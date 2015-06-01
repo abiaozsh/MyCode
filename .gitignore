@@ -1,0 +1,7 @@
+obj
+bin
+*.s
+*.out
+*.hex
+*.ii
+*.o
