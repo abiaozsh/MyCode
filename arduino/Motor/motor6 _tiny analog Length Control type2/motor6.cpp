@@ -204,7 +204,7 @@ void adj() {
 	sbi(ADCSRA, ADSC);
 	if(aread>=512)
 	{
-		TargetRPM = pgm_read_word_near(PWR_Table2 + ((512-aread)>>1));// TODO 512byte convert table  *32 8000max  ticks<<5
+		TargetRPM = pgm_read_byte_near(PWR_Table2 + ((aread&511)>>1));// TODO 512byte convert table  *32 8000max  ticks<<5
 	}
 	else
 	{
