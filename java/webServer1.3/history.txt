@@ -1,0 +1,27 @@
+2007 5/15 config 的xml化
+
+2007 5/17 断点续传
+
+2007 5/18 jsp解析更新
+
+2007 8/23 SSL support
+
+configPage
+
+linux support
+
+fileSystem upgrade ( upload del sort)
+
+configPage upgrade
+
+MD5 password
+
+2009-03-01 response 对象
+http头
+http项
+\r\n \r\n
+数据
+在response中准备数据，最后发送
+iostream 由processor 处理
+
+

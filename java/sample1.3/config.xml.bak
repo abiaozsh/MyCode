@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+	<!-- normal connection -->
+	<port>88</port>
+	
+	<!-- SSL -->
+	<SSL>
+		<active>true</active>
+		<!-- SSL connection -->
+		<port>443</port>
+		<!-- created by "keytool -genkey -keystore clientKeys.key -keysize 1024 -keypass 123456 -storepass 123456" -->
+		<clientKeysFile>clientKeys.key</clientKeysFile>
+		<keyStorePass>123456</keyStorePass>
+		<keyPassword>123456</keyPassword>
+	</SSL>
+	
+	<javaCompilerPath>file:///lib/tools.jar</javaCompilerPath>
+	<!--<javaCompilerPath>file:///C:/jdk1.5.0_12/lib/tools.jar</javaCompilerPath>-->
+	<!--<javaCompilerPath>file:////usr/java/lib/tools.jar</javaCompilerPath>-->
+	<defaultEncoding>utf-8</defaultEncoding>
+<!--
+	<defaultEncoding>GBK</defaultEncoding>	//chinese
+	<defaultEncoding>SJIS</defaultEncoding> //japanese
+-->
+	<sessionExpires>300</sessionExpires>
+
+	<configPage>
+		<enabled>true</enabled>
+		<url>/config</url>
+		<passWord>admin</passWord>
+	</configPage>
+
+	<fileSystem>
+		<rootPath>c:\</rootPath>
+		<url>/c/</url>
+		<allowList>true</allowList>
+		<allowUpLoad>true</allowUpLoad>
+		<allowDel>true</allowDel>
+	</fileSystem>
+	
+	<fileSystem>
+		<rootPath>fileSystem\</rootPath>
+		<url>/file/</url>
+		<allowList>true</allowList>
+		<allowUpLoad>true</allowUpLoad>
+		<allowDel>true</allowDel>
+	</fileSystem>
+
+	<fileSystem>
+		<rootPath>d:\</rootPath>
+		<url>/diskd/</url>
+		<allowList>true</allowList>
+	</fileSystem>
+
+	<fileSystem>
+		<rootPath>g:\</rootPath>
+		<url>/diskg/</url>
+		<allowList>true</allowList>
+	</fileSystem>
+
+	<jsp>
+		<url>/jsp/</url>
+		<rootPath>jsp\</rootPath>
+	</jsp>
+
+	<servlet>
+		<path>/Screen</path>
+		<class>sample.ScreenServlet</class>
+	</servlet>
+	<servlet>
+		<path>/Map</path>
+		<class>sample.MapServlet</class>
+	</servlet>
+	<servlet>
+		<path>/setQuality</path>
+		<class>sample.setQualityServlet</class>
+	</servlet>
+	<servlet>
+		<path>/MouseAction</path>
+		<class>sample.MouseAction</class>
+	</servlet>
+	<servlet>
+		<path>/TestPage</path>
+		<class>sample.TestPage</class>
+	</servlet>
+	<servlet>
+		<path>/UploadServlet</path>
+		<class>sample.UploadServlet</class>
+	</servlet>
+	<servlet>
+		<path>/Sample</path>
+		<class>sample.Sample</class>
+	</servlet>
+	<servlet>
+		<path>/</path>
+		<class>sample.Root</class>
+	</servlet>
+	<servlet>
+		<path>/MessageBoxAction</path>
+		<class>sample.MessageboxAction</class>
+	</servlet>
+	<servlet>
+		<path>/LoginAction</path>
+		<class>sample.LoginAction</class>
+	</servlet>
+</config>

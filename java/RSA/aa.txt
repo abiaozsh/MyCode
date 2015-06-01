@@ -1,0 +1,219 @@
+   IT搜索：    资讯 产品 资源 人才 论坛   
+ 注册 | 登录 | 我的IT夹  
+ 
+ 
+ 　　首页 | 资讯 | 教程 | 联盟 | 下载 | 商务 | 人才 | 论坛 | 旧版  
+你现在的位置 : 首页=> 资源中心=>软件开发=>Java=>Java加密和数字签名编程快速入门  文章搜索 
+ 
+  
+Java加密和数字签名编程快速入门 
+ 
+ 时间: 2005-02-17 来自：blog 
+　　本文主要谈一下密码学中的加密和数字签名，以及其在java中如何进行使用。对密码学有兴趣的伙伴，推荐看Bruce Schneier的著作：Applied Crypotography。在jdk1.5的发行版本中安全性方面有了很大的改进，也提供了对RSA算法的直接支持，现在我们从实例入手解决问题（本文仅是作为简单介绍）： 
+
+　　一、密码学上常用的概念　
+
+　　1）消息摘要：
+
+　　这是一种与消息认证码结合使用以确保消息完整性的技术。主要使用单向散列函数算法，可用于检验消息的完整性，和通过散列密码直接以文本形式保存等，目前广泛使用的算法有MD4、MD5、SHA-1，jdk1.5对上面都提供了支持，在java中进行消息摘要很简单， java.security.MessageDigest提供了一个简易的操作方法：
+
+/**
+*MessageDigestExample.java
+*Copyright 2005-2-16
+*/
+import java.security.MessageDigest;
+/**
+*单一的消息摘要算法，不使用密码.可以用来对明文消息（如：密码）隐藏保存
+*/
+public class MessageDigestExample{
+　public static void main(String[] args) throws Exception{
+　　if(args.length!=1){
+　　　System.err.println("Usage:java MessageDigestExample text");
+　　　System.exit(1);
+　　}
+
+　　byte[] plainText=args[0].getBytes("UTF8");
+
+　　//使用getInstance("算法")来获得消息摘要,这里使用SHA-1的160位算法
+　　MessageDigest messageDigest=MessageDigest.getInstance("SHA-1");
+
+　　System.out.println("\n"+messageDigest.getProvider().getInfo());
+　　//开始使用算法
+　　messageDigest.update(plainText);
+　　System.out.println("\nDigest:");
+　　//输出算法运算结果
+　　System.out.println(new String(messageDigest.digest(),"UTF8"));
+　}
+} 
+
+　　还可以通过消息认证码来进行加密实现，javax.crypto.Mac提供了一个解决方案，有兴趣者可以参考相关API文档，本文只是简单介绍什么是摘要算法。
+
+　　2）私钥加密：
+
+　　消息摘要只能检查消息的完整性，但是单向的，对明文消息并不能加密，要加密明文的消息的话，就要使用其他的算法，要确保机密性，我们需要使用私钥密码术来交换私有消息。
+
+　　这种最好理解，使用对称算法。比如：A用一个密钥对一个文件加密，而B读取这个文件的话，则需要和A一样的密钥，双方共享一个私钥（而在web环境下，私钥在传递时容易被侦听）：
+
+　　使用私钥加密的话，首先需要一个密钥，可用javax.crypto.KeyGenerator产生一个密钥(java.security.Key),然后传递给一个加密工具(javax.crypto.Cipher),该工具再使用相应的算法来进行加密，主要对称算法有：DES（实际密钥只用到56位），AES（支持三种密钥长度：128、192、256位），通常首先128位，其他的还有DESede等，jdk1.5种也提供了对对称算法的支持，以下例子使用AES算法来加密：
+
+/**
+*PrivateExmaple.java
+*Copyright 2005-2-16
+*/
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import java.security.Key;
+
+/**
+*私鈅加密，保证消息机密性
+*/
+public class PrivateExample{
+　public static void main(String[] args) throws Exception{
+　　if(args.length!=1){
+　　　System.err.println("Usage:java PrivateExample <text>");
+　　　System.exit(1);
+　　}
+　　byte[] plainText=args[0].getBytes("UTF8");
+
+　　//通过KeyGenerator形成一个key
+　　System.out.println("\nStart generate AES key");
+　　KeyGenerator keyGen=KeyGenerator.getInstance("AES");
+　　keyGen.init(128);
+　　Key key=keyGen.generateKey();
+　　System.out.println("Finish generating DES key");
+
+　　//获得一个私鈅加密类Cipher，ECB是加密方式，PKCS5Padding是填充方法
+　　Cipher cipher=Cipher.getInstance("AES/ECB/PKCS5Padding");
+　　System.out.println("\n"+cipher.getProvider().getInfo());
+
+　　//使用私鈅加密
+　　System.out.println("\nStart encryption:");
+　　cipher.init(Cipher.ENCRYPT_MODE,key);
+　　byte[] cipherText=cipher.doFinal(plainText);
+　　System.out.println("Finish encryption:");
+　　System.out.println(new String(cipherText,"UTF8"));
+
+　　System.out.println("\nStart decryption:");
+　　cipher.init(Cipher.DECRYPT_MODE,key);
+　　byte[] newPlainText=cipher.doFinal(cipherText);
+　　System.out.println("Finish decryption:");
+
+　　System.out.println(new String(newPlainText,"UTF8"));
+
+　}
+} 
+
+　　3）公钥加密：
+
+　　上面提到，私钥加密需要一个共享的密钥，那么如何传递密钥呢？web环境下，直接传递的话很容易被侦听到，幸好有了公钥加密的出现。公钥加密也叫不对称加密，不对称算法使用一对密钥对，一个公钥，一个私钥，使用公钥加密的数据，只有私钥能解开（可用于加密）；同时，使用私钥加密的数据，只有公钥能解开（签名）。但是速度很慢（比私钥加密慢100到1000倍），公钥的主要算法有RSA，还包括Blowfish,Diffie-Helman等，jdk1.5种提供了对RSA的支持，是一个改进的地方： 
+
+/**
+*PublicExample.java
+*Copyright 2005-2-16
+*/
+import java.security.Key;
+import javax.crypto.Cipher;
+import java.security.KeyPairGenerator;
+import java.security.KeyPair;
+/**
+*一个简单的公鈅加密例子,Cipher类使用KeyPairGenerator生成的公鈅和私鈅
+*/
+public class PublicExample{
+　public static void main(String[] args) throws Exception{
+　　if(args.length!=1){
+　　　System.err.println("Usage:java PublicExample <text>");
+　　　System.exit(1);
+　　}
+
+　　byte[] plainText=args[0].getBytes("UTF8");
+　　//构成一个RSA密钥
+　　System.out.println("\nStart generating RSA key");
+　　KeyPairGenerator keyGen=KeyPairGenerator.getInstance("RSA");
+　　keyGen.initialize(1024);
+　　KeyPair key=keyGen.generateKeyPair();
+　　System.out.println("Finish generating RSA key");
+
+　　//获得一个RSA的Cipher类，使用公鈅加密
+　　Cipher cipher=Cipher.getInstance("RSA/ECB/PKCS1Padding");
+　　System.out.println("\n"+cipher.getProvider().getInfo());
+
+　　System.out.println("\nStart encryption");
+　　cipher.init(Cipher.ENCRYPT_MODE,key.getPublic());
+　　byte[] cipherText=cipher.doFinal(plainText);
+　　System.out.println("Finish encryption:");
+　　System.out.println(new String(cipherText,"UTF8"));
+
+　　//使用私鈅解密
+　　System.out.println("\nStart decryption");
+　　cipher.init(Cipher.DECRYPT_MODE,key.getPrivate());
+　　byte[] newPlainText=cipher.doFinal(cipherText);
+　　System.out.println("Finish decryption:");
+　　System.out.println(new String(newPlainText,"UTF8"));
+　}
+} 
+
+ 
+ 　 
+共 3 页， 12 3  
+     
+ 
+ 　相关文章 
+ 
+ 
+ 
+
+ 
+ 
+    
+    标题   正文 
+ 
+      
+    
+   
+
+热点排行 
+ 
+Java 6：应该知道的10件事情 
+ 
+Java 6：应该知道的10件 
+Eclipse插件之WebLogic  
+AOP和Spring事务处理 
+跟我学Java Swing之游戏 
+精通J2ME中的Hello Worl 
+为Symbian编写动态链接库 
+.NET框架下使用双缓冲技 
+C++启蒙教程之教你编写简 
+Java 6：应该知道的10件 
+通过包技术扩展Visual S 
+Eclipse插件之WebLogic  
+完全控制桌面的实现 
+ 
+ 
+  
+ 
+最新文章 
+DOM属性用法速查手册 
+用Java实现几种常见的排 
+每个Java初学者都应该搞 
+一种常用的权限控制算法 
+JAVA内存泄漏，走开！ 
+结合第三方工具工具对We 
+全面分析Java的垃圾回收 
+AJAX编写用户注册实例及 
+Java编程测试1M内存可用 
+Java抽取Office、PDF的四 
+Java实时应用程序中的内 
+浅析J2EE应用中的时间值 
+ 
+ 
+ 
+ 
+关于ITDB | 免责条款 | 网站地图 | 我要投稿 | 网站合作 | 联系我们 | 交换链接 | 加盟ITDB 
+与我们联系:Tel:020-38467459 87071693 E-mail: 粤ICP备 05064500号 
+ITDB.cn @ 2006-2007 版权所有| 技术支持：华微软件 
+  
+ 
+ 
+9380 
+ 
+ 站长统计 

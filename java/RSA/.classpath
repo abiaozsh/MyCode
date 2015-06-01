@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry path="" kind="src"/>
+	<classpathentry path="bcprov-jdk14-137.jar" kind="lib"/>
+	<classpathentry path="org.eclipse.jdt.launching.JRE_CONTAINER" kind="con"/>
+	<classpathentry path="" kind="output"/>
+</classpath>

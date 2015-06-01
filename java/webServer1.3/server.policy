@@ -1,0 +1,4 @@
+grant { 
+	permission java.io.FilePermission "webServer.log", "read,write";
+};
+

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+ 
+ <port>81</port>
+ 
+ <SSL>
+  <active>true</active>
+  <port>443</port>
+  <clientKeysFile>clientKeys.key</clientKeysFile>
+  <keyStorePass>123456</keyStorePass>
+  <keyPassword>123456</keyPassword>
+ </SSL>
+ 
+ <javaCompilerPath>file:///C:\Program Files\Java\jdk1.5.0_16\lib\tools.jar</javaCompilerPath>
+ 
+ <defaultEncoding>utf-8</defaultEncoding>
+ 
+ <sessionExpires>300</sessionExpires>
+ 
+ <configPage>
+  <enabled>true</enabled>
+  <url>/config</url>
+  <userName>admin</userName>
+  <passWord>ISMvKXpXpadDiUoOSoAfww==</passWord>
+ </configPage>
+ 
+ <fileSystem>
+  <url>/c/</url>
+  <rootPath>c:\</rootPath>
+  <allowList>true</allowList>
+  <allowUpLoad>true</allowUpLoad>
+  <allowDel>true</allowDel>
+  <userName>zhengsh</userName>
+  <passWord>3FF34C93F0C80AA7689C8A9B9672A9A9</passWord>
+ </fileSystem>
+ 
+ <fileSystem>
+  <url>/filesystem/</url>
+  <rootPath>fileSystem\</rootPath>
+  <allowList>false</allowList>
+  <allowUpLoad>false</allowUpLoad>
+  <allowDel>false</allowDel>
+  <userName></userName>
+  <passWord></passWord>
+ </fileSystem>
+ 
+ <fileSystem>
+  <url>/d/</url>
+  <rootPath>d:\</rootPath>
+  <allowList>true</allowList>
+  <allowUpLoad>true</allowUpLoad>
+  <allowDel>true</allowDel>
+  <userName></userName>
+  <passWord></passWord>
+ </fileSystem>
+ 
+ <fileSystem>
+  <url>/e/</url>
+  <rootPath>e:\</rootPath>
+  <allowList>true</allowList>
+  <allowUpLoad>true</allowUpLoad>
+  <allowDel>true</allowDel>
+  <userName></userName>
+  <passWord></passWord>
+ </fileSystem>
+ 
+ <jsp>
+  <url>/jsp/</url>
+  <rootPath>jsp\</rootPath>
+ </jsp>
+ 
+ <servlet>
+  <url>/</url>
+  <class>sample.Root</class>
+ </servlet>
+ 
+</config>

@@ -1,0 +1,205 @@
+2013/01/08 12:22:09:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+	at webServer.Server.applyConfig(Server.java:366)
+	at webServer.Main.main(Main.java:8)
+
+2013/01/08 12:22:10:class sample.ProxyAction not found.
+2013/01/08 12:22:10:listening port:80
+2013/01/08 12:22:10:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.PlainSocketImpl.socketBind(Native Method)
+	at java.net.PlainSocketImpl.bind(PlainSocketImpl.java:383)
+	at java.net.ServerSocket.bind(ServerSocket.java:328)
+	at java.net.ServerSocket.<init>(ServerSocket.java:194)
+	at java.net.ServerSocket.<init>(ServerSocket.java:106)
+	at webServer.ServerThread.<init>(Server.java:510)
+	at webServer.Monitor.run(Server.java:638)
+
+2013/01/08 12:22:10:listening port:443(SSL)
+2013/01/09 18:07:21:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+	at webServer.Server.applyConfig(Server.java:366)
+	at webServer.Main.main(Main.java:8)
+
+2013/01/09 18:07:21:class sample.ProxyAction not found.
+2013/01/09 18:07:21:listening port:80
+2013/01/09 18:07:21:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.PlainSocketImpl.socketBind(Native Method)
+	at java.net.PlainSocketImpl.bind(PlainSocketImpl.java:383)
+	at java.net.ServerSocket.bind(ServerSocket.java:328)
+	at java.net.ServerSocket.<init>(ServerSocket.java:194)
+	at java.net.ServerSocket.<init>(ServerSocket.java:106)
+	at webServer.ServerThread.<init>(Server.java:510)
+	at webServer.Monitor.run(Server.java:638)
+
+2013/01/09 18:07:21:listening port:443(SSL)
+2013/01/11 12:23:47:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+	at webServer.Server.applyConfig(Server.java:366)
+	at webServer.Main.main(Main.java:8)
+
+2013/01/11 12:23:47:class sample.ProxyAction not found.
+2013/01/11 12:23:47:listening port:80
+2013/01/11 12:23:47:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.PlainSocketImpl.socketBind(Native Method)
+	at java.net.PlainSocketImpl.bind(PlainSocketImpl.java:383)
+	at java.net.ServerSocket.bind(ServerSocket.java:328)
+	at java.net.ServerSocket.<init>(ServerSocket.java:194)
+	at java.net.ServerSocket.<init>(ServerSocket.java:106)
+	at webServer.ServerThread.<init>(Server.java:510)
+	at webServer.Monitor.run(Server.java:638)
+
+2013/01/11 12:23:47:listening port:443(SSL)
+2013/01/11 12:26:50:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+	at webServer.Server.applyConfig(Server.java:366)
+	at webServer.Main.main(Main.java:8)
+
+2013/01/11 12:26:50:class sample.ProxyAction not found.
+2013/01/11 12:26:50:listening port:80
+2013/01/11 12:26:50:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.PlainSocketImpl.socketBind(Native Method)
+	at java.net.PlainSocketImpl.bind(PlainSocketImpl.java:383)
+	at java.net.ServerSocket.bind(ServerSocket.java:328)
+	at java.net.ServerSocket.<init>(ServerSocket.java:194)
+	at java.net.ServerSocket.<init>(ServerSocket.java:106)
+	at webServer.ServerThread.<init>(Server.java:510)
+	at webServer.Monitor.run(Server.java:638)
+
+2013/01/11 12:26:50:listening port:443(SSL)
+2013/01/11 12:28:22:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+	at webServer.Server.applyConfig(Server.java:366)
+	at webServer.Main.main(Main.java:8)
+
+2013/01/11 12:28:22:class sample.ProxyAction not found.
+2013/01/11 12:28:22:listening port:80
+2013/01/11 12:28:22:listening port:443(SSL)
+2013/01/11 12:28:24:connection at:443 ip:127.0.0.1 port:19111
+2013/01/11 12:28:24:connection at:443 ip:127.0.0.1 port:19112
+2013/01/11 12:28:25:requested:/ajax/libs/webfont/1/webfont.js[127.0.0.1:19112]
+2013/01/11 12:28:27:requested:/ajax/libs/webfont/1/webfont.js[127.0.0.1:19111]
+2013/01/11 12:30:43:connection at:443 ip:127.0.0.1 port:19154
+2013/01/11 12:30:43:connection at:443 ip:127.0.0.1 port:19155
+2013/01/11 12:30:46:connection at:443 ip:127.0.0.1 port:19156
+2013/01/11 12:30:46:
+javax.net.ssl.SSLHandshakeException: Received fatal alert: bad_certificate
+	at com.sun.net.ssl.internal.ssl.Alerts.getSSLException(Alerts.java:174)
+	at com.sun.net.ssl.internal.ssl.Alerts.getSSLException(Alerts.java:136)
+	at com.sun.net.ssl.internal.ssl.SSLSocketImpl.recvAlert(SSLSocketImpl.java:1720)
+	at com.sun.net.ssl.internal.ssl.SSLSocketImpl.readRecord(SSLSocketImpl.java:954)
+	at com.sun.net.ssl.internal.ssl.SSLSocketImpl.readDataRecord(SSLSocketImpl.java:755)
+	at com.sun.net.ssl.internal.ssl.AppInputStream.read(AppInputStream.java:75)
+	at com.sun.net.ssl.internal.ssl.AppInputStream.read(AppInputStream.java:50)
+	at webServer.Processor.getHead(Processor.java:130)
+	at webServer.Processor.run(Processor.java:58)
+
+2013/01/11 12:30:46:connection at:443 ip:127.0.0.1 port:19157
+2013/01/11 12:30:48:connection at:443 ip:127.0.0.1 port:19158
+2013/01/11 12:30:48:requested:/ajax/libs/webfont/1/webfont.js[127.0.0.1:19158]
+2013/01/11 12:30:48:connection at:443 ip:127.0.0.1 port:19159
+2013/01/11 12:31:23:connection at:443 ip:127.0.0.1 port:19161
+2013/01/11 12:31:24:requested:/ajax/libs/webfont/1/webfont.js[127.0.0.1:19161]
+2013/01/11 12:31:24:connection at:443 ip:127.0.0.1 port:19162
+2015/01/13 17:43:21:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at webServer.Server.applyConfig(Server.java:366)
+	at webServer.Main.main(Main.java:8)
+
+2015/01/13 17:43:21:class sample.ProxyAction not found.
+2015/01/13 17:43:21:listening port:81
+2015/01/13 17:43:21:listening port:445(SSL)
+2015/01/13 17:43:21:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.DualStackPlainSocketImpl.bind0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketBind(Unknown Source)
+	at java.net.AbstractPlainSocketImpl.bind(Unknown Source)
+	at java.net.PlainSocketImpl.bind(Unknown Source)
+	at java.net.ServerSocket.bind(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at javax.net.ssl.SSLServerSocket.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketImpl.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketFactoryImpl.createServerSocket(Unknown Source)
+	at webServer.ServerThread.getSSLServerSocket(Server.java:615)
+	at webServer.ServerThread.<init>(Server.java:504)
+	at webServer.Monitor.run(Server.java:643)
+
+2015/01/13 17:44:04:connection at:81 ip:192.168.43.1 port:47272
+2015/01/13 17:44:04:requested:/[192.168.43.1:47272]
+2015/01/13 17:44:10:connection at:81 ip:192.168.43.1 port:47273
+2015/01/13 17:44:10:requested:/[192.168.43.1:47273]
+2015/01/13 17:44:11:connection at:81 ip:192.168.43.1 port:47274
+2015/01/13 17:44:11:requested:/[192.168.43.1:47274]
+2015/01/13 17:44:11:connection at:81 ip:192.168.43.1 port:47275
+2015/01/13 17:44:11:requested:/[192.168.43.1:47275]
+2015/01/13 17:44:12:connection at:81 ip:192.168.43.1 port:47276
+2015/01/13 17:44:12:requested:/[192.168.43.1:47276]
+2015/01/13 17:44:12:connection at:81 ip:192.168.43.1 port:47277
+2015/01/13 17:44:12:requested:/[192.168.43.1:47277]
+2015/01/13 17:44:12:connection at:81 ip:192.168.43.1 port:47278
+2015/01/13 17:44:12:requested:/[192.168.43.1:47278]
+2015/01/13 17:44:13:connection at:81 ip:192.168.43.1 port:47279
+2015/01/13 17:44:13:requested:/[192.168.43.1:47279]
+2015/01/13 17:44:13:connection at:81 ip:192.168.43.1 port:47280
+2015/01/13 17:44:13:requested:/[192.168.43.1:47280]
+2015/01/13 17:44:13:connection at:81 ip:192.168.43.1 port:47281
+2015/01/13 17:44:13:requested:/[192.168.43.1:47281]
+2015/01/13 17:44:13:connection at:81 ip:192.168.43.1 port:47282
+2015/01/13 17:44:13:requested:/[192.168.43.1:47282]
+2015/01/13 17:44:13:connection at:81 ip:192.168.43.1 port:47283
+2015/01/13 17:44:13:requested:/[192.168.43.1:47283]
+2015/01/13 17:44:14:connection at:81 ip:192.168.43.1 port:47284
+2015/01/13 17:44:14:requested:/[192.168.43.1:47284]
+2015/01/13 17:44:19:connection at:81 ip:192.168.43.1 port:47285
+2015/01/13 17:44:19:requested:/jsp/upload.jsp[192.168.43.1:47285]
+2015/01/13 17:44:24:connection at:81 ip:192.168.43.1 port:47286
+2015/01/13 17:44:24:requested:/jsp/control.jsp[192.168.43.1:47286]
+2015/01/13 17:44:28:connection at:81 ip:192.168.43.1 port:47287
+2015/01/13 17:44:28:requested:/Control[192.168.43.1:47287]
+2015/01/13 17:44:28:connection at:81 ip:192.168.43.1 port:47288
+2015/01/13 17:44:28:requested:/Login[192.168.43.1:47288]
+2015/01/13 17:44:31:connection at:81 ip:192.168.43.1 port:47289
+2015/01/13 17:44:31:requested:/file/[192.168.43.1:47289]
+2015/01/13 17:44:31:connection at:81 ip:192.168.43.1 port:47290
+2015/01/13 17:44:31:requested:/file/1552846.gif[192.168.43.1:47290]
+2015/01/13 17:44:31:connection at:81 ip:192.168.43.1 port:47291
+2015/01/13 17:44:31:requested:/file/3257918.gif[192.168.43.1:47291]
+2015/01/13 17:44:31:connection at:81 ip:192.168.43.1 port:47292
+2015/01/13 17:44:31:requested:/file/4406651.gif[192.168.43.1:47292]
+2015/01/13 17:44:31:connection at:81 ip:192.168.43.1 port:47293
+2015/01/13 17:44:31:requested:/file/5144936.gif[192.168.43.1:47293]

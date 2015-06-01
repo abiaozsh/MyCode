@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+ 
+ <port>81</port>
+ 
+ <SSL>
+  <active>true</active>
+  <port>445</port>
+  <clientKeysFile>clientKeys.key</clientKeysFile>
+  <keyStorePass>123456</keyStorePass>
+  <keyPassword>123456</keyPassword>
+ </SSL>
+ 
+ <javaCompilerPath>file:///C:\Program Files\Java\jdk1.6.0_06\lib\tools.jar</javaCompilerPath>
+ 
+ <defaultEncoding>utf-8</defaultEncoding>
+ 
+ <sessionExpires>300</sessionExpires>
+ 
+ <configPage>
+  <enabled>true</enabled>
+  <url>/config</url>
+  <userName>admin</userName>
+  <passWord>uYCu8m0wTlCO+9yXSWeIoA==</passWord>
+ </configPage>
+ 
+ <fileSystem>
+  <url>/c/</url>
+  <rootPath>c:\</rootPath>
+  <allowList>true</allowList>
+  <allowUpLoad>true</allowUpLoad>
+  <allowDel>false</allowDel>
+  <userName>admin</userName>
+  <passWord>uYCu8m0wTlCO+9yXSWeIoA==</passWord>
+ </fileSystem>
+ 
+ <fileSystem>
+  <url>/file/</url>
+  <rootPath>fileSystem\</rootPath>
+  <allowList>true</allowList>
+  <allowUpLoad>true</allowUpLoad>
+  <allowDel>true</allowDel>
+  <userName></userName>
+  <passWord></passWord>
+ </fileSystem>
+ 
+ <fileSystem>
+  <url>/diskd/</url>
+  <rootPath>d:\</rootPath>
+  <allowList>true</allowList>
+  <allowUpLoad>true</allowUpLoad>
+  <allowDel>false</allowDel>
+  <userName>admin</userName>
+  <passWord>uYCu8m0wTlCO+9yXSWeIoA==</passWord>
+ </fileSystem>
+ 
+ <fileSystem>
+  <url>/diske/</url>
+  <rootPath>e:\</rootPath>
+  <allowList>true</allowList>
+  <allowUpLoad>false</allowUpLoad>
+  <allowDel>false</allowDel>
+  <userName>admin</userName>
+  <passWord>uYCu8m0wTlCO+9yXSWeIoA==</passWord>
+ </fileSystem>
+ 
+ <fileSystem>
+  <url>/ajax/</url>
+  <rootPath>ajax\</rootPath>
+  <allowList>true</allowList>
+  <allowUpLoad>false</allowUpLoad>
+  <allowDel>false</allowDel>
+  <userName></userName>
+  <passWord></passWord>
+ </fileSystem>
+ 
+ <jsp>
+  <url>/jsp/</url>
+  <rootPath>jsp\</rootPath>
+ </jsp>
+ 
+ <servlet>
+  <url>/Control</url>
+  <class>sample.Control</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/screen.jpg</url>
+  <class>sample.ScreenServlet</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/setQuality</url>
+  <class>sample.setQualityServlet</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/MouseAction</url>
+  <class>sample.MouseAction</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/test</url>
+  <class>sample.TestPage</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/UploadServlet</url>
+  <class>sample.UploadServlet</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/Sample</url>
+  <class>sample.Sample</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/</url>
+  <class>sample.Root</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/MessageBoxAction</url>
+  <class>sample.MessageboxAction</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/KeyAction</url>
+  <class>sample.KeyAction</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/ClipBoardAction</url>
+  <class>sample.ClipBoardAction</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/proxy</url>
+  <class>sample.ProxyAction</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/map</url>
+  <class>sample.MapServlet</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/processList</url>
+  <class>sample.ProcessListAction</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/processKill</url>
+  <class>sample.ProcessKillAction</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/Login</url>
+  <class>sample.LoginServlet</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/Screen.jpg</url>
+  <class>sample.ScreenServlet</class>
+ </servlet>
+ 
+</config>
