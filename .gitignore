@@ -1,7 +1,10 @@
-obj
 bin
-*.s
+obj
 *.out
 *.hex
 *.ii
 *.o
+*.class
+.metadata
+*.ncb
+release
