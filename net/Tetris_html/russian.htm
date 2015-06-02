@@ -1,0 +1,476 @@
+<html>
+<head>
+<script>
+var Board;
+var oldBoard;
+var PosX;
+var PosY;
+var NowNum;
+var NextNum;
+var NowShape;
+var Score;
+var Shapes;
+var ShapeNow;
+var ShapeNext;
+
+function Init()
+{
+	document.onkeydown = keyDown;
+	
+	Board = new Array(10);
+	for(i=0;i<10;i++)
+	{
+		Board[i] = new Array(20);
+		for(j=0;j<20;j++)
+		{
+			Board[i][j] = 0;
+		}
+	}
+	oldBoard = new Array(10);
+	for(i=0;i<10;i++)
+	{
+		oldBoard[i] = new Array(20);
+		for(j=0;j<20;j++)
+		{
+			oldBoard[i][j] = -1;
+		}
+	}
+
+
+	var strTemp = "";
+	for(j=0;j<20;j++)
+	{
+		for(i=0;i<10;i++)
+		{
+			strTemp += "<image id='img1_"+j+"_"+i+"'>";
+		}
+		strTemp += "<br>";
+	}
+	b1.innerHTML = strTemp;
+	
+	strTemp = "";
+	for(j=0;j<4;j++)
+	{
+		for(i=0;i<4;i++)
+		{
+			strTemp += "<image id='img2_"+j+"_"+i+"'>";
+		}
+		strTemp += "<br>";
+	}
+	b2.innerHTML = strTemp;
+
+	var data2= new Array(
+			new Array(0x07000,0x03000,0x03000,0x06000,0x01111,3),
+			new Array(0x05224,0x00000,0x00000,0x00000,0x04000,0),
+			new Array(0x07000,0x03000,0x03000,0x06000,0x01111,3),
+			new Array(0x05224,0x00000,0x00000,0x00000,0x04000,0),
+			new Array(0x0B900,0x08A00,0x00000,0x00000,0x02200,1),
+			new Array(0x0B900,0x08A00,0x00000,0x00000,0x02200,1),
+			new Array(0x0B900,0x08A00,0x00000,0x00000,0x02200,1),
+			new Array(0x0B900,0x08A00,0x00000,0x00000,0x02200,1),
+			new Array(0x00700,0x0BA00,0x06000,0x00000,0x02210,2),
+			new Array(0x05900,0x00840,0x00000,0x00000,0x02300,1),
+			new Array(0x00700,0x0BA00,0x06000,0x00000,0x02210,2),
+			new Array(0x05900,0x00840,0x00000,0x00000,0x02300,1),
+			new Array(0x07000,0x08900,0x00600,0x00000,0x01220,2),
+			new Array(0x00B40,0x05A00,0x00000,0x00000,0x03200,1),
+			new Array(0x07000,0x08900,0x00600,0x00000,0x01220,2),
+			new Array(0x00B40,0x05A00,0x00000,0x00000,0x03200,1),
+			new Array(0x07000,0x03000,0x08400,0x00000,0x01120,2),
+			new Array(0x00070,0x052A0,0x00000,0x00000,0x03300,1),
+			new Array(0x05900,0x00300,0x00600,0x00000,0x02220,2),
+			new Array(0x0B240,0x06000,0x00000,0x00000,0x03100,1),
+			new Array(0x0B400,0x03000,0x06000,0x00000,0x02110,2),
+			new Array(0x07000,0x08240,0x00000,0x00000,0x01300,1),
+			new Array(0x00700,0x00300,0x05A00,0x00000,0x02220,2),
+			new Array(0x05290,0x00060,0x00000,0x00000,0x03300,1),
+			new Array(0x00700,0x05F40,0x00000,0x00000,0x02300,1),
+			new Array(0x00700,0x05C00,0x00600,0x00000,0x02220,2),
+			new Array(0x05D40,0x00600,0x00000,0x00000,0x03200,1),
+			new Array(0x07000,0x0E400,0x06000,0x00000,0x01210,2)
+			);
+
+	Shapes = new Array(7);
+	for(i=0;i<7;i++)
+	{
+		Shapes[i] = new Array(4);
+		for(j=0;j<4;j++)
+		{
+			Shapes[i][j]=new Object();
+			Shapes[i][j].dot = new Array(4);
+			for(k=0;k<4;k++)
+			{
+				Shapes[i][j].dot[k] = new Array(4);
+				for(l=0;l<4;l++)
+				{
+					Shapes[i][j].dot[k][l]=(data2[i*4+j][k]>>(4*(3-l))) & 0x0F;
+				}
+			}
+			Shapes[i][j].bottom = new Array(4);
+			for(k=0;k<4;k++)
+			{
+				Shapes[i][j].bottom[k]=(data2[i*4+j][4]>>(4*(3-k))) & 0x0F;
+			}
+			Shapes[i][j].left=(data2[i*4+j][5]) & 0x0F;
+		}
+	}
+	PosY = 17;
+	PosX = 3;
+	
+	Clear();
+	RndShapeNext();
+	NextShapeNow();
+	RndShapeNext();
+	DrawNextShape();
+	
+	timename=setInterval("timing();",1000); 
+	//clearInterval(timename);
+}
+
+function keyDown()
+{
+	ClearOldShape();
+	var k = event.keyCode;
+	if(k == 32)
+	{
+		NowShape++;
+		while(true)
+		{
+			if(NowShape==-1)
+			{
+				NowShape=3;
+			}
+			if(NowShape==4)
+			{
+				NowShape=0;
+			}
+			ShapeNow=Shapes[NowNum][NowShape];
+			if(ShapeNow.left+PosX>9)
+			{
+				PosX=9-ShapeNow.left;
+			}
+			if(Any_Touch())
+			{
+				NowShape--;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+	if(k == 37)
+	{
+		PosX--;
+		if(Any_Touch())
+		{
+			PosX++;
+		}
+	}
+	if(k == 39)
+	{
+		PosX++;
+		if(Any_Touch())
+		{
+			PosX--;
+		}
+	}
+
+	if(k == 38)
+	{
+		if(Touch())
+		{
+			TouchDo();
+		}
+		PosY--;
+	}
+	if(k == 40)
+	{
+		while(!Touch())
+		{
+			PosY--;
+		}
+		TouchDo();
+	}
+	DrawBoard();
+}
+
+function timing()
+{
+	ClearOldShape();
+	if(Touch())
+	{
+		TouchDo();
+	}
+	PosY--;
+	DrawBoard();
+}
+
+function Clear()
+{
+	for(i=0;i<10;i++)
+	{
+		for(j=0;j<20;j++)
+		{
+			Board[i][j]=0;
+		}
+	}
+}
+
+function RndShapeNext()
+{
+	var num = Math.floor(Math.random()*7);
+	NextNum = num;
+	ShapeNext=Shapes[num][0];
+}
+
+function NextShapeNow()
+{
+	ShapeNow=ShapeNext;
+	NowNum=NextNum;
+	NowShape=0;
+}
+
+function Touch()
+{
+	for(i=0;i<4;i++)
+	{
+		if(ShapeNow.bottom[i]!=0)
+		{
+			if(ShapeNow.bottom[i]!=PosY+1)
+			{
+				if(Board[PosX+i][PosY-ShapeNow.bottom[i]]!=0)return true;
+			}
+			else
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+function Any_Touch()
+{
+	if(PosX<0)
+	{
+		return true;
+	}
+	if(ShapeNow.left+PosX>9)
+	{
+		return true;
+	}
+	if(PosY>20)
+	{
+		return false;
+	}
+	for(i=0;i<4;i++)
+	{
+		for(j=0;j<4;j++)
+		{
+			var x=PosX+i;
+			var y=PosY+j-3;
+			if(PosY-ShapeNow.bottom[i]<-1)
+			{
+				return true;
+			}
+			if(x>=0&&y>=0&&x<10&&y<20&&ShapeNow.dot[i][3-j]!=0&&Board[x][y]!=0)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+function TouchDo()
+{
+	AddToBoard();
+	while(IsLine())
+	{
+		DoIsLine();
+	}
+	for(i=0;i<10;i++)
+	{
+		if(Board[i][18]!=0)
+		{
+			Score=0;
+			Clear();
+			break;
+		}
+	}	
+	NextShapeNow();
+	RndShapeNext();
+	DrawNextShape();
+	PosY=19;
+	PosX=3;
+}
+
+function AddToBoard()
+{
+	for(i=0;i<4;i++)
+	{
+		for(j=0;j<4;j++)
+		{
+			var x=PosX+i;
+			var y=PosY+j-3;
+			if(ShapeNow.dot[i][3-j]!=0)
+			{
+				Board[x][y]=ShapeNow.dot[i][3-j];
+			}
+		}
+	}
+}
+
+function IsLine()
+{
+	for(j=0;j<20;j++)
+	{
+		var line=1;
+		for(i=0;i<10;i++)
+		{
+			if(Board[i][j]==0)
+			{
+				line=0;
+				break;
+			}
+		}
+		if(line==1)
+			return true;
+	}
+	return false;
+}
+
+function DoIsLine()
+{
+	for(j=0;j<20;j++)
+	{
+		var line=1;
+		for(i=0;i<10;i++)
+		{
+			if(Board[i][j]==0)
+			{
+				line=0;
+				break;
+			}
+		}
+		if(line==1)
+		{
+			for(k=0;k<10;k++)
+			{
+				if(j-1>=0)
+				{
+					var temp = Board[k][j-1];
+					if(temp==9 )Board[k][j-1]=7;
+					else if(temp==10)Board[k][j-1]=6;
+					else if(temp==4 )Board[k][j-1]=1;
+					else if(temp==2 )Board[k][j-1]=5;
+					else if(temp==13)Board[k][j-1]=11;
+					else if(temp==12)Board[k][j-1]=3;
+					else if(temp==15)Board[k][j-1]=8;
+				}
+				if(j+1<20)
+				{
+					var temp = Board[k][j+1];
+					if(temp==5)Board[k][j+1]=1;
+					else if(temp==11)Board[k][j+1]=7;
+					else if(temp==2 )Board[k][j+1]=4;
+					else if(temp==8 )Board[k][j+1]=6;
+					else if(temp==15)Board[k][j+1]=10;
+					else if(temp==14)Board[k][j+1]=3;
+					else if(temp==13)Board[k][j+1]=9;
+				}
+				Board[k][j]=0;
+			}
+			for(k=j;k<19;k++)
+			{
+				for(l=0;l<10;l++)
+				{
+					Board[l][k]=Board[l][k+1];
+				}
+			}
+			break;
+		}
+	}
+}
+
+function DrawNextShape()
+{
+	for(i=0;i<4;i++)
+	{
+		for(j=0;j<4;j++)
+		{
+			document.all["img2_"+j+"_"+i].src = ShapeNext.dot[i][j]+".bmp";
+		}
+	}
+}
+
+function ClearOldShape()
+{
+	for(i=0;i<4;i++)
+	{
+		for(j=0;j<4;j++)
+		{
+			if((i+PosX)<10&&(j+19-PosY)<20&&ShapeNow.dot[i][j]!=0)
+			{
+				document.all["img1_"+(j+19-PosY)+"_"+(i+PosX)].src = "0.bmp";
+			}
+		}
+	}
+}
+function DrawBoard()
+{
+	for(i=0;i<10;i++)
+	{
+		for(j=0;j<20;j++)
+		{
+			if(oldBoard[i][19-j] != Board[i][19-j])
+			{
+				oldBoard[i][19-j] = Board[i][19-j];
+				document.all["img1_"+j+"_"+i].src = Board[i][19-j]+".bmp";
+			}
+		}
+	}
+	for(i=0;i<4;i++)
+	{
+		for(j=0;j<4;j++)
+		{
+			if((i+PosX)<10&&(j+19-PosY)<20&&ShapeNow.dot[i][j]!=0)
+			{
+				document.all["img1_"+(j+19-PosY)+"_"+(i+PosX)].src = ShapeNow.dot[i][j]+".bmp";
+			}
+		}
+	}
+}
+
+</script>
+</head>
+<body onload = "Init();">
+<br>
+<table>
+<tr>
+<td>
+<span id="b1"></span>
+</td>
+<td>
+<span id="b2"></span>
+</td>
+</table>
+<img src = "0.bmp">
+<img src = "1.bmp">
+<img src = "2.bmp">
+<img src = "3.bmp">
+<img src = "4.bmp">
+<img src = "5.bmp">
+<img src = "6.bmp">
+<img src = "7.bmp">
+<img src = "8.bmp">
+<img src = "9.bmp">
+<img src = "10.bmp">
+<img src = "11.bmp">
+<img src = "12.bmp">
+<img src = "13.bmp">
+<img src = "14.bmp">
+<img src = "15.bmp">
+</body>
+</html>
