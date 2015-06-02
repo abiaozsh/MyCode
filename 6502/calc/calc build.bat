@@ -1,8 +1,8 @@
 del calcasm.o
 del calc.map.txt
 del calc.nes
-..\bin\ca65 -t nes calcasm.s
-..\bin\ld65 calcasm.o ..\lib\neschr.lib --config ..\lib\neschr.cfg -o calc.nes -m calc.map.txt
+..\binFile\ca65 -t nes calcasm.s
+..\binFile\ld65 calcasm.o ..\lib\neschr.lib --config ..\lib\neschr.cfg -o calc.nes -m calc.map.txt
 ..\sim\FAMTASIA.EXE calc.nes
 rem ..\sim\jnes calc.nes
 rem ..\sim\VirtuaNES.exe calc.nes

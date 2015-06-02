@@ -2,8 +2,8 @@
 del tetrisasm.o
 del tetris.map.txt
 del tetris.nes
-..\bin\ca65 -t nes tetrisasm.s
-..\bin\ld65 tetrisasm.o ..\lib\neschr.lib --config ..\lib\neschr.cfg -o tetris.nes -m tetris.map.txt
+..\binFile\ca65 -t nes tetrisasm.s
+..\binFile\ld65 tetrisasm.o ..\lib\neschr.lib --config ..\lib\neschr.cfg -o tetris.nes -m tetris.map.txt
 ..\sim\famtasia.exe tetris.nes
 rem ..\sim\Jnes tetris.nes
 
