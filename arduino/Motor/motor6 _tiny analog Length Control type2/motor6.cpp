@@ -156,6 +156,7 @@ void loop() {
 void waita() {
 	if(drA6)
 	{
+		CmdPWROn;
 		ADMUX = 6;//A6
 		ADCSRB = _BV(ADLAR);
 		ADCSRA = _BV(ADEN) | _BV(ADSC);// 1/2
@@ -204,11 +205,11 @@ void adj() {
 	sbi(ADCSRA, ADSC);
 	if(aread>=512)
 	{
-		TargetRPM = pgm_read_byte_near(PWR_Table2 + ((aread&511)>>1));// TODO 512byte convert table  *32 8000max  ticks<<5
+		TargetRPM = pgm_read_byte_near(PWR_Table2 + ((aread&511)>>1));//高速表 8位
 	}
 	else
 	{
-		TargetRPM = pgm_read_word_near(PWR_Table1 + (aread>>1));// TODO 512byte convert table  *32 8000max  ticks<<5
+		TargetRPM = pgm_read_word_near(PWR_Table1 + (aread>>1));//低速表 16位
 	}
 	if(Status == 1)
 	{
