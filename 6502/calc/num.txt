@@ -1,0 +1,100 @@
+
+12345678|
+        |
+    MM  |
+  MM  MM|
+  MM  MM|
+  MM  MM|
+  MM  MM|
+  MM  MM|
+    MM  |
+
+12345678|
+        |
+    MM  |
+  MMMM  |
+    MM  |
+    MM  |
+    MM  |
+    MM  |
+  MMMMMM|
+
+12345678|
+        |
+    MM  |
+  MM  MM|
+      MM|
+    MM  |
+  MM    |
+  MM    |
+  MMMMMM|
+
+12345678|
+        |
+    MM  |
+  MM  MM|
+      MM|
+    MM  |
+      MM|
+  MM  MM|
+    MM  |
+
+12345678|
+        |
+      MM|
+    MMMM|
+  MM  MM|
+  MMMMMM|
+      MM|
+      MM|
+    MMMM|
+
+12345678|
+        |
+  MMMMMM|
+  MM    |
+  MMMM  |
+      MM|
+      MM|
+  MM  MM|
+    MM  |
+
+12345678|
+        |
+    MM  |
+  MM  MM|
+  MM    |
+  MMMMMM|
+  MM  MM|
+  MM  MM|
+    MM  |
+
+12345678|
+        |
+  MMMMMM|
+      MM|
+    MM  |
+    MM  |
+    MM  |
+    MM  |
+    MM  |
+
+12345678|
+        |
+    MM  |
+  MM  MM|
+  MM  MM|
+    MM  |
+  MM  MM|
+  MM  MM|
+    MM  |
+
+12345678|
+        |
+    MM  |
+  MM  MM|
+  MM  MM|
+    MMMM|
+      MM|
+  MM  MM|
+    MM  |
