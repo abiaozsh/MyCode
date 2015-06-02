@@ -1,0 +1,5 @@
+Microsoft Visual Studio 9.0\VC\VCProjectDefaults\masm.rules
+
+			CommandLine="ml.exe /c [AllOptions] [AdditionalOptions] /Ta[inputs]"
+TO
+			CommandLine="ml64.exe /c [AllOptions] [AdditionalOptions] /Ta[inputs]"

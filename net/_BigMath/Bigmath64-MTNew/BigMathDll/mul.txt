@@ -1,0 +1,184 @@
+Microsoft (R) Macro Assembler (x64) Version 10.00.40219.01  07/30/14 21:17:20
+mul.asm							     Page 1 - 1
+
+
+				;The terms “less” and “greater” are used for comparisons of signed integers
+				;the terms “above” and “below” are used for unsigned integers.
+
+				;c d 8 9 入参
+				; RBX、RBP、RDI、RSI、R12、R13、R14 和 R15 需要保护
+				; RAX、RCX、RDX、R8、R9、R10 和 R11 不需保护
+
+				EXTRN	__security_check_cookie:PROC
+				PUBLIC	mulcore
+ 00000000			_TEXT	SEGMENT
+				;rcx* Num_Array, rdx* buf_Num_Array, r8 cnt, r9 shift N$,n
+ = 00000028			N$ = 32+8
+ 00000000			mulcore	PROC
+ 00000000  4C/ 8B 54 24			mov r10,QWORD PTR N$[rsp] ;n
+	   28
+ 00000005  56				push rsi
+ 00000006  57				push rdi
+
+					;mov edi,&Num_Array[shift - 1];
+ 00000007  4A/ 8D 7C C9			lea rdi,[rcx+r9*8-8]
+	   F8
+
+					;int carry = 0;
+					;if (cnt>0)
+ 0000000C  49/ 83 F8 00			cmp r8,0
+ 00000010  7E 32			jle jp1
+						;mov esi,&buf_Num_Array[-1];
+ 00000012  48/ 8D 72 F8				lea rsi,[rdx-8]
+
+						;mov ecx,cnt
+ 00000016  49/ 8B C8				mov rcx,r8
+
+ 00000019  49/ C7 C3				mov r11,0
+	   00000000
+ 00000020					lp1:
+ 00000020  49/ 8B C2					mov rax,r10
+ 00000023  48/ 99					cqo
+ 00000025  48/ F7 24 CE					mul QWORD PTR [rsi+rcx*8] ; low:rax,high:rdx
+ 00000029  48/ 03 04 CF					add rax,[rdi+rcx*8]
+ 0000002D  48/ 83 D2 00					adc rdx,0
+ 00000031  49/ 03 C3					add rax,r11
+ 00000034  48/ 83 D2 00					adc rdx,0
+ 00000038  48/ 89 04 CF					mov [rdi+rcx*8],rax
+ 0000003C  4C/ 8B DA					mov r11,rdx
+						;loop lp1
+ 0000003F  48/ FF C9				dec rcx
+ 00000042  75 DC				jnz lp1
+						;mov carry,ebx
+ 00000044				jp1:
+
+					;继续进位
+					;if (shift>0)
+ 00000044  49/ 83 F9 00			cmp r9,0
+ 00000048  7E 25			jle jp2
+						;mov edi&Num_Array[shift - 1];
+
+						;mov ecx,shift
+ 0000004A  49/ 8B C9				mov rcx,r9
+						
+						;mov edx,carry
+ 0000004D					lp2:
+ 0000004D  48/ 8B 07					mov rax,[rdi]
+ 00000050  48/ 03 C2					add rax,rdx
+ 00000053  48/ 89 07					mov [rdi],rax
+ 00000056  48/ C7 C2					mov rdx,0
+	   00000000
+ 0000005D  73 10					jnc ext
+ 0000005F  48/ C7 C2					mov rdx,1
+	   00000001
+ 00000066  48/ 83 EF 08					sub rdi,8
+						;loop lp2
+ 0000006A  48/ FF C9				dec rcx
+ 0000006D  75 DE				jnz lp2
+ 0000006F					ext:
+						;mov carry,edx
+ 0000006F				jp2:
+
+ 0000006F  5F				pop rdi
+ 00000070  5E				pop rsi
+
+ 00000071  48/ 8B C2			mov rax,rdx
+ 00000074  C3				ret
+ 00000075			mulcore	ENDP
+ 00000075			_TEXT	ENDS
+
+
+				PUBLIC	muln
+ 00000075			_TEXT	SEGMENT
+				;rcx* Precision, rdx* Num_Array, r8 pExponent, r9 n
+				;extern "C" void muln(int Precision, unsigned int* Num_Array, int* pExponent, unsigned int n);
+ 00000075			muln	PROC
+ 00000075  53				push rbx
+ 00000076  56				push rsi
+ 00000077  57				push rdi
+
+ 00000078  49/ C7 C3			mov r11,0	;int temp_Exponent = *pExponent; (*pExponent) = 0;
+	   00000000
+					
+					;mov rcx,rcx	;int cnt = Precision;
+					
+ 0000007F  4C/ 8B D1			mov r10,rcx
+					
+					;mov edi,&Num_Array[-1];
+ 00000082  48/ 8D 7A F8			lea rdi,[rdx-8]
+ 00000086  48/ C7 C3			mov rbx,0
+	   00000000
+ 0000008D				lp:
+ 0000008D  49/ 8B C1				mov rax,r9  ;n
+ 00000090  48/ 99				cqo
+ 00000092  48/ F7 24 CF				mul QWORD PTR [rdi+rcx*8]	;l:eax,h:edx
+ 00000096  48/ 03 C3				add rax,rbx		;+ carry
+ 00000099  48/ 83 D2 00				adc rdx,0
+ 0000009D  89 04 CF				mov [rdi+rcx*8],eax
+ 000000A0  48/ 8B DA				mov rbx,rdx
+ 000000A3  48/ FF C9			dec rcx
+ 000000A6  75 E5			jnz lp
+					;mov carry,ebx
+
+ 000000A8  48/ 83 FB 00			cmp rbx,0  ;if (carry!=0)
+ 000000AC  74 20			jz jp1
+ 000000AE  49/ FF C3				inc r11	 ;(*pExponent)++;
+ 000000B1  49/ 8B CA				mov rcx,r10	;Precision - 1
+ 000000B4  48/ FF C9				dec rcx
+ 000000B7  48/ 8B F7				mov rsi,rdi
+ 000000BA  48/ 83 C7 08				add rdi,8
+						;for (int i = Precision - 1; i > 0; i--)
+						;{
+						;	Num_Array[i] = Num_Array[i - 1];
+						;}
+ 000000BE					lp1:
+ 000000BE  48/ 8B 04 CE					mov rax,[rsi+rcx*8]
+ 000000C2  48/ 89 04 CF					mov [rdi+rcx*8],rax
+ 000000C6  48/ FF C9				dec rcx
+ 000000C9  75 F3				jnz lp1
+						;Num_Array[0] = carry;
+ 000000CB  48/ 89 1F				mov [rdi],rbx
+ 000000CE				jp1:
+					;(*pExponent) += temp_Exponent;
+ 000000CE  4D/ 01 18			add [r8],r11
+ 000000D1  5F				pop rdi
+ 000000D2  5E				pop rsi
+ 000000D3  5B				pop rbx
+ 000000D4  C3				ret
+ 000000D5			muln	ENDP
+ 000000D5			_TEXT	ENDS
+
+
+
+				END
+Microsoft (R) Macro Assembler (x64) Version 10.00.40219.01  07/30/14 21:17:20
+mul.asm							     Symbols 2 - 1
+
+
+
+
+Procedures, parameters, and locals:
+
+                N a m e                 Type     Value    Attr
+
+mulcore  . . . . . . . . . . . .	P 	 00000000 _TEXT	Length= 00000075 Public
+  lp1  . . . . . . . . . . . . .	L 	 00000020 _TEXT	
+  jp1  . . . . . . . . . . . . .	L 	 00000044 _TEXT	
+  lp2  . . . . . . . . . . . . .	L 	 0000004D _TEXT	
+  ext  . . . . . . . . . . . . .	L 	 0000006F _TEXT	
+  jp2  . . . . . . . . . . . . .	L 	 0000006F _TEXT	
+muln . . . . . . . . . . . . . .	P 	 00000075 _TEXT	Length= 00000060 Public
+  lp . . . . . . . . . . . . . .	L 	 0000008D _TEXT	
+  lp1  . . . . . . . . . . . . .	L 	 000000BE _TEXT	
+  jp1  . . . . . . . . . . . . .	L 	 000000CE _TEXT	
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+N$ . . . . . . . . . . . . . . .	Number	 00000028h   
+__security_check_cookie  . . . .	L 	 00000000 External
+
+	   0 Warnings
+	   0 Errors
