@@ -6,8 +6,7 @@
 //a6 start signal / restartup signal
 //a7 throttle
 
-#define HaltRpm  11000
-#define StartRpm 12000
+#define StartRpm 15000
 
 #define CmdNextStep Step = NextStep[Step];
 uint8_t NextStep[] = {
@@ -137,6 +136,7 @@ void loop() {
 		TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
 		if(drA6)
 		{
+			CmdPWROn;
 			uint16_t temp = TargetRPM>>1;
 			while(true)
 			{
@@ -153,7 +153,7 @@ void loop() {
 		else
 		{
 			Power = NextPower;
-			if(Status)
+			if(Power)
 			{
 				CmdPWROn;
 			}
@@ -219,7 +219,7 @@ void adj() {
 	}
 	if(Status)
 	{
-		if(rpm>HaltRpm)//too slow, halt
+		if(rpm>StartRpm)//too slow, halt
 		{
 			StartUpCount1 = 0;
 			Status = 0;//halt
@@ -252,7 +252,7 @@ void adj() {
 		{
 			StartUpCount1 = 0;
 		}
-		if(StartUpCount1>50)
+		if(StartUpCount1>40)
 		{
 			Status = 1;
 		}

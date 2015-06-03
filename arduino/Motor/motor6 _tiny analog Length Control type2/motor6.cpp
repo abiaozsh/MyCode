@@ -157,7 +157,7 @@ void waita() {
 	if(drA6)
 	{
 		CmdPWROn;
-		uint16_t temp = TargetRPM)>>1;
+		uint16_t temp = TargetRPM>>1;
 		while(true)
 		{
 			if(currTick>=temp){
