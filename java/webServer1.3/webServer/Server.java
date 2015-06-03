@@ -374,6 +374,7 @@ public final class Server
 					javaCompiler = null;
 					jspLoadException = e;
 				}
+				ucl.close();
 				if (javaCompiler == null)
 				{
 					throw new Exception("Failed to load JavaCompiler, JSP function will not work.", jspLoadException);
