@@ -1,0 +1,7 @@
+#define LEDAOUT DDRB |= _BV(0);
+#define LEDBOUT DDRD |= _BV(5);
+#define LEDAON  PORTB &= ~_BV(0);
+#define LEDAOFF PORTB |=  _BV(0);
+#define LEDBON  PORTD &= ~_BV(5);
+#define LEDBOFF PORTD |=  _BV(5);
+#define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)

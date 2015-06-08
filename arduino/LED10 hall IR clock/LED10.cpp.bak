@@ -1,0 +1,87 @@
+#include <avr/io.h>
+#include <avr/pgmspace.h>
+#include <avr/interrupt.h>
+#include "LED10.h"
+
+volatile int temp;
+//D,C,E,B,F
+void loop();
+void wait(unsigned int ticks);
+void TimerInit();
+
+int main(void) {
+	cli();
+	TimerInit();
+	LEDAOUT;
+	LEDBOUT;
+	LEDAON;
+	LEDBON;
+	loop();
+}
+
+void TimerInit() {
+	TCCR1A = 0;
+	TCCR1B = 5;//  1/8	1MHz 1us
+	TCCR1C = 0;
+	TIMSK1 = 0;
+}
+
+void loop() {
+	while(true)
+	{
+		LEDAON;
+		wait(10000);
+		LEDAOFF;
+		wait(60000);
+		LEDBON;
+		wait(10000);
+		LEDBOFF;
+		wait(60000);
+	}
+}
+
+void wait(unsigned int ticks) {
+	TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
+	while(currTick<ticks)
+	{
+		;
+	}
+}
+
+
+//ISR(INT0_vect           ){} /* External Interrupt Request 0 */
+//ISR(INT1_vect           ){} /* External Interrupt Request 1 */
+//ISR(INT2_vect           ){} /* External Interrupt Request 2 */
+//ISR(INT3_vect           ){} /* External Interrupt Request 3 */
+//ISR(INT6_vect           ){} /* External Interrupt Request 6 */
+//ISR(PCINT0_vect         ){} /* Pin Change Interrupt Request 0 */
+//ISR(USB_GEN_vect        ){}  /* USB General Interrupt Request */
+//ISR(USB_COM_vect        ){}  /* USB Endpoint/Pipe Interrupt Communication Request */
+//ISR(WDT_vect            ){}  /* Watchdog Time-out Interrupt */
+//ISR(TIMER1_CAPT_vect    ){}  /* Timer/Counter1 Capture Event */
+//ISR(TIMER1_COMPA_vect   ){}  /* Timer/Counter1 Compare Match A */
+//ISR(TIMER1_COMPB_vect   ){}  /* Timer/Counter1 Compare Match B */
+//ISR(TIMER1_COMPC_vect   ){}  /* Timer/Counter1 Compare Match C */
+//ISR(TIMER1_OVF_vect     ){}  /* Timer/Counter1 Overflow */
+//ISR(TIMER0_COMPA_vect   ){}  /* Timer/Counter0 Compare Match A */
+//ISR(TIMER0_COMPB_vect   ){}  /* Timer/Counter0 Compare Match B */
+//ISR(TIMER0_OVF_vect     ){}  /* Timer/Counter0 Overflow */
+//ISR(SPI_STC_vect        ){}  /* SPI Serial Transfer Complete */
+//ISR(USART1_RX_vect      ){}  /* USART1, Rx Complete */
+//ISR(USART1_UDRE_vect    ){}  /* USART1 Data register Empty */
+//ISR(USART1_TX_vect      ){}  /* USART1, Tx Complete */
+//ISR(ANALOG_COMP_vect    ){}  /* Analog Comparator */
+//ISR(ADC_vect            ){}  /* ADC Conversion Complete */
+//ISR(EE_READY_vect       ){}  /* EEPROM Ready */
+//ISR(TIMER3_CAPT_vect    ){}  /* Timer/Counter3 Capture Event */
+//ISR(TIMER3_COMPA_vect   ){}  /* Timer/Counter3 Compare Match A */
+//ISR(TIMER3_COMPB_vect   ){}  /* Timer/Counter3 Compare Match B */
+//ISR(TIMER3_COMPC_vect   ){}  /* Timer/Counter3 Compare Match C */
+//ISR(TIMER3_OVF_vect     ){}  /* Timer/Counter3 Overflow */
+//ISR(TWI_vect            ){}  /* 2-wire Serial Interface         */
+//ISR(SPM_READY_vect      ){}  /* Store Program Memory Read */
+//ISR(TIMER4_COMPA_vect   ){}  /* Timer/Counter4 Compare Match A */
+//ISR(TIMER4_COMPB_vect   ){}  /* Timer/Counter4 Compare Match B */
+//ISR(TIMER4_COMPD_vect   ){}  /* Timer/Counter4 Compare Match D */
+//ISR(TIMER4_OVF_vect     ){}  /* Timer/Counter4 Overflow */
+//ISR(TIMER4_FPF_vect     ){}  /* Timer/Counter4 Fault Protection Interrupt */
