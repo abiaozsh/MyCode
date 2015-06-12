@@ -14,6 +14,9 @@ import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -59,58 +62,96 @@ public class MainActivity extends Activity implements OnTouchListener,
 		status = 1;
 	}
 
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.main, menu);
+		return true;
+	}
+
+	public boolean onOptionsItemSelected(MenuItem item) {
+		int item_id = item.getItemId();
+		if (ms == null) {
+			return false;
+		}
+		if (item_id == R.id.Design) {
+			status = 1;
+			init();
+		}
+
+		if (item_id == R.id.Run) {
+			status = 2;
+		}
+
+		return true;
+	}
+
 	int tmpx;
 	int tmpy;
 	int running = 0;
+	PLine templine;
 
 	public boolean onTouch(View v, MotionEvent event) {
 		int action = event.getAction();
-		switch (action) {
-		case MotionEvent.ACTION_DOWN:
-			running = 0;
-			tmpx = (int) event.getX();
-			tmpy = (int) (height - event.getY());
-			break;
-		case MotionEvent.ACTION_MOVE:
-
-			break;
-		case MotionEvent.ACTION_UP:
-
-			int x = (int) event.getX();
-			int y = (int) (height - event.getY());
-			int headingx = (x - tmpx);
-			int headingy = (y - tmpy);
-
-			double dist = Math.sqrt(headingx * headingx + headingy * headingy);
-			if (dist < 0.01)
-				dist = 0.01;
-			double arc = Math.asin((double) headingx / dist);
-			if (headingx > 0 && headingy < 0) {
-				arc = 3.14159265 - arc;
-			} else if (headingx < 0 && headingy > 0) {
-				arc = 3.14159265 * 2 + arc;
-			} else if (headingx < 0 && headingy < 0) {
-				arc = 3.14159265 - arc;
+		if (status == 1) {
+			canvas.drawARGB(255, 255, 255, 255);
+			for (PLine l : lineList) {
+				canvas.drawLine((float) l.x1, (float) (height - l.y1),
+						(float) l.x2, (float) (height - l.y2), paint);
 			}
-
-			dList = new ArrayList<PDot>();
-			PDot d;
-
-			for (double i = -0.5; i < 0.5; i += 0.1) {
-				d = new PDot();
-				d.posx = tmpx;
-				d.posy = tmpy;
-				d.headingx = Math.sin(arc + i) * dist * 0.2;
-				d.headingy = Math.cos(arc + i) * dist * 0.2;
-				dList.add(d);
+			if (action == MotionEvent.ACTION_DOWN) {
+				templine = new PLine();
+				templine.x1 = (int) event.getX();
+				templine.y1 = (int) (height - event.getY());
+			} else if (action == MotionEvent.ACTION_MOVE) {
+				canvas.drawLine((float) templine.x1,
+						(float) (height - templine.y1), (int) event.getX(),
+						(int) (event.getY()), paint);
+			} else if (action == MotionEvent.ACTION_UP) {
+				canvas.drawLine((float) templine.x1,
+						(float) (height - templine.y1), (int) event.getX(),
+						(int) (event.getY()), paint);
+				templine.x2 = (int) event.getX();
+				templine.y2 = (int) (height - event.getY());
+				lineList.add(templine);
 			}
+			image.invalidate();
+		} else if (status == 2) {
+			if (action == MotionEvent.ACTION_DOWN) {
+				running = 0;
+				tmpx = (int) event.getX();
+				tmpy = (int) (height - event.getY());
+			} else if (action == MotionEvent.ACTION_UP) {
+				int x = (int) event.getX();
+				int y = (int) (height - event.getY());
+				int headingx = (x - tmpx);
+				int headingy = (y - tmpy);
 
-			running = 1;
+				double dist = Math.sqrt(headingx * headingx + headingy
+						* headingy);
+				if (dist < 0.01)
+					dist = 0.01;
+				double arc = Math.asin((double) headingx / dist);
+				if (headingx > 0 && headingy < 0) {
+					arc = 3.14159265 - arc;
+				} else if (headingx < 0 && headingy > 0) {
+					arc = 3.14159265 * 2 + arc;
+				} else if (headingx < 0 && headingy < 0) {
+					arc = 3.14159265 - arc;
+				}
 
-			break;
+				dList = new ArrayList<PDot>();
+				PDot d;
 
-		default:
-			break;
+				for (double i = -0.5; i < 0.5; i += 0.1) {
+					d = new PDot();
+					d.posx = tmpx;
+					d.posy = tmpy;
+					d.headingx = Math.sin(arc + i) * dist * 0.2;
+					d.headingy = Math.cos(arc + i) * dist * 0.2;
+					dList.add(d);
+				}
+				running = 1;
+			}
 		}
 		return true;
 	}
@@ -208,76 +249,6 @@ public class MainActivity extends Activity implements OnTouchListener,
 		l.y1 = 1;
 		l.x2 = width - 2;
 		l.y2 = height - 2;
-		lineList.add(l);
-
-		l = new PLine();
-		l.x1 = 37;
-		l.y1 = 68;
-		l.x2 = 71;
-		l.y2 = 29;
-		lineList.add(l);
-
-		l = new PLine();
-		l.x1 = 236;
-		l.y1 = 27;
-		l.x2 = 276;
-		l.y2 = 58;
-		lineList.add(l);
-
-		l = new PLine();
-		l.x1 = 111;
-		l.y1 = 159;
-		l.x2 = 216;
-		l.y2 = 160;
-		lineList.add(l);
-
-		l = new PLine();
-		l.x1 = 56;
-		l.y1 = 127;
-		l.x2 = 92;
-		l.y2 = 101;
-		lineList.add(l);
-
-		l = new PLine();
-		l.x1 = 207;
-		l.y1 = 86;
-		l.x2 = 244;
-		l.y2 = 130;
-		lineList.add(l);
-
-		l = new PLine();
-		l.x1 = 152;
-		l.y1 = 70;
-		l.x2 = 150;
-		l.y2 = 32;
-		lineList.add(l);
-
-		l = new PLine();
-		l.x1 = 78;
-		l.y1 = 79;
-		l.x2 = 144;
-		l.y2 = 109;
-		lineList.add(l);
-
-		l = new PLine();
-		l.x1 = 175;
-		l.y1 = 91;
-		l.x2 = 211;
-		l.y2 = 62;
-		lineList.add(l);
-
-		l = new PLine();
-		l.x1 = 104;
-		l.y1 = 41;
-		l.x2 = 80;
-		l.y2 = 17;
-		lineList.add(l);
-
-		l = new PLine();
-		l.x1 = 206;
-		l.y1 = 39;
-		l.x2 = 227;
-		l.y2 = 14;
 		lineList.add(l);
 
 	}
