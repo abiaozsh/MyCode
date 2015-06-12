@@ -1,0 +1,36 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/Reset"
+        android:title="复位">
+    </item>
+    <item
+        android:id="@+id/Cali"
+        android:title="校准">
+    </item>
+    <item
+        android:id="@+id/CaliXStart"
+        android:title="校准X开始">
+    </item>
+    <item
+        android:id="@+id/CaliXEnd"
+        android:title="校准X结束">
+    </item>
+    <item
+        android:id="@+id/CaliYStart"
+        android:title="校准Y开始">
+    </item>
+    <item
+        android:id="@+id/CaliYEnd"
+        android:title="校准Y结束">
+    </item>
+    <item
+        android:id="@+id/CaliZStart"
+        android:title="校准Z开始">
+    </item>
+    <item
+        android:id="@+id/CaliZEnd"
+        android:title="校准Z结束">
+    </item>
+    
+</menu>
