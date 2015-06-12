@@ -35,8 +35,7 @@ public class MySensor implements SensorEventListener {
 				gyro2 = item;
 			}
 
-			if (item.getType() == Sensor.TYPE_LINEAR_ACCELERATION
-					&& item.getVendor().startsWith("Google")) {
+			if (item.getType() == Sensor.TYPE_ACCELEROMETER) {
 				acce = item;
 			}
 
@@ -49,8 +48,8 @@ public class MySensor implements SensorEventListener {
 		this.msl = msl;
 
 		int delay = SensorManager.SENSOR_DELAY_FASTEST;
-		sensorManager.registerListener(this, gyro, delay);
-		//sensorManager.registerListener(this, acce, delay);
+		//sensorManager.registerListener(this, gyro, delay);
+		sensorManager.registerListener(this, acce, delay);
 		// sensorManager.registerListener(this, gyro2, delay);
 
 	}
@@ -70,9 +69,9 @@ public class MySensor implements SensorEventListener {
 	float cali_x = 100;
 	float cali_y = 100;
 	float cali_z = 100;
-	float g_x = 0;
-	float g_y = 0;
-	float g_z = 0;
+	public float g_x = 0;
+	public float g_y = 0;
+	public float g_z = 0;
 
 	public void CalibrateGyro() {
 		Cali_cnt_Gyro = 100;
@@ -204,6 +203,9 @@ public class MySensor implements SensorEventListener {
 				CalibrateAcce(e);
 				return;
 			}
+			g_x = e.values[0];
+			g_y = e.values[1];
+			g_z = e.values[2];
 
 			msl.onSensorChanged();
 		}

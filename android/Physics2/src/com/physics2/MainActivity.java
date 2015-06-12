@@ -2,6 +2,8 @@ package com.physics2;
 
 import java.util.ArrayList;
 
+import mySensor.MySensor;
+import mySensor.MySensorListener;
 import Core.PDot;
 import Core.PLine;
 import android.app.Activity;
@@ -17,22 +19,25 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.ImageView;
 
-import com.physics2.R;
-
-public class MainActivity extends Activity implements OnTouchListener {
-
-	ArrayList<PDot> dList = new ArrayList<PDot>();
-	ArrayList<PLine> lineList = new ArrayList<PLine>();
-
-	double gravity = -0.1;
-	double airDrag = 0.99;
-
-	int height = 1050;
-	int width = 650;
+public class MainActivity extends Activity implements OnTouchListener,
+		MySensorListener {
+	MySensor ms;
 	private ImageView image;
 	private Paint paint;
 	private Canvas canvas;
 	private Bitmap bitmap;
+
+	int status = 0;// 1=design 2=play
+
+	ArrayList<PDot> dList = new ArrayList<PDot>();
+	ArrayList<PLine> lineList = new ArrayList<PLine>();
+
+	double gravityx = 0;
+	double gravityy = -0.1;
+	double airDrag = 0.99;
+
+	int height = 1050;
+	int width = 650;
 	public Thread t;
 
 	@Override
@@ -50,6 +55,8 @@ public class MainActivity extends Activity implements OnTouchListener {
 		init();
 		t = new Thread(new ThreadShow());
 		t.start();
+		ms = new MySensor(this, this);
+		status = 1;
 	}
 
 	int tmpx;
@@ -75,9 +82,9 @@ public class MainActivity extends Activity implements OnTouchListener {
 			int headingy = (y - tmpy);
 
 			double dist = Math.sqrt(headingx * headingx + headingy * headingy);
-			double arc = Math.asin((double) headingx
-					* Math.sqrt((double) 1
-							/ (headingx * headingx + headingy * headingy)));
+			if (dist < 0.01)
+				dist = 0.01;
+			double arc = Math.asin((double) headingx / dist);
 			if (headingx > 0 && headingy < 0) {
 				arc = 3.14159265 - arc;
 			} else if (headingx < 0 && headingy > 0) {
@@ -100,7 +107,6 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 			running = 1;
 
-			// image.invalidate();// 刷新
 			break;
 
 		default:
@@ -109,12 +115,18 @@ public class MainActivity extends Activity implements OnTouchListener {
 		return true;
 	}
 
+	public void onSensorChanged() {
+		// d3dDevice.world.getCamera().setPosition(0,50, 0);
+		// TextView tv = (TextView) this.findViewById(R.id.textView1);
+		// tv.setText(sensorValueX + "," + sensorValueY + "," + sensorValueZ);
+		gravityx = -ms.g_x / 10;
+		gravityy = -ms.g_y / 10;
+	}
+
 	// handler类接收数据
 	Handler handler = new Handler() {
 		public void handleMessage(Message msg) {
 			if (msg.what == 1) {
-				// tvShow.setText(Integer.toString(i++));
-				// System.out.println("receive....");
 				image.invalidate();// image.setImageBitmap(bitmap);//canvas.save();
 			}
 		};
@@ -142,18 +154,18 @@ public class MainActivity extends Activity implements OnTouchListener {
 						if (!d.CheckTouch(lineList)) {
 							d.headingx *= airDrag;
 							d.headingy *= airDrag;
-							d.headingx = d.headingx + 0;
-							d.headingy = d.headingy + gravity;
+							d.headingx = d.headingx + gravityx;
+							d.headingy = d.headingy + gravityy;
 							d.posx += d.headingx;
 							d.posy += d.headingy;
 						}
-						canvas.drawRect((float) d.posx,
-								(float) (height - d.posy), (float) d.posx+2,
-								(float) (height - d.posy)+2, paint);
-						canvas.drawLine((float) d.posx,
-								(float) (height - d.posy),
-								(float) (d.posx + d.headingx), (float) (height
-										- d.posy - d.headingy), paint);
+						float x1 = (float) d.posx;
+						float y1 = (float) (height - d.posy);
+						float x2 = (float) (d.posx + d.headingx);
+						float y2 = (float) (height - d.posy - d.headingy);
+
+						canvas.drawRect(x2, y2, x2 + 2, y2 + 2, paint);
+						canvas.drawLine(x1, y1, x2, y2, paint);
 					}
 
 					Message msg = new Message();
