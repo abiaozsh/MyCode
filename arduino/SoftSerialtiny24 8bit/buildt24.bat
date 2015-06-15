@@ -3,9 +3,9 @@ del serial.ii
 del serial.o
 del serial.s
 del a.out
-rem set arduinopath=C:\Program Files (x86)\Arduino
-set arduinopath=C:\Program Files\Arduino
-set comPort=COM5
+set arduinopath=C:\Program Files (x86)\Arduino
+rem set arduinopath=C:\Program Files\Arduino
+set comPort=COM21
 "%arduinopath%\hardware\tools\avr\bin\avr-g++" -help
 "%arduinopath%\hardware\tools\avr\bin\avr-g++" -Os -mmcu=attiny24 -save-temps -fverbose-asm -I"%arduinopath%\hardware\arduino\cores\arduino" serial.cpp
 "%arduinopath%\hardware\tools\avr\bin\avr-g++" -Os -mmcu=attiny24                           -I"%arduinopath%\hardware\arduino\cores\arduino" serial.cpp -o serial.o

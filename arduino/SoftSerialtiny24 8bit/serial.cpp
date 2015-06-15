@@ -27,6 +27,7 @@ void SendInt(uint32_t val);
 uint32_t ReadInt();
 
 int main(void) {
+	DDRA = 1;
 	ClockInit();
 	SerialInit();
 	TimerInit();
@@ -43,6 +44,7 @@ uint8_t buff[8];
 void loop() {
 	for(;;)
 	{
+		PINA = 1;
 		for(uint8_t v = '0';v<='9';v++)
 		{
 			SerialSend(v);
@@ -64,7 +66,6 @@ void loop() {
 
 void TimerInit() {
 	TCCR0A = 0;
-	TCCR0C = 0;
 	TIMSK0 = 0;
 }
 
@@ -118,13 +119,13 @@ void SerialSend(uint8_t val)
 	TCNT0 = 0;
 	uint8_t timing;
 	prog_uint8_t* pTiming = CUR_TIMING;
-	PORT_Send &= ~BIT_Send;timing = pgm_read_byte_near(pTiming++);while(timing-TCNT0<128);//startbit
+	PORT_Send &= ~BIT_Send;timing = pgm_read_byte_near(pTiming++);while(timing-TCNT0>0);//startbit
 	uint8_t chkbit = 0x01;
 	for(uint8_t i = 8 ; i > 0 ; i--)
 	{
-		if(val&chkbit){PORT_Send |= BIT_Send;}else{PORT_Send &= ~BIT_Send;}chkbit<<=1;timing = pgm_read_byte_near(pTiming++);while(timing-TCNT0<128);
+		if(val&chkbit){PORT_Send |= BIT_Send;}else{PORT_Send &= ~BIT_Send;}chkbit<<=1;timing = pgm_read_byte_near(pTiming++);while(timing-TCNT0>0);
 	}
-	PORT_Send |= BIT_Send;timing = pgm_read_byte_near(pTiming);while(timing-TCNT0<128);
+	PORT_Send |= BIT_Send;timing = pgm_read_byte_near(pTiming);while(timing-TCNT0>0);
 	sei();
 }
 
