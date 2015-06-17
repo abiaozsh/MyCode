@@ -21,16 +21,16 @@ void loop();
 void TimerInit();
 void SerialInit();
 void SerialSend(uint8_t val);
-uint8_t SerialRead();
-uint8_t SerialRead(uint16_t timeout, uint8_t* timoutParam);
+//uint8_t SerialRead();
+//uint8_t SerialRead(uint16_t timeout, uint8_t* timoutParam);
 void SendInt(uint32_t val);
-uint32_t ReadInt();
+//uint32_t ReadInt();
 
 int main(void) {
-	DDRA = 1;
 	ClockInit();
 	SerialInit();
 	TimerInit();
+	DDRA |= 1;
 	loop();
 }
 
