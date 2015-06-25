@@ -1,16 +1,17 @@
 /////////////////////////////////////////////////////////////////////////////////////////
-#define DDR_ce DDRB
-#define PORT_ce PORTB
-#define BIT_ce _BV(2)
+#define DDR_sclk DDRD
+#define PORT_sclk PORTD
+#define BIT_sclk _BV(2)
 
-#define DDR_io DDRB
-#define PIN_io PINB
-#define PORT_io PORTB
+#define DDR_io DDRD
+#define PIN_io PIND
+#define PORT_io PORTD
 #define BIT_io _BV(3)
 
-#define DDR_sclk DDRB
-#define PORT_sclk PORTB
-#define BIT_sclk _BV(5)
+#define DDR_ce DDRD
+#define PORT_ce PORTD
+#define BIT_ce _BV(4)
+
 
 uint8_t Time_sec;
 uint8_t Time_min;
@@ -25,51 +26,52 @@ uint8_t IsInit = 1;
 
 void setup()
 {
-  Serial.begin(9600);
-  PortInit();
-  if(IsInit)
-  {
-    Time_sec = 0;
-    Time_min = 0;
-    Time_hr = 0;
-    Time_day = 1;
-    Time_mon = 1;
-    Time_yr = 0;
-    Time_week = 1;
-    WriteTime();
-  }
+	Serial.begin(9600);
+	Serial.setTimeout(1000);
+	PortInit();
 }
+
 void loop()
 {
-  ReadTime();
-  Serial.print(Time_yr);  Serial.print(" ");
-  Serial.print(Time_mon); Serial.print(" ");
-  Serial.print(Time_day); Serial.print(" ");
-  Serial.print(Time_hr);  Serial.print(" ");
-  Serial.print(Time_min); Serial.print(" ");
-  Serial.print(Time_sec); Serial.print(" ");
-  Serial.println();
-  
-  Serial.print((Time_yr & 0xF0)>>4);
-  Serial.print((Time_yr & 0x0F));
-  Serial.print("/");
-  Serial.print((Time_mon & 0xF0)>>4);
-  Serial.print((Time_mon & 0x0F));
-  Serial.print("/");
-  Serial.print((Time_day & 0xF0)>>4);
-  Serial.print((Time_day & 0x0F));
-  Serial.print(" ");
-  Serial.print((Time_hr & 0xF0)>>4);
-  Serial.print((Time_hr & 0x0F));
-  Serial.print(":");
-  Serial.print((Time_min & 0xF0)>>4);
-  Serial.print((Time_min & 0x0F));
-  Serial.print(":");
-  Serial.print((Time_sec & 0xF0)>>4);
-  Serial.print((Time_sec & 0x0F));
-  Serial.println();
+	ReadTime();
+	Serial.print(Time_yr);  Serial.print(" ");
+	Serial.print(Time_mon); Serial.print(" ");
+	Serial.print(Time_day); Serial.print(" ");
+	Serial.print(Time_hr);  Serial.print(" ");
+	Serial.print(Time_min); Serial.print(" ");
+	Serial.print(Time_sec); Serial.print(" ");
+	Serial.println();
 
-  delay(1000);
+	Serial.print((Time_yr & 0xF0)>>4);
+	Serial.print((Time_yr & 0x0F));
+	Serial.print("/");
+	Serial.print((Time_mon & 0xF0)>>4);
+	Serial.print((Time_mon & 0x0F));
+	Serial.print("/");
+	Serial.print((Time_day & 0xF0)>>4);
+	Serial.print((Time_day & 0x0F));
+	Serial.print(" ");
+	Serial.print((Time_hr & 0xF0)>>4);
+	Serial.print((Time_hr & 0x0F));
+	Serial.print(":");
+	Serial.print((Time_min & 0xF0)>>4);
+	Serial.print((Time_min & 0x0F));
+	Serial.print(":");
+	Serial.print((Time_sec & 0xF0)>>4);
+	Serial.print((Time_sec & 0x0F));
+	Serial.println();
+
+	int start = Serial.parseInt();
+	if(start == 33)
+	{
+		Time_sec = Serial.parseInt();
+		Time_min = Serial.parseInt();
+		Time_hr  = Serial.parseInt();
+		Time_day = Serial.parseInt();
+		Time_mon = Serial.parseInt();
+		Time_yr  = Serial.parseInt();
+		Time_week= Serial.parseInt();
+	}
 }
 
 void PortInit()

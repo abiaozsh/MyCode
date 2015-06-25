@@ -13,7 +13,7 @@ namespace ConsoleApplication1
 
 		static void Main(string[] args)
 		{
-            Proc(@"createfilelist f.xml f:\".Split(' '));
+            Proc(@"createfilelist d.xml d:\".Split(' '));
                 //Proc("createfilelist t.xml t:\\".Split(' '));
             /*
 
