@@ -11,7 +11,7 @@
 
 // Class representing a particular time and date.
 class Time {
- public:
+public:
   enum Day {
     kSunday    = 1,
     kMonday    = 2,
@@ -33,8 +33,8 @@ class Time {
   //   sec: seconds. Range: {0, ..., 59}.
   //   day: day of the week. Sunday is 1. Range: {1, ..., 7}.
   Time(uint16_t yr, uint8_t mon, uint8_t date,
-       uint8_t hr, uint8_t min, uint8_t sec,
-       Day day);
+  uint8_t hr, uint8_t min, uint8_t sec,
+  Day day);
 
   uint8_t sec;
   uint8_t min;
@@ -52,7 +52,7 @@ class Time {
 // being read or modified. Instead, using DS1302::time() guarantees safe reads
 // and writes using the DS1302's burst mode feature.
 class DS1302 {
- public:
+public:
   // Size of the DS1302's RAM storage, in bytes.
   static const int kRamSize = 31;
 
@@ -198,76 +198,77 @@ private:
 
 namespace {
 
-enum Register {
-  kSecondReg       = 0,
-  kMinuteReg       = 1,
-  kHourReg         = 2,
-  kDateReg         = 3,
-  kMonthReg        = 4,
-  kDayReg          = 5,
-  kYearReg         = 6,
-  kWriteProtectReg = 7,
+  enum Register {
+    kSecondReg       = 0,
+    kMinuteReg       = 1,
+    kHourReg         = 2,
+    kDateReg         = 3,
+    kMonthReg        = 4,
+    kDayReg          = 5,
+    kYearReg         = 6,
+    kWriteProtectReg = 7,
 
-  // The RAM register space follows the clock register space.
-  kRamAddress0     = 32
-};
+    // The RAM register space follows the clock register space.
+    kRamAddress0     = 32
+  };
 
-enum Command {
-  kClockBurstRead  = 0xBF,
-  kClockBurstWrite = 0xBE,
-  kRamBurstRead    = 0xFF,
-  kRamBurstWrite   = 0xFE
-};
+  enum Command {
+    kClockBurstRead  = 0xBF,
+    kClockBurstWrite = 0xBE,
+    kRamBurstRead    = 0xFF,
+    kRamBurstWrite   = 0xFE
+  };
 
-// Establishes and terminates a three-wire SPI session.
-class SPISession {
- public:
-  SPISession(const int ce_pin, const int io_pin, const int sclk_pin)
-      : ce_pin_(ce_pin), io_pin_(io_pin), sclk_pin_(sclk_pin) {
-    digitalWrite(sclk_pin_, LOW);
-    digitalWrite(ce_pin_, HIGH);
-    delayMicroseconds(4);  // tCC
+  // Establishes and terminates a three-wire SPI session.
+  class SPISession {
+public:
+    SPISession(const int ce_pin, const int io_pin, const int sclk_pin)
+: 
+      ce_pin_(ce_pin), io_pin_(io_pin), sclk_pin_(sclk_pin) {
+        digitalWrite(sclk_pin_, LOW);
+        digitalWrite(ce_pin_, HIGH);
+        delayMicroseconds(4);  // tCC
+      }
+    ~SPISession() {
+      digitalWrite(ce_pin_, LOW);
+      delayMicroseconds(4);  // tCWH
+    }
+
+private:
+    const int ce_pin_;
+    const int io_pin_;
+    const int sclk_pin_;
+  };
+
+  // Returns the decoded decimal value from a binary-coded decimal (BCD) byte.
+  // Assumes 'bcd' is coded with 4-bits per digit, with the tens place digit in
+  // the upper 4 MSBs.
+  uint8_t bcdToDec(const uint8_t bcd) {
+    return (10 * ((bcd & 0xF0) >> 4) + (bcd & 0x0F));
   }
-  ~SPISession() {
-    digitalWrite(ce_pin_, LOW);
-    delayMicroseconds(4);  // tCWH
+
+  // Returns the binary-coded decimal of 'dec'. Inverse of bcdToDec.
+  uint8_t decToBcd(const uint8_t dec) {
+    const uint8_t tens = dec / 10;
+    const uint8_t ones = dec % 10;
+    return (tens << 4) | ones;
   }
 
- private:
-  const int ce_pin_;
-  const int io_pin_;
-  const int sclk_pin_;
-};
-
-// Returns the decoded decimal value from a binary-coded decimal (BCD) byte.
-// Assumes 'bcd' is coded with 4-bits per digit, with the tens place digit in
-// the upper 4 MSBs.
-uint8_t bcdToDec(const uint8_t bcd) {
-  return (10 * ((bcd & 0xF0) >> 4) + (bcd & 0x0F));
-}
-
-// Returns the binary-coded decimal of 'dec'. Inverse of bcdToDec.
-uint8_t decToBcd(const uint8_t dec) {
-  const uint8_t tens = dec / 10;
-  const uint8_t ones = dec % 10;
-  return (tens << 4) | ones;
-}
-
-// Returns the hour in 24-hour format from the hour register value.
-uint8_t hourFromRegisterValue(const uint8_t value) {
-  uint8_t adj;
-  if (value & 128)  // 12-hour mode
-    adj = 12 * ((value & 32) >> 5);
-  else           // 24-hour mode
+  // Returns the hour in 24-hour format from the hour register value.
+  uint8_t hourFromRegisterValue(const uint8_t value) {
+    uint8_t adj;
+    if (value & 128)  // 12-hour mode
+      adj = 12 * ((value & 32) >> 5);
+    else           // 24-hour mode
     adj = 10 * ((value & (32 + 16)) >> 4);
-  return (value & 15) + adj;
-}
+    return (value & 15) + adj;
+  }
 
 }  // namespace
 
 Time::Time(const uint16_t yr, const uint8_t mon, const uint8_t date,
-           const uint8_t hr, const uint8_t min, const uint8_t sec,
-           const Day day) {
+const uint8_t hr, const uint8_t min, const uint8_t sec,
+const Day day) {
   this->yr   = yr;
   this->mon  = mon;
   this->date = date;
@@ -278,7 +279,7 @@ Time::Time(const uint16_t yr, const uint8_t mon, const uint8_t date,
 }
 
 DS1302::DS1302(const uint8_t ce_pin, const uint8_t io_pin,
-               const uint8_t sclk_pin) {
+const uint8_t sclk_pin) {
   ce_pin_ = ce_pin;
   io_pin_ = io_pin;
   sclk_pin_ = sclk_pin;
@@ -438,54 +439,61 @@ void DS1302::readRamBulk(uint8_t* const data, int len) {
 
 namespace {
 
-// Set the appropriate digital I/O pin connections. These are the pin
-// assignments for the Arduino as well for as the DS1302 chip. See the DS1302
-// datasheet:
-//
-//   http://datasheets.maximintegrated.com/en/ds/DS1302.pdf
-const int kCePin   = 4;//5;  // Chip Enable
-const int kIoPin   = 3;//6;  // Input/Output
-const int kSclkPin = 2;//7;  // Serial Clock
+  // Set the appropriate digital I/O pin connections. These are the pin
+  // assignments for the Arduino as well for as the DS1302 chip. See the DS1302
+  // datasheet:
+  //
+  //   http://datasheets.maximintegrated.com/en/ds/DS1302.pdf
+  const int kCePin   = 4;//5;  // Chip Enable
+  const int kIoPin   = 3;//6;  // Input/Output
+  const int kSclkPin = 2;//7;  // Serial Clock
 
-// Create a DS1302 object.
-DS1302 rtc(kCePin, kIoPin, kSclkPin);
+  // Create a DS1302 object.
+  DS1302 rtc(kCePin, kIoPin, kSclkPin);
 
-String dayAsString(const Time::Day day) {
-  switch (day) {
-    case Time::kSunday: return "Sunday";
-    case Time::kMonday: return "Monday";
-    case Time::kTuesday: return "Tuesday";
-    case Time::kWednesday: return "Wednesday";
-    case Time::kThursday: return "Thursday";
-    case Time::kFriday: return "Friday";
-    case Time::kSaturday: return "Saturday";
+  String dayAsString(const Time::Day day) {
+    switch (day) {
+      case Time::kSunday: 
+      return "Sunday";
+      case Time::kMonday: 
+      return "Monday";
+      case Time::kTuesday: 
+      return "Tuesday";
+      case Time::kWednesday: 
+      return "Wednesday";
+      case Time::kThursday: 
+      return "Thursday";
+      case Time::kFriday: 
+      return "Friday";
+      case Time::kSaturday: 
+      return "Saturday";
+    }
+    return "(unknown day)";
   }
-  return "(unknown day)";
-}
 
-void printTime() {
-  // Get the current time and date from the chip.
-  Time t = rtc.time();
+  void printTime() {
+    // Get the current time and date from the chip.
+    Time t = rtc.time();
 
-  // Name the day of the week.
-  const String day = dayAsString(t.day);
+    // Name the day of the week.
+    const String day = dayAsString(t.day);
 
-  // Format the time and date and insert into the temporary buffer.
-  char buf[50];
-  snprintf(buf, sizeof(buf), "%s %04d-%02d-%02d %02d:%02d:%02d",
-           day.c_str(),
-           t.yr, t.mon, t.date,
-           t.hr, t.min, t.sec);
+    // Format the time and date and insert into the temporary buffer.
+    char buf[50];
+    snprintf(buf, sizeof(buf), "%s %04d-%02d-%02d %02d:%02d:%02d",
+    day.c_str(),
+    t.yr, t.mon, t.date,
+    t.hr, t.min, t.sec);
 
-  // Print the formatted string to serial so we can see the time.
-  Serial.println(buf);
-}
+    // Print the formatted string to serial so we can see the time.
+    Serial.println(buf);
+  }
 
 }  // namespace
 
 void setup() {
   Serial.begin(9600);
-
+  Serial.setTimeout(1000);
   // Initialize a new chip by turning off write protection and clearing the
   // clock halt flag. These methods needn't always be called. See the DS1302
   // datasheet for details.
@@ -494,15 +502,47 @@ void setup() {
 
   // Make a new time object to set the date and time.
   // Sunday, September 22, 2013 at 01:38:50.
-  Time t(2013, 9, 22, 1, 38, 50, Time::kSunday);
+
 
   // Set the time and date on the chip.
-  rtc.time(t);
 }
 
 // Loop and print the time every second.
 void loop() {
   printTime();
-  delay(1000);
+  //delay(1000);
+  uint8_t Time_sec;
+  uint8_t Time_min;
+  uint8_t Time_hr;
+  uint8_t Time_day;
+  uint8_t Time_mon;
+  uint16_t Time_yr;
+  uint8_t Time_week;
+  int start = Serial.parseInt();
+  if(start == 33)
+  {
+    //pinMode(13, OUTPUT);
+    //digitalWrite(13, HIGH);
+    Time_sec = Serial.parseInt();
+    Time_min = Serial.parseInt();
+    Time_hr  = Serial.parseInt();
+    Time_day = Serial.parseInt();
+    Time_mon = Serial.parseInt();
+    Time_yr  = Serial.parseInt();
+    Time_week= Serial.parseInt();
+    //Time t(Time_yr, Time_mon, Time_day, Time_hr, Time_min, Time_sec, Time::kSunday);
+    Time t(2015, 9, 22, 1, 38, 50, Time::kSunday);
+    t.sec = Time_sec;
+    t.min = Time_min;
+    t.hr  =Time_hr;
+    t.date=Time_day;
+    t.mon=Time_mon;
+    t.yr=Time_yr;
+
+    rtc.time(t);
+  }
+
 }
+
+
 
