@@ -497,8 +497,6 @@ void setup() {
   // Initialize a new chip by turning off write protection and clearing the
   // clock halt flag. These methods needn't always be called. See the DS1302
   // datasheet for details.
-  rtc.writeProtect(false);
-  rtc.halt(false);
 
   // Make a new time object to set the date and time.
   // Sunday, September 22, 2013 at 01:38:50.
@@ -523,6 +521,8 @@ void loop() {
   {
     //pinMode(13, OUTPUT);
     //digitalWrite(13, HIGH);
+  rtc.writeProtect(false);
+  rtc.halt(false);
     Time_sec = Serial.parseInt();
     Time_min = Serial.parseInt();
     Time_hr  = Serial.parseInt();
