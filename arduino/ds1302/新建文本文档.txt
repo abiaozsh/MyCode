@@ -1,0 +1,13 @@
+d0,d1 serial
+d2~d7 6 io 
+b0 b1 b2 clk + st + oe
+
+b3 b4 b5 clk + data + rst
+
+a4 a5 sda scl
+
+a6+a7 input
+
+a01 PNP
+
+a23 time+ time-
