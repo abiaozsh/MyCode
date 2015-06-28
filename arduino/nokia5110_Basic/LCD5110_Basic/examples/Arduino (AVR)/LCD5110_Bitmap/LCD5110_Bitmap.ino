@@ -17,7 +17,7 @@
 //
 #include <LCD5110_Basic.h>
 
-LCD5110 myGLCD(8,9,10,11,12);
+LCD5110 myGLCD(10,11,12,A0,13);
 
 extern uint8_t arduino_logo[];
 extern uint8_t oshw_logo[];

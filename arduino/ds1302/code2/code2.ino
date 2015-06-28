@@ -132,6 +132,7 @@ void printTime() {
 }
 
 void setup() {
+  delay(5000);
 	Serial.begin(9600);
 	Serial.setTimeout(1000);
 }
