@@ -307,6 +307,7 @@ byte rr[7];
 int ledPin =  13;
 void setup()
 {
+  delay(5000);
   DDRC|=_BV(2) |_BV(3);  // POWER:Vcc Gnd
   PORTC |=_BV(3);  // VCC PINC3
   pinMode(ledPin, OUTPUT);  
