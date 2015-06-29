@@ -30,10 +30,6 @@ uint8_t decToBcd(const uint8_t dec) {
 
 void writeOut(const uint8_t value) {
 	pinMode(io_pin, OUTPUT);
-	// This assumes that shiftOut is 'slow' enough for the DS1302 to read the
-	// bits. The datasheet specifies that SCLK must be in its high and low states
-	// for at least 0.25us at 5V or 1us at 2V. Experimentally, a 16MHz Arduino
-	// seems to spend ~4us high and ~12us low when shifting.
 	shiftOuta(io_pin, sclk_pin, LSBFIRST, value);
 }
 
@@ -87,7 +83,7 @@ void GetTime(Time* t) {
 	t->hr = bcdToDec(readIn());
 	t->date = bcdToDec(readIn());
 	t->mon = bcdToDec(readIn());
-	t->day = bcdToDec(readIn());
+	t->day = readIn();
 	t->yr = bcdToDec(readIn());
 		digitalWrite(ce_pin, LOW);
 		delayMicroseconds(4);  // tCWH
@@ -107,7 +103,7 @@ void SetTime(Time* t) {
 	writeOut(decToBcd(t->hr));
 	writeOut(decToBcd(t->date));
 	writeOut(decToBcd(t->mon));
-	writeOut(decToBcd(t->day));
+	writeOut(t->day);
 	writeOut(decToBcd(t->yr));
 	// All clock registers *and* the WP register have to be written for the time
 	// to be set.
@@ -117,20 +113,6 @@ void SetTime(Time* t) {
 }
 
 
-void printTime() {
-	// Get the current time and date from the chip.
-	Time t;
-
-	GetTime(&t);
-
-	// Format the time and date and insert into the temporary buffer.
-	char buf[50];
-	snprintf(buf, sizeof(buf), "%02d 20%02d-%02d-%02d %02d:%02d:%02d",t.day, t.yr, t.mon, t.date, t.hr, t.min, t.sec);
-
-	// Print the formatted string to serial so we can see the time.
-	Serial.println(buf);
-}
-
 void setup() {
   delay(5000);
 	Serial.begin(9600);
@@ -138,34 +120,30 @@ void setup() {
 }
 
 void loop() {
-	printTime();
+	Time t;
+
+	GetTime(&t);
+
+	char buf[60];
+	snprintf(buf, sizeof(buf), "DS1302:%02d 20%02d-%02d-%02d %02d:%02d:%02d",t.day, t.yr, t.mon, t.date, t.hr, t.min, t.sec);
+
+	// Print the formatted string to serial so we can see the time.
+	Serial.println(buf);
+
 	//delay(1000);
-	uint8_t Time_sec;
-	uint8_t Time_min;
-	uint8_t Time_hr;
-	uint8_t Time_day;
-	uint8_t Time_mon;
-	uint8_t Time_yr;
-	uint8_t Time_week;
+
 	int start = Serial.parseInt();
 	if(start == 33)
 	{
-		Time_yr  = Serial.parseInt();
-		Time_mon = Serial.parseInt();
-		Time_day = Serial.parseInt();
-		Time_hr  = Serial.parseInt();
-		Time_min = Serial.parseInt();
-		Time_sec = Serial.parseInt();
-		Time_week= Serial.parseInt();
+		t.yr  = Serial.parseInt();
+		t.mon = Serial.parseInt();
+		t.date = Serial.parseInt();
+		t.hr  = Serial.parseInt();
+		t.min = Serial.parseInt();
+		t.sec = Serial.parseInt();
+		t.day= Serial.parseInt();
 
-		Time t;
-		t.sec = Time_sec;
-		t.min = Time_min;
-		t.hr  = Time_hr;
-		t.date= Time_day;
-		t.mon = Time_mon;
-		t.yr  = Time_yr;
-                t.day = Time_week;
+
 		SetTime(&t);
 	}
 }
