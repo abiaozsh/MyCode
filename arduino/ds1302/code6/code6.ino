@@ -11,9 +11,21 @@ struct Time {
 void GetTime(Time* t);
 void SetTime(Time* t);
 
-const int ce_pin   = 4;//5;  // Chip Enable
-const int io_pin   = 3;//6;  // Input/Output
-const int sclk_pin = 2;//7;  // Serial Clock
+//const int ce_pin   = 4;//5;  // Chip Enable
+#define DDR_CE DDRD
+#define PORT_CE PORTD
+#define BIT_CE _BV(4)
+
+//const int io_pin   = 3;//6;  // Input/Output
+#define DDR_IO DDRD
+#define PORT_IO PORTD
+#define PIN_IO PIND
+#define BIT_IO _BV(3)
+
+//const int sclk_pin = 2;//7;  // Serial Clock
+#define DDR_CLK DDRD
+#define PORT_CLK PORTD
+#define BIT_CLK _BV(2)
 
 #define kClockBurstRead  0xBF
 #define kClockBurstWrite 0xBE
@@ -28,58 +40,67 @@ uint8_t decToBcd(const uint8_t dec) {
 	return (tens << 4) | ones;
 }
 
-void writeOut(const uint8_t value) {
-	pinMode(io_pin, OUTPUT);
-	// This assumes that shiftOut is 'slow' enough for the DS1302 to read the
-	// bits. The datasheet specifies that SCLK must be in its high and low states
-	// for at least 0.25us at 5V or 1us at 2V. Experimentally, a 16MHz Arduino
-	// seems to spend ~4us high and ~12us low when shifting.
-	shiftOuta(io_pin, sclk_pin, LSBFIRST, value);
+volatile int temp;
+void wait()
+{
+	for(int i=0;i<100;i++)
+	{
+		temp++;
+	}
 }
 
-void shiftOuta(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val)
-{
-	uint8_t i;
-
-	for (i = 0; i < 8; i++)  {
-		if (bitOrder == LSBFIRST)
-			digitalWrite(dataPin, !!(val & (1 << i)));
-		else	
-			digitalWrite(dataPin, !!(val & (1 << (7 - i))));
-			
-		digitalWrite(clockPin, HIGH);
-		digitalWrite(clockPin, LOW);
+void writeOut(const uint8_t value) {
+	DDR_IO |= BIT_IO;//pinMode(io_pin, OUTPUT);
+	wait();
+	uint8_t val = value;
+	for (uint8_t i = 0; i < 8; i++)  {
+		if(val & 1)//digitalWrite(io_pin, !!(value & (1 << i)));
+		{
+			PORT_IO |= BIT_IO;
+		}
+		else
+		{
+			PORT_IO &= ~BIT_IO;
+		}
+		val = val>>1;
+		wait();
+		PORT_CLK |= BIT_CLK;//digitalWrite(sclk_pin, HIGH);
+		wait();
+		PORT_CLK &= ~BIT_CLK;//digitalWrite(sclk_pin, LOW);
+		wait();
 	}
+	DDR_IO &= ~BIT_IO;
+	wait();
 }
 
 uint8_t readIn() {
 	uint8_t input_value = 0;
-	uint8_t bit = 0;
-	pinMode(io_pin, INPUT);
-
-	// Bits from the DS1302 are output on the falling edge of the clock
-	// cycle. This method is called after a previous call to writeOut() or
-	// readIn(), which will have already set the clock low.
-	for (int i = 0; i < 8; ++i) {
-		bit = digitalRead(io_pin);
-		input_value |= (bit << i);  // Bits are read LSB first.
-
-		// See the note in writeOut() about timing. digitalWrite() is slow enough to
-		// not require extra delays for tCH and tCL.
-		digitalWrite(sclk_pin, HIGH);
-		digitalWrite(sclk_pin, LOW);
+	wait();
+	for (uint8_t i = 0; i < 8; i++) {
+		if(PIN_IO & BIT_IO)//digitalWrite(io_pin, !!(value & (1 << i)));
+		{
+			input_value |= 1;  // Bits are read LSB first.
+		}
+		else
+		{
+			input_value |= 0;  // Bits are read LSB first.
+		}
+		input_value = input_value << 1;
+		wait();
+		PORT_CLK |= BIT_CLK;//digitalWrite(sclk_pin, HIGH);
+		wait();
+		PORT_CLK &= ~BIT_CLK;//digitalWrite(sclk_pin, LOW);
+		wait();
 	}
-
 	return input_value;
 }
 
 void GetTime(Time* t) {
-	pinMode(ce_pin, OUTPUT);
-	pinMode(sclk_pin, OUTPUT);
+	DDR_CLK |= BIT_CLK;//pinMode(sclk_pin, OUTPUT);
 
-	digitalWrite(sclk_pin, LOW);
-	digitalWrite(ce_pin, HIGH);
-	delayMicroseconds(4);  // tCC
+	PORT_CLK &= ~BIT_CLK;//digitalWrite(sclk_pin, LOW);
+	PORT_CE |= BIT_CE;//digitalWrite(ce_pin, HIGH);
+	wait();//	delayMicroseconds(4);  // tCC
 
 	writeOut(kClockBurstRead);
 	t->sec = bcdToDec(readIn());
@@ -87,19 +108,20 @@ void GetTime(Time* t) {
 	t->hr = bcdToDec(readIn());
 	t->date = bcdToDec(readIn());
 	t->mon = bcdToDec(readIn());
-	t->day = bcdToDec(readIn());
+	t->day = readIn();
 	t->yr = bcdToDec(readIn());
-	digitalWrite(ce_pin, LOW);
-	delayMicroseconds(4);  // tCWH
+	PORT_CE &= ~BIT_CE;//digitalWrite(ce_pin, LOW);
+	wait();
+	
+	DDR_CLK &= ~BIT_CLK;
 }
 
 void SetTime(Time* t) {
-	pinMode(ce_pin, OUTPUT);
-	pinMode(sclk_pin, OUTPUT);
+	DDR_CLK |= BIT_CLK;//pinMode(sclk_pin, OUTPUT);
 
-	digitalWrite(sclk_pin, LOW);
-	digitalWrite(ce_pin, HIGH);
-	delayMicroseconds(4);  // tCC
+	PORT_CLK &= ~BIT_CLK;//digitalWrite(sclk_pin, LOW);
+	PORT_CE |= BIT_CE;//digitalWrite(ce_pin, HIGH);
+	wait();//	delayMicroseconds(4);  // tCC
 
 	writeOut(kClockBurstWrite);
 	writeOut(decToBcd(t->sec));
@@ -107,67 +129,54 @@ void SetTime(Time* t) {
 	writeOut(decToBcd(t->hr));
 	writeOut(decToBcd(t->date));
 	writeOut(decToBcd(t->mon));
-	writeOut(decToBcd(t->day));
+	writeOut(t->day);
 	writeOut(decToBcd(t->yr));
-	// All clock registers *and* the WP register have to be written for the time
-	// to be set.
 	writeOut(0);  // Write protection register.
-	digitalWrite(ce_pin, LOW);
-	delayMicroseconds(4);  // tCWH
+	PORT_CE &= ~BIT_CE;//digitalWrite(ce_pin, LOW);
+	wait();//	delayMicroseconds(4);  // tCC
 }
 
 
-void printTime() {
-	// Get the current time and date from the chip.
+void setup() {
+	DDR_CE |= BIT_CE;
+	PORT_CE &= ~BIT_CE;
+	delay(5000);
+	Serial.begin(9600);
+	Serial.setTimeout(1000);
+	pinMode(13, OUTPUT);
+}
+
+void loop() {
+	digitalWrite(13, HIGH);
 	Time t;
 
 	GetTime(&t);
 
-	// Format the time and date and insert into the temporary buffer.
-	char buf[50];
-	snprintf(buf, sizeof(buf), "%02d 20%02d-%02d-%02d %02d:%02d:%02d",t.day, t.yr, t.mon, t.date, t.hr, t.min, t.sec);
+	char buf[60];
+	snprintf(buf, sizeof(buf), "DS1302:%02d 20%02d-%02d-%02d %02d:%02d:%02d",t.day, t.yr, t.mon, t.date, t.hr, t.min, t.sec);
 
 	// Print the formatted string to serial so we can see the time.
 	Serial.println(buf);
-}
 
-void setup() {
-	Serial.begin(9600);
-	Serial.setTimeout(1000);
-}
-
-void loop() {
-	printTime();
 	//delay(1000);
-	uint8_t Time_sec;
-	uint8_t Time_min;
-	uint8_t Time_hr;
-	uint8_t Time_day;
-	uint8_t Time_mon;
-	uint8_t Time_yr;
-	uint8_t Time_week;
+
+	digitalWrite(13, LOW);
 	int start = Serial.parseInt();
 	if(start == 33)
 	{
-		Time_yr  = Serial.parseInt();
-		Time_mon = Serial.parseInt();
-		Time_day = Serial.parseInt();
-		Time_hr  = Serial.parseInt();
-		Time_min = Serial.parseInt();
-		Time_sec = Serial.parseInt();
-		Time_week= Serial.parseInt();
+		t.yr  = Serial.parseInt();
+		t.mon = Serial.parseInt();
+		t.date = Serial.parseInt();
+		t.hr  = Serial.parseInt();
+		t.min = Serial.parseInt();
+		t.sec = Serial.parseInt();
+		t.day= Serial.parseInt();
 
-		Time t;
-		t.sec = Time_sec;
-		t.min = Time_min;
-		t.hr  = Time_hr;
-		t.date= Time_day;
-		t.mon = Time_mon;
-		t.yr  = Time_yr;
 
 		SetTime(&t);
 	}
 }
+//33,15,6,26,20,39,00,5,
 
 
 

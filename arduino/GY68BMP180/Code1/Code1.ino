@@ -32,9 +32,8 @@ void loop()
 {
   float temperature = bmp085GetTemperature(bmp085ReadUT()); //MUST be called first
   float pressure = bmp085GetPressure(bmp085ReadUP());
-  float atm = pressure / 101325; // "standard atmosphere"
   float altitude = calcAltitude(pressure); //Uncompensated caculation - in Meters 
-
+  
   Serial.print("Temperature: ");
   Serial.print(temperature, 2); //display 2 decimal places
   Serial.println("deg C");
@@ -43,14 +42,13 @@ void loop()
   Serial.print(pressure, 0); //whole number only.
   Serial.println(" Pa");
 
-  Serial.print("Standard Atmosphere: ");
-  Serial.println(atm, 4); //display 4 decimal places
-
   Serial.print("Altitude: ");
   Serial.print(altitude, 2); //display 2 decimal places
   Serial.println(" M");
 
   Serial.println();//line break
+
+  //记录实际的样本
 
   delay(500); //wait a second and get values again.
 }

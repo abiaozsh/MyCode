@@ -1,7 +1,3 @@
-// include types & constants of Wiring core API
-#include <WConstants.h>
-
-// include types & constants of Wire ic2 lib
 #include <Wire.h>
 
 uint8_t DS1307_SEC;// 0
@@ -99,12 +95,6 @@ void loop()
 
 		DS1307_save();
 	}
-}
-char BCD2DEC(char var){
-  if (var>9){
-     var=(var>>4)*10+(var&0x0f);
-  }
-  return var;
 }
 
 //33,15,6,26,20,39,00,5,

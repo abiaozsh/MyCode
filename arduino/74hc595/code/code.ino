@@ -1,43 +1,46 @@
-//INPUTS
+ï»¿//INPUTS
 //A (Pin 14)
 //Serial Data Input. The data on this pin is shifted into the
-//8¨Cbit serial shift register.
+//8â€“bit serial shift register.
 //CONTROL INPUTS
 //Shift Clock (Pin 11)
-//Shift Register Clock Input. A low¨C to¨Chigh transition on
+//Shift Register Clock Input. A lowâ€“ toâ€“high transition on
 //this input causes the data at the Serial Input pin to be shifted
-//into the 8¨Cbit shift register.
+//into the 8â€“bit shift register.
 //Reset (Pin 10)
-//Active¨Clow, Asynchronous, Shift Register Reset Input. A
+//Activeâ€“low, Asynchronous, Shift Register Reset Input. A
 //low on this pin resets the shift register portion of this device
-//only. The 8¨Cbit latch is not affected.
+//only. The 8â€“bit latch is not affected.
 //Latch Clock (Pin 12)
-//Storage Latch Clock Input. A low¨Cto¨Chigh transition on
+//Storage Latch Clock Input. A lowâ€“toâ€“high transition on
 //this input latches the shift register data.
 //Output Enable (Pin 13)
-//Active¨Clow Output Enable. A low on this input allows the
+//Activeâ€“low Output Enable. A low on this input allows the
 //data from the latches to be presented at the outputs. A high
-//on this input forces the outputs (QA¨CQH) into the
-//high¨Cimpedance state. The serial output is not affected by
+//on this input forces the outputs (QAâ€“QH) into the
+//highâ€“impedance state. The serial output is not affected by
 //this control unit.
 //OUTPUTS
-//QA ¨C QH (Pins 15, 1, 2, 3, 4, 5, 6, 7)
-//Noninverted, 3¨Cstate, latch outputs.
+//QA â€“ QH (Pins 15, 1, 2, 3, 4, 5, 6, 7)
+//Noninverted, 3â€“state, latch outputs.
 //SQH (Pin 9)
 //Noninverted, Serial Data Output. This is the output of the
-//eighth stage of the 8¨Cbit shift register. This output does not
-//have three¨Cstate capability.
+//eighth stage of the 8â€“bit shift register. This output does not
+//have threeâ€“state capability.
 
-//·ûºÅ¡¡¡¡	Òı½Å¡¡¡¡	ÃèÊö¡¡¡¡
-//Q0--Q7¡¡¡¡	µÚ15½Å£¬µÚ1-7½Å	8Î»²¢ĞĞÊı¾İÊä³ö£¬¡¡¡¡
-//GND¡¡¡¡	µÚ8½Å¡¡¡¡	µØ¡¡¡¡
-//Q7¡¯¡¡¡¡	µÚ9½Å¡¡¡¡	´®ĞĞÊı¾İÊä³ö¡¡¡¡
-//MR¡¡¡¡	µÚ10½Å¡¡¡¡	Ö÷¸´Î»£¨µÍµçÆ½£©¡¡¡¡
-//SHCP¡¡¡¡	µÚ11½Å¡¡¡¡	ÒÆÎ»¼Ä´æÆ÷Ê±ÖÓÊäÈë¡¡¡¡
-//STCP¡¡¡¡	µÚ12½Å¡¡¡¡	´æ´¢¼Ä´æÆ÷Ê±ÖÓÊäÈë¡¡¡¡
-//OE¡¡¡¡	µÚ13½Å¡¡¡¡	Êä³öÓĞĞ§£¨µÍµçÆ½£©¡¡¡¡
-//DS¡¡¡¡	µÚ14½Å¡¡¡¡	´®ĞĞÊı¾İÊäÈë¡¡¡¡
-//VCC¡¡¡¡	µÚ16½Å¡¡¡¡	µçÔ´¡¡¡¡
+//ç¬¦å·ã€€ã€€	å¼•è„šã€€ã€€	æè¿°ã€€ã€€
+//Q0--Q7ã€€ã€€	ç¬¬15è„šï¼Œç¬¬1-7è„š	8ä½å¹¶è¡Œæ•°æ®è¾“å‡ºï¼Œã€€ã€€
+//GNDã€€ã€€	ç¬¬8è„šã€€ã€€	åœ°ã€€ã€€
+//Q7â€™ã€€ã€€	ç¬¬9è„šã€€ã€€	ä¸²è¡Œæ•°æ®è¾“å‡ºã€€ã€€
+//MRã€€ã€€	ç¬¬10è„šã€€ã€€	ä¸»å¤ä½ï¼ˆä½ç”µå¹³ï¼‰ã€€ã€€
+//SHCPã€€ã€€	ç¬¬11è„šã€€ã€€	ç§»ä½å¯„å­˜å™¨æ—¶é’Ÿè¾“å…¥ã€€ã€€
+//STCPã€€ã€€	ç¬¬12è„šã€€ã€€	å­˜å‚¨å¯„å­˜å™¨æ—¶é’Ÿè¾“å…¥ã€€ã€€
+//OEã€€ã€€	ç¬¬13è„šã€€ã€€	è¾“å‡ºæœ‰æ•ˆï¼ˆä½ç”µå¹³ï¼‰ã€€ã€€
+//DSã€€ã€€	ç¬¬14è„šã€€ã€€	ä¸²è¡Œæ•°æ®è¾“å…¥ã€€ã€€
+//VCCã€€ã€€	ç¬¬16è„šã€€ã€€	ç”µæºã€€ã€€
+
+
+//33,1,10,10000,
 
 void setup()
 {
