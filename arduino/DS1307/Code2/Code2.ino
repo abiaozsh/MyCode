@@ -70,18 +70,22 @@ void setup()
   Serial.begin(9600);
   Serial.setTimeout(1000);
   Wire.begin();
+  //sbi(TWSR, TWPS0);
+  //sbi(TWSR, TWPS1);
+  //TWBR = ((F_CPU / TWI_FREQ) - 16) / 2;
 
+  pinMode(13, OUTPUT);
 }
 
 void loop()
 {
-  int i;
+  digitalWrite(13, HIGH);
   DS1307_read();
 
   	char buf[60];
 	snprintf(buf, sizeof(buf), "DS1307:%02d 20%02d-%02d-%02d %02d:%02d:%02d",DS1307_DOW, DS1307_YR, DS1307_MTH, DS1307_DATE, DS1307_HR, DS1307_MIN, DS1307_SEC);
 	Serial.println(buf);
-
+	digitalWrite(13, LOW);
 	int start = Serial.parseInt();
 	if(start == 33)
 	{
