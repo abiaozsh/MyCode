@@ -59,6 +59,9 @@ void DS1307_save()
 
 
 #include <Wire.h>
+#ifndef sbi
+#define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
+#endif
 
 void setup()
 {

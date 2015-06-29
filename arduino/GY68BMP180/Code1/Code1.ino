@@ -1,3 +1,29 @@
+
+Temperature: 30.60deg C
+
+Pressure: 100265 Pa
+
+Altitude: 88.61 M
+
+
+
+Temperature: 30.60deg C
+
+Pressure: 100267 Pa
+
+Altitude: 88.45 M
+
+
+
+Temperature: 30.50deg C
+
+Pressure: 100274 Pa
+
+Altitude: 87.86 M
+
+
+
+
 #include <Wire.h>
 
 #define BMP085_ADDRESS 0x77  // I2C address of BMP085
@@ -48,7 +74,7 @@ void loop()
 
   Serial.println();//line break
 
-  //¼ÇÂ¼Êµ¼ÊµÄÑù±¾
+  //ï¿½ï¿½Â¼Êµï¿½Êµï¿½ï¿½ï¿½
 
   delay(500); //wait a second and get values again.
 }

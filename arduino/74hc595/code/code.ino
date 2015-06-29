@@ -1,4 +1,4 @@
-﻿//INPUTS
+//INPUTS
 //A (Pin 14)
 //Serial Data Input. The data on this pin is shifted into the
 //8–bit serial shift register.
@@ -40,7 +40,7 @@
 //VCC　　	第16脚　　	电源　　
 
 
-//33,1,10,10000,
+//33,127,10,10000,
 
 void setup()
 {
