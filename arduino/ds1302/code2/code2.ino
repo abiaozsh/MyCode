@@ -117,9 +117,11 @@ void setup() {
   delay(5000);
 	Serial.begin(9600);
 	Serial.setTimeout(1000);
+	pinMode(13, OUTPUT);
 }
 
 void loop() {
+	digitalWrite(13, HIGH);
 	Time t;
 
 	GetTime(&t);
@@ -132,6 +134,7 @@ void loop() {
 
 	//delay(1000);
 
+	digitalWrite(13, LOW);
 	int start = Serial.parseInt();
 	if(start == 33)
 	{
