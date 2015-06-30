@@ -69,12 +69,16 @@ void setup()
     }
   }
   cli();
+  TCCR1A = 0;
+  TCCR1B = 3; // 1/1
+  TCCR1C = 0;
   while(true)
   {
-    for(uint8_t data = 0;;data++)
+    for(uint8_t idata = 0;;idata++)
     {
+      uint8_t data = idata;
       PORTB &= ~(_BV(1) | _BV(0)); //clear clock
-      delay(dely);
+      //delay(dely);
       for(uint8_t i=0;i<8;i++)
       {
         if(data & 1){
@@ -84,20 +88,16 @@ void setup()
           PORTD &= ~_BV(4);
         }//set data
         data = data >> 1;
-        delay(dely);
+        //delay(dely);
         PORTB |= _BV(1); //shift clock up
-        delay(dely);
+        //delay(dely);
         PORTB &= ~_BV(1); //shift clock down
-        delay(dely);
+        //delay(dely);
       }
       PORTB |= _BV(0); //Store clock up
-      delay(dely);
+      //delay(dely);
       PORTB |= _BV(0); //Store clock down
-      delay(dely);
-
-      TCCR1A = 0;
-      TCCR1B = 1; // 1/1
-      TCCR1C = 0;
+      //delay(dely);
 
       TCNT1 = 0;
       PORTD |= _BV(3);//PNP on H
