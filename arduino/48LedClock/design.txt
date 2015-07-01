@@ -1,0 +1,97 @@
+	A0	a0
+b7	A1	
+	A2	a1
+b6	A3	
+	A4	a2
+b5	A5	
+	A6	a3
+b4	A7	
+	B0	a4
+b3	B1	
+	B2	a5
+b2	B3	
+	B4	a6
+b1	B5	
+	B6	a7
+b0	B7	
+	C0	c0
+d7	C1	
+	C2	c1
+d6	C3	
+	C4	c2
+d5	C5	
+	C6	c3
+d4	C7	
+	D0	c4
+d3	D1	
+	D2	c5
+d2	D3	
+	D4	c6
+d1	D5	
+	D6	c7
+d0	D7	
+	E0	e0
+f7	E1	
+	E2	e1
+f6	E3	
+	E4	e2
+f5	E5	
+	E6	e3
+f4	E7	
+	F0	e4
+f3	F1	
+	F2	e5
+f2	F3	
+	F4	e6
+f1	F5	
+	F6	e7
+f0	F7	
+0  1  2  3  4  5  6  7
+b0 = a0|b0|c0|d0|e0|f0;
+b1 = a1|b1|c1|d1|e1|f1;
+b2 = a2|b2|c2|d2|e2|f2;
+b3 = a3|b3|c3|d3|e3|f3;
+b4 = a4|b4|c4|d4|e4|f4;
+b5 = a5|b5|c5|d5|e5|f5;
+b6 = a6|b6|c6|d6|e6|f6;
+b7 = a7|b7|c7|d7|e7|f7;
+
+0  1  2  3  4  5  6  7
+b0 = A0|B7|C0|D7|E0|F7;
+b1 = A2|B5|C2|D5|E2|F5;
+b2 = A4|B3|C4|D3|E4|F3;
+b3 = A6|B1|C6|D1|E6|F1;
+b4 = B0|A7|D0|C7|F0|E7;
+b5 = B2|A5|D2|C5|F2|E5;
+b6 = B4|A3|D4|C3|F4|E3;
+b7 = B6|A1|D6|C1|F6|E1;
+
+      7  6  5  4  3  2  1  0 
+b0 = F7|E0|D7|C0|B7|A0;
+b1 = F5|E2|D5|C2|B5|A2;
+b2 = F3|E4|D3|C4|B3|A4;
+b3 = F1|E6|D1|C6|B1|A6;
+b4 = E7|F0|C7|D0|A7|B0;
+b5 = E5|F2|C5|D2|A5|B2;
+b6 = E3|F4|C3|D4|A3|B4;
+b7 = E1|F6|C1|D6|A1|B6;
+A0 B1 C2 D3 E4 F5
+
+
+//                               7                       6                       5                       4                       3                       2  1  0 
+uint8_t b0 = ((data[5]&_BV(7))   ) | ((data[4]&_BV(0))<<6) | ((data[3]&_BV(7))>>2) | ((data[2]&_BV(0))<<4) | ((data[1]&_BV(7))>>4) | ((data[0]&_BV(0))<<2) ;
+uint8_t b1 = ((data[5]&_BV(5))<<2) | ((data[4]&_BV(2))<<4) | ((data[3]&_BV(5))   ) | ((data[2]&_BV(2))<<2) | ((data[1]&_BV(5))>>2) | ((data[0]&_BV(2))   ) ;
+uint8_t b2 = ((data[5]&_BV(3))<<4) | ((data[4]&_BV(4))<<2) | ((data[3]&_BV(3))<<2) | ((data[2]&_BV(4))   ) | ((data[1]&_BV(3))   ) | ((data[0]&_BV(4))>>2) ;
+uint8_t b3 = ((data[5]&_BV(1))<<6) | ((data[4]&_BV(6))   ) | ((data[3]&_BV(1))<<4) | ((data[2]&_BV(6))>>2) | ((data[1]&_BV(1))<<2) | ((data[0]&_BV(6))>>4) ;
+uint8_t b4 = ((data[4]&_BV(7))   ) | ((data[5]&_BV(0))<<6) | ((data[2]&_BV(7))>>2) | ((data[3]&_BV(0))<<4) | ((data[0]&_BV(7))>>4) | ((data[1]&_BV(0))<<2) ;
+uint8_t b5 = ((data[4]&_BV(5))<<2) | ((data[5]&_BV(2))<<4) | ((data[2]&_BV(5))   ) | ((data[3]&_BV(2))<<2) | ((data[0]&_BV(5))>>2) | ((data[1]&_BV(2))   ) ;       
+uint8_t b6 = ((data[4]&_BV(3))<<4) | ((data[5]&_BV(4))<<2) | ((data[2]&_BV(3))<<2) | ((data[3]&_BV(4))   ) | ((data[0]&_BV(3))   ) | ((data[1]&_BV(4))>>2) ;       
+uint8_t b7 = ((data[4]&_BV(1))<<6) | ((data[5]&_BV(6))   ) | ((data[2]&_BV(1))<<4) | ((data[3]&_BV(6))>>2) | ((data[0]&_BV(1))<<2) | ((data[1]&_BV(6))>>4) ;       
+data[0] = b0;
+data[1] = b1;
+data[2] = b2;
+data[3] = b3;
+data[4] = b4;
+data[5] = b5;
+data[6] = b6;
+data[7] = b7;
