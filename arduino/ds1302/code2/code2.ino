@@ -46,10 +46,10 @@ uint8_t decToBcd(const uint8_t dec) {
 volatile int temp;
 void wait()
 {
-  for(int i=0;i<10;i++)
-  {
-    temp++;
-  }
+  //for(int i=0;i<1000;i++)
+  //{
+  //  temp++;
+  //}
 }
 
 void writeOut(uint8_t value) {
@@ -83,13 +83,22 @@ uint8_t readIn() {
   // cycle. This method is called after a previous call to writeOut() or
   // readIn(), which will have already set the clock low.
   for (int i = 0; i < 8; ++i) {
-    bit = digitalRead(io_pin);
+    if(PIN_IO & BIT_IO)
+    {
+    bit = 1;
+    }
+    else
+    {
+      bit=0;
+    }
     input_value |= (bit << i);  // Bits are read LSB first.
 
     // See the note in writeOut() about timing. digitalWrite() is slow enough to
     // not require extra delays for tCH and tCL.
-    digitalWrite(sclk_pin, HIGH);
-    digitalWrite(sclk_pin, LOW);
+    PORT_CLK |= BIT_CLK;//digitalWrite(sclk_pin, HIGH);
+    wait();
+    PORT_CLK &= ~BIT_CLK;//digitalWrite(sclk_pin, LOW);
+    wait();
   }
 
   return input_value;
@@ -142,7 +151,7 @@ void SetTime(Time* t) {
 void setup() {
   delay(2000);
   Serial.begin(9600);
-  Serial.setTimeout(1000);
+  Serial.setTimeout(500);
   pinMode(13, OUTPUT);
 }
 
