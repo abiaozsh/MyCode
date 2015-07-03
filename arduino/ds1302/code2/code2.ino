@@ -43,20 +43,12 @@ uint8_t decToBcd(const uint8_t dec) {
   const uint8_t ones = dec % 10;
   return (tens << 4) | ones;
 }
-volatile int temp;
-void wait()
-{
-  //for(int i=0;i<1000;i++)
-  //{
-  //  temp++;
-  //}
-}
 
 void writeOut(uint8_t value) {
   DDR_IO |= BIT_IO;
   uint8_t val = value;
   for (uint8_t i = 0; i < 8; i++)  {
-    if(val & 1)//digitalWrite(io_pin, !!(value & (1 << i)));
+    if(val & 1)
     {
       PORT_IO |= BIT_IO;
     }
@@ -65,52 +57,44 @@ void writeOut(uint8_t value) {
       PORT_IO &= ~BIT_IO;
     }
     val = val>>1;
-    wait();
-
-    PORT_CLK |= BIT_CLK;//digitalWrite(sclk_pin, HIGH);
-    wait();
-    PORT_CLK &= ~BIT_CLK;//digitalWrite(sclk_pin, LOW);
-    wait();
+    PORT_CLK |= BIT_CLK;
+    PORT_CLK &= ~BIT_CLK;
   }
 }
 
 uint8_t readIn() {
   uint8_t input_value = 0;
   uint8_t bit = 0;
-  DDR_IO &= ~BIT_IO;//pinMode(io_pin, INPUT);
-
-  // Bits from the DS1302 are output on the falling edge of the clock
-  // cycle. This method is called after a previous call to writeOut() or
-  // readIn(), which will have already set the clock low.
-  for (int i = 0; i < 8; ++i) {
+  DDR_IO &= ~BIT_IO;
+  for (int i = 0; i < 8; i++) {
+    input_value = input_value>>1;
     if(PIN_IO & BIT_IO)
     {
-    bit = 1;
+    bit = 0x80;
     }
     else
     {
       bit=0;
     }
-    input_value |= (bit << i);  // Bits are read LSB first.
-
-    // See the note in writeOut() about timing. digitalWrite() is slow enough to
-    // not require extra delays for tCH and tCL.
-    PORT_CLK |= BIT_CLK;//digitalWrite(sclk_pin, HIGH);
-    wait();
-    PORT_CLK &= ~BIT_CLK;//digitalWrite(sclk_pin, LOW);
-    wait();
+    input_value |= bit;
+    PORT_CLK |= BIT_CLK;
+    PORT_CLK &= ~BIT_CLK;
   }
 
   return input_value;
 }
 
 void GetTime(Time* t) {
-  pinMode(ce_pin, OUTPUT);
-  pinMode(sclk_pin, OUTPUT);
+  DDR_CE |= BIT_CE;
+  DDR_CLK |= BIT_CLK;
 
-  digitalWrite(sclk_pin, LOW);
-  digitalWrite(ce_pin, HIGH);
-  delayMicroseconds(4);  // tCC
+  PORT_CLK &= ~BIT_CLK;
+  PORT_CE |= BIT_CE;
+  for(uint8_t i=0;i<80;i++)
+  {
+    volatile int tmp = 0;
+    tmp++;
+  }//delayMicroseconds(4);  // tCC
 
   writeOut(kClockBurstRead);
   t->sec = bcdToDec(readIn());
@@ -120,17 +104,25 @@ void GetTime(Time* t) {
   t->mon = bcdToDec(readIn());
   t->day = readIn();
   t->yr = bcdToDec(readIn());
-  digitalWrite(ce_pin, LOW);
-  delayMicroseconds(4);  // tCWH
+  PORT_CE &= ~BIT_CE;
+  for(uint8_t i=0;i<80;i++)
+  {
+    volatile int tmp = 0;
+    tmp++;
+  }//delayMicroseconds(4);  // tCC
 }
 
 void SetTime(Time* t) {
-  pinMode(ce_pin, OUTPUT);
-  pinMode(sclk_pin, OUTPUT);
+  DDR_CE |= BIT_CE;
+  DDR_CLK |= BIT_CLK;
 
-  digitalWrite(sclk_pin, LOW);
-  digitalWrite(ce_pin, HIGH);
-  delayMicroseconds(4);  // tCC
+  PORT_CLK &= ~BIT_CLK;
+  PORT_CE |= BIT_CE;
+  for(uint8_t i=0;i<80;i++)
+  {
+    volatile int tmp = 0;
+    tmp++;
+  }//delayMicroseconds(4);  // tCC
 
   writeOut(kClockBurstWrite);
   writeOut(decToBcd(t->sec));
@@ -143,8 +135,12 @@ void SetTime(Time* t) {
   // All clock registers *and* the WP register have to be written for the time
   // to be set.
   writeOut(0);  // Write protection register.
-  digitalWrite(ce_pin, LOW);
-  delayMicroseconds(4);  // tCWH
+  PORT_CE &= ~BIT_CE;
+  for(uint8_t i=0;i<80;i++)
+  {
+    volatile int tmp = 0;
+    tmp++;
+  }//delayMicroseconds(4);  // tCC
 }
 
 
