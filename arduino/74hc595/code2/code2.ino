@@ -20,6 +20,7 @@
 //on this input forces the outputs (QA–QH) into the
 //high–impedance state. The serial output is not affected by
 //this control unit.
+
 //OUTPUTS
 //QA – QH (Pins 15, 1, 2, 3, 4, 5, 6, 7)
 //Noninverted, 3–state, latch outputs.
@@ -78,7 +79,6 @@ void setup()
     {
       uint8_t data = idata;
       PORTB &= ~(_BV(1) | _BV(0)); //clear clock
-      //delay(dely);
       for(uint8_t i=0;i<8;i++)
       {
         if(data & 1){
@@ -88,16 +88,11 @@ void setup()
           PORTD &= ~_BV(4);
         }//set data
         data = data >> 1;
-        //delay(dely);
         PORTB |= _BV(1); //shift clock up
-        //delay(dely);
         PORTB &= ~_BV(1); //shift clock down
-        //delay(dely);
       }
       PORTB |= _BV(0); //Store clock up
-      //delay(dely);
-      PORTB |= _BV(0); //Store clock down
-      //delay(dely);
+      PORTB &= ~_BV(0); //Store clock down
 
       TCNT1 = 0;
       PORTD |= _BV(3);//PNP on H

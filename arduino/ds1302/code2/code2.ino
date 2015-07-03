@@ -11,10 +11,6 @@ struct Time {
 void GetTime(Time* t);
 void SetTime(Time* t);
 
-const int ce_pin   = 4;//5;  // Chip Enable
-const int io_pin   = 3;//6;  // Input/Output
-const int sclk_pin = 2;//7;  // Serial Clock
-
 //const int ce_pin   = 4;//5;  // Chip Enable
 #define DDR_CE DDRD
 #define PORT_CE PORTD

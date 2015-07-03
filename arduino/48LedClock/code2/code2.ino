@@ -1,3 +1,32 @@
+//d0,d1 serial
+//d2~d7 6 io 74hc595
+#define PORT_595_6 PORTD
+
+//b0 b1 b2 clk + st + oe 74hc595
+#define DDR_CLK DDRB
+#define PORT_CLK PORTB
+#define BIT_CLK _BV(0)
+
+#define DDR_STR DDRB
+#define PORT_STR PORTB
+#define BIT_STR _BV(1)
+
+#define DDR_OE DDRB
+#define PORT_OE PORTB
+#define BIT_OE _BV(2)
+
+//b0 b4 b5 clk + data + rst ds1302
+
+/*b3 alarm
+
+a4 a5 sda scl ds1307/bmp180
+
+a6+a7 time+ time- analog read
+
+a01 PNP * 2
+
+a23 led * 2
+*/
 struct Time {
   uint8_t sec;
   uint8_t min;
@@ -10,10 +39,6 @@ struct Time {
 
 void GetTime(Time* t);
 void SetTime(Time* t);
-
-const int ce_pin   = 4;//5;  // Chip Enable
-const int io_pin   = 3;//6;  // Input/Output
-const int sclk_pin = 2;//7;  // Serial Clock
 
 //const int ce_pin   = 4;//5;  // Chip Enable
 #define DDR_CE DDRD
@@ -204,24 +229,40 @@ void start()
       Conv(buff+i);
     }
     
+    
+    
     while(TCNT1<15625)
     {
       //draw();
     }
   }
-  
 }
+
+void SendLine(uint8_t* data)
+{
+	PORT_CLK &= ~BIT_CLK;
+	PORT_STR &= ~BIT_STR;
+	for(uint8_t i=0;i<8;i++)
+	{
+		PORT_595_6 = data[i];//setData bit0.1 is usart use bit2~7
+		PORT_CLK |= BIT_CLK; //shift clock up
+		PORT_CLK &= ~BIT_CLK; //shift clock down
+	}
+	PORT_STR |= BIT_STR; //Store clock up
+	PORT_STR &= ~BIT_STR; //Store clock down
+}
+
 void Conv(uint8_t* data) // 6->8
 {
   //                               7                       6                       5                       4                       3                       2  1  0 
-  uint8_t b0 = ((data[5]&_BV(7))   ) | ((data[4]&_BV(0))<<6) | ((data[3]&_BV(7))>>2) | ((data[2]&_BV(0))<<4) | ((data[1]&_BV(7))>>4) | ((data[0]&_BV(0))<<2) ;
-  uint8_t b1 = ((data[5]&_BV(5))<<2) | ((data[4]&_BV(2))<<4) | ((data[3]&_BV(5))   ) | ((data[2]&_BV(2))<<2) | ((data[1]&_BV(5))>>2) | ((data[0]&_BV(2))   ) ;
-  uint8_t b2 = ((data[5]&_BV(3))<<4) | ((data[4]&_BV(4))<<2) | ((data[3]&_BV(3))<<2) | ((data[2]&_BV(4))   ) | ((data[1]&_BV(3))   ) | ((data[0]&_BV(4))>>2) ;
-  uint8_t b3 = ((data[5]&_BV(1))<<6) | ((data[4]&_BV(6))   ) | ((data[3]&_BV(1))<<4) | ((data[2]&_BV(6))>>2) | ((data[1]&_BV(1))<<2) | ((data[0]&_BV(6))>>4) ;
-  uint8_t b4 = ((data[4]&_BV(7))   ) | ((data[5]&_BV(0))<<6) | ((data[2]&_BV(7))>>2) | ((data[3]&_BV(0))<<4) | ((data[0]&_BV(7))>>4) | ((data[1]&_BV(0))<<2) ;
-  uint8_t b5 = ((data[4]&_BV(5))<<2) | ((data[5]&_BV(2))<<4) | ((data[2]&_BV(5))   ) | ((data[3]&_BV(2))<<2) | ((data[0]&_BV(5))>>2) | ((data[1]&_BV(2))   ) ;       
-  uint8_t b6 = ((data[4]&_BV(3))<<4) | ((data[5]&_BV(4))<<2) | ((data[2]&_BV(3))<<2) | ((data[3]&_BV(4))   ) | ((data[0]&_BV(3))   ) | ((data[1]&_BV(4))>>2) ;       
-  uint8_t b7 = ((data[4]&_BV(1))<<6) | ((data[5]&_BV(6))   ) | ((data[2]&_BV(1))<<4) | ((data[3]&_BV(6))>>2) | ((data[0]&_BV(1))<<2) | ((data[1]&_BV(6))>>4) ;       
+  uint8_t b0 = ((data[5]&_BV(7))   ) | ((data[4]&_BV(0))<<6) | ((data[3]&_BV(7))>>2) | ((data[2]&_BV(0))<<4) | ((data[1]&_BV(7))>>4) | ((data[0]&_BV(0))<<2) |0 |0;
+  uint8_t b1 = ((data[5]&_BV(5))<<2) | ((data[4]&_BV(2))<<4) | ((data[3]&_BV(5))   ) | ((data[2]&_BV(2))<<2) | ((data[1]&_BV(5))>>2) | ((data[0]&_BV(2))   ) |0 |0;
+  uint8_t b2 = ((data[5]&_BV(3))<<4) | ((data[4]&_BV(4))<<2) | ((data[3]&_BV(3))<<2) | ((data[2]&_BV(4))   ) | ((data[1]&_BV(3))   ) | ((data[0]&_BV(4))>>2) |0 |0;
+  uint8_t b3 = ((data[5]&_BV(1))<<6) | ((data[4]&_BV(6))   ) | ((data[3]&_BV(1))<<4) | ((data[2]&_BV(6))>>2) | ((data[1]&_BV(1))<<2) | ((data[0]&_BV(6))>>4) |0 |0;
+  uint8_t b4 = ((data[4]&_BV(7))   ) | ((data[5]&_BV(0))<<6) | ((data[2]&_BV(7))>>2) | ((data[3]&_BV(0))<<4) | ((data[0]&_BV(7))>>4) | ((data[1]&_BV(0))<<2) |0 |0;
+  uint8_t b5 = ((data[4]&_BV(5))<<2) | ((data[5]&_BV(2))<<4) | ((data[2]&_BV(5))   ) | ((data[3]&_BV(2))<<2) | ((data[0]&_BV(5))>>2) | ((data[1]&_BV(2))   ) |0 |0;
+  uint8_t b6 = ((data[4]&_BV(3))<<4) | ((data[5]&_BV(4))<<2) | ((data[2]&_BV(3))<<2) | ((data[3]&_BV(4))   ) | ((data[0]&_BV(3))   ) | ((data[1]&_BV(4))>>2) |0 |0;
+  uint8_t b7 = ((data[4]&_BV(1))<<6) | ((data[5]&_BV(6))   ) | ((data[2]&_BV(1))<<4) | ((data[3]&_BV(6))>>2) | ((data[0]&_BV(1))<<2) | ((data[1]&_BV(6))>>4) |0 |0;
   data[0] = b0;
   data[1] = b1;
   data[2] = b2;
