@@ -1,8 +1,10 @@
 d0,d1 serial
 d2~d7 6 io 74hc595
-b0 b1 b2 clk + st + oe 74hc595
+b0 (b1) b2 clk + (st) + oe 74hc595
 
 b0 b4 b5 clk + data + rst ds1302
+
+b1 free
 
 b3 alarm
 
