@@ -48,7 +48,7 @@ class SoftI2CMaster
 
 
 #include <string.h>
-#define i2cbitdelay 50
+#define i2cbitdelay 500
 #define I2C_ACK 1
 #define I2C_NAK 0
 #define i2c_scl_release() *_sclDirReg &=~ _sclBitMask
