@@ -16,9 +16,12 @@ int md;
 long b5; 
 void setup(){
   Serial.begin(9600);
+  Serial.println();
+  Serial.println();
   Wire.begin();
   bmp085Calibration();
   delay(1000);
+  Serial.println();
 }
 
 void loop()
@@ -115,8 +118,10 @@ char bmp085Read(unsigned char address)
   Wire.requestFrom(BMP085_ADDRESS, 1);
   while(!Wire.available())
     ;
-
-  return Wire.read();
+  uint8_t msb = Wire.read();
+  Serial.print(msb);
+  Serial.print(",");
+  return msb;
 }
 
 // Read 2 bytes from the BMP085
@@ -135,7 +140,10 @@ int bmp085ReadInt(unsigned char address)
     ;
   msb = Wire.read();
   lsb = Wire.read();
-
+  Serial.print(msb);
+  Serial.print(",");
+  Serial.print(lsb);
+  Serial.print(",");
   return (int) msb<<8 | lsb;
 }
 
@@ -182,30 +190,6 @@ unsigned long bmp085ReadUP(){
   up = (((unsigned long) msb << 16) | ((unsigned long) lsb << 8) | (unsigned long) xlsb) >> (8-OSS);
 
   return up;
-}
-
-void writeRegister(int deviceAddress, byte address, byte val) {
-  Wire.beginTransmission(deviceAddress); // start transmission to device 
-  Wire.write(address);       // send register address
-  Wire.write(val);         // send value to write
-  Wire.endTransmission();     // end transmission
-}
-
-int readRegister(int deviceAddress, byte address){
-
-  int v;
-  Wire.beginTransmission(deviceAddress);
-  Wire.write(address); // register to read
-  Wire.endTransmission();
-
-  Wire.requestFrom(deviceAddress, 1); // read a byte
-
-  while(!Wire.available()) {
-    // waiting
-  }
-
-  v = Wire.read();
-  return v;
 }
 
 float calcAltitude(float pressure){

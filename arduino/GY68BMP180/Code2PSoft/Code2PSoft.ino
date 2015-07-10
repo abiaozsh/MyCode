@@ -308,12 +308,14 @@ int mc;
 int md;
 long b5; 
 
-SoftI2CMaster i2c = SoftI2CMaster();
+SoftI2CMaster i2c = SoftI2CMaster(sclPin,sdaPin,false);
 
 void setup(){
   Serial.begin(9600);
-  i2c.setPins(sclPin,sdaPin,false);
+  Serial.println();
+  Serial.println();
   bmp085Calibration();
+  Serial.println();
   delay(1000);
 }
 
@@ -407,7 +409,10 @@ char bmp085Read(unsigned char address)
   i2c.write(address);
   i2c.endTransmission();
   i2c.requestFrom(BMP085_ADDRESS);
-  return i2c.read();
+  uint8_t msb = i2c.read();
+  Serial.print(msb);
+  Serial.print(",");
+  return msb;
 }
 
 // Read 2 bytes from the BMP085
@@ -425,6 +430,10 @@ int bmp085ReadInt(unsigned char address)
 
   msb = i2c.read();
   lsb = i2c.read();
+  Serial.print(msb);
+  Serial.print(",");
+  Serial.print(lsb);
+  Serial.print(",");
 
   return (int) msb<<8 | lsb;
 }
@@ -472,24 +481,6 @@ unsigned long bmp085ReadUP(){
   up = (((unsigned long) msb << 16) | ((unsigned long) lsb << 8) | (unsigned long) xlsb) >> (8-OSS);
 
   return up;
-}
-
-void writeRegister(int deviceAddress, byte address, byte val) {
-  i2c.beginTransmission(deviceAddress); // start transmission to device 
-  i2c.write(address);       // send register address
-  i2c.write(val);         // send value to write
-  i2c.endTransmission();     // end transmission
-}
-
-int readRegister(int deviceAddress, byte address){
-
-  int v;
-  i2c.beginTransmission(deviceAddress);
-  i2c.write(address); // register to read
-  i2c.endTransmission();
-  i2c.requestFrom(deviceAddress); // read a byte
-  v = i2c.read();
-  return v;
 }
 
 float calcAltitude(float pressure){
