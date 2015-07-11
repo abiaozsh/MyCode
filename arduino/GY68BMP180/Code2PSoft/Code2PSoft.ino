@@ -1,252 +1,143 @@
-#include <util/delay.h>
-class SoftI2CMaster
+
+
+void dly()
 {
-	private:
-	// per object data
-	uint8_t _sclPin;
-	uint8_t _sdaPin;
-	uint8_t _sclBitMask;
-	uint8_t _sdaBitMask;
-	volatile uint8_t *_sclPortReg;
-	volatile uint8_t *_sdaPortReg;
-	volatile uint8_t *_sclDirReg;
-	volatile uint8_t *_sdaDirReg;
-	uint8_t usePullups;
-	// private methods
-	void i2c_writebit( uint8_t c );
-	uint8_t i2c_readbit(void);
-	void i2c_init(void);
-	void i2c_start(void);
-	void i2c_repstart(void);
-	void i2c_stop(void);
-	uint8_t i2c_write( uint8_t c );
-	uint8_t i2c_read( uint8_t ack );
-	public:
-	// public methods
-	SoftI2CMaster();
-	SoftI2CMaster(uint8_t sclPin, uint8_t sdaPin);
-	SoftI2CMaster(uint8_t sclPin, uint8_t sdaPin, uint8_t usePullups);
-	void setPins(uint8_t sclPin, uint8_t sdaPin, uint8_t usePullups);
-	uint8_t beginTransmission(uint8_t address);
-	uint8_t beginTransmission(int address);
-	uint8_t endTransmission(void);
-	uint8_t write(uint8_t);
-	void write(uint8_t*, uint8_t);
-	void write(int);
-	void write(char*);
-	uint8_t requestFrom(int address);
-	uint8_t requestFrom(uint8_t address);
-	uint8_t read( uint8_t ack );
-	uint8_t read();
-	uint8_t readLast();
-};
+	for(uint8_t i=0;i<200;i++)
+	{
+		volatile uint8_t v=0;
+		v++;
+	}
+}
+#define BIT_SCL  _BV(5)
+#define DDR_SCL  DDRC
+#define PORT_SCL PORTC
 
+#define BIT_SDA  _BV(4)
+#define DDR_SDA  DDRC
+#define PORT_SDA PORTC
+#define PIN_SDA  PINC
 
-
-
-
-
-
-#include <string.h>
-#define i2cbitdelay 50
 #define I2C_ACK 1
 #define I2C_NAK 0
-#define i2c_scl_release() *_sclDirReg &=~ _sclBitMask
-#define i2c_sda_release() *_sdaDirReg &=~ _sdaBitMask
+#define i2c_scl_release() DDR_SCL &= ~BIT_SCL
+#define i2c_sda_release() DDR_SDA &= ~BIT_SDA
 // sets SCL low and drives output
-#define i2c_scl_lo() *_sclPortReg &=~ _sclBitMask; *_sclDirReg |= _sclBitMask;
+#define i2c_scl_lo() PORT_SCL &= ~BIT_SCL; DDR_SCL |= BIT_SCL;
 // sets SDA low and drives output
-#define i2c_sda_lo() *_sdaPortReg &=~ _sdaBitMask; *_sdaDirReg |= _sdaBitMask;
+#define i2c_sda_lo() PORT_SDA &= ~BIT_SDA; DDR_SDA |= BIT_SDA;
 // set SCL high and to input (releases pin) (i.e. change to input,turnon pullup)
-#define i2c_scl_hi() *_sclDirReg &=~ _sclBitMask; if(usePullups) { *_sclPortReg |= _sclBitMask; }
+#define i2c_scl_hi() DDR_SCL &=~ BIT_SCL;
 // set SDA high and to input (releases pin) (i.e. change to input,turnon pullup)
-#define i2c_sda_hi() *_sdaDirReg &=~ _sdaBitMask; if(usePullups) { *_sdaPortReg |= _sdaBitMask; }
+#define i2c_sda_hi() DDR_SDA &=~ BIT_SDA;
+
 //
-// Constructor
-//
-SoftI2CMaster::SoftI2CMaster()
+void i2c_SoftI2CMaster()
 {
-// do nothing, use setPins() later
+i2c_sda_hi();
+i2c_scl_hi();
+dly();
 }
 //
-SoftI2CMaster::SoftI2CMaster(uint8_t sclPin, uint8_t sdaPin)
-{
-setPins(sclPin, sdaPin, true);
-i2c_init();
-}
-//
-SoftI2CMaster::SoftI2CMaster(uint8_t sclPin, uint8_t sdaPin, uint8_t pullups)
-{
-setPins(sclPin, sdaPin, pullups);
-i2c_init();
-}
-//
-// Turn Arduino pin numbers into PORTx, DDRx, and PINx
-//
-void SoftI2CMaster::setPins(uint8_t sclPin, uint8_t sdaPin, uint8_t pullups)
-{
-uint8_t port;
-usePullups = pullups;
-_sclPin = sclPin;
-_sdaPin = sdaPin;
-_sclBitMask = digitalPinToBitMask(sclPin);
-_sdaBitMask = digitalPinToBitMask(sdaPin);
-port = digitalPinToPort(sclPin);
-_sclPortReg = portOutputRegister(port);
-_sclDirReg = portModeRegister(port);
-port = digitalPinToPort(sdaPin);
-_sdaPortReg = portOutputRegister(port);
-_sdaDirReg = portModeRegister(port);
-}
-//
-//
-//
-uint8_t SoftI2CMaster::beginTransmission(uint8_t address)
+uint8_t i2c_beginTransmission(uint8_t address)
 {
 i2c_start();
 uint8_t rc = i2c_write((address<<1) | 0); // clr read bit
 return rc;
 }
 //
-uint8_t SoftI2CMaster::requestFrom(uint8_t address)
+uint8_t i2c_requestFrom(uint8_t address)
 {
 i2c_start();
 uint8_t rc = i2c_write((address<<1) | 1); // set read bit
 return rc;
 }
 //
-uint8_t SoftI2CMaster::requestFrom(int address)
-{
-return requestFrom( (uint8_t) address);
-}
-//
-uint8_t SoftI2CMaster::beginTransmission(int address)
-{
-return beginTransmission((uint8_t)address);
-}
 //
 //
-//
-uint8_t SoftI2CMaster::endTransmission(void)
+uint8_t i2c_endTransmission(void)
 {
 i2c_stop();
 //return ret; // FIXME
 return 0;
 }
+
 // must be called in:
 // slave tx event callback
 // or after beginTransmission(address)
-uint8_t SoftI2CMaster::write(uint8_t data)
-{
-return i2c_write(data);
-}
-// must be called in:
-// slave tx event callback
-// or after beginTransmission(address)
-void SoftI2CMaster::write(uint8_t* data, uint8_t quantity)
+void i2c_write(uint8_t* data, uint8_t quantity)
 {
 for(uint8_t i = 0; i < quantity; ++i){
-write(data[i]);
+i2c_write(data[i]);
 }
 }
-// must be called in:
-// slave tx event callback
-// or after beginTransmission(address)
-void SoftI2CMaster::write(char* data)
-{
-write((uint8_t*)data, strlen(data));
-}
-// must be called in:
-// slave tx event callback
-// or after beginTransmission(address)
-void SoftI2CMaster::write(int data)
-{
-write((uint8_t)data);
-}
+
 //--------------------------------------------------------------------
-void SoftI2CMaster::i2c_writebit( uint8_t c )
+void i2c_writebit( uint8_t c )
 {
 if ( c > 0 ) {
 i2c_sda_hi();
 } else {
 i2c_sda_lo();
 }
-_delay_us(i2cbitdelay);
 i2c_scl_hi();
-_delay_us(i2cbitdelay);
+dly();
 i2c_scl_lo();
-_delay_us(i2cbitdelay);
+dly();
 if ( c > 0 ) {
 i2c_sda_lo();
 }
-_delay_us(i2cbitdelay);
+dly();
 }
 //
-uint8_t SoftI2CMaster::i2c_readbit(void)
+uint8_t i2c_readbit(void)
 {
 i2c_sda_hi();
 i2c_scl_hi();
-_delay_us(i2cbitdelay);
-uint8_t port = digitalPinToPort(_sdaPin);
-volatile uint8_t* pinReg = portInputRegister(port);
-uint8_t c = *pinReg; // I2C_PIN;
+dly();
+uint8_t c = PIN_SDA; // I2C_PIN;
 i2c_scl_lo();
-_delay_us(i2cbitdelay);
-return ( c & _sdaBitMask) ? 1 : 0;
-}
-// Inits bitbanging port, must be called before using the functions below
-//
-void SoftI2CMaster::i2c_init(void)
-{
-//I2C_PORT &=~ (_BV( I2C_SDA ) | _BV( I2C_SCL ));
-//*_sclPortReg &=~ (_sdaBitMask | _sclBitMask);
-i2c_sda_hi();
-i2c_scl_hi();
-_delay_us(i2cbitdelay);
+dly();
+return ( c & BIT_SDA) ? 1 : 0;
 }
 // Send a START Condition
 //
-void SoftI2CMaster::i2c_start(void)
+void i2c_start(void)
 {
 // set both to high at the same time
-//I2C_DDR &=~ (_BV( I2C_SDA ) | _BV( I2C_SCL ));
-//*_sclDirReg &=~ (_sdaBitMask | _sclBitMask);
 i2c_sda_hi();
 i2c_scl_hi();
-_delay_us(i2cbitdelay);
+dly();
 i2c_sda_lo();
-_delay_us(i2cbitdelay);
+dly();
 i2c_scl_lo();
-_delay_us(i2cbitdelay);
+dly();
 }
-void SoftI2CMaster::i2c_repstart(void)
+void i2c_repstart(void)
 {
 // set both to high at the same time (releases drive on both lines)
-//I2C_DDR &=~ (_BV( I2C_SDA ) | _BV( I2C_SCL ));
-//*_sclDirReg &=~ (_sdaBitMask | _sclBitMask);
 i2c_sda_hi();
 i2c_scl_hi();
 i2c_scl_lo(); // force SCL low
-_delay_us(i2cbitdelay);
+dly();
 i2c_sda_release(); // release SDA
-_delay_us(i2cbitdelay);
+dly();
 i2c_scl_release(); // release SCL
-_delay_us(i2cbitdelay);
+dly();
 i2c_sda_lo(); // force SDA low
-_delay_us(i2cbitdelay);
+dly();
 }
 // Send a STOP Condition
 //
-void SoftI2CMaster::i2c_stop(void)
+void i2c_stop(void)
 {
 i2c_scl_hi();
-_delay_us(i2cbitdelay);
+dly();
 i2c_sda_hi();
-_delay_us(i2cbitdelay);
+dly();
 }
 // write a byte to the I2C slave device
 //
-uint8_t SoftI2CMaster::i2c_write( uint8_t c )
+uint8_t i2c_write( uint8_t c )
 {
 for ( uint8_t i=0;i<8;i++) {
 i2c_writebit( c & 128 );
@@ -256,7 +147,7 @@ return i2c_readbit();
 }
 // read a byte from the I2C slave device
 //
-uint8_t SoftI2CMaster::i2c_read( uint8_t ack )
+uint8_t i2c_read( uint8_t ack )
 {
 uint8_t res = 0;
 for ( uint8_t i=0;i<8;i++) {
@@ -267,30 +158,20 @@ if ( ack )
 i2c_writebit( 0 );
 else
 i2c_writebit( 1 );
-_delay_us(i2cbitdelay);
+dly();
 return res;
 }
-// FIXME: this isn't right, surely
-uint8_t SoftI2CMaster::read( uint8_t ack )
-{
-return i2c_read( ack );
-}
+
 //
-uint8_t SoftI2CMaster::read()
+uint8_t i2c_read()
 {
 return i2c_read( I2C_ACK );
 }
 //
-uint8_t SoftI2CMaster::readLast()
+uint8_t i2c_readLast()
 {
 return i2c_read( I2C_NAK );
 }
-
-
-
-const byte sclPin = A5; // digital pin 7 wired to 'c' on BlinkM
-const byte sdaPin = A4; // digital pin 6 wired to 'd' on BlinkM
-
 
 
 #define BMP085_ADDRESS 0x77  // I2C address of BMP085
@@ -309,11 +190,11 @@ int mc;
 int md;
 long b5; 
 
-SoftI2CMaster i2c = SoftI2CMaster(sclPin,sdaPin,false);
 
 void setup(){
   Serial.begin(9600);
   Serial.println();
+  i2c_SoftI2CMaster();
   bmp085Calibration();
   Serial.println();
   delay(1000);
@@ -405,11 +286,11 @@ long bmp085GetPressure(unsigned long up){
 char bmp085Read(unsigned char address)
 {
   unsigned char data;
-  i2c.beginTransmission(BMP085_ADDRESS);
-  i2c.write(address);
-  i2c.endTransmission();
-  i2c.requestFrom(BMP085_ADDRESS);
-  uint8_t msb = i2c.readLast();
+  i2c_beginTransmission(BMP085_ADDRESS);
+  i2c_write(address);
+  i2c_endTransmission();
+  i2c_requestFrom(BMP085_ADDRESS);
+  uint8_t msb = i2c_readLast();
   return msb;
 }
 
@@ -420,14 +301,14 @@ int bmp085ReadInt(unsigned char address)
 {
   unsigned char msb, lsb;
 
-  i2c.beginTransmission(BMP085_ADDRESS);
-  i2c.write(address);
-  i2c.endTransmission();
+  i2c_beginTransmission(BMP085_ADDRESS);
+  i2c_write(address);
+  i2c_endTransmission();
 
-  i2c.requestFrom(BMP085_ADDRESS);
+  i2c_requestFrom(BMP085_ADDRESS);
 
-  msb = i2c.read();
-  lsb = i2c.readLast();
+  msb = i2c_read();
+  lsb = i2c_readLast();
   return (int) msb<<8 | lsb;
 }
 
@@ -437,10 +318,12 @@ unsigned int bmp085ReadUT(){
 
   // Write 0x2E into Register 0xF4
   // This requests a temperature reading
-  i2c.beginTransmission(BMP085_ADDRESS);
-  i2c.write(0xF4);
-  i2c.write(0x2E);
-  i2c.endTransmission();
+  i2c_beginTransmission(BMP085_ADDRESS);
+  uint8_t d1 = 0xF4;
+  uint8_t d2 = 0x2E;
+  i2c_write(d1);
+  i2c_write(d2);
+  i2c_endTransmission();
 
   // Wait at least 4.5ms
   delay(5);
@@ -458,10 +341,12 @@ unsigned long bmp085ReadUP(){
 
   // Write 0x34+(OSS<<6) into register 0xF4
   // Request a pressure reading w/ oversampling setting
-  i2c.beginTransmission(BMP085_ADDRESS);
-  i2c.write(0xF4);
-  i2c.write(0x34 + (OSS<<6));
-  i2c.endTransmission();
+  i2c_beginTransmission(BMP085_ADDRESS);
+  uint8_t d1 = 0xF4;
+  uint8_t d2 = 0x34 + (OSS<<6);
+  i2c_write(d1);
+  i2c_write(d2);
+  i2c_endTransmission();
 
   // Wait for conversion, delay time dependent on OSS
   delay(2 + (3<<OSS));
