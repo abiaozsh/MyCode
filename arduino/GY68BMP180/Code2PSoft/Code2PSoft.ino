@@ -48,7 +48,7 @@ class SoftI2CMaster
 
 
 #include <string.h>
-#define i2cbitdelay 500
+#define i2cbitdelay 50
 #define I2C_ACK 1
 #define I2C_NAK 0
 #define i2c_scl_release() *_sclDirReg &=~ _sclBitMask
@@ -171,6 +171,7 @@ i2c_sda_hi();
 } else {
 i2c_sda_lo();
 }
+_delay_us(i2cbitdelay);
 i2c_scl_hi();
 _delay_us(i2cbitdelay);
 i2c_scl_lo();
@@ -313,7 +314,6 @@ SoftI2CMaster i2c = SoftI2CMaster(sclPin,sdaPin,false);
 void setup(){
   Serial.begin(9600);
   Serial.println();
-  Serial.println();
   bmp085Calibration();
   Serial.println();
   delay(1000);
@@ -409,9 +409,7 @@ char bmp085Read(unsigned char address)
   i2c.write(address);
   i2c.endTransmission();
   i2c.requestFrom(BMP085_ADDRESS);
-  uint8_t msb = i2c.read();
-  Serial.print(msb);
-  Serial.print(",");
+  uint8_t msb = i2c.readLast();
   return msb;
 }
 
@@ -429,12 +427,7 @@ int bmp085ReadInt(unsigned char address)
   i2c.requestFrom(BMP085_ADDRESS);
 
   msb = i2c.read();
-  lsb = i2c.read();
-  Serial.print(msb);
-  Serial.print(",");
-  Serial.print(lsb);
-  Serial.print(",");
-
+  lsb = i2c.readLast();
   return (int) msb<<8 | lsb;
 }
 
