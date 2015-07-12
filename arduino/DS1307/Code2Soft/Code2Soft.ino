@@ -2,11 +2,11 @@
 
 void dly()
 {
-	for(uint8_t i=0;i<200;i++)
-	{
-		volatile uint8_t v=0;
-		v++;
-	}
+  for(uint8_t i=0;i<200;i++)
+  {
+    volatile uint8_t v=0;
+    v++;
+  }
 }
 #define BIT_SCL  _BV(5)
 #define DDR_SCL  DDRC
@@ -33,32 +33,32 @@ void dly()
 //
 void i2c_SoftI2CMaster()
 {
-i2c_sda_hi();
-i2c_scl_hi();
-dly();
+  i2c_sda_hi();
+  i2c_scl_hi();
+  dly();
 }
 //
 uint8_t i2c_beginTransmission(uint8_t address)
 {
-i2c_start();
-uint8_t rc = i2c_write((address<<1) | 0); // clr read bit
-return rc;
+  i2c_start();
+  uint8_t rc = i2c_write((address<<1) | 0); // clr read bit
+  return rc;
 }
 //
 uint8_t i2c_requestFrom(uint8_t address)
 {
-i2c_start();
-uint8_t rc = i2c_write((address<<1) | 1); // set read bit
-return rc;
+  i2c_start();
+  uint8_t rc = i2c_write((address<<1) | 1); // set read bit
+  return rc;
 }
 //
 //
 //
 uint8_t i2c_endTransmission(void)
 {
-i2c_stop();
-//return ret; // FIXME
-return 0;
+  i2c_stop();
+  //return ret; // FIXME
+  return 0;
 }
 
 // must be called in:
@@ -66,111 +66,112 @@ return 0;
 // or after beginTransmission(address)
 void i2c_write(uint8_t* data, uint8_t quantity)
 {
-for(uint8_t i = 0; i < quantity; ++i){
-i2c_write(data[i]);
-}
+  for(uint8_t i = 0; i < quantity; ++i){
+    i2c_write(data[i]);
+  }
 }
 
 //--------------------------------------------------------------------
 void i2c_writebit( uint8_t c )
 {
-if ( c > 0 ) {
-i2c_sda_hi();
-} else {
-i2c_sda_lo();
-}
-i2c_scl_hi();
-dly();
-i2c_scl_lo();
-dly();
-if ( c > 0 ) {
-i2c_sda_lo();
-}
-dly();
+  if ( c > 0 ) {
+    i2c_sda_hi();
+  } 
+  else {
+    i2c_sda_lo();
+  }
+  i2c_scl_hi();
+  dly();
+  i2c_scl_lo();
+  dly();
+  if ( c > 0 ) {
+    i2c_sda_lo();
+  }
+  dly();
 }
 //
 uint8_t i2c_readbit(void)
 {
-i2c_sda_hi();
-i2c_scl_hi();
-dly();
-uint8_t c = PIN_SDA; // I2C_PIN;
-i2c_scl_lo();
-dly();
-return ( c & BIT_SDA) ? 1 : 0;
+  i2c_sda_hi();
+  i2c_scl_hi();
+  dly();
+  uint8_t c = PIN_SDA; // I2C_PIN;
+  i2c_scl_lo();
+  dly();
+  return ( c & BIT_SDA) ? 1 : 0;
 }
 // Send a START Condition
 //
 void i2c_start(void)
 {
-// set both to high at the same time
-i2c_sda_hi();
-i2c_scl_hi();
-dly();
-i2c_sda_lo();
-dly();
-i2c_scl_lo();
-dly();
+  // set both to high at the same time
+  i2c_sda_hi();
+  i2c_scl_hi();
+  dly();
+  i2c_sda_lo();
+  dly();
+  i2c_scl_lo();
+  dly();
 }
 void i2c_repstart(void)
 {
-// set both to high at the same time (releases drive on both lines)
-i2c_sda_hi();
-i2c_scl_hi();
-i2c_scl_lo(); // force SCL low
-dly();
-i2c_sda_release(); // release SDA
-dly();
-i2c_scl_release(); // release SCL
-dly();
-i2c_sda_lo(); // force SDA low
-dly();
+  // set both to high at the same time (releases drive on both lines)
+  i2c_sda_hi();
+  i2c_scl_hi();
+  i2c_scl_lo(); // force SCL low
+  dly();
+  i2c_sda_release(); // release SDA
+  dly();
+  i2c_scl_release(); // release SCL
+  dly();
+  i2c_sda_lo(); // force SDA low
+  dly();
 }
 // Send a STOP Condition
 //
 void i2c_stop(void)
 {
-i2c_scl_hi();
-dly();
-i2c_sda_hi();
-dly();
+  i2c_scl_hi();
+  dly();
+  i2c_sda_hi();
+  dly();
 }
 // write a byte to the I2C slave device
 //
 uint8_t i2c_write( uint8_t c )
 {
-for ( uint8_t i=0;i<8;i++) {
-i2c_writebit( c & 128 );
-c<<=1;
-}
-return i2c_readbit();
+  for ( uint8_t i=0;i<8;i++) {
+    i2c_writebit( c & 128 );
+    c<<=1;
+  }
+  return i2c_readbit();
 }
 // read a byte from the I2C slave device
 //
 uint8_t i2c_read( uint8_t ack )
 {
-uint8_t res = 0;
-for ( uint8_t i=0;i<8;i++) {
-res <<= 1;
-res |= i2c_readbit();
-}
-if ( ack )
-i2c_writebit( 0 );
-else
-i2c_writebit( 1 );
-dly();
-return res;
+  uint8_t res = 0;
+  for ( uint8_t i=0;i<8;i++) {
+    res <<= 1;
+    res |= i2c_readbit();
+  }
+  if ( ack )
+    i2c_writebit( 0 );
+  else
+    i2c_writebit( 1 );
+  dly();
+  return res;
 }
 
 //
 uint8_t i2c_read()
 {
-return i2c_read( I2C_ACK );
+  return i2c_read( I2C_ACK );
 }
 //
 uint8_t i2c_readLast()
 {
-return i2c_read( I2C_NAK );
+  return i2c_read( I2C_NAK );
 }
 
 
@@ -200,13 +201,13 @@ uint8_t DS1307_YR;// 6
 #define DS1307_CTRL_ID B1101000  //DS1307
 
 uint8_t bcdToDec(const uint8_t bcd) {
-	return (10 * ((bcd & 0xF0) >> 4) + (bcd & 0x0F));
+  return (10 * ((bcd & 0xF0) >> 4) + (bcd & 0x0F));
 }
 
 uint8_t decToBcd(const uint8_t dec) {
-	const uint8_t tens = dec / 10;
-	const uint8_t ones = dec % 10;
-	return (tens << 4) | ones;
+  const uint8_t tens = dec / 10;
+  const uint8_t ones = dec % 10;
+  return (tens << 4) | ones;
 }
 
 // Aquire data from the RTC chip in BCD format
@@ -221,14 +222,14 @@ void DS1307_read()
 
   // request the 7 bytes of data    (secs, min, hr, dow, date. mth, yr)
   i2c_requestFrom(DS1307_CTRL_ID);
-    // store data in raw bcd format
-	DS1307_SEC=bcdToDec(i2c_read());// 0
-	DS1307_MIN=bcdToDec(i2c_read());// 1
-	DS1307_HR=bcdToDec(i2c_read());// 2
-	DS1307_DOW=i2c_read();// 3
-	DS1307_DATE=bcdToDec(i2c_read());// 4
-	DS1307_MTH=bcdToDec(i2c_read());// 5
-	DS1307_YR=bcdToDec(i2c_readLast());// 6
+  // store data in raw bcd format
+  DS1307_SEC=bcdToDec(i2c_read());// 0
+  DS1307_MIN=bcdToDec(i2c_read());// 1
+  DS1307_HR=bcdToDec(i2c_read());// 2
+  DS1307_DOW=i2c_read();// 3
+  DS1307_DATE=bcdToDec(i2c_read());// 4
+  DS1307_MTH=bcdToDec(i2c_read());// 5
+  DS1307_YR=bcdToDec(i2c_readLast());// 6
 }
 
 // update the data on the IC from the bcd formatted data in the buffer
@@ -253,7 +254,7 @@ void DS1307_save()
 
 void setup()
 {
-  delay(5000);
+  delay(1000);
   Serial.begin(9600);
   Serial.setTimeout(1000);
   i2c_SoftI2CMaster();
@@ -264,25 +265,28 @@ void loop()
 {
   digitalWrite(13, HIGH);
   DS1307_read();
+  char buf[60];
+  snprintf(buf, sizeof(buf), "DS1307:%02d 20%02d-%02d-%02d %02d:%02d:%02d",DS1307_DOW, DS1307_YR, DS1307_MTH, DS1307_DATE, DS1307_HR, DS1307_MIN, DS1307_SEC);
+  Serial.println(buf);
+  if(DS1307_SEC!=80)
+  {
+    digitalWrite(13, LOW);
+  }
+  int start = Serial.parseInt();
+  if(start == 33)
+  {
+    DS1307_YR  = Serial.parseInt();
+    DS1307_MTH = Serial.parseInt();
+    DS1307_DATE = Serial.parseInt();
+    DS1307_HR  = Serial.parseInt();
+    DS1307_MIN = Serial.parseInt();
+    DS1307_SEC = Serial.parseInt();
+    DS1307_DOW= Serial.parseInt();
 
-  	char buf[60];
-	snprintf(buf, sizeof(buf), "DS1307:%02d 20%02d-%02d-%02d %02d:%02d:%02d",DS1307_DOW, DS1307_YR, DS1307_MTH, DS1307_DATE, DS1307_HR, DS1307_MIN, DS1307_SEC);
-	Serial.println(buf);
-	digitalWrite(13, LOW);
-	int start = Serial.parseInt();
-	if(start == 33)
-	{
-		DS1307_YR  = Serial.parseInt();
-		DS1307_MTH = Serial.parseInt();
-		DS1307_DATE = Serial.parseInt();
-		DS1307_HR  = Serial.parseInt();
-		DS1307_MIN = Serial.parseInt();
-		DS1307_SEC = Serial.parseInt();
-		DS1307_DOW= Serial.parseInt();
-
-		DS1307_save();
-	}
+    DS1307_save();
+  }
 }
 
 //33,15,6,26,20,39,00,5,
+
 
