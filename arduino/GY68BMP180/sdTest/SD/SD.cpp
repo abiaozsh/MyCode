@@ -7,7 +7,7 @@ boolean SDClass::begin() {
   return card.init() && volume.init(card) && root.openRoot(volume);
 }
 
-File SDClass::openSimple(const char *filepath, uint8_t mode,uint8_t toend) {
+File SDClass::openSimple(const char *filepath, uint8_t mode, uint8_t toend) {
   // Open the file itself
   SdFile file;
 
