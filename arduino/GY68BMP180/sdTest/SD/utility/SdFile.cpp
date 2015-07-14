@@ -78,76 +78,6 @@ uint8_t SdFile::close(void) {
 }
 //------------------------------------------------------------------------------
 /**
- * Check for contiguous file and return its raw block range.
- *
- * \param[out] bgnBlock the first block address for the file.
- * \param[out] endBlock the last  block address for the file.
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- * Reasons for failure include file is not contiguous, file has zero length
- * or an I/O error occurred.
- */
-uint8_t SdFile::contiguousRange(uint32_t* bgnBlock, uint32_t* endBlock) {
-  // error if no blocks
-  if (firstCluster_ == 0) return false;
-
-  for (uint32_t c = firstCluster_; ; c++) {
-    uint32_t next;
-    if (!vol_->fatGet(c, &next)) return false;
-
-    // check for contiguous
-    if (next != (c + 1)) {
-      // error if not end of chain
-      if (!vol_->isEOC(next)) return false;
-      *bgnBlock = vol_->clusterStartBlock(firstCluster_);
-      *endBlock = vol_->clusterStartBlock(c)
-                  + vol_->blocksPerCluster_ - 1;
-      return true;
-    }
-  }
-}
-//------------------------------------------------------------------------------
-/**
- * Create and open a new contiguous file of a specified size.
- *
- * \note This function only supports short DOS 8.3 names.
- * See open() for more information.
- *
- * \param[in] dirFile The directory where the file will be created.
- * \param[in] fileName A valid DOS 8.3 file name.
- * \param[in] size The desired file size.
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- * Reasons for failure include \a fileName contains
- * an invalid DOS 8.3 file name, the FAT volume has not been initialized,
- * a file is already open, the file already exists, the root
- * directory is full or an I/O error.
- *
- */
-uint8_t SdFile::createContiguous(SdFile* dirFile,
-        const char* fileName, uint32_t size) {
-  // don't allow zero length file
-  if (size == 0) return false;
-  if (!open(dirFile, fileName, O_CREAT | O_EXCL | O_RDWR)) return false;
-
-  // calculate number of clusters needed
-  uint32_t count = ((size - 1) >> (vol_->clusterSizeShift_ + 9)) + 1;
-
-  // allocate clusters
-  if (!vol_->allocContiguous(count, &firstCluster_)) {
-    remove();
-    return false;
-  }
-  fileSize_ = size;
-
-  // insure sync() will update dir entry
-  flags_ |= F_FILE_DIR_DIRTY;
-  return sync();
-}
-//------------------------------------------------------------------------------
-/**
  * Return a files directory entry
  *
  * \param[out] dir Location for return of the files directory entry.
@@ -185,62 +115,6 @@ void SdFile::dirName(const dir_t& dir, char* name) {
   name[j] = 0;
 }
 //------------------------------------------------------------------------------
-/** List directory contents to Serial.
- *
- * \param[in] flags The inclusive OR of
- *
- * LS_DATE - %Print file modification date
- *
- * LS_SIZE - %Print file size.
- *
- * LS_R - Recursive list of subdirectories.
- *
- * \param[in] indent Amount of space before file name. Used for recursive
- * list to indicate subdirectory level.
- */
-void SdFile::ls(uint8_t flags, uint8_t indent) {
-  dir_t* p;
-
-  rewind();
-  while ((p = readDirCache())) {
-    // done if past last used entry
-    if (p->name[0] == DIR_NAME_FREE) break;
-
-    // skip deleted entry and entries for . and  ..
-    if (p->name[0] == DIR_NAME_DELETED || p->name[0] == '.') continue;
-
-    // only list subdirectories and files
-    if (!DIR_IS_FILE_OR_SUBDIR(p)) continue;
-
-    // print any indent spaces
-    for (int8_t i = 0; i < indent; i++) Serial.print(' ');
-
-    // print file name with possible blank fill
-    printDirName(*p, flags & (LS_DATE | LS_SIZE) ? 14 : 0);
-
-    // print modify date/time if requested
-    if (flags & LS_DATE) {
-       printFatDate(p->lastWriteDate);
-       Serial.print(' ');
-       printFatTime(p->lastWriteTime);
-    }
-    // print size if requested
-    if (!DIR_IS_SUBDIR(p) && (flags & LS_SIZE)) {
-      Serial.print(' ');
-      Serial.print(p->fileSize);
-    }
-    Serial.println();
-
-    // list subdirectory content if requested
-    if ((flags & LS_R) && DIR_IS_SUBDIR(p)) {
-      uint16_t index = curPosition()/32 - 1;
-      SdFile s;
-      if (s.open(this, index, O_READ)) s.ls(flags, indent + 2);
-      seekSet(32 * (index + 1));
-    }
-  }
-}
-//------------------------------------------------------------------------------
 // format directory name field from a 8.3 name string
 uint8_t SdFile::make83Name(const char* str, uint8_t* name) {
   uint8_t c;
@@ -267,72 +141,6 @@ uint8_t SdFile::make83Name(const char* str, uint8_t* name) {
   }
   // must have a file name, extension is optional
   return name[0] != ' ';
-}
-//------------------------------------------------------------------------------
-/** Make a new directory.
- *
- * \param[in] dir An open SdFat instance for the directory that will containing
- * the new directory.
- *
- * \param[in] dirName A valid 8.3 DOS name for the new directory.
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- * Reasons for failure include this SdFile is already open, \a dir is not a
- * directory, \a dirName is invalid or already exists in \a dir.
- */
-uint8_t SdFile::makeDir(SdFile* dir, const char* dirName) {
-  dir_t d;
-
-  // create a normal file
-  if (!open(dir, dirName, O_CREAT | O_EXCL | O_RDWR)) return false;
-
-  // convert SdFile to directory
-  flags_ = O_READ;
-  type_ = FAT_FILE_TYPE_SUBDIR;
-
-  // allocate and zero first cluster
-  if (!addDirCluster())return false;
-
-  // force entry to SD
-  if (!sync()) return false;
-
-  // cache entry - should already be in cache due to sync() call
-  dir_t* p = cacheDirEntry(SdVolume::CACHE_FOR_WRITE);
-  if (!p) return false;
-
-  // change directory entry  attribute
-  p->attributes = DIR_ATT_DIRECTORY;
-
-  // make entry for '.'
-  memcpy(&d, p, sizeof(d));
-  for (uint8_t i = 1; i < 11; i++) d.name[i] = ' ';
-  d.name[0] = '.';
-
-  // cache block for '.'  and '..'
-  uint32_t block = vol_->clusterStartBlock(firstCluster_);
-  if (!SdVolume::cacheRawBlock(block, SdVolume::CACHE_FOR_WRITE)) return false;
-
-  // copy '.' to block
-  memcpy(&SdVolume::cacheBuffer_.dir[0], &d, sizeof(d));
-
-  // make entry for '..'
-  d.name[1] = '.';
-  if (dir->isRoot()) {
-    d.firstClusterLow = 0;
-    d.firstClusterHigh = 0;
-  } else {
-    d.firstClusterLow = dir->firstCluster_ & 0XFFFF;
-    d.firstClusterHigh = dir->firstCluster_ >> 16;
-  }
-  // copy '..' to block
-  memcpy(&SdVolume::cacheBuffer_.dir[1], &d, sizeof(d));
-
-  // set position after '..'
-  curPosition_ = 2 * sizeof(d);
-
-  // write first block
-  return SdVolume::cacheFlush();
 }
 //------------------------------------------------------------------------------
 /**
@@ -459,45 +267,6 @@ uint8_t SdFile::open(SdFile* dirFile, const char* fileName, uint8_t oflag) {
   return openCachedEntry(dirIndex_, oflag);
 }
 //------------------------------------------------------------------------------
-/**
- * Open a file by index.
- *
- * \param[in] dirFile An open SdFat instance for the directory.
- *
- * \param[in] index The \a index of the directory entry for the file to be
- * opened.  The value for \a index is (directory file position)/32.
- *
- * \param[in] oflag Values for \a oflag are constructed by a bitwise-inclusive
- * OR of flags O_READ, O_WRITE, O_TRUNC, and O_SYNC.
- *
- * See open() by fileName for definition of flags and return values.
- *
- */
-uint8_t SdFile::open(SdFile* dirFile, uint16_t index, uint8_t oflag) {
-  // error if already open
-  if (isOpen())return false;
-
-  // don't open existing file if O_CREAT and O_EXCL - user call error
-  if ((oflag & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL)) return false;
-
-  vol_ = dirFile->vol_;
-
-  // seek to location of entry
-  if (!dirFile->seekSet(32 * index)) return false;
-
-  // read entry into cache
-  dir_t* p = dirFile->readDirCache();
-  if (p == NULL) return false;
-
-  // error if empty slot or '.' or '..'
-  if (p->name[0] == DIR_NAME_FREE ||
-      p->name[0] == DIR_NAME_DELETED || p->name[0] == '.') {
-    return false;
-  }
-  // open cached entry
-  return openCachedEntry(index & 0XF, oflag);
-}
-//------------------------------------------------------------------------------
 // open a cached directory entry. Assumes vol_ is initializes
 uint8_t SdFile::openCachedEntry(uint8_t dirIndex, uint8_t oflag) {
   // location of entry in cache
@@ -577,72 +346,6 @@ uint8_t SdFile::openRoot(SdVolume* vol) {
   return true;
 }
 //------------------------------------------------------------------------------
-/** %Print the name field of a directory entry in 8.3 format to Serial.
- *
- * \param[in] dir The directory structure containing the name.
- * \param[in] width Blank fill name if length is less than \a width.
- */
-void SdFile::printDirName(const dir_t& dir, uint8_t width) {
-  uint8_t w = 0;
-  for (uint8_t i = 0; i < 11; i++) {
-    if (dir.name[i] == ' ')continue;
-    if (i == 8) {
-      Serial.print('.');
-      w++;
-    }
-    Serial.write(dir.name[i]);
-    w++;
-  }
-  if (DIR_IS_SUBDIR(&dir)) {
-    Serial.print('/');
-    w++;
-  }
-  while (w < width) {
-    Serial.print(' ');
-    w++;
-  }
-}
-//------------------------------------------------------------------------------
-/** %Print a directory date field to Serial.
- *
- *  Format is yyyy-mm-dd.
- *
- * \param[in] fatDate The date field from a directory entry.
- */
-void SdFile::printFatDate(uint16_t fatDate) {
-  Serial.print(FAT_YEAR(fatDate));
-  Serial.print('-');
-  printTwoDigits(FAT_MONTH(fatDate));
-  Serial.print('-');
-  printTwoDigits(FAT_DAY(fatDate));
-}
-//------------------------------------------------------------------------------
-/** %Print a directory time field to Serial.
- *
- * Format is hh:mm:ss.
- *
- * \param[in] fatTime The time field from a directory entry.
- */
-void SdFile::printFatTime(uint16_t fatTime) {
-  printTwoDigits(FAT_HOUR(fatTime));
-  Serial.print(':');
-  printTwoDigits(FAT_MINUTE(fatTime));
-  Serial.print(':');
-  printTwoDigits(FAT_SECOND(fatTime));
-}
-//------------------------------------------------------------------------------
-/** %Print a value as two digits to Serial.
- *
- * \param[in] v Value to be printed, 0 <= \a v <= 99
- */
-void SdFile::printTwoDigits(uint8_t v) {
-  char str[3];
-  str[0] = '0' + v/10;
-  str[1] = '0' + v % 10;
-  str[2] = 0;
-  Serial.print(str);
-}
-//------------------------------------------------------------------------------
 /**
  * Read data from a file starting at the current position.
  *
@@ -710,34 +413,6 @@ int16_t SdFile::read(void* buf, uint16_t nbyte) {
   return nbyte;
 }
 //------------------------------------------------------------------------------
-/**
- * Read the next directory entry from a directory file.
- *
- * \param[out] dir The dir_t struct that will receive the data.
- *
- * \return For success readDir() returns the number of bytes read.
- * A value of zero will be returned if end of file is reached.
- * If an error occurs, readDir() returns -1.  Possible errors include
- * readDir() called before a directory has been opened, this is not
- * a directory file or an I/O error occurred.
- */
-int8_t SdFile::readDir(dir_t* dir) {
-  int8_t n;
-  // if not a directory file or miss-positioned return an error
-  if (!isDir() || (0X1F & curPosition_)) return -1;
-
-  while ((n = read(dir, sizeof(dir_t))) == sizeof(dir_t)) {
-    // last entry if DIR_NAME_FREE
-    if (dir->name[0] == DIR_NAME_FREE) break;
-    // skip empty entries and entry for .  and ..
-    if (dir->name[0] == DIR_NAME_DELETED || dir->name[0] == '.') continue;
-    // return if normal file or subdirectory
-    if (DIR_IS_FILE_OR_SUBDIR(dir)) return n;
-  }
-  // error, end of file, or past last entry
-  return n < 0 ? -1 : 0;
-}
-//------------------------------------------------------------------------------
 // Read next directory entry into the cache
 // Assumes file is correctly positioned
 dir_t* SdFile::readDirCache(void) {
@@ -755,100 +430,6 @@ dir_t* SdFile::readDirCache(void) {
 
   // return pointer to entry
   return (SdVolume::cacheBuffer_.dir + i);
-}
-//------------------------------------------------------------------------------
-/**
- * Remove a file.
- *
- * The directory entry and all data for the file are deleted.
- *
- * \note This function should not be used to delete the 8.3 version of a
- * file that has a long name. For example if a file has the long name
- * "New Text Document.txt" you should not delete the 8.3 name "NEWTEX~1.TXT".
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- * Reasons for failure include the file read-only, is a directory,
- * or an I/O error occurred.
- */
-uint8_t SdFile::remove(void) {
-  // free any clusters - will fail if read-only or directory
-  if (!truncate(0)) return false;
-
-  // cache directory entry
-  dir_t* d = cacheDirEntry(SdVolume::CACHE_FOR_WRITE);
-  if (!d) return false;
-
-  // mark entry deleted
-  d->name[0] = DIR_NAME_DELETED;
-
-  // set this SdFile closed
-  type_ = FAT_FILE_TYPE_CLOSED;
-
-  // write entry to SD
-  return SdVolume::cacheFlush();
-}
-//------------------------------------------------------------------------------
-/**
- * Remove a file.
- *
- * The directory entry and all data for the file are deleted.
- *
- * \param[in] dirFile The directory that contains the file.
- * \param[in] fileName The name of the file to be removed.
- *
- * \note This function should not be used to delete the 8.3 version of a
- * file that has a long name. For example if a file has the long name
- * "New Text Document.txt" you should not delete the 8.3 name "NEWTEX~1.TXT".
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- * Reasons for failure include the file is a directory, is read only,
- * \a dirFile is not a directory, \a fileName is not found
- * or an I/O error occurred.
- */
-uint8_t SdFile::remove(SdFile* dirFile, const char* fileName) {
-  SdFile file;
-  if (!file.open(dirFile, fileName, O_WRITE)) return false;
-  return file.remove();
-}
-//------------------------------------------------------------------------------
-/** Remove a directory file.
- *
- * The directory file will be removed only if it is empty and is not the
- * root directory.  rmDir() follows DOS and Windows and ignores the
- * read-only attribute for the directory.
- *
- * \note This function should not be used to delete the 8.3 version of a
- * directory that has a long name. For example if a directory has the
- * long name "New folder" you should not delete the 8.3 name "NEWFOL~1".
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- * Reasons for failure include the file is not a directory, is the root
- * directory, is not empty, or an I/O error occurred.
- */
-uint8_t SdFile::rmDir(void) {
-  // must be open subdirectory
-  if (!isSubDir()) return false;
-
-  rewind();
-
-  // make sure directory is empty
-  while (curPosition_ < fileSize_) {
-    dir_t* p = readDirCache();
-    if (p == NULL) return false;
-    // done if past last used entry
-    if (p->name[0] == DIR_NAME_FREE) break;
-    // skip empty slot or '.' or '..'
-    if (p->name[0] == DIR_NAME_DELETED || p->name[0] == '.') continue;
-    // error not empty
-    if (DIR_IS_FILE_OR_SUBDIR(p)) return false;
-  }
-  // convert empty directory to normal file for remove
-  type_ = FAT_FILE_TYPE_NORMAL;
-  flags_ |= O_WRITE;
-  return remove();
 }
 //------------------------------------------------------------------------------
 /**
@@ -924,76 +505,6 @@ uint8_t SdFile::sync(void) {
     flags_ &= ~F_FILE_DIR_DIRTY;
   }
   return SdVolume::cacheFlush();
-}
-//------------------------------------------------------------------------------
-/**
- * Set a file's timestamps in its directory entry.
- *
- * \param[in] flags Values for \a flags are constructed by a bitwise-inclusive
- * OR of flags from the following list
- *
- * T_ACCESS - Set the file's last access date.
- *
- * T_CREATE - Set the file's creation date and time.
- *
- * T_WRITE - Set the file's last write/modification date and time.
- *
- * \param[in] year Valid range 1980 - 2107 inclusive.
- *
- * \param[in] month Valid range 1 - 12 inclusive.
- *
- * \param[in] day Valid range 1 - 31 inclusive.
- *
- * \param[in] hour Valid range 0 - 23 inclusive.
- *
- * \param[in] minute Valid range 0 - 59 inclusive.
- *
- * \param[in] second Valid range 0 - 59 inclusive
- *
- * \note It is possible to set an invalid date since there is no check for
- * the number of days in a month.
- *
- * \note
- * Modify and access timestamps may be overwritten if a date time callback
- * function has been set by dateTimeCallback().
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- */
-uint8_t SdFile::timestamp(uint8_t flags, uint16_t year, uint8_t month,
-         uint8_t day, uint8_t hour, uint8_t minute, uint8_t second) {
-  if (!isOpen()
-    || year < 1980
-    || year > 2107
-    || month < 1
-    || month > 12
-    || day < 1
-    || day > 31
-    || hour > 23
-    || minute > 59
-    || second > 59) {
-      return false;
-  }
-  dir_t* d = cacheDirEntry(SdVolume::CACHE_FOR_WRITE);
-  if (!d) return false;
-
-  uint16_t dirDate = FAT_DATE(year, month, day);
-  uint16_t dirTime = FAT_TIME(hour, minute, second);
-  if (flags & T_ACCESS) {
-    d->lastAccessDate = dirDate;
-  }
-  if (flags & T_CREATE) {
-    d->creationDate = dirDate;
-    d->creationTime = dirTime;
-    // seems to be units of 1/100 second not 1/10 as Microsoft states
-    d->creationTimeTenths = second & 1 ? 100 : 0;
-  }
-  if (flags & T_WRITE) {
-    d->lastWriteDate = dirDate;
-    d->lastWriteTime = dirTime;
-  }
-  SdVolume::cacheSetDirty();
-  return sync();
 }
 //------------------------------------------------------------------------------
 /**

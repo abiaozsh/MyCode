@@ -367,16 +367,8 @@ uint8_t const DIR_ATT_DIRECTORY = 0X10;
 /** Old DOS archive bit for backup support */
 uint8_t const DIR_ATT_ARCHIVE = 0X20;
 /** Test value for long name entry.  Test is
-  (d->attributes & DIR_ATT_LONG_NAME_MASK) == DIR_ATT_LONG_NAME. */
-uint8_t const DIR_ATT_LONG_NAME = 0X0F;
-/** Test mask for long name entry */
-uint8_t const DIR_ATT_LONG_NAME_MASK = 0X3F;
 /** defined attribute bits */
 uint8_t const DIR_ATT_DEFINED_BITS = 0X3F;
-/** Directory entry is part of a long name */
-static inline uint8_t DIR_IS_LONG_NAME(const dir_t* dir) {
-  return (dir->attributes & DIR_ATT_LONG_NAME_MASK) == DIR_ATT_LONG_NAME;
-}
 /** Mask for file/subdirectory tests */
 uint8_t const DIR_ATT_FILE_TYPE_MASK = (DIR_ATT_VOLUME_ID | DIR_ATT_DIRECTORY);
 /** Directory entry is for a file */

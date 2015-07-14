@@ -150,9 +150,6 @@ class SdFile : public Print {
     flags_ &= ~F_FILE_UNBUFFERED_READ;
   }
   uint8_t close(void);
-  uint8_t contiguousRange(uint32_t* bgnBlock, uint32_t* endBlock);
-  uint8_t createContiguous(SdFile* dirFile,
-          const char* fileName, uint32_t size);
   /** \return The current cluster number for a file or directory. */
   uint32_t curCluster(void) const {return curCluster_;}
   /** \return The current position for a file or directory. */
@@ -218,16 +215,10 @@ class SdFile : public Print {
   uint8_t isRoot(void) const {
     return type_ == FAT_FILE_TYPE_ROOT16 || type_ == FAT_FILE_TYPE_ROOT32;
   }
-  void ls(uint8_t flags = 0, uint8_t indent = 0);
-  uint8_t makeDir(SdFile* dir, const char* dirName);
   uint8_t open(SdFile* dirFile, uint16_t index, uint8_t oflag);
   uint8_t open(SdFile* dirFile, const char* fileName, uint8_t oflag);
 
   uint8_t openRoot(SdVolume* vol);
-  static void printDirName(const dir_t& dir, uint8_t width);
-  static void printFatDate(uint16_t fatDate);
-  static void printFatTime(uint16_t fatTime);
-  static void printTwoDigits(uint8_t v);
   /**
    * Read the next byte from a file.
    *
@@ -239,14 +230,10 @@ class SdFile : public Print {
     return read(&b, 1) == 1 ? b : -1;
   }
   int16_t read(void* buf, uint16_t nbyte);
-  int8_t readDir(dir_t* dir);
-  static uint8_t remove(SdFile* dirFile, const char* fileName);
-  uint8_t remove(void);
   /** Set the file's current position to zero. */
   void rewind(void) {
     curPosition_ = curCluster_ = 0;
   }
-  uint8_t rmDir(void);
   /** Set the files position to current position + \a pos. See seekSet(). */
   uint8_t seekCur(uint32_t pos) {
     return seekSet(curPosition_ + pos);
@@ -266,8 +253,6 @@ class SdFile : public Print {
   void setUnbufferedRead(void) {
     if (isFile()) flags_ |= F_FILE_UNBUFFERED_READ;
   }
-  uint8_t timestamp(uint8_t flag, uint16_t year, uint8_t month, uint8_t day,
-          uint8_t hour, uint8_t minute, uint8_t second);
   uint8_t sync(void);
   /** Type of this SdFile.  You should use isFile() or isDir() instead of type()
    * if possible.
@@ -289,21 +274,6 @@ class SdFile : public Print {
   void writeln_P(PGM_P str);
 //------------------------------------------------------------------------------
 #if ALLOW_DEPRECATED_FUNCTIONS
-// Deprecated functions  - suppress cpplint warnings with NOLINT comment
-  /** \deprecated Use:
-   * uint8_t SdFile::contiguousRange(uint32_t* bgnBlock, uint32_t* endBlock);
-   */
-  uint8_t contiguousRange(uint32_t& bgnBlock, uint32_t& endBlock) {  // NOLINT
-    return contiguousRange(&bgnBlock, &endBlock);
-  }
- /** \deprecated Use:
-   * uint8_t SdFile::createContiguous(SdFile* dirFile,
-   *   const char* fileName, uint32_t size)
-   */
-  uint8_t createContiguous(SdFile& dirFile,  // NOLINT
-    const char* fileName, uint32_t size) {
-    return createContiguous(&dirFile, fileName, size);
-  }
 
   /**
    * \deprecated Use:
@@ -317,12 +287,6 @@ class SdFile : public Print {
   }
   /** \deprecated Use: uint8_t SdFile::dirEntry(dir_t* dir); */
   uint8_t dirEntry(dir_t& dir) {return dirEntry(&dir);}  // NOLINT
-  /** \deprecated Use:
-   * uint8_t SdFile::makeDir(SdFile* dir, const char* dirName);
-   */
-  uint8_t makeDir(SdFile& dir, const char* dirName) {  // NOLINT
-    return makeDir(&dir, dirName);
-  }
   /** \deprecated Use:
    * uint8_t SdFile::open(SdFile* dirFile, const char* fileName, uint8_t oflag);
    */
@@ -343,14 +307,6 @@ class SdFile : public Print {
   /** \deprecated Use: uint8_t SdFile::openRoot(SdVolume* vol); */
   uint8_t openRoot(SdVolume& vol) {return openRoot(&vol);}  // NOLINT
 
-  /** \deprecated Use: int8_t SdFile::readDir(dir_t* dir); */
-  int8_t readDir(dir_t& dir) {return readDir(&dir);}  // NOLINT
-  /** \deprecated Use:
-   * static uint8_t SdFile::remove(SdFile* dirFile, const char* fileName);
-   */
-  static uint8_t remove(SdFile& dirFile, const char* fileName) {  // NOLINT
-    return remove(&dirFile, fileName);
-  }
 //------------------------------------------------------------------------------
 // rest are private
  private:
