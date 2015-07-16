@@ -59,11 +59,12 @@ static inline __attribute__((always_inline)) uint8_t fastDigitalRead(uint8_t pin
     return (~(*digitalPinMap[pin].pin >> digitalPinMap[pin].bit)) & 1;
 }
 static inline __attribute__((always_inline)) void fastDigitalWrite(uint8_t pin, uint8_t value) {
+    *digitalPinMap[pin].port &= ~(1 << digitalPinMap[pin].bit);
 
     if (value) {
-      *digitalPinMap[pin].port &= ~(1 << digitalPinMap[pin].bit);
+      *digitalPinMap[pin].ddr &= ~(1 << digitalPinMap[pin].bit);
     } else {
-      *digitalPinMap[pin].port |= 1 << digitalPinMap[pin].bit;
+      *digitalPinMap[pin].ddr |= 1 << digitalPinMap[pin].bit;
     }
     for(int i=0;i<100;i++)
     {

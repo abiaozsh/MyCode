@@ -452,7 +452,7 @@ File myFile;
 
 void setup(){
   Serial.begin(9600);
-
+  pinMode(13, INPUT);
   BIT_SCL = _BV(7);//BMP180
   BIT_SDA = _BV(6);//BMP180
   i2c_SoftI2CMaster();

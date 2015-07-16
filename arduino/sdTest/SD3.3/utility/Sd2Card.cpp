@@ -119,11 +119,15 @@ uint32_t Sd2Card::cardSize(void) {
 }
 //------------------------------------------------------------------------------
 void Sd2Card::chipSelectHigh(void) {
-  digitalWrite(chipSelectPin_, HIGH);
+  fastDigitalWrite(chipSelectPin_, LOW);
+  //digitalWrite(chipSelectPin_, HIGH);
+  pinMode(chipSelectPin_, INPUT);
 }
 //------------------------------------------------------------------------------
 void Sd2Card::chipSelectLow(void) {
-  digitalWrite(chipSelectPin_, LOW);
+  fastDigitalWrite(chipSelectPin_, LOW);
+  //digitalWrite(chipSelectPin_, LOW);
+  pinMode(chipSelectPin_, OUTPUT);
 }
 //------------------------------------------------------------------------------
 /** Erase a range of blocks.
@@ -191,11 +195,11 @@ uint8_t Sd2Card::init() {
   uint32_t arg;
 
   // set pin modes
-  pinMode(chipSelectPin_, OUTPUT);
+  pinMode(chipSelectPin_, INPUT);
   chipSelectHigh();
   pinMode(SPI_MISO_PIN, INPUT);
-  pinMode(SPI_MOSI_PIN, OUTPUT);
-  pinMode(SPI_SCK_PIN, OUTPUT);
+  pinMode(SPI_MOSI_PIN, INPUT);
+  pinMode(SPI_SCK_PIN, INPUT);
 
 
   // must supply min of 74 clock cycles with CS high.
