@@ -20,6 +20,7 @@ void dly()
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
+#define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
 
 #define I2C_ACK 1
 #define I2C_NAK 0
@@ -215,7 +216,7 @@ long b5;
 
 float temperature; //MUST be called first
 float pressure;
-float altitude; //Uncompensated caculation - in Meters 
+//float altitude; //Uncompensated caculation - in Meters 
 
 // Stores all of the bmp085's calibration values into global variables
 // Calibration values are required to calculate temp and pressure
@@ -462,33 +463,41 @@ void setup(){
   i2c_SoftI2CMaster();
 
   DS1307_read();
-
-  while(true)
+  
+  TCCR1A = 0;
+  TCCR1B = 5;//1/1024
+  TCCR1C = 0;
+  TIMSK1 = 0;
+  
+  if(DS1307_SEC == 80)
   {
-    int cmd = Serial.parseInt();
-    if(cmd == 29)
+    while(true)
     {
-      //29,15,6,26,20,39,00,5,
-      DS1307_YR  = Serial.parseInt();
-      DS1307_MTH = Serial.parseInt();
-      DS1307_DATE = Serial.parseInt();
-      DS1307_HR  = Serial.parseInt();
-      DS1307_MIN = Serial.parseInt();
-      DS1307_SEC = Serial.parseInt();
-      DS1307_DOW= Serial.parseInt();
+      int cmd = Serial.parseInt();
+      if(cmd == 29)
+      {
+        //29,15,6,26,20,39,00,5,
+        DS1307_YR  = Serial.parseInt();
+        DS1307_MTH = Serial.parseInt();
+        DS1307_DATE = Serial.parseInt();
+        DS1307_HR  = Serial.parseInt();
+        DS1307_MIN = Serial.parseInt();
+        DS1307_SEC = Serial.parseInt();
+        DS1307_DOW= Serial.parseInt();
 
-      DS1307_save();
+        DS1307_save();
 
-      DS1307_read();
-      char buf[30];
-      //                          2015-01-01 12:00:00
-      snprintf(buf, sizeof(buf), "20%02d-%02d-%02d %02d:%02d:%02d",DS1307_YR, DS1307_MTH, DS1307_DATE, DS1307_HR, DS1307_MIN, DS1307_SEC);
-      Serial.println(buf);
-      break;
-    }
-    if(digitalRead(2)==LOW)
-    {
-      break;
+        DS1307_read();
+        char buf[30];
+        //                          2015-01-01 12:00:00
+        snprintf(buf, sizeof(buf), "20%02d-%02d-%02d %02d:%02d:%02d",DS1307_YR, DS1307_MTH, DS1307_DATE, DS1307_HR, DS1307_MIN, DS1307_SEC);
+        Serial.println(buf);
+        break;
+      }
+      //if(digitalRead(2)==LOW)
+      //{
+      //  break;
+      //}
     }
   }
   digitalWrite(3, HIGH);
@@ -506,7 +515,7 @@ void getBMP180()
   BIT_SDA = _BV(6);//BMP180
   temperature = bmp085GetTemperature(bmp085ReadUT()); //MUST be called first
   pressure = bmp085GetPressure(bmp085ReadUP());
-  altitude = calcAltitude(pressure); //Uncompensated caculation - in Meters 
+  //altitude = calcAltitude(pressure); //Uncompensated caculation - in Meters 
 }
 
 void loop()
@@ -517,31 +526,34 @@ void loop()
 
   for(int i=0;i<10;i++)
   {
+    TCNT1 = 0;
+    TIFR1 &= !_BV(TOV1);
+
     digitalWrite(3, HIGH);
     getBMP180();
-    DS1307_read();
 
-    Serial.print("temperature:");
-    Serial.print(temperature);
-    Serial.print(",pressure:");
-    Serial.print(pressure);
-    Serial.print(",altitude:");
-    Serial.print(altitude);
     DS1307_read();
     char buf[30];
     snprintf(buf, sizeof(buf), "20%02d-%02d-%02d %02d:%02d:%02d",DS1307_YR, DS1307_MTH, DS1307_DATE, DS1307_HR, DS1307_MIN, DS1307_SEC);
     Serial.println(buf);
 
+    Serial.print("temperature:");
+    Serial.print(temperature);
+    Serial.print(",pressure:");
+    Serial.print(pressure);
+    //Serial.print(",altitude:");
+    //Serial.print(altitude);
+
 
     myFile = SD.openSimple("DATA.TXT", O_WRITE, 1);
     if (myFile) {
+      myFile.print(buf);
+      myFile.print(",");
       myFile.print(temperature);
       myFile.print(",");
       myFile.print(pressure);
-      myFile.print(",");
-      myFile.print(altitude);
-      myFile.print(",");
-      myFile.print(buf);
+      //myFile.print(",");
+      //myFile.print(altitude);
       myFile.println();
       myFile.close();
       digitalWrite(3, LOW);
@@ -550,11 +562,8 @@ void loop()
       Serial.println("error.");
     }
 
-    delay(500);
+    while(currTick<15625);
   }
-
-
-
 }
 
 

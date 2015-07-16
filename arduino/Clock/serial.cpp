@@ -8,21 +8,19 @@
    3
 4     5
    6
-data0 clk1 st2 oe3      4A
+data0 clk1 st2 oeb2     3A 1B
 clk0 data1 (scl0 sda1)  2B
-alarm2                  1B
-adj 4 5                 2A // 调整月日时分
-light sense 6           1A
-LED                     1A
+adj 4 5 6 7 (digital in)4A // 调整月日时分
+light sense 3           1A
 11
 
-1data                   1
-clk st oe               3
-(clk) data rst(sda scl) 2
-alarm                   1
-adj                     2
-light sense             1
-time/date               1
+74HC595(1):1~7(7) 0 alarm
+74HC595(2):1~7(7) 0 time index
+74HC595(3):1~7(7) 0 date index
+74HC595(4):1~7(7) 0
+74HC595(5):1~7(7) 0
+74HC595(6):1~7(7) 0
+74HC595(7):1~7(7) week
 
 LED 10
 LED 420 （10+41）
@@ -45,18 +43,15 @@ NPN 7
 #define PORT_STR_ON  PORTA |=  _BV(2)
 #define PORT_STR_OFF PORTA &= ~_BV(2)
 
-#define PORT_OE_ON   PORTA |=  _BV(3)
-#define PORT_OE_OFF  PORTA &= ~_BV(3)
+#define PORT_OE_ON   PORTB |=  _BV(2)
+#define PORT_OE_OFF  PORTB &= ~_BV(2)
 
-#define PORT_IDX_ON  PORTA |=  _BV(7)
-#define PORT_IDX_OFF PORTA &= ~_BV(7)
+#define PIN_ADJ1 PINA &= ~_BV(4)
+#define PIN_ADJ2 PINA &= ~_BV(5)
+#define PIN_ADJ3 PINA &= ~_BV(6)
+#define PIN_ADJ4 PINA &= ~_BV(7)
 
-#define NUM_ADJ1 4
-#define NUM_ADJ2 5
-#define NUM_SENS 6
-
-#define PORT_ALM_ON  PORTB |=  _BV(2)
-#define PORT_ALM_OFF PORTB &= ~_BV(2)
+#define NUM_SENS 3
 
 #define DS1307_CTRL_ID 0x68//B01101000  //DS1307
 
