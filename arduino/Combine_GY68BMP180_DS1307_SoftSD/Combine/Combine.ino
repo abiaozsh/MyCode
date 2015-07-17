@@ -594,45 +594,6 @@ void loop()
     }
   }
 
-  // read sd
-  if(cmd == 44)
-  {
-    myFile = SD.openSimple("TEST3.TXT", O_WRITE | O_TRUNC, 0);
-    if (myFile) {
-      int v = 14;
-      float fv = 13.2;
-      myFile.println("a");
-      myFile.println(v);
-      myFile.println(fv);
-      myFile.close();
-      Serial.println("done.");
-    } 
-    else
-    {
-      Serial.print(errCode);
-      Serial.println(",error.");
-    }
-  }
-
-  // read sd
-  if(cmd == 45)
-  {
-    myFile = SD.openSimple("TEST3.TXT", O_CREAT | O_WRITE | O_TRUNC, 0);
-    if (myFile) {
-      int v = 14;
-      float fv = 13.2;
-      myFile.println("a");
-      myFile.println(v);
-      myFile.println(fv);
-      myFile.close();
-      Serial.println("done.");
-    } 
-    else
-    {
-      Serial.print(errCode);
-      Serial.println(",error.");
-    }
-  }
 }
 
 

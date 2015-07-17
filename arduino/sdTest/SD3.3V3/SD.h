@@ -173,11 +173,7 @@ uint8_t const SD_CARD_TYPE_SDHC = 3;
 class Sd2Card {
  public:
   /** Construct an instance of Sd2Card. */
-  Sd2Card(void) : errorCode_(0), inBlock_(0), partialBlockRead_(0), type_(0) {}
-  /**
-   * \return error code for last error. See Sd2Card.h for a list of error codes.
-   */
-  uint8_t errorCode(void) const {return errorCode_;}
+  Sd2Card(void) : inBlock_(0), partialBlockRead_(0), type_(0) {}
   /** \return error data for last error. */
   uint8_t errorData(void) const {return status_;}
 
@@ -197,11 +193,8 @@ class Sd2Card {
   uint8_t type(void) const {return type_;}
   uint8_t writeBlock(uint32_t blockNumber, const uint8_t* src);
   uint8_t writeData(const uint8_t* src);
-  uint8_t writeStart(uint32_t blockNumber, uint32_t eraseCount);
-  uint8_t writeStop(void);
  private:
   uint32_t block_;
-  uint8_t errorCode_;
   uint8_t inBlock_;
   uint16_t offset_;
   uint8_t partialBlockRead_;
@@ -213,8 +206,6 @@ class Sd2Card {
     return cardCommand(cmd, arg);
   }
   uint8_t cardCommand(uint8_t cmd, uint32_t arg);
-  void error(uint8_t code) {errorCode_ = code;}
-  uint8_t readRegister(uint8_t cmd, void* buf);
   uint8_t sendWriteCommand(uint32_t blockNumber, uint32_t eraseCount);
   void type(uint8_t value) {type_ = value;}
   uint8_t waitNotBusy(uint16_t timeoutMillis);
@@ -484,29 +475,6 @@ typedef struct fat32BootSector fbs_t;
  *
  * Short means short 8.3 name, not the entry size.
  *  
- * Date Format. A FAT directory entry date stamp is a 16-bit field that is 
- * basically a date relative to the MS-DOS epoch of 01/01/1980. Here is the
- * format (bit 0 is the LSB of the 16-bit word, bit 15 is the MSB of the 
- * 16-bit word):
- *   
- * Bits 9-15: Count of years from 1980, valid value range 0-127 
- * inclusive (1980-2107).
- *   
- * Bits 5-8: Month of year, 1 = January, valid value range 1-12 inclusive.
- *
- * Bits 0-4: Day of month, valid value range 1-31 inclusive.
- *
- * Time Format. A FAT directory entry time stamp is a 16-bit field that has
- * a granularity of 2 seconds. Here is the format (bit 0 is the LSB of the 
- * 16-bit word, bit 15 is the MSB of the 16-bit word).
- *   
- * Bits 11-15: Hours, valid value range 0-23 inclusive.
- * 
- * Bits 5-10: Minutes, valid value range 0-59 inclusive.
- *      
- * Bits 0-4: 2-second count, valid value range 0-29 inclusive (0 - 58 seconds).
- *   
- * The valid time range is from Midnight 00:00:00 to 23:59:58.
  */
 struct directoryEntry {
            /**
@@ -515,12 +483,6 @@ struct directoryEntry {
             * The last three bytes contain the file extension with blank fill.
             */
   uint8_t  name[11];
-          /** Entry attributes.
-           *
-           * The upper two bits of the attribute byte are reserved and should
-           * always be set to 0 when a file is created and never modified or
-           * looked at after that.  See defines that begin with DIR_ATT_.
-           */
   uint8_t  attributes;
           /**
            * Reserved for use by Windows NT. Set value to 0 when a file is
@@ -533,24 +495,15 @@ struct directoryEntry {
            * value range is 0-199 inclusive. (WHG note - seems to be hundredths)
            */
   uint8_t  creationTimeTenths;
-           /** Time file was created. */
   uint16_t creationTime;
-           /** Date file was created. */
   uint16_t creationDate;
-          /**
-           * Last access date. Note that there is no last access time, only
-           * a date.  This is the date of last read or write. In the case of
-           * a write, this should be set to the same date as lastWriteDate.
-           */
   uint16_t lastAccessDate;
           /**
            * High word of this entry's first cluster number (always 0 for a
            * FAT12 or FAT16 volume).
            */
   uint16_t firstClusterHigh;
-           /** Time of last write. File creation is considered a write. */
   uint16_t lastWriteTime;
-           /** Date of last write. File creation is considered a write. */
   uint16_t lastWriteDate;
            /** Low word of this entry's first cluster number. */
   uint16_t firstClusterLow;
@@ -562,8 +515,6 @@ struct directoryEntry {
 //
 /** Type name for directoryEntry */
 typedef struct directoryEntry dir_t;
-/** escape for name[0] = 0XE5 */
-uint8_t const DIR_NAME_0XE5 = 0X05;
 /** name[0] value for entry that is free after being "deleted" */
 uint8_t const DIR_NAME_DELETED = 0XE5;
 /** name[0] value for entry that is free and no allocated entries follow */
@@ -580,37 +531,13 @@ uint8_t const DIR_ATT_VOLUME_ID = 0X08;
 uint8_t const DIR_ATT_DIRECTORY = 0X10;
 /** Old DOS archive bit for backup support */
 uint8_t const DIR_ATT_ARCHIVE = 0X20;
-/** Test value for long name entry.  Test is
-  (d->attributes & DIR_ATT_LONG_NAME_MASK) == DIR_ATT_LONG_NAME. */
-uint8_t const DIR_ATT_LONG_NAME = 0X0F;
 /** Test mask for long name entry */
 uint8_t const DIR_ATT_LONG_NAME_MASK = 0X3F;
 /** defined attribute bits */
 uint8_t const DIR_ATT_DEFINED_BITS = 0X3F;
-/** Directory entry is part of a long name */
-static inline uint8_t DIR_IS_LONG_NAME(const dir_t* dir) {
-  return (dir->attributes & DIR_ATT_LONG_NAME_MASK) == DIR_ATT_LONG_NAME;
-}
 /** Mask for file/subdirectory tests */
 uint8_t const DIR_ATT_FILE_TYPE_MASK = (DIR_ATT_VOLUME_ID | DIR_ATT_DIRECTORY);
-/** Directory entry is for a file */
-static inline uint8_t DIR_IS_FILE(const dir_t* dir) {
-  return (dir->attributes & DIR_ATT_FILE_TYPE_MASK) == 0;
-}
-/** Directory entry is for a subdirectory */
-static inline uint8_t DIR_IS_SUBDIR(const dir_t* dir) {
-  return (dir->attributes & DIR_ATT_FILE_TYPE_MASK) == DIR_ATT_DIRECTORY;
-}
-/** Directory entry is for a file or subdirectory */
-static inline uint8_t DIR_IS_FILE_OR_SUBDIR(const dir_t* dir) {
-  return (dir->attributes & DIR_ATT_VOLUME_ID) == 0;
-}
 
-//------------------------------------------------------------------------------
-/**
- * Allow use of deprecated functions if non-zero
- */
-#define ALLOW_DEPRECATED_FUNCTIONS 1
 //------------------------------------------------------------------------------
 // forward declaration since SdVolume is used in SdFile
 class SdVolume;
@@ -640,16 +567,7 @@ uint8_t const O_SYNC = 0X08;
 uint8_t const O_CREAT = 0X10;
 /** If O_CREAT and O_EXCL are set, open() shall fail if the file exists */
 uint8_t const O_EXCL = 0X20;
-/** truncate the file to zero length */
-uint8_t const O_TRUNC = 0X40;
 
-// flags for timestamp
-/** set the file's last access date */
-uint8_t const T_ACCESS = 1;
-/** set the file's creation date and time */
-uint8_t const T_CREATE = 2;
-/** Set the file's write date and time */
-uint8_t const T_WRITE = 4;
 // values for type_
 /** This SdFile has not been opened. */
 uint8_t const FAT_FILE_TYPE_CLOSED = 0;
@@ -659,47 +577,9 @@ uint8_t const FAT_FILE_TYPE_NORMAL = 1;
 uint8_t const FAT_FILE_TYPE_ROOT16 = 2;
 /** SdFile for a FAT32 root directory */
 uint8_t const FAT_FILE_TYPE_ROOT32 = 3;
-/** SdFile for a subdirectory */
-uint8_t const FAT_FILE_TYPE_SUBDIR = 4;
 /** Test value for directory type */
 uint8_t const FAT_FILE_TYPE_MIN_DIR = FAT_FILE_TYPE_ROOT16;
 
-/** date field for FAT directory entry */
-static inline uint16_t FAT_DATE(uint16_t year, uint8_t month, uint8_t day) {
-  return (year - 1980) << 9 | month << 5 | day;
-}
-/** year part of FAT directory date field */
-static inline uint16_t FAT_YEAR(uint16_t fatDate) {
-  return 1980 + (fatDate >> 9);
-}
-/** month part of FAT directory date field */
-static inline uint8_t FAT_MONTH(uint16_t fatDate) {
-  return (fatDate >> 5) & 0XF;
-}
-/** day part of FAT directory date field */
-static inline uint8_t FAT_DAY(uint16_t fatDate) {
-  return fatDate & 0X1F;
-}
-/** time field for FAT directory entry */
-static inline uint16_t FAT_TIME(uint8_t hour, uint8_t minute, uint8_t second) {
-  return hour << 11 | minute << 5 | second >> 1;
-}
-/** hour part of FAT directory time field */
-static inline uint8_t FAT_HOUR(uint16_t fatTime) {
-  return fatTime >> 11;
-}
-/** minute part of FAT directory time field */
-static inline uint8_t FAT_MINUTE(uint16_t fatTime) {
-  return(fatTime >> 5) & 0X3F;
-}
-/** second part of FAT directory time field */
-static inline uint8_t FAT_SECOND(uint16_t fatTime) {
-  return 2*(fatTime & 0X1F);
-}
-/** Default date for file timestamps is 1 Jan 2000 */
-uint16_t const FAT_DEFAULT_DATE = ((2000 - 1980) << 9) | (1 << 5) | 1;
-/** Default time for file timestamp is 1 am */
-uint16_t const FAT_DEFAULT_TIME = (1 << 11);
 //------------------------------------------------------------------------------
 /**
  * \class SdFile
@@ -715,13 +595,6 @@ class SdFile : public Print {
    * for true after calls to print() and/or write().
    */
   //bool writeError;
-  /**
-   * Cancel unbuffered reads for this file.
-   * See setUnbufferedRead()
-   */
-  void clearUnbufferedRead(void) {
-    flags_ &= ~F_FILE_UNBUFFERED_READ;
-  }
   uint8_t close(void);
   /** \return The current cluster number for a file or directory. */
   uint32_t curCluster(void) const {return curCluster_;}
@@ -742,8 +615,6 @@ class SdFile : public Print {
   uint8_t isFile(void) const {return type_ == FAT_FILE_TYPE_NORMAL;}
   /** \return True if this is a SdFile for an open file/directory else false. */
   uint8_t isOpen(void) const {return type_ != FAT_FILE_TYPE_CLOSED;}
-  /** \return True if this is a SdFile for a subdirectory else false. */
-  uint8_t isSubDir(void) const {return type_ == FAT_FILE_TYPE_SUBDIR;}
   /** \return True if this is a SdFile for the root directory. */
   uint8_t isRoot(void) const {
     return type_ == FAT_FILE_TYPE_ROOT16 || type_ == FAT_FILE_TYPE_ROOT32;
@@ -752,9 +623,6 @@ class SdFile : public Print {
   uint8_t open(SdFile* dirFile, const char* fileName, uint8_t oflag);
 
   uint8_t openRoot(SdVolume* vol);
-  static void printFatDate(uint16_t fatDate);
-  static void printFatTime(uint16_t fatTime);
-  static void printTwoDigits(uint8_t v);
   /**
    * Read the next byte from a file.
    *
@@ -766,14 +634,10 @@ class SdFile : public Print {
     return read(&b, 1) == 1 ? b : -1;
   }
   int16_t read(void* buf, uint16_t nbyte);
-  int8_t readDir(dir_t* dir);
-  static uint8_t remove(SdFile* dirFile, const char* fileName);
-  uint8_t remove(void);
   /** Set the file's current position to zero. */
   void rewind(void) {
     curPosition_ = curCluster_ = 0;
   }
-  uint8_t rmDir(void);
   /** Set the files position to current position + \a pos. See seekSet(). */
   uint8_t seekCur(uint32_t pos) {
     return seekSet(curPosition_ + pos);
@@ -813,7 +677,6 @@ class SdFile : public Print {
   void write_P(PGM_P str);
   void writeln_P(PGM_P str);
 //------------------------------------------------------------------------------
-#if ALLOW_DEPRECATED_FUNCTIONS
 
   /** \deprecated Use: uint8_t SdFile::dirEntry(dir_t* dir); */
   uint8_t dirEntry(dir_t& dir) {return dirEntry(&dir);}  // NOLINT
@@ -837,20 +700,8 @@ class SdFile : public Print {
   }
   /** \deprecated Use: uint8_t SdFile::openRoot(SdVolume* vol); */
   uint8_t openRoot(SdVolume& vol) {return openRoot(&vol);}  // NOLINT
-
-  /** \deprecated Use: int8_t SdFile::readDir(dir_t* dir); */
-  int8_t readDir(dir_t& dir) {return readDir(&dir);}  // NOLINT
-  /** \deprecated Use:
-   * static uint8_t SdFile::remove(SdFile* dirFile, const char* fileName);
-   */
-  static uint8_t remove(SdFile& dirFile, const char* fileName) {  // NOLINT
-    return remove(&dirFile, fileName);
-  }
 //------------------------------------------------------------------------------
 // rest are private
- private:
-  static void (*oldDateTime_)(uint16_t& date, uint16_t& time);  // NOLINT
-#endif  // ALLOW_DEPRECATED_FUNCTIONS
  private:
   // bits defined in flags_
   // should be 0XF
@@ -882,7 +733,6 @@ class SdFile : public Print {
   uint8_t addCluster(void);
   uint8_t addDirCluster(void);
   dir_t* cacheDirEntry(uint8_t action);
-  static void (*dateTime_)(uint16_t* date, uint16_t* time);
   static uint8_t make83Name(const char* str, uint8_t* name);
   uint8_t openCachedEntry(uint8_t cacheIndex, uint8_t oflags);
   dir_t* readDirCache(void);
@@ -955,7 +805,6 @@ class SdVolume {
   /** return a pointer to the Sd2Card object for this volume */
   static Sd2Card* sdCard(void) {return sdCard_;}
 //------------------------------------------------------------------------------
-#if ALLOW_DEPRECATED_FUNCTIONS
   // Deprecated functions  - suppress cpplint warnings with NOLINT comment
   /** \deprecated Use: uint8_t SdVolume::init(Sd2Card* dev); */
   uint8_t init(Sd2Card& dev) {return init(&dev);}  // NOLINT
@@ -964,7 +813,6 @@ class SdVolume {
   uint8_t init(Sd2Card& dev, uint8_t part) {  // NOLINT
     return init(&dev, part);
   }
-#endif  // ALLOW_DEPRECATED_FUNCTIONS
 //------------------------------------------------------------------------------
   private:
   // Allow SdFile access to SdVolume private data.
@@ -1010,7 +858,6 @@ class SdVolume {
   uint8_t fatPutEOC(uint32_t cluster) {
     return fatPut(cluster, 0x0FFFFFFF);
   }
-  uint8_t freeChain(uint32_t cluster);
   uint8_t isEOC(uint32_t cluster) const {
     return  cluster >= (fatType_ == 16 ? FAT16EOC_MIN : FAT32EOC_MIN);
   }
@@ -1109,7 +956,6 @@ void spiSend(uint8_t data) {
   cli();
   for (uint8_t i = 0; i < 8; i++) {
     SPI_SCK_LOW();
-
     if(data & 0X80)
     {
       SPI_MOSI_HIGH();
@@ -1119,11 +965,8 @@ void spiSend(uint8_t data) {
       SPI_MOSI_LOW();
     }
     data <<= 1;
-
     SPI_SCK_HIGH();
-	
   }
-
   SPI_SCK_LOW();
   // enable interrupts
   sei();
@@ -1134,39 +977,26 @@ void spiSend(uint8_t data) {
 uint8_t Sd2Card::cardCommand(uint8_t cmd, uint32_t arg) {
   // end read if in partialBlockRead mode
   readEnd();
-
   // select card
   SPI_CHIP_SELECT_LOW();
-
   // wait up to 300 ms if busy
   waitNotBusy(300);
-
   // send command
   spiSend(cmd | 0x40);
-
   // send argument
   for (int8_t s = 24; s >= 0; s -= 8) spiSend(arg >> s);
-
   // send CRC
   uint8_t crc = 0XFF;
   if (cmd == CMD0) crc = 0X95;  // correct crc for CMD0 with arg 0
   if (cmd == CMD8) crc = 0X87;  // correct crc for CMD8 with arg 0X1AA
   spiSend(crc);
-
   // wait for response
   for (uint8_t i = 0; ((status_ = spiRec()) & 0X80) && i != 0XFF; i++);
   return status_;
 }
 //------------------------------------------------------------------------------
-/**
- * Initialize an SD flash memory card.
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.  The reason for failure
- * can be determined by calling errorCode() and errorData().
- */
 uint8_t Sd2Card::init() {
-  errorCode_ = inBlock_ = partialBlockRead_ = type_ = 0;
+  inBlock_ = partialBlockRead_ = type_ = 0;
   // 16-bit init start time allows over a minute
   uint16_t t0 = (uint16_t)millis();
   uint32_t arg;
@@ -1273,8 +1103,7 @@ uint8_t Sd2Card::readBlock(uint32_t block, uint8_t* dst) {
  * \return The value one, true, is returned for success and
  * the value zero, false, is returned for failure.
  */
-uint8_t Sd2Card::readData(uint32_t block,
-        uint16_t offset, uint16_t count, uint8_t* dst) {
+uint8_t Sd2Card::readData(uint32_t block, uint16_t offset, uint16_t count, uint8_t* dst) {
   if (count == 0) return true;
   if ((count + offset) > 512) {
     goto fail;
@@ -1284,7 +1113,7 @@ uint8_t Sd2Card::readData(uint32_t block,
     // use address if not SDHC card
     if (type()!= SD_CARD_TYPE_SDHC) block <<= 9;
     if (cardCommand(CMD17, block)) {
-      error(SD_CARD_ERROR_CMD17);
+      errCode = 6;
       goto fail;
     }
     if (!waitStartBlock()) {
@@ -1326,26 +1155,6 @@ void Sd2Card::readEnd(void) {
   }
 }
 //------------------------------------------------------------------------------
-/** read CID or CSR register */
-uint8_t Sd2Card::readRegister(uint8_t cmd, void* buf) {
-  uint8_t* dst = reinterpret_cast<uint8_t*>(buf);
-  if (cardCommand(cmd, 0)) {
-    error(SD_CARD_ERROR_READ_REG);
-    goto fail;
-  }
-  if (!waitStartBlock()) goto fail;
-  // transfer data
-  for (uint16_t i = 0; i < 16; i++) dst[i] = spiRec();
-  spiRec();  // get first crc byte
-  spiRec();  // get second crc byte
-  SPI_CHIP_SELECT_HIGH();
-  return true;
-
- fail:
-  SPI_CHIP_SELECT_HIGH();
-  return false;
-}
-//------------------------------------------------------------------------------
 // wait for card to go not busy
 uint8_t Sd2Card::waitNotBusy(uint16_t timeoutMillis) {
   uint16_t t0 = millis();
@@ -1361,12 +1170,12 @@ uint8_t Sd2Card::waitStartBlock(void) {
   uint16_t t0 = millis();
   while ((status_ = spiRec()) == 0XFF) {
     if (((uint16_t)millis() - t0) > SD_READ_TIMEOUT) {
-      error(SD_CARD_ERROR_READ_TIMEOUT);
+      errCode = 8;
       goto fail;
     }
   }
   if (status_ != DATA_START_BLOCK) {
-    error(SD_CARD_ERROR_READ);
+    errCode = 9;
     goto fail;
   }
   return true;
@@ -1389,19 +1198,19 @@ uint8_t Sd2Card::writeBlock(uint32_t blockNumber, const uint8_t* src) {
   // use address if not SDHC card
   if (type() != SD_CARD_TYPE_SDHC) blockNumber <<= 9;
   if (cardCommand(CMD24, blockNumber)) {
-    error(SD_CARD_ERROR_CMD24);
+    errCode = 10;
     goto fail;
   }
   if (!writeData(DATA_START_BLOCK, src)) goto fail;
 
   // wait for flash programming to complete
   if (!waitNotBusy(SD_WRITE_TIMEOUT)) {
-    error(SD_CARD_ERROR_WRITE_TIMEOUT);
+    errCode = 11;
     goto fail;
   }
   // response is r2 so get and check two bytes for nonzero
   if (cardCommand(CMD13, 0) || spiRec()) {
-    error(SD_CARD_ERROR_WRITE_PROGRAMMING);
+    errCode = 12;
     goto fail;
   }
   SPI_CHIP_SELECT_HIGH();
@@ -1416,7 +1225,7 @@ uint8_t Sd2Card::writeBlock(uint32_t blockNumber, const uint8_t* src) {
 uint8_t Sd2Card::writeData(const uint8_t* src) {
   // wait for previous write to finish
   if (!waitNotBusy(SD_WRITE_TIMEOUT)) {
-    error(SD_CARD_ERROR_WRITE_MULTIPLE);
+    errCode = 13;
     SPI_CHIP_SELECT_HIGH();
     return false;
   }
@@ -1434,72 +1243,13 @@ uint8_t Sd2Card::writeData(uint8_t token, const uint8_t* src) {
 
   status_ = spiRec();
   if ((status_ & DATA_RES_MASK) != DATA_RES_ACCEPTED) {
-    error(SD_CARD_ERROR_WRITE);
+    errCode = 14;
     SPI_CHIP_SELECT_HIGH();
     return false;
   }
   return true;
 }
-//------------------------------------------------------------------------------
-/** Start a write multiple blocks sequence.
- *
- * \param[in] blockNumber Address of first block in sequence.
- * \param[in] eraseCount The number of blocks to be pre-erased.
- *
- * \note This function is used with writeData() and writeStop()
- * for optimized multiple block writes.
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- */
-uint8_t Sd2Card::writeStart(uint32_t blockNumber, uint32_t eraseCount) {
-  // send pre-erase count
-  if (cardAcmd(ACMD23, eraseCount)) {
-    error(SD_CARD_ERROR_ACMD23);
-    goto fail;
-  }
-  // use address if not SDHC card
-  if (type() != SD_CARD_TYPE_SDHC) blockNumber <<= 9;
-  if (cardCommand(CMD25, blockNumber)) {
-    error(SD_CARD_ERROR_CMD25);
-    goto fail;
-  }
-  return true;
 
- fail:
-  SPI_CHIP_SELECT_HIGH();
-  return false;
-}
-//------------------------------------------------------------------------------
-/** End a write multiple blocks sequence.
- *
-* \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- */
-uint8_t Sd2Card::writeStop(void) {
-  if (!waitNotBusy(SD_WRITE_TIMEOUT)) goto fail;
-  spiSend(STOP_TRAN_TOKEN);
-  if (!waitNotBusy(SD_WRITE_TIMEOUT)) goto fail;
-  SPI_CHIP_SELECT_HIGH();
-  return true;
-
- fail:
-  error(SD_CARD_ERROR_STOP_TRAN);
-  SPI_CHIP_SELECT_HIGH();
-  return false;
-}
-
-
-
-
-//------------------------------------------------------------------------------
-// callback function for date/time
-void (*SdFile::dateTime_)(uint16_t* date, uint16_t* time) = NULL;
-
-#if ALLOW_DEPRECATED_FUNCTIONS
-// suppress cpplint warnings with NOLINT comment
-void (*SdFile::oldDateTime_)(uint16_t& date, uint16_t& time) = NULL;  // NOLINT
-#endif  // ALLOW_DEPRECATED_FUNCTIONS
 //------------------------------------------------------------------------------
 // add a cluster to a file
 uint8_t SdFile::addCluster() {
@@ -1603,7 +1353,11 @@ uint8_t SdFile::open(SdFile* dirFile, const char* fileName, uint8_t oflag) {
   dir_t* p;
 
   // error if already open
-  if (isOpen()){errCode = 101;return false;}
+  if (isOpen())
+  {
+    errCode = 101;
+    return false;
+  }
 
   if (!make83Name(fileName, dname)){errCode = 102;return false;}
   vol_ = dirFile->vol_;
@@ -1656,19 +1410,6 @@ uint8_t SdFile::open(SdFile* dirFile, const char* fileName, uint8_t oflag) {
   memset(p, 0, sizeof(dir_t));
   memcpy(p->name, dname, 11);
 
-  // set timestamps
-  if (dateTime_) {
-    // call user function
-    dateTime_(&p->creationDate, &p->creationTime);
-  } else {
-    // use default date/time
-    p->creationDate = FAT_DEFAULT_DATE;
-    p->creationTime = FAT_DEFAULT_TIME;
-  }
-  p->lastAccessDate = p->creationDate;
-  p->lastWriteDate = p->creationDate;
-  p->lastWriteTime = p->creationTime;
-
   // force write of entry to SD
   if (!SdVolume::cacheFlush()){errCode = 109;  return false;}
 
@@ -1681,10 +1422,6 @@ uint8_t SdFile::openCachedEntry(uint8_t dirIndex, uint8_t oflag) {
   // location of entry in cache
   dir_t* p = SdVolume::cacheBuffer_.dir + dirIndex;
 
-  // write or truncate is an error for a directory or read-only file
-  if (p->attributes & (DIR_ATT_READ_ONLY | DIR_ATT_DIRECTORY)) {
-    if (oflag & (O_WRITE | O_TRUNC)){errCode = 200;  return false;}
-  }
   // remember location of directory entry on SD
   dirIndex_ = dirIndex;
   dirBlock_ = SdVolume::cacheBlockNumber_;
@@ -1694,24 +1431,14 @@ uint8_t SdFile::openCachedEntry(uint8_t dirIndex, uint8_t oflag) {
   firstCluster_ |= p->firstClusterLow;
 
   // make sure it is a normal file or subdirectory
-  if (DIR_IS_FILE(p)) {
-    fileSize_ = p->fileSize;
-    type_ = FAT_FILE_TYPE_NORMAL;
-  } else if (DIR_IS_SUBDIR(p)) {
-    if (!vol_->chainSize(firstCluster_, &fileSize_)){errCode = 201;  return false;}
-    type_ = FAT_FILE_TYPE_SUBDIR;
-  } else {
-    errCode = 202; return false;
-  }
+  fileSize_ = p->fileSize;
+  type_ = FAT_FILE_TYPE_NORMAL;
   // save open flags for read/write
   flags_ = oflag & (O_ACCMODE | O_SYNC | O_APPEND);
 
   // set to start of file
   curCluster_ = 0;
   curPosition_ = 0;
-
-  // truncate file to zero length if requested
-  if (oflag & O_TRUNC) return truncate(0);
   return true;
 }
 //------------------------------------------------------------------------------
@@ -1753,46 +1480,6 @@ uint8_t SdFile::openRoot(SdVolume* vol) {
   dirBlock_ = 0;
   dirIndex_ = 0;
   return true;
-}
-//------------------------------------------------------------------------------
-/** %Print a directory date field to Serial.
- *
- *  Format is yyyy-mm-dd.
- *
- * \param[in] fatDate The date field from a directory entry.
- */
-void SdFile::printFatDate(uint16_t fatDate) {
-  Serial.print(FAT_YEAR(fatDate));
-  Serial.print('-');
-  printTwoDigits(FAT_MONTH(fatDate));
-  Serial.print('-');
-  printTwoDigits(FAT_DAY(fatDate));
-}
-//------------------------------------------------------------------------------
-/** %Print a directory time field to Serial.
- *
- * Format is hh:mm:ss.
- *
- * \param[in] fatTime The time field from a directory entry.
- */
-void SdFile::printFatTime(uint16_t fatTime) {
-  printTwoDigits(FAT_HOUR(fatTime));
-  Serial.print(':');
-  printTwoDigits(FAT_MINUTE(fatTime));
-  Serial.print(':');
-  printTwoDigits(FAT_SECOND(fatTime));
-}
-//------------------------------------------------------------------------------
-/** %Print a value as two digits to Serial.
- *
- * \param[in] v Value to be printed, 0 <= \a v <= 99
- */
-void SdFile::printTwoDigits(uint8_t v) {
-  char str[3];
-  str[0] = '0' + v/10;
-  str[1] = '0' + v % 10;
-  str[2] = 0;
-  Serial.print(str);
 }
 //------------------------------------------------------------------------------
 /**
@@ -1862,34 +1549,6 @@ int16_t SdFile::read(void* buf, uint16_t nbyte) {
   return nbyte;
 }
 //------------------------------------------------------------------------------
-/**
- * Read the next directory entry from a directory file.
- *
- * \param[out] dir The dir_t struct that will receive the data.
- *
- * \return For success readDir() returns the number of bytes read.
- * A value of zero will be returned if end of file is reached.
- * If an error occurs, readDir() returns -1.  Possible errors include
- * readDir() called before a directory has been opened, this is not
- * a directory file or an I/O error occurred.
- */
-int8_t SdFile::readDir(dir_t* dir) {
-  int8_t n;
-  // if not a directory file or miss-positioned return an error
-  if (!isDir() || (0X1F & curPosition_)) return -1;
-
-  while ((n = read(dir, sizeof(dir_t))) == sizeof(dir_t)) {
-    // last entry if DIR_NAME_FREE
-    if (dir->name[0] == DIR_NAME_FREE) break;
-    // skip empty entries and entry for .  and ..
-    if (dir->name[0] == DIR_NAME_DELETED || dir->name[0] == '.') continue;
-    // return if normal file or subdirectory
-    if (DIR_IS_FILE_OR_SUBDIR(dir)) return n;
-  }
-  // error, end of file, or past last entry
-  return n < 0 ? -1 : 0;
-}
-//------------------------------------------------------------------------------
 // Read next directory entry into the cache
 // Assumes file is correctly positioned
 dir_t* SdFile::readDirCache(void) {
@@ -1907,100 +1566,6 @@ dir_t* SdFile::readDirCache(void) {
 
   // return pointer to entry
   return (SdVolume::cacheBuffer_.dir + i);
-}
-//------------------------------------------------------------------------------
-/**
- * Remove a file.
- *
- * The directory entry and all data for the file are deleted.
- *
- * \note This function should not be used to delete the 8.3 version of a
- * file that has a long name. For example if a file has the long name
- * "New Text Document.txt" you should not delete the 8.3 name "NEWTEX~1.TXT".
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- * Reasons for failure include the file read-only, is a directory,
- * or an I/O error occurred.
- */
-uint8_t SdFile::remove(void) {
-  // free any clusters - will fail if read-only or directory
-  if (!truncate(0)) return false;
-
-  // cache directory entry
-  dir_t* d = cacheDirEntry(SdVolume::CACHE_FOR_WRITE);
-  if (!d) return false;
-
-  // mark entry deleted
-  d->name[0] = DIR_NAME_DELETED;
-
-  // set this SdFile closed
-  type_ = FAT_FILE_TYPE_CLOSED;
-
-  // write entry to SD
-  return SdVolume::cacheFlush();
-}
-//------------------------------------------------------------------------------
-/**
- * Remove a file.
- *
- * The directory entry and all data for the file are deleted.
- *
- * \param[in] dirFile The directory that contains the file.
- * \param[in] fileName The name of the file to be removed.
- *
- * \note This function should not be used to delete the 8.3 version of a
- * file that has a long name. For example if a file has the long name
- * "New Text Document.txt" you should not delete the 8.3 name "NEWTEX~1.TXT".
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- * Reasons for failure include the file is a directory, is read only,
- * \a dirFile is not a directory, \a fileName is not found
- * or an I/O error occurred.
- */
-uint8_t SdFile::remove(SdFile* dirFile, const char* fileName) {
-  SdFile file;
-  if (!file.open(dirFile, fileName, O_WRITE)) return false;
-  return file.remove();
-}
-//------------------------------------------------------------------------------
-/** Remove a directory file.
- *
- * The directory file will be removed only if it is empty and is not the
- * root directory.  rmDir() follows DOS and Windows and ignores the
- * read-only attribute for the directory.
- *
- * \note This function should not be used to delete the 8.3 version of a
- * directory that has a long name. For example if a directory has the
- * long name "New folder" you should not delete the 8.3 name "NEWFOL~1".
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- * Reasons for failure include the file is not a directory, is the root
- * directory, is not empty, or an I/O error occurred.
- */
-uint8_t SdFile::rmDir(void) {
-  // must be open subdirectory
-  if (!isSubDir()) return false;
-
-  rewind();
-
-  // make sure directory is empty
-  while (curPosition_ < fileSize_) {
-    dir_t* p = readDirCache();
-    if (p == NULL) return false;
-    // done if past last used entry
-    if (p->name[0] == DIR_NAME_FREE) break;
-    // skip empty slot or '.' or '..'
-    if (p->name[0] == DIR_NAME_DELETED || p->name[0] == '.') continue;
-    // error not empty
-    if (DIR_IS_FILE_OR_SUBDIR(p)) return false;
-  }
-  // convert empty directory to normal file for remove
-  type_ = FAT_FILE_TYPE_NORMAL;
-  flags_ |= O_WRITE;
-  return remove();
 }
 //------------------------------------------------------------------------------
 /**
@@ -2067,70 +1632,10 @@ uint8_t SdFile::sync(void) {
     d->firstClusterLow = firstCluster_ & 0XFFFF;
     d->firstClusterHigh = firstCluster_ >> 16;
 
-    // set modify time if user supplied a callback date/time function
-    if (dateTime_) {
-      dateTime_(&d->lastWriteDate, &d->lastWriteTime);
-      d->lastAccessDate = d->lastWriteDate;
-    }
     // clear directory dirty
     flags_ &= ~F_FILE_DIR_DIRTY;
   }
   return SdVolume::cacheFlush();
-}
-//------------------------------------------------------------------------------
-/**
- * Truncate a file to a specified length.  The current file position
- * will be maintained if it is less than or equal to \a length otherwise
- * it will be set to end of file.
- *
- * \param[in] length The desired length for the file.
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- * Reasons for failure include file is read only, file is a directory,
- * \a length is greater than the current file size or an I/O error occurs.
- */
-uint8_t SdFile::truncate(uint32_t length) {
-// error if not a normal file or read-only
-  if (!isFile() || !(flags_ & O_WRITE)){errCode = 50;  return false;}
-
-  // error if length is greater than current size
-  if (length > fileSize_){errCode = 51;  return false;}
-
-  // fileSize and length are zero - nothing to do
-  if (fileSize_ == 0){errCode = 52;  return true;}
-
-  // remember position for seek after truncation
-  uint32_t newPos = curPosition_ > length ? length : curPosition_;
-
-  // position to last cluster in truncated file
-  if (!seekSet(length)){errCode = 53;  return false;}
-
-  if (length == 0) {
-    // free all clusters
-    if (!vol_->freeChain(firstCluster_)) {errCode = 54; return false;}
-    firstCluster_ = 0;
-  } else {
-    uint32_t toFree;
-    if (!vol_->fatGet(curCluster_, &toFree)) {errCode = 55; return false;}
-
-    if (!vol_->isEOC(toFree)) {
-      // free extra clusters
-      if (!vol_->freeChain(toFree)) {errCode = 56; return false;}
-
-      // current cluster is end of chain
-      if (!vol_->fatPutEOC(curCluster_)){errCode = 57;  return false;}
-    }
-  }
-  fileSize_ = length;
-
-  // need to update directory entry
-  flags_ |= F_FILE_DIR_DIRTY;
-
-  if (!sync()) {errCode = 58; return false;}
-
-  // set file to correct position
-  return seekSet(newPos);
 }
 //------------------------------------------------------------------------------
 /**
@@ -2225,9 +1730,6 @@ size_t SdFile::write(const void* buf, uint16_t nbyte) {
   if (curPosition_ > fileSize_) {
     // update fileSize and insure sync will update dir entry
     fileSize_ = curPosition_;
-    flags_ |= F_FILE_DIR_DIRTY;
-  } else if (dateTime_ && nbyte) {
-    // insure sync will update modified date and time
     flags_ |= F_FILE_DIR_DIRTY;
   }
 
@@ -2452,24 +1954,6 @@ uint8_t SdVolume::fatPut(uint32_t cluster, uint32_t value) {
 
   // mirror second FAT
   if (fatCount_ > 1) cacheMirrorBlock_ = lba + blocksPerFat_;
-  return true;
-}
-//------------------------------------------------------------------------------
-// free a cluster chain
-uint8_t SdVolume::freeChain(uint32_t cluster) {
-  // clear free cluster location
-  allocSearchStart_ = 2;
-
-  do {
-    uint32_t next;
-    if (!fatGet(cluster, &next)) return false;
-
-    // free cluster
-    if (!fatPut(cluster, 0)) return false;
-
-    cluster = next;
-  } while (!isEOC(cluster));
-
   return true;
 }
 uint8_t SdVolume::init(Sd2Card* dev, uint8_t part) {
