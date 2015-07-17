@@ -460,7 +460,8 @@ void getBMP180()
 
 void setup(){
   Serial.begin(115200);
-  pinMode(3, OUTPUT);
+  DDRD |= _BV(3);
+  DDRB |= _BV(5);
   BIT_SCL = _BV(7);//BMP180
   BIT_SDA = _BV(6);//BMP180
   i2c_SoftI2CMaster();
@@ -503,12 +504,12 @@ void setup(){
       //}
     }
   }
-  digitalWrite(3, HIGH);
+  PORTD |= _BV(3);
   while (!SD.begin()) {
     Serial.println("SD not ready.");
     delay(1000);
   }
-  digitalWrite(3, LOW);
+  PORTD &= ~_BV(3);
 }
 
 int a_t[50];
@@ -531,7 +532,7 @@ void loop()
   for(int i=0;i<50;i++)
   {
     uint32_t t0 = millis();
-    digitalWrite(3, HIGH);
+    PORTB |= _BV(5);
     getBMP180();
     a_t[i] = temperature;
     a_p[i] = pressure;
@@ -540,11 +541,11 @@ void loop()
     Serial.print(",p:");
     Serial.print(pressure);
     Serial.println();
-    digitalWrite(3, LOW);
+    PORTB &= ~_BV(5);
     while(millis() - t0<200);
   }
 
-  digitalWrite(3, HIGH);
+  PORTD |= _BV(3);
   myFile = SD.openSimple(buf, O_WRITE|O_CREAT, 1);
   if (myFile) {
     myFile.println(buf2);
@@ -558,7 +559,7 @@ void loop()
     //myFile.print(altitude);
     myFile.println();
     myFile.close();
-    digitalWrite(3, LOW);
+    PORTD &= ~_BV(3);
   }
   else {
     Serial.println("error.");
