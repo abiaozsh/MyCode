@@ -544,7 +544,7 @@ void loop()
 
     myFile = SD.openSimple(buf, O_WRITE|O_CREAT, 1);
     if (myFile) {
-      myFile.print(buf);
+      myFile.print(buf2);
       myFile.print(",");
       myFile.print(temperature);
       myFile.print(",");
