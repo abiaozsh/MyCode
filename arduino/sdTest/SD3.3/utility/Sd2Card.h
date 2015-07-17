@@ -25,7 +25,7 @@ uint8_t const SPI_SCK_PIN = 11;
 /** SPI Master Out Slave In pin */
 uint8_t const SPI_MOSI_PIN = 12;
 /** SPI chip select pin */
-uint8_t const SD_CHIP_SELECT_PIN = 13;
+uint8_t const SD_CHIP_SELECT_PIN = 14;
 
 //------------------------------------------------------------------------------
 /** Protect block zero from write if nonzero */

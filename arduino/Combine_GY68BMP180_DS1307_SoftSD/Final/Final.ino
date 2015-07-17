@@ -3,7 +3,7 @@
 
 void dly()
 {
-  for(uint8_t i=0;i<200;i++)
+  for(uint8_t i=0;i<100;i++)
   {
     volatile uint8_t v=0;
     v++;
@@ -289,7 +289,6 @@ long bmp085GetPressure(unsigned long up){
 // Read 1 byte from the BMP085 at 'address'
 char bmp085Read(unsigned char address)
 {
-  unsigned char data;
   i2c_beginTransmission(BMP085_ADDRESS);
   i2c_write(address);
   i2c_endTransmission();
@@ -450,6 +449,15 @@ void DS1307_save()
 File myFile;
 
 
+void getBMP180()
+{
+  BIT_SCL = _BV(7);//BMP180
+  BIT_SDA = _BV(6);//BMP180
+  temperature = bmp085GetTemperature(bmp085ReadUT()); //MUST be called first
+  pressure = bmp085GetPressure(bmp085ReadUP());
+  //altitude = calcAltitude(pressure); //Uncompensated caculation - in Meters 
+}
+
 
 void setup(){
   Serial.begin(9600);
@@ -463,12 +471,7 @@ void setup(){
   i2c_SoftI2CMaster();
 
   DS1307_read();
-  
-  TCCR1A = 0;
-  TCCR1B = 5;//1/1024
-  TCCR1C = 0;
-  TIMSK1 = 0;
-  
+
   if(DS1307_SEC == 80)
   {
     while(true)
@@ -476,7 +479,7 @@ void setup(){
       int cmd = Serial.parseInt();
       if(cmd == 29)
       {
-        //29,15,6,26,20,39,00,5,
+        //29,15,7,17,20,39,00,5,
         DS1307_YR  = Serial.parseInt();
         DS1307_MTH = Serial.parseInt();
         DS1307_DATE = Serial.parseInt();
@@ -509,15 +512,6 @@ void setup(){
 }
 
 
-void getBMP180()
-{
-  BIT_SCL = _BV(7);//BMP180
-  BIT_SDA = _BV(6);//BMP180
-  temperature = bmp085GetTemperature(bmp085ReadUT()); //MUST be called first
-  pressure = bmp085GetPressure(bmp085ReadUP());
-  //altitude = calcAltitude(pressure); //Uncompensated caculation - in Meters 
-}
-
 void loop()
 {
   BIT_SCL = _BV(7);//BMP180
@@ -526,26 +520,29 @@ void loop()
 
   for(int i=0;i<10;i++)
   {
-    TCNT1 = 0;
-    TIFR1 &= !_BV(TOV1);
+    uint32_t t0 = millis();
 
     digitalWrite(3, HIGH);
     getBMP180();
 
     DS1307_read();
-    char buf[30];
-    snprintf(buf, sizeof(buf), "20%02d-%02d-%02d %02d:%02d:%02d",DS1307_YR, DS1307_MTH, DS1307_DATE, DS1307_HR, DS1307_MIN, DS1307_SEC);
-    Serial.println(buf);
+    char buf[20];
+    snprintf(buf, sizeof(buf), "%02d%02d%02d.TXT",DS1307_YR, DS1307_MTH, DS1307_DATE);
+
+    char buf2[10];
+    snprintf(buf2, sizeof(buf2), "%02d:%02d:%02d",DS1307_HR, DS1307_MIN, DS1307_SEC);
+    Serial.print(buf2);
 
     Serial.print("temperature:");
     Serial.print(temperature);
     Serial.print(",pressure:");
     Serial.print(pressure);
+    Serial.println();
     //Serial.print(",altitude:");
     //Serial.print(altitude);
 
 
-    myFile = SD.openSimple("DATA.TXT", O_WRITE, 1);
+    myFile = SD.openSimple(buf, O_WRITE|O_CREAT, 1);
     if (myFile) {
       myFile.print(buf);
       myFile.print(",");
@@ -561,8 +558,10 @@ void loop()
     else {
       Serial.println("error.");
     }
+    
+    Serial.println(millis() - t0);
 
-    while(currTick<15625);
+    while(millis() - t0<1000);
   }
 }
 

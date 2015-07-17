@@ -1,3 +1,4 @@
+
 #include <SD.h>
 
 
@@ -530,9 +531,11 @@ void loop()
   if(cmd == 40)
   {
     while (!SD.begin()) {
-      Serial.println("SD not ready.");
+      Serial.print(errCode);
+      Serial.println(",SD not ready.");
       delay(1000);
     }
+    Serial.println("SD is ready.");
   }
   // read sd
   if(cmd == 41)
@@ -544,41 +547,92 @@ void loop()
       Serial.println("v");
       Serial.println(v);
       myFile.close();
+      Serial.println("done.");
     } 
     else {
-      Serial.println("error.");
+      Serial.print(errCode);
+      Serial.println(",error.");
     }
   }
-
-
 
   // read sd
   if(cmd == 42)
   {
     myFile = SD.openSimple("TEST2.TXT", O_WRITE, 1);
     if (myFile) {
+      int v = 14;
+      float fv = 13.2;
       myFile.println("a");
+      myFile.println(v);
+      myFile.println(fv);
       myFile.close();
+      Serial.println("done.");
     } 
     else {
-      Serial.println("error.");
+      Serial.print(errCode);
+      Serial.println(",error.");
     }
   }
+
 
   // read sd
   if(cmd == 43)
   {
-    myFile = SD.openSimple("TEST3.TXT", O_WRITE | O_TRUNC, 0);
+    myFile = SD.openSimple("TEST2.TXT", O_WRITE | O_CREAT, 1);
     if (myFile) {
-      myFile.println("b");
+      int v = 14;
+      float fv = 13.2;
+      myFile.println("a");
+      myFile.println(v);
+      myFile.println(fv);
       myFile.close();
+      Serial.println("done.");
     } 
-    else
-    {
-      Serial.println("error.");
+    else {
+      Serial.print(errCode);
+      Serial.println(",error.");
     }
   }
 
+  // read sd
+  if(cmd == 44)
+  {
+    myFile = SD.openSimple("TEST3.TXT", O_WRITE | O_TRUNC, 0);
+    if (myFile) {
+      int v = 14;
+      float fv = 13.2;
+      myFile.println("a");
+      myFile.println(v);
+      myFile.println(fv);
+      myFile.close();
+      Serial.println("done.");
+    } 
+    else
+    {
+      Serial.print(errCode);
+      Serial.println(",error.");
+    }
+  }
+
+  // read sd
+  if(cmd == 45)
+  {
+    myFile = SD.openSimple("TEST3.TXT", O_CREAT | O_WRITE | O_TRUNC, 0);
+    if (myFile) {
+      int v = 14;
+      float fv = 13.2;
+      myFile.println("a");
+      myFile.println(v);
+      myFile.println(fv);
+      myFile.close();
+      Serial.println("done.");
+    } 
+    else
+    {
+      Serial.print(errCode);
+      Serial.println(",error.");
+    }
+  }
 }
 
 
