@@ -8,57 +8,34 @@
 
 uint8_t errCode = 0;
 
-//------------------------------------------------------------------------------
-/** struct for mapping digital pins */
-struct pin_map_t {
-  volatile uint8_t* ddr;
-  volatile uint8_t* pin;
-  volatile uint8_t* port;
-  uint8_t bit;
-};
-//------------------------------------------------------------------------------
-
-static const pin_map_t digitalPinMap[] = {
-  {&DDRD, &PIND, &PORTD, 0},  // D0  0
-  {&DDRD, &PIND, &PORTD, 1},  // D1  1
-  {&DDRD, &PIND, &PORTD, 2},  // D2  2
-  {&DDRD, &PIND, &PORTD, 3},  // D3  3
-  {&DDRD, &PIND, &PORTD, 4},  // D4  4
-  {&DDRD, &PIND, &PORTD, 5},  // D5  5
-  {&DDRD, &PIND, &PORTD, 6},  // D6  6
-  {&DDRD, &PIND, &PORTD, 7},  // D7  7
-  {&DDRB, &PINB, &PORTB, 0},  // B0  8
-  {&DDRB, &PINB, &PORTB, 1},  // B1  9
-  {&DDRB, &PINB, &PORTB, 2},  // B2 10
-  {&DDRB, &PINB, &PORTB, 3},  // B3 11
-  {&DDRB, &PINB, &PORTB, 4},  // B4 12
-  {&DDRB, &PINB, &PORTB, 5},  // B5 13
-  {&DDRC, &PINC, &PORTC, 0},  // C0 14
-  {&DDRC, &PINC, &PORTC, 1},  // C1 15
-  {&DDRC, &PINC, &PORTC, 2},  // C2 16
-  {&DDRC, &PINC, &PORTC, 3},  // C3 17
-  {&DDRC, &PINC, &PORTC, 4},  // C4 18
-  {&DDRC, &PINC, &PORTC, 5}   // C5 19
-};
-
-static inline __attribute__((always_inline)) uint8_t fastDigitalRead(uint8_t pin) {
-    return (~(*digitalPinMap[pin].pin >> digitalPinMap[pin].bit)) & 1;
+void _dly()
+{
+  for(int i=0;i<100;i++)
+  {
+    volatile int t;
+    t=0;
+  }
 }
-static inline __attribute__((always_inline)) void fastDigitalWrite(uint8_t pin, uint8_t value) {
-    *digitalPinMap[pin].port &= ~(1 << digitalPinMap[pin].bit);
 
-    if (value) {
-      *digitalPinMap[pin].ddr &= ~(1 << digitalPinMap[pin].bit);
-    } else {
-      *digitalPinMap[pin].ddr |= 1 << digitalPinMap[pin].bit;
-    }
-    for(int i=0;i<100;i++)
-    {
-      volatile int t;
-      t=0;
-    }
+//B4
+void SPI_MOSI_INIT(){PORTB &= ~_BV(4);_dly();}
+void SPI_MOSI_HIGH(){DDRB &= ~_BV(4);_dly();}
+void SPI_MOSI_LOW(){DDRB |= _BV(4);_dly();}
 
-}
+//B2
+void SPI_MISO_INIT(){PORTB &= ~_BV(2);DDRB &= ~_BV(2);_dly();}
+uint8_t SPI_MISO_GET(){return (~PINB) & _BV(2);}
+
+//B3
+void SPI_SCK_INIT(){PORTB &= ~_BV(3);_dly();}
+void SPI_SCK_HIGH(){DDRB &= ~_BV(3);_dly();}
+void SPI_SCK_LOW(){DDRB |= _BV(3);_dly();}
+
+//C0
+void SPI_CHIP_SELECT_INIT(){PORTC &= ~_BV(0);_dly();}
+void SPI_CHIP_SELECT_HIGH(){DDRC &= ~_BV(0);_dly();}
+void SPI_CHIP_SELECT_LOW(){DDRC |= _BV(0);_dly();}
+
 // www.sdcard.org/developers/tech/sdcard/pls/Simplified_Physical_Layer_Spec.pdf
 //------------------------------------------------------------------------------
 // SD card commands
@@ -112,177 +89,27 @@ uint8_t const WRITE_MULTIPLE_TOKEN = 0XFC;
 uint8_t const DATA_RES_MASK = 0X1F;
 /** write data accepted token */
 uint8_t const DATA_RES_ACCEPTED = 0X05;
-//------------------------------------------------------------------------------
-typedef struct CID {
-  // byte 0
-  uint8_t mid;  // Manufacturer ID
-  // byte 1-2
-  char oid[2];  // OEM/Application ID
-  // byte 3-7
-  char pnm[5];  // Product name
-  // byte 8
-  unsigned prv_m : 4;  // Product revision n.m
-  unsigned prv_n : 4;
-  // byte 9-12
-  uint32_t psn;  // Product serial number
-  // byte 13
-  unsigned mdt_year_high : 4;  // Manufacturing date
-  unsigned reserved : 4;
-  // byte 14
-  unsigned mdt_month : 4;
-  unsigned mdt_year_low :4;
-  // byte 15
-  unsigned always1 : 1;
-  unsigned crc : 7;
-}cid_t;
-//------------------------------------------------------------------------------
-// CSD for version 1.00 cards
-typedef struct CSDV1 {
-  // byte 0
-  unsigned reserved1 : 6;
-  unsigned csd_ver : 2;
-  // byte 1
-  uint8_t taac;
-  // byte 2
-  uint8_t nsac;
-  // byte 3
-  uint8_t tran_speed;
-  // byte 4
-  uint8_t ccc_high;
-  // byte 5
-  unsigned read_bl_len : 4;
-  unsigned ccc_low : 4;
-  // byte 6
-  unsigned c_size_high : 2;
-  unsigned reserved2 : 2;
-  unsigned dsr_imp : 1;
-  unsigned read_blk_misalign :1;
-  unsigned write_blk_misalign : 1;
-  unsigned read_bl_partial : 1;
-  // byte 7
-  uint8_t c_size_mid;
-  // byte 8
-  unsigned vdd_r_curr_max : 3;
-  unsigned vdd_r_curr_min : 3;
-  unsigned c_size_low :2;
-  // byte 9
-  unsigned c_size_mult_high : 2;
-  unsigned vdd_w_cur_max : 3;
-  unsigned vdd_w_curr_min : 3;
-  // byte 10
-  unsigned sector_size_high : 6;
-  unsigned erase_blk_en : 1;
-  unsigned c_size_mult_low : 1;
-  // byte 11
-  unsigned wp_grp_size : 7;
-  unsigned sector_size_low : 1;
-  // byte 12
-  unsigned write_bl_len_high : 2;
-  unsigned r2w_factor : 3;
-  unsigned reserved3 : 2;
-  unsigned wp_grp_enable : 1;
-  // byte 13
-  unsigned reserved4 : 5;
-  unsigned write_partial : 1;
-  unsigned write_bl_len_low : 2;
-  // byte 14
-  unsigned reserved5: 2;
-  unsigned file_format : 2;
-  unsigned tmp_write_protect : 1;
-  unsigned perm_write_protect : 1;
-  unsigned copy : 1;
-  unsigned file_format_grp : 1;
-  // byte 15
-  unsigned always1 : 1;
-  unsigned crc : 7;
-}csd1_t;
-//------------------------------------------------------------------------------
-// CSD for version 2.00 cards
-typedef struct CSDV2 {
-  // byte 0
-  unsigned reserved1 : 6;
-  unsigned csd_ver : 2;
-  // byte 1
-  uint8_t taac;
-  // byte 2
-  uint8_t nsac;
-  // byte 3
-  uint8_t tran_speed;
-  // byte 4
-  uint8_t ccc_high;
-  // byte 5
-  unsigned read_bl_len : 4;
-  unsigned ccc_low : 4;
-  // byte 6
-  unsigned reserved2 : 4;
-  unsigned dsr_imp : 1;
-  unsigned read_blk_misalign :1;
-  unsigned write_blk_misalign : 1;
-  unsigned read_bl_partial : 1;
-  // byte 7
-  unsigned reserved3 : 2;
-  unsigned c_size_high : 6;
-  // byte 8
-  uint8_t c_size_mid;
-  // byte 9
-  uint8_t c_size_low;
-  // byte 10
-  unsigned sector_size_high : 6;
-  unsigned erase_blk_en : 1;
-  unsigned reserved4 : 1;
-  // byte 11
-  unsigned wp_grp_size : 7;
-  unsigned sector_size_low : 1;
-  // byte 12
-  unsigned write_bl_len_high : 2;
-  unsigned r2w_factor : 3;
-  unsigned reserved5 : 2;
-  unsigned wp_grp_enable : 1;
-  // byte 13
-  unsigned reserved6 : 5;
-  unsigned write_partial : 1;
-  unsigned write_bl_len_low : 2;
-  // byte 14
-  unsigned reserved7: 2;
-  unsigned file_format : 2;
-  unsigned tmp_write_protect : 1;
-  unsigned perm_write_protect : 1;
-  unsigned copy : 1;
-  unsigned file_format_grp : 1;
-  // byte 15
-  unsigned always1 : 1;
-  unsigned crc : 7;
-}csd2_t;
-//------------------------------------------------------------------------------
-// union of old and new style CSD register
-union csd_t {
-  csd1_t v1;
-  csd2_t v2;
-};
 
-/**
- * Define MEGA_SOFT_SPI non-zero to use software SPI on Mega Arduinos.
- * Pins used are SS 10, MOSI 11, MISO 12, and SCK 13.
- *
- * MEGA_SOFT_SPI allows an unmodified Adafruit GPS Shield to be used
- * on Mega Arduinos.  Software SPI works well with GPS Shield V1.1
- * but many SD cards will fail with GPS Shield V1.0.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
  // define software SPI pins so Mega can use unmodified GPS Shield
 //GND
-/** SPI Master In Slave Out pin */
-uint8_t const SPI_MISO_PIN = 10;
-/** SPI Clock pin */
-uint8_t const SPI_SCK_PIN = 11;
-/** SPI Master Out Slave In pin */
-uint8_t const SPI_MOSI_PIN = 12;
-/** SPI chip select pin */
-uint8_t const SD_CHIP_SELECT_PIN = 14;
 
 //------------------------------------------------------------------------------
 /** Protect block zero from write if nonzero */
-#define SD_PROTECT_BLOCK_ZERO 1
 /** init timeout ms */
 uint16_t const SD_INIT_TIMEOUT = 1000;
 /** read timeout ms */
@@ -357,7 +184,6 @@ class Sd2Card {
   /**
    * Initialize an SD flash memory card with the selected SPI clock rate
    * and the default SD chip select pin.
-   * See sd2Card::init(uint8_t sckRateID, uint8_t chipSelectPin).
    */
   uint8_t init();
   void partialBlockRead(uint8_t value);
@@ -366,19 +192,6 @@ class Sd2Card {
   uint8_t readBlock(uint32_t block, uint8_t* dst);
   uint8_t readData(uint32_t block,
           uint16_t offset, uint16_t count, uint8_t* dst);
-  /**
-   * Read a cards CID register. The CID contains card identification
-   * information such as Manufacturer ID, Product name, Product serial
-   * number and Manufacturing date. */
-  uint8_t readCID(cid_t* cid) {
-    return readRegister(CMD10, cid);
-  }
-  /**
-   * Read a cards CSD register. The CSD contains Card-Specific Data that
-   * provides information regarding access to the card's contents. */
-  uint8_t readCSD(csd_t* csd) {
-    return readRegister(CMD9, csd);
-  }
   void readEnd(void);
   /** Return the card type: SD V1, SD V2 or SDHC */
   uint8_t type(void) const {return type_;}
@@ -388,7 +201,6 @@ class Sd2Card {
   uint8_t writeStop(void);
  private:
   uint32_t block_;
-  uint8_t chipSelectPin_;
   uint8_t errorCode_;
   uint8_t inBlock_;
   uint16_t offset_;
@@ -404,8 +216,6 @@ class Sd2Card {
   void error(uint8_t code) {errorCode_ = code;}
   uint8_t readRegister(uint8_t cmd, void* buf);
   uint8_t sendWriteCommand(uint32_t blockNumber, uint32_t eraseCount);
-  void chipSelectHigh(void);
-  void chipSelectLow(void);
   void type(uint8_t value) {type_ = value;}
   uint8_t waitNotBusy(uint16_t timeoutMillis);
   uint8_t writeData(uint8_t token, const uint8_t* src);
@@ -919,7 +729,6 @@ class SdFile : public Print {
     flags_ &= ~F_FILE_UNBUFFERED_READ;
   }
   uint8_t close(void);
-  uint8_t contiguousRange(uint32_t* bgnBlock, uint32_t* endBlock);
   /** \return The current cluster number for a file or directory. */
   uint32_t curCluster(void) const {return curCluster_;}
   /** \return The current position for a file or directory. */
@@ -1054,13 +863,6 @@ class SdFile : public Print {
   void writeln_P(PGM_P str);
 //------------------------------------------------------------------------------
 #if ALLOW_DEPRECATED_FUNCTIONS
-// Deprecated functions  - suppress cpplint warnings with NOLINT comment
-  /** \deprecated Use:
-   * uint8_t SdFile::contiguousRange(uint32_t* bgnBlock, uint32_t* endBlock);
-   */
-  uint8_t contiguousRange(uint32_t& bgnBlock, uint32_t& endBlock) {  // NOLINT
-    return contiguousRange(&bgnBlock, &endBlock);
-  }
 
   /**
    * \deprecated Use:
@@ -1361,16 +1163,16 @@ uint8_t spiRec(void) {
   // no interrupts during byte receive - about 8 us
   cli();
   // output pin high - like sending 0XFF
-  fastDigitalWrite(SPI_MOSI_PIN, HIGH);
+  SPI_MOSI_HIGH();
   
   for (uint8_t i = 0; i < 8; i++) {
-    fastDigitalWrite(SPI_SCK_PIN, HIGH);
+    SPI_SCK_HIGH();
 
     data <<= 1;
 
-    if (fastDigitalRead(SPI_MISO_PIN)) data |= 1;
+    if (SPI_MISO_GET()) data |= 1;
 
-    fastDigitalWrite(SPI_SCK_PIN, LOW);
+    SPI_SCK_LOW();
   }
   // enable interrupts
   sei();
@@ -1382,17 +1184,23 @@ void spiSend(uint8_t data) {
   // no interrupts during byte send - about 8 us
   cli();
   for (uint8_t i = 0; i < 8; i++) {
-    fastDigitalWrite(SPI_SCK_PIN, LOW);
+    SPI_SCK_LOW();
 
-    fastDigitalWrite(SPI_MOSI_PIN, data & 0X80);
-
+    if(data & 0X80)
+    {
+      SPI_MOSI_HIGH();
+    }
+    else
+    {
+      SPI_MOSI_LOW();
+    }
     data <<= 1;
 
-    fastDigitalWrite(SPI_SCK_PIN, HIGH);
+    SPI_SCK_HIGH();
 	
   }
 
-  fastDigitalWrite(SPI_SCK_PIN, LOW);
+  SPI_SCK_LOW();
   // enable interrupts
   sei();
 }
@@ -1404,7 +1212,7 @@ uint8_t Sd2Card::cardCommand(uint8_t cmd, uint32_t arg) {
   readEnd();
 
   // select card
-  chipSelectLow();
+  SPI_CHIP_SELECT_LOW();
 
   // wait up to 300 ms if busy
   waitNotBusy(300);
@@ -1426,18 +1234,6 @@ uint8_t Sd2Card::cardCommand(uint8_t cmd, uint32_t arg) {
   return status_;
 }
 //------------------------------------------------------------------------------
-void Sd2Card::chipSelectHigh(void) {
-  fastDigitalWrite(chipSelectPin_, LOW);
-  //digitalWrite(chipSelectPin_, HIGH);
-  pinMode(chipSelectPin_, INPUT);
-}
-//------------------------------------------------------------------------------
-void Sd2Card::chipSelectLow(void) {
-  fastDigitalWrite(chipSelectPin_, LOW);
-  //digitalWrite(chipSelectPin_, LOW);
-  pinMode(chipSelectPin_, OUTPUT);
-}
-//------------------------------------------------------------------------------
 /**
  * Initialize an SD flash memory card.
  *
@@ -1447,23 +1243,22 @@ void Sd2Card::chipSelectLow(void) {
  */
 uint8_t Sd2Card::init() {
   errorCode_ = inBlock_ = partialBlockRead_ = type_ = 0;
-  chipSelectPin_ = SD_CHIP_SELECT_PIN;
   // 16-bit init start time allows over a minute
   uint16_t t0 = (uint16_t)millis();
   uint32_t arg;
 
   // set pin modes
-  pinMode(chipSelectPin_, INPUT);
-  chipSelectHigh();
-  pinMode(SPI_MISO_PIN, INPUT);
-  pinMode(SPI_MOSI_PIN, INPUT);
-  pinMode(SPI_SCK_PIN, INPUT);
+  SPI_CHIP_SELECT_INIT();
+  SPI_CHIP_SELECT_HIGH();
+  SPI_MISO_INIT();
+  SPI_MOSI_INIT();
+  SPI_SCK_INIT();
 
 
   // must supply min of 74 clock cycles with CS high.
   for (uint8_t i = 0; i < 10; i++) spiSend(0XFF);
 
-  chipSelectLow();
+  SPI_CHIP_SELECT_LOW();
 
   // command to go idle in SPI mode
   while ((status_ = cardCommand(CMD0, 0)) != R1_IDLE_STATE) {
@@ -1504,12 +1299,12 @@ uint8_t Sd2Card::init() {
     // discard rest of ocr - contains allowed voltage range
     for (uint8_t i = 0; i < 3; i++) spiRec();
   }
-  chipSelectHigh();
+  SPI_CHIP_SELECT_HIGH();
 
   return true;
 
  fail:
-  chipSelectHigh();
+  SPI_CHIP_SELECT_HIGH();
   return false;
 }
 //------------------------------------------------------------------------------
@@ -1594,7 +1389,7 @@ uint8_t Sd2Card::readData(uint32_t block,
   return true;
 
  fail:
-  chipSelectHigh();
+  SPI_CHIP_SELECT_HIGH();
   return false;
 }
 //------------------------------------------------------------------------------
@@ -1603,7 +1398,7 @@ void Sd2Card::readEnd(void) {
   if (inBlock_) {
       // skip data and crc
     while (offset_++ < 514) spiRec();
-    chipSelectHigh();
+    SPI_CHIP_SELECT_HIGH();
     inBlock_ = 0;
   }
 }
@@ -1620,11 +1415,11 @@ uint8_t Sd2Card::readRegister(uint8_t cmd, void* buf) {
   for (uint16_t i = 0; i < 16; i++) dst[i] = spiRec();
   spiRec();  // get first crc byte
   spiRec();  // get second crc byte
-  chipSelectHigh();
+  SPI_CHIP_SELECT_HIGH();
   return true;
 
  fail:
-  chipSelectHigh();
+  SPI_CHIP_SELECT_HIGH();
   return false;
 }
 //------------------------------------------------------------------------------
@@ -1654,7 +1449,7 @@ uint8_t Sd2Card::waitStartBlock(void) {
   return true;
 
  fail:
-  chipSelectHigh();
+  SPI_CHIP_SELECT_HIGH();
   return false;
 }
 //------------------------------------------------------------------------------
@@ -1667,13 +1462,6 @@ uint8_t Sd2Card::waitStartBlock(void) {
  * the value zero, false, is returned for failure.
  */
 uint8_t Sd2Card::writeBlock(uint32_t blockNumber, const uint8_t* src) {
-#if SD_PROTECT_BLOCK_ZERO
-  // don't allow write to first block
-  if (blockNumber == 0) {
-    error(SD_CARD_ERROR_WRITE_BLOCK_ZERO);
-    goto fail;
-  }
-#endif  // SD_PROTECT_BLOCK_ZERO
 
   // use address if not SDHC card
   if (type() != SD_CARD_TYPE_SDHC) blockNumber <<= 9;
@@ -1693,11 +1481,11 @@ uint8_t Sd2Card::writeBlock(uint32_t blockNumber, const uint8_t* src) {
     error(SD_CARD_ERROR_WRITE_PROGRAMMING);
     goto fail;
   }
-  chipSelectHigh();
+  SPI_CHIP_SELECT_HIGH();
   return true;
 
  fail:
-  chipSelectHigh();
+  SPI_CHIP_SELECT_HIGH();
   return false;
 }
 //------------------------------------------------------------------------------
@@ -1706,7 +1494,7 @@ uint8_t Sd2Card::writeData(const uint8_t* src) {
   // wait for previous write to finish
   if (!waitNotBusy(SD_WRITE_TIMEOUT)) {
     error(SD_CARD_ERROR_WRITE_MULTIPLE);
-    chipSelectHigh();
+    SPI_CHIP_SELECT_HIGH();
     return false;
   }
   return writeData(WRITE_MULTIPLE_TOKEN, src);
@@ -1724,7 +1512,7 @@ uint8_t Sd2Card::writeData(uint8_t token, const uint8_t* src) {
   status_ = spiRec();
   if ((status_ & DATA_RES_MASK) != DATA_RES_ACCEPTED) {
     error(SD_CARD_ERROR_WRITE);
-    chipSelectHigh();
+    SPI_CHIP_SELECT_HIGH();
     return false;
   }
   return true;
@@ -1742,13 +1530,6 @@ uint8_t Sd2Card::writeData(uint8_t token, const uint8_t* src) {
  * the value zero, false, is returned for failure.
  */
 uint8_t Sd2Card::writeStart(uint32_t blockNumber, uint32_t eraseCount) {
-#if SD_PROTECT_BLOCK_ZERO
-  // don't allow write to first block
-  if (blockNumber == 0) {
-    error(SD_CARD_ERROR_WRITE_BLOCK_ZERO);
-    goto fail;
-  }
-#endif  // SD_PROTECT_BLOCK_ZERO
   // send pre-erase count
   if (cardAcmd(ACMD23, eraseCount)) {
     error(SD_CARD_ERROR_ACMD23);
@@ -1763,7 +1544,7 @@ uint8_t Sd2Card::writeStart(uint32_t blockNumber, uint32_t eraseCount) {
   return true;
 
  fail:
-  chipSelectHigh();
+  SPI_CHIP_SELECT_HIGH();
   return false;
 }
 //------------------------------------------------------------------------------
@@ -1776,12 +1557,12 @@ uint8_t Sd2Card::writeStop(void) {
   if (!waitNotBusy(SD_WRITE_TIMEOUT)) goto fail;
   spiSend(STOP_TRAN_TOKEN);
   if (!waitNotBusy(SD_WRITE_TIMEOUT)) goto fail;
-  chipSelectHigh();
+  SPI_CHIP_SELECT_HIGH();
   return true;
 
  fail:
   error(SD_CARD_ERROR_STOP_TRAN);
-  chipSelectHigh();
+  SPI_CHIP_SELECT_HIGH();
   return false;
 }
 
@@ -1843,37 +1624,6 @@ uint8_t SdFile::close(void) {
   if (!sync())return false;
   type_ = FAT_FILE_TYPE_CLOSED;
   return true;
-}
-//------------------------------------------------------------------------------
-/**
- * Check for contiguous file and return its raw block range.
- *
- * \param[out] bgnBlock the first block address for the file.
- * \param[out] endBlock the last  block address for the file.
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- * Reasons for failure include file is not contiguous, file has zero length
- * or an I/O error occurred.
- */
-uint8_t SdFile::contiguousRange(uint32_t* bgnBlock, uint32_t* endBlock) {
-  // error if no blocks
-  if (firstCluster_ == 0) return false;
-
-  for (uint32_t c = firstCluster_; ; c++) {
-    uint32_t next;
-    if (!vol_->fatGet(c, &next)) return false;
-
-    // check for contiguous
-    if (next != (c + 1)) {
-      // error if not end of chain
-      if (!vol_->isEOC(next)) return false;
-      *bgnBlock = vol_->clusterStartBlock(firstCluster_);
-      *endBlock = vol_->clusterStartBlock(c)
-                  + vol_->blocksPerCluster_ - 1;
-      return true;
-    }
-  }
 }
 //------------------------------------------------------------------------------
 /**
