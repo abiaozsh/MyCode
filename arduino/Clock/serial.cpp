@@ -14,12 +14,9 @@ adj 4 5 6 7 (digital in)4A // 调整月日时分
 light sense 3           1A
 11
 
-74HC595(1):1~7(7) 0 alarm
-74HC595(2):1~7(7) 0 time index
-74HC595(3):1~7(7) 0 date index
-74HC595(4):1~7(7) 0
-74HC595(5):1~7(7) 0
-74HC595(6):1~7(7) 0
+74HC595(1):1~7(7) down 0 alarm
+74HC595(2):2~7(6) up 0:1 time index date index
+74HC595(3) week
 直接用6个8显示星期 或者用秒的最后一位表示星期
 星期1 8
 星期2 88
