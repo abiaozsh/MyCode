@@ -498,10 +498,19 @@ void setup(){
         Serial.println(buf);
         break;
       }
-      //if(digitalRead(2)==LOW)
-      //{
-      //  break;
-      //}
+      if(digitalRead(2)==LOW)
+      {
+        //29,15,7,17,20,39,00,5,
+        DS1307_YR  = 0;
+        DS1307_MTH = 1;
+        DS1307_DATE = 1;
+        DS1307_HR  = 0;
+        DS1307_MIN = 0;
+        DS1307_SEC = 0;
+        DS1307_DOW= 0;
+        DS1307_save();
+        break;
+      }
     }
   }
   PORTD |= _BV(3);
@@ -542,6 +551,7 @@ void loop()
     Serial.print(pressure);
     Serial.println();
     PORTB &= ~_BV(5);
+    Serial.print(millis() - t0);
     while(millis() - t0<200);
   }
 
