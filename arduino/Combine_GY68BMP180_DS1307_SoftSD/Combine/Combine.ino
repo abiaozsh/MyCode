@@ -4,7 +4,7 @@
 
 void dly()
 {
-  for(uint8_t i=0;i<200;i++)
+  for(uint8_t i=0;i<6;i++)//6 is stable
   {
     volatile uint8_t v=0;
     v++;
@@ -452,7 +452,7 @@ File myFile;
 
 
 void setup(){
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(13, INPUT);
   BIT_SCL = _BV(7);//BMP180
   BIT_SDA = _BV(6);//BMP180
@@ -491,9 +491,11 @@ void loop()
   int cmd = Serial.parseInt();
 
   //pressure
-  if(cmd == 17)
+  if(cmd == 1)
   {
+    uint32_t t0 = millis();
     getBMP180();
+    Serial.println(millis() - t0);
     Serial.print("temperature:");
     Serial.print(temperature);
     Serial.print(",pressure:");
@@ -504,18 +506,20 @@ void loop()
   }
 
   //read time
-  if(cmd == 27)
+  if(cmd == 2)
   {
+    uint32_t t0 = millis();
     DS1307_read();
+    Serial.println(millis() - t0);
     char buf[60];
     snprintf(buf, sizeof(buf), "DS1307:%02d 20%02d-%02d-%02d %02d:%02d:%02d",DS1307_DOW, DS1307_YR, DS1307_MTH, DS1307_DATE, DS1307_HR, DS1307_MIN, DS1307_SEC);
     Serial.println(buf);
   }
 
   //set time
-  if(cmd == 29)
+  if(cmd == 3)
   {
-    //29,15,6,26,20,39,00,5,
+    //3,15,6,26,20,39,00,5,
     DS1307_YR  = Serial.parseInt();
     DS1307_MTH = Serial.parseInt();
     DS1307_DATE = Serial.parseInt();
@@ -523,12 +527,14 @@ void loop()
     DS1307_MIN = Serial.parseInt();
     DS1307_SEC = Serial.parseInt();
     DS1307_DOW= Serial.parseInt();
-
+    
+    uint32_t t0 = millis();
     DS1307_save();
+    Serial.println(millis() - t0);
   }
 
   // read sd
-  if(cmd == 40)
+  if(cmd == 4)
   {
     while (!SD.begin()) {
       Serial.print(errCode);
@@ -537,35 +543,49 @@ void loop()
     }
     Serial.println("SD is ready.");
   }
-  // read sd
-  if(cmd == 41)
+  
+  // read from start
+  if(cmd == 5)
   {
     // re-open the file for reading:
-    myFile = SD.openSimple("TEST1.TXT", O_READ, 0);//openSimple
+    myFile = SD.openSimple("A.TXT", O_READ, 0);//openSimple
     if (myFile) {
-      int v = myFile.read();
-      Serial.println("v");
-      Serial.println(v);
+      while(true)
+      {
+        int v = myFile.read();
+        if(v>0)
+        {
+          Serial.print((char)v);
+        }
+        else
+        {
+          break;
+        }
+      }
       myFile.close();
       Serial.println("done.");
-    } 
+    }
     else {
       Serial.print(errCode);
       Serial.println(",error.");
     }
   }
 
-  // read sd
-  if(cmd == 42)
+  // write from end
+  if(cmd == 6)
   {
-    myFile = SD.openSimple("TEST2.TXT", O_WRITE, 1);
+    uint32_t t0 = millis();
+    myFile = SD.openSimple("B.TXT", O_WRITE | O_CREAT, 1);//1:toend
     if (myFile) {
-      int v = 14;
-      float fv = 13.2;
-      myFile.println("a");
-      myFile.println(v);
-      myFile.println(fv);
+      for(int i=0;i<50;i++)
+      {
+        myFile.print(i);
+        myFile.print(",");
+        myFile.print(i);
+        myFile.println();
+      }
       myFile.close();
+      Serial.println(millis() - t0);
       Serial.println("done.");
     } 
     else {
@@ -574,25 +594,6 @@ void loop()
     }
   }
 
-
-  // read sd
-  if(cmd == 43)
-  {
-    myFile = SD.openSimple("TEST2.TXT", O_WRITE | O_CREAT, 1);
-    if (myFile) {
-      int v = 14;
-      float fv = 13.2;
-      myFile.println("a");
-      myFile.println(v);
-      myFile.println(fv);
-      myFile.close();
-      Serial.println("done.");
-    } 
-    else {
-      Serial.print(errCode);
-      Serial.println(",error.");
-    }
-  }
 
 }
 

@@ -1,9 +1,8 @@
 #include <SD.h>
 
-
 void dly()
 {
-  for(uint8_t i=0;i<100;i++)
+  for(uint8_t i=0;i<6;i++)//6 is stable
   {
     volatile uint8_t v=0;
     v++;
@@ -523,57 +522,61 @@ void setup(){
 
 int a_t[50];
 long a_p[50];
+int idx = 0;
 
 void loop()
 {
-  BIT_SCL = _BV(7);//BMP180
-  BIT_SDA = _BV(6);//BMP180
-  bmp085Calibration();
+  uint32_t t0 = millis();
 
-  DS1307_read();
-  char buf[20];
-  snprintf(buf, sizeof(buf), "%02d%02d%02d.TXT",DS1307_YR, DS1307_MTH, DS1307_DATE);
-  Serial.print(buf);
-  char buf2[10];
-  snprintf(buf2, sizeof(buf2), "%02d:%02d:%02d",DS1307_HR, DS1307_MIN, DS1307_SEC);
-  Serial.println(buf2);
-  
-  for(int i=0;i<50;i++)
+  if(idx==0)
   {
-    uint32_t t0 = millis();
-    PORTB |= _BV(5);
-    getBMP180();
-    a_t[i] = temperature;
-    a_p[i] = pressure;
-    Serial.print("t:");
-    Serial.print(temperature);
-    Serial.print(",p:");
-    Serial.print(pressure);
-    Serial.println();
-    PORTB &= ~_BV(5);
-    Serial.print(millis() - t0);
-    while(millis() - t0<200);
+    BIT_SCL = _BV(7);//BMP180
+    BIT_SDA = _BV(6);//BMP180
+    bmp085Calibration();
   }
-
-  PORTD |= _BV(3);
-  myFile = SD.openSimple(buf, O_WRITE|O_CREAT, 1);
-  if (myFile) {
-    myFile.println(buf2);
-    for(int i=0;i<50;i++)
-    {
-      myFile.print(a_t[i]);
-      myFile.print(",");
-      myFile.println(a_p[i]);
+  if(idx==50)
+  {
+    idx=0;
+    DS1307_read();
+    char buf[20];
+    snprintf(buf, sizeof(buf), "%02d%02d%02d.TXT",DS1307_YR, DS1307_MTH, DS1307_DATE);
+    Serial.print(buf);
+    char buf2[10];
+    snprintf(buf2, sizeof(buf2), "%02d:%02d:%02d",DS1307_HR, DS1307_MIN, DS1307_SEC);
+    Serial.println(buf2);
+  
+    PORTD |= _BV(3);
+    myFile = SD.openSimple(buf, O_WRITE|O_CREAT, 1);
+    if (myFile) {
+      myFile.println(buf2);
+      for(int i=0;i<50;i++)
+      {
+        myFile.print(a_t[i]);
+        myFile.print(",");
+        myFile.println(a_p[i]);
+      }
+      //myFile.print(",");
+      //myFile.print(altitude);
+      myFile.println();
+      myFile.close();
+      PORTD &= ~_BV(3);
     }
-    //myFile.print(",");
-    //myFile.print(altitude);
-    myFile.println();
-    myFile.close();
-    PORTD &= ~_BV(3);
+    else {
+      Serial.println("error.");
+    }
   }
-  else {
-    Serial.println("error.");
-  }
+  
+  PORTB |= _BV(5);
+  getBMP180();
+  a_t[idx] = temperature;
+  a_p[idx] = pressure;
+  Serial.print(temperature);
+  Serial.print(",");
+  Serial.println(pressure);
+  PORTB &= ~_BV(5);
+  while(millis() - t0<100);
+  idx++;
+
 }
 
 

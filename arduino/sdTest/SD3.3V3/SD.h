@@ -8,11 +8,11 @@
 
 uint8_t errCode = 0;
 
-void _dly()
+inline void _dly()
 {
-  for(int i=0;i<10;i++)
+  for(uint8_t i=0;i<5;i++)//5 is good
   {
-    volatile int t;
+    volatile uint8_t t;
     t=0;
   }
 }
