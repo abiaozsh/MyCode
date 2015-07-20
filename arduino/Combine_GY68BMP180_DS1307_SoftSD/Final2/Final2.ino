@@ -538,8 +538,8 @@ void loop()
   {
     idx=0;
     DS1307_read();
-    char buf[20];
-    snprintf(buf, sizeof(buf), "%02d%02d%02d.TXT",DS1307_YR, DS1307_MTH, DS1307_DATE);
+    char buf[11];
+    snprintf(buf, sizeof(buf), "%02d%02d%02d  TXT",DS1307_YR, DS1307_MTH, DS1307_DATE);
     Serial.print(buf);
     char buf2[10];
     snprintf(buf2, sizeof(buf2), "%02d:%02d:%02d",DS1307_HR, DS1307_MIN, DS1307_SEC);

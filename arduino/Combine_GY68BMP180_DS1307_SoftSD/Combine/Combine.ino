@@ -548,7 +548,8 @@ void loop()
   if(cmd == 5)
   {
     // re-open the file for reading:
-    myFile = SD.openSimple("A.TXT", O_READ, 0);//openSimple
+    //                      12345678ABC
+    myFile = SD.openSimple("A       TXT", O_READ, 0);//openSimple
     if (myFile) {
       while(true)
       {
@@ -575,7 +576,8 @@ void loop()
   if(cmd == 6)
   {
     uint32_t t0 = millis();
-    myFile = SD.openSimple("B.TXT", O_WRITE | O_CREAT, 1);//1:toend
+    //                      12345678abc
+    myFile = SD.openSimple("B       TXT", O_WRITE | O_CREAT, 1);//1:toend
     if (myFile) {
       for(int i=0;i<50;i++)
       {
