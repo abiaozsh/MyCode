@@ -135,16 +135,13 @@ uint8_t const SD_CARD_TYPE_SDHC = 3;
 class Sd2Card {
  public:
   /** Construct an instance of Sd2Card. */
-  Sd2Card(void) : inBlock_(0), partialBlockRead_(0), type_(0) {}
+  Sd2Card(void) : inBlock_(0), type_(0) {}
 
   /**
    * Initialize an SD flash memory card with the selected SPI clock rate
    * and the default SD chip select pin.
    */
-  uint8_t init();
-  void partialBlockRead(uint8_t value);
-  /** Returns the current value, true or false, for partial block read. */
-  uint8_t partialBlockRead(void) const {return partialBlockRead_;}
+  uint8_t cardinit();
   uint8_t readBlock(uint32_t block, uint8_t* dst);
   uint8_t readData(uint32_t block, uint16_t offset, uint16_t count, uint8_t* dst);
   void readEnd(void);
@@ -156,7 +153,6 @@ class Sd2Card {
   uint32_t block_;
   uint8_t inBlock_;
   uint16_t offset_;
-  uint8_t partialBlockRead_;
   uint8_t status_;
   uint8_t type_;
   // private functions
@@ -502,31 +498,6 @@ uint8_t const DIR_ATT_FILE_TYPE_MASK = (DIR_ATT_VOLUME_ID | DIR_ATT_DIRECTORY);
 class SdVolume;
 //==============================================================================
 // SdFile class
-
-// flags for ls()
-
-// use the gnu style oflag in open()
-/** open() oflag for reading */
-uint8_t const O_READ = 0X01;
-/** open() oflag - same as O_READ */
-uint8_t const O_RDONLY = O_READ;
-/** open() oflag for write */
-uint8_t const O_WRITE = 0X02;
-/** open() oflag - same as O_WRITE */
-uint8_t const O_WRONLY = O_WRITE;
-/** open() oflag for reading and writing */
-uint8_t const O_RDWR = (O_READ | O_WRITE);
-/** open() oflag mask for access modes */
-uint8_t const O_ACCMODE = (O_READ | O_WRITE);
-/** The file offset shall be set to the end of the file prior to each write. */
-uint8_t const O_APPEND = 0X04;
-/** synchronous writes - call sync() after each write */
-uint8_t const O_SYNC = 0X08;
-/** create the file if nonexistent */
-uint8_t const O_CREAT = 0X10;
-/** If O_CREAT and O_EXCL are set, open() shall fail if the file exists */
-uint8_t const O_EXCL = 0X20;
-
 // values for type_
 /** This SdFile has not been opened. */
 uint8_t const FAT_FILE_TYPE_CLOSED = 0;
@@ -555,29 +526,16 @@ class SdFile : public Print {
    */
   //bool writeError;
   uint8_t close(void);
-  /** \return The current cluster number for a file or directory. */
-  uint32_t curCluster(void) const {return curCluster_;}
   /** \return The current position for a file or directory. */
   uint32_t curPosition(void) const {return curPosition_;}
-  /** \return Address of the block that contains this file's directory. */
-  uint32_t dirBlock(void) const {return dirBlock_;}
-  uint8_t dirEntry(dir_t* dir);
-  /** \return Index of this file's directory in the block dirBlock. */
-  uint8_t dirIndex(void) const {return dirIndex_;}
   /** \return The total number of bytes in a file or directory. */
   uint32_t fileSize(void) const {return fileSize_;}
-  /** \return The first cluster number for a file or directory. */
-  uint32_t firstCluster(void) const {return firstCluster_;}
   /** \return True if this is a SdFile for a directory else false. */
   uint8_t isDir(void) const {return type_ >= FAT_FILE_TYPE_MIN_DIR;}
-  /** \return True if this is a SdFile for a file else false. */
-  uint8_t isFile(void) const {return type_ == FAT_FILE_TYPE_NORMAL;}
   /** \return True if this is a SdFile for an open file/directory else false. */
   uint8_t isOpen(void) const {return type_ != FAT_FILE_TYPE_CLOSED;}
-  /** \return True if this is a SdFile for the root directory. */
-  uint8_t isRoot(void) const {return type_ == FAT_FILE_TYPE_ROOT16 || type_ == FAT_FILE_TYPE_ROOT32;}
-  uint8_t open02(SdFile* dirFile, const char* fileName, uint8_t oflag);
 
+  uint8_t open02(SdFile* dirFile, const char* fileName);
   uint8_t openRoot(SdVolume* vol);
   /**
    * Read the next byte from a file.
@@ -600,11 +558,6 @@ class SdFile : public Print {
   uint8_t seekCur(uint32_t pos) {
     return seekSet(curPosition_ + pos);
   }
-  /**
-   *  Set the files current position to end of file.  Useful to position
-   *  a file for append. See seekSet().
-   */
-  uint8_t seekEnd(void) {return seekSet(fileSize_);}
   uint8_t seekSet(uint32_t pos);
   uint8_t sync(void);
   /** Type of this SdFile.  You should use isFile() or isDir() instead of type()
@@ -614,10 +567,6 @@ class SdFile : public Print {
    */
   uint8_t type(void) const {return type_;}
   uint8_t truncate(uint32_t size);
-  /** \return Unbuffered read flag. */
-  uint8_t unbufferedRead(void) const {
-    return flags_ & F_FILE_UNBUFFERED_READ;
-  }
   /** \return SdVolume that contains this file. */
   SdVolume* volume(void) const {return vol_;}
   size_t write(uint8_t b);
@@ -626,20 +575,10 @@ class SdFile : public Print {
   void write_P(PGM_P str);
   void writeln_P(PGM_P str);
 //------------------------------------------------------------------------------
-// rest are private
  private:
-  // bits defined in flags_
-  // should be 0XF
-  static uint8_t const F_OFLAG = (O_ACCMODE | O_APPEND | O_SYNC);
-  // available bits
-  static uint8_t const F_UNUSED = 0X30;
-  // use unbuffered SD read
-  static uint8_t const F_FILE_UNBUFFERED_READ = 0X40;
-  // sync of directory entry required
-  static uint8_t const F_FILE_DIR_DIRTY = 0X80;
 
   // private data
-  uint8_t   flags_;         // See above for definition of flags_ bits
+  uint8_t   flags_;         // is F_FILE_DIR_DIRTY
   uint8_t   type_;          // type of file see above for values
   uint32_t  curCluster_;    // cluster for current file position
   uint32_t  curPosition_;   // current file position in bytes from beginning
@@ -654,7 +593,7 @@ class SdFile : public Print {
   uint8_t addDirCluster(void);
   dir_t* cacheDirEntry(uint8_t action);
   static uint8_t make83Name(const char* str, uint8_t* name);
-  uint8_t openCachedEntry(uint8_t cacheIndex, uint8_t oflags);
+  uint8_t openCachedEntry(uint8_t cacheIndex);
   dir_t* readDirCache(void);
 };
 //==============================================================================
@@ -697,7 +636,7 @@ class SdVolume {
    * failure include not finding a valid partition, not finding a valid
    * FAT file system or an I/O error.
    */
-  uint8_t init(Sd2Card* dev, uint8_t part);
+  uint8_t volumeinit(Sd2Card* dev, uint8_t part);
 
   // inline functions that return volume info
   /** \return The volume's cluster size in blocks. */
@@ -775,7 +714,6 @@ class File : public Stream {
   SdFile *_file;  // underlying file pointer
 
 public:
-  File(void);      // 'empty' constructor
   void setSDFile(SdFile* f);     // wraps an underlying SdFile
   virtual size_t write(uint8_t);
   virtual size_t write(const uint8_t *buf, size_t size);
@@ -863,8 +801,8 @@ uint8_t Sd2Card::cardCommand(uint8_t cmd, uint32_t arg) {
   return status_;
 }
 //------------------------------------------------------------------------------
-uint8_t Sd2Card::init() {
-  inBlock_ = partialBlockRead_ = type_ = 0;
+uint8_t Sd2Card::cardinit() {
+  inBlock_ = type_ = 0;
   // 16-bit init start time allows over a minute
   uint16_t t0 = (uint16_t)millis();
   uint32_t arg;
@@ -931,24 +869,6 @@ uint8_t Sd2Card::init() {
 }
 //------------------------------------------------------------------------------
 /**
- * Enable or disable partial block reads.
- *
- * Enabling partial block reads improves performance by allowing a block
- * to be read over the SPI bus as several sub-blocks.  Errors may occur
- * if the time between reads is too long since the SD card may timeout.
- * The SPI SS line will be held low until the entire block is read or
- * readEnd() is called.
- *
- * Use this for applications like the Adafruit Wave Shield.
- *
- * \param[in] value The value TRUE (non-zero) or FALSE (zero).)
- */
-void Sd2Card::partialBlockRead(uint8_t value) {
-  readEnd();
-  partialBlockRead_ = value;
-}
-//------------------------------------------------------------------------------
-/**
  * Read a 512 byte block from an SD card device.
  *
  * \param[in] block Logical block to be read.
@@ -1002,10 +922,7 @@ uint8_t Sd2Card::readData(uint32_t block, uint16_t offset, uint16_t count, uint8
   }
 
   offset_ += count;
-  if (!partialBlockRead_ || offset_ >= 512) {
-    // read rest of data, checksum and set chip select high
-    readEnd();
-  }
+  readEnd();
   return true;
 
  fail:
@@ -1126,7 +1043,7 @@ uint8_t SdFile::addCluster() {
   // if first cluster of file link to directory entry
   if (firstCluster_ == 0) {
     firstCluster_ = curCluster_;
-    flags_ |= F_FILE_DIR_DIRTY;
+    flags_ = 1;
   }
   return true;
 }
@@ -1167,36 +1084,8 @@ uint8_t SdFile::close(void) {
   return true;
 }
 //------------------------------------------------------------------------------
-/**
- * Return a files directory entry
- *
- * \param[out] dir Location for return of the files directory entry.
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- */
-uint8_t SdFile::dirEntry(dir_t* dir) {
-  // make sure fields on SD are correct
-  if (!sync()) return false;
-
-  // read entry
-  dir_t* p = cacheDirEntry(SdVolume::CACHE_FOR_READ);
-  if (!p) return false;
-
-  // copy to caller's struct
-  memcpy(dir, p, sizeof(dir_t));
-  return true;
-}
-//------------------------------------------------------------------------------
-uint8_t SdFile::open02(SdFile* dirFile, const char* dname, uint8_t oflag) {
+uint8_t SdFile::open02(SdFile* dirFile, const char* dname) {
   dir_t* p;
-
-  // error if already open
-  if (isOpen())
-  {
-    errCode = 101;
-    return false;
-  }
 
   vol_ = dirFile->vol_;
   dirFile->rewind();
@@ -1220,15 +1109,11 @@ uint8_t SdFile::open02(SdFile* dirFile, const char* dname, uint8_t oflag) {
       // done if no entries follow
       if (p->name[0] == DIR_NAME_FREE) break;
     } else if (!memcmp(dname, p->name, 11)) {
-      // don't open existing file if O_CREAT and O_EXCL
-      if ((oflag & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL)){errCode = 104; return false;}
 
       // open found file
-      return openCachedEntry(0XF & index, oflag);
+      return openCachedEntry(0XF & index);
     }
   }
-  // only create file if O_CREAT and O_WRITE
-  if ((oflag & (O_CREAT | O_WRITE)) != (O_CREAT | O_WRITE)){errCode = 105; return false;}
 
   // cache found slot or add cluster if end of file
   if (emptyFound) {
@@ -1252,11 +1137,11 @@ uint8_t SdFile::open02(SdFile* dirFile, const char* dname, uint8_t oflag) {
   if (!SdVolume::cacheFlush()){errCode = 109;  return false;}
 
   // open entry in cache
-  return openCachedEntry(dirIndex_, oflag);
+  return openCachedEntry(dirIndex_);
 }
 //------------------------------------------------------------------------------
 // open a cached directory entry. Assumes vol_ is initializes
-uint8_t SdFile::openCachedEntry(uint8_t dirIndex, uint8_t oflag) {
+uint8_t SdFile::openCachedEntry(uint8_t dirIndex) {
   // location of entry in cache
   dir_t* p = SdVolume::cacheBuffer_.dir + dirIndex;
 
@@ -1271,8 +1156,6 @@ uint8_t SdFile::openCachedEntry(uint8_t dirIndex, uint8_t oflag) {
   // make sure it is a normal file or subdirectory
   fileSize_ = p->fileSize;
   type_ = FAT_FILE_TYPE_NORMAL;
-  // save open flags for read/write
-  flags_ = oflag & (O_ACCMODE | O_SYNC | O_APPEND);
 
   // set to start of file
   curCluster_ = 0;
@@ -1307,8 +1190,6 @@ uint8_t SdFile::openRoot(SdVolume* vol) {
     return false;
   }
   vol_ = vol;
-  // read only
-  flags_ = O_READ;
 
   // set to start of file
   curCluster_ = 0;
@@ -1336,9 +1217,6 @@ uint8_t SdFile::openRoot(SdVolume* vol) {
  */
 int16_t SdFile::read(void* buf, uint16_t nbyte) {
   uint8_t* dst = reinterpret_cast<uint8_t*>(buf);
-
-  // error if not open or write only
-  if (!isOpen() || !(flags_ & O_READ)) return -1;
 
   // max bytes left in file
   if (nbyte > (fileSize_ - curPosition_)) nbyte = fileSize_ - curPosition_;
@@ -1370,8 +1248,7 @@ int16_t SdFile::read(void* buf, uint16_t nbyte) {
     if (n > (512 - offset)) n = 512 - offset;
 
     // no buffering needed if n == 512 or user requests no buffering
-    if ((unbufferedRead() || n == 512) &&
-      block != SdVolume::cacheBlockNumber_) {
+    if ((n == 512) && block != SdVolume::cacheBlockNumber_) {
       if (!vol_->readData(block, offset, n, dst)) return -1;
       dst += n;
     } else {
@@ -1459,7 +1336,7 @@ uint8_t SdFile::sync(void) {
   // only allow open files and directories
   if (!isOpen()) return false;
 
-  if (flags_ & F_FILE_DIR_DIRTY) {
+  if (flags_) {
     dir_t* d = cacheDirEntry(SdVolume::CACHE_FOR_WRITE);
     if (!d) return false;
 
@@ -1471,7 +1348,7 @@ uint8_t SdFile::sync(void) {
     d->firstClusterHigh = firstCluster_ >> 16;
 
     // clear directory dirty
-    flags_ &= ~F_FILE_DIR_DIRTY;
+    flags_ = 0;
   }
   return SdVolume::cacheFlush();
 }
@@ -1499,14 +1376,6 @@ size_t SdFile::write(const void* buf, uint16_t nbyte) {
   // number of bytes left to write  -  must be before goto statements
   uint16_t nToWrite = nbyte;
 
-  // error if not a normal file or is read-only
-  if (!isFile() || !(flags_ & O_WRITE)) goto writeErrorReturn;
-
-  // seek to end of file if append flag
-  if ((flags_ & O_APPEND) && curPosition_ != fileSize_) {
-    if (!seekEnd()) goto writeErrorReturn;
-  }
-
   while (nToWrite > 0) {
     uint8_t blockOfCluster = vol_->blockOfCluster(curPosition_);
     uint16_t blockOffset = curPosition_ & 0X1FF;
@@ -1515,7 +1384,7 @@ size_t SdFile::write(const void* buf, uint16_t nbyte) {
       if (curCluster_ == 0) {
         if (firstCluster_ == 0) {
           // allocate first cluster of file
-          if (!addCluster()) goto writeErrorReturn;
+          if (!addCluster())   return 0;
         } else {
           curCluster_ = firstCluster_;
         }
@@ -1524,7 +1393,7 @@ size_t SdFile::write(const void* buf, uint16_t nbyte) {
         if (!vol_->fatGet(curCluster_, &next)) return false;
         if (vol_->isEOC(next)) {
           // add cluster if at end of chain
-          if (!addCluster()) goto writeErrorReturn;
+          if (!addCluster())   return 0;
         } else {
           curCluster_ = next;
         }
@@ -1544,18 +1413,18 @@ size_t SdFile::write(const void* buf, uint16_t nbyte) {
       if (SdVolume::cacheBlockNumber_ == block) {
         SdVolume::cacheBlockNumber_ = 0XFFFFFFFF;
       }
-      if (!vol_->writeBlock(block, src)) goto writeErrorReturn;
+      if (!vol_->writeBlock(block, src)) return 0;
       src += 512;
     } else {
       if (blockOffset == 0 && curPosition_ >= fileSize_) {
         // start of new block don't need to read into cache
-        if (!SdVolume::cacheFlush()) goto writeErrorReturn;
+        if (!SdVolume::cacheFlush()) return 0;
         SdVolume::cacheBlockNumber_ = block;
         SdVolume::cacheSetDirty();
       } else {
         // rewrite part of block
         if (!SdVolume::cacheRawBlock(block, SdVolume::CACHE_FOR_WRITE)) {
-          goto writeErrorReturn;
+          return 0;
         }
       }
       uint8_t* dst = SdVolume::cacheBuffer_.data + blockOffset;
@@ -1568,19 +1437,11 @@ size_t SdFile::write(const void* buf, uint16_t nbyte) {
   if (curPosition_ > fileSize_) {
     // update fileSize and insure sync will update dir entry
     fileSize_ = curPosition_;
-    flags_ |= F_FILE_DIR_DIRTY;
+    flags_ = 1;
   }
 
-  if (flags_ & O_SYNC) {
-    if (!sync()) goto writeErrorReturn;
-  }
   return nbyte;
 
- writeErrorReturn:
-  // return for write error
-  //writeError = true;
-  setWriteError();
-  return 0;
 }
 //------------------------------------------------------------------------------
 /**
@@ -1794,13 +1655,12 @@ uint8_t SdVolume::fatPut(uint32_t cluster, uint32_t value) {
   if (fatCount_ > 1) cacheMirrorBlock_ = lba + blocksPerFat_;
   return true;
 }
-uint8_t SdVolume::init(Sd2Card* dev, uint8_t part) {
+uint8_t SdVolume::volumeinit(Sd2Card* dev, uint8_t part) {
   uint32_t volumeStartBlock = 0;
   sdCard_ = dev;
   // if part == 0 assume super floppy with FAT boot sector in block zero
   // if part > 0 assume mbr volume with partition table
   if (part) {
-    if (part > 4)return false;
     if (!cacheRawBlock(volumeStartBlock, CACHE_FOR_READ)) return false;
     part_t* p = &cacheBuffer_.mbr.part[part-1];
     if ((p->boot & 0X7F) !=0  ||
@@ -1829,8 +1689,7 @@ uint8_t SdVolume::init(Sd2Card* dev, uint8_t part) {
     // error if not power of 2
     if (clusterSizeShift_++ > 7) return false;
   }
-  blocksPerFat_ = bpb->sectorsPerFat16 ?
-                    bpb->sectorsPerFat16 : bpb->sectorsPerFat32;
+  blocksPerFat_ = bpb->sectorsPerFat16 ? bpb->sectorsPerFat16 : bpb->sectorsPerFat32;
 
   fatStartBlock_ = volumeStartBlock + bpb->reservedSectorCount;
 
@@ -1867,87 +1726,52 @@ void File::setSDFile(SdFile* f) {
   _file = f; 
 }
 
-File::File(void) {
-  _file = 0;
-  //Serial.print("Created empty file object");
-}
-
 size_t File::write(uint8_t val) {
   return write(&val, 1);
 }
 
 size_t File::write(const uint8_t *buf, size_t size) {
-  size_t t;
-  if (!_file) {
-    setWriteError();
-    return 0;
-  }
-  _file->clearWriteError();
-  t = _file->write(buf, size);
-  if (_file->getWriteError()) {
-    setWriteError();
-    return 0;
-  }
-  return t;
+  return _file->write(buf, size);
 }
 
 int File::peek() {
-  if (! _file) 
-    return 0;
-
   int c = _file->read();
   if (c != -1) _file->seekCur(-1);
   return c;
 }
 
 int File::read() {
-  if (_file) 
-    return _file->read();
-  return -1;
+  return _file->read();
 }
 
 // buffered read for more efficient, high speed reading
 int File::read(void *buf, uint16_t nbyte) {
-  if (_file) 
-    return _file->read(buf, nbyte);
-  return 0;
+  return _file->read(buf, nbyte);
 }
 
 int File::available() {
-  if (! _file) return 0;
-
   uint32_t n = size() - position();
-
   return n > 0X7FFF ? 0X7FFF : n;
 }
 
 void File::flush() {
-  if (_file)
-    _file->sync();
+  _file->sync();
 }
 
 boolean File::seek(uint32_t pos) {
-  if (! _file) return false;
-
   return _file->seekSet(pos);
 }
 
 uint32_t File::position() {
-  if (! _file) return -1;
   return _file->curPosition();
 }
 
 uint32_t File::size() {
-  if (! _file) return 0;
   return _file->fileSize();
 }
 
 void File::close() {
-  if (_file) {
-    _file->close();
-    free(_file); 
-    _file = 0;
-  }
+  _file->close();
 }
 
 
@@ -1962,10 +1786,10 @@ public:
   File file;
   
   boolean begin() {
-    if(!card.init())return false;
-    if(!volume.init(&card, 1))
+    if(!card.cardinit())return false;
+    if(!volume.volumeinit(&card, 1))
     {
-        if(!volume.init(&card, 0))
+        if(!volume.volumeinit(&card, 0))
         {
           return false;
         }
@@ -1976,11 +1800,11 @@ public:
   // Open the specified file/directory with the supplied mode (e.g. read or
   // write, etc). Returns a File object for interacting with the file.
   // Note that currently only one file can be open at a time.
-  uint8_t openSimple(const char *filepath, uint8_t mode,uint8_t toend) {
+  uint8_t openSimple(const char *filepath, uint8_t toend) {
     // Open the file itself
     
 
-    if (!sdfile.open02(&root, filepath, mode)) {
+    if (!sdfile.open02(&root, filepath)) {
       // failed to open the file :(
       return 0;
     }

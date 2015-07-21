@@ -444,13 +444,6 @@ void DS1307_save()
 }
 
 
-
-
-
-File myFile;
-
-
-
 void setup(){
   Serial.begin(115200);
   pinMode(13, INPUT);
@@ -548,12 +541,11 @@ void loop()
   if(cmd == 5)
   {
     // re-open the file for reading:
-    //                      12345678ABC
-    myFile = SD.openSimple("A       TXT", O_READ, 0);//openSimple
-    if (myFile) {
+    //                 12345678ABC
+    if (SD.openSimple("A       TXT", 0)) {
       while(true)
       {
-        int v = myFile.read();
+        int v = SD.file.read();
         if(v>0)
         {
           Serial.print((char)v);
@@ -563,7 +555,7 @@ void loop()
           break;
         }
       }
-      myFile.close();
+      SD.file.close();
       Serial.println("done.");
     }
     else {
@@ -576,17 +568,16 @@ void loop()
   if(cmd == 6)
   {
     uint32_t t0 = millis();
-    //                      12345678abc
-    myFile = SD.openSimple("B       TXT", O_WRITE | O_CREAT, 1);//1:toend
-    if (myFile) {
+    //                 12345678abc
+    if (SD.openSimple("B       TXT", 1)) {
       for(int i=0;i<50;i++)
       {
-        myFile.print(i);
-        myFile.print(",");
-        myFile.print(i);
-        myFile.println();
+        SD.file.print(i);
+        SD.file.print(",");
+        SD.file.print(i);
+        SD.file.println();
       }
-      myFile.close();
+      SD.file.close();
       Serial.println(millis() - t0);
       Serial.println("done.");
     } 
