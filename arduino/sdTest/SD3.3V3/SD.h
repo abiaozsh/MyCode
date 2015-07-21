@@ -576,8 +576,7 @@ class SdFile : public Print {
   uint8_t isOpen(void) const {return type_ != FAT_FILE_TYPE_CLOSED;}
   /** \return True if this is a SdFile for the root directory. */
   uint8_t isRoot(void) const {return type_ == FAT_FILE_TYPE_ROOT16 || type_ == FAT_FILE_TYPE_ROOT32;}
-  uint8_t open(SdFile* dirFile, uint16_t index, uint8_t oflag);
-  uint8_t open(SdFile* dirFile, const char* fileName, uint8_t oflag);
+  uint8_t open02(SdFile* dirFile, const char* fileName, uint8_t oflag);
 
   uint8_t openRoot(SdVolume* vol);
   /**
@@ -607,15 +606,6 @@ class SdFile : public Print {
    */
   uint8_t seekEnd(void) {return seekSet(fileSize_);}
   uint8_t seekSet(uint32_t pos);
-  /**
-   * Use unbuffered reads to access this file.  Used with Wave
-   * Shield ISR.  Used with Sd2Card::partialBlockRead() in WaveRP.
-   *
-   * Not recommended for normal applications.
-   */
-  void setUnbufferedRead(void) {
-    if (isFile()) flags_ |= F_FILE_UNBUFFERED_READ;
-  }
   uint8_t sync(void);
   /** Type of this SdFile.  You should use isFile() or isDir() instead of type()
    * if possible.
@@ -635,30 +625,6 @@ class SdFile : public Print {
   size_t write(const char* str);
   void write_P(PGM_P str);
   void writeln_P(PGM_P str);
-//------------------------------------------------------------------------------
-
-  /** \deprecated Use: uint8_t SdFile::dirEntry(dir_t* dir); */
-  uint8_t dirEntry(dir_t& dir) {return dirEntry(&dir);}  // NOLINT
-
-  /** \deprecated Use:
-   * uint8_t SdFile::open(SdFile* dirFile, const char* fileName, uint8_t oflag);
-   */
-  uint8_t open(SdFile& dirFile, // NOLINT
-    const char* fileName, uint8_t oflag) {
-    return open(&dirFile, fileName, oflag);
-  }
-  /** \deprecated  Do not use in new apps */
-  uint8_t open(SdFile& dirFile, const char* fileName) {  // NOLINT
-    return open(dirFile, fileName, O_RDWR);
-  }
-  /** \deprecated Use:
-   * uint8_t SdFile::open(SdFile* dirFile, uint16_t index, uint8_t oflag);
-   */
-  uint8_t open(SdFile& dirFile, uint16_t index, uint8_t oflag) {  // NOLINT
-    return open(&dirFile, index, oflag);
-  }
-  /** \deprecated Use: uint8_t SdFile::openRoot(SdVolume* vol); */
-  uint8_t openRoot(SdVolume& vol) {return openRoot(&vol);}  // NOLINT
 //------------------------------------------------------------------------------
 // rest are private
  private:
@@ -731,7 +697,6 @@ class SdVolume {
    * failure include not finding a valid partition, not finding a valid
    * FAT file system or an I/O error.
    */
-  uint8_t init(Sd2Card* dev) { return init(dev, 1) ? true : init(dev, 0);}
   uint8_t init(Sd2Card* dev, uint8_t part);
 
   // inline functions that return volume info
@@ -758,15 +723,6 @@ class SdVolume {
   uint32_t rootDirStart(void) const {return rootDirStart_;}
   /** return a pointer to the Sd2Card object for this volume */
   static Sd2Card* sdCard(void) {return sdCard_;}
-//------------------------------------------------------------------------------
-  // Deprecated functions  - suppress cpplint warnings with NOLINT comment
-  /** \deprecated Use: uint8_t SdVolume::init(Sd2Card* dev); */
-  uint8_t init(Sd2Card& dev) {return init(&dev);}  // NOLINT
-
-  /** \deprecated Use: uint8_t SdVolume::init(Sd2Card* dev, uint8_t vol); */
-  uint8_t init(Sd2Card& dev, uint8_t part) {  // NOLINT
-    return init(&dev, part);
-  }
 //------------------------------------------------------------------------------
   private:
   // Allow SdFile access to SdVolume private data.
@@ -816,12 +772,11 @@ class SdVolume {
 
 class File : public Stream {
  private:
-  char _name[13]; // our name
   SdFile *_file;  // underlying file pointer
 
 public:
-  File(SdFile f, const char *name);     // wraps an underlying SdFile
   File(void);      // 'empty' constructor
+  void setSDFile(SdFile* f);     // wraps an underlying SdFile
   virtual size_t write(uint8_t);
   virtual size_t write(const uint8_t *buf, size_t size);
   virtual int read();
@@ -833,8 +788,6 @@ public:
   uint32_t position();
   uint32_t size();
   void close();
-  operator bool();
-  char * name();
   
   using Print::write;
 };
@@ -1235,7 +1188,7 @@ uint8_t SdFile::dirEntry(dir_t* dir) {
   return true;
 }
 //------------------------------------------------------------------------------
-uint8_t SdFile::open(SdFile* dirFile, const char* dname, uint8_t oflag) {
+uint8_t SdFile::open02(SdFile* dirFile, const char* dname, uint8_t oflag) {
   dir_t* p;
 
   // error if already open
@@ -1910,31 +1863,14 @@ uint8_t SdVolume::init(Sd2Card* dev, uint8_t part) {
   return true;
 }
 
-
-
-File::File(SdFile f, const char *n) {
-  // oh man you are kidding me, new() doesnt exist? Ok we do it by hand!
-  _file = (SdFile *)malloc(sizeof(SdFile)); 
-  if (_file) {
-    memcpy(_file, &f, sizeof(SdFile));
-    
-    strncpy(_name, n, 12);
-    _name[12] = 0;
-    
-  }
+void File::setSDFile(SdFile* f) {
+  _file = f; 
 }
 
 File::File(void) {
   _file = 0;
-  _name[0] = 0;
   //Serial.print("Created empty file object");
 }
-
-// returns a pointer to the file name
-char *File::name(void) {
-  return _name;
-}
-
 
 size_t File::write(uint8_t val) {
   return write(&val, 1);
@@ -2014,41 +1950,46 @@ void File::close() {
   }
 }
 
-File::operator bool() {
-  if (_file) 
-    return  _file->isOpen();
-  return false;
-}
-
 
 class SDClass {
 
-private:
+public:
   // These are required for initialisation and use of sdfatlib
   Sd2Card card;
   SdVolume volume;
   SdFile root;
+  SdFile sdfile;
+  File file;
   
-public:
   boolean begin() {
-    return card.init() && volume.init(card) && root.openRoot(volume);
+    if(!card.init())return false;
+    if(!volume.init(&card, 1))
+    {
+        if(!volume.init(&card, 0))
+        {
+          return false;
+        }
+    }
+    return root.openRoot(&volume);
   }
 
   // Open the specified file/directory with the supplied mode (e.g. read or
   // write, etc). Returns a File object for interacting with the file.
   // Note that currently only one file can be open at a time.
-  File openSimple(const char *filepath, uint8_t mode,uint8_t toend) {
+  uint8_t openSimple(const char *filepath, uint8_t mode,uint8_t toend) {
     // Open the file itself
-    SdFile file;
+    
 
-    if ( ! file.open(root, filepath, mode)) {
+    if (!sdfile.open02(&root, filepath, mode)) {
       // failed to open the file :(
-      return File();
+      return 0;
     }
 
     if (toend) 
-      file.seekSet(file.fileSize());
-    return File(file, filepath);
+      sdfile.seekSet(sdfile.fileSize());
+    
+    file.setSDFile(&sdfile);
+    return 1;
   }
 
 private:
