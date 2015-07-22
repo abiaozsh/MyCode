@@ -93,18 +93,6 @@ uint8_t const DATA_RES_ACCEPTED = 0X05;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
  // define software SPI pins so Mega can use unmodified GPS Shield
 //GND
 
