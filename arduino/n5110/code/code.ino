@@ -230,11 +230,11 @@ void LCD5110::drawBitmapBuff(int x, int y, byte *bitmap, int sx, int sy)
 }
 
 
-#define _SCK  10
-#define _MOSI 11
-#define _DC 12
-#define _CS 13
-#define _RST A0
+#define _SCK  A1//10
+#define _MOSI A2//11
+#define _DC A3//12
+#define _CS 9//13
+#define _RST 8//A0
 
 LCD5110 myGLCD(_SCK,_MOSI,_DC,_RST,_CS);
 
@@ -246,6 +246,7 @@ void setup() {
   setPixel(1,1,0);
   setPixel(1,0,0);
   setPixel(0,1,1);
+  setPixel(27,20,1);
   myGLCD.drawBitmapBuff(0, 0, buff, 84, 48);
 }
 
