@@ -8,10 +8,11 @@
    3
 4     5
    6
-data0 clk1 st2 oeb2     3A 1B
-clk0 data1 (scl0 sda1)  2B
+dataB0 clkA1 stA2 oeB2  2A 2B
+ sdaB0 sclB1            1B
 adj 4 5 6 7 (digital in)4A // 调整月日时分
 light sense 3           1A
+1A free (IR in)
 11
 
 74HC595(1):1~7(7) down 0 alarm
@@ -38,8 +39,8 @@ NPN 7
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
-#define PORT_DAT_ON  PORTA |=  _BV(0)
-#define PORT_DAT_OFF PORTA &= ~_BV(0)
+#define PORT_DAT_ON  PORTB |=  _BV(0)
+#define PORT_DAT_OFF PORTB &= ~_BV(0)
 
 #define PORT_CLK_ON  PORTA |=  _BV(1)
 #define PORT_CLK_OFF PORTA &= ~_BV(1)
@@ -60,11 +61,11 @@ NPN 7
 #define DS1307_CTRL_ID 0x68//B01101000  //DS1307
 
 //scl0 sda1
-#define BIT_SCL  _BV(0)
+#define BIT_SCL  _BV(1)
 #define DDR_SCL  DDRB
 #define PORT_SCL PORTB
 
-#define BIT_SDA  _BV(1)
+#define BIT_SDA  _BV(0)
 #define DDR_SDA  DDRB
 #define PORT_SDA PORTB
 #define PIN_SDA  PINB

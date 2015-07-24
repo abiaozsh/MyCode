@@ -984,9 +984,9 @@ void loop()
     buf2[8] = '\0';
     
     //snprintf(buf, 12, "20%02d%02d%02dTXT",DS1307_YR, DS1307_MTH, DS1307_DATE);
-    //Serial.print(buf);
+    Serial.print(buf);
     //snprintf(buf2, 10, "%02d:%02d:%02d",DS1307_HR, DS1307_MIN, DS1307_SEC);
-    //Serial.println(buf2);
+    Serial.println(buf2);
   
     PORTD |= _BV(3);
     if (SD.openSimple(buf, 1)) {
@@ -1027,9 +1027,9 @@ void loop()
   a_p[idx] = pressure;
   TotalP += pressure;
   
-  //Serial.print(temperature);
-  //Serial.print(",");
-  //Serial.println(pressure);
+  Serial.print(temperature);
+  Serial.print(",");
+  Serial.println(pressure);
   PORTB &= ~_BV(5);
   while(millis() - t0<100);
   idx++;
