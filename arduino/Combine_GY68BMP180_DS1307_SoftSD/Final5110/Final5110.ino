@@ -875,15 +875,18 @@ void setup(){
     }
     if(digitalRead(2)==LOW)
     {
-      //29,15,7,17,20,39,00,5,
-      DS1307_YR  = 15;
-      DS1307_MTH = 11;
-      DS1307_DATE = 23;
-      DS1307_HR  = 21;
-      DS1307_MIN = 34;
-      DS1307_SEC = 58;
-      DS1307_DOW= 0;
-      DS1307_save();
+      if(DS1307_SEC == 80)
+      {
+        //29,15,7,17,20,39,00,5,
+        DS1307_YR  = 15;
+        DS1307_MTH = 1;
+        DS1307_DATE = 1;
+        DS1307_HR  = 0;
+        DS1307_MIN = 0;
+        DS1307_SEC = 0;
+        DS1307_DOW= 0;
+        DS1307_save();
+      }
       break;
     }
   }
@@ -919,11 +922,11 @@ void loop()
     {
       line[i] = ' ';
     }
-    line[0] = buf[2];
-    line[1] = buf[3];
+    line[0] = buf[4];
+    line[1] = buf[5];
     line[2] = '-';
-    line[3] = buf[4];
-    line[4] = buf[5];
+    line[3] = buf[6];
+    line[4] = buf[7];
     line[5] = ' ';
     LastTotalT = LastTotalT/5;
     line[9] = '0'+(LastTotalT%10);LastTotalT=LastTotalT/10;
@@ -961,13 +964,13 @@ void loop()
   {
     idx=0;
     DS1307_read();
-    buf[0] = '0'+(DS1307_YR/10);
-    buf[1] = '0'+(DS1307_YR%10);
-    buf[2] = '0'+(DS1307_MTH/10);
-    buf[3] = '0'+(DS1307_MTH%10);
-    buf[4] = '0'+(DS1307_DATE/10);
-    buf[5] = '0'+(DS1307_DATE%10);
-    buf[6] = ' ';buf[7] = ' ';
+    buf[0] = '2';buf[1] = '0';
+    buf[2] = '0'+(DS1307_YR/10);
+    buf[3] = '0'+(DS1307_YR%10);
+    buf[4] = '0'+(DS1307_MTH/10);
+    buf[5] = '0'+(DS1307_MTH%10);
+    buf[6] = '0'+(DS1307_DATE/10);
+    buf[7] = '0'+(DS1307_DATE%10);
     buf[8] = 'T';buf[9] = 'X';buf[10] = 'T';buf[11] = '\0';
     
     buf2[0] = '0'+(DS1307_HR/10);
@@ -980,7 +983,7 @@ void loop()
     buf2[7] = '0'+(DS1307_SEC%10);
     buf2[8] = '\0';
     
-    //snprintf(buf, 12, "%02d%02d%02d  TXT",DS1307_YR, DS1307_MTH, DS1307_DATE);
+    //snprintf(buf, 12, "20%02d%02d%02dTXT",DS1307_YR, DS1307_MTH, DS1307_DATE);
     //Serial.print(buf);
     //snprintf(buf2, 10, "%02d:%02d:%02d",DS1307_HR, DS1307_MIN, DS1307_SEC);
     //Serial.println(buf2);
