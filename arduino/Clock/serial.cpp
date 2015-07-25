@@ -10,9 +10,8 @@
    6
 dataB0 clkA1 stA2 oeB2  2A 2B
  sdaB0 sclB1            1B
-adj 4 5 6 7 (digital in)4A // 调整月日时分
-light sense 3           1A
-1A free (IR in)
+adj 3 4 5 6 7 (digital in)5A // 上下左右调整 按下左右默认在分上 Page
+light sense A0           1A
 11
 
 74HC595(1):1~7(7) down 0 alarm

@@ -11,8 +11,8 @@
 dataB0 clkA1 stA2 oeB2  2A 2B
  sdaB0 sclB1            1B
 adj 4 5 6 7 (digital in)4A // 调整月日时分
-light sense 3           1A
-1A free (IR in)
+light sense A0           1A
+A3 free (Page)
 11
 
 74HC595(1):1~7(7) down 0 alarm
@@ -182,10 +182,6 @@ uint8_t DS1307_YR;// 6
 
 int main(void) {
 	ClockInit();
-	DDRA|=_BV(0);
-	DDRA|=_BV(1);
-	DDRA|=_BV(2);
-	DDRA|=_BV(3);
 	
 	loop();
 	
@@ -213,6 +209,7 @@ void loop() {
 		temp[5] = 8;
 		
 		Init();
+		PORT_OE_OFF;
     while(true)
     {
       Page(temp);
@@ -221,6 +218,11 @@ void loop() {
 }
 
 void Init(){
+	DDRB|=_BV(0);
+	DDRA|=_BV(1);
+	DDRA|=_BV(2);
+	DDRB|=_BV(2);
+	PORT_OE_ON;
 	for(uint8_t i=0;i<16;i++)
 	{
 		PORT_DAT_OFF;
@@ -229,7 +231,6 @@ void Init(){
 	}
 	PORT_STR_ON; //store clock up
 	PORT_STR_OFF; //store clock down
-	PORT_OE_ON;
 }
 
 //12:34:56
@@ -241,22 +242,25 @@ void Page(uint8_t* vals){
 		{
       uint8_t low = 0;
       uint8_t high = 0;
-      low  |= Up6[(w<<1)];
-      high |= Up6[(w<<1)+1];
+      low  |= pgm_read_byte_near(Up6+(w<<1));
+      high |= pgm_read_byte_near(Up6+(w<<1)+1);
       
-      low  |= Down7[(vals[w]*10+l<<1)];
-      high |= Down7[(vals[w]*10+l<<1)+1];
+      low  |= pgm_read_byte_near(Down7+(vals[w]*10+l<<1));
+      high |= pgm_read_byte_near(Down7+(vals[w]*10+l<<1)+1);
       
 			SendByte(low);//位线
 			SendByte(high);//字线
 			PORT_STR_ON; //store clock up
 			PORT_STR_OFF; //store clock down
+			//for(int _d = 0;_d<100000;_d++)
+			//{
+			//	volatile int v=0;
+			//	v++;
+			//}
 		}
 	}
 }
 void SendByte(uint8_t data){
-	PORT_CLK_OFF;
-	PORT_STR_OFF;
 	for(uint8_t i=0;i<8;i++)
 	{
 		if(data&1)
@@ -270,6 +274,11 @@ void SendByte(uint8_t data){
 		data>>1;
 		PORT_CLK_ON; //shift clock up
 		PORT_CLK_OFF; //shift clock down
+		//	for(int _d = 0;_d<10;_d++)
+		//	{
+		//		volatile int v=0;
+		//		v++;
+		//	}
 	}
 }
 
