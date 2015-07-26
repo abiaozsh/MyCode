@@ -201,12 +201,12 @@ void loop() {
 	for(;;)
 	{
 		uint8_t temp[6];
-		temp[0] = 8;
-		temp[1] = 8;
-		temp[2] = 8;
-		temp[3] = 8;
-		temp[4] = 8;
-		temp[5] = 8;
+		temp[0] = 0;
+		temp[1] = 1;
+		temp[2] = 2;
+		temp[3] = 3;
+		temp[4] = 4;
+		temp[5] = 5;
 		
 		Init();
 		PORT_OE_OFF;
