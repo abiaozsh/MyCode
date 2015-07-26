@@ -203,15 +203,15 @@ void loop() {
 		temp[0] = 0;
 		temp[1] = 0;
 		temp[2] = 0;
-		temp[3] = 0;
-		temp[4] = 0;
-		temp[5] = 0;
+		temp[3] = 1;
+		temp[4] = 1;
+		temp[5] = 1;
 		uint8_t aread = ADCH;ADCSRA |= _BV(ADSC);
-		temp[5] = aread%10;aread/=10;
-		temp[4] = aread%10;aread/=10;
-		temp[3] = aread%10;
+		temp[2] = aread%10;aread/=10;
+		temp[1] = aread%10;aread/=10;
+		temp[0] = aread%10;
 		
-      for(uint8_t time = 0;time<100;time++)
+      for(uint8_t time = 0;time<10;time++)
 	  {
 		Page(temp);
 	  }
@@ -255,8 +255,20 @@ void Page(uint8_t* vals){
       
 			SendByte(high);
 			SendByte(low);
+			PORT_OE_ON;
 			PORT_STR_ON; //store clock up
 			PORT_STR_OFF; //store clock down
+		for(int sss=0;sss<30;sss++)//ÑÓ³Ù ±ÜÃâÉÏÏÂÑØÇÐ»»Ê±ÍÏÓ°
+		{
+			volatile int vvv = 0;
+			vvv++;
+		}
+			PORT_OE_OFF;
+		for(int sss=0;sss<300;sss++)
+		{
+			volatile int vvv = 0;
+			vvv++;
+		}
 		}
 	}
 }
