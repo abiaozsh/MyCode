@@ -51,12 +51,11 @@ NPN 7
 #define PORT_OE_ON   PORTB |=  _BV(2)
 #define PORT_OE_OFF  PORTB &= ~_BV(2)
 
-#define PIN_ADJ1 PINA &= ~_BV(4)
-#define PIN_ADJ2 PINA &= ~_BV(5)
-#define PIN_ADJ3 PINA &= ~_BV(6)
-#define PIN_ADJ4 PINA &= ~_BV(7)
+#define PIN_ADJU PINA &= ~_BV(3)
+#define PIN_ADJD PINA &= ~_BV(5)
+#define PIN_ADJL PINA &= ~_BV(7)
+#define PIN_ADJR PINA &= ~_BV(4)
 
-#define NUM_SENS 3
 
 #define DS1307_CTRL_ID 0x68//B01101000  //DS1307
 
@@ -168,8 +167,6 @@ uint8_t decToBcd(const uint8_t dec);
 void DS1307_read();
 void DS1307_save();
 
-int analogRead(uint8_t pin);
-
 
 uint8_t DS1307_SEC;// 0
 uint8_t DS1307_MIN;// 1
@@ -189,9 +186,8 @@ Init();
 	loop();
 	
 	//
-	analogRead(1);
-	DS1307_read();
-	DS1307_save();
+	//DS1307_read();
+	//DS1307_save();
 }
 
 void ClockInit() {
@@ -204,13 +200,21 @@ void loop() {
 	for(;;)
 	{
 		uint8_t temp[6];
-		temp[0] = 8;
-		temp[1] = 8;
-		temp[2] = 8;
-		temp[3] = 8;
-		temp[4] = 8;
-		temp[5] = 8;
-      Page(temp);
+		temp[0] = 0;
+		temp[1] = 0;
+		temp[2] = 0;
+		temp[3] = 0;
+		temp[4] = 0;
+		temp[5] = 0;
+		uint8_t aread = ADCH;ADCSRA |= _BV(ADSC);
+		temp[5] = aread%10;aread/=10;
+		temp[4] = aread%10;aread/=10;
+		temp[3] = aread%10;
+		
+      for(uint8_t time = 0;time<100;time++)
+	  {
+		Page(temp);
+	  }
 	}
 }
 
@@ -228,6 +232,10 @@ void Init(){
 	}
 	PORT_STR_ON; //store clock up
 	PORT_STR_OFF; //store clock down
+	
+	ADCSRB |= _BV(ADLAR);
+	ADMUX = 0;
+	ADCSRA = _BV(ADEN) | _BV(ADSC) | _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2);
 }
 
 //12:34:56
@@ -254,61 +262,32 @@ void Page(uint8_t* vals){
 }
 
 void SendByte(uint8_t data){
-	for(uint8_t i=0;i<8;i++)
-	{
-		if(data&1)
-		{
-			PORT_DAT_ON;
-		}
-		else
-		{
-			PORT_DAT_OFF;
-		}
-		data>>=1;
-		PORT_CLK_ON; //shift clock up
-		PORT_CLK_OFF; //shift clock down
-	}
+  uint8_t _data = ~data;
+  for(uint8_t i=0;i<8;i++)
+  {
+    if(data&1)
+    {
+      PORT_DAT_ON;
+    }
+    if(_data&1)
+    {
+      PORT_DAT_OFF;
+    }
+    data>>=1;
+    _data>>=1;
+    PORT_CLK_ON; //shift clock up
+    PORT_CLK_OFF; //shift clock down
+  }
 }
+
+
+
+
+
+
+
 
 /*
-
-
-
-int analogRead(uint8_t pin){
-	uint8_t low, high;
-
-	ADCSRB |= _BV(ADLAR);
-  
-	ADMUX = (pin & 0x07);
-
-	// without a delay, we seem to read from the wrong channel
-	//delay(1);
-
-	// start the conversion
-	sbi(ADCSRA, ADSC);
-
-	// ADSC is cleared when the conversion finishes
-	while (bit_is_set(ADCSRA, ADSC));
-
-	// we have to read ADCL first; doing so locks both ADCL
-	// and ADCH until ADCH is read.  reading ADCL second would
-	// cause the results of each conversion to be discarded,
-	// as ADCL and ADCH would be locked when it completed.
-	low  = ADCL;
-	high = ADCH;
-
-	
-	// combine the two bytes
-	return (high << 8) | low;
-}
-
-
-
-
-
-
-
-
 
 
 

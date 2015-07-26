@@ -1,6 +1,6 @@
-rem set arduinopath=C:\Program Files (x86)\Arduino
-set arduinopath=C:\Program Files\Arduino
-set comPort=COM11
+set arduinopath=C:\Program Files (x86)\Arduino
+rem set arduinopath=C:\Program Files\Arduino
+set comPort=COM33
 set filename=serial
 
 del %filename%.hex
