@@ -242,6 +242,21 @@ void Init(){
 void Page(uint8_t* vals){
 	for(uint8_t w=0;w<6;w++)
 	{
+		PORT_OE_ON;
+	PORT_DAT_OFF;
+	for(uint8_t i=0;i<16;i++)
+	{
+		PORT_CLK_ON; //shift clock up
+		PORT_CLK_OFF; //shift clock down
+	}
+	PORT_STR_ON; //store clock up
+	PORT_STR_OFF; //store clock down
+		//for(int sss=0;sss<2;sss++)//ÑÓ³Ù ±ÜÃâÉÏÏÂÑØÇÐ»»Ê±ÍÏÓ°
+		//{
+		//	volatile int vvv = 0;
+		//	vvv++;
+		//}
+		PORT_OE_OFF;
 		//uint8_t t = pgm_read_byte_near(SEGS+vals[w]);
 		for(uint8_t l=0;l<7;l++)
 		{
@@ -255,20 +270,13 @@ void Page(uint8_t* vals){
       
 			SendByte(high);
 			SendByte(low);
-			PORT_OE_ON;
 			PORT_STR_ON; //store clock up
 			PORT_STR_OFF; //store clock down
-		for(int sss=0;sss<30;sss++)//ÑÓ³Ù ±ÜÃâÉÏÏÂÑØÇÐ»»Ê±ÍÏÓ°
-		{
-			volatile int vvv = 0;
-			vvv++;
-		}
-			PORT_OE_OFF;
-		for(int sss=0;sss<300;sss++)
-		{
-			volatile int vvv = 0;
-			vvv++;
-		}
+			//for(int sss=0;sss<2;sss++)
+			//{
+			//	volatile int vvv = 0;
+			//	vvv++;
+			//}
 		}
 	}
 }
