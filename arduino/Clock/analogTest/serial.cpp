@@ -83,7 +83,7 @@ NPN 7
 // set SDA high and to input (releases pin) (i.e. change to input,turnon pullup)
 #define i2c_sda_hi() DDR_SDA &=~ BIT_SDA;
 
-//先送低，后送高
+//先送高，后送低
 //上1	上2	上3	上4	上5	上6	
 //0x0040	0x0010	0x0004	0x0800	0x0200	0x8000
 PROGMEM prog_uint8_t Up6[] = {
@@ -182,7 +182,10 @@ uint8_t DS1307_YR;// 6
 
 int main(void) {
 	ClockInit();
-	
+Init();
+		
+		PORT_OE_OFF;
+		
 	loop();
 	
 	//
@@ -201,19 +204,13 @@ void loop() {
 	for(;;)
 	{
 		uint8_t temp[6];
-		temp[0] = 0;
-		temp[1] = 1;
-		temp[2] = 2;
-		temp[3] = 3;
-		temp[4] = 4;
-		temp[5] = 5;
-		
-		Init();
-		PORT_OE_OFF;
-    while(true)
-    {
+		temp[0] = 8;
+		temp[1] = 8;
+		temp[2] = 8;
+		temp[3] = 8;
+		temp[4] = 8;
+		temp[5] = 8;
       Page(temp);
-    }
 	}
 }
 
@@ -223,9 +220,9 @@ void Init(){
 	DDRA|=_BV(2);
 	DDRB|=_BV(2);
 	PORT_OE_ON;
+	PORT_DAT_OFF;
 	for(uint8_t i=0;i<16;i++)
 	{
-		PORT_DAT_OFF;
 		PORT_CLK_ON; //shift clock up
 		PORT_CLK_OFF; //shift clock down
 	}
@@ -245,21 +242,17 @@ void Page(uint8_t* vals){
       low  |= pgm_read_byte_near(Up6+(w<<1));
       high |= pgm_read_byte_near(Up6+(w<<1)+1);
       
-      low  |= pgm_read_byte_near(Down7+(vals[w]*10+l<<1));
-      high |= pgm_read_byte_near(Down7+(vals[w]*10+l<<1)+1);
+      low  |= pgm_read_byte_near(Down7+vals[w]*14+(l<<1));
+      high |= pgm_read_byte_near(Down7+vals[w]*14+(l<<1)+1);
       
-			SendByte(low);//位线
-			SendByte(high);//字线
+			SendByte(high);
+			SendByte(low);
 			PORT_STR_ON; //store clock up
 			PORT_STR_OFF; //store clock down
-			//for(int _d = 0;_d<100000;_d++)
-			//{
-			//	volatile int v=0;
-			//	v++;
-			//}
 		}
 	}
 }
+
 void SendByte(uint8_t data){
 	for(uint8_t i=0;i<8;i++)
 	{
@@ -271,17 +264,13 @@ void SendByte(uint8_t data){
 		{
 			PORT_DAT_OFF;
 		}
-		data>>1;
+		data>>=1;
 		PORT_CLK_ON; //shift clock up
 		PORT_CLK_OFF; //shift clock down
-		//	for(int _d = 0;_d<10;_d++)
-		//	{
-		//		volatile int v=0;
-		//		v++;
-		//	}
 	}
 }
 
+/*
 
 
 
@@ -514,3 +503,4 @@ void loopa()
   //  DS1307_save();
   //}
 }
+*/
