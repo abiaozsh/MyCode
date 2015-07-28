@@ -191,7 +191,6 @@ int main(void) {
   ClockInit();
   Init();
   loop();
-	
 }
 
 void ClockInit() {
@@ -227,14 +226,15 @@ void Init(){
   ADCSRA = _BV(ADEN) | _BV(ADSC) | _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2);
   
   TCCR0A = 0;
-  TCCR0B = 5;//1/1024
+  TCCR0B = 4;
   TCNT0 = 0;
   OCR0A = 128;//数字越大越暗（match以后开OE，定时器超时关OE）
   TIMSK0 = _BV(OCIE0A) | _BV(TOIE0);
+  sei();
 }
 
 void loop() {
-	for(;;)
+	while(true)
 	{
     if(AllowGetTime)
     {
@@ -300,7 +300,7 @@ ISR(TIM0_OVF_vect)
     AllowGetTime = 1;
   }
   
-  //准备输出数据开始
+  //准备输出数据 开始
   lineCount++;
   if(lineCount==8)
   {
@@ -315,18 +315,20 @@ ISR(TIM0_OVF_vect)
   highSign=0;
   if(lineCount!=7)//多余的一行用于字与字间切换
   {
-    lowSign  |= pgm_read_byte_near(Up6+(wordCount<<1));
-    highSign |= pgm_read_byte_near(Up6+(wordCount<<1)+1);
+    prog_uint8_t* p = Up6+(wordCount<<1);
+    lowSign  |= pgm_read_byte_near(p++);
+    highSign |= pgm_read_byte_near(p);
     
-    lowSign  |= pgm_read_byte_near(Down7+wordArray[wordCount]*14+(lineCount<<1));
-    highSign |= pgm_read_byte_near(Down7+wordArray[wordCount]*14+(lineCount<<1)+1);
+	p = Down7+wordArray[wordCount]*14+(lineCount<<1);
+    lowSign  |= pgm_read_byte_near(p++);
+    highSign |= pgm_read_byte_near(p);
   }
-  if(wordCount==0)//显示时间日期
+  if(wordCount==0)//显示时间:日期-
   {
     lowSign  |= LEDLowSign;
     highSign |= LEDHighSign;
   }
-  //准备输出数据结束
+  //准备输出数据 结束
   
 
 }
