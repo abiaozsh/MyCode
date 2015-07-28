@@ -168,24 +168,24 @@ uint8_t decToBcd(const uint8_t dec);
 void DS1307_read();
 void DS1307_save();
 
-uint8_t wordArray[6];
-uint8_t wordCount = 0;
-uint8_t lineCount = 0;
-uint8_t lowSign = 0;
-uint8_t highSign = 0;
-uint8_t LEDLowSign = 0;
-uint8_t LEDHighSign = 0;
-uint8_t AllowGetTime = 0;
+volatile uint8_t wordArray[6];
+volatile uint8_t wordCount = 0;
+volatile uint8_t lineCount = 0;
+volatile uint8_t lowSign = 0;
+volatile uint8_t highSign = 0;
+volatile uint8_t LEDLowSign = 0;
+volatile uint8_t LEDHighSign = 0;
+volatile uint8_t AllowGetTime = 0;
 
-uint8_t DS1307_SEC;// 0
-uint8_t DS1307_MIN;// 1
-uint8_t DS1307_HR;// 2
-uint8_t DS1307_DOW;// 3
-uint8_t DS1307_DATE;// 4
-uint8_t DS1307_MTH;// 5
-uint8_t DS1307_YR;// 6
+volatile uint8_t DS1307_SEC;// 0
+volatile uint8_t DS1307_MIN;// 1
+volatile uint8_t DS1307_HR;// 2
+volatile uint8_t DS1307_DOW;// 3
+volatile uint8_t DS1307_DATE;// 4
+volatile uint8_t DS1307_MTH;// 5
+volatile uint8_t DS1307_YR;// 6
 
-uint8_t iicDelay = 100;
+volatile uint8_t iicDelay = 100;
 
 int main(void) {
   ClockInit();
@@ -226,7 +226,7 @@ void Init(){
   ADCSRA = _BV(ADEN) | _BV(ADSC) | _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2);
   
   TCCR0A = 0;
-  TCCR0B = 4;
+  TCCR0B = 2;
   TCNT0 = 0;
   OCR0A = 128;//数字越大越暗（match以后开OE，定时器超时关OE）
   TIMSK0 = _BV(OCIE0A) | _BV(TOIE0);
@@ -239,6 +239,7 @@ void loop() {
     if(AllowGetTime)
     {
       uint8_t aread = ADCH;ADCSRA |= _BV(ADSC);
+	  OCR0A = aread;
       wordArray[2] = aread%10;aread/=10;
       wordArray[1] = aread%10;aread/=10;
       wordArray[0] = aread%10;
@@ -285,6 +286,7 @@ inline void SendByte(uint8_t data){
 
 ISR(TIM0_OVF_vect)
 {
+	sei();
   if(wordCount==0&&lineCount==0)//开始画第一字第一笔，不可以取时间
   {
     AllowGetTime = 0;
@@ -340,7 +342,7 @@ ISR(TIM0_COMPA_vect)
 
 
 
-
+/*
 void dly(){
   for(uint8_t i=0;i<iicDelay;i++)
   {
@@ -511,3 +513,4 @@ void loopa()
   //  DS1307_save();
   //}
 }
+*/

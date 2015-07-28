@@ -2613,7 +2613,7 @@ void drawLine(char* line, uint8_t Pos)
       chr*=16;
       for(uint8_t cx=0; cx<16; cx+=2)
       {
-        _LCD_Write(pgm_read_byte_near(font+chr+cx), LCD_DATA);
+        _LCD_Write(~pgm_read_byte_near(font+chr+cx), LCD_DATA);
       }
     }
   }
@@ -2634,7 +2634,7 @@ void drawLine(char* line, uint8_t Pos)
       chr*=16;
       for(uint8_t cx=1; cx<17; cx+=2)
       {
-        _LCD_Write(pgm_read_byte_near(font+chr+cx), LCD_DATA);
+        _LCD_Write(~pgm_read_byte_near(font+chr+cx), LCD_DATA);
       }
     }
   }
