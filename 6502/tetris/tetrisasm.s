@@ -138,7 +138,7 @@ _datarnd:
 ;page2: 0x0200 ~0x02FF
 ;size:100*2(0x0C8) player board 1,2
 .define Board            $0200
-;size:16*2(0x020)  playe r data 1,2
+;size:16*2(0x020)  player  data 1,2
 .define Player           $02C8
 ;size:16(0x010)
 .define DrawBuff         $02E8
