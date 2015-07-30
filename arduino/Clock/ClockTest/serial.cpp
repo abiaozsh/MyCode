@@ -27,6 +27,10 @@ A3 free (Page)
 星期6 888888
 星期天 
 
+按红色按钮，翻页：时间，日期，星期
+按上下左右键后，进入设定状态，10秒无操作，返回显示状态
+
+
 LED 10
 LED 420 （10+41）
 PNP 6 NPN 6
@@ -47,11 +51,11 @@ NPN 7
 #define PORT_OE_ON   PORTB |=  _BV(2)
 #define PORT_OE_OFF  PORTB &= ~_BV(2)
 
-#define PIN_ADJU PINA &= ~_BV(3)
-#define PIN_ADJD PINA &= ~_BV(5)
-#define PIN_ADJL PINA &= ~_BV(7)
-#define PIN_ADJR PINA &= ~_BV(4)
-
+#define ADJU PINA &= ~_BV(3)
+#define ADJD PINA &= ~_BV(5)
+#define ADJL PINA &= ~_BV(7)
+#define ADJR PINA &= ~_BV(4)
+#define BTN  PINA &= ~_BV(6)
 
 //先送高，后送低
 //上1	上2	上3	上4	上5	上6	
@@ -64,7 +68,7 @@ PROGMEM prog_uint8_t Up6[] = {
 0x00,0x02,
 0x00,0x80
 };
-  
+/*
 //下1	下2	下3	下4	下5	下6	下7
 //0x0020	0x0008	0x0002	0x2000	0x1000	0x0400	0x0100
 PROGMEM prog_uint8_t Down7[] = {
@@ -83,7 +87,39 @@ PROGMEM prog_uint8_t Down7[] = {
 0x00,0x00,	0x20,0x00,	0x08,0x00,	0x00,0x00,	0x00,0x00,	0x00,0x10,	0x00,0x00,	0x00,0x01,//C=0 110 010 1=
 0x00,0x00,	0x00,0x00,	0x00,0x00,	0x02,0x00,	0x00,0x20,	0x00,0x10,	0x00,0x04,	0x00,0x01,//D=0 001 111 1=
 0x00,0x00,	0x20,0x00,	0x08,0x00,	0x00,0x00,	0x00,0x20,	0x00,0x10,	0x00,0x00,	0x00,0x01,//E=0 110 110 1=
-0x00,0x00,	0x20,0x00,	0x08,0x00,	0x00,0x00,	0x00,0x20,	0x00,0x10,	0x00,0x00,	0x00,0x00 //F=0 110 110 0=
+0x00,0x00,	0x20,0x00,	0x08,0x00,	0x00,0x00,	0x00,0x20,	0x00,0x10,	0x00,0x00,	0x00,0x00,//F=0 110 110 0=
+0x00,0x00,	0x00,0x00,	0x00,0x00,	0x00,0x00,	0x00,0x00,	0x00,0x00,	0x00,0x00,	0x00,0x00 // =0 000 000 0=
+};
+*/
+
+PROGMEM prog_uint8_t Down7A[] = {
+0x00,0x00,
+0x20,0x00,
+0x08,0x00,
+0x02,0x00,
+0x00,0x20,
+0x00,0x10,
+0x00,0x04,
+0x00,0x01
+};
+PROGMEM prog_uint8_t Down7B[] = {
+0x77,//0111 0111, 0 
+0x12,//0001 0010, 1 
+0x5D,//0101 1101, 2 
+0x5B,//0101 1011, 3 
+0x3A,//0011 1010, 4 
+0x6B,//0110 1011, 5 
+0x6F,//0110 1111, 6 
+0x52,//0101 0010, 7 
+0x7F,//0111 1111, 8 
+0x7B,//0111 1011, 9 
+0x7E,//0111 1110, A 
+0x2F,//0010 1111, B 
+0x65,//0110 0101, C 
+0x1F,//0001 1111, D 
+0x6D,//0110 1101, E 
+0x6C,//0110 1100  F 
+0x00 //0000 0000    
 };
 
 //(LED1)	(LED2)
@@ -114,15 +150,13 @@ void SendByte(uint8_t data);
 void dly();
 void i2c_SoftI2CMaster();
 void i2c_SoftI2CMasterEnd();
-uint8_t i2c_beginTransmission(uint8_t address);
-uint8_t i2c_requestFrom(uint8_t address);
-uint8_t i2c_endTransmission(void);
-void i2c_write(uint8_t* data, uint8_t quantity);
+void i2c_beginTransmission(uint8_t address);
+void i2c_requestFrom(uint8_t address);
+void i2c_endTransmission();
 void i2c_writebit(uint8_t c);
-uint8_t i2c_readbit(void);
-void i2c_start(void);
-void i2c_stop(void);
-uint8_t i2c_write(uint8_t c);
+void i2c_start();
+void i2c_write(uint8_t c);
+uint8_t i2c_readbit();
 uint8_t i2c_read(uint8_t ack);
 uint8_t i2c_read();
 uint8_t i2c_readLast();
@@ -132,7 +166,7 @@ uint8_t decToBcd(const uint8_t dec);
 void DS1307_read();
 void DS1307_save();
 
-volatile uint8_t wordArray[6];
+volatile uint8_t wordArray[6];//0~15 显示相应数字，16全暗
 volatile uint8_t wordCount = 0;
 volatile uint8_t lineCount = 0;
 volatile uint8_t lowSign = 0;
@@ -140,6 +174,7 @@ volatile uint8_t highSign = 0;
 volatile uint8_t LEDLowSign = 0;
 volatile uint8_t LEDHighSign = 0;
 volatile uint8_t AllowGetTime = 0;
+volatile uint8_t analogRead = 0;
 
 volatile uint8_t DS1307_SEC;// 0
 volatile uint8_t DS1307_MIN;// 1
@@ -169,6 +204,10 @@ void Init(){
   wordArray[4] = 14;
   wordArray[5] = 15;
 
+  DS1307_SEC=0;
+  DS1307_MIN=0;
+  DS1307_save();
+  
   DDRB|=_BV(0);
   DDRA|=_BV(1);
   DDRA|=_BV(2);
@@ -198,36 +237,40 @@ void Init(){
 void loop() {
 	while(true)
 	{
-    if(AllowGetTime>10)
+    if(AllowGetTime>13)//13次每秒
     {
       cli();
-      i2c_SoftI2CMaster();
-      
       DS1307_read();
-      
-      wordArray[5] = DS1307_SEC%10;
-      wordArray[4] = DS1307_SEC/10;
-      wordArray[3] = DS1307_MIN%10;
-      wordArray[2] = DS1307_MIN/10;
-      wordArray[1] = DS1307_HR%10;
-      wordArray[0] = DS1307_HR/10;
-
-      //DS1307_save();
-      i2c_SoftI2CMasterEnd();
       sei();
+      
+      wordArray[0] = DS1307_SEC%10;
+      wordArray[1] = DS1307_SEC/10;
+      wordArray[2] = DS1307_MIN%10;
+      wordArray[3] = DS1307_MIN/10;
+      wordArray[4] = DS1307_HR%10;
+      wordArray[5] = DS1307_HR/10;
+
+      //
+      
       AllowGetTime = 0;//取完时间后关闭窗口
     }
-      
-    //LEDLowSign  = LED1L;
-    //LEDHighSign = LED1H;
-    //LEDLowSign  = LED2L;
-    //LEDHighSign = LED2H;
+    
+    if(analogRead>128)
+    {
+      LEDLowSign  = LED1L;
+      LEDHighSign = LED1H;
+    }
+    else
+    {
+      LEDLowSign  = LED2L;
+      LEDHighSign = LED2H;
+    }
+    
     
 	}
 }
 
 inline void SendByte(uint8_t data){
-  //uint8_t _data = ~data;
   for(uint8_t i=0;i<8;i++)
   {
     if(data&1)
@@ -238,16 +281,7 @@ inline void SendByte(uint8_t data){
     {
       PORT_DAT_OFF;
     }
-    //if(data&1)
-    //{
-    //  PORT_DAT_ON;
-    //}
-    //if(_data&1)
-    //{
-    //  PORT_DAT_OFF;
-    //}
     data>>=1;
-    //_data>>=1;
     PORT_CLK_ON; //shift clock up
     PORT_CLK_OFF; //shift clock down
   }
@@ -255,17 +289,17 @@ inline void SendByte(uint8_t data){
 
 ISR(TIM0_OVF_vect)
 {
-	sei();
   PORT_OE_ON;//关闭OE,开始传输
   SendByte(highSign);
   SendByte(lowSign);
   PORT_STR_ON;
   PORT_STR_OFF;
+	sei();
   ///////////////////////////一笔已画完,数据线空出/////////////////////
   if(wordCount==5&&lineCount==7)//最后一字已画完,可以取时间了
   {
-    uint8_t aread = ADCH;ADCSRA |= _BV(ADSC);
-    OCR0A = aread;
+    analogRead = ADCH;ADCSRA |= _BV(ADSC);
+    OCR0A = analogRead;
     AllowGetTime++;
   }
   
@@ -287,19 +321,25 @@ ISR(TIM0_OVF_vect)
     prog_uint8_t* p = Up6+(wordCount<<1);
     lowSign  |= pgm_read_byte_near(p++);
     highSign |= pgm_read_byte_near(p);
-    
-    p = Down7+(wordArray[wordCount]<<4)+(lineCount<<1);
+    ////////////////////////////////////////////////////
+    if(pgm_read_byte_near(Down7B+wordArray[wordCount])&(0x80>>wordCount))
+    {
+      p = Down7A+(lineCount<<1);
+      lowSign  |= pgm_read_byte_near(p++);
+      highSign |= pgm_read_byte_near(p);
+    }
+    ////////////////////////////////////////////////////
+    /*p = Down7+(wordArray[wordCount]<<4)+(lineCount<<1);
     lowSign  |= pgm_read_byte_near(p++);
-    highSign |= pgm_read_byte_near(p);
+    highSign |= pgm_read_byte_near(p);*/
+    ////////////////////////////////////////////////////
   }
-  if(wordCount==0)//显示时间:日期-
+  if(wordCount==0&&lineCount==0)//显示时间:日期-
   {
     lowSign  |= LEDLowSign;
     highSign |= LEDHighSign;
   }
   //准备输出数据 结束
-  
-
 }
 
 ISR(TIM0_COMPA_vect)
@@ -322,10 +362,8 @@ ISR(TIM0_COMPA_vect)
 #define PORT_SDA PORTB
 #define PIN_SDA  PINB
 
-#define I2C_ACK 1
 #define I2C_NAK 0
-#define i2c_scl_release() DDR_SCL &= ~BIT_SCL
-#define i2c_sda_release() DDR_SDA &= ~BIT_SDA
+#define I2C_ACK 1
 // sets SCL low and drives output
 #define i2c_scl_lo() PORT_SCL &= ~BIT_SCL; DDR_SCL |= BIT_SCL;
 // sets SDA low and drives output
@@ -336,7 +374,7 @@ ISR(TIM0_COMPA_vect)
 #define i2c_sda_hi() DDR_SDA &=~ BIT_SDA;
 
 
-void dly()
+inline void dly()
 {
   for(uint8_t i=0;i<6;i++)//6 is stable
   {
@@ -347,6 +385,8 @@ void dly()
 void i2c_SoftI2CMaster(){
   i2c_sda_hi();
   i2c_scl_hi();
+  PORT_SCL &= ~BIT_SCL;
+  PORT_SDA &= ~BIT_SDA;
   dly();
 }
 void i2c_SoftI2CMasterEnd(){
@@ -354,25 +394,29 @@ void i2c_SoftI2CMasterEnd(){
   i2c_scl_lo();
   dly();
 }
-uint8_t i2c_beginTransmission(uint8_t address){
+void i2c_start(void){
+  // set both to high at the same time
+  i2c_sda_hi();
+  i2c_scl_hi();
+  dly();
+  i2c_sda_lo();
+  dly();
+  i2c_scl_lo();
+  dly();
+}
+void i2c_beginTransmission(uint8_t address){
   i2c_start();
-  uint8_t rc = i2c_write((address<<1) | 0); // clr read bit
-  return rc;
+  i2c_write((address<<1) | 0); // clr read bit
 }
-uint8_t i2c_requestFrom(uint8_t address){
+void i2c_requestFrom(uint8_t address){
   i2c_start();
-  uint8_t rc = i2c_write((address<<1) | 1); // set read bit
-  return rc;
+  i2c_write((address<<1) | 1); // set read bit
 }
-uint8_t i2c_endTransmission(void){
-  i2c_stop();
-  //return ret; // FIXME
-  return 0;
-}
-void i2c_write(uint8_t* data, uint8_t quantity){
-  for(uint8_t i = 0; i < quantity; ++i){
-    i2c_write(data[i]);
-  }
+void i2c_endTransmission(void){
+  i2c_scl_hi();
+  dly();
+  i2c_sda_hi();
+  dly();
 }
 void i2c_writebit(uint8_t c){
   if ( c > 0 ) {
@@ -399,28 +443,12 @@ uint8_t i2c_readbit(void){
   dly();
   return ( c & BIT_SDA) ? 1 : 0;
 }
-void i2c_start(void){
-  // set both to high at the same time
-  i2c_sda_hi();
-  i2c_scl_hi();
-  dly();
-  i2c_sda_lo();
-  dly();
-  i2c_scl_lo();
-  dly();
-}
-void i2c_stop(void){
-  i2c_scl_hi();
-  dly();
-  i2c_sda_hi();
-  dly();
-}
-uint8_t i2c_write(uint8_t c){
+void i2c_write(uint8_t c){
   for ( uint8_t i=0;i<8;i++) {
     i2c_writebit( c & 128 );
     c<<=1;
   }
-  return i2c_readbit();
+  i2c_readbit();
 }
 uint8_t i2c_read(uint8_t ack){
   uint8_t res = 0;
@@ -453,6 +481,7 @@ uint8_t decToBcd(const uint8_t dec) {
 }
 
 void DS1307_read(){
+  i2c_SoftI2CMaster();
   i2c_beginTransmission(DS1307_CTRL_ID);
   i2c_write(0x00);
   i2c_endTransmission();
@@ -464,9 +493,11 @@ void DS1307_read(){
   DS1307_DATE=bcdToDec(i2c_read());// 4
   DS1307_MTH=bcdToDec(i2c_read());// 5
   DS1307_YR=bcdToDec(i2c_readLast());// 6
+  i2c_SoftI2CMasterEnd();
 }
 
 void DS1307_save(){
+  i2c_SoftI2CMaster();
   i2c_beginTransmission(DS1307_CTRL_ID);
   i2c_write(0x00); // reset register pointer
   i2c_write(decToBcd(DS1307_SEC));
@@ -477,32 +508,5 @@ void DS1307_save(){
   i2c_write(decToBcd(DS1307_MTH));
   i2c_write(decToBcd(DS1307_YR));
   i2c_endTransmission();
-}
-
-
-
-void loopa()
-{
-  //digitalWrite(13, HIGH);
-  //DS1307_read();
-  //char buf[60];
-  //snprintf(buf, sizeof(buf), "DS1307:%02d 20%02d-%02d-%02d %02d:%02d:%02d",DS1307_DOW, DS1307_YR, DS1307_MTH, DS1307_DATE, DS1307_HR, DS1307_MIN, DS1307_SEC);
-  //Serial.println(buf);
-  //if(DS1307_SEC!=80)
-  //{
-  //  digitalWrite(13, LOW);
-  //}
-  //int start = Serial.parseInt();
-  //if(start == 33)
-  //{
-  //  DS1307_YR  = Serial.parseInt();
-  //  DS1307_MTH = Serial.parseInt();
-  //  DS1307_DATE = Serial.parseInt();
-  //  DS1307_HR  = Serial.parseInt();
-  //  DS1307_MIN = Serial.parseInt();
-  //  DS1307_SEC = Serial.parseInt();
-  //  DS1307_DOW= Serial.parseInt();
-  //
-  //  DS1307_save();
-  //}
+  i2c_SoftI2CMasterEnd();
 }
