@@ -59,14 +59,8 @@ GENERAL DESCRIPTION
 
 void setup()
 {
-  DDRB |= _BV(1);//pin9 B1 Shift Clock Pin 11
-  DDRB |= _BV(0);//pin8 B0 Store Clock Pin 12
-  DDRD |= _BV(5);//pin5 D5 Output Enable Pin 13
-  DDRD |= _BV(4);//pin4 D4 Serial Data Input Pin 14
-  DDRD |= _BV(3);//PNP Drive
-
-  PORTD &= ~_BV(3);//PNP disable L
-  PORTD |= _BV(5);//OE disable H
+  DDRD |= _BV(2);//pin9 B1 Shift Clock Pin 11
+  DDRD |= _BV(3);//pin8 B0 Store Clock Pin 12
 
   Serial.begin(9600);
 
