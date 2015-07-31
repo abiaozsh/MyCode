@@ -102,8 +102,8 @@ _Z5waitav:
 /* prologue: function */
 /* frame size = 0 */
 	lds r24,Step	 ;  Step, Step
-	ldi r25,lo8(0)	 ;  D.1921,
-	movw r30,r24	 ;  tmp57, D.1921
+	ldi r25,lo8(0)	 ;  D.1920,
+	movw r30,r24	 ;  tmp57, D.1920
 	subi r30,lo8(-(DigitReadBaseVal))	 ;  tmp57,
 	sbci r31,hi8(-(DigitReadBaseVal))	 ;  tmp57,
 	ld r17,Z	 ;  valbase, DigitReadBaseVal
@@ -111,54 +111,54 @@ _Z5waitav:
 	lds r21,(rpm)+1	 ;  temp, rpm
 	lsr r21	 ;  temp
 	ror r20	 ;  temp
-	lds r22,Power	 ;  Power.21, Power
-	lds r23,(Power)+1	 ;  Power.21, Power
-	movw r30,r24	 ;  tmp82, D.1921
+	lds r22,Power	 ;  Power.20, Power
+	lds r23,(Power)+1	 ;  Power.20, Power
+	movw r30,r24	 ;  tmp82, D.1920
 	subi r30,lo8(-(PWR_OFF))	 ;  tmp82,
 	sbci r31,hi8(-(PWR_OFF))	 ;  tmp82,
-	movw r26,r24	 ;  tmp83, D.1921
+	movw r26,r24	 ;  tmp83, D.1920
 	subi r26,lo8(-(DigitRead))	 ;  tmp83,
 	sbci r27,hi8(-(DigitRead))	 ;  tmp83,
 .L24:
 	sbis 43-32,0	 ; ,,
 	rjmp .L13	 ; 
-	ldi r24,lo8(-1)	 ;  iftmp.20,
-	ldi r25,hi8(-1)	 ;  iftmp.20,
+	ldi r24,lo8(-1)	 ;  iftmp.19,
+	ldi r25,hi8(-1)	 ;  iftmp.19,
 	rjmp .L14	 ; 
 .L13:
-	in r24,76-32	 ;  iftmp.20,,
-	in r25,(76)+1-32	 ;  iftmp.20,,
+	in r24,76-32	 ;  iftmp.19,,
+	in r25,(76)+1-32	 ;  iftmp.19,,
 .L14:
-	cp r22,r24	 ;  Power.21, iftmp.20
-	cpc r23,r25	 ;  Power.21, iftmp.20
+	cp r22,r24	 ;  Power.20, iftmp.19
+	cpc r23,r25	 ;  Power.20, iftmp.19
 	brsh .L15	 ; ,
-	ld r24,Z	 ;  D.1936, PWR_OFF
-	out 59-32,r24	 ; ,, D.1936
+	ld r24,Z	 ;  D.1935, PWR_OFF
+	out 59-32,r24	 ; ,, D.1935
 .L15:
 	sbis 57-32,6	 ; ,,
 	rjmp .L16	 ; 
 	sbic 43-32,0	 ; ,,
 	rjmp .L21	 ; 
-	in r24,76-32	 ;  D.1949,,
-	in r25,(76)+1-32	 ;  D.1949,,
-	subi r24,lo8(-1)	 ;  D.1949,
-	sbci r25,hi8(-1)	 ;  D.1949,
+	in r24,76-32	 ;  D.1948,,
+	in r25,(76)+1-32	 ;  D.1948,,
+	subi r24,lo8(-1)	 ;  D.1948,
+	sbci r25,hi8(-1)	 ;  D.1948,
 	brne .L16	 ; ,
 	rjmp .L21	 ; 
 .L26:
-	in r24,76-32	 ;  iftmp.26,,
-	in r25,(76)+1-32	 ;  iftmp.26,,
-	cp r24,r20	 ;  iftmp.26, temp
-	cpc r25,r21	 ;  iftmp.26, temp
+	in r24,76-32	 ;  iftmp.25,,
+	in r25,(76)+1-32	 ;  iftmp.25,,
+	cp r24,r20	 ;  iftmp.25, temp
+	cpc r25,r21	 ;  iftmp.25, temp
 	brlo .L24	 ; ,
 .L19:
-	and r18,r19	 ;  D.1952, D.1951
-	cp r18,r17	 ;  D.1952, valbase
+	and r18,r19	 ;  D.1951, D.1950
+	cp r18,r17	 ;  D.1951, valbase
 	brne .L21	 ; ,
 	rjmp .L24	 ; 
 .L16:
-	in r19,54-32	 ;  D.1951,,
-	ld r18,X	 ;  D.1952, DigitRead
+	in r19,54-32	 ;  D.1950,,
+	ld r18,X	 ;  D.1951, DigitRead
 	sbic 43-32,0	 ; ,,
 	rjmp .L19	 ; 
 	rjmp .L26	 ; 
@@ -223,18 +223,18 @@ _Z3adjv:
 	tst r24	 ;  Status
 	brne .+2	 ; 
 	rjmp .L30	 ; 
-	ldi r24,hi8(11001)	 ; ,
-	cpi r18,lo8(11001)	 ;  rpm,
+	ldi r24,hi8(15001)	 ; ,
+	cpi r18,lo8(15001)	 ;  rpm,
 	cpc r19,r24	 ;  rpm,
 	brlo .L31	 ; ,
 	sts StartUpCount1,__zero_reg__	 ;  StartUpCount1,
 	sts Status,__zero_reg__	 ;  Status,
 	rjmp .L36	 ; 
 .L31:
-	lds r22,TargetRPM	 ;  TargetRPM.31, TargetRPM
-	lds r23,(TargetRPM)+1	 ;  TargetRPM.31, TargetRPM
-	cp r22,r18	 ;  TargetRPM.31, rpm
-	cpc r23,r19	 ;  TargetRPM.31, rpm
+	lds r22,TargetRPM	 ;  TargetRPM.30, TargetRPM
+	lds r23,(TargetRPM)+1	 ;  TargetRPM.30, TargetRPM
+	cp r22,r18	 ;  TargetRPM.30, rpm
+	cpc r23,r19	 ;  TargetRPM.30, rpm
 	brlo .+2	 ; 
 	rjmp .L36	 ; 
 	cpi r18,201	 ;  rpm,
@@ -242,14 +242,14 @@ _Z3adjv:
 	brlo .L33	 ; ,
 	ldi r24,lo8(0)	 ;  temp,
 	ldi r25,hi8(0)	 ;  temp,
-	movw r24,r22	 ;  temp.65, temp
-	clr r23	 ;  temp.65
-	clr r22	 ;  temp.65
-	movw r10,r18	 ;  D.1985, rpm
-	clr r12	 ;  D.1985
-	clr r13	 ;  D.1985
-	movw r20,r12	 ; , D.1985
-	movw r18,r10	 ; , D.1985
+	movw r24,r22	 ;  temp.64, temp
+	clr r23	 ;  temp.64
+	clr r22	 ;  temp.64
+	movw r10,r18	 ;  D.1984, rpm
+	clr r12	 ;  D.1984
+	clr r13	 ;  D.1984
+	movw r20,r12	 ; , D.1984
+	movw r18,r10	 ; , D.1984
 	rcall __udivmodsi4
 	movw r14,r18	 ; ,
 	movw r16,r20	 ; ,
@@ -257,12 +257,12 @@ _Z3adjv:
 	ldi r23,hi8(65536)	 ;  tmp69,
 	ldi r24,hlo8(65536)	 ;  tmp69,
 	ldi r25,hhi8(65536)	 ;  tmp69,
-	sub r22,r14	 ;  tmp69, temp.66
-	sbc r23,r15	 ;  tmp69, temp.66
-	sbc r24,r16	 ;  tmp69, temp.66
-	sbc r25,r17	 ;  tmp69, temp.66
-	movw r20,r12	 ; , D.1985
-	movw r18,r10	 ; , D.1985
+	sub r22,r14	 ;  tmp69, temp.65
+	sbc r23,r15	 ;  tmp69, temp.65
+	sbc r24,r16	 ;  tmp69, temp.65
+	sbc r25,r17	 ;  tmp69, temp.65
+	movw r20,r12	 ; , D.1984
+	movw r18,r10	 ; , D.1984
 	rcall __mulsi3	 ; 
 	ldi r19,15	 ; ,
 1:	lsr r25	 ;  tmp70
@@ -281,10 +281,10 @@ _Z3adjv:
 	sts NextPower,r24	 ;  NextPower, tmp72
 	rjmp .L36	 ; 
 .L30:
-	subi r18,lo8(-(-1501))	 ;  rpm,
-	sbci r19,hi8(-(-1501))	 ;  rpm,
-	subi r18,lo8(10499)	 ;  rpm,
-	sbci r19,hi8(10499)	 ;  rpm,
+	subi r18,lo8(-(-1876))	 ;  rpm,
+	sbci r19,hi8(-(-1876))	 ;  rpm,
+	subi r18,lo8(13124)	 ;  rpm,
+	sbci r19,hi8(13124)	 ;  rpm,
 	brsh .L34	 ; ,
 	lds r24,StartUpCount1	 ;  StartUpCount1, StartUpCount1
 	subi r24,lo8(-(1))	 ;  StartUpCount1,
@@ -294,7 +294,7 @@ _Z3adjv:
 	sts StartUpCount1,__zero_reg__	 ;  StartUpCount1,
 .L35:
 	lds r24,StartUpCount1	 ;  StartUpCount1, StartUpCount1
-	cpi r24,lo8(51)	 ;  StartUpCount1,
+	cpi r24,lo8(41)	 ;  StartUpCount1,
 	brlo .L36	 ; ,
 	ldi r24,lo8(1)	 ;  tmp78,
 	sts Status,r24	 ;  Status, tmp78
@@ -321,94 +321,101 @@ _Z4loopv:
 	sbi 43-32,0	 ; ,,
 	sbis 57-32,6	 ; ,,
 	rjmp .L38	 ; 
-	lds r18,TargetRPM	 ;  TargetRPM.5, TargetRPM
-	lds r19,(TargetRPM)+1	 ;  TargetRPM.5, TargetRPM
-	movw r20,r18	 ;  temp, TargetRPM.5
+	lds r24,Step	 ;  Step, Step
+	ldi r25,lo8(0)	 ;  D.1884,
+	movw r30,r24	 ;  tmp68, D.1884
+	subi r30,lo8(-(PWR_ON))	 ;  tmp68,
+	sbci r31,hi8(-(PWR_ON))	 ;  tmp68,
+	ld r18,Z	 ;  D.1885, PWR_ON
+	out 59-32,r18	 ; ,, D.1885
+	lds r18,TargetRPM	 ;  TargetRPM.6, TargetRPM
+	lds r19,(TargetRPM)+1	 ;  TargetRPM.6, TargetRPM
+	movw r20,r18	 ;  temp, TargetRPM.6
 	lsr r21	 ;  temp
 	ror r20	 ;  temp
-	lds r24,Step	 ;  Step, Step
-	mov r30,r24	 ;  tmp106, Step
-	ldi r31,lo8(0)	 ; ,
-	subi r30,lo8(-(PWR_OFF))	 ;  tmp106,
-	sbci r31,hi8(-(PWR_OFF))	 ;  tmp106,
+	movw r30,r24	 ;  tmp109, D.1884
+	subi r30,lo8(-(PWR_OFF))	 ;  tmp109,
+	sbci r31,hi8(-(PWR_OFF))	 ;  tmp109,
 .L42:
 	sbic 43-32,0	 ; ,,
 	rjmp .L39	 ; 
-	in r24,76-32	 ;  iftmp.7,,
-	in r25,(76)+1-32	 ;  iftmp.7,,
-	cp r24,r20	 ;  iftmp.7, temp
-	cpc r25,r21	 ;  iftmp.7, temp
+	in r24,76-32	 ;  iftmp.8,,
+	in r25,(76)+1-32	 ;  iftmp.8,,
+	cp r24,r20	 ;  iftmp.8, temp
+	cpc r25,r21	 ;  iftmp.8, temp
 	brlo .L40	 ; ,
 .L39:
-	ld r24,Z	 ;  D.1895, PWR_OFF
-	out 59-32,r24	 ; ,, D.1895
+	ld r24,Z	 ;  D.1896, PWR_OFF
+	out 59-32,r24	 ; ,, D.1896
 .L40:
 	sbic 43-32,0	 ; ,,
-	rjmp .L53	 ; 
+	rjmp .L52	 ; 
 	in r24,76-32	 ;  iftmp.10,,
 	in r25,(76)+1-32	 ;  iftmp.10,,
-	cp r24,r18	 ;  iftmp.10, TargetRPM.5
-	cpc r25,r19	 ;  iftmp.10, TargetRPM.5
+	cp r24,r18	 ;  iftmp.10, TargetRPM.6
+	cpc r25,r19	 ;  iftmp.10, TargetRPM.6
 	brlo .L42	 ; ,
-	rjmp .L53	 ; 
+	rjmp .L52	 ; 
 .L38:
 	lds r18,NextPower	 ;  NextPower.11, NextPower
 	lds r19,(NextPower)+1	 ;  NextPower.11, NextPower
 	sts (Power)+1,r19	 ;  Power, NextPower.11
 	sts Power,r18	 ;  Power, NextPower.11
-	lds r24,Status	 ;  Status, Status
 	lds r30,Step	 ;  Step, Step
-	tst r24	 ;  Status
+	cp r18,__zero_reg__	 ;  NextPower.11
+	cpc r19,__zero_reg__	 ;  NextPower.11
 	breq .L44	 ; ,
 	ldi r31,lo8(0)	 ;  Step,
 	subi r30,lo8(-(PWR_ON))	 ;  Step,
 	sbci r31,hi8(-(PWR_ON))	 ;  Step,
-	rjmp .L52	 ; 
+	ld r24,Z	 ;  temp.78, PWR_ON
+	out 59-32,r24	 ; ,, temp.78
+	cpi r18,200	 ;  NextPower.11,
+	cpc r19,__zero_reg__	 ;  NextPower.11
+	brsh .L45	 ; ,
+	rjmp .L46	 ; 
 .L44:
 	ldi r31,lo8(0)	 ;  Step,
 	subi r30,lo8(-(PWR_OFF))	 ;  Step,
 	sbci r31,hi8(-(PWR_OFF))	 ;  Step,
-.L52:
-	ld r24,Z	 ;  temp.81,* Step
+	ld r24,Z	 ;  temp.81, PWR_OFF
 	out 59-32,r24	 ; ,, temp.81
-	cpi r18,200	 ;  NextPower.11,
-	cpc r19,__zero_reg__	 ;  NextPower.11
-	brsh .L46	 ; ,
+.L46:
 	lds r24,rpm	 ;  rpm, rpm
 	lds r25,(rpm)+1	 ;  rpm, rpm
 	subi r24,lo8(501)	 ;  rpm,
 	sbci r25,hi8(501)	 ;  rpm,
-	brlo .L46	 ; ,
+	brlo .L45	 ; ,
 	rcall _Z5waitav	 ; 
-.L53:
+.L52:
 	rcall _Z3adjv	 ; 
 	rjmp .L43	 ; 
-.L46:
+.L45:
 	rcall _Z3adjv	 ; 
 	rcall _Z5waitav	 ; 
 .L43:
 	lds r30,Step	 ;  Step, Step
 	ldi r31,lo8(0)	 ;  temp.83,
-	movw r26,r30	 ;  tmp96, temp.83
-	subi r26,lo8(-(PWR_OFF))	 ;  tmp96,
-	sbci r27,hi8(-(PWR_OFF))	 ;  tmp96,
+	movw r26,r30	 ;  tmp99, temp.83
+	subi r26,lo8(-(PWR_OFF))	 ;  tmp99,
+	sbci r27,hi8(-(PWR_OFF))	 ;  tmp99,
 	ld r24,X	 ;  temp.84, PWR_OFF
 	out 59-32,r24	 ; ,, temp.84
 	subi r30,lo8(-(NextStep))	 ;  temp.83,
 	sbci r31,hi8(-(NextStep))	 ;  temp.83,
-	ld r24,Z	 ;  tmp100, NextStep
-	sts Step,r24	 ;  Step, tmp100
+	ld r24,Z	 ;  tmp103, NextStep
+	sts Step,r24	 ;  Step, tmp103
 	sbis 43-32,0	 ; ,,
 	rjmp .L47	 ; 
-	ldi r24,lo8(-1)	 ;  iftmp.16,
-	ldi r25,hi8(-1)	 ;  iftmp.16,
+	ldi r24,lo8(-1)	 ;  iftmp.15,
+	ldi r25,hi8(-1)	 ;  iftmp.15,
 	rjmp .L48	 ; 
 .L47:
-	in r24,76-32	 ;  iftmp.16,,
-	in r25,(76)+1-32	 ;  iftmp.16,,
+	in r24,76-32	 ;  iftmp.15,,
+	in r25,(76)+1-32	 ;  iftmp.15,,
 .L48:
-	sts (rpm)+1,r25	 ;  rpm, iftmp.16
-	sts rpm,r24	 ;  rpm, iftmp.16
+	sts (rpm)+1,r25	 ;  rpm, iftmp.15
+	sts rpm,r24	 ;  rpm, iftmp.15
 	rjmp .L49	 ; 
 	.size	_Z4loopv, .-_Z4loopv
 .global	main
@@ -435,33 +442,33 @@ main:
 	out 56-32,__zero_reg__	 ; ,,
 	ldi r18,lo8(0)	 ;  cnt,
 	ldi r19,hi8(0)	 ;  cnt,
-.L58:
+.L57:
 	out (76)+1-32,__zero_reg__	 ; ,,
 	out 76-32,__zero_reg__	 ; ,,
 	sbi 43-32,0	 ; ,,
-.L56:
+.L55:
 	sbic 43-32,0	 ; ,,
-	rjmp .L55	 ; 
+	rjmp .L54	 ; 
 	in r24,76-32	 ;  iftmp.3,,
 	in r25,(76)+1-32	 ;  iftmp.3,,
 	subi r24,lo8(1000)	 ;  iftmp.3,
 	sbci r25,hi8(1000)	 ;  iftmp.3,
-	brlo .L56	 ; ,
-.L55:
+	brlo .L55	 ; ,
+.L54:
 	sbic 57-32,6	 ; ,,
-	rjmp .L57	 ; 
+	rjmp .L56	 ; 
 	ldi r18,lo8(0)	 ;  cnt,
 	ldi r19,hi8(0)	 ;  cnt,
-.L57:
+.L56:
 	subi r18,lo8(-(1))	 ;  cnt,
 	sbci r19,hi8(-(1))	 ;  cnt,
 	ldi r24,hi8(1000)	 ; ,
 	cpi r18,lo8(1000)	 ;  cnt,
 	cpc r19,r24	 ;  cnt,
-	brlt .L58	 ; ,
-.L61:
+	brlt .L57	 ; ,
+.L60:
 	sbic 57-32,6	 ; ,,
-	rjmp .L61	 ; 
+	rjmp .L60	 ; 
 	ldi r24,lo8(63)	 ;  tmp80,
 	out 58-32,r24	 ; ,, tmp80
 	ldi r24,lo8(42)	 ;  tmp82,
