@@ -32,10 +32,6 @@ namespace WindowsFormsApplication1
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			textBox1.Text = DateTime.Today.AddDays(-1).ToString("yyyy-MM-dd");
-			textBox2.Text = DateTime.Today.ToString("yyyy-MM-dd");
-			textBox1.Text = ("2015-07-24");
-			textBox2.Text = ("2015-07-27");
 		}
 
 		private void button8_Click(object sender, EventArgs e)
@@ -147,16 +143,21 @@ namespace WindowsFormsApplication1
 			}
 		}
 
-
-		private void button1_Click(object sender, EventArgs e)
+		void Form1_DragEnter(object sender, System.Windows.Forms.DragEventArgs e)
 		{
+			e.Effect = DragDropEffects.All;
+		}
+
+		void Form1_DragDrop(object sender, System.Windows.Forms.DragEventArgs e)
+		{
+			string[] files = (string[])e.Data.GetData("FileDrop");
+
 			datas = new List<DATAS>();
-			for (DateTime d = DateTime.Parse(textBox1.Text); d <= DateTime.Parse(textBox2.Text); d = d.AddDays(1))
+			foreach (string fn in files)
 			{
-				string name = @"..\..\..\..\" + d.ToString("yyyyMMdd") + ".txt";
 				try
 				{
-					FileStream fs = new FileStream(name, FileMode.Open, FileAccess.Read);
+					FileStream fs = new FileStream(fn, FileMode.Open, FileAccess.Read);
 					StreamReader sr = new StreamReader(fs);
 					while (true)
 					{
@@ -164,7 +165,8 @@ namespace WindowsFormsApplication1
 						if (line == null) break;
 						if (line.Contains(":"))
 						{
-							DateTime t = DateTime.Parse(d.ToString("yyyy-MM-dd") + " " + line);
+							string filename = fn.Substring(fn.LastIndexOf("\\") + 1);
+							DateTime t = DateTime.Parse(filename.Substring(0, 4) + "-" + filename.Substring(4, 2) + "-" + filename.Substring(6, 2) + " " + line);
 							string line0 = sr.ReadLine();
 							int temp = int.Parse(line0.Split(',')[0]);
 							int pres = int.Parse(line0.Split(',')[1]);
