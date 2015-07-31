@@ -239,16 +239,16 @@ void loop() {
 	{
     if(AllowGetTime>13)//13´ÎÃ¿Ãë
     {
-      cli();
-      DS1307_read();
-      sei();
+      //cli();
+      //DS1307_read();
+      //sei();
       
-      wordArray[0] = DS1307_SEC%10;
-      wordArray[1] = DS1307_SEC/10;
-      wordArray[2] = DS1307_MIN%10;
-      wordArray[3] = DS1307_MIN/10;
-      wordArray[4] = DS1307_HR%10;
-      wordArray[5] = DS1307_HR/10;
+      wordArray[0] = analogRead/100;//DS1307_SEC%10;
+      wordArray[1] = analogRead/100;//DS1307_SEC/10;
+      wordArray[2] = analogRead/100;//DS1307_MIN%10;
+      wordArray[3] = analogRead/100;//DS1307_MIN/10;
+      wordArray[4] = analogRead/100;//DS1307_HR%10;
+      wordArray[5] = analogRead/100;//DS1307_HR/10;
 
       //
       
@@ -322,7 +322,7 @@ ISR(TIM0_OVF_vect)
     lowSign  |= pgm_read_byte_near(p++);
     highSign |= pgm_read_byte_near(p);
     ////////////////////////////////////////////////////
-    if(pgm_read_byte_near(Down7B+wordArray[wordCount])&(0x80>>wordCount))
+    if(pgm_read_byte_near(Down7B+wordArray[wordCount])&(0x80>>lineCount))
     {
       p = Down7A+(lineCount<<1);
       lowSign  |= pgm_read_byte_near(p++);
