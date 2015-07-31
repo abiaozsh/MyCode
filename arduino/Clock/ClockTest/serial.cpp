@@ -57,6 +57,13 @@ NPN 7
 #define PORT_SDA PORTA
 #define PIN_SDA  PINA
 
+//alarm
+//B0
+//7
+//0x0080
+#define Alarm_ON  PORTA |=  _BV(6)
+#define Alarm_OFF PORTA &= ~_BV(6)
+
 //先送高，后送低
 //上1	上2	上3	上4	上5	上6	
 //0x0040	0x0010	0x0004	0x0800	0x0200	0x8000
@@ -80,22 +87,29 @@ PROGMEM prog_uint8_t Down7A[] = {
 0x00,0x01
 };
 PROGMEM prog_uint8_t Down7B[] = {
-0x77,//0111 0111, 0 
-0x12,//0001 0010, 1 
-0x5D,//0101 1101, 2 
-0x5B,//0101 1011, 3 
-0x3A,//0011 1010, 4 
-0x6B,//0110 1011, 5 
-0x6F,//0110 1111, 6 
-0x52,//0101 0010, 7 
-0x7F,//0111 1111, 8 
-0x7B,//0111 1011, 9 
-0x7E,//0111 1110, A 
-0x2F,//0010 1111, B 
-0x65,//0110 0101, C 
-0x1F,//0001 1111, D 
-0x6D,//0110 1101, E 
-0x6C,//0110 1100  F 
+0x77,//0111 0111, 0
+0x12,//0001 0010, 1
+0x5D,//0101 1101, 2
+0x5B,//0101 1011, 3
+0x3A,//0011 1010, 4
+0x6B,//0110 1011, 5
+0x6F,//0110 1111, 6
+0x52,//0101 0010, 7
+0x7F,//0111 1111, 8
+0x7B,//0111 1011, 9
+0x7E,//0111 1110, A
+0x2F,//0010 1111, B
+0x65,//0110 0101, C
+0x1F,//0001 1111, D
+0x6D,//0110 1101, E
+0x6C,//0110 1100, F
+0x40,//0100 0000  第一笔
+0x20,//0010 0000 
+0x10,//0001 0000    
+0x00,//0000 1000    
+0x00,//0000 0100    
+0x00,//0000 0010    
+0x00,//0000 0001    
 0x00 //0000 0000    
 };
 
@@ -107,13 +121,6 @@ PROGMEM prog_uint8_t Down7B[] = {
 #define LED1H 0x00
 #define LED2L 0x00
 #define LED2H 0x40
-
-//alarm
-//B0
-//7
-//0x0080
-#define AlarmL 0x80
-#define AlarmH 0x00
 
 
 
@@ -272,15 +279,6 @@ uint8_t get165()
     CP_OFF;
   }
   return data;
-}
-
-uint8_t bcdToDec(const uint8_t bcd) {
-  return (10 * ((bcd & 0xF0) >> 4) + (bcd & 0x0F));
-}
-uint8_t decToBcd(const uint8_t dec) {
-  const uint8_t tens = dec / 10;
-  const uint8_t ones = dec % 10;
-  return (tens << 4) | ones;
 }
 
 ISR(TIM0_OVF_vect)
