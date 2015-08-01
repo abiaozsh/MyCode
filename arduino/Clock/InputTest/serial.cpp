@@ -15,6 +15,13 @@ light sense A0           1A
 A3 free (Page)
 11
 
+80 red
+1 up
+2 down
+8 left
+4 right
+
+
 74HC595(1):1~7(7) down 0 alarm
 74HC595(2):2~7(6) up 0:1 time index date index
 74HC595(3) week
@@ -123,8 +130,8 @@ PROGMEM prog_uint8_t Down7B[] = {
 //B0
 //7
 //0x0080
-#define AlarmL 0x80
-#define AlarmH 0x00
+#define Alarm_ON  PORTA |=  _BV(6)
+#define Alarm_OFF PORTA &= ~_BV(6)
 
 
 
@@ -186,16 +193,19 @@ void ClockInit() {
 }
 
 void Init(){
-  wordArray[0] = 10;
-  wordArray[1] = 11;
-  wordArray[2] = 12;
-  wordArray[3] = 13;
-  wordArray[4] = 14;
-  wordArray[5] = 15;
+  wordArray[0] = 8;
+  wordArray[1] = 8;
+  wordArray[2] = 8;
+  wordArray[3] = 8;
+  wordArray[4] = 8;
+  wordArray[5] = 8;
   
-  DDRB|=_BV(0);
   DDRA|=_BV(1);
   DDRA|=_BV(2);
+  DDRA|=_BV(3);
+  DDRA|=_BV(4);
+  DDRA|=_BV(6);
+  DDRB|=_BV(0);
   DDRB|=_BV(2);
   PORT_OE_ON;
   PORT_DAT_OFF;
@@ -228,17 +238,46 @@ void loop() {
       //DS1307_read();
       //sei();
       uint8_t data1 = get165();
-      
-      wordArray[0] = data1&0x0F;//DS1307_SEC/10;
-      wordArray[1] = data1>>4;//DS1307_SEC%10;
-      //wordArray[2] = analogRead/100;//DS1307_MIN%10;
+if(data1==0x80)
+{
+ Alarm_ON ;
+}
+else
+{
+Alarm_OFF ;
+}
+
+if(data1==1)
+{
+wordArray[0]++;
+}
+if(data1==2)
+{
+wordArray[0]--;
+}
+if(data1==8)
+{
+wordArray[1]++;
+}
+if(data1==4)
+{
+wordArray[1]--;
+}
+//1 up
+//2 down
+//8 left
+//4 right
+
+      // = (data1>>4)&0x0F;//DS1307_SEC/10;
+      //wordArray[1] = data1&0x0F;//DS1307_SEC%10;
+      //wordArray[2] = 15;//wordArray[2] = analogRead/100;//DS1307_MIN%10;
       //wordArray[3] = analogRead/100;//DS1307_MIN/10;
       //wordArray[4] = analogRead/100;//DS1307_HR%10;
       //wordArray[5] = analogRead/100;//DS1307_HR/10;
 
       //
       
-      AllowGetTime = 0;//取完时间后关闭窗口
+      //AllowGetTime = 0;//取完时间后关闭窗口
     //}
     
     if(analogRead>128)

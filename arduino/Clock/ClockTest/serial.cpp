@@ -20,6 +20,12 @@
 按红色按钮，翻页：时间，日期，星期
 按上下左右键后，进入设定状态，10秒无操作，返回显示状态
 
+80 red
+1 up
+2 down
+8 left
+4 right
+
 
 LED 10
 LED 420 （10+41）
@@ -188,14 +194,12 @@ void Init(){
   wordArray[3] = 13;
   wordArray[4] = 14;
   wordArray[5] = 15;
-
-  DS1307_SEC=0;
-  DS1307_MIN=0;
-  DS1307_save();
   
-  DDRB|=_BV(0);
   DDRA|=_BV(1);
   DDRA|=_BV(2);
+  DDRA|=_BV(3);
+  DDRA|=_BV(4);
+  DDRB|=_BV(0);
   DDRB|=_BV(2);
   PORT_OE_ON;
   PORT_DAT_OFF;
@@ -217,16 +221,22 @@ void Init(){
   OCR0A = 128;//数字越大越暗（match以后开OE，定时器超时关OE）
   TIMSK0 = _BV(OCIE0A) | _BV(TOIE0);
   i2c_SoftI2CMaster();
+
+  DS1307_SEC=0;
+  DS1307_MIN=0;
+  DS1307_save();
   sei();
 }
 
 void loop() {
 	while(true)
 	{
+	      uint8_t inputdata1 = get165();
+
     DS1307_read();
       
-    wordArray[0] = DS1307_SEC&0x0F;
-    wordArray[1] = DS1307_SEC>>4;
+    wordArray[0] = (DS1307_SEC>>4)&0x0F;
+    wordArray[1] = DS1307_SEC&0x0F;
     //wordArray[2] = analogRead/100;//DS1307_MIN%10;
     //wordArray[3] = analogRead/100;//DS1307_MIN/10;
     //wordArray[4] = analogRead/100;//DS1307_HR%10;
@@ -357,7 +367,7 @@ ISR(TIM0_COMPA_vect)
 
 inline void dly()
 {
-  for(uint8_t i=0;i<6;i++)//6 is stable
+  for(uint8_t i=0;i<60;i++)//6 is stable
   {
     volatile uint8_t v=0;
     v++;
@@ -370,11 +380,7 @@ void i2c_SoftI2CMaster(){
   PORT_SDA &= ~BIT_SDA;
   dly();
 }
-void i2c_SoftI2CMasterEnd(){
-  i2c_sda_lo();
-  i2c_scl_lo();
-  dly();
-}
+
 void i2c_start(void){
   // set both to high at the same time
   i2c_sda_hi();

@@ -222,8 +222,8 @@ void Init(){
 void loop() {
 	while(true)
 	{
-    wordArray[0] = data1&0x0F;//DS1307_SEC/10;
-    wordArray[1] = data1>>4;//DS1307_SEC%10;
+    wordArray[0] = (data1>>4)&0x0F;//DS1307_SEC/10;
+    wordArray[1] = data1&0x0F;//DS1307_SEC%10;
     
     if(analogRead>128)
     {
