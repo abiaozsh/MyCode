@@ -225,7 +225,7 @@ void Init(){
   DS1307_p[5] = &DS1307_MIN;
   DS1307_p[6] = &DS1307_SEC;
 
-  DDRA=_BV(1)|_BV(2)|_BV(3)|_BV(4);
+  DDRA=_BV(1)|_BV(2)|_BV(3)|_BV(4)|_BV(6);
   DDRB=_BV(0)|_BV(2);
   PORT_OE_ON;
   SendByte(0);
@@ -299,6 +299,10 @@ void loop() {
     {
       Adjust();
     }
+    else if(status == 4)//TODO 全led测试
+    {
+      Adjust();
+    }
   }
 }
 
@@ -363,7 +367,7 @@ inline void Adjust(){
       *partAdj-=valAdj;
     }
     
-    if(currTick>=3906)//0.5s 闪烁
+    if(currTick>=3900)//0.5s 闪烁
     {
       AdjFlashIdx=~AdjFlashIdx;
       TCNT1 = 0;TIFR1 |= _BV(TOV1);
@@ -398,10 +402,10 @@ inline void Alarm(){
     {
       TCNT1 = 0;TIFR1 |= _BV(TOV1);
       Alarm_ON;
-      while(currTick<7812);//1s
+      while(currTick<9000);
       TCNT1 = 0;TIFR1 |= _BV(TOV1);
       Alarm_OFF;
-      while(currTick<5);
+      while(currTick<1000);
     }
   }
 }
@@ -409,6 +413,8 @@ void DrawDateTime(uint8_t** p,uint8_t AdjFlashIdx,volatile uint8_t* pflash){
   volatile uint8_t* p2 = wordArray;
   for(uint8_t i=0;i<3;i++)
   {
+  //TODO 将闪烁的字反过来
+  //年的第一位置空
     if(AdjFlashIdx || p2==pflash)
     {
       *p2 = (**p)>>4;
@@ -431,6 +437,7 @@ void DrawDateTime(uint8_t** p,uint8_t AdjFlashIdx,volatile uint8_t* pflash){
   }
 }
 void DrawWeek(){
+//TODO wenti
   wordArray[0] = EMPTY;
   wordArray[1] = EMPTY;
   wordArray[2] = EMPTY;
@@ -524,7 +531,7 @@ ISR(TIM0_OVF_vect){
   }
   lowSign=0;
   highSign=0;
-  if(lineCount)//多余的一行用于字与字间切换 (TODO 去掉)
+  //if(lineCount)//多余的一行用于字与字间切换
   {
     prog_uint8_t* p = Up6+(wordCount<<1);
     lowSign  |= pgm_read_byte_near(p++);
