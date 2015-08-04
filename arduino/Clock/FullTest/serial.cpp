@@ -75,6 +75,8 @@ NPN 7
 #define LEDTimeH 0x00
 #define LEDDateL 0x00
 #define LEDDateH 0x40
+#define LEDDateTimeL LEDDateL|LEDTimeL
+#define LEDDateTimeH LEDTimeH|LEDDateH
 
 #define KeyRED   0x80
 #define KeyUp    0x01
@@ -119,19 +121,6 @@ PROGMEM prog_uint8_t Down7B[] = {
 0x7F,//0111 1111, 8
 0x7B,//0111 1011, 9
 0x00 //0000 0000  10 空
-//0x7E,//0111 1110, A
-//0x2F,//0010 1111, B
-//0x65,//0110 0101, C
-//0x1F,//0001 1111, D
-//0x6D,//0110 1101, E
-//0x6C,//0110 1100, F
-//0x40,//0100 0000  17 第一笔
-//0x20,//0010 0000  18
-//0x10,//0001 0000  19
-//0x00,//0000 1000  20
-//0x00,//0000 0100  21
-//0x00,//0000 0010  22
-//0x00 //0000 0001  23
 };
 
 
@@ -154,6 +143,7 @@ void ProcInput();
 void DrawDateTime(uint8_t** p,uint8_t AdjFlashIdx,volatile uint8_t* pflash);
 void DrawWeek();
 void Alarm();
+void Alarm(uint8_t AlarmCnt);
 void Adjust();
 
 void dly();
@@ -173,7 +163,7 @@ void DS1307_read();
 void DS1307_save();
 
 
-volatile uint8_t wordArray[6];//0~15 显示相应数字，16全暗
+volatile uint8_t wordArray[6];//0~9 显示相应数字，10全暗
 volatile uint8_t LEDLowSign = 0;
 volatile uint8_t LEDHighSign = 0;
 volatile uint8_t wordCount = 0;
@@ -182,20 +172,20 @@ volatile uint8_t lowSign;
 volatile uint8_t highSign;
 uint8_t inputdata;
 uint8_t status = 0;
-uint8_t CurAdj = 11;//1 week,2/3 year,4/5 month,6/7 day,8/9 hour,10/11 minute,12/13 second 默认（11）
+uint8_t CurAdj;
 uint8_t AdjFlashIdx = 0;
 uint8_t LastInputData = 0;
 
 
 //0null,1 week,2/3 year,4/5 month,6/7 day,8/9 hour,10/11 minute,12/13 second 默认（11）
-uint8_t* DS1307_p[7];// 6
-uint8_t DS1307_SEC;// 0
-uint8_t DS1307_MIN;// 1
-uint8_t DS1307_HR;// 2
-uint8_t DS1307_DOW;// 3
+uint8_t* DS1307_p[7];
+uint8_t DS1307_SEC; // 0
+uint8_t DS1307_MIN; // 1
+uint8_t DS1307_HR;  // 2
+uint8_t DS1307_DOW; // 3
 uint8_t DS1307_DATE;// 4
-uint8_t DS1307_MTH;// 5
-uint8_t DS1307_YR;// 6
+uint8_t DS1307_MTH; // 5
+uint8_t DS1307_YR;  // 6
 
 
 int main(void) {
@@ -204,19 +194,19 @@ int main(void) {
   loop();
 }
 
-void ClockInit() {
+inline void ClockInit() {
 	CLKPR = 128;//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
 	//CLKPR = 3;//1/8
 	CLKPR = 0;//1/1 //8MHz
 }
 
-void Init(){
-  wordArray[0] = 0;
-  wordArray[1] = 0;
-  wordArray[2] = 0;
-  wordArray[3] = 0;
-  wordArray[4] = 0;
-  wordArray[5] = 0;
+inline void Init(){
+  //wordArray[0] = 0;
+  //wordArray[1] = 0;
+  //wordArray[2] = 0;
+  //wordArray[3] = 0;
+  //wordArray[4] = 0;
+  //wordArray[5] = 0;
   DS1307_p[0] = &DS1307_DOW;
   DS1307_p[1] = &DS1307_YR;
   DS1307_p[2] = &DS1307_MTH;
@@ -235,28 +225,28 @@ void Init(){
 
   //ADC初始化
   ADCSRB |= _BV(ADLAR);
-  ADMUX = 0;
+  ADMUX = 0;//Initial Value 0 0 0 0 0 0 0 0
   ADCSRA = _BV(ADEN) | _BV(ADSC) | _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2);
   
   //刷新定时器初始化
-  TCCR0A = 0;//Initial Value 0 0 0 0 0 0 0 0
+  //TCCR0A = 0;//Initial Value 0 0 0 0 0 0 0 0
   TCCR0B = 2;
   TCNT0 = 0;
   OCR0A = 128;//数字越大越暗（match以后开OE，定时器超时关OE）
   TIMSK0 = _BV(OCIE0A) | _BV(TOIE0);
   
-  TCCR1A = 0;//Initial Value 0 0 0 0 0 0 0 0
+  //TCCR1A = 0;//Initial Value 0 0 0 0 0 0 0 0
   TCCR1B = 5;//  1/1024 7812.5hz/0.119hz(0.000128s/8.4s)
-  TCCR1C = 0;//Initial Value 0 0 0 0 0 0 0 0
-  TIMSK1 = 0;//Initial Value 0 0 0 0 0 0 0 0
+  //TCCR1C = 0;//Initial Value 0 0 0 0 0 0 0 0
+  //TIMSK1 = 0;//Initial Value 0 0 0 0 0 0 0 0
   
   //I2C不需要初始化
-  i2c_SoftI2CMaster();
+  //i2c_SoftI2CMaster();
 
   sei();
 }
 
-void loop() {
+inline void loop() {
 	while(true)
 	{
     uint8_t CurInputData = get165();
@@ -267,41 +257,64 @@ void loop() {
     }
     LastInputData = CurInputData;
     
-    if(status == 0)
+    switch(status)
     {
-      DS1307_read();
-      DrawDateTime(&DS1307_p[4],1,wordArray);
-      LEDLowSign =  LEDTimeL;
-      LEDHighSign = LEDTimeH;
+      case 0:
+      {
+        DS1307_read();
+        DrawDateTime(&DS1307_p[4],1,wordArray);
+        LEDLowSign =  LEDTimeL;
+        LEDHighSign = LEDTimeH;
 
-      ProcInput();
-      Alarm();
-    }
-    else if(status == 1)
-    {
-      DS1307_read();
-      DrawDateTime(&DS1307_p[1],1,wordArray);
-      LEDLowSign =  LEDDateL;
-      LEDHighSign = LEDDateH;
+        ProcInput();
+        Alarm();
+      }
+      break;
+      case 1:
+      {
+        DS1307_read();
+        DrawDateTime(&DS1307_p[1],1,wordArray);
+        LEDLowSign =  LEDDateL;
+        LEDHighSign = LEDDateH;
 
-      ProcInput();
-      Alarm();
-    }
-    else if(status == 2)
-    {
-      DS1307_read();
-      DrawWeek();
-      
-      ProcInput();
-      Alarm();
-    }
-    else if(status == 3)
-    {
-      Adjust();
-    }
-    else if(status == 4)//TODO 全led测试
-    {
-      Adjust();
+        ProcInput();
+        Alarm();
+      }
+      break;
+      case 2:
+      {
+        DS1307_read();
+        DrawWeek();
+        
+        ProcInput();
+        Alarm();
+      }
+      break;
+      case 3://全led测试 打钟测试
+      {
+        wordArray[0] = 8;
+        wordArray[1] = 8;
+        wordArray[2] = 8;
+        wordArray[3] = 8;
+        wordArray[4] = 8;
+        wordArray[5] = 8;
+        LEDLowSign  = LEDDateTimeL;
+        LEDHighSign = LEDDateTimeH;
+        if(inputdata & 0x0F)
+        {
+          Alarm(1);
+        }
+        if(inputdata==KeyRED)
+        {
+          status=0;
+        }
+      }
+      break;
+      default : //else if(status == 4)
+      {
+        Adjust();
+      }
+      break;
     }
   }
 }
@@ -367,7 +380,7 @@ inline void Adjust(){
       *partAdj-=valAdj;
     }
     
-    if(currTick>=3900)//0.5s 闪烁
+    if(currTick>=2000)//0.5s 闪烁
     {
       AdjFlashIdx=~AdjFlashIdx;
       TCNT1 = 0;TIFR1 |= _BV(TOV1);
@@ -375,56 +388,75 @@ inline void Adjust(){
     if(CurAdj>=2&&CurAdj<=7)
     {
       DrawDateTime(&DS1307_p[1],AdjFlashIdx,&wordArray[CurAdj-2]);
-      LEDLowSign =  LEDDateL;
+      LEDLowSign  = LEDDateL;
       LEDHighSign = LEDDateH;
     }
     else if(CurAdj>=8&&CurAdj<=13)
     {
       DrawDateTime(&DS1307_p[4],AdjFlashIdx,&wordArray[CurAdj-8]);
-      LEDLowSign =  LEDTimeL;
+      LEDLowSign  = LEDTimeL;
       LEDHighSign = LEDTimeH;
     }
   }
 }
-inline void Alarm(){
+void Alarm(){
   uint8_t AlarmCnt = 0;
-  if(DS1307_SEC==0&&DS1307_MIN==0x30)
+  if(DS1307_SEC==0)
   {
-    AlarmCnt = 1;
-  }
-  else if(DS1307_SEC==0&&DS1307_MIN==0)
-  {
-    AlarmCnt = pgm_read_byte_near(ClockTable + DS1307_HR);
-  }
-  if(AlarmCnt)
-  {
-    for(uint8_t i=0;i<AlarmCnt;i++)
+    if(DS1307_MIN==0x30)
     {
-      TCNT1 = 0;TIFR1 |= _BV(TOV1);
-      Alarm_ON;
-      while(currTick<9000);
-      TCNT1 = 0;TIFR1 |= _BV(TOV1);
-      Alarm_OFF;
-      while(currTick<1000);
+      AlarmCnt = 1;
     }
+    else if(DS1307_MIN==0)
+    {
+      AlarmCnt = pgm_read_byte_near(ClockTable + DS1307_HR);
+    }
+    if(AlarmCnt)
+    {
+      Alarm(AlarmCnt);
+    }
+  }
+}
+void Alarm(uint8_t AlarmCnt){
+  for(uint8_t i=0;i<AlarmCnt;i++)
+  {
+    TCNT1 = 0;TIFR1 |= _BV(TOV1);
+    Alarm_ON;
+    while(currTick<9000);
+    TCNT1 = 0;TIFR1 |= _BV(TOV1);
+    Alarm_OFF;
+    while(currTick<1000);
   }
 }
 void DrawDateTime(uint8_t** p,uint8_t AdjFlashIdx,volatile uint8_t* pflash){
   volatile uint8_t* p2 = wordArray;
   for(uint8_t i=0;i<3;i++)
   {
-  //TODO 将闪烁的字反过来
-  //年的第一位置空
-    if(AdjFlashIdx || p2==pflash)
+    //年的第一位置空
+    if(*p==&DS1307_YR)
     {
-      *p2 = (**p)>>4;
+      if((AdjFlashIdx || p2!=pflash)&&((**p)>>4))
+      {
+        *p2 = (**p)>>4;
+      }
+      else
+      {
+        *p2 = EMPTY;
+      }
     }
     else
     {
-      *p2 = EMPTY;
+      if(AdjFlashIdx || p2!=pflash)
+      {
+        *p2 = (**p)>>4;
+      }
+      else
+      {
+        *p2 = EMPTY;
+      }
     }
     p2++;
-    if(AdjFlashIdx || p2==pflash)
+    if(AdjFlashIdx || p2!=pflash)
     {
       *p2 = (**p)&0x0F;
     }
@@ -437,22 +469,12 @@ void DrawDateTime(uint8_t** p,uint8_t AdjFlashIdx,volatile uint8_t* pflash){
   }
 }
 void DrawWeek(){
-//TODO wenti
   wordArray[0] = EMPTY;
   wordArray[1] = EMPTY;
   wordArray[2] = EMPTY;
   wordArray[3] = EMPTY;
   wordArray[4] = EMPTY;
-  wordArray[5] = EMPTY;
-  if(DS1307_DOW!=7)
-  {
-    if(DS1307_DOW>=1)wordArray[0] = 8;
-    if(DS1307_DOW>=2)wordArray[1] = 8;
-    if(DS1307_DOW>=3)wordArray[2] = 8;
-    if(DS1307_DOW>=4)wordArray[3] = 8;
-    if(DS1307_DOW>=5)wordArray[4] = 8;
-    if(DS1307_DOW>=6)wordArray[5] = 8;
-  }
+  wordArray[5] = DS1307_DOW;
   LEDLowSign = 0;
   LEDHighSign = 0;
 }
@@ -463,17 +485,14 @@ void ProcInput(){
   }
   if(inputdata & 0x0F)
   {
-    status = 3;
+    status = 4;
     CurAdj = 11;
-    TCNT1 = 0;TIFR1 |= _BV(TOV1);
+    //TCNT1 = 0;TIFR1 |= _BV(TOV1);
   }
   if(inputdata==KeyRED)
   {
     status++;
-    if(status==3)
-    {
-      status=0;
-    }
+    status&=3;
     TCNT1 = 0;TIFR1 |= _BV(TOV1);
   }
 }
@@ -494,7 +513,7 @@ void SendByte(uint8_t data){
     PORT_CLK_OFF; //shift clock down
   }
 }
-uint8_t get165(){
+inline uint8_t get165(){
   uint8_t data = 0;
   PL_OFF;
   PL_ON;
@@ -531,18 +550,18 @@ ISR(TIM0_OVF_vect){
   }
   lowSign=0;
   highSign=0;
-  //if(lineCount)//多余的一行用于字与字间切换
+
+  //多余的一行用于字与字间切换
+  prog_uint8_t* p = Up6+(wordCount<<1);
+  lowSign  |= pgm_read_byte_near(p++);
+  highSign |= pgm_read_byte_near(p);
+  if(pgm_read_byte_near(Down7B+wordArray[wordCount])&(0x80>>lineCount))
   {
-    prog_uint8_t* p = Up6+(wordCount<<1);
+    p = Down7A+(lineCount<<1);
     lowSign  |= pgm_read_byte_near(p++);
     highSign |= pgm_read_byte_near(p);
-    if(pgm_read_byte_near(Down7B+wordArray[wordCount])&(0x80>>lineCount))
-    {
-      p = Down7A+(lineCount<<1);
-      lowSign  |= pgm_read_byte_near(p++);
-      highSign |= pgm_read_byte_near(p);
-    }
   }
+
   if(wordCount==0&&lineCount==0)//显示时间:日期-
   {
     lowSign  |= LEDLowSign;
@@ -558,6 +577,8 @@ ISR(TIM0_COMPA_vect){
 
 
 #define DS1307_CTRL_ID 0x68//B01101000  //DS1307
+
+#define ADDRESS DS1307_CTRL_ID
 
 #define I2C_NAK 0
 #define I2C_ACK 1
@@ -577,13 +598,13 @@ void dly(){
     asm volatile ("nop");
   }
 }
-void i2c_SoftI2CMaster(){
-  i2c_sda_hi();
-  i2c_scl_hi();
-  PORT_SCL &= ~BIT_SCL;
-  PORT_SDA &= ~BIT_SDA;
-  dly();
-}
+//void i2c_SoftI2CMaster(){
+//  i2c_sda_hi();
+//  i2c_scl_hi();
+//  PORT_SCL &= ~BIT_SCL;
+//  PORT_SDA &= ~BIT_SDA;
+//  dly();
+//}
 void i2c_start(void){
   // set both to high at the same time
   i2c_sda_hi();
@@ -594,13 +615,14 @@ void i2c_start(void){
   i2c_scl_lo();
   dly();
 }
-void i2c_beginTransmission(uint8_t address){
+//address非参数化，固定值，省空间
+void i2c_beginTransmission(){
   i2c_start();
-  i2c_write((address<<1) | 0); // clr read bit
+  i2c_write((ADDRESS<<1) | 0); // clr read bit
 }
-void i2c_requestFrom(uint8_t address){
+inline void i2c_requestFrom(){
   i2c_start();
-  i2c_write((address<<1) | 1); // set read bit
+  i2c_write((ADDRESS<<1) | 1); // set read bit
 }
 void i2c_endTransmission(void){
   i2c_scl_hi();
@@ -631,7 +653,7 @@ uint8_t i2c_readbit(void){
   uint8_t c = PIN_SDA; // I2C_PIN;
   i2c_scl_lo();
   dly();
-  return ( c & BIT_SDA) ? 1 : 0;
+  return c & BIT_SDA;
 }
 void i2c_write(uint8_t c){
   for ( uint8_t i=0;i<8;i++) {
@@ -644,7 +666,10 @@ uint8_t i2c_read(uint8_t ack){
   uint8_t res = 0;
   for ( uint8_t i=0;i<8;i++) {
     res <<= 1;
-    res |= i2c_readbit();
+    if(i2c_readbit())
+    {
+    res |= 1;
+    }
   }
   if ( ack )
     i2c_writebit( 0 );
@@ -661,10 +686,10 @@ uint8_t i2c_readLast(){
 }
 
 void DS1307_read(){
-  i2c_beginTransmission(DS1307_CTRL_ID);
+  i2c_beginTransmission();
   i2c_write(0x00);
   i2c_endTransmission();
-  i2c_requestFrom(DS1307_CTRL_ID);
+  i2c_requestFrom();
   DS1307_SEC =i2c_read();// 0
   DS1307_MIN =i2c_read();// 1
   DS1307_HR  =i2c_read();// 2
@@ -675,7 +700,7 @@ void DS1307_read(){
 }
 
 void DS1307_save(){
-  i2c_beginTransmission(DS1307_CTRL_ID);
+  i2c_beginTransmission();
   i2c_write(0x00); // reset register pointer
   i2c_write(DS1307_SEC);
   i2c_write(DS1307_MIN);
