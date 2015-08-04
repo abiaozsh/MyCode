@@ -302,7 +302,7 @@ inline void loop() {
         LEDHighSign = LEDDateTimeH;
         if(inputdata & 0x0F)
         {
-          Alarm(1);
+          Alarm(inputdata);
         }
         if(inputdata==KeyRED)
         {
@@ -580,12 +580,10 @@ ISR(TIM0_COMPA_vect){
 
 #define ADDRESS DS1307_CTRL_ID
 
-#define I2C_NAK 0
-#define I2C_ACK 1
-// sets SCL low and drives output
-#define i2c_scl_lo() PORT_SCL &= ~BIT_SCL; DDR_SCL |= BIT_SCL;
-// sets SDA low and drives output
-#define i2c_sda_lo() PORT_SDA &= ~BIT_SDA; DDR_SDA |= BIT_SDA;
+// sets SCL low and drives output PORT_SCL &= ~BIT_SCL; 
+#define i2c_scl_lo() DDR_SCL |= BIT_SCL;
+// sets SDA low and drives output PORT_SDA &= ~BIT_SDA; 
+#define i2c_sda_lo() DDR_SDA |= BIT_SDA;
 // set SCL high and to input (releases pin) (i.e. change to input,turnon pullup)
 #define i2c_scl_hi() DDR_SCL &=~ BIT_SCL;
 // set SDA high and to input (releases pin) (i.e. change to input,turnon pullup)
@@ -662,6 +660,7 @@ void i2c_write(uint8_t c){
   }
   i2c_readbit();
 }
+
 uint8_t i2c_read(uint8_t ack){
   uint8_t res = 0;
   for ( uint8_t i=0;i<8;i++) {
@@ -671,18 +670,22 @@ uint8_t i2c_read(uint8_t ack){
     res |= 1;
     }
   }
-  if ( ack )
-    i2c_writebit( 0 );
-  else
-    i2c_writebit( 1 );
+  i2c_writebit(ack);
+  //if ( ack )
+  //  i2c_writebit( 0 );
+  //else
+  //  i2c_writebit( 1 );
   dly();
   return res;
 }
+#define I2C_NAK 0
+#define I2C_ACK 1
+
 uint8_t i2c_read(){
-  return i2c_read( I2C_ACK );
+  return i2c_read( 0 );//I2C_ACK 1 ~=0
 }
 uint8_t i2c_readLast(){
-  return i2c_read( I2C_NAK );
+  return i2c_read( 1 );//I2C_NAK 0 ~=1
 }
 
 void DS1307_read(){
