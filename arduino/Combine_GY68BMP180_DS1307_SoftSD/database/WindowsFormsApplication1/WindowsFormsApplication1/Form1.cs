@@ -93,7 +93,9 @@ namespace WindowsFormsApplication1
 
 				if (xxx >= 0 && xxx < w && yyy >= 0 && yyy < h)
 				{
-					bmp.SetPixel((int)xxx, (int)yyy, ((data.time.Date.Subtract(starttime0.Date).Days & 1) == 1) ? Color.Red : Color.Blue);
+					int red = (int)((256 * data.time.TimeOfDay.TotalSeconds) / TimeSpan.FromDays(1).TotalSeconds);
+					int blue = 255 - red;
+					bmp.SetPixel((int)xxx, (int)yyy, Color.FromArgb(red, 0, blue));
 				}
 				if (xxx >= 0 && xxx < w)
 				{
