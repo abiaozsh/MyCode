@@ -28,6 +28,16 @@
 //Noninverted, Serial Data Output. This is the output of the
 //eighth stage of the 8–bit shift register. This output does not
 //have three–state capability.
+/*
+1       VCC
+2       0
+3       DATA
+4       ~OE
+5       ST
+6       SH
+7       7'
+GND
+*/
 
 //符号　　	引脚　　	描述　　
 //Q0--Q7　　	第15脚，第1-7脚	8位并行数据输出，　　
