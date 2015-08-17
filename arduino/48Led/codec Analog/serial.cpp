@@ -88,6 +88,15 @@ int main(void) {
 	
   UCSR0A = 0;
 	UCSR0B = _BV(RXEN0);
+  
+  PORT_PNP1_OFF;
+  PORT_OE_ON;
+  
+  AltBuff = buff0;
+  for(uint8_t i = 0;i<48;i++)
+  {
+    buff0[i] = i+1;
+  }
 	while(true)
 	{
     
