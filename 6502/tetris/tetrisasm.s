@@ -155,7 +155,7 @@ _datarnd:
 .segment    "CODE"
 
 .proc    _nmi: near
-    rts
+    rts;rti
 .endproc
 
 .proc    _waitvblank: near
