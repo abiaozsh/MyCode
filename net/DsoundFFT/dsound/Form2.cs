@@ -96,7 +96,7 @@ namespace dsound
 		}
 
 
-		public void proc(short[] array, int n)
+		public void proc1(short[] array, int n)
 		{
 			int[] a = new int[n];
 
@@ -141,7 +141,7 @@ namespace dsound
 			}
 		}
 
-		public void proc1(short[] array, int n)
+		public void proc(short[] array, int n)
 		{
 			long[] real = new long[n];
 
