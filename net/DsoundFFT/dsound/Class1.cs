@@ -41,7 +41,7 @@ namespace dsound
 
 				CaptureBufferDescription dscheckboxd = new CaptureBufferDescription();
 
-				CaptureBufferSize = format.AverageBytesPerSecond * 2;
+				CaptureBufferSize = format.AverageBytesPerSecond * 16;
 
 				dscheckboxd.BufferBytes = CaptureBufferSize;
 				format.FormatTag = WaveFormatTag.Pcm;
@@ -91,27 +91,20 @@ namespace dsound
 					LockSize += CaptureBufferSize;
 				//Console.WriteLine("1," + ReadPos + "," + CapturePos + "," + LockSize);
 
-				int n = 512;
+				int n = 8192;
 
-				while (LockSize >= n)
+				if (LockSize >= n)
 				{
 					LockSize = n;
 
 					CaptureData = (short[])applicationBuffer.Read(ReadPos, typeof(short), LockFlag.None, LockSize);
 
-					ReadPos += CaptureData.Length;
+					ReadPos += n;
 					ReadPos %= CaptureBufferSize;
 
 					form.proc(CaptureData, n);
 
 					applicationBuffer.GetCurrentPosition(out temp, out CapturePos);
-
-					LockSize = CapturePos - ReadPos;
-					if (LockSize < 0)
-						LockSize += CaptureBufferSize;
-
-					//Console.WriteLine("2," + ReadPos + "," + CapturePos + "," + LockSize);
-
 				}
 
 			}

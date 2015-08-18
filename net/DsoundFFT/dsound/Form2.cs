@@ -96,7 +96,7 @@ namespace dsound
 		}
 
 
-		public void proc1(short[] array, int n)
+		public void proc(short[] array, int n)
 		{
 			int[] a = new int[n];
 
@@ -122,7 +122,7 @@ namespace dsound
 			}
 			//max = 1110.1f;
 			{
-				for (int i = 1; i < n / 2; i++)
+				for (int i = 1; i < 256; i++)
 				{
 					if (i >= array.Length)
 					{
@@ -141,19 +141,16 @@ namespace dsound
 			}
 		}
 
-		public void proc(short[] array, int n)
+		public void proc1(short[] array, int n)
 		{
-			long[] real = new long[512];
+			long[] real = new long[n];
 
 			for (int i = 0; i < n; i++)
 			{
-				real[i] = array[i] * 256;
+				real[i] = array[i];
 			}
 
-			FastFFT.fft(real, 512);
-
-			double max = 65536*2;
-			double multi = 256;
+			FastFFT.fft(real, n);
 
 			int[] result = new int[n];
 
@@ -164,20 +161,16 @@ namespace dsound
 				{
 					v = -v;
 				}
-				result[i] = v;//最接近整数
-				//if (v > max)
-				//{
-				//	max = v;
-				//}
+				result[i] = v;
 			}
 			{
-				for (int i = 2; i < n / 2; i++)
+				for (int i = 2; i < 256; i++)
 				{
 					if (i >= array.Length)
 					{
 						break;
 					}
-					int j = (int)(result[i] * multi / max);
+					int j = (result[i] *128/n);
 
 					spect[curLine, i] = (int)(j);
 				}
