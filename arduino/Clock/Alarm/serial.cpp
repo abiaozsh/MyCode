@@ -201,10 +201,10 @@ uint8_t DS1307_DATA[16];
 #define DS1307_YR_ADJ0     12
 #define DS1307_YR_ADJ1     13
 
-#define AlarmHR_ADJ0       14
-#define AlarmHR_ADJ1       15
-#define AlarmMIN_ADJ0      16
-#define AlarmMIN_ADJ1      17
+#define AlarmMIN_ADJ1      14
+#define AlarmMIN_ADJ0      15
+#define AlarmHR_ADJ1       16
+#define AlarmHR_ADJ0       17
 
 
 
@@ -227,14 +227,14 @@ inline void Init(){
   DDRA=_BV(1)|_BV(2)|_BV(3)|_BV(4)|_BV(6);
   DDRB=_BV(0)|_BV(2);
   PORT_OE_ON;
-  SendByte(0);
-  SendByte(0);
-  PORT_STR_ON; //store clock up
-  PORT_STR_OFF; //store clock down
+  //SendByte(0);
+  //SendByte(0);
+  //PORT_STR_ON; //store clock up
+  //PORT_STR_OFF; //store clock down
 
   //ADC初始化
   ADCSRB |= _BV(ADLAR);
-  ADMUX = 0;//Initial Value 0 0 0 0 0 0 0 0
+  //ADMUX = 0;//Initial Value 0 0 0 0 0 0 0 0
   ADCSRA = _BV(ADEN) | _BV(ADSC) | _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2);
   
   //刷新定时器初始化
@@ -337,11 +337,11 @@ inline void Adjust(){
   }
   if(inputdata==KeyLeft)
   {
-    CurAdj--;
+    CurAdj++;
   }
   if(inputdata==KeyRight)
   {
-    CurAdj++;
+    CurAdj--;
   }
   if(CurAdj==255)
   {
@@ -358,7 +358,7 @@ inline void Adjust(){
     TCNT1 = 0;TIFR1 |= _BV(TOV1);
   }
 
-  if(CurAdj==DS1307_DOW_ADJ0 || CurAdj==DS1307_SET_ADJ0 || CurAdj>=AlarmHR_ADJ0 && CurAdj<=AlarmMIN_ADJ1)
+  if(CurAdj==DS1307_DOW_ADJ0 || CurAdj==DS1307_SET_ADJ0 || CurAdj>=AlarmMIN_ADJ1 && CurAdj<=AlarmHR_ADJ0)
   {
     uint8_t valAdj = 0;
     uint8_t* partAdj;
@@ -383,12 +383,12 @@ inline void Adjust(){
       partAdj = &DS1307_DATA[AlarmHR];
       valAdj = 1;
     }
-    else if(CurAdj<=AlarmMIN_ADJ0)
+    else if(CurAdj==AlarmMIN_ADJ0)
     {
       partAdj = &DS1307_DATA[AlarmMIN];
       valAdj = 0x10;
     }
-    else if(CurAdj<=AlarmMIN_ADJ1)
+    else if(CurAdj==AlarmMIN_ADJ1)
     {
       partAdj = &DS1307_DATA[AlarmMIN];
       valAdj = 1;
@@ -414,11 +414,11 @@ inline void Adjust(){
     
     if(CurAdj&1)
     {
-      valAdj = 1;
+      valAdj = 0x10;
     }
     else
     {
-      valAdj = 0x10;
+      valAdj = 1;
     }
     
     if(inputdata==KeyUp)
@@ -432,13 +432,13 @@ inline void Adjust(){
     
     if(CurAdj>=DS1307_DATE_ADJ0 && CurAdj<=DS1307_YR_ADJ1)
     {
-      DrawDateTime(&DS1307_DATA[DS1307_YR],AdjFlashIdx,&wordArray[CurAdj-DS1307_DATE_ADJ0]);
+      DrawDateTime(&DS1307_DATA[DS1307_YR],AdjFlashIdx,&wordArray[DS1307_YR_ADJ1-CurAdj]);
       LEDLowSign  = LEDDateL;
       LEDHighSign = LEDDateH;
     }
     else if(CurAdj>=DS1307_SEC_ADJ0 && CurAdj<=DS1307_HR_ADJ1)
     {
-      DrawDateTime(&DS1307_DATA[DS1307_HR],AdjFlashIdx,&wordArray[CurAdj-DS1307_SEC_ADJ0]);
+      DrawDateTime(&DS1307_DATA[DS1307_HR],AdjFlashIdx,&wordArray[DS1307_HR_ADJ1-CurAdj]);
       LEDLowSign  = LEDTimeL;
       LEDHighSign = LEDTimeH;
     }
@@ -528,12 +528,12 @@ void DrawDateTime(uint8_t* p,uint8_t AdjFlashIdx,volatile uint8_t* pflash){
   }
 }
 void DrawWeek(){
-  wordArray[0] = (AdjFlashIdx && CurAdj==DS1307_DOW_ADJ0)?EMPTY:DS1307_DATA[DS1307_DOW];
-  wordArray[1] = (AdjFlashIdx && CurAdj==DS1307_SET_ADJ0)?EMPTY:DS1307_DATA[DS1307_SET];
-  wordArray[2] = (AdjFlashIdx && CurAdj==AlarmHR_ADJ0   )?EMPTY:(DS1307_DATA[AlarmHR]>>4);
-  wordArray[3] = (AdjFlashIdx && CurAdj==AlarmHR_ADJ1   )?EMPTY:(DS1307_DATA[AlarmHR]&0x0F);
-  wordArray[4] = (AdjFlashIdx && CurAdj==AlarmMIN_ADJ0  )?EMPTY:(DS1307_DATA[AlarmMIN]>>4);
-  wordArray[5] = (AdjFlashIdx && CurAdj==AlarmMIN_ADJ1  )?EMPTY:(DS1307_DATA[AlarmMIN]&0x0F);
+  wordArray[0] = (AdjFlashIdx && CurAdj==AlarmHR_ADJ0   )?EMPTY:(DS1307_DATA[AlarmHR]>>4);
+  wordArray[1] = (AdjFlashIdx && CurAdj==AlarmHR_ADJ1   )?EMPTY:(DS1307_DATA[AlarmHR]&0x0F);
+  wordArray[2] = (AdjFlashIdx && CurAdj==AlarmMIN_ADJ0  )?EMPTY:(DS1307_DATA[AlarmMIN]>>4);
+  wordArray[3] = (AdjFlashIdx && CurAdj==AlarmMIN_ADJ1  )?EMPTY:(DS1307_DATA[AlarmMIN]&0x0F);
+  wordArray[4] = (AdjFlashIdx && CurAdj==DS1307_SET_ADJ0)?EMPTY:DS1307_DATA[DS1307_SET];
+  wordArray[5] = (AdjFlashIdx && CurAdj==DS1307_DOW_ADJ0)?EMPTY:DS1307_DATA[DS1307_DOW];
   LEDLowSign = 0;
   LEDHighSign = 0;
 }
@@ -545,8 +545,7 @@ void ProcInput(){
   if(inputdata & 0x0F)
   {
     status = 4;
-    CurAdj = 11;
-    //TCNT1 = 0;TIFR1 |= _BV(TOV1);
+    CurAdj = DS1307_MIN_ADJ0;
   }
   if(inputdata==KeyRED)
   {
@@ -594,7 +593,7 @@ ISR(TIM0_OVF_vect){
   SendByte(lowSign);
   PORT_STR_ON;
   PORT_STR_OFF;
-	sei();
+  sei();
   
   //准备输出数据 开始
   lineCount++;
@@ -655,13 +654,7 @@ void dly(){
     asm volatile ("nop");
   }
 }
-//void i2c_SoftI2CMaster(){
-//  i2c_sda_hi();
-//  i2c_scl_hi();
-//  PORT_SCL &= ~BIT_SCL;
-//  PORT_SDA &= ~BIT_SDA;
-//  dly();
-//}
+
 void i2c_start(void){
   // set both to high at the same time
   i2c_sda_hi();
@@ -730,10 +723,6 @@ uint8_t i2c_read(uint8_t ack){
     }
   }
   i2c_writebit(ack);
-  //if ( ack )
-  //  i2c_writebit( 0 );
-  //else
-  //  i2c_writebit( 1 );
   dly();
   return res;
 }
