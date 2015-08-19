@@ -358,69 +358,50 @@ inline void Adjust(){
     TCNT1 = 0;TIFR1 |= _BV(TOV1);
   }
 
-  if(CurAdj==DS1307_DOW_ADJ0 || CurAdj==DS1307_SET_ADJ0 || CurAdj>=AlarmMIN_ADJ1 && CurAdj<=AlarmHR_ADJ0)
+  uint8_t valAdj = 0;
+  uint8_t* partAdj;
+  uint8_t isWeek = 1;
+  switch(CurAdj)
   {
-    uint8_t valAdj = 0;
-    uint8_t* partAdj;
-
-    if(CurAdj==DS1307_DOW_ADJ0)
-    {
+	case DS1307_DOW_ADJ0:
       partAdj = &DS1307_DATA[DS1307_DOW];
       valAdj = 1;
-    }
-    else if(CurAdj==DS1307_SET_ADJ0)
-    {
+	  break;
+	case DS1307_SET_ADJ0:
       partAdj = &DS1307_DATA[DS1307_SET];
       valAdj = 1;
-    }
-    else if(CurAdj==AlarmHR_ADJ0)
-    {
+	  break;
+    case AlarmHR_ADJ0:
       partAdj = &DS1307_DATA[AlarmHR];
       valAdj = 0x10;
-    }
-    else if(CurAdj==AlarmHR_ADJ1)
-    {
+	  break;
+    case AlarmHR_ADJ1:
       partAdj = &DS1307_DATA[AlarmHR];
       valAdj = 1;
-    }
-    else if(CurAdj==AlarmMIN_ADJ0)
-    {
+	  break;
+    case AlarmMIN_ADJ0:
       partAdj = &DS1307_DATA[AlarmMIN];
       valAdj = 0x10;
-    }
-    else if(CurAdj==AlarmMIN_ADJ1)
-    {
+	  break;
+    case AlarmMIN_ADJ1:
       partAdj = &DS1307_DATA[AlarmMIN];
       valAdj = 1;
-    }
-    
-    if(inputdata==KeyUp)
-    {
-      *partAdj+=valAdj;
-    }
-    if(inputdata==KeyDown)
-    {
-      *partAdj-=valAdj;
-    }
-    
-    DrawWeek();
+	break;
+    default:
+		partAdj = &DS1307_DATA[CurAdj>>1];
+		
+		if(CurAdj&1)
+		{
+		  valAdj = 0x10;
+		}
+		else
+		{
+		  valAdj = 1;
+		}
+		isWeek=0;
+		break;
   }
-  else
-  {
-    uint8_t valAdj = 0;
-    uint8_t* partAdj;
 
-    partAdj = &DS1307_DATA[CurAdj>>1];
-    
-    if(CurAdj&1)
-    {
-      valAdj = 0x10;
-    }
-    else
-    {
-      valAdj = 1;
-    }
-    
     if(inputdata==KeyUp)
     {
       *partAdj+=valAdj;
@@ -429,8 +410,12 @@ inline void Adjust(){
     {
       *partAdj-=valAdj;
     }
-    
-    if(CurAdj>=DS1307_DATE_ADJ0 && CurAdj<=DS1307_YR_ADJ1)
+	
+	if(isWeek)
+	{
+	  DrawWeek();
+    }
+	else if(CurAdj>=DS1307_DATE_ADJ0 && CurAdj<=DS1307_YR_ADJ1)
     {
       DrawDateTime(&DS1307_DATA[DS1307_YR],AdjFlashIdx,&wordArray[DS1307_YR_ADJ1-CurAdj]);
       LEDLowSign  = LEDDateL;
@@ -442,8 +427,8 @@ inline void Adjust(){
       LEDLowSign  = LEDTimeL;
       LEDHighSign = LEDTimeH;
     }
-  }
 }
+
 void Alarm(){
   if(DS1307_DATA[DS1307_SET]==1)
   {

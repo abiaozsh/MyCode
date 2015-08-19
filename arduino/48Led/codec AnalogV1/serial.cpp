@@ -66,8 +66,9 @@ PROGMEM  prog_uint8_t  DitherTable[] = {
 0xf0,0x70,0xb0,0x30,0xd0,0x50,0x90,0x10,0xe0,0x60,0xa0,0x20,0xc0,0x40,0x80,0x00
 };
 
-//#define getV(pos,bit) ((AltBuff[pos]>pgm_read_byte_near(DitherTable + Count256))?bit:0)
-#define getV(pos,bit) (((DT-AltBuff[pos])&0x80)>>bit)
+#define getV(pos,bit) (((AltBuff[pos]-DT)&0x80)?0:bit)
+//#define getV(pos,bit) (((DT-AltBuff[pos])&0x80)>>bit)
+
 //#define getV(pos,bit) ((AltBuff[pos]>=60)?bit:0)
 volatile uint8_t Count256;
 
@@ -111,7 +112,7 @@ cli();
   AltBuff = buff0;
   for(uint8_t i = 0;i<48;i++)
   {
-    buff0[i] = i*4;
+    buff0[i] = i;
   }
   //buff0[1] = 1;
   //buff0[2] = 2;
@@ -119,13 +120,13 @@ cli();
   sei();
 	while(true)
 	{
-	  for(uint8_t i = 0;i<47;i++)
+	/*  for(uint8_t i = 0;i<47;i++)
 	  {
 		buff1[i] = buff0[i+1];
 	  }
 		buff1[47] = buff0[0];
 		AltBuff = buff1;
-		for(long i=0;i<300;i++)
+		for(long i=0;i<3000;i++)
 		{
 		volatile int vv=0;vv++;
 		}
@@ -137,10 +138,10 @@ cli();
 	  }
 		buff0[47] = buff1[0];
 		AltBuff = buff0;
-		for(long i=0;i<300;i++)
+		for(long i=0;i<3000;i++)
 		{
 		volatile int vv=0;vv++;
-		}
+		}*/
   	}
 }
 
@@ -200,22 +201,22 @@ ISR(TIMER0_OVF_vect){
   PORT_PNP1_OFF;//关闭输出,开始传输
  uint8_t data[8];
  uint8_t DT = pgm_read_byte_near(DitherTable + Count256);
-  //data[7] = getV(5*8+7,_BV(7)) | getV(4*8+0,_BV(6)) | getV(3*8+7,_BV(5)) | getV(2*8+0,_BV(4)) | getV(1*8+7,_BV(3)) | getV(0*8+0,_BV(2)) |0 |0;
-  //data[6] = getV(5*8+5,_BV(7)) | getV(4*8+2,_BV(6)) | getV(3*8+5,_BV(5)) | getV(2*8+2,_BV(4)) | getV(1*8+5,_BV(3)) | getV(0*8+2,_BV(2)) |0 |0;
-  //data[5] = getV(5*8+3,_BV(7)) | getV(4*8+4,_BV(6)) | getV(3*8+3,_BV(5)) | getV(2*8+4,_BV(4)) | getV(1*8+3,_BV(3)) | getV(0*8+4,_BV(2)) |0 |0;
-  //data[4] = getV(5*8+1,_BV(7)) | getV(4*8+6,_BV(6)) | getV(3*8+1,_BV(5)) | getV(2*8+6,_BV(4)) | getV(1*8+1,_BV(3)) | getV(0*8+6,_BV(2)) |0 |0;
-  //data[3] = getV(4*8+7,_BV(7)) | getV(5*8+0,_BV(6)) | getV(2*8+7,_BV(5)) | getV(3*8+0,_BV(4)) | getV(0*8+7,_BV(3)) | getV(1*8+0,_BV(2)) |0 |0;
-  //data[2] = getV(4*8+5,_BV(7)) | getV(5*8+2,_BV(6)) | getV(2*8+5,_BV(5)) | getV(3*8+2,_BV(4)) | getV(0*8+5,_BV(3)) | getV(1*8+2,_BV(2)) |0 |0;
-  //data[1] = getV(4*8+3,_BV(7)) | getV(5*8+4,_BV(6)) | getV(2*8+3,_BV(5)) | getV(3*8+4,_BV(4)) | getV(0*8+3,_BV(3)) | getV(1*8+4,_BV(2)) |0 |0;
-  //data[0] = getV(4*8+1,_BV(7)) | getV(5*8+6,_BV(6)) | getV(2*8+1,_BV(5)) | getV(3*8+6,_BV(4)) | getV(0*8+1,_BV(3)) | getV(1*8+6,_BV(2)) |0 |0;
-  data[7] = getV(5*8+7,0) | getV(4*8+0,1) | getV(3*8+7,2) | getV(2*8+0,3) | getV(1*8+7,4) | getV(0*8+0,5) |0 |0;
-  data[6] = getV(5*8+5,0) | getV(4*8+2,1) | getV(3*8+5,2) | getV(2*8+2,3) | getV(1*8+5,4) | getV(0*8+2,5) |0 |0;
-  data[5] = getV(5*8+3,0) | getV(4*8+4,1) | getV(3*8+3,2) | getV(2*8+4,3) | getV(1*8+3,4) | getV(0*8+4,5) |0 |0;
-  data[4] = getV(5*8+1,0) | getV(4*8+6,1) | getV(3*8+1,2) | getV(2*8+6,3) | getV(1*8+1,4) | getV(0*8+6,5) |0 |0;
-  data[3] = getV(4*8+7,0) | getV(5*8+0,1) | getV(2*8+7,2) | getV(3*8+0,3) | getV(0*8+7,4) | getV(1*8+0,5) |0 |0;
-  data[2] = getV(4*8+5,0) | getV(5*8+2,1) | getV(2*8+5,2) | getV(3*8+2,3) | getV(0*8+5,4) | getV(1*8+2,5) |0 |0;
-  data[1] = getV(4*8+3,0) | getV(5*8+4,1) | getV(2*8+3,2) | getV(3*8+4,3) | getV(0*8+3,4) | getV(1*8+4,5) |0 |0;
-  data[0] = getV(4*8+1,0) | getV(5*8+6,1) | getV(2*8+1,2) | getV(3*8+6,3) | getV(0*8+1,4) | getV(1*8+6,5) |0 |0;
+  data[7] = getV(5*8+7,_BV(7)) | getV(4*8+0,_BV(6)) | getV(3*8+7,_BV(5)) | getV(2*8+0,_BV(4)) | getV(1*8+7,_BV(3)) | getV(0*8+0,_BV(2)) |0 |0;
+  data[6] = getV(5*8+5,_BV(7)) | getV(4*8+2,_BV(6)) | getV(3*8+5,_BV(5)) | getV(2*8+2,_BV(4)) | getV(1*8+5,_BV(3)) | getV(0*8+2,_BV(2)) |0 |0;
+  data[5] = getV(5*8+3,_BV(7)) | getV(4*8+4,_BV(6)) | getV(3*8+3,_BV(5)) | getV(2*8+4,_BV(4)) | getV(1*8+3,_BV(3)) | getV(0*8+4,_BV(2)) |0 |0;
+  data[4] = getV(5*8+1,_BV(7)) | getV(4*8+6,_BV(6)) | getV(3*8+1,_BV(5)) | getV(2*8+6,_BV(4)) | getV(1*8+1,_BV(3)) | getV(0*8+6,_BV(2)) |0 |0;
+  data[3] = getV(4*8+7,_BV(7)) | getV(5*8+0,_BV(6)) | getV(2*8+7,_BV(5)) | getV(3*8+0,_BV(4)) | getV(0*8+7,_BV(3)) | getV(1*8+0,_BV(2)) |0 |0;
+  data[2] = getV(4*8+5,_BV(7)) | getV(5*8+2,_BV(6)) | getV(2*8+5,_BV(5)) | getV(3*8+2,_BV(4)) | getV(0*8+5,_BV(3)) | getV(1*8+2,_BV(2)) |0 |0;
+  data[1] = getV(4*8+3,_BV(7)) | getV(5*8+4,_BV(6)) | getV(2*8+3,_BV(5)) | getV(3*8+4,_BV(4)) | getV(0*8+3,_BV(3)) | getV(1*8+4,_BV(2)) |0 |0;
+  data[0] = getV(4*8+1,_BV(7)) | getV(5*8+6,_BV(6)) | getV(2*8+1,_BV(5)) | getV(3*8+6,_BV(4)) | getV(0*8+1,_BV(3)) | getV(1*8+6,_BV(2)) |0 |0;
+  //data[7] = getV(5*8+7,0) | getV(4*8+0,1) | getV(3*8+7,2) | getV(2*8+0,3) | getV(1*8+7,4) | getV(0*8+0,5) |0 |0;
+  //data[6] = getV(5*8+5,0) | getV(4*8+2,1) | getV(3*8+5,2) | getV(2*8+2,3) | getV(1*8+5,4) | getV(0*8+2,5) |0 |0;
+  //data[5] = getV(5*8+3,0) | getV(4*8+4,1) | getV(3*8+3,2) | getV(2*8+4,3) | getV(1*8+3,4) | getV(0*8+4,5) |0 |0;
+  //data[4] = getV(5*8+1,0) | getV(4*8+6,1) | getV(3*8+1,2) | getV(2*8+6,3) | getV(1*8+1,4) | getV(0*8+6,5) |0 |0;
+  //data[3] = getV(4*8+7,0) | getV(5*8+0,1) | getV(2*8+7,2) | getV(3*8+0,3) | getV(0*8+7,4) | getV(1*8+0,5) |0 |0;
+  //data[2] = getV(4*8+5,0) | getV(5*8+2,1) | getV(2*8+5,2) | getV(3*8+2,3) | getV(0*8+5,4) | getV(1*8+2,5) |0 |0;
+  //data[1] = getV(4*8+3,0) | getV(5*8+4,1) | getV(2*8+3,2) | getV(3*8+4,3) | getV(0*8+3,4) | getV(1*8+4,5) |0 |0;
+  //data[0] = getV(4*8+1,0) | getV(5*8+6,1) | getV(2*8+1,2) | getV(3*8+6,3) | getV(0*8+1,4) | getV(1*8+6,5) |0 |0;
   Count256++;
   
 	PORT_CLK_OFF;
@@ -230,7 +231,7 @@ ISR(TIMER0_OVF_vect){
 	PORT_595_6 = *idx++;PORT_CLK_ON;PORT_CLK_OFF;
 	PORT_CLK_ON; //shift clock up
 	PORT_CLK_OFF; //shift clock down
-  /*
+  
 	UCSR0B = 0;//not forget turnoff usart0 on mega328p
 	DDR_Send |= BIT_Send;
 	DDR_Recv &= ~BIT_Recv;
@@ -241,6 +242,28 @@ ISR(TIMER0_OVF_vect){
 	cli();
 	while(true)
 	{
+	uint8_t v1 = 35;
+	uint8_t v2 = 45;
+	uint8_t temp = 0;
+	asm volatile("lds 16,%0"::"m"(v1):"r16");
+	asm volatile("lds 17,%0"::"m"(v2):"r17");
+	asm volatile("lds 18,%0"::"m"(temp):"r18");
+	asm volatile("sub 16,17");
+	asm volatile("ror 18");
+	asm volatile("sts %0,18":"=m"(temp));
+	
+		SendInt(temp);
+		SerialSend('\r');
+		SerialSend('\n');
+		SendInt(((v2-v1)&0x80?0:1));
+		SerialSend('\r');
+		SerialSend('\n');
+		SendInt((v1-v2)&0x80);
+		SerialSend('\r');
+		SerialSend('\n');
+		SendInt((v2-v1)&0x80);
+		SerialSend('\r');
+		SerialSend('\n');
 		SendInt(time);
 		SerialSend('\r');
 		SerialSend('\n');
@@ -248,7 +271,7 @@ ISR(TIMER0_OVF_vect){
 		{
 		volatile long vv=0;vv++;
 		}
-	}*/
+	}
 }
 
 ISR(TIMER0_COMPA_vect){
