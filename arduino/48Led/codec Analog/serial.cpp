@@ -67,7 +67,6 @@ PROGMEM  prog_uint8_t  DitherTable[] = {
 };
 
 #define getV(pos,bit) ((AltBuff[pos]>pgm_read_byte_near(DitherTable + Count256))?bit:0)
-//#define getV(pos,bit) ((AltBuff[pos]>=60)?bit:0)
 volatile uint8_t Count256;
 
 
@@ -75,7 +74,7 @@ volatile uint8_t* volatile currBuff;//正在写入
 volatile uint8_t* volatile AltBuff;//显示用
 volatile uint8_t buff0[48];
 volatile uint8_t buff1[48];
-
+volatile uint8_t buffidx = 0;
 
 void SendLine();
 void Conv();
@@ -101,103 +100,40 @@ cli();
 	TCCR1C = 0;
 	TIMSK1 = 0;
 	
-  //UCSR0A = 0;
-	//UCSR0B = _BV(RXEN0);
+  UCSR0A = 0;
+	UCSR0B = _BV(RXEN0) | _BV(RXCIE0);
+  UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);
+  UBRR0 = 8;//115200
   
   PORT_PNP1_OFF;
   PORT_OE_OFF;
   
   AltBuff = buff0;
-  for(uint8_t i = 0;i<48;i++)
-  {
-    buff0[i] = i*4;
-  }
-  //buff0[1] = 1;
-  //buff0[2] = 2;
-  //buff0[3] = 3;
+  currBuff = buff1;
   sei();
-	while(true)
-	{
-	  for(uint8_t i = 0;i<47;i++)
-	  {
-		buff1[i] = buff0[i+1];
-	  }
-		buff1[47] = buff0[0];
-		AltBuff = buff1;
-		for(long i=0;i<300;i++)
-		{
-		volatile int vv=0;vv++;
-		}
-		
-		
-	  for(uint8_t i = 0;i<47;i++)
-	  {
-		buff0[i] = buff1[i+1];
-	  }
-		buff0[47] = buff1[0];
-		AltBuff = buff0;
-		for(long i=0;i<300;i++)
-		{
-		volatile int vv=0;vv++;
-		}
-  	}
+  while(true)
+  {
+  }
 }
 
-void SerialSend(uint8_t val)
-{
-	cli();
-	TCCR1B = TCCR1B_Value;
-	TCNT1 = 0;
-	uint16_t timing;
-	PORT_Send &= ~BIT_Send;timing = pgm_read_word_near(CUR_TIMING);while(TCNT1<timing);//startbit
-	uint8_t chkbit = 0x01;
-	for(uint8_t i = 1;i<=8;i++)
-	{
-		if(val&chkbit){PORT_Send |= BIT_Send;}else{PORT_Send &= ~BIT_Send;}chkbit<<=1;timing = pgm_read_word_near(CUR_TIMING + i);while(TCNT1<timing);
-	}
-	PORT_Send |= BIT_Send;timing = pgm_read_word_near(CUR_TIMING + 9);while(TCNT1<timing);
-	sei();
-}
-
-PROGMEM prog_uint32_t num10s[] = {
-1000000000,
-100000000,
-10000000,
-1000000,
-100000,
-10000,
-1000,
-100,
-10,
-1,
-};
-
-void SendInt(uint32_t val)
-{
-	uint32_t num = val;
-	for(uint8_t idx = 0; idx < 10 ; idx++)
-	{
-		uint8_t outNum = 0;
-		uint32_t CmpNum = pgm_read_dword_near(num10s + idx);
-		for(uint8_t i = 0; i < 10 ; i++)
-		{
-			if(num>=CmpNum)
-			{
-				num -= CmpNum;
-				outNum++;
-			}
-			else
-			{
-				break;
-			}
-		}
-		SerialSend('0' + outNum);
-	}
+ISR(USART_RX_vect){
+  currBuff[buffidx++] = UDR0;
+  if(buffidx==48)
+  {
+    buffidx = 0;
+    volatile uint8_t* tempBuff;
+    tempBuff = currBuff;
+    currBuff = AltBuff;
+    AltBuff = tempBuff;
+  }
 }
 
 ISR(TIMER0_OVF_vect){
   PORT_PNP1_OFF;//关闭输出,开始传输
- uint8_t data[8];
+  
+  sei();//允许被串口中断
+  
+  uint8_t data[8];
   data[7] = getV(5*8+7,_BV(7)) | getV(4*8+0,_BV(6)) | getV(3*8+7,_BV(5)) | getV(2*8+0,_BV(4)) | getV(1*8+7,_BV(3)) | getV(0*8+0,_BV(2)) |0 |0;
   data[6] = getV(5*8+5,_BV(7)) | getV(4*8+2,_BV(6)) | getV(3*8+5,_BV(5)) | getV(2*8+2,_BV(4)) | getV(1*8+5,_BV(3)) | getV(0*8+2,_BV(2)) |0 |0;
   data[5] = getV(5*8+3,_BV(7)) | getV(4*8+4,_BV(6)) | getV(3*8+3,_BV(5)) | getV(2*8+4,_BV(4)) | getV(1*8+3,_BV(3)) | getV(0*8+4,_BV(2)) |0 |0;
@@ -220,25 +156,6 @@ ISR(TIMER0_OVF_vect){
 	PORT_595_6 = *idx++;PORT_CLK_ON;PORT_CLK_OFF;
 	PORT_CLK_ON; //shift clock up
 	PORT_CLK_OFF; //shift clock down
-  /*
-	UCSR0B = 0;//not forget turnoff usart0 on mega328p
-	DDR_Send |= BIT_Send;
-	DDR_Recv &= ~BIT_Recv;
-	PORT_Send |= BIT_Send;
-	
-	uint8_t time = TCNT0;
-	TIMSK0 = 0;
-	cli();
-	while(true)
-	{
-		SendInt(time);
-		SerialSend('\r');
-		SerialSend('\n');
-		for(long i=0;i<300000;i++)
-		{
-		volatile long vv=0;vv++;
-		}
-	}*/
 }
 
 ISR(TIMER0_COMPA_vect){

@@ -1,21 +1,14 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
-实现功能：定时闹钟，设定（1闹钟，2整点报时，3静音）
+//实现功能：定时闹钟，设定（1闹钟，2整点报时，3静音）
 /*
    0
 1     2
    3
 4     5
    6
-直接用6个8显示星期 或者用秒的最后一位表示星期
-星期1 8
-星期2 88
-星期3 888
-星期4 8888
-星期5 88888
-星期6 888888
-星期天 
+
 
 按红色按钮，翻页：时间，日期，星期
 按上下左右键后，进入设定状态，10秒无操作，返回显示状态
@@ -140,7 +133,7 @@ void Init();
 void SendByte(uint8_t data);
 uint8_t get165();
 void ProcInput();
-void DrawDateTime(uint8_t** p,uint8_t AdjFlashIdx,volatile uint8_t* pflash);
+void DrawDateTime(uint8_t* p,uint8_t AdjFlashIdx,volatile uint8_t* pflash);
 void DrawWeek();
 void Alarm();
 void Alarm(uint8_t AlarmCnt);
@@ -178,16 +171,45 @@ uint8_t LastInputData = 0;
 
 
 //0null,1 week,2/3 year,4/5 month,6/7 day,8/9 hour,10/11 minute,12/13 second 默认（11）
-uint8_t* DS1307_p[8];
-uint8_t DS1307_SEC; // 0
-uint8_t DS1307_MIN; // 1
-uint8_t DS1307_HR;  // 2
-uint8_t DS1307_DOW; // 3
-uint8_t DS1307_DATE;// 4
-uint8_t DS1307_MTH; // 5
-uint8_t DS1307_YR;  // 6
+uint8_t DS1307_DATA[16];
+#define DS1307_SEC      0
+#define DS1307_MIN      1
+#define DS1307_HR       2
+#define DS1307_DOW      3
+#define DS1307_DATE     4
+#define DS1307_MTH      5
+#define DS1307_YR       6
+#define DS1307_CONTROL  7
+#define DS1307_SET      8
+#define AlarmMIN        9
+#define AlarmHR         10
 
-uint8_t SETTING = 1;  // 6
+#define DS1307_SEC_ADJ0    0
+#define DS1307_SEC_ADJ1    1
+#define DS1307_MIN_ADJ0    2
+#define DS1307_MIN_ADJ1    3
+#define DS1307_HR_ADJ0     4
+#define DS1307_HR_ADJ1     5
+
+#define DS1307_DOW_ADJ0    6
+#define DS1307_SET_ADJ0    7
+
+#define DS1307_DATE_ADJ0   8
+#define DS1307_DATE_ADJ1   9
+#define DS1307_MTH_ADJ0    10
+#define DS1307_MTH_ADJ1    11
+#define DS1307_YR_ADJ0     12
+#define DS1307_YR_ADJ1     13
+
+#define AlarmHR_ADJ0       14
+#define AlarmHR_ADJ1       15
+#define AlarmMIN_ADJ0      16
+#define AlarmMIN_ADJ1      17
+
+
+
+
+
 
 int main(void) {
   ClockInit();
@@ -202,20 +224,6 @@ inline void ClockInit() {
 }
 
 inline void Init(){
-  //wordArray[0] = 0;
-  //wordArray[1] = 0;
-  //wordArray[2] = 0;
-  //wordArray[3] = 0;
-  //wordArray[4] = 0;
-  //wordArray[5] = 0;
-  DS1307_p[0] = &DS1307_DOW;
-  DS1307_p[1] = &DS1307_YR;
-  DS1307_p[2] = &DS1307_MTH;
-  DS1307_p[3] = &DS1307_DATE;
-  DS1307_p[4] = &DS1307_HR;
-  DS1307_p[5] = &DS1307_MIN;
-  DS1307_p[6] = &DS1307_SEC;
-
   DDRA=_BV(1)|_BV(2)|_BV(3)|_BV(4)|_BV(6);
   DDRB=_BV(0)|_BV(2);
   PORT_OE_ON;
@@ -263,7 +271,7 @@ inline void loop() {
       case 0:
       {
         DS1307_read();
-        DrawDateTime(&DS1307_p[4],1,wordArray);
+        DrawDateTime(&DS1307_DATA[DS1307_HR],1,wordArray);
         LEDLowSign =  LEDTimeL;
         LEDHighSign = LEDTimeH;
 
@@ -274,7 +282,7 @@ inline void loop() {
       case 1:
       {
         DS1307_read();
-        DrawDateTime(&DS1307_p[1],1,wordArray);
+        DrawDateTime(&DS1307_DATA[DS1307_YR],1,wordArray);
         LEDLowSign =  LEDDateL;
         LEDHighSign = LEDDateH;
 
@@ -335,25 +343,66 @@ inline void Adjust(){
   {
     CurAdj++;
   }
-  if(CurAdj==0)
+  if(CurAdj==255)
   {
-    CurAdj = 13;
+    CurAdj = 17;
   }
-  if(CurAdj==14)
+  if(CurAdj==18)
   {
-    CurAdj = 1;
+    CurAdj = 0;
   }
   
-  if(CurAdj==1)
+  if(currTick>=2000)//0.5s 闪烁
   {
+    AdjFlashIdx=~AdjFlashIdx;
+    TCNT1 = 0;TIFR1 |= _BV(TOV1);
+  }
+
+  if(CurAdj==DS1307_DOW_ADJ0 || CurAdj==DS1307_SET_ADJ0 || CurAdj>=AlarmHR_ADJ0 && CurAdj<=AlarmMIN_ADJ1)
+  {
+    uint8_t valAdj = 0;
+    uint8_t* partAdj;
+
+    if(CurAdj==DS1307_DOW_ADJ0)
+    {
+      partAdj = &DS1307_DATA[DS1307_DOW];
+      valAdj = 1;
+    }
+    else if(CurAdj==DS1307_SET_ADJ0)
+    {
+      partAdj = &DS1307_DATA[DS1307_SET];
+      valAdj = 1;
+    }
+    else if(CurAdj==AlarmHR_ADJ0)
+    {
+      partAdj = &DS1307_DATA[AlarmHR];
+      valAdj = 0x10;
+    }
+    else if(CurAdj==AlarmHR_ADJ1)
+    {
+      partAdj = &DS1307_DATA[AlarmHR];
+      valAdj = 1;
+    }
+    else if(CurAdj<=AlarmMIN_ADJ0)
+    {
+      partAdj = &DS1307_DATA[AlarmMIN];
+      valAdj = 0x10;
+    }
+    else if(CurAdj<=AlarmMIN_ADJ1)
+    {
+      partAdj = &DS1307_DATA[AlarmMIN];
+      valAdj = 1;
+    }
+    
     if(inputdata==KeyUp)
     {
-      DS1307_DOW--;
+      *partAdj+=valAdj;
     }
     if(inputdata==KeyDown)
     {
-      DS1307_DOW++;
+      *partAdj-=valAdj;
     }
+    
     DrawWeek();
   }
   else
@@ -361,7 +410,7 @@ inline void Adjust(){
     uint8_t valAdj = 0;
     uint8_t* partAdj;
 
-    partAdj = DS1307_p[CurAdj>>1];
+    partAdj = &DS1307_DATA[CurAdj>>1];
     
     if(CurAdj&1)
     {
@@ -381,40 +430,48 @@ inline void Adjust(){
       *partAdj-=valAdj;
     }
     
-    if(currTick>=2000)//0.5s 闪烁
+    if(CurAdj>=DS1307_DATE_ADJ0 && CurAdj<=DS1307_YR_ADJ1)
     {
-      AdjFlashIdx=~AdjFlashIdx;
-      TCNT1 = 0;TIFR1 |= _BV(TOV1);
-    }
-    if(CurAdj>=2&&CurAdj<=7)
-    {
-      DrawDateTime(&DS1307_p[1],AdjFlashIdx,&wordArray[CurAdj-2]);
+      DrawDateTime(&DS1307_DATA[DS1307_YR],AdjFlashIdx,&wordArray[CurAdj-DS1307_DATE_ADJ0]);
       LEDLowSign  = LEDDateL;
       LEDHighSign = LEDDateH;
     }
-    else if(CurAdj>=8&&CurAdj<=13)
+    else if(CurAdj>=DS1307_SEC_ADJ0 && CurAdj<=DS1307_HR_ADJ1)
     {
-      DrawDateTime(&DS1307_p[4],AdjFlashIdx,&wordArray[CurAdj-8]);
+      DrawDateTime(&DS1307_DATA[DS1307_HR],AdjFlashIdx,&wordArray[CurAdj-DS1307_SEC_ADJ0]);
       LEDLowSign  = LEDTimeL;
       LEDHighSign = LEDTimeH;
     }
   }
 }
 void Alarm(){
-  uint8_t AlarmCnt = 0;
-  if(DS1307_SEC==0)
+  if(DS1307_DATA[DS1307_SET]==1)
   {
-    if(DS1307_MIN==0x30)
+    uint8_t AlarmCnt = 0;
+    if(DS1307_DATA[DS1307_SEC]==0)
     {
-      AlarmCnt = 1;
+      if(DS1307_DATA[DS1307_MIN]==0x30)
+      {
+        AlarmCnt = 1;
+      }
+      else if(DS1307_DATA[DS1307_MIN]==0)
+      {
+        AlarmCnt = pgm_read_byte_near(ClockTable + DS1307_DATA[DS1307_HR]);
+      }
+      if(AlarmCnt)
+      {
+        Alarm(AlarmCnt);
+      }
     }
-    else if(DS1307_MIN==0)
+  }
+  else if(DS1307_DATA[DS1307_SET]==2)
+  {
+    if(DS1307_DATA[DS1307_SEC]==0)
     {
-      AlarmCnt = pgm_read_byte_near(ClockTable + DS1307_HR);
-    }
-    if(AlarmCnt)
-    {
-      Alarm(AlarmCnt);
+      if(DS1307_DATA[DS1307_MIN]==DS1307_DATA[AlarmMIN] && DS1307_DATA[DS1307_HR]==DS1307_DATA[AlarmHR])
+      {
+        Alarm(1);
+      }
     }
   }
 }
@@ -429,16 +486,17 @@ void Alarm(uint8_t AlarmCnt){
     while(currTick<1000);
   }
 }
-void DrawDateTime(uint8_t** p,uint8_t AdjFlashIdx,volatile uint8_t* pflash){
+
+void DrawDateTime(uint8_t* p,uint8_t AdjFlashIdx,volatile uint8_t* pflash){
   volatile uint8_t* p2 = wordArray;
   for(uint8_t i=0;i<3;i++)
   {
-    //年的第一位置空
-    if(*p==&DS1307_YR)
+    //年和小时的第一位置空
+    if(i==0)
     {
-      if((AdjFlashIdx || p2!=pflash)&&((**p)>>4))
+      if((AdjFlashIdx || p2!=pflash)&&((*p)>>4))
       {
-        *p2 = (**p)>>4;
+        *p2 = (*p)>>4;
       }
       else
       {
@@ -449,7 +507,7 @@ void DrawDateTime(uint8_t** p,uint8_t AdjFlashIdx,volatile uint8_t* pflash){
     {
       if(AdjFlashIdx || p2!=pflash)
       {
-        *p2 = (**p)>>4;
+        *p2 = (*p)>>4;
       }
       else
       {
@@ -459,23 +517,23 @@ void DrawDateTime(uint8_t** p,uint8_t AdjFlashIdx,volatile uint8_t* pflash){
     p2++;
     if(AdjFlashIdx || p2!=pflash)
     {
-      *p2 = (**p)&0x0F;
+      *p2 = (*p)&0x0F;
     }
     else
     {
       *p2 = EMPTY;
     }
     p2++;
-    p++;
+    p--;
   }
 }
 void DrawWeek(){
-  wordArray[0] = EMPTY;
-  wordArray[1] = EMPTY;
-  wordArray[2] = EMPTY;
-  wordArray[3] = EMPTY;
-  wordArray[4] = EMPTY;
-  wordArray[5] = DS1307_DOW;
+  wordArray[0] = (AdjFlashIdx && CurAdj==DS1307_DOW_ADJ0)?EMPTY:DS1307_DATA[DS1307_DOW];
+  wordArray[1] = (AdjFlashIdx && CurAdj==DS1307_SET_ADJ0)?EMPTY:DS1307_DATA[DS1307_SET];
+  wordArray[2] = (AdjFlashIdx && CurAdj==AlarmHR_ADJ0   )?EMPTY:(DS1307_DATA[AlarmHR]>>4);
+  wordArray[3] = (AdjFlashIdx && CurAdj==AlarmHR_ADJ1   )?EMPTY:(DS1307_DATA[AlarmHR]&0x0F);
+  wordArray[4] = (AdjFlashIdx && CurAdj==AlarmMIN_ADJ0  )?EMPTY:(DS1307_DATA[AlarmMIN]>>4);
+  wordArray[5] = (AdjFlashIdx && CurAdj==AlarmMIN_ADJ1  )?EMPTY:(DS1307_DATA[AlarmMIN]&0x0F);
   LEDLowSign = 0;
   LEDHighSign = 0;
 }
@@ -679,39 +737,25 @@ uint8_t i2c_read(uint8_t ack){
   dly();
   return res;
 }
-#define I2C_NAK 0
-#define I2C_ACK 1
-
-uint8_t i2c_read(){
-  return i2c_read( 0 );//I2C_ACK 1 ~=0
-}
-uint8_t i2c_readLast(){
-  return i2c_read( 1 );//I2C_NAK 0 ~=1
-}
 
 void DS1307_read(){
   i2c_beginTransmission();
   i2c_write(0x00);
   i2c_endTransmission();
   i2c_requestFrom();
-  DS1307_SEC =i2c_read();// 0
-  DS1307_MIN =i2c_read();// 1
-  DS1307_HR  =i2c_read();// 2
-  DS1307_DOW =i2c_read();// 3
-  DS1307_DATE=i2c_read();// 4
-  DS1307_MTH =i2c_read();// 5
-  DS1307_YR  =i2c_readLast();// 6
+  for(uint8_t i = 0;i<15;i++)
+  {
+    DS1307_DATA[i] = i2c_read(0);// 0
+  }
+  DS1307_DATA[15] = i2c_read(1);// 0
 }
 
 void DS1307_save(){
   i2c_beginTransmission();
   i2c_write(0x00); // reset register pointer
-  i2c_write(DS1307_SEC);
-  i2c_write(DS1307_MIN);
-  i2c_write(DS1307_HR);
-  i2c_write(DS1307_DOW);
-  i2c_write(DS1307_DATE);
-  i2c_write(DS1307_MTH);
-  i2c_write(DS1307_YR);
+  for(uint8_t i = 0;i<16;i++)
+  {
+    i2c_write(DS1307_DATA[i]);
+  }
   i2c_endTransmission();
 }
