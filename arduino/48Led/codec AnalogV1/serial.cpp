@@ -245,12 +245,12 @@ ISR(TIMER0_OVF_vect){
 	uint8_t v1 = 35;
 	uint8_t v2 = 45;
 	uint8_t temp = 0;
-	asm volatile("lds 16,%0"::"m"(v1):"r16");
-	asm volatile("lds 17,%0"::"m"(v2):"r17");
-	asm volatile("lds 18,%0"::"m"(temp):"r18");
-	asm volatile("sub 16,17");
-	asm volatile("ror 18");
-	asm volatile("sts %0,18":"=m"(temp));
+	asm volatile("ldd r16,%0"::"m"(v1):"r16");
+	asm volatile("ldd r17,%0"::"m"(v2):"r17");
+	asm volatile("ldd r18,%0"::"m"(temp):"r18");
+	asm volatile("sub r16,r17");
+	asm volatile("ror r18");
+	asm volatile("std %0,r18":"=m"(temp));
 	
 		SendInt(temp);
 		SerialSend('\r');
