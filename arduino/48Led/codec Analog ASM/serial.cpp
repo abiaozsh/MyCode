@@ -111,12 +111,12 @@ PROGMEM  prog_uint8_t  AddressTable[] = {
     (                                            \
       "ldi r18,0\n\t" \
       /*r17<-AltBuff[i] ; AltBuff[i]-DT store carry*/ \
-      "ld r17,X+\n\t" "cp r17,r16\n\t" "ror r18\n\t" \
-      "ld r17,X+\n\t" "cp r17,r16\n\t" "ror r18\n\t" \
-      "ld r17,X+\n\t" "cp r17,r16\n\t" "ror r18\n\t" \
-      "ld r17,X+\n\t" "cp r17,r16\n\t" "ror r18\n\t" \
-      "ld r17,X+\n\t" "cp r17,r16\n\t" "ror r18\n\t" \
-      "ld r17,X+\n\t" "cp r17,r16\n\t" "ror r18\n\t" \
+      "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
+      "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
+      "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
+      "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
+      "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
+      "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
       "sts %0,r18\n\t" \
       ::"m" (num)\
     );                                           \
@@ -188,11 +188,13 @@ cli();
 	//DDR_LED2_ON;
 	
   //刷新定时器初始化
-  TCCR0A = 0;//Initial Value 0 0 0 0 0 0 0 0
+  //2 0 1 0 CTC OCRA Immediate MAX
+  TCCR0A = _BV(WGM01);//Initial Value 0 0 0 0 0 0 0 0
   TCCR0B = 2;
   TCNT0 = 0;
-  OCR0A = 255;//数字越大越暗（match以后开OE，定时器超时关OE）
-  TIMSK0 = _BV(OCIE0A) | _BV(TOIE0);
+  OCR0A = 60;//数字越大越暗（match以后开OE，定时器超时关OE）
+  //OCR0B = 60;
+  TIMSK0 = _BV(OCIE0A);//TOIE0  | _BV(OCIE0B)
 
 	TCCR1A = 0;
 	TCCR1B = 5;//1/1024 (16000000/1024=15625)tick/s
@@ -202,44 +204,46 @@ cli();
   //UCSR0A = 0;
 	//UCSR0B = _BV(RXEN0);
   
-  PORT_PNP1_OFF;
-  PORT_OE_OFF;
+  PORT_PNP1_ON;///PORT_PNP1_OFF
+  PORT_OE_ON;///PORT_OE_OFF
   
   AltBuff = buff0;
-  for(uint8_t i = 0;i<48;i++)
+  for(uint8_t i = 0;i<30;i++)
   {
     buff0[pgm_read_byte_near(AddressTable+i)] = i;
   }
   sei();
 	while(true)
 	{
-	//  for(uint8_t i = 0;i<47;i++)
-	//  {
-	//	buff1[pgm_read_byte_near(AddressTable+i)] = buff0[pgm_read_byte_near(AddressTable+i+1)];
-	//  }
-	//	buff1[pgm_read_byte_near(AddressTable+47)] = buff0[pgm_read_byte_near(AddressTable+0)];
-	//	AltBuff = buff1;
-	//	for(long i=0;i<3000;i++)
-	//	{
-	//	volatile int vv=0;vv++;
-	//	}
-	//	
-	//	
-	//  for(uint8_t i = 0;i<47;i++)
-	//  {
-	//	buff0[pgm_read_byte_near(AddressTable+i)] = buff1[pgm_read_byte_near(AddressTable+i+1)];
-	//  }
-	//	buff0[pgm_read_byte_near(AddressTable+47)] = buff1[pgm_read_byte_near(AddressTable+0)];
-	//	AltBuff = buff0;
-	//	for(long i=0;i<3000;i++)
-	//	{
-	//	volatile int vv=0;vv++;
-	//	}
+	  for(uint8_t i = 0;i<47;i++)
+	  {
+		buff1[pgm_read_byte_near(AddressTable+i)] = buff0[pgm_read_byte_near(AddressTable+i+1)];
+	  }
+		buff1[pgm_read_byte_near(AddressTable+47)] = buff0[pgm_read_byte_near(AddressTable+0)];
+		AltBuff = buff1;
+		for(long i=0;i<30000;i++)
+		{
+		volatile int vv=0;vv++;
+		}
+		
+		
+	  for(uint8_t i = 0;i<47;i++)
+	  {
+		buff0[pgm_read_byte_near(AddressTable+i)] = buff1[pgm_read_byte_near(AddressTable+i+1)];
+	  }
+		buff0[pgm_read_byte_near(AddressTable+47)] = buff1[pgm_read_byte_near(AddressTable+0)];
+		AltBuff = buff0;
+		for(long i=0;i<30000;i++)
+		{
+		volatile int vv=0;vv++;
+		}
   }
 }
 
-ISR(TIMER0_OVF_vect){
-  PORT_PNP1_OFF;//关闭输出,开始传输
+//TIMER0_OVF_vect
+ISR(TIMER0_COMPA_vect){
+	PORT_OE_OFF;
+  PORT_OE_ON;///PORT_PNP1_OFF;//关闭输出,开始传输
   uint8_t data[8];
   
   CurrentDT = pgm_read_byte_near(DitherTable + Count256);
@@ -301,7 +305,8 @@ ISR(TIMER0_OVF_vect){
 	}*/
 }
 
-ISR(TIMER0_COMPA_vect){
-  PORT_PNP1_ON;//打开输出
+//TIMER0_COMPA_vect
+ISR(TIMER0_COMPB_vect){
+  //PORT_OE_OFF;///PORT_PNP1_ON;//打开输出
 }
 
