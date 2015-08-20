@@ -192,7 +192,7 @@ cli();
   TCCR0A = _BV(WGM01);//Initial Value 0 0 0 0 0 0 0 0
   TCCR0B = 2;
   TCNT0 = 0;
-  OCR0A = 60;//数字越大越暗（match以后开OE，定时器超时关OE）
+  OCR0A = 60;//60周期 30us
   //OCR0B = 60;
   TIMSK0 = _BV(OCIE0A);//TOIE0  | _BV(OCIE0B)
 
