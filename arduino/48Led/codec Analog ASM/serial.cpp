@@ -242,8 +242,10 @@ cli();
 
 //TIMER0_OVF_vect
 ISR(TIMER0_COMPA_vect){
+PORT_PNP1_ON;
 	PORT_OE_OFF;
   PORT_OE_ON;///PORT_PNP1_OFF;//关闭输出,开始传输
+  PORT_PNP1_OFF;
   uint8_t data[8];
   
   CurrentDT = pgm_read_byte_near(DitherTable + Count256);
