@@ -47,7 +47,7 @@ PROGMEM prog_uint16_t TIMING_16M_TCCR1B_1_115200[] = {  138,  277,  416,  555,  
 #define PORT_LED2_OFF PORTB &= ~_BV(5)
 
 
-PROGMEM  prog_uint8_t  DitherTable[] = {
+PROGMEM  prog_uint8_t DitherTable[] = {
 0xff,0x7f,0xbf,0x3f,0xdf,0x5f,0x9f,0x1f,0xef,0x6f,0xaf,0x2f,0xcf,0x4f,0x8f,0x0f,
 0xf7,0x77,0xb7,0x37,0xd7,0x57,0x97,0x17,0xe7,0x67,0xa7,0x27,0xc7,0x47,0x87,0x07,
 0xfb,0x7b,0xbb,0x3b,0xdb,0x5b,0x9b,0x1b,0xeb,0x6b,0xab,0x2b,0xcb,0x4b,0x8b,0x0b,
@@ -67,7 +67,7 @@ PROGMEM  prog_uint8_t  DitherTable[] = {
 };
 
 //存储转换表
-PROGMEM  prog_uint8_t  AddressTable[] = {
+PROGMEM  prog_uint8_t AddressTable[] = {
  0,43, 6,37,12,31,
 18,25,24,19,30,13,
 36, 7,42, 1, 2,45,
@@ -165,8 +165,7 @@ int main(void) {
   TCCR0B = 2;
   TCNT0 = 0;
   OCR0A = 60;//60周期 30us
-  //OCR0B = 60;
-  TIMSK0 = _BV(OCIE0A);//TOIE0  | _BV(OCIE0B)
+  TIMSK0 = _BV(OCIE0A);
 
   TCCR1A = 0;
   TCCR1B = 5;//1/1024 (16000000/1024=15625)tick/s
@@ -200,19 +199,18 @@ ISR(USART_RX_vect){
   }
 }
 
-#define proc(num)\
-{\
+#define proc(num){\
   asm volatile(\
-    "ldi r18,0\n\t" \
-    /*r17<-AltBuff[i] ; AltBuff[i]-DT store carry*/ \
-    "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
-    "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
-    "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
-    "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
-    "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
-    "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
-    "sts %0,r18\n\t" \
-    ::"m" (num));\
+  "ldi r18,0\n\t" \
+  /*r17<-AltBuff[i] ; AltBuff[i]-DT store carry*/ \
+  "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
+  "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
+  "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
+  "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
+  "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
+  "ld r17,X+\n\t" "cp r16,r17\n\t" "ror r18\n\t" \
+  "sts %0,r18\n\t" \
+  ::"m" (num));\
 }
 
 //TIMER0_OVF_vect
