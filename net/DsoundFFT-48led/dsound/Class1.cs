@@ -22,7 +22,7 @@ namespace dsound
 		{
 			form = mform;
 			CaptureDevicesCollection devices = new CaptureDevicesCollection();
-			this.CaptureDeviceGuid = devices[1].DriverGuid;
+			this.CaptureDeviceGuid = devices[0].DriverGuid;
 			CaptureBufferSize = 0;
 			applicationDevice = new Capture(CaptureDeviceGuid);
 

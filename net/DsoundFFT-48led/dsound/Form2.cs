@@ -33,7 +33,7 @@ namespace dsound
 				if (port == null)
 				{
 					//COM4为Arduino使用的串口号，需根据实际情况调整
-					port = new SerialPort("COM12", 9600, Parity.None, 8, StopBits.One);
+					port = new SerialPort("COM29", 250000, Parity.None, 8, StopBits.One);
 					port.Open();
 				}
 			}
@@ -113,7 +113,9 @@ namespace dsound
 						int v = spect[line, j];
 						if (v > 255) v = 255;
 						ary[i + j * 1] = Color.FromArgb(v, v, v).ToArgb();
-					}
+                        data[j] = (byte)spect[line, j];
+                        if (data[j] == 0) data[j] = 1;
+                    }
 				}
 				Send(data);
 
@@ -207,7 +209,7 @@ namespace dsound
 					{
 						break;
 					}
-					int j = (result[i] *128/n);
+					int j = (result[i] /n);
 
 					spect[curLine, i] = (int)(j);
 				}

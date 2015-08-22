@@ -172,15 +172,16 @@ int main(void) {
   TCCR1C = 0;
   TIMSK1 = 0;
 
-  UCSR0A = 0;
-	UCSR0B = _BV(RXEN0) | _BV(RXCIE0);
+  UCSR0A = 2;
+  UCSR0B = 128+16+8;//_BV(TXEN0) | _BV(RXEN0) | _BV(RXCIE0);
   UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);
-  UBRR0 = 8;//115200
+  UBRR0 = 7;//115200
   
   PORT_PNP1_ON;///PORT_PNP1_OFF
   PORT_OE_ON;///PORT_OE_OFF
   
   AltBuff = buff0;
+  currBuff = buff1;
   sei();
 	while(true)
 	{
@@ -188,7 +189,8 @@ int main(void) {
 }
 
 ISR(USART_RX_vect){
-  currBuff[pgm_read_byte_near(AddressTable+buffidx++)] = UDR0;
+  currBuff[pgm_read_byte_near(AddressTable+buffidx)] = UDR0;
+  buffidx++;
   if(buffidx==48)
   {
     buffidx = 0;

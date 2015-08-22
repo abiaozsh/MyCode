@@ -127,19 +127,19 @@ PROGMEM prog_uint8_t ClockTable[] = {
 };
 
 
-inline void ClockInit();
-inline void loop();
-inline void Init();
+void ClockInit();
+void loop();
+void Init();
 void SendByte(uint8_t data);
-inline uint8_t get165();
+uint8_t get165();
 void ProcInput();
 void DrawDateTime(uint8_t* p,uint8_t AdjFlashIdx,volatile uint8_t* pflash);
 void DrawWeek();
 void Alarm();
 void AlarmP(uint8_t AlarmCnt);
-inline void Adjust();
+void Adjust();
 
-void dly2() __attribute__ ((naked));
+void dly();
 void i2c_SoftI2CMaster();
 void i2c_beginTransmission();
 void i2c_requestFrom();
@@ -213,13 +213,13 @@ int main(void) {
   loop();
 }
 
-inline void ClockInit() {
+void ClockInit() {
 	CLKPR = 128;//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
 	//CLKPR = 3;//1/8
 	CLKPR = 0;//1/1 //8MHz
 }
 
-inline void Init(){
+void Init(){
   DDRA=_BV(1)|_BV(2)|_BV(3)|_BV(4)|_BV(6);
   DDRB=_BV(0)|_BV(2);
   PORT_OE_ON;
@@ -248,7 +248,7 @@ inline void Init(){
   sei();
 }
 
-inline void loop() {
+void loop() {
   for(;;)
   {
     uint8_t CurInputData = get165();
@@ -308,7 +308,7 @@ inline void loop() {
   }
 }
 
-inline void Adjust(){
+void Adjust(){
   if(inputdata==KeyRED)
   {
     DS1307_save();
@@ -519,7 +519,7 @@ void SendByte(uint8_t data){
     PORT_CLK_OFF; //shift clock down
   }
 }
-inline uint8_t get165(){
+uint8_t get165(){
   uint8_t data = 0;
   uint8_t i;
   PL_OFF;
@@ -596,39 +596,47 @@ ISR(TIM0_COMPA_vect){
 // set SDA high and to input (releases pin) (i.e. change to input,turnon pullup)
 #define i2c_sda_hi DDR_SDA &=~ BIT_SDA
 
-void dly2(){
-  uint8_t i;
-  for(i=0;i<100;i++)//6 is stable
-  {
-    asm volatile("nop");
-  }
-  asm volatile("ret");
+#define DLY asm volatile("rcall dly\n")
+//#define DLY dly()
+
+void dly(){
+    asm volatile(
+	"push r24 \n"
+"	ldi r24,lo8(0)	 ;  i,          \n"
+".Loop1:                            \n"
+"	nop                             \n"
+"	inc r24	 ;  i,      \n"
+"	cpi r24,lo8(200)	 ;  i,      \n"
+"	brne .Loop1	 ; ,                \n"
+"pop r24 \n"
+"	ret                             \n"
+	);
 }
 
 void i2c_start(void){
   // set both to high at the same time
   i2c_sda_hi;
   i2c_scl_hi;
-  asm volatile("rcall dly2\n");//dly();
+  DLY;
   i2c_sda_lo;
-  asm volatile("rcall dly2\n");//dly();
+  DLY;
   i2c_scl_lo;
-  asm volatile("rcall dly2\n");//dly();
+  DLY;
 }
 //address非参数化，固定值，省空间
 void i2c_beginTransmission(){
   i2c_start();
   i2c_write((ADDRESS<<1) | 0); // clr read bit
 }
-inline void i2c_requestFrom(){
+void i2c_requestFrom(){
   i2c_start();
   i2c_write((ADDRESS<<1) | 1); // set read bit
 }
 void i2c_endTransmission(void){
   i2c_scl_hi;
-  asm volatile("rcall dly2\n");//dly();
+  DLY;
   i2c_sda_hi;
-  asm volatile("rcall dly2\n");//dly();
+  DLY;
 }
 void i2c_writebit(uint8_t c){
   if (c) {
@@ -638,21 +646,21 @@ void i2c_writebit(uint8_t c){
     i2c_sda_lo;
   }
   i2c_scl_hi;
-  asm volatile("rcall dly2\n");//dly();
+  DLY;
   i2c_scl_lo;
-  asm volatile("rcall dly2\n");//dly();
+  DLY;
   if (c) {
     i2c_sda_lo;
   }
-  asm volatile("rcall dly2\n");//dly();
+  DLY;
 }
 uint8_t i2c_readbit(void){
   i2c_sda_hi;
   i2c_scl_hi;
-  asm volatile("rcall dly2\n");//dly();
+  DLY;
   uint8_t c = PIN_SDA; // I2C_PIN;
   i2c_scl_lo;
-  asm volatile("rcall dly2\n");//dly();
+  DLY;
   return c & BIT_SDA;
 }
 void i2c_write(uint8_t c){
@@ -674,7 +682,7 @@ uint8_t i2c_readack(uint8_t ack){
     }
   }
   i2c_writebit(ack);
-  asm volatile("rcall dly2\n");//dly();
+  DLY;
   return res;
 }
 void DS1307_read(){
