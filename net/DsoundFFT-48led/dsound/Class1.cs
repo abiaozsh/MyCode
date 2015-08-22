@@ -91,7 +91,7 @@ namespace dsound
 					LockSize += CaptureBufferSize;
 				//Console.WriteLine("1," + ReadPos + "," + CapturePos + "," + LockSize);
 
-				int n = 2048;
+				int n = 4096;
 
 				if (LockSize >= n)
 				{
