@@ -33,7 +33,7 @@ namespace dsound
 				if (port == null)
 				{
 					//COM4为Arduino使用的串口号，需根据实际情况调整
-					port = new SerialPort("COM29", 250000, Parity.None, 8, StopBits.One);
+					port = new SerialPort("COM6", 250000, Parity.None, 8, StopBits.One);
 					port.Open();
 				}
 			}
@@ -135,7 +135,7 @@ namespace dsound
 		}
 
 
-		public void proc1(short[] array, int n)
+		public void proc(short[] array, int n)
 		{
 			int[] a = new int[n];
 
@@ -149,15 +149,15 @@ namespace dsound
 			fft.FFT(n, a, w, A);
 			float[] result = new float[n];
 
-			float max = 0.1f;
+			//float max = 0.1f;
 			for (int i = 1; i < n / 2; i++)
 			{
 				float v = Math.Abs(A[i].real());
 				result[i] = v;//最接近整数
-				if (v > max)
-				{
-					max = v;
-				}
+				//if (v > max)
+				//{
+				//	max = v;
+				//}
 			}
 			//max = 1110.1f;
 			{
@@ -167,7 +167,7 @@ namespace dsound
 					{
 						break;
 					}
-					float j = result[i] / max;
+					float j = result[i] / n/256;
 
 					spect[curLine, i] = (int)(j * 255);
 				}
@@ -180,7 +180,7 @@ namespace dsound
 			}
 		}
 
-		public void proc(short[] array, int n)
+		public void proc1(short[] array, int n)
 		{
 			long[] real = new long[n];
 

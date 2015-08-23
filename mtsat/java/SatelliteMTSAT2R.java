@@ -16,9 +16,9 @@ public class SatelliteMTSAT2R
 		SimpleDateFormat sdf3 = new SimpleDateFormat("yyyyMMddHH", Locale.ENGLISH);
 
 		Calendar c = Calendar.getInstance();
-		Date d = sdf.parse("2012/08/01 00:00:00");
+		Date d = sdf.parse("2012/09/01 00:00:00");
 		c.setTime(d);
-		Date end = sdf.parse("2012/09/01 00:00:00");
+		Date end = sdf.parse("2012/10/01 00:00:00");
 		Calendar cend = Calendar.getInstance();
 		cend.setTime(end);
 		while (true)
