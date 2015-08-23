@@ -1,0 +1,26 @@
+d0,d1 serial
+d2~d7 6 io 74hc595
+b0 (b1) b2 clk + (st) + oe 74hc595
+
+b0 b4 b5 clk + data + rst ds1302
+
+b1 free
+
+b3 alarm
+
+a4 a5 sda scl ds1307/bmp180
+
+a6+a7 time+ time- analog read
+
+a01 PNP * 2
+
+a23 led * 2
+
+
+
+data clk st oe          4A
+adj                     3A
+light sense             1A
+clk data (sda scl)      2B
+alarm                   1B
+11
