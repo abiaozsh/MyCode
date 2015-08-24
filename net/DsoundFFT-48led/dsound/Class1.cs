@@ -131,12 +131,7 @@ namespace dsound
 			{
 				float v = Math.Abs(A[i].real());
 				result[i] = v;//最接近整数
-				//if (v > max)
-				//{
-				//	max = v;
-				//}
 			}
-			//max = 1110.1f;
 			{
 				for (int i = 1; i < 256; i++)
 				{

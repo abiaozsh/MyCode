@@ -157,7 +157,6 @@ namespace dsound
 		}
 		short[] buff = new short[65536 * 2];
 		int buffidx = 0;
-		int procidx = 0;
 		int numbers = 1024;
 		int totalcount = 0;
 
@@ -197,14 +196,16 @@ namespace dsound
 				data |= (short)(CaptureData[i * 2 + 1] << 8);
 				buff[buffidx++] = data;
 			}
-			if (buffidx - procidx >= numbers)
+
+			while (buffidx >= numbers)
 			{
-				proc(buff, procidx, numbers);
-				Console.WriteLine("proc:" + totalcount++);
-				procidx += numbers;
+				proc(buff, numbers);
+				for (int i = numbers; i < buffidx; i++)
+				{
+					buff[i - numbers] = buff[i];
+				}
+				buffidx -= numbers;
 			}
-			procidx &= 0x0FFFF;
-			buffidx &= 0x0FFFF;
 
 			mNextCuptureOffset += CaptureData.Length;
 			//更新已经录制的数据长度
@@ -213,13 +214,13 @@ namespace dsound
 		}
 
 
-		public void proc(short[] array, int start, int n)
+		public void proc(short[] array, int n)
 		{
 			int[] a = new int[n];
 
 			for (int i = 0; i < n; i++)
 			{
-				a[i] = array[start + i];//最接近整数
+				a[i] = array[i];//最接近整数
 			}
 
 			Complex[] A = new Complex[n];
