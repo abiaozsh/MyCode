@@ -133,7 +133,7 @@ void Init();
 void SendByte(uint8_t data);
 uint8_t get165();
 void ProcInput();
-void DrawDateTime(uint8_t* p,uint8_t AdjFlashIdx,volatile uint8_t* pflash);
+void DrawDateTime(uint8_t* p,volatile uint8_t* pflash);
 void DrawWeek();
 void Alarm();
 void AlarmP(uint8_t AlarmCnt);
@@ -263,7 +263,7 @@ void loop() {
     {
       case 0:
         DS1307_read();
-        DrawDateTime(&DS1307_DATA[DS1307_HR],1,wordArray);
+        DrawDateTime(&DS1307_DATA[DS1307_HR],wordArray);
         LEDLowSign =  LEDTimeL;
         LEDHighSign = LEDTimeH;
         ProcInput();
@@ -271,7 +271,7 @@ void loop() {
         break;
       case 1:
         DS1307_read();
-        DrawDateTime(&DS1307_DATA[DS1307_YR],1,wordArray);
+        DrawDateTime(&DS1307_DATA[DS1307_YR],wordArray);
         LEDLowSign =  LEDDateL;
         LEDHighSign = LEDDateH;
         ProcInput();
@@ -313,6 +313,7 @@ void Adjust(){
   {
     DS1307_save();
     status = 0;
+	AdjFlashIdx = 0;
     return;
   }
   if(inputdata==KeyLeft)
@@ -396,13 +397,13 @@ void Adjust(){
   }
   else if(CurAdj>=DS1307_DATE_ADJ0 && CurAdj<=DS1307_YR_ADJ1)
   {
-    DrawDateTime(&DS1307_DATA[DS1307_YR],AdjFlashIdx,&wordArray[DS1307_YR_ADJ1-CurAdj]);
+    DrawDateTime(&DS1307_DATA[DS1307_YR],&wordArray[DS1307_YR_ADJ1-CurAdj]);
     LEDLowSign  = LEDDateL;
     LEDHighSign = LEDDateH;
   }
   else if(CurAdj>=DS1307_SEC_ADJ0 && CurAdj<=DS1307_HR_ADJ1)
   {
-    DrawDateTime(&DS1307_DATA[DS1307_HR],AdjFlashIdx,&wordArray[DS1307_HR_ADJ1-CurAdj]);
+    DrawDateTime(&DS1307_DATA[DS1307_HR],&wordArray[DS1307_HR_ADJ1-CurAdj]);
     LEDLowSign  = LEDTimeL;
     LEDHighSign = LEDTimeH;
   }
@@ -450,7 +451,7 @@ void AlarmP(uint8_t AlarmCnt){
     while(currTick<1000);
   }
 }
-void DrawDateTime(uint8_t* p,uint8_t AdjFlashIdx,volatile uint8_t* pflash){
+void DrawDateTime(uint8_t* p,volatile uint8_t* pflash){
   volatile uint8_t* p2 = wordArray;
   uint8_t i;
   for(i=0;i<3;i++)

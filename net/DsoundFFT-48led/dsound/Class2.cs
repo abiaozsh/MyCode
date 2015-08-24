@@ -246,7 +246,7 @@ namespace dsound
 					{
 						break;
 					}
-					float j = result[i] / n / 8;// /256
+					float j = result[i] / n / 256;// /256
 
 					spect[curLine, i] = (int)(j * 255);
 				}

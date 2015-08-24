@@ -16,7 +16,7 @@ public class SatelliteMTSAT2R
 		SimpleDateFormat sdf3 = new SimpleDateFormat("yyyyMMddHH", Locale.ENGLISH);
 
 		Calendar c = Calendar.getInstance();
-		Date d = sdf.parse("2012/09/01 00:00:00");
+		Date d = sdf.parse("2012/09/26 04:00:00");
 		c.setTime(d);
 		Date end = sdf.parse("2012/10/01 00:00:00");
 		Calendar cend = Calendar.getInstance();
@@ -41,7 +41,7 @@ public class SatelliteMTSAT2R
 
 		}
 	}
-	private static String path = "i:\\mtsat\\";
+	private static String path = "F:\\mtsat\\";
 	
 	private static void download(String fn, SimpleDateFormat sdf2, Date d) throws Exception
 	{
