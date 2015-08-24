@@ -3,24 +3,38 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.DirectX.DirectSound;
+using System.Threading;
+using System.Diagnostics;
 
 namespace dsound
 {
+	public class FFTThread
+	{
+		public DxCapture capture;
+		public void fftThread()
+		{
+			capture.init();
+		}
 
+		public void startRec()
+		{
+			capture = new DxCapture();
+			Thread t = new Thread(fftThread);
+			t.Start();
+		}
+	}
 	public class DxCapture
 	{
+		BufferPositionNotify a;
 
 		public CaptureBuffer applicationBuffer = null;
 		public Guid CaptureDeviceGuid = Guid.Empty;
 		public Capture applicationDevice = null;
 		public int CaptureBufferSize = 0;
 		public WaveFormat format;
-		Form2 form;
-		int ReadPos;
 
-		public void init(Form2 mform)
+		public void init()
 		{
-			form = mform;
 			CaptureDevicesCollection devices = new CaptureDevicesCollection();
 			this.CaptureDeviceGuid = devices[0].DriverGuid;
 			CaptureBufferSize = 0;
@@ -30,9 +44,6 @@ namespace dsound
 			{
 				this.format = new WaveFormat();
 				format.SamplesPerSecond = 44100;
-				//format.SamplesPerSecond = 22050;
-				//format.SamplesPerSecond = 11025;
-				//format.BitsPerSample = 8;
 				format.BitsPerSample = 16;
 				format.Channels = 1;
 				format.BlockAlign = (short)(format.Channels * (format.BitsPerSample / 8));
@@ -48,44 +59,29 @@ namespace dsound
 				dscheckboxd.Format = format;
 
 				applicationBuffer = new CaptureBuffer(dscheckboxd, applicationDevice);
-
 			}
-
-			System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-			timer.Tick += new EventHandler(timer_Tick);
-
-			timer.Interval = 1;
-			timer.Start();
-		}
-
-		public void Dispose()
-		{
-			if (null != applicationBuffer)
-				if (applicationBuffer.Capturing)
-					stop();
-		}
-
-		public void start()
-		{
 			applicationBuffer.Start(true);
-		}
 
-		public void stop()
-		{
-			applicationBuffer.Stop();
-		}
-        int cnt = 0;
-		void timer_Tick(object sender, EventArgs e)
-		{
-			if (applicationBuffer != null && applicationBuffer.Capturing)
+
+			Stopwatch sw = new Stopwatch();
+			long time1;
+			long time2;
+
+
+			int ReadPos;
+			int temp;
+			int CapturePos;
+			int LockSize;
+			applicationBuffer.GetCurrentPosition(out temp, out CapturePos);
+			ReadPos = CapturePos;
+
+			while (true)
 			{
+				sw.Start();
 
 				short[] CaptureData = null;
 
-				int temp;
-				int CapturePos;
 				applicationBuffer.GetCurrentPosition(out temp, out CapturePos);
-				int LockSize;
 				LockSize = CapturePos - ReadPos;
 				if (LockSize < 0)
 					LockSize += CaptureBufferSize;
@@ -93,7 +89,7 @@ namespace dsound
 
 				int n = 4096;
 
-				while (LockSize >= n)
+				if (LockSize >= n)
 				{
 					LockSize = n;
 
@@ -101,25 +97,124 @@ namespace dsound
 
 					ReadPos += n;
 					ReadPos %= CaptureBufferSize;
+					sw.Stop(); time1 = sw.ElapsedMilliseconds; sw.Start();
+					proc(CaptureData, n);
+					sw.Stop(); time2 = sw.ElapsedMilliseconds; sw.Start();
+				}
 
-					form.proc(CaptureData, n);
-
-					applicationBuffer.GetCurrentPosition(out temp, out CapturePos);
-
-
-                    LockSize = CapturePos - ReadPos;
-                    if (LockSize < 0)
-                        LockSize += CaptureBufferSize;
-                }
 
 			}
-            if (cnt++ == 40)
-            {
-                form.timer1_Tick();
-                cnt = 0;
-            }
 
-        }
+		}
+
+
+		public int[,] spect = new int[512, 512];
+		public int curLine = 0;
+
+
+		public void proc(short[] array, int n)
+		{
+			int[] a = new int[n];
+
+			for (int i = 0; i < n; i++)
+			{
+				a[i] = array[i];//最接近整数
+			}
+
+			Complex[] A = new Complex[n];
+			Complex w = fft.ww(n, 1);
+			fft.FFT(n, a, w, A);
+			float[] result = new float[n];
+
+			//float max = 0.1f;
+			for (int i = 1; i < n / 2; i++)
+			{
+				float v = Math.Abs(A[i].real());
+				result[i] = v;//最接近整数
+				//if (v > max)
+				//{
+				//	max = v;
+				//}
+			}
+			//max = 1110.1f;
+			{
+				for (int i = 1; i < 256; i++)
+				{
+					if (i >= array.Length)
+					{
+						break;
+					}
+					float j = result[i] / n / 8;// /256
+
+					spect[curLine, i] = (int)(j * 255);
+				}
+			}
+
+			curLine++;
+			if (curLine == 512)
+			{
+				curLine = 0;
+			}
+		}
+
+		public void proc1(short[] array, int n)
+		{
+			long[] real = new long[n];
+
+			for (int i = 0; i < n; i++)
+			{
+				real[i] = array[i];
+			}
+
+			FastFFT.fft(real, n);
+
+			int[] result = new int[n];
+
+			for (int i = 1; i < n; i++)
+			{
+				int v = (int)real[i];
+				if (v < 0)
+				{
+					v = -v;
+				}
+				result[i] = v;
+			}
+			{
+				for (int i = 2; i < 256; i++)
+				{
+					if (i >= array.Length)
+					{
+						break;
+					}
+					int j = (result[i] / n);
+
+					spect[curLine, i] = (int)(j);
+				}
+			}
+
+			curLine++;
+			if (curLine == 512)
+			{
+				curLine = 0;
+			}
+		}
+
+
+		public void Dispose()
+		{
+			if (null != applicationBuffer)
+			{
+				if (applicationBuffer.Capturing)
+				{
+					stop();
+				}
+			}
+		}
+
+		public void stop()
+		{
+			applicationBuffer.Stop();
+		}
 	}
 
 
@@ -273,8 +368,6 @@ namespace dsound
 			return new Complex(r * (float)Math.Cos(theta), r * (float)Math.Sin(theta));
 		}
 	}
-
-
 
 	public class FastFFT
 	{
