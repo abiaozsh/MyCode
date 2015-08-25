@@ -1,6 +1,9 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
+
+//#define __NO_INLINE__
+
 //实现功能：定时闹钟，设定（1闹钟，2整点报时，3静音）
 /*
    0
@@ -8,6 +11,7 @@
    3
 4     5
    6
+  asm volatile("break\n");
 
 
 按红色按钮，翻页：时间，日期，星期
@@ -159,10 +163,11 @@ void DS1307_save();
 volatile uint8_t wordArray[6];//0~9 显示相应数字，10全暗
 volatile uint8_t LEDLowSign = 0;
 volatile uint8_t LEDHighSign = 0;
-volatile uint8_t wordCount = 0;
-volatile uint8_t lineCount = 0;
-volatile uint8_t lowSign;
-volatile uint8_t highSign;
+uint8_t wordCount = 0;
+uint8_t lineCount = 0;
+uint8_t lineCountBit = 0x80;
+uint8_t lowSign;
+uint8_t highSign;
 uint8_t inputdata;
 uint8_t status = 3;
 uint8_t CurAdj;
@@ -223,27 +228,28 @@ void Init(){
   DDRA=_BV(1)|_BV(2)|_BV(3)|_BV(4)|_BV(6);
   DDRB=_BV(0)|_BV(2);
   PORT_OE_ON;
-  //SendByte(0);
-  //SendByte(0);
-  //PORT_STR_ON; //store clock up
-  //PORT_STR_OFF; //store clock down
+  //SendByte(0);                         //DEL
+  //SendByte(0);                         //DEL
+  //PORT_STR_ON; //store clock up        //DEL
+  //PORT_STR_OFF; //store clock down     //DEL
 
   //ADC初始化
   ADCSRB |= _BV(ADLAR);
-  //ADMUX = 0;//Initial Value 0 0 0 0 0 0 0 0
+  //ADMUX = 0;//Initial Value 0 0 0 0 0 0 0 0  //DEL
   ADCSRA = _BV(ADEN) | _BV(ADSC) | _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2);
   
   //刷新定时器初始化
-  //TCCR0A = 0;//Initial Value 0 0 0 0 0 0 0 0
+  //TCCR0A = 0;//Initial Value 0 0 0 0 0 0 0 0 //DEL
   TCCR0B = 2;
-  TCNT0 = 0;
+  //TCNT0 = 0;                                 //DEL
   OCR0A = 128;//数字越大越暗（match以后开OE，定时器超时关OE）
   TIMSK0 = _BV(OCIE0A) | _BV(TOIE0);
   
-  //TCCR1A = 0;//Initial Value 0 0 0 0 0 0 0 0
-  TCCR1B = 5;//  1/1024 7812.5hz/0.119hz(0.000128s/8.4s)
-  //TCCR1C = 0;//Initial Value 0 0 0 0 0 0 0 0
-  //TIMSK1 = 0;//Initial Value 0 0 0 0 0 0 0 0
+  //asm volatile("break\n");
+  //TCCR1A = 0;//Initial Value 0 0 0 0 0 0 0 0                      //DEL
+  TCCR1B = 5;//  1/1024 7812.5hz/0.119hz(0.000128s/8.4s)          
+  //TCCR1C = 0;//Initial Value 0 0 0 0 0 0 0 0                      //DEL
+  //TIMSK1 = 0;//Initial Value 0 0 0 0 0 0 0 0                      //DEL
 
   sei();
 }
@@ -313,7 +319,7 @@ void Adjust(){
   {
     DS1307_save();
     status = 0;
-	AdjFlashIdx = 0;
+    AdjFlashIdx = 0;
     return;
   }
   if(inputdata==KeyLeft)
@@ -390,7 +396,34 @@ void Adjust(){
   {
     *partAdj-=valAdj;
   }
+  
+  //边界检查
+  
+//#define DS1307_SEC      0
+//#define DS1307_MIN      1
+//#define DS1307_HR       2
+//#define DS1307_DOW      3
+//#define DS1307_DATE     4
+//#define DS1307_MTH      5
+//#define DS1307_YR       6
+//#define DS1307_CONTROL  7
+//#define DS1307_SET      8
+//#define AlarmMIN        9
+//#define AlarmHR         10
+  if((DS1307_DATA[DS1307_DOW]&0x0F)==0x08)DS1307_DATA[DS1307_DOW]-=0x07;
+  if((DS1307_DATA[DS1307_DOW]&0x0F)==0x00)DS1307_DATA[DS1307_DOW]+=0x07;
+  
+  if((DS1307_DATA[DS1307_SEC]&0xF0)==0x60)DS1307_DATA[DS1307_SEC]-=0x60;
+  if((DS1307_DATA[DS1307_SEC]&0xF0)==0xF0)DS1307_DATA[DS1307_SEC]-=0xA0;
+  
+  if((DS1307_DATA[DS1307_MIN]&0xF0)==0x60)DS1307_DATA[DS1307_MIN]-=0x60;
+  if((DS1307_DATA[DS1307_MIN]&0xF0)==0xF0)DS1307_DATA[DS1307_MIN]-=0xA0;
 
+  if(((*partAdj)&0xF0)==0xF0)(*partAdj)-=0x60;
+  if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0x06;
+  if(((*partAdj)&0xF0)==0xA0)(*partAdj)-=0xA0;
+  if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+  
   if(isWeek)
   {
     DrawWeek();
@@ -492,6 +525,7 @@ void ProcInput(){
   if(currTick>=65530)
   {
     status = 0;
+    AdjFlashIdx = 0;
   }
   if(inputdata & 0x0F)
   {
@@ -546,12 +580,14 @@ ISR(TIM0_OVF_vect){
   sei();
   
   //准备输出数据 开始
-  lineCount++;
-  if(lineCount==8)
+  lineCount+=2;
+  lineCountBit>>=1;
+  if(lineCount==16)
   {
     lineCount = 0;
-    wordCount++;
-    if(wordCount==6)
+    lineCountBit = 0x80;
+    wordCount+=2;
+    if(wordCount==12)
     {
       wordCount = 0;
     }
@@ -560,12 +596,12 @@ ISR(TIM0_OVF_vect){
   highSign=0;
 
   //多余的一行用于字与字间切换
-  prog_uint8_t* p = Up6+(wordCount<<1);
+  prog_uint8_t* p = Up6+wordCount;
   lowSign  |= pgm_read_byte_near(p++);
   highSign |= pgm_read_byte_near(p);
-  if(pgm_read_byte_near(Down7B+wordArray[wordCount])&(0x80>>lineCount))
+  if(pgm_read_byte_near(Down7B+wordArray[wordCount])&(lineCountBit))
   {
-    p = Down7A+(lineCount<<1);
+    p = Down7A+lineCount;
     lowSign  |= pgm_read_byte_near(p++);
     highSign |= pgm_read_byte_near(p);
   }
@@ -659,10 +695,10 @@ uint8_t i2c_readbit(void){
   i2c_sda_hi;
   i2c_scl_hi;
   DLY;
-  uint8_t c = PIN_SDA; // I2C_PIN;
+  uint8_t c = PIN_SDA & BIT_SDA; // I2C_PIN;
   i2c_scl_lo;
   DLY;
-  return c & BIT_SDA;
+  return c;
 }
 void i2c_write(uint8_t c){
   uint8_t i;
