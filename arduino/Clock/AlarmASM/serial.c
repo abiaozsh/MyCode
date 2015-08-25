@@ -416,8 +416,8 @@ void Adjust(){
   if((DS1307_DATA[DS1307_SEC]&0xF0)==0x60)DS1307_DATA[DS1307_SEC]-=0x60;
   if((DS1307_DATA[DS1307_SEC]&0xF0)==0xF0)DS1307_DATA[DS1307_SEC]-=0xA0;
   
-  if((DS1307_DATA[DS1307_MIN]&0xF0)==0x60)DS1307_DATA[DS1307_MIN]-=0x60;
-  if((DS1307_DATA[DS1307_MIN]&0xF0)==0xF0)DS1307_DATA[DS1307_MIN]-=0xA0;
+  //if((DS1307_DATA[DS1307_MIN]&0xF0)==0x60)DS1307_DATA[DS1307_MIN]-=0x60;
+  //if((DS1307_DATA[DS1307_MIN]&0xF0)==0xF0)DS1307_DATA[DS1307_MIN]-=0xA0;
 
   if(((*partAdj)&0xF0)==0xF0)(*partAdj)-=0x60;
   if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0x06;
@@ -599,7 +599,7 @@ ISR(TIM0_OVF_vect){
   prog_uint8_t* p = Up6+wordCount;
   lowSign  |= pgm_read_byte_near(p++);
   highSign |= pgm_read_byte_near(p);
-  if(pgm_read_byte_near(Down7B+wordArray[wordCount])&(lineCountBit))
+  if(pgm_read_byte_near(Down7B+wordArray[wordCount>>1])&(lineCountBit))
   {
     p = Down7A+lineCount;
     lowSign  |= pgm_read_byte_near(p++);
