@@ -2,8 +2,6 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
-//#define __NO_INLINE__
-
 //实现功能：定时闹钟，设定（1闹钟，2整点报时，3静音）
 /*
    0
@@ -130,7 +128,6 @@ PROGMEM prog_uint8_t ClockTable[] = {
     8, 9,10,11
 };
 
-
 void ClockInit();
 void loop();
 void Init();
@@ -211,6 +208,89 @@ uint8_t DS1307_DATA[16];
 #define AlarmHR_ADJ1       16
 #define AlarmHR_ADJ0       17
 
+PROGMEM prog_uint8_t CheckTable[] = {
+//if((DS1307_DATA[DS1307_DOW]&0x0F)==0x08)DS1307_DATA[DS1307_DOW]-=0x07;
+DS1307_DOW,0x0F,0x08,0x07,
+//if((DS1307_DATA[DS1307_DOW]&0x0F)==0x00)DS1307_DATA[DS1307_DOW]-=0xF9;//+0x07
+DS1307_DOW,0x0F,0x00,0xF9,
+
+//if((DS1307_DATA[DS1307_SEC]&0xF0)==0x60)DS1307_DATA[DS1307_SEC]-=0x60;
+DS1307_SEC,0xF0,0x60,0x60,
+//if((DS1307_DATA[DS1307_SEC]&0xF0)==0xF0)DS1307_DATA[DS1307_SEC]-=0xA0;
+DS1307_SEC,0xF0,0xF0,0xA0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+DS1307_SEC,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+DS1307_SEC,0x0F,0x0A,0x0A,
+
+//if((DS1307_DATA[DS1307_MIN]&0xF0)==0x60)DS1307_DATA[DS1307_MIN]-=0x60;
+DS1307_MIN,0xF0,0x60,0x60,
+//if((DS1307_DATA[DS1307_MIN]&0xF0)==0xF0)DS1307_DATA[DS1307_MIN]-=0xA0;//f-a=6
+DS1307_MIN,0xF0,0xF0,0xA0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+DS1307_MIN,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+DS1307_MIN,0x0F,0x0A,0x0A,
+
+//if((DS1307_DATA[DS1307_HR]&0xF0)==0x30)DS1307_DATA[DS1307_HR]-=0x30;
+DS1307_HR,0xF0,0x30,0x30,
+//if((DS1307_DATA[DS1307_HR]&0xF0)==0xF0)DS1307_DATA[DS1307_HR]-=0xD0;//f-d=2
+DS1307_HR,0xF0,0xF0,0xD0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+DS1307_HR,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+DS1307_HR,0x0F,0x0A,0x0A,
+
+//if((DS1307_DATA[DS1307_DATE]&0xF0)==0x40)DS1307_DATA[DS1307_DATE]-=0x40;
+DS1307_DATE,0xF0,0x40,0x40,
+//if((DS1307_DATA[DS1307_DATE]&0xF0)==0xF0)DS1307_DATA[DS1307_DATE]-=0xC0;//f-c=3
+DS1307_DATE,0xF0,0xF0,0xC0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+DS1307_DATE,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+DS1307_DATE,0x0F,0x0A,0x0A,
+
+//if((DS1307_DATA[DS1307_DATE]&0xF0)==0x40)DS1307_DATA[DS1307_DATE]-=0x40;
+DS1307_MTH,0xF0,0x20,0x20,
+//if((DS1307_DATA[DS1307_DATE]&0xF0)==0xF0)DS1307_DATA[DS1307_DATE]-=0xC0;//f-c=3
+DS1307_MTH,0xF0,0xF0,0xE0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+DS1307_MTH,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+DS1307_MTH,0x0F,0x0A,0x0A,
+
+//if(((*partAdj)&0xF0)==0xF0)(*partAdj)-=0x60;
+DS1307_YR,0xF0,0xF0,0x60,
+//if(((*partAdj)&0xF0)==0xA0)(*partAdj)-=0xA0;
+DS1307_YR,0xF0,0xA0,0xA0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+DS1307_YR,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+DS1307_YR,0x0F,0x0A,0x0A,
+
+//if((DS1307_DATA[DS1307_DOW]&0x0F)==0x08)DS1307_DATA[DS1307_DOW]-=0x07;
+DS1307_SET,0x0F,0x03,0x03,
+//if((DS1307_DATA[DS1307_DOW]&0x0F)==0x00)DS1307_DATA[DS1307_DOW]-=0xF9;//+0x07
+DS1307_SET,0x0F,0x0F,0xFD,
+
+//if((DS1307_DATA[DS1307_MIN]&0xF0)==0x60)DS1307_DATA[DS1307_MIN]-=0x60;
+AlarmMIN,0xF0,0x60,0x60,
+//if((DS1307_DATA[DS1307_MIN]&0xF0)==0xF0)DS1307_DATA[DS1307_MIN]-=0xA0;//f-a=6
+AlarmMIN,0xF0,0xF0,0xA0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+AlarmMIN,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+AlarmMIN,0x0F,0x0A,0x0A,
+
+//if((DS1307_DATA[DS1307_HR]&0xF0)==0x30)DS1307_DATA[DS1307_HR]-=0x30;
+AlarmHR,0xF0,0x30,0x30,
+//if((DS1307_DATA[DS1307_HR]&0xF0)==0xF0)DS1307_DATA[DS1307_HR]-=0xD0;//f-d=2
+AlarmHR,0xF0,0xF0,0xD0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+AlarmHR,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+AlarmHR,0x0F,0x0A,0x0A,
+};
 
 int main(void) {
   ClockInit();
@@ -315,6 +395,7 @@ void loop() {
 }
 
 void Adjust(){
+uint8_t i;
   if(inputdata==KeyRED)
   {
     DS1307_save();
@@ -398,31 +479,11 @@ void Adjust(){
   }
   
   //边界检查
-  
-//#define DS1307_SEC      0
-//#define DS1307_MIN      1
-//#define DS1307_HR       2
-//#define DS1307_DOW      3
-//#define DS1307_DATE     4
-//#define DS1307_MTH      5
-//#define DS1307_YR       6
-//#define DS1307_CONTROL  7
-//#define DS1307_SET      8
-//#define AlarmMIN        9
-//#define AlarmHR         10
-  if((DS1307_DATA[DS1307_DOW]&0x0F)==0x08)DS1307_DATA[DS1307_DOW]-=0x07;
-  if((DS1307_DATA[DS1307_DOW]&0x0F)==0x00)DS1307_DATA[DS1307_DOW]+=0x07;
-  
-  if((DS1307_DATA[DS1307_SEC]&0xF0)==0x60)DS1307_DATA[DS1307_SEC]-=0x60;
-  if((DS1307_DATA[DS1307_SEC]&0xF0)==0xF0)DS1307_DATA[DS1307_SEC]-=0xA0;
-  
-  //if((DS1307_DATA[DS1307_MIN]&0xF0)==0x60)DS1307_DATA[DS1307_MIN]-=0x60;
-  //if((DS1307_DATA[DS1307_MIN]&0xF0)==0xF0)DS1307_DATA[DS1307_MIN]-=0xA0;
-
-  if(((*partAdj)&0xF0)==0xF0)(*partAdj)-=0x60;
-  if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0x06;
-  if(((*partAdj)&0xF0)==0xA0)(*partAdj)-=0xA0;
-  if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+	
+	for(i=0;i<sizeof(CheckTable);i+=4)
+	{
+		if((DS1307_DATA[pgm_read_byte_near(CheckTable+i)]&pgm_read_byte_near(CheckTable+i+1))==pgm_read_byte_near(CheckTable+i+2))DS1307_DATA[pgm_read_byte_near(CheckTable+i)]-=pgm_read_byte_near(CheckTable+i+3);
+	}
   
   if(isWeek)
   {
@@ -441,6 +502,8 @@ void Adjust(){
     LEDHighSign = LEDTimeH;
   }
 }
+
+
 void Alarm(){
   if(DS1307_DATA[DS1307_SET]==1)
   {
