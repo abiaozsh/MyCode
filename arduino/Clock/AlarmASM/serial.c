@@ -699,6 +699,7 @@ ISR(TIM0_COMPA_vect){
 #define DLY asm volatile("rcall dly\n")
 //#define DLY dly()
 
+ªªªÿ”√c++–¥
 void dly(){
     asm volatile(
 	"push r24 \n"
