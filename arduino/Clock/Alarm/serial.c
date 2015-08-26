@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
+
 //实现功能：定时闹钟，设定（1闹钟，2整点报时，3静音）
 /*
    0
@@ -8,6 +9,7 @@
    3
 4     5
    6
+  asm volatile("break\n");
 
 
 按红色按钮，翻页：时间，日期，星期
@@ -81,6 +83,7 @@ NPN 7
 //先送高，后送低
 //上1	上2	上3	上4	上5	上6	
 //0x0040	0x0010	0x0004	0x0800	0x0200	0x8000
+//12
 PROGMEM prog_uint8_t Up6[] = {
 0x40,0x00,
 0x10,0x00,
@@ -90,6 +93,7 @@ PROGMEM prog_uint8_t Up6[] = {
 0x00,0x80
 };
 
+//16
 PROGMEM prog_uint8_t Down7A[] = {
 0x00,0x00,
 0x20,0x00,
@@ -102,6 +106,7 @@ PROGMEM prog_uint8_t Down7A[] = {
 };
 
 #define EMPTY 10
+//11
 PROGMEM prog_uint8_t Down7B[] = {
 0x77,//0111 0111, 0
 0x12,//0001 0010, 1
@@ -116,7 +121,7 @@ PROGMEM prog_uint8_t Down7B[] = {
 0x00 //0000 0000  10 空
 };
 
-
+//36
 PROGMEM prog_uint8_t ClockTable[] = {
 // 00,01,02,03,04,05,06,07,08,09,0A,0B,0C,0D,0E,0F
    12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0,
@@ -126,29 +131,28 @@ PROGMEM prog_uint8_t ClockTable[] = {
     8, 9,10,11
 };
 
-
 void ClockInit();
 void loop();
 void Init();
 void SendByte(uint8_t data);
 uint8_t get165();
 void ProcInput();
-void DrawDateTime(uint8_t* p,uint8_t AdjFlashIdx,volatile uint8_t* pflash);
+void DrawDateTime(uint8_t* p,volatile uint8_t* pflash);
 void DrawWeek();
 void Alarm();
-void Alarm(uint8_t AlarmCnt);
+void AlarmP(uint8_t AlarmCnt);
 void Adjust();
 
 void dly();
 void i2c_SoftI2CMaster();
-void i2c_beginTransmission(uint8_t address);
-void i2c_requestFrom(uint8_t address);
+void i2c_beginTransmission();
+void i2c_requestFrom();
 void i2c_endTransmission();
 void i2c_writebit(uint8_t c);
 void i2c_start();
 void i2c_write(uint8_t c);
 uint8_t i2c_readbit();
-uint8_t i2c_read(uint8_t ack);
+uint8_t i2c_readack(uint8_t ack);
 uint8_t i2c_read();
 uint8_t i2c_readLast();
 
@@ -159,12 +163,13 @@ void DS1307_save();
 volatile uint8_t wordArray[6];//0~9 显示相应数字，10全暗
 volatile uint8_t LEDLowSign = 0;
 volatile uint8_t LEDHighSign = 0;
-volatile uint8_t wordCount = 0;
-volatile uint8_t lineCount = 0;
-volatile uint8_t lowSign;
-volatile uint8_t highSign;
+uint8_t wordCount = 0;
+uint8_t lineCount = 0;
+uint8_t lineCountBit = 0x80;
+uint8_t lowSign;
+uint8_t highSign;
 uint8_t inputdata;
-uint8_t status = 0;
+uint8_t status = 3;
 uint8_t CurAdj;
 uint8_t AdjFlashIdx = 0;
 uint8_t LastInputData = 0;
@@ -206,10 +211,90 @@ uint8_t DS1307_DATA[16];
 #define AlarmHR_ADJ1       16
 #define AlarmHR_ADJ0       17
 
+//196
+PROGMEM prog_uint8_t CheckTable[] = {
+//if((DS1307_DATA[DS1307_DOW]&0x0F)==0x08)DS1307_DATA[DS1307_DOW]-=0x07;
+DS1307_DOW,0x0F,0x08,0x07,
+//if((DS1307_DATA[DS1307_DOW]&0x0F)==0x00)DS1307_DATA[DS1307_DOW]-=0xF9;//+0x07
+DS1307_DOW,0x0F,0x00,0xF9,
 
+//if((DS1307_DATA[DS1307_SEC]&0xF0)==0x60)DS1307_DATA[DS1307_SEC]-=0x60;
+DS1307_SEC,0xF0,0x60,0x60,
+//if((DS1307_DATA[DS1307_SEC]&0xF0)==0xF0)DS1307_DATA[DS1307_SEC]-=0xA0;
+DS1307_SEC,0xF0,0xF0,0xA0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+DS1307_SEC,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+DS1307_SEC,0x0F,0x0A,0x0A,
 
+//if((DS1307_DATA[DS1307_MIN]&0xF0)==0x60)DS1307_DATA[DS1307_MIN]-=0x60;
+DS1307_MIN,0xF0,0x60,0x60,
+//if((DS1307_DATA[DS1307_MIN]&0xF0)==0xF0)DS1307_DATA[DS1307_MIN]-=0xA0;//f-a=6
+DS1307_MIN,0xF0,0xF0,0xA0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+DS1307_MIN,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+DS1307_MIN,0x0F,0x0A,0x0A,
 
+//if((DS1307_DATA[DS1307_HR]&0xF0)==0x30)DS1307_DATA[DS1307_HR]-=0x30;
+DS1307_HR,0xF0,0x30,0x30,
+//if((DS1307_DATA[DS1307_HR]&0xF0)==0xF0)DS1307_DATA[DS1307_HR]-=0xD0;//f-d=2
+DS1307_HR,0xF0,0xF0,0xD0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+DS1307_HR,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+DS1307_HR,0x0F,0x0A,0x0A,
 
+//if((DS1307_DATA[DS1307_DATE]&0xF0)==0x40)DS1307_DATA[DS1307_DATE]-=0x40;
+DS1307_DATE,0xF0,0x40,0x40,
+//if((DS1307_DATA[DS1307_DATE]&0xF0)==0xF0)DS1307_DATA[DS1307_DATE]-=0xC0;//f-c=3
+DS1307_DATE,0xF0,0xF0,0xC0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+DS1307_DATE,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+DS1307_DATE,0x0F,0x0A,0x0A,
+
+//if((DS1307_DATA[DS1307_DATE]&0xF0)==0x40)DS1307_DATA[DS1307_DATE]-=0x40;
+DS1307_MTH,0xF0,0x20,0x20,
+//if((DS1307_DATA[DS1307_DATE]&0xF0)==0xF0)DS1307_DATA[DS1307_DATE]-=0xC0;//f-c=3
+DS1307_MTH,0xF0,0xF0,0xE0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+DS1307_MTH,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+DS1307_MTH,0x0F,0x0A,0x0A,
+
+//if(((*partAdj)&0xF0)==0xF0)(*partAdj)-=0x60;
+DS1307_YR,0xF0,0xF0,0x60,
+//if(((*partAdj)&0xF0)==0xA0)(*partAdj)-=0xA0;
+DS1307_YR,0xF0,0xA0,0xA0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+DS1307_YR,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+DS1307_YR,0x0F,0x0A,0x0A,
+
+//if((DS1307_DATA[DS1307_DOW]&0x0F)==0x08)DS1307_DATA[DS1307_DOW]-=0x07;
+DS1307_SET,0x0F,0x03,0x03,
+//if((DS1307_DATA[DS1307_DOW]&0x0F)==0x00)DS1307_DATA[DS1307_DOW]-=0xF9;//+0x07
+DS1307_SET,0x0F,0x0F,0xFD,
+
+//if((DS1307_DATA[DS1307_MIN]&0xF0)==0x60)DS1307_DATA[DS1307_MIN]-=0x60;
+AlarmMIN,0xF0,0x60,0x60,
+//if((DS1307_DATA[DS1307_MIN]&0xF0)==0xF0)DS1307_DATA[DS1307_MIN]-=0xA0;//f-a=6
+AlarmMIN,0xF0,0xF0,0xA0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+AlarmMIN,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+AlarmMIN,0x0F,0x0A,0x0A,
+
+//if((DS1307_DATA[DS1307_HR]&0xF0)==0x30)DS1307_DATA[DS1307_HR]-=0x30;
+AlarmHR,0xF0,0x30,0x30,
+//if((DS1307_DATA[DS1307_HR]&0xF0)==0xF0)DS1307_DATA[DS1307_HR]-=0xD0;//f-d=2
+AlarmHR,0xF0,0xF0,0xD0,
+//if(((*partAdj)&0x0F)==0x0F)(*partAdj)-=0xF6;//n0-- = 0xnF n--
+AlarmHR,0x0F,0x0F,0xF6,
+//if(((*partAdj)&0x0F)==0x0A)(*partAdj)-=0x0A;
+AlarmHR,0x0F,0x0A,0x0A,
+};
 
 int main(void) {
   ClockInit();
@@ -217,47 +302,48 @@ int main(void) {
   loop();
 }
 
-inline void ClockInit() {
+//8
+void ClockInit() {
 	CLKPR = 128;//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
 	//CLKPR = 3;//1/8
 	CLKPR = 0;//1/1 //8MHz
 }
 
-inline void Init(){
+//62
+void Init(){
   DDRA=_BV(1)|_BV(2)|_BV(3)|_BV(4)|_BV(6);
   DDRB=_BV(0)|_BV(2);
   PORT_OE_ON;
-  //SendByte(0);
-  //SendByte(0);
-  //PORT_STR_ON; //store clock up
-  //PORT_STR_OFF; //store clock down
+  SendByte(0);                         //DEL
+  SendByte(0);                         //DEL
+  PORT_STR_ON; //store clock up        //DEL
+  PORT_STR_OFF; //store clock down     //DEL
 
   //ADC初始化
   ADCSRB |= _BV(ADLAR);
-  //ADMUX = 0;//Initial Value 0 0 0 0 0 0 0 0
+  ADMUX = 0;//Initial Value 0 0 0 0 0 0 0 0  //DEL
   ADCSRA = _BV(ADEN) | _BV(ADSC) | _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2);
   
   //刷新定时器初始化
-  //TCCR0A = 0;//Initial Value 0 0 0 0 0 0 0 0
+  TCCR0A = 0;//Initial Value 0 0 0 0 0 0 0 0 //DEL
   TCCR0B = 2;
-  TCNT0 = 0;
+  TCNT0 = 0;                                 //DEL
   OCR0A = 128;//数字越大越暗（match以后开OE，定时器超时关OE）
   TIMSK0 = _BV(OCIE0A) | _BV(TOIE0);
   
-  //TCCR1A = 0;//Initial Value 0 0 0 0 0 0 0 0
-  TCCR1B = 5;//  1/1024 7812.5hz/0.119hz(0.000128s/8.4s)
-  //TCCR1C = 0;//Initial Value 0 0 0 0 0 0 0 0
-  //TIMSK1 = 0;//Initial Value 0 0 0 0 0 0 0 0
-  
-  //I2C不需要初始化
-  //i2c_SoftI2CMaster();
+  //asm volatile("break\n");
+  TCCR1A = 0;//Initial Value 0 0 0 0 0 0 0 0                      //DEL
+  TCCR1B = 5;//  1/1024 7812.5hz/0.119hz(0.000128s/8.4s)          
+  TCCR1C = 0;//Initial Value 0 0 0 0 0 0 0 0                      //DEL
+  TIMSK1 = 0;//Initial Value 0 0 0 0 0 0 0 0                      //DEL
 
   sei();
 }
 
-inline void loop() {
-	while(true)
-	{
+//190
+void loop() {
+  for(;;)
+  {
     uint8_t CurInputData = get165();
     inputdata = 0;
     if(LastInputData==0 && CurInputData!=0)
@@ -269,38 +355,28 @@ inline void loop() {
     switch(status)
     {
       case 0:
-      {
         DS1307_read();
-        DrawDateTime(&DS1307_DATA[DS1307_HR],1,wordArray);
+        DrawDateTime(&DS1307_DATA[DS1307_HR],wordArray);
         LEDLowSign =  LEDTimeL;
         LEDHighSign = LEDTimeH;
-
         ProcInput();
         Alarm();
-      }
-      break;
+        break;
       case 1:
-      {
         DS1307_read();
-        DrawDateTime(&DS1307_DATA[DS1307_YR],1,wordArray);
+        DrawDateTime(&DS1307_DATA[DS1307_YR],wordArray);
         LEDLowSign =  LEDDateL;
         LEDHighSign = LEDDateH;
-
         ProcInput();
         Alarm();
-      }
-      break;
+        break;
       case 2:
-      {
         DS1307_read();
         DrawWeek();
-        
         ProcInput();
         Alarm();
-      }
-      break;
+        break;
       case 3://全led测试 打钟测试
-      {
         wordArray[0] = 8;
         wordArray[1] = 8;
         wordArray[2] = 8;
@@ -311,28 +387,27 @@ inline void loop() {
         LEDHighSign = LEDDateTimeH;
         if(inputdata & 0x0F)
         {
-          Alarm(inputdata);
+          AlarmP(1);
         }
         if(inputdata==KeyRED)
         {
           status=0;
         }
-      }
-      break;
-      default : //else if(status == 4)
-      {
+        break;
+      default:
         Adjust();
-      }
-      break;
+        break;
     }
   }
 }
 
-inline void Adjust(){
+//358
+void Adjust(){
   if(inputdata==KeyRED)
   {
     DS1307_save();
     status = 0;
+    AdjFlashIdx = 0;
     return;
   }
   if(inputdata==KeyLeft)
@@ -363,72 +438,80 @@ inline void Adjust(){
   uint8_t isWeek = 1;
   switch(CurAdj)
   {
-	case DS1307_DOW_ADJ0:
+    case DS1307_DOW_ADJ0:
       partAdj = &DS1307_DATA[DS1307_DOW];
       valAdj = 1;
-	  break;
-	case DS1307_SET_ADJ0:
+      break;
+    case DS1307_SET_ADJ0:
       partAdj = &DS1307_DATA[DS1307_SET];
       valAdj = 1;
-	  break;
+      break;
     case AlarmHR_ADJ0:
       partAdj = &DS1307_DATA[AlarmHR];
       valAdj = 0x10;
-	  break;
+      break;
     case AlarmHR_ADJ1:
       partAdj = &DS1307_DATA[AlarmHR];
       valAdj = 1;
-	  break;
+      break;
     case AlarmMIN_ADJ0:
       partAdj = &DS1307_DATA[AlarmMIN];
       valAdj = 0x10;
-	  break;
+      break;
     case AlarmMIN_ADJ1:
       partAdj = &DS1307_DATA[AlarmMIN];
       valAdj = 1;
-	break;
+      break;
     default:
-		partAdj = &DS1307_DATA[CurAdj>>1];
-		
-		if(CurAdj&1)
-		{
-		  valAdj = 0x10;
-		}
-		else
-		{
-		  valAdj = 1;
-		}
-		isWeek=0;
-		break;
+      partAdj = &DS1307_DATA[CurAdj>>1];
+      if(CurAdj&1)
+      {
+        valAdj = 0x10;
+      }
+      else
+      {
+        valAdj = 1;
+      }
+      isWeek=0;
+      break;
   }
 
-    if(inputdata==KeyUp)
-    {
-      *partAdj+=valAdj;
-    }
-    if(inputdata==KeyDown)
-    {
-      *partAdj-=valAdj;
-    }
-	
-	if(isWeek)
-	{
-	  DrawWeek();
-    }
-	else if(CurAdj>=DS1307_DATE_ADJ0 && CurAdj<=DS1307_YR_ADJ1)
-    {
-      DrawDateTime(&DS1307_DATA[DS1307_YR],AdjFlashIdx,&wordArray[DS1307_YR_ADJ1-CurAdj]);
-      LEDLowSign  = LEDDateL;
-      LEDHighSign = LEDDateH;
-    }
-    else if(CurAdj>=DS1307_SEC_ADJ0 && CurAdj<=DS1307_HR_ADJ1)
-    {
-      DrawDateTime(&DS1307_DATA[DS1307_HR],AdjFlashIdx,&wordArray[DS1307_HR_ADJ1-CurAdj]);
-      LEDLowSign  = LEDTimeL;
-      LEDHighSign = LEDTimeH;
-    }
+  if(inputdata==KeyUp)
+  {
+    *partAdj+=valAdj;
+  }
+  if(inputdata==KeyDown)
+  {
+    *partAdj-=valAdj;
+  }
+  
+  //边界检查
+  uint8_t i;
+  for(i=0;i<sizeof(CheckTable);i+=4)
+  {
+    if((DS1307_DATA[pgm_read_byte_near(CheckTable+i)]&pgm_read_byte_near(CheckTable+i+1))==pgm_read_byte_near(CheckTable+i+2))DS1307_DATA[pgm_read_byte_near(CheckTable+i)]-=pgm_read_byte_near(CheckTable+i+3);
+  }
+  
+  if(isWeek)
+  {
+    DrawWeek();
+  }
+  
+  else if(CurAdj>=DS1307_DATE_ADJ0 && CurAdj<=DS1307_YR_ADJ1)
+  {
+    DrawDateTime(&DS1307_DATA[DS1307_YR],&wordArray[DS1307_YR_ADJ1-CurAdj]);
+    LEDLowSign  = LEDDateL;
+    LEDHighSign = LEDDateH;
+  }
+  else if(CurAdj>=DS1307_SEC_ADJ0 && CurAdj<=DS1307_HR_ADJ1)
+  {
+    DrawDateTime(&DS1307_DATA[DS1307_HR],&wordArray[DS1307_HR_ADJ1-CurAdj]);
+    LEDLowSign  = LEDTimeL;
+    LEDHighSign = LEDTimeH;
+  }
 }
 
+//94
 void Alarm(){
   if(DS1307_DATA[DS1307_SET]==1)
   {
@@ -445,7 +528,7 @@ void Alarm(){
       }
       if(AlarmCnt)
       {
-        Alarm(AlarmCnt);
+        AlarmP(AlarmCnt);
       }
     }
   }
@@ -455,13 +538,16 @@ void Alarm(){
     {
       if(DS1307_DATA[DS1307_MIN]==DS1307_DATA[AlarmMIN] && DS1307_DATA[DS1307_HR]==DS1307_DATA[AlarmHR])
       {
-        Alarm(1);
+        AlarmP(1);
       }
     }
   }
 }
-void Alarm(uint8_t AlarmCnt){
-  for(uint8_t i=0;i<AlarmCnt;i++)
+
+//170
+void AlarmP(uint8_t AlarmCnt){
+  uint8_t i;
+  for(i=0;i<AlarmCnt;i++)
   {
     TCNT1 = 0;TIFR1 |= _BV(TOV1);
     Alarm_ON;
@@ -472,60 +558,53 @@ void Alarm(uint8_t AlarmCnt){
   }
 }
 
-void DrawDateTime(uint8_t* p,uint8_t AdjFlashIdx,volatile uint8_t* pflash){
+//168
+void DrawDateTime(uint8_t* p,volatile uint8_t* pflash){
   volatile uint8_t* p2 = wordArray;
-  for(uint8_t i=0;i<3;i++)
+  uint8_t i;
+  for(i=0;i<3;i++)
   {
     //年和小时的第一位置空
-    if(i==0)
-    {
-      if((AdjFlashIdx || p2!=pflash)&&((*p)>>4))
-      {
-        *p2 = (*p)>>4;
-      }
-      else
-      {
-        *p2 = EMPTY;
-      }
-    }
-    else
-    {
-      if(AdjFlashIdx || p2!=pflash)
-      {
-        *p2 = (*p)>>4;
-      }
-      else
-      {
-        *p2 = EMPTY;
-      }
-    }
-    p2++;
-    if(AdjFlashIdx || p2!=pflash)
-    {
-      *p2 = (*p)&0x0F;
-    }
-    else
+    if( (AdjFlashIdx && p2==pflash) || (i==0)&&(((*p)>>4)==0))
     {
       *p2 = EMPTY;
+    }
+    else
+    {
+      *p2 = (*p)>>4;
+    }
+    p2++;
+    if(AdjFlashIdx && p2==pflash)
+    {
+      *p2 = EMPTY;
+    }
+    else
+    {
+      *p2 = (*p)&0x0F;
     }
     p2++;
     p--;
   }
 }
+
+//174
 void DrawWeek(){
   wordArray[0] = (AdjFlashIdx && CurAdj==AlarmHR_ADJ0   )?EMPTY:(DS1307_DATA[AlarmHR]>>4);
   wordArray[1] = (AdjFlashIdx && CurAdj==AlarmHR_ADJ1   )?EMPTY:(DS1307_DATA[AlarmHR]&0x0F);
   wordArray[2] = (AdjFlashIdx && CurAdj==AlarmMIN_ADJ0  )?EMPTY:(DS1307_DATA[AlarmMIN]>>4);
   wordArray[3] = (AdjFlashIdx && CurAdj==AlarmMIN_ADJ1  )?EMPTY:(DS1307_DATA[AlarmMIN]&0x0F);
-  wordArray[4] = (AdjFlashIdx && CurAdj==DS1307_SET_ADJ0)?EMPTY:DS1307_DATA[DS1307_SET];
-  wordArray[5] = (AdjFlashIdx && CurAdj==DS1307_DOW_ADJ0)?EMPTY:DS1307_DATA[DS1307_DOW];
+  wordArray[4] = (AdjFlashIdx && CurAdj==DS1307_SET_ADJ0)?EMPTY: DS1307_DATA[DS1307_SET];
+  wordArray[5] = (AdjFlashIdx && CurAdj==DS1307_DOW_ADJ0)?EMPTY: DS1307_DATA[DS1307_DOW];
   LEDLowSign = 0;
   LEDHighSign = 0;
 }
+
+//74
 void ProcInput(){
   if(currTick>=65530)
   {
     status = 0;
+    AdjFlashIdx = 0;
   }
   if(inputdata & 0x0F)
   {
@@ -540,29 +619,31 @@ void ProcInput(){
   }
 }
 
+//70
 void SendByte(uint8_t data){
-  for(uint8_t i=0;i<8;i++)
+  uint8_t i;
+  for(i=0;i<8;i++)
   {
+    PORT_DAT_OFF;
     if(data&1)
     {
       PORT_DAT_ON;
-    }
-    else
-    {
-      PORT_DAT_OFF;
     }
     data>>=1;
     PORT_CLK_ON; //shift clock up
     PORT_CLK_OFF; //shift clock down
   }
 }
-inline uint8_t get165(){
+
+//18
+uint8_t get165(){
   uint8_t data = 0;
   PL_OFF;
   PL_ON;
-  for(uint8_t i=0;i<8;i++)
+  uint8_t i;
+  for(i=0;i<8;i++)
   {
-    data = data << 1;
+    data <<= 1;
     if(PINQ7){
       data|=1;
     }
@@ -572,6 +653,7 @@ inline uint8_t get165(){
   return data;
 }
 
+//248
 ISR(TIM0_OVF_vect){
   PORT_OE_ON;//关闭OE,开始传输
   SendByte(highSign);
@@ -581,12 +663,14 @@ ISR(TIM0_OVF_vect){
   sei();
   
   //准备输出数据 开始
-  lineCount++;
-  if(lineCount==8)
+  lineCount+=2;
+  lineCountBit>>=1;
+  if(lineCount==16)
   {
     lineCount = 0;
-    wordCount++;
-    if(wordCount==6)
+    lineCountBit = 0x80;
+    wordCount+=2;
+    if(wordCount==12)
     {
       wordCount = 0;
     }
@@ -595,12 +679,12 @@ ISR(TIM0_OVF_vect){
   highSign=0;
 
   //多余的一行用于字与字间切换
-  prog_uint8_t* p = Up6+(wordCount<<1);
+  prog_uint8_t* p = Up6+wordCount;
   lowSign  |= pgm_read_byte_near(p++);
   highSign |= pgm_read_byte_near(p);
-  if(pgm_read_byte_near(Down7B+wordArray[wordCount])&(0x80>>lineCount))
+  if(pgm_read_byte_near(Down7B+wordArray[wordCount>>1])&(lineCountBit))
   {
-    p = Down7A+(lineCount<<1);
+    p = Down7A+lineCount;
     lowSign  |= pgm_read_byte_near(p++);
     highSign |= pgm_read_byte_near(p);
   }
@@ -614,6 +698,7 @@ ISR(TIM0_OVF_vect){
   //准备输出数据 结束
 }
 
+//2
 ISR(TIM0_COMPA_vect){
   PORT_OE_OFF;//打开输出
 }
@@ -624,83 +709,93 @@ ISR(TIM0_COMPA_vect){
 #define ADDRESS DS1307_CTRL_ID
 
 // sets SCL low and drives output PORT_SCL &= ~BIT_SCL; 
-#define i2c_scl_lo() DDR_SCL |= BIT_SCL;
+#define i2c_scl_lo DDR_SCL |= BIT_SCL
 // sets SDA low and drives output PORT_SDA &= ~BIT_SDA; 
-#define i2c_sda_lo() DDR_SDA |= BIT_SDA;
+#define i2c_sda_lo DDR_SDA |= BIT_SDA
 // set SCL high and to input (releases pin) (i.e. change to input,turnon pullup)
-#define i2c_scl_hi() DDR_SCL &=~ BIT_SCL;
+#define i2c_scl_hi DDR_SCL &=~ BIT_SCL
 // set SDA high and to input (releases pin) (i.e. change to input,turnon pullup)
-#define i2c_sda_hi() DDR_SDA &=~ BIT_SDA;
+#define i2c_sda_hi DDR_SDA &=~ BIT_SDA
 
+//#define DLY asm volatile("rcall dly\n")
+#define DLY dly()
 
+//44
 void dly(){
-  for(uint8_t i=0;i<100;i++)//6 is stable
+  uint8_t i;
+  for(i=0;i<100;i++)//6 is stable
   {
     asm volatile ("nop");
   }
 }
-
+//18
 void i2c_start(void){
-  // set both to high at the same time
-  i2c_sda_hi();
-  i2c_scl_hi();
-  dly();
-  i2c_sda_lo();
-  dly();
-  i2c_scl_lo();
-  dly();
+  i2c_sda_hi;
+  i2c_scl_hi;
+  DLY;
+  i2c_sda_lo;
+  DLY;
+  i2c_scl_lo;
+  DLY;
 }
-//address非参数化，固定值，省空间
+//10
 void i2c_beginTransmission(){
   i2c_start();
   i2c_write((ADDRESS<<1) | 0); // clr read bit
 }
-inline void i2c_requestFrom(){
+//8
+void i2c_requestFrom(){
   i2c_start();
   i2c_write((ADDRESS<<1) | 1); // set read bit
 }
+//12
 void i2c_endTransmission(void){
-  i2c_scl_hi();
-  dly();
-  i2c_sda_hi();
-  dly();
+  i2c_scl_hi;
+  DLY;
+  i2c_sda_hi;
+  DLY;
 }
+//66
 void i2c_writebit(uint8_t c){
   if (c) {
-    i2c_sda_hi();
+    i2c_sda_hi;
   } 
   else {
-    i2c_sda_lo();
+    i2c_sda_lo;
   }
-  i2c_scl_hi();
-  dly();
-  i2c_scl_lo();
-  dly();
+  i2c_scl_hi;
+  DLY;
+  i2c_scl_lo;
+  DLY;
   if (c) {
-    i2c_sda_lo();
+    i2c_sda_lo;
   }
-  dly();
+  DLY;
 }
+//24
 uint8_t i2c_readbit(void){
-  i2c_sda_hi();
-  i2c_scl_hi();
-  dly();
-  uint8_t c = PIN_SDA; // I2C_PIN;
-  i2c_scl_lo();
-  dly();
-  return c & BIT_SDA;
+  i2c_sda_hi;
+  i2c_scl_hi;
+  DLY;
+  uint8_t c = PIN_SDA & BIT_SDA; // I2C_PIN;
+  i2c_scl_lo;
+  DLY;
+  return c;
 }
+//68
 void i2c_write(uint8_t c){
-  for ( uint8_t i=0;i<8;i++) {
+  uint8_t i;
+  for(i=0;i<8;i++) {
     i2c_writebit( c & 128 );
     c<<=1;
   }
   i2c_readbit();
 }
-
-uint8_t i2c_read(uint8_t ack){
+//38
+uint8_t i2c_readack(uint8_t ack){
   uint8_t res = 0;
-  for ( uint8_t i=0;i<8;i++) {
+  uint8_t i;
+  for(i=0;i<8;i++) {
     res <<= 1;
     if(i2c_readbit())
     {
@@ -708,26 +803,28 @@ uint8_t i2c_read(uint8_t ack){
     }
   }
   i2c_writebit(ack);
-  dly();
+  DLY;
   return res;
 }
-
+//48
 void DS1307_read(){
   i2c_beginTransmission();
   i2c_write(0x00);
   i2c_endTransmission();
   i2c_requestFrom();
-  for(uint8_t i = 0;i<15;i++)
+  uint8_t i;
+  for(i = 0;i<15;i++)
   {
-    DS1307_DATA[i] = i2c_read(0);// 0
+    DS1307_DATA[i] = i2c_readack(0);// 0
   }
-  DS1307_DATA[15] = i2c_read(1);// 0
+  DS1307_DATA[15] = i2c_readack(1);// 0
 }
-
+//34
 void DS1307_save(){
   i2c_beginTransmission();
   i2c_write(0x00); // reset register pointer
-  for(uint8_t i = 0;i<16;i++)
+  uint8_t i;
+  for(i = 0;i<16;i++)
   {
     i2c_write(DS1307_DATA[i]);
   }
