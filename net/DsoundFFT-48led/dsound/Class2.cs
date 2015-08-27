@@ -233,12 +233,7 @@ namespace dsound
 			{
 				float v = Math.Abs(A[i].real());
 				result[i] = v;//最接近整数
-				//if (v > max)
-				//{
-				//	max = v;
-				//}
 			}
-			//max = 1110.1f;
 			{
 				for (int i = 1; i < 256; i++)
 				{
@@ -246,7 +241,7 @@ namespace dsound
 					{
 						break;
 					}
-					float j = result[i] / n / 256;// /256
+					float j = result[i] / n / 32;// /256
 
 					spect[curLine, i] = (int)(j * 255);
 				}
@@ -303,7 +298,3 @@ namespace dsound
 
 	}
 }
-
-
-/*
- */

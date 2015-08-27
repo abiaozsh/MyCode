@@ -17,7 +17,6 @@ namespace dsound
 		{
 			InitializeComponent();
 		}
-		//FFTThread fft = new FFTThread();
 		SoundRecord sr = new SoundRecord();
 		//dsound2.SoundRecord sr2 = new dsound2.SoundRecord();
 
@@ -39,7 +38,6 @@ namespace dsound
 			{
 				MessageBox.Show("error");
 			}
-			//fft.startRec();
 			sr.RecStart();
 			//sr2.RecStart();
 
@@ -51,12 +49,8 @@ namespace dsound
 
 		void t_Tick(object sender, EventArgs e)
 		{
-			//if (fft.capture == null) return;
-			//var spect = fft.capture.spect;
-			//var curLine = fft.capture.curLine;
 			var spect = sr.spect;
 			var curLine = sr.curLine;
-
 			{
 				Bitmap p1 = new Bitmap(512, 256);
 				int line = 0;//curLine
