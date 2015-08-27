@@ -169,13 +169,12 @@ uint8_t lineCountBit = 0x80;
 uint8_t lowSign;
 uint8_t highSign;
 uint8_t inputdata;
-uint8_t status = 3;
+uint8_t status = 0;
 uint8_t CurAdj;
 uint8_t AdjFlashIdx = 0;
 uint8_t LastInputData = 0;
 
 
-//0null,1 week,2/3 year,4/5 month,6/7 day,8/9 hour,10/11 minute,12/13 second 默认（11）
 uint8_t DS1307_DATA[16];
 #define DS1307_SEC      0
 #define DS1307_MIN      1
@@ -495,8 +494,9 @@ void Adjust(){
   if(isWeek)
   {
     DrawWeek();
+    LEDLowSign  = 0;
+    LEDHighSign = 0;
   }
-  
   else if(CurAdj>=DS1307_DATE_ADJ0 && CurAdj<=DS1307_YR_ADJ1)
   {
     DrawDateTime(&DS1307_DATA[DS1307_YR],&wordArray[DS1307_YR_ADJ1-CurAdj]);
@@ -549,6 +549,7 @@ void AlarmP(uint8_t AlarmCnt){
   uint8_t i;
   for(i=0;i<AlarmCnt;i++)
   {
+    //asm volatile("break");
     TCNT1 = 0;TIFR1 |= _BV(TOV1);
     Alarm_ON;
     while(currTick<9000);
@@ -589,14 +590,12 @@ void DrawDateTime(uint8_t* p,volatile uint8_t* pflash){
 
 //174
 void DrawWeek(){
-  wordArray[0] = (AdjFlashIdx && CurAdj==AlarmHR_ADJ0   )?EMPTY:(DS1307_DATA[AlarmHR]>>4);
-  wordArray[1] = (AdjFlashIdx && CurAdj==AlarmHR_ADJ1   )?EMPTY:(DS1307_DATA[AlarmHR]&0x0F);
-  wordArray[2] = (AdjFlashIdx && CurAdj==AlarmMIN_ADJ0  )?EMPTY:(DS1307_DATA[AlarmMIN]>>4);
-  wordArray[3] = (AdjFlashIdx && CurAdj==AlarmMIN_ADJ1  )?EMPTY:(DS1307_DATA[AlarmMIN]&0x0F);
+  wordArray[0] = (AdjFlashIdx && CurAdj==AlarmHR_ADJ0   )?EMPTY:(DS1307_DATA[AlarmHR   ]>>4);
+  wordArray[1] = (AdjFlashIdx && CurAdj==AlarmHR_ADJ1   )?EMPTY:(DS1307_DATA[AlarmHR   ]&0x0F);
+  wordArray[2] = (AdjFlashIdx && CurAdj==AlarmMIN_ADJ0  )?EMPTY:(DS1307_DATA[AlarmMIN  ]>>4);
+  wordArray[3] = (AdjFlashIdx && CurAdj==AlarmMIN_ADJ1  )?EMPTY:(DS1307_DATA[AlarmMIN  ]&0x0F);
   wordArray[4] = (AdjFlashIdx && CurAdj==DS1307_SET_ADJ0)?EMPTY: DS1307_DATA[DS1307_SET];
   wordArray[5] = (AdjFlashIdx && CurAdj==DS1307_DOW_ADJ0)?EMPTY: DS1307_DATA[DS1307_DOW];
-  LEDLowSign = 0;
-  LEDHighSign = 0;
 }
 
 //74
@@ -662,6 +661,9 @@ ISR(TIM0_OVF_vect){
   PORT_STR_OFF;
   sei();
   
+  highSign=0;
+  lowSign=0;
+  
   //准备输出数据 开始
   lineCount+=2;
   lineCountBit>>=1;
@@ -673,10 +675,11 @@ ISR(TIM0_OVF_vect){
     if(wordCount==12)
     {
       wordCount = 0;
+      highSign |= LEDHighSign;
+      lowSign  |= LEDLowSign;
+      OCR0A = ADCH;ADCSRA |= _BV(ADSC);//设置亮度
     }
   }
-  lowSign=0;
-  highSign=0;
 
   //多余的一行用于字与字间切换
   prog_uint8_t* p = Up6+wordCount;
@@ -689,20 +692,18 @@ ISR(TIM0_OVF_vect){
     highSign |= pgm_read_byte_near(p);
   }
 
-  if(wordCount==0&&lineCount==0)//显示时间:日期-
-  {
-    lowSign  |= LEDLowSign;
-    highSign |= LEDHighSign;
-    OCR0A = ADCH;ADCSRA |= _BV(ADSC);//设置亮度
-  }
   //准备输出数据 结束
 }
 
 //2
-ISR(TIM0_COMPA_vect){
+ISR(TIM0_COMPA_vect,__attribute__((naked))){
   PORT_OE_OFF;//打开输出
+  asm volatile("reti");
 }
 
+//ISR(TIM0_COMPA_vect){
+//  PORT_OE_OFF;//打开输出
+//}
 
 #define DS1307_CTRL_ID 0x68//B01101000  //DS1307
 
