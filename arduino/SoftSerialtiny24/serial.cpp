@@ -31,9 +31,9 @@ void loop();
 void TimerInit();
 void SerialInit();
 void SerialSend(uint8_t val);
+void SendInt(uint32_t val);
 uint8_t SerialRead();
 uint8_t SerialRead(uint16_t timeout, uint8_t* timoutParam);
-void SendInt(uint32_t val);
 uint32_t ReadInt();
 
 int main(void) {
@@ -147,8 +147,7 @@ PROGMEM prog_uint32_t num10s[] = {
 1,
 };
 
-void SendInt(uint32_t val)
-{
+void SendInt(uint32_t val){
 	uint32_t num = val;
 	for(uint8_t idx = 0; idx < 10 ; idx++)
 	{
@@ -170,8 +169,7 @@ void SendInt(uint32_t val)
 	}
 }
 
-void SerialSend(uint8_t val)
-{
+void SerialSend(uint8_t val){
 	cli();
 	TCCR1B = TCCR1B_Value;
 	TCNT1 = 0;
