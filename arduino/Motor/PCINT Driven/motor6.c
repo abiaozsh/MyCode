@@ -11,7 +11,8 @@
 #define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
 
 //drA3
-#define drA7 (PINA & _BV(7)) /*DAT*/
+#define drDAT (PINA & _BV(7)) /*DAT*/
+#define drCLK (PINA & _BV(6)) /*DAT*/
 
 //2 1 0
 //5 4 3 2 1 0
@@ -72,9 +73,10 @@ uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 uint8_t Step = 0;
 uint8_t Status = 0;//0 halt ,1 running, 2 starting
 uint8_t StartUpCount1=0;
-volatile uint16_t TargetRPM=32767;//bit16 = start flg rest is data
-uint16_t TempData;
-uint8_t TempDataCnt=16;
+volatile uint16_t TargetRPM=6000;//bit16 = start flg rest is data
+volatile uint8_t FStart;
+volatile uint16_t TempData;
+volatile uint8_t TempDataCnt;
 uint16_t rpm;
 uint16_t startupCurrent;
 uint16_t Power = 0;
@@ -93,7 +95,8 @@ int main(void) {
 	ClockInit();//初始化时钟：1MHz -> 8MHz
 	TimerInit();//初始化定时器 1/8
 	PCIntInit();//初始化模拟输入
-
+	TempDataCnt=16;
+FStart=0;
 	DDRA = 0;PORTA = 0;//all input
 	DDRB = 0;PORTB = 0;//all input
 
@@ -109,7 +112,6 @@ int main(void) {
 	//初始化输入端口
 	DDR3I = 0;
 	PORT3I = 0;
-
 	//主循环
 	loop();
 }
@@ -137,7 +139,7 @@ void loop() {
 	for(;;) {
 		//定时器清零
 		TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
-		if(TargetRPM&0x8000)
+		if(FStart)
 		{
 			CmdPWROn;
 			uint16_t temp = TargetRPM>>1;
@@ -196,7 +198,7 @@ void waita() {
 			CmdPWROff;
 		}
 		
-		if((TargetRPM&0x8000) && currTick==65535)// power on signal
+		if(FStart && currTick==65535)// power on signal
 		{
 			return;
 		}
@@ -209,6 +211,7 @@ void waita() {
 }
 
 void adj() {
+	NextPower=0;
 	if(Status)
 	{
 		if(rpm>StartRpm)//too slow, halt
@@ -216,11 +219,11 @@ void adj() {
 			StartUpCount1 = 0;
 			Status = 0;//halt
 		}
-		else if(rpm>(TargetRPM&0x7FFF))//bit slow && running
+		else if(rpm>TargetRPM)//bit slow && running
 		{
 			if(rpm>200)//低转速下进行精细运算
 			{
-				uint32_t temp = TargetRPM&0x7FFF;  // TargetRPM/rpm *65536  ->0~65536
+				uint32_t temp = TargetRPM;
 				temp = temp << 16;//*65536
 				temp = temp / rpm;
 				temp = 65536 - temp;//65536~~>0 (0 为转速非常接近)
@@ -251,26 +254,37 @@ void adj() {
 	}
 }
 
-ISR(PCINT0_vect){
-  if(TempDataCnt==16)
+ISR(PCINT0_vect){//先送高，后送低
+  if(drCLK)//上升沿读取
   {
-    if(drA7)//起始位
-    {
-      TempData = 0;
-      TempDataCnt = 0;
-    }
-  }
-  else
-  {
-    TempData<<=1;
-    if(drA7)
-    {
-      TempData|=1;
-    }
-    TempDataCnt++;
     if(TempDataCnt==16)
     {
-      TargetRPM = TempData;
+      if(drDAT)//起始位
+      {
+        TempData = 0;
+        TempDataCnt = 0;
+      }
+    }
+    else
+    {
+      TempData<<=1;
+      if(drDAT)
+      {
+        TempData|=1;
+      }
+      TempDataCnt++;
+      if(TempDataCnt==16)
+      {
+        TargetRPM = TempData&0x7FFF;
+		if(TempData&0x8000)
+		{
+		FStart=1;
+		}
+		else
+		{
+		FStart=0;
+		}
+      }
     }
   }
 }
