@@ -1,6 +1,6 @@
-set arduinopath=C:\Program Files (x86)\Arduino
-rem set arduinopath=C:\Program Files\Arduino
-set comPort=COM5
+rem set arduinopath=C:\Program Files (x86)\Arduino
+set arduinopath=C:\Program Files\Arduino
+set comPort=COM3
 set filename=motor6
 
 del %filename%.hex

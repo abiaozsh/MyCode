@@ -8,6 +8,7 @@ void setup() {
   Serial.begin(9600);
   Serial.setTimeout(1000000);
   DDRD = _BV(2) | _BV(3);//2 clock 3 data
+  DDRB |= _BV(5);
   CLKOFF;
   DATOFF;//startbit
   delay(1);
@@ -25,6 +26,7 @@ void loop() {
   int v1 = Serial.read();
   if(v1!=-1)
   {
+    PINB |= _BV(5);
     uint8_t val = (uint8_t)v1;
     send(val);
   }

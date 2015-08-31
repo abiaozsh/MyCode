@@ -30,7 +30,7 @@ namespace WindowsFormsApplication1
 			if (port == null)
 			{
 				//COM4为Arduino使用的串口号，需根据实际情况调整
-				port = new SerialPort("COM5", 9600, Parity.None, 8, StopBits.One);
+				port = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
 				port.Open();
 			}
 		}
@@ -125,7 +125,7 @@ namespace WindowsFormsApplication1
 			}
 			else
 			{
-				buff[0] = CMD_FORCEOFF;
+                buff[0] = CMD_FORCEOFF;
 				port.Write(buff, 0, 1);
 				Thread.Sleep(50);
 			}

@@ -73,7 +73,7 @@ uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 uint8_t Step = 0;
 uint8_t Status = 0;//0 halt ,1 running, 2 starting
 uint8_t StartUpCount1=0;
-volatile uint16_t TargetRPM=6000;//bit16 = start flg rest is data
+volatile uint16_t TargetRPM=2000;//bit16 = start flg rest is data
 volatile uint8_t FStart = 0;
 uint16_t rpm;
 uint16_t startupCurrent;
@@ -81,8 +81,8 @@ uint16_t Power = 0;
 uint16_t NextPower = 0;
 
 uint8_t CMD = 0;
-uint8_t TempData;
-uint8_t TempDataCnt;
+uint8_t TempData=0;
+uint8_t TempDataCnt=8;
 uint16_t TargetRPMBuff;//bit16 = start flg rest is data
 
 void ClockInit();
@@ -98,8 +98,7 @@ int main(void) {
 	ClockInit();//初始化时钟：1MHz -> 8MHz
 	TimerInit();//初始化定时器 1/8
 	PCIntInit();//初始化模拟输入
-	TempDataCnt=8;
-FStart=0;
+
 	DDRA = 0;PORTA = 0;//all input
 	DDRB = 0;PORTB = 0;//all input
 
@@ -291,13 +290,17 @@ ISR(PCINT0_vect){//先送高，后送低
             if(TempData==CMD_SETHIGH||TempData==CMD_SETLOW)
             {
               CMD = TempData;
+				return;
             }
-            return;
+			
+			break;
           case CMD_SETHIGH:
             TargetRPMBuff |= TempData<<8;
+			CMD=0;
             return;
           case CMD_SETLOW:
             TargetRPMBuff |= TempData;
+			CMD=0;
             return;
         }
         
