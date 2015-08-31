@@ -1,5 +1,5 @@
-rem set arduinopath=C:\Program Files (x86)\Arduino
-set arduinopath=C:\Program Files\Arduino
+set arduinopath=C:\Program Files (x86)\Arduino
+rem set arduinopath=C:\Program Files\Arduino
 set comPort=COM5
 set filename=motor6
 
