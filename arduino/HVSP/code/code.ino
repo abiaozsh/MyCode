@@ -13,12 +13,29 @@
 #define  RST      2    // Output to level shifter for !RESET from transistor to Pin 1
 #define  VCC      3    // Connect to VCC Pin 8
 #define  CLKOUT   4    // Connect to Serial Clock Input (SCI) Pin 2
-#define  INSTOUT  5    // Connect to Serial Instruction Input (SII) Pin 6
-#define  DATAOUT  6    // Connect to Serial Data Input (SDI) Pin 5 
+#define  DATAOUT  5    // Connect to Serial Data Input (SDI) Pin 5 
+#define  INSTOUT  6    // Connect to Serial Instruction Input (SII) Pin 6
 #define  DATAIN   7    // Connect to Serial Data Output (SDO) Pin 7
 
+//VCC GND
+//B0  A0
+//B1  A1
+//RST A2
+//B2  A3
+//A7  A4
+//A6  A5
 
+//VCC B0(SCI) A6(SDI) A5(SII) A4(SDO)
 
+//A0 GND
+//A1 GND
+//A2 GND
+//2->NPN 1k
+//3->VCC 1k
+//4->B0(SCI)
+//5->A6(SDI)
+//6->A5(SII)
+//7->A4(SDO)
 
 int inByte = 0;         // incoming serial byte Computer
 int inData = 0;         // incoming serial byte AVR
