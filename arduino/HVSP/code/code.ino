@@ -10,12 +10,12 @@
 
 
 
-#define  RST     13    // Output to level shifter for !RESET from transistor to Pin 1
-#define  CLKOUT  12    // Connect to Serial Clock Input (SCI) Pin 2
-#define  DATAIN  11    // Connect to Serial Data Output (SDO) Pin 7
-#define  INSTOUT 10    // Connect to Serial Instruction Input (SII) Pin 6
-#define  DATAOUT  9    // Connect to Serial Data Input (SDI) Pin 5 
-#define  VCC      8    // Connect to VCC Pin 8
+#define  RST      2    // Output to level shifter for !RESET from transistor to Pin 1
+#define  VCC      3    // Connect to VCC Pin 8
+#define  CLKOUT   4    // Connect to Serial Clock Input (SCI) Pin 2
+#define  INSTOUT  5    // Connect to Serial Instruction Input (SII) Pin 6
+#define  DATAOUT  6    // Connect to Serial Data Input (SDI) Pin 5 
+#define  DATAIN   7    // Connect to Serial Data Output (SDO) Pin 7
 
 
 
@@ -27,20 +27,23 @@ void setup()
 {
   // Set up control lines for HV parallel programming
   pinMode(VCC, OUTPUT);
+  digitalWrite(VCC, LOW);
   pinMode(RST, OUTPUT);
+  digitalWrite(RST, LOW);//HIGH  // Level shifter is inverting, this shuts off 12V
   pinMode(DATAOUT, OUTPUT);
+  digitalWrite(DATAOUT, LOW);
   pinMode(INSTOUT, OUTPUT);
+  digitalWrite(INSTOUT, LOW);
   pinMode(CLKOUT, OUTPUT);
+  digitalWrite(CLKOUT, LOW);
   pinMode(DATAIN, OUTPUT);  // configured as input when in programming mode
-  
-  // Initialize output pins as needed
-  digitalWrite(RST, HIGH);  // Level shifter is inverting, this shuts off 12V
-  
+  digitalWrite(DATAIN, LOW);
+
   // start serial port at 9600 bps:
   Serial.begin(9600);
-  
+
   establishContact();  // send a byte to establish contact until receiver responds 
-  
+
 }
 
 
@@ -58,40 +61,40 @@ void loop()
     digitalWrite(DATAOUT, LOW);
     digitalWrite(INSTOUT, LOW);
     digitalWrite(DATAIN, LOW);
-    digitalWrite(RST, HIGH);  // Level shifter is inverting, this shuts off 12V
-    
+    digitalWrite(RST, LOW);//HIGH  // Level shifter is inverting, this shuts off 12V
+
     // Enter High-voltage Serial programming mode
     digitalWrite(VCC, HIGH);  // Apply VCC to start programming process
     delayMicroseconds(20);
-    digitalWrite(RST, LOW);   //Turn on 12v
+    digitalWrite(RST, HIGH); //LOW  //Turn on 12v
     delayMicroseconds(10);
     pinMode(DATAIN, INPUT);   //Release DATAIN
     delayMicroseconds(300);
-    
-    //Programming mode
-    
-    readFuses();
-    
-    //Write hfuse
-    Serial.println("Writing hfuse");
-    shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x40, 0x4C);
-    shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, HFUSE, 0x2C);
-    shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x00, 0x74);
-    shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x00, 0x7C);
-    
-    //Write lfuse
-    Serial.println("Writing lfuse\n");
-    shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x40, 0x4C);
-    shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, LFUSE, 0x2C);
-    shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x00, 0x64);
-    shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x00, 0x6C);
 
-    readFuses();    
-    
+    //Programming mode
+    Erase();
+    readFuses();
+
+//    //Write hfuse
+//    Serial.println("Writing hfuse");
+//    shiftOut2(0x40, 0x4C);
+//    shiftOut2(HFUSE, 0x2C);
+//    shiftOut2(0x00, 0x74);
+//    shiftOut2(0x00, 0x7C);
+//
+//    //Write lfuse
+//    Serial.println("Writing lfuse\n");
+//    shiftOut2(0x40, 0x4C);
+//    shiftOut2(LFUSE, 0x2C);
+//    shiftOut2(0x00, 0x64);
+//    shiftOut2(0x00, 0x6C);
+//
+//    readFuses();    
+
     Serial.println("Exiting programming Mode\n");
     digitalWrite(CLKOUT, LOW);
     digitalWrite(VCC, LOW);
-    digitalWrite(RST, HIGH);   //Turn off 12v
+    digitalWrite(RST, LOW);//HIGH   //Turn off 12v
   }
 }
 
@@ -103,69 +106,181 @@ void establishContact() {
   }
 }
 
-int shiftOut2(uint8_t dataPin, uint8_t dataPin1, uint8_t clockPin, uint8_t bitOrder, byte val, byte val1)
+int shiftOut2(byte val, byte val1)
 {
-	int i;
-        int inBits = 0;
-        //Wait until DATAIN goes high
-        while (!digitalRead(DATAIN));
-        
-        //Start bit
-        digitalWrite(DATAOUT, LOW);
-        digitalWrite(INSTOUT, LOW);
-        digitalWrite(clockPin, HIGH);
-  	digitalWrite(clockPin, LOW);
-        
-	for (i = 0; i < 8; i++)  {
-                
-		if (bitOrder == LSBFIRST) {
-			digitalWrite(dataPin, !!(val & (1 << i)));
-                        digitalWrite(dataPin1, !!(val1 & (1 << i)));
-                }
-		else {
-			digitalWrite(dataPin, !!(val & (1 << (7 - i))));
-                        digitalWrite(dataPin1, !!(val1 & (1 << (7 - i))));
-                }
-                inBits <<=1;
-                inBits |= digitalRead(DATAIN);
-                digitalWrite(clockPin, HIGH);
-		digitalWrite(clockPin, LOW);
-                
-	}
+  int i;
+  int inBits = 0;
+  //Wait until DATAIN goes high
+  while (!digitalRead(DATAIN));
 
-        
-        //End bits
-        digitalWrite(DATAOUT, LOW);
-        digitalWrite(INSTOUT, LOW);
-        digitalWrite(clockPin, HIGH);
-        digitalWrite(clockPin, LOW);
-        digitalWrite(clockPin, HIGH);
-        digitalWrite(clockPin, LOW);
-        
-        return inBits;
+  //Start bit
+  digitalWrite(DATAOUT, LOW);
+  digitalWrite(INSTOUT, LOW);
+  digitalWrite(CLKOUT, HIGH);
+  digitalWrite(CLKOUT, LOW);
+
+  for (i = 0; i < 8; i++)  {
+
+    //msb first
+    digitalWrite(DATAOUT, !!(val & (1 << (7 - i))));
+    digitalWrite(INSTOUT, !!(val1 & (1 << (7 - i))));
+
+    inBits <<=1;
+    inBits |= digitalRead(DATAIN);
+    digitalWrite(CLKOUT, HIGH);
+    digitalWrite(CLKOUT, LOW);
+
+  }
+
+
+  //End bits
+  digitalWrite(DATAOUT, LOW);
+  digitalWrite(INSTOUT, LOW);
+  digitalWrite(CLKOUT, HIGH);
+  digitalWrite(CLKOUT, LOW);
+  digitalWrite(CLKOUT, HIGH);
+  digitalWrite(CLKOUT, LOW);
+
+  return inBits;
 }
 
 void readFuses(){
-     //Read lfuse
-    shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x04, 0x4C);
-    shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x00, 0x68);
-    inData = shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x00, 0x6C);
-    Serial.print("lfuse reads as ");
-    Serial.println(inData, HEX);
-    
-    //Read hfuse
-    shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x04, 0x4C);
-    shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x00, 0x7A);
-    inData = shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x00, 0x7E);
-    Serial.print("hfuse reads as ");
-    Serial.println(inData, HEX);
-    
-    //Read efuse
-    shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x04, 0x4C);
-    shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x00, 0x6A);
-    inData = shiftOut2(DATAOUT, INSTOUT, CLKOUT, MSBFIRST, 0x00, 0x6E);
-    Serial.print("efuse reads as ");
-    Serial.println(inData, HEX);
-    Serial.println(); 
+  //Read Signature Bytes
+  //SDI 0_0000_1000_00 0x04
+  //SII 0_0100_1100_00 0x4C
+  //SDO x_xxxx_xxxx_xx
+  //0_0000_00bb_00 0x?? 0,1,2
+  //0_0000_1100_00 0x0c
+  //x_xxxx_xxxx_xx
+  //0_0000_0000_00 0x00
+  //0_0110_1000_00 0x68
+  //x_xxxx_xxxx_xx
+  //0_0000_0000_00 0x00
+  //0_0110_1100_00 0x6C
+  //q_qqqq_qqqx_xx
+  //Repeats Instr 2 4 for each
+  //signature byte address.
+  shiftOut2(0x04, 0x4C);
+  shiftOut2(0x00, 0x0c);
+  shiftOut2(0x00, 0x68);
+  inData = shiftOut2(0x00, 0x6C);
+  Serial.print("Signature Bytes 0 ");
+  Serial.println(inData, HEX);
+  shiftOut2(0x04, 0x4C);
+  shiftOut2(0x01, 0x0c);
+  shiftOut2(0x00, 0x68);
+  inData = shiftOut2(0x00, 0x6C);
+  Serial.print("Signature Bytes 1 ");
+  Serial.println(inData, HEX);
+  Serial.println(); 
+  shiftOut2(0x04, 0x4C);
+  shiftOut2(0x02, 0x0c);
+  shiftOut2(0x00, 0x68);
+  inData = shiftOut2(0x00, 0x6C);
+  Serial.print("Signature Bytes 2 ");
+  Serial.println(inData, HEX);
+  Serial.println(); 
+
+
+return;
+  //Read Fuse Low Bits
+  //SDI 0_0000_0100_00 0x04
+  //SII 0_0100_1100_00 0x4c
+  //SDO x_xxxx_xxxx_xx
+  //0_0000_0000_00 0x00
+  //0_0110_1000_00 0x68
+  //x_xxxx_xxxx_xx
+  //0_0000_0000_00 0x00
+  //0_0110_1100_00 0x6c
+  //A_9876_543x_xx
+  //Reading A - 3 = “0” means the
+  //Fuse bit is programmed.
+  shiftOut2(0x04, 0x4C);
+  shiftOut2(0x00, 0x68);
+  inData = shiftOut2(0x00, 0x6C);
+  Serial.print("Fuse Low Bits ");
+  Serial.println(inData, HEX);
+
+  //Read Fuse High Bits
+  //SDI 0_0000_0100_00 0x04
+  //SII 0_0100_1100_00 0x4c
+  //SDO x_xxxx_xxxx_xx
+  //0_0000_0000_00 0x00
+  //0_0111_1010_00 0x7A
+  //x_xxxx_xxxx_xx
+  //0_0000_0000_00 0x00
+  //0_0111_1100_00 0x7C
+  //I_HGFE_DCBx_xx
+  //Reading F - B = “0” means the
+  //Fuse bit is programmed.
+  shiftOut2(0x04, 0x4C);
+  shiftOut2(0x00, 0x7A);
+  inData = shiftOut2(0x00, 0x7C);//(0x00, 0x7E);
+  Serial.print("Fuse High Bits ");
+  Serial.println(inData, HEX);
+
+  //Read Fuse Extended Bits
+  //SDI 0_0000_0100_00 0x04
+  //SII 0_0100_1100_00 0x4C
+  //SDO x_xxxx_xxxx_xx
+  //0_0000_0000_00 0x00
+  //0_0110_1010_00 0x6A
+  //x_xxxx_xxxx_xx
+  //0_0000_0000_00 0x00
+  //0_0110_1110_00 0x6E
+  //x_xxxx_xxJx_xx
+  //Reading J = “0” means the
+  //Fuse bit is programmed.
+  shiftOut2(0x04, 0x4C);
+  shiftOut2(0x00, 0x6A);
+  inData = shiftOut2(0x00, 0x6E);
+  Serial.print("Fuse Extended Bits ");
+  Serial.println(inData, HEX);
+  Serial.println(); 
+  
+  //Read Lock Bits
+  //SDI 0_0000_0100_00 0x04
+  //SII 0_0100_1100_00 0x4C
+  //SDO x_xxxx_xxxx_xx
+  //0_0000_0000_00 0x00
+  //0_0111_1000_00 0x78
+  //x_xxxx_xxxx_xx
+  //0_0000_0000_00 0x00
+  //0_0110_1100_00 0x6C
+  //x_xxxx_x21x_xx
+  //Reading 2, 1 = “0” means the
+  //Lock bit is programmed.
+  shiftOut2(0x04, 0x4C);
+  shiftOut2(0x00, 0x78);
+  inData = shiftOut2(0x00, 0x6C);
+  Serial.print("Lock Bits ");
+  Serial.println(inData, HEX);
+  Serial.println(); 
+
+  
+
 }
+
+void Erase(){
+//Chip Erase
+//SDI
+//SII
+//SDO
+//0_1000_0000_00
+//0_0100_1100_00
+//x_xxxx_xxxx_xx
+//0_0000_0000_00
+//0_0110_0100_00
+//x_xxxx_xxxx_xx
+//0_0000_0000_00
+//0_0110_1100_00
+//x_xxxx_xxxx_xx
+//Wait after Instr.3 until SDO
+//goes high for the Chip Erase
+//cycle to finish.
+  
+
+}
+
+
 
