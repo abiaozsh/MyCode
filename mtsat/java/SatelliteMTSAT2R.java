@@ -14,11 +14,11 @@ public class SatelliteMTSAT2R
 
 		SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy/MMM", Locale.ENGLISH);
 		SimpleDateFormat sdf3 = new SimpleDateFormat("yyyyMMddHH", Locale.ENGLISH);
-
+//MTSAT2R201209172332IR1.jpg
 		Calendar c = Calendar.getInstance();
-		Date d = sdf.parse("2012/09/26 04:00:00");
+		Date d = sdf.parse("2012/11/01 00:00:00");
 		c.setTime(d);
-		Date end = sdf.parse("2012/10/01 00:00:00");
+		Date end = sdf.parse("2012/12/01 00:00:00");
 		Calendar cend = Calendar.getInstance();
 		cend.setTime(end);
 		while (true)
@@ -29,13 +29,15 @@ public class SatelliteMTSAT2R
 			}
 
 			Date d2 = c.getTime();
-			String date = "MTSAT2R" + sdf3.format(d2);
+			//String date = "MTSAT2R" + sdf3.format(d2);
+			String date = "MTSAT1R" + sdf3.format(d2);
 
-			download(date + "32IR1.jpg", sdf2, d2);
-			//download(date + "30IR2.jpg", sdf2, d2);
-			download(date + "32IR3.jpg", sdf2, d2);
-			//download(date + "30IR4.jpg", sdf2, d2);
-			download(date + "32VIS.jpg", sdf2, d2);
+			//download(date + "32IR1.jpg", sdf2, d2);
+			//download(date + "32IR3.jpg", sdf2, d2);
+			//download(date + "32VIS.jpg", sdf2, d2);
+			download(date + "30IR1.jpg", sdf2, d2);
+			download(date + "30IR3.jpg", sdf2, d2);
+			download(date + "30VIS.jpg", sdf2, d2);
 
 			c.add(Calendar.HOUR, 1);
 

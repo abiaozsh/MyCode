@@ -5,7 +5,7 @@ public class RenameMTSAT2R
 	public static void main(String[] args) throws Exception
 	{
 
-		aa("i:\\mtsat\\");
+		aa("f:\\mtsat2\\");
 
 
 	}

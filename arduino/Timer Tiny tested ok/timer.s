@@ -10,7 +10,7 @@ __zero_reg__ = 1
  ;  GNU C++ (WinAVR 20081205) version 4.3.2 (avr)
  ; 	compiled by GNU C version 3.4.5 (mingw-vista special r3), GMP version 4.2.3, MPFR version 2.3.2.
  ;  GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
- ;  options passed:  -fpreprocessed timer.ii -mmcu=attiny24 -Os
+ ;  options passed:  -fpreprocessed timer.ii -mmcu=attiny24 -Os -fno-inline
  ;  -fverbose-asm -fno-rtti -fno-enforce-eh-specs -fno-exceptions
  ;  options enabled:  -falign-loops -fargument-alias -fauto-inc-dec
  ;  -fbranch-count-reg -fcaller-saves -fcommon -fcprop-registers
@@ -85,69 +85,38 @@ _Z4waitj:
 .global	main
 	.type	main, @function
 main:
+	push r28	 ; 
+	push r29	 ; 
 /* prologue: function */
 /* frame size = 0 */
-	ldi r24,lo8(-128)	 ;  tmp62,
-	out 70-32,r24	 ; ,, tmp62
-	out 70-32,__zero_reg__	 ; ,,
-	out 79-32,__zero_reg__	 ; ,,
-	ldi r24,lo8(2)	 ;  tmp66,
-	out 78-32,r24	 ; ,, tmp66
-	out 66-32,__zero_reg__	 ; ,,
-	out 44-32,__zero_reg__	 ; ,,
+	rcall _Z9ClockInitv	 ; 
+	rcall _Z9TimerInitv	 ; 
 	sbi 58-32,0	 ; ,,
 	sbi 59-32,0	 ; ,,
-.L17:
-	sbi 57-32,0	 ; ,,
-	ldi r18,lo8(0)	 ;  i,
-	ldi r19,hi8(0)	 ;  i,
 .L13:
-	out (76)+1-32,__zero_reg__	 ; ,,
-	out 76-32,__zero_reg__	 ; ,,
-	sbi 43-32,0	 ; ,,
-.L12:
-	sbic 43-32,0	 ; ,,
-	rjmp .L11	 ; 
-	in r24,76-32	 ;  iftmp.1,,
-	in r25,(76)+1-32	 ;  iftmp.1,,
-	cpi r24,100	 ;  iftmp.1,
-	cpc r25,__zero_reg__	 ;  iftmp.1
-	brlo .L12	 ; ,
-.L11:
-	subi r18,lo8(-(1))	 ;  i,
-	sbci r19,hi8(-(1))	 ;  i,
-	ldi r24,hi8(1000)	 ; ,
-	cpi r18,lo8(1000)	 ;  i,
-	cpc r19,r24	 ;  i,
-	brne .L13	 ; ,
 	sbi 57-32,0	 ; ,,
-	ldi r18,lo8(0)	 ;  i,
-	ldi r19,hi8(0)	 ;  i,
-.L16:
-	out (76)+1-32,__zero_reg__	 ; ,,
-	out 76-32,__zero_reg__	 ; ,,
-	sbi 43-32,0	 ; ,,
-.L15:
-	sbic 43-32,0	 ; ,,
-	rjmp .L14	 ; 
-	in r24,76-32	 ;  iftmp.1,,
-	in r25,(76)+1-32	 ;  iftmp.1,,
-	cpi r24,100	 ;  iftmp.1,
-	cpc r25,__zero_reg__	 ;  iftmp.1
-	brlo .L15	 ; ,
-.L14:
-	subi r18,lo8(-(1))	 ;  i,
-	sbci r19,hi8(-(1))	 ;  i,
+	ldi r28,lo8(0)	 ;  i,
+	ldi r29,hi8(0)	 ;  i,
+.L11:
+	ldi r24,lo8(100)	 ; ,
+	ldi r25,hi8(100)	 ; ,
+	rcall _Z4waitj	 ; 
+	adiw r28,1	 ;  i,
 	ldi r24,hi8(1000)	 ; ,
-	cpi r18,lo8(1000)	 ;  i,
-	cpc r19,r24	 ;  i,
-	brne .L16	 ; ,
-	rjmp .L17	 ; 
+	cpi r28,lo8(1000)	 ;  i,
+	cpc r29,r24	 ;  i,
+	brne .L11	 ; ,
+	sbi 57-32,0	 ; ,,
+	ldi r28,lo8(0)	 ;  i,
+	ldi r29,hi8(0)	 ;  i,
+.L12:
+	ldi r24,lo8(100)	 ; ,
+	ldi r25,hi8(100)	 ; ,
+	rcall _Z4waitj	 ; 
+	adiw r28,1	 ;  i,
+	ldi r24,hi8(1000)	 ; ,
+	cpi r28,lo8(1000)	 ;  i,
+	cpc r29,r24	 ;  i,
+	brne .L12	 ; ,
+	rjmp .L13	 ; 
 	.size	main, .-main
-.global	temp
-.global	temp
-	.section .bss
-	.type	temp, @object
-	.size	temp, 2
-temp:
-	.skip 2,0

@@ -1,11 +1,4 @@
 #include <avr/io.h>
-volatile int temp;
-#ifndef cbi
-#define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
-#endif
-#ifndef sbi
-#define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
-#endif
 
 #define dwPH PORTA |=  _BV(0);
 #define dwPL PORTA &= ~_BV(0);
@@ -18,13 +11,7 @@ volatile int temp;
 //pull-up function for all pins in all ports when set.
 
 
-#define drA3 (PINC & _BV(3))
-
 #define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
-
-
-#define dwP13H PORTB |=  _BV(5);
-#define dwP13L PORTB &= ~_BV(5);
 
 void ClockInit()
 {
