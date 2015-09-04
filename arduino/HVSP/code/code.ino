@@ -341,3 +341,132 @@ int shiftOut2(byte val, byte val1)
   return inBits;
 }
 
+
+
+
+Chip Erase
+SDI
+SII
+SDO
+0_1000_0000_00
+0_0100_1100_00
+x_xxxx_xxxx_xx
+0_0000_0000_00
+0_0110_0100_00
+x_xxxx_xxxx_xx
+0_0000_0000_00
+0_0110_1100_00
+x_xxxx_xxxx_xx
+Wait after Instr.3 until SDO
+goes high for the Chip Erase
+cycle to finish.
+Load “Write
+Flash”
+Command
+SDI
+SII
+SDO
+0_0001_0000_00
+0_0100_1100_00
+x_xxxx_xxxx_xx
+Enter Flash Programming code.
+Load Flash
+Page Buffer
+SDI
+SII
+SDO
+0_ bbbb_bbbb _00
+0_0000_1100_00
+x_xxxx_xxxx_xx
+0_eeee_eeee_00
+0_0010_1100_00
+x_xxxx_xxxx_xx
+0_0000_0000_00
+0_0110_1101_00
+x_xxxx_xxxx_xx
+0_0000_0000_00
+0_0110_1100_00
+x_xxxx_xxxx_xx
+Repeat after Instr. 1 - 7until the
+entire page buffer is filled or
+until all data within the page is
+filled.(2)
+SDI
+SII
+SDO
+0_dddd_dddd_00
+0_0011_1100_00
+x_xxxx_xxxx_xx
+0_0000_0000_00
+0_0111_1101_00
+x_xxxx_xxxx_xx
+0_0000_0000_00
+0_0111_1100_00
+x_xxxx_xxxx_xx
+Instr 5-7.
+Load Flash
+High Address
+and Program
+Page
+SDI
+SII
+SDO
+0_0000_000a_00
+0_0001_1100_00
+x_xxxx_xxxx_xx
+0_0000_0000_00
+0_0110_0100_00
+x_xxxx_xxxx_xx
+0_0000_0000_00
+0_0110_1100_00
+x_xxxx_xxxx_xx
+Wait after Instr 3 until SDO
+goes high. Repeat Instr. 2 - 3
+for each loaded Flash Page
+until the entire Flash or all data
+is programmed. Repeat Instr. 1
+for a new 256 byte page.(2)
+171
+8183F–AVR–06/12
+ATtiny24A/44A/84A
+Load “Read
+Flash”
+Command
+SDI
+SII
+SDO
+0_0000_0010_00
+0_0100_1100_00
+x_xxxx_xxxx_xx
+Enter Flash Read mode.
+Read Flash
+Low and High
+Bytes
+SDI
+SII
+SDO
+0_bbbb_bbbb_00
+0_0000_1100_00
+x_xxxx_xxxx_xx
+0_0000_000a_00
+0_0001_1100_00
+x_xxxx_xxxx_xx
+0_0000_0000_00
+0_0110_1000_00
+x_xxxx_xxxx_xx
+0_0000_0000_00
+0_0110_1100_00
+q_qqqq_qqqx_xx
+Repeat Instr. 1, 3 - 6 for each
+new address. Repeat Instr. 2 for
+a new 256 byte page.
+SDI
+SII
+SDO
+0_0000_0000_00
+0_0111_1000_00
+x_xxxx_xxxx_xx
+0_0000_0000_00
+0_0111_1100_00
+p_pppp_pppx_xx
+Instr 5 - 6.
