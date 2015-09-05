@@ -11,13 +11,15 @@
 #define  CLKOUT   6    // Connect to Serial Clock Input (B0 SCI) Pin 2
 #define  RST      7    // Output to level shifter for !RESET from transistor to Pin 1
 
-//VCC GND
-//B0  A0
-//B1  A1
-//RST A2
-//B2  A3
-//A7  A4
-//A6  A5
+//VCC 					GND
+//B0 (SCI)				A0 (GND)
+//B1  					A1 (GND)
+//RST (12V)				A2 (GND)
+//B2  					A3
+//A7  					A4 (SDO)/SCL
+//A6 (SDI) MOSI			A5 (SII)/MISO 
+
+
 
 //VCC B0(SCI) A6(SDI) A5(SII) A4(SDO)
 
