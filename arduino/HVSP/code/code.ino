@@ -1,9 +1,3 @@
-
-// Desired fuse configuration
-#define  HFUSE  0xDF
-#define  LFUSE  0x62   
-
-
 #define  INSTOUT  2    // Connect to Serial Instruction Input (A5 SII) Pin 6
 #define  DATAIN   3    // Connect to Serial Data Output (A4 SDO) Pin 7
 #define  VCC      4    // Connect to VCC Pin 8
@@ -20,9 +14,22 @@
 //A6 (SDI) MOSI			A5 (SII)/MISO 
 
 
-
 //VCC B0(SCI) A6(SDI) A5(SII) A4(SDO)
 
+
+//The Flash is organized in pages, see “Page Size” on page 162. When programming the Flash,
+//the program data is latched into a page buffer. This allows one page of program data to be programmed
+//simultaneously. The following procedure describes how to program the entire Flash
+//memory:
+//1. Load Command “Write Flash” (see Table 19-16 on page 171).
+//2. Load Flash Page Buffer.
+//3. Load Flash High Address and Program Page. Wait after Instr. 3 until SDO goes high for the “Page Programming” cycle to finish.
+//4. Repeat 2 through 3 until the entire Flash is programmed or until all data has been
+//programmed.
+//5. End Page Programming by Loading Command “No Operation”.
+//When writing or reading serial data to the ATtiny24/44/84, data is clocked on the rising edge of
+//the serial clock, see Figure 20-6 on page 184, Figure 19-3 on page 167 and Table 20-13 on
+//page 184 for details.
 
 
 //A0 GND
@@ -34,9 +41,6 @@
 //5->A6(SDI)
 //6->B0(SCI)
 //7->NPN 1k
-
-int inByte = 0;         // incoming serial byte Computer
-int inData = 0;         // incoming serial byte AVR
 
 void setup()
 {
@@ -56,261 +60,158 @@ void setup()
 
   // start serial port at 9600 bps:
   Serial.begin(9600);
-
-  establishContact();  // send a byte to establish contact until receiver responds 
-
 }
+
 
 
 void loop()
 {
-  // if we get a valid byte, run:
-  if (Serial.available() > 0) {
-    // get incoming byte:
-    inByte = Serial.read();
-    Serial.println(byte(inByte));
-    Serial.println("Entering programming Mode\n");
+  while(!Serial.available());
+  int cmd1 = Serial.read();
+  if(cmd1>='a'&&cmd1<='z'){}else{return;}
+  while(!Serial.available());
+  int cmd2 = Serial.read();
+  if(cmd2>='a'&&cmd2<='z'){}else{return;}
 
-    // Initialize pins to enter programming mode
-    pinMode(DATAIN, OUTPUT);  //Temporary
-    digitalWrite(DATAOUT, LOW);
-    digitalWrite(INSTOUT, LOW);
-    digitalWrite(DATAIN, LOW);
-    digitalWrite(RST, LOW);//HIGH  // Level shifter is inverting, this shuts off 12V
-
-    // Enter High-voltage Serial programming mode
-    digitalWrite(VCC, HIGH);  // Apply VCC to start programming process
-    delayMicroseconds(20);
-    digitalWrite(RST, HIGH); //LOW  //Turn on 12v
-    delayMicroseconds(10);
-    pinMode(DATAIN, INPUT);   //Release DATAIN
-    delayMicroseconds(300);
-
-    if(inByte=='w')
-    {
-      writeFuses();
-    }
-    if(inByte=='q')
-    {
-      writeFuses0();
-    } 
-    if(inByte=='e')
-    {
-      writeFusesf();
-    }    //Programming mode
+  if(cmd1=='t' && cmd2=='s')            //ts test
+  {
+    uint8_t val = GetByte();
+    Serial.print(val, HEX);
+  }
+  else if(cmd1=='s' && cmd2=='t')       //st Start
+  {
+    Start();
+    Serial.println("iStart OK.");
+  }
+  else if(cmd1=='e' && cmd2=='d')       //ed End
+  {
+    End();
+    Serial.println("iEnd OK.");
+  }
+  else if(cmd1=='e' && cmd2=='r')       //er Erase
+  {
     Erase();
-    readFuses();
-
-    Serial.println("Exiting programming Mode\n");
-    digitalWrite(CLKOUT, LOW);
-    digitalWrite(VCC, LOW);
-    digitalWrite(RST, LOW);//HIGH   //Turn off 12v
+    Serial.println("iErase Done.");
+  }
+  else if(cmd1=='r' && cmd2=='h')       //rh ReadHighFuses
+  {
+    uint8_t data = ReadHighFuses();
+    Serial.print(data, HEX);
+  }
+  else if(cmd1=='r' && cmd2=='l')       //rl ReadLowFuses
+  {
+    uint8_t data = ReadLowFuses();
+    Serial.print(data, HEX);
+  }
+  else if(cmd1=='r' && cmd2=='e')       //re ReadExtendedBits
+  {
+    uint8_t data = ReadExtendedBits();
+    Serial.print(data, HEX);
+  }
+  else if(cmd1=='r' && cmd2=='k')       //rk ReadLockBits
+  {
+    uint8_t data = ReadLockBits();
+    Serial.print(data, HEX);
+  }
+  else if(cmd1=='s' && cmd2=='i')       //si ReadSignatureBytes
+  {
+    uint8_t data;
+    data = ReadSignatureBytes(0);
+    Serial.print(data, HEX);
+    
+    data = ReadSignatureBytes(1);
+    Serial.print(data, HEX);
+    
+    data = ReadSignatureBytes(2);
+    Serial.print(data, HEX);
+  }
+  else if(cmd1=='w' && cmd2=='l')       //wl WriteLowFuses
+  {
+    uint8_t val = GetByte();
+    WriteLowFuses(val);
+    Serial.println("iWrite Low Fuses Done.");
+  }
+  else if(cmd1=='w' && cmd2=='h')       //wh WriteHighFuses
+  {
+    uint8_t val = GetByte();
+    WriteHighFuses(val);
+    Serial.println("iWrite High Fuses Done.");
+  }
+  else if(cmd1=='w' && cmd2=='e')       //we WriteExtendedBits
+  {
+    uint8_t val = GetByte();
+    WriteExtendedBits(val);
+    Serial.println("iWrite Extended Bits Done.");
+  }
+  else if(cmd1=='w' && cmd2=='k')       //wk WriteLockBits
+  {
+    uint8_t val = GetByte();
+    WriteLockBits(val);
+    Serial.println("iWrite Lock Bits Done.");
+  }
+  else if(cmd1=='w' && cmd2=='f')       //wf WriteFlash
+  {
+    WriteFlash();
+    Serial.println("iWrite Flash Done.");
+  }
+  else if(cmd1=='p' && cmd2=='b')       //pb LoadFlashPageBuffer
+  {
+    uint8_t valal = GetByte();
+    uint8_t valdl = GetByte();
+    uint8_t valdh = GetByte();
+    LoadFlashPageBuffer(valal, valdl, valdh);
+    Serial.println("iLoad Flash Page Buffer Done.");
+  }
+  else if(cmd1=='h' && cmd2=='a')       //ha LoadFlashHighAddress
+  {
+    uint8_t valah = GetByte();
+    LoadFlashHighAddress(valah);
+    Serial.println("iLoad Flash High Address and Program Page Done.");
+  }
+  else if(cmd1=='r' && cmd2=='f')       //rf ReadFlash
+  {
+    ReadFlash();
+    Serial.println("iRead Flash Done.");
+  }
+  else if(cmd1=='f' && cmd2=='b')       //fb ReadFlashLowAndHighBytes
+  {
+    uint8_t valal = GetByte();
+    uint8_t valah = GetByte();
+    uint16_t data = ReadFlashLowAndHighBytes(valah, valah);
+    Serial.print(data, HEX);
+  }
+  else if(cmd1=='n' && cmd2=='o')       //no NOP
+  {
+    NOP();
+    Serial.println("iNOP Done.");
   }
 }
 
-
-void establishContact() {
-  while (Serial.available() <= 0) {
-    Serial.println("Enter a character to continue");   // send an initial string
-    delay(1000);
+uint8_t GetByte(){
+  while(!Serial.available());
+  int vh = ConvBCD(Serial.read());
+  while(!Serial.available());
+  int vl = ConvBCD(Serial.read());
+  uint8_t val = (( vh << 4 ) & 0xF0 ) | (vl & 0x0F);
+  return val;
+}
+uint8_t ConvBCD(uint8_t val){
+  if(val>='0'&&val<='9')
+  {
+    val = val - '0';
   }
+  else if(val>='a'&&val<='f')
+  {
+    val = val - 'a' + 10;
+  }
+  else if(val>='A'&&val<='F')
+  {
+    val = val - 'A' + 10;
+  }
+  return val;
 }
-void writeFuses(){
-
-    //Write hfuse
-    Serial.println("Writing hfuse");
-    shiftOut2(0x40, 0x4C);
-    shiftOut2(HFUSE, 0x2C);
-    shiftOut2(0x00, 0x74);
-    shiftOut2(0x00, 0x7C);
-
-    //Write lfuse
-    Serial.println("Writing lfuse\n");
-    shiftOut2(0x40, 0x4C);
-    shiftOut2(LFUSE, 0x2C);
-    shiftOut2(0x00, 0x64);
-    shiftOut2(0x00, 0x6C);
-
-}
-
-void writeFusesf(){
-
-    //Write hfuse
-    Serial.println("Writing hfuse");
-    shiftOut2(0x40, 0x4C);
-    shiftOut2(0xFF, 0x2C);
-    shiftOut2(0x00, 0x74);
-    shiftOut2(0x00, 0x7C);
-
-    //Write lfuse
-    Serial.println("Writing lfuse\n");
-    shiftOut2(0x40, 0x4C);
-    shiftOut2(0xFF, 0x2C);
-    shiftOut2(0x00, 0x64);
-    shiftOut2(0x00, 0x6C);
-
-}
-void writeFuses0(){
-
-    //Write hfuse
-    Serial.println("Writing hfuse");
-    shiftOut2(0x40, 0x4C);
-    shiftOut2(0, 0x2C);
-    shiftOut2(0x00, 0x74);
-    shiftOut2(0x00, 0x7C);
-
-    //Write lfuse
-    Serial.println("Writing lfuse\n");
-    shiftOut2(0x40, 0x4C);
-    shiftOut2(0, 0x2C);
-    shiftOut2(0x00, 0x64);
-    shiftOut2(0x00, 0x6C);
-
-}
-
-void readFuses(){
-  //Read Signature Bytes
-  //SDI 0_0000_1000_00 0x04
-  //SII 0_0100_1100_00 0x4C
-  //SDO x_xxxx_xxxx_xx
-  //0_0000_00bb_00 0x?? 0,1,2
-  //0_0000_1100_00 0x0c
-  //x_xxxx_xxxx_xx
-  //0_0000_0000_00 0x00
-  //0_0110_1000_00 0x68
-  //x_xxxx_xxxx_xx
-  //0_0000_0000_00 0x00
-  //0_0110_1100_00 0x6C
-  //q_qqqq_qqqx_xx
-  //Repeats Instr 2 4 for each
-  //signature byte address.
-  shiftOut2(0x08, 0x4C);
-  shiftOut2(0x00, 0x0c);
-  shiftOut2(0x00, 0x68);
-  inData = shiftOut2(0x00, 0x6C);
-  Serial.print("Signature Bytes 0 ");
-  Serial.println(inData, HEX);
-  shiftOut2(0x08, 0x4C);
-  shiftOut2(0x01, 0x0c);
-  shiftOut2(0x00, 0x68);
-  inData = shiftOut2(0x00, 0x6C);
-  Serial.print("Signature Bytes 1 ");
-  Serial.println(inData, HEX);
-  shiftOut2(0x08, 0x4C);
-  shiftOut2(0x02, 0x0c);
-  shiftOut2(0x00, 0x68);
-  inData = shiftOut2(0x00, 0x6C);
-  Serial.print("Signature Bytes 2 ");
-  Serial.println(inData, HEX);
-  Serial.println(); 
-
-
-  //Read Fuse Low Bits
-  //SDI 0_0000_0100_00 0x04
-  //SII 0_0100_1100_00 0x4c
-  //SDO x_xxxx_xxxx_xx
-  //0_0000_0000_00 0x00
-  //0_0110_1000_00 0x68
-  //x_xxxx_xxxx_xx
-  //0_0000_0000_00 0x00
-  //0_0110_1100_00 0x6c
-  //A_9876_543x_xx
-  //Reading A - 3 = “0” means the
-  //Fuse bit is programmed.
-  shiftOut2(0x04, 0x4C);
-  shiftOut2(0x00, 0x68);
-  inData = shiftOut2(0x00, 0x6C);
-  Serial.print("Fuse Low Bits ");
-  Serial.println(inData, HEX);
-
-  //Read Fuse High Bits
-  //SDI 0_0000_0100_00 0x04
-  //SII 0_0100_1100_00 0x4c
-  //SDO x_xxxx_xxxx_xx
-  //0_0000_0000_00 0x00
-  //0_0111_1010_00 0x7A
-  //x_xxxx_xxxx_xx
-  //0_0000_0000_00 0x00
-  //0_0111_1100_00 0x7C
-  //I_HGFE_DCBx_xx
-  //Reading F - B = “0” means the
-  //Fuse bit is programmed.
-  shiftOut2(0x04, 0x4C);
-  shiftOut2(0x00, 0x7A);
-  inData = shiftOut2(0x00, 0x7C);//(0x00, 0x7E);
-  Serial.print("Fuse High Bits ");
-  Serial.println(inData, HEX);
-
-  //Read Fuse Extended Bits
-  //SDI 0_0000_0100_00 0x04
-  //SII 0_0100_1100_00 0x4C
-  //SDO x_xxxx_xxxx_xx
-  //0_0000_0000_00 0x00
-  //0_0110_1010_00 0x6A
-  //x_xxxx_xxxx_xx
-  //0_0000_0000_00 0x00
-  //0_0110_1110_00 0x6E
-  //x_xxxx_xxJx_xx
-  //Reading J = “0” means the
-  //Fuse bit is programmed.
-  shiftOut2(0x04, 0x4C);
-  shiftOut2(0x00, 0x6A);
-  inData = shiftOut2(0x00, 0x6E);
-  Serial.print("Fuse Extended Bits ");
-  Serial.println(inData, HEX);
-
-  //Read Lock Bits
-  //SDI 0_0000_0100_00 0x04
-  //SII 0_0100_1100_00 0x4C
-  //SDO x_xxxx_xxxx_xx
-  //0_0000_0000_00 0x00
-  //0_0111_1000_00 0x78
-  //x_xxxx_xxxx_xx
-  //0_0000_0000_00 0x00
-  //0_0110_1100_00 0x6C
-  //x_xxxx_x21x_xx
-  //Reading 2, 1 = “0” means the
-  //Lock bit is programmed.
-  shiftOut2(0x04, 0x4C);
-  shiftOut2(0x00, 0x78);
-  inData = shiftOut2(0x00, 0x6C);
-  Serial.print("Lock Bits ");
-  Serial.println(inData, HEX);
-  Serial.println(); 
-
-  
-
-}
-
-void Erase(){
-//Chip Erase
-//SDI
-//SII
-//SDO
-//0_1000_0000_00
-//0_0100_1100_00
-//x_xxxx_xxxx_xx
-//0_0000_0000_00
-//0_0110_0100_00
-//x_xxxx_xxxx_xx
-//0_0000_0000_00
-//0_0110_1100_00
-//x_xxxx_xxxx_xx
-//Wait after Instr.3 until SDO
-//goes high for the Chip Erase
-//cycle to finish.
-  
-
-}
-
-
-
-int shiftOut2(byte val, byte val1)
-{
-  int i;
-  int inBits = 0;
-  //Wait until DATAIN goes high
-  while (!digitalRead(DATAIN));
+uint8_t shiftOut2(byte val, byte val1){
+  uint8_t inBits = 0;
 
   //Start bit
   digitalWrite(DATAOUT, LOW);
@@ -318,7 +219,7 @@ int shiftOut2(byte val, byte val1)
   digitalWrite(CLKOUT, HIGH);
   digitalWrite(CLKOUT, LOW);
 
-  for (i = 0; i < 8; i++)  {
+  for (uint8_t i = 0; i < 8; i++)  {
 
     //msb first
     digitalWrite(DATAOUT, !!(val & (1 << (7 - i))));
@@ -343,132 +244,205 @@ int shiftOut2(byte val, byte val1)
   return inBits;
 }
 
+void Start(){
+  // Initialize pins to enter programming mode
+  pinMode(DATAIN, OUTPUT);  //Temporary
+  digitalWrite(DATAOUT, LOW);
+  digitalWrite(INSTOUT, LOW);
+  digitalWrite(DATAIN, LOW);
+  digitalWrite(RST, LOW);//HIGH  // Level shifter is inverting, this shuts off 12V
 
-
-
-Chip Erase
-SDI
-SII
-SDO
-0_1000_0000_00
-0_0100_1100_00
-x_xxxx_xxxx_xx
-0_0000_0000_00
-0_0110_0100_00
-x_xxxx_xxxx_xx
-0_0000_0000_00
-0_0110_1100_00
-x_xxxx_xxxx_xx
-Wait after Instr.3 until SDO
-goes high for the Chip Erase
-cycle to finish.
-Load “Write
-Flash”
-Command
-SDI
-SII
-SDO
-0_0001_0000_00
-0_0100_1100_00
-x_xxxx_xxxx_xx
-Enter Flash Programming code.
-Load Flash
-Page Buffer
-SDI
-SII
-SDO
-0_ bbbb_bbbb _00
-0_0000_1100_00
-x_xxxx_xxxx_xx
-0_eeee_eeee_00
-0_0010_1100_00
-x_xxxx_xxxx_xx
-0_0000_0000_00
-0_0110_1101_00
-x_xxxx_xxxx_xx
-0_0000_0000_00
-0_0110_1100_00
-x_xxxx_xxxx_xx
-Repeat after Instr. 1 - 7until the
-entire page buffer is filled or
-until all data within the page is
-filled.(2)
-SDI
-SII
-SDO
-0_dddd_dddd_00
-0_0011_1100_00
-x_xxxx_xxxx_xx
-0_0000_0000_00
-0_0111_1101_00
-x_xxxx_xxxx_xx
-0_0000_0000_00
-0_0111_1100_00
-x_xxxx_xxxx_xx
-Instr 5-7.
-Load Flash
-High Address
-and Program
-Page
-SDI
-SII
-SDO
-0_0000_000a_00
-0_0001_1100_00
-x_xxxx_xxxx_xx
-0_0000_0000_00
-0_0110_0100_00
-x_xxxx_xxxx_xx
-0_0000_0000_00
-0_0110_1100_00
-x_xxxx_xxxx_xx
-Wait after Instr 3 until SDO
-goes high. Repeat Instr. 2 - 3
-for each loaded Flash Page
-until the entire Flash or all data
-is programmed. Repeat Instr. 1
-for a new 256 byte page.(2)
-171
-8183F–AVR–06/12
-ATtiny24A/44A/84A
-Load “Read
-Flash”
-Command
-SDI
-SII
-SDO
-0_0000_0010_00
-0_0100_1100_00
-x_xxxx_xxxx_xx
-Enter Flash Read mode.
-Read Flash
-Low and High
-Bytes
-SDI
-SII
-SDO
-0_bbbb_bbbb_00
-0_0000_1100_00
-x_xxxx_xxxx_xx
-0_0000_000a_00
-0_0001_1100_00
-x_xxxx_xxxx_xx
-0_0000_0000_00
-0_0110_1000_00
-x_xxxx_xxxx_xx
-0_0000_0000_00
-0_0110_1100_00
-q_qqqq_qqqx_xx
-Repeat Instr. 1, 3 - 6 for each
-new address. Repeat Instr. 2 for
-a new 256 byte page.
-SDI
-SII
-SDO
-0_0000_0000_00
-0_0111_1000_00
-x_xxxx_xxxx_xx
-0_0000_0000_00
-0_0111_1100_00
-p_pppp_pppx_xx
-Instr 5 - 6.
+  // Enter High-voltage Serial programming mode
+  digitalWrite(VCC, HIGH);  // Apply VCC to start programming process
+  delayMicroseconds(20);
+  digitalWrite(RST, HIGH); //LOW  //Turn on 12v
+  delayMicroseconds(10);
+  pinMode(DATAIN, INPUT);   //Release DATAIN
+  delayMicroseconds(300);
+}
+void End(){
+  digitalWrite(CLKOUT, LOW);
+  digitalWrite(VCC, LOW);
+  digitalWrite(RST, LOW);//HIGH   //Turn off 12v
+}
+void NOP(){
+  //Load “No Operation” Command
+  //SDI  SII  SDO
+  //0_0000_0000_00  0_0100_1100_00  x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x4C);
+}
+void Erase(){
+  //Chip Erase
+  //0_1000_0000_00 0_0100_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x80, 0x4C);
+  //0_0000_0000_00 0_0110_0100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x64);
+  //0_0000_0000_00 0_0110_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x6C);
+  //Wait after Instr.3 until SDO goes high for the Chip Erase cycle to finish.
+  while(!digitalRead(DATAIN));//until SDO goes high.
+  //Load Command “No Operation”.
+  NOP();
+}
+uint8_t ReadLowFuses(){
+  //Read Fuse Low Bits
+  //0_0000_0100_00 0_0100_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x04, 0x4C);
+  //0_0000_0000_00 0_0110_1000_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x68);
+  //0_0000_0000_00 0_0110_1100_00 A_9876_543x_xx
+  return shiftOut2(0x00, 0x6C);
+  //Reading A - 3 = “0” means the Fuse bit is programmed.
+}
+uint8_t ReadHighFuses(){
+  //Read Fuse High Bits
+  //0_0000_0100_00 0_0100_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x04, 0x4C);
+  //0_0000_0000_00 0_0111_1010_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x7A);
+  //0_0000_0000_00 0_0111_1100_00 I_HGFE_DCBx_xx
+  return shiftOut2(0x00, 0x7C);
+  //Reading F - B = “0” means the Fuse bit is programmed.
+}
+uint8_t ReadExtendedBits(){
+  //Read Fuse Extended Bits
+  //0_0000_0100_00 0_0100_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x04, 0x4C);
+  //0_0000_0000_00 0_0110_1010_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x6A);
+  //0_0000_0000_00 0_0110_1110_00 x_xxxx_xxJx_xx
+  return shiftOut2(0x00, 0x6E);
+  //Reading J = “0” means the Fuse bit is programmed.
+}
+uint8_t ReadLockBits(){
+  //Read Lock Bits
+  //0_0000_0100_00 0_0100_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x04, 0x4C);
+  //0_0000_0000_00 0_0111_1000_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x78);
+  //0_0000_0000_00 0_0110_1100_00 x_xxxx_x21x_xx
+  return shiftOut2(0x00, 0x6C);
+  //Reading 2, 1 = “0” means the Lock bit is programmed.
+}
+uint8_t ReadSignatureBytes(uint8_t i){
+  //Read Signature Bytes
+  //0_0000_1000_00 0_0100_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x08, 0x4C);
+  //0_0000_00bb_00 0_0000_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(i, 0x0C);
+  //0_0000_0000_00 0_0110_1000_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x68);
+  //0_0000_0000_00 0_0110_1100_00 q_qqqq_qqqx_xx
+  return shiftOut2(0x00, 0x6C);
+  //Repeats Instr 2 4 for each signature byte address.
+}
+void WriteLowFuses(uint8_t val){
+  //Write Fuse Low Bits
+  //0_0100_0000_00 0_0100_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x40, 0x4C);
+  //0_A987_6543_00 0_0010_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(val, 0x2C);
+  //0_0000_0000_00 0_0110_0100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x64);
+  //0_0000_0000_00 0_0110_1100_00 x_xxxx_xxxx_xx  
+  shiftOut2(0x00, 0x6C);
+  //Wait after Instr. 4 until SDO goes high. Write A - 3 = “0” to program the Fuse bit.
+  while(!digitalRead(DATAIN));//until SDO goes high.
+}
+void WriteHighFuses(uint8_t val){
+  //Write Fuse High Bits
+  //0_0100_0000_00 0_0100_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x40, 0x4C);
+  //0_IHGF_EDCB_00 0_0010_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(val, 0x2C);
+  //0_0000_0000_00 0_0111_0100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x74);
+  //0_0000_0000_00 0_0111_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x7C);
+  //Wait after Instr. 4 until SDO goes high. Write F - B = “0” to program the Fuse bit.
+  while(!digitalRead(DATAIN));//until SDO goes high.
+}
+void WriteExtendedBits(uint8_t val){
+  //Write Fuse Extended Bits
+  //0_0100_0000_00 0_0100_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x40, 0x4C);
+  //0_0000_000J_00 0_0010_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(val, 0x2C);
+  //0_0000_0000_00 0_0110_0110_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x66);
+  //0_0000_0000_00 0_0110_1110_00 x_xxxx_xxxx_xx  
+  shiftOut2(0x00, 0x6E);
+  //Wait after Instr. 4 until SDO goes high. Write J = “0” to program the Fuse bit.
+  while(!digitalRead(DATAIN));//until SDO goes high.
+}
+void WriteLockBits(uint8_t val){
+  //Write Lock Bits
+  //0_0010_0000_00 0_0100_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x20, 0x4C);
+  //0_0000_0021_00 0_0010_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(val, 0x2C);
+  //0_0000_0000_00 0_0110_0100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x64);
+  //0_0000_0000_00 0_0110_1100_00 x_xxxx_xxxx_xx  
+  shiftOut2(0x00, 0x6C);
+  //Wait after Instr. 4 until SDO goes high. Write 2 - 1 = “0” to program the Lock Bit.
+  while(!digitalRead(DATAIN));//until SDO goes high.
+}
+void WriteFlash(){
+  //Load “Write Flash” Command
+  //0_0001_0000_00 0_0100_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x10, 0x4C);
+  //Enter Flash Programming code.
+}
+void LoadFlashPageBuffer(uint8_t addLow, uint8_t dataLow, uint8_t dataHigh){
+  //Load Flash Page Buffer
+  //0_bbbb_bbbb_00 0_0000_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(addLow, 0x0C);
+  //0_eeee_eeee_00 0_0010_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(dataLow, 0x2C);
+  //0_0000_0000_00 0_0110_1101_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x6D);
+  //0_0000_0000_00 0_0110_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x6C);
+  //0_dddd_dddd_00 0_0011_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(dataHigh, 0x3C);
+  //0_0000_0000_00 0_0111_1101_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x7D);
+  //0_0000_0000_00 0_0111_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x7C);
+  //Repeat after Instr. 1 - 7until the entire page buffer is filled or until all data within the page is filled.(2)
+}
+void LoadFlashHighAddress(uint8_t addHigh){
+  //Load Flash High Address and Program Page
+  //0_0000_000a_00 0_0001_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(addHigh, 0x1C);
+  //0_0000_0000_00 0_0110_0100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x64);
+  //0_0000_0000_00 0_0110_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x6C);
+  //Wait after Instr 3 until SDO goes high. Repeat Instr. 2 - 3 for each loaded Flash Page until the entire Flash or all data is programmed. Repeat Instr. 1 for a new 256 byte page.
+  while(!digitalRead(DATAIN));//until SDO goes high.
+}
+void ReadFlash(){
+  //Load “Read Flash” Command
+  //0_0000_0010_00 0_0100_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x02, 0x4C);
+  //Enter Flash Read mode.
+}
+uint16_t ReadFlashLowAndHighBytes(uint8_t addLow, uint8_t addHigh){
+  // Read Flash Low and High Bytes
+  //0_bbbb_bbbb_00 0_0000_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(addLow, 0x0C);
+  //0_0000_000a_00 0_0001_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(addHigh, 0x1C);
+  //0_0000_0000_00 0_0110_1000_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x68);
+  //0_0000_0000_00 0_0110_1100_00 q_qqqq_qqqx_xx
+  uint16_t lowBits = shiftOut2(0x00, 0x6C);
+  //0_0000_0000_00 0_0111_1000_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x78);
+  //0_0000_0000_00 0_0111_1100_00 p_pppp_pppx_xx
+  uint16_t highBits = shiftOut2(0x00, 0x7C);
+  //Repeat Instr. 1, 3 - 6 for each new address. Repeat Instr. 2 for a new 256 byte page.
+  return lowBits | (highBits << 8);
+}
