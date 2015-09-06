@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.IO.Ports;
 using System.Threading;
 using System.IO;
+using System.Globalization;
 
 namespace WindowsFormsApplication1
 {
@@ -46,6 +47,8 @@ namespace WindowsFormsApplication1
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
+			this.textBox2.DragDrop += new DragEventHandler(Form1_DragDrop);
+			this.textBox2.DragEnter += new DragEventHandler(Form1_DragEnter);
 		}
 
 		private void button1_Click(object sender, EventArgs e)
@@ -100,7 +103,55 @@ namespace WindowsFormsApplication1
 		string[] convt = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f" };
 		private string getHex(int val)//"ll"+"hh"
 		{
-			return convt[((val & 0xF0) >> 4)] + convt[((val & 0x0F))] + convt[((val & 0x0F00) >> 8)] + convt[((val & 0xF000) >> 12)];
+			return convt[((val & 0xF0) >> 4)] + convt[((val & 0x0F))] + convt[((val & 0xF000) >> 12)] + convt[((val & 0x0F00) >> 8)];
+		}
+
+		void Form1_DragEnter(object sender, DragEventArgs e)
+		{
+			e.Effect = DragDropEffects.All;
+		}
+		void Form1_DragDrop(object sender, DragEventArgs e)
+		{
+			string[] files = (string[])e.Data.GetData("FileDrop");
+			FileStream fs = new FileStream(files[0], FileMode.Open, FileAccess.Read);
+			StreamReader sr = new StreamReader(fs);
+			while (true)
+			{
+				string line = sr.ReadLine();
+				if (line == null) return;
+
+				int length = int.Parse(line.Substring(1, 2), NumberStyles.HexNumber);
+
+				string data = line.Substring(9, length * 2);
+
+				textBox2.Text += data;
+			}
+		}
+		private void textBox2_TextChanged(object sender, EventArgs e)
+		{
+
+		}
+
+		private void button3_Click(object sender, EventArgs e)
+		{
+			if(textBox2.Text.Length==0)return;
+
+			port.Write("st");//st Start
+			if (port.ReadLine() != "iStart OK.") return;
+			port.Write("er");//st Start
+			if (port.ReadLine() != "iStart OK.") return;
+			port.Write("wf");//wf WriteFlash
+			if (port.ReadLine() != "iWrite Flash Done.") return;
+
+			recev = true;
+			//16 words attiny24
+			for (int i = 0; i < textBox2.Text.Length/4; i++)
+			{
+				port.Write("fb" + getHex(i));
+			}
+			recev = false;
+			port.Write("ed");//ed End
+			if (port.ReadLine() != "iEnd OK.") return;
 		}
 	}
 }

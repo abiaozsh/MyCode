@@ -66,11 +66,13 @@
 			// 
 			// textBox2
 			// 
+			this.textBox2.AllowDrop = true;
 			this.textBox2.Location = new System.Drawing.Point(12, 41);
 			this.textBox2.Multiline = true;
 			this.textBox2.Name = "textBox2";
 			this.textBox2.Size = new System.Drawing.Size(1001, 608);
 			this.textBox2.TabIndex = 2;
+			this.textBox2.TextChanged += new System.EventHandler(this.textBox2_TextChanged);
 			// 
 			// button3
 			// 
@@ -80,6 +82,7 @@
 			this.button3.TabIndex = 3;
 			this.button3.Text = "write";
 			this.button3.UseVisualStyleBackColor = true;
+			this.button3.Click += new System.EventHandler(this.button3_Click);
 			// 
 			// button4
 			// 
