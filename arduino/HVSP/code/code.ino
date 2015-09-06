@@ -173,11 +173,11 @@ void loop()
     ReadFlash();
     Serial.println("iRead Flash Done.");
   }
-  else if(cmd1=='f' && cmd2=='b')       //fb ReadFlashLowAndHighBytes
+  else if(cmd1=='f' && cmd2=='b')       //fb ReadFlashLowAndHighBytes1
   {
     uint8_t valal = GetByte();
     uint8_t valah = GetByte();
-    uint16_t data = ReadFlashLowAndHighBytes(valah, valah);
+    uint16_t data = ReadFlashLowAndHighBytes(valal, valah);
     Serial.print(data, HEX);
   }
   else if(cmd1=='n' && cmd2=='o')       //no NOP
@@ -446,3 +446,4 @@ uint16_t ReadFlashLowAndHighBytes(uint8_t addLow, uint8_t addHigh){
   //Repeat Instr. 1, 3 - 6 for each new address. Repeat Instr. 2 for a new 256 byte page.
   return lowBits | (highBits << 8);
 }
+

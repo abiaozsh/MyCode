@@ -75,9 +75,9 @@ namespace WindowsFormsApplication1
 		private void button4_Click(object sender, EventArgs e)
 		{
 			port.Write("st");//st Start
-			if (port.ReadLine() != "iStart OK.") return;
+			if (port.ReadLine() != "iStart OK.\r") return;
 			port.Write("rf");//rf ReadFlash
-			if (port.ReadLine() != "iRead Flash Done.") return;
+            if (port.ReadLine() != "iRead Flash Done.\r") return;
 
 			recev = true;
 			for (int i = 0; i < 1024; i++)
@@ -86,16 +86,18 @@ namespace WindowsFormsApplication1
 			}
 			recev = false;
 			port.Write("ed");//ed End
-			if (port.ReadLine() != "iEnd OK.") return;
+            if (port.ReadLine() != "iEnd OK.\r") return;
+            textBox2.Text = sb.ToString();
+            sb.Clear();
 		}
-
+        StringBuilder sb = new StringBuilder();
 		void port_DataReceived(object sender, SerialDataReceivedEventArgs e)
 		{
 			if (recev)
 			{
 				while (port.BytesToRead > 0)
 				{
-					textBox2.Text += port.ReadChar();
+                    sb.Append((char)port.ReadChar());
 				}
 			}
 		}

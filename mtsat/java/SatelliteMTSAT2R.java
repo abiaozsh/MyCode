@@ -16,7 +16,7 @@ public class SatelliteMTSAT2R
 		SimpleDateFormat sdf3 = new SimpleDateFormat("yyyyMMddHH", Locale.ENGLISH);
 //MTSAT2R201209172332IR1.jpg
 		Calendar c = Calendar.getInstance();
-		Date d = sdf.parse("2012/11/01 00:00:00");
+		Date d = sdf.parse("2012/11/28 01:00:00");
 		c.setTime(d);
 		Date end = sdf.parse("2012/12/01 00:00:00");
 		Calendar cend = Calendar.getInstance();
