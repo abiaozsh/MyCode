@@ -195,7 +195,7 @@ void printHex(uint16_t val){//"ll"+"hh"
   Serial.print(convt[((val & 0xF000) >> 12)]);
   Serial.print(convt[((val & 0x0F00) >> 8)]);
 }
-void printHex(uint8_t val){//"ll"+"hh"
+void printHex(uint8_t val){//"hl"
   Serial.print(convt[((val & 0xF0) >> 4)]);
   Serial.print(convt[((val & 0x0F))]);
 }
