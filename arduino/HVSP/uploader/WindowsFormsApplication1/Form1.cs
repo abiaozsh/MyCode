@@ -17,8 +17,6 @@ namespace WindowsFormsApplication1
 	public partial class Form1 : Form
 	{
 		SerialPort port;
-		FileStream fs;
-		StreamWriter sw;
 		public Form1()
 		{
 			InitializeComponent();
@@ -34,17 +32,6 @@ namespace WindowsFormsApplication1
 			}
 		}
 
-		//private void PortWrite(int chn, int data)
-		//{
-		//	byte[] d = new byte[2];
-		//	d[0] = (byte)(0x050 | chn);
-		//	d[1] = (byte)(data & 0x0FF);
-		//	if (port != null && port.IsOpen)
-		//	{
-		//		port.Write(d, 1, 1);
-		//	}
-		//}
-
 		private void Form1_Load(object sender, EventArgs e)
 		{
 			this.textBox2.DragDrop += new DragEventHandler(Form1_DragDrop);
@@ -58,7 +45,6 @@ namespace WindowsFormsApplication1
 				//COM4为Arduino使用的串口号，需根据实际情况调整
 				port = new SerialPort(textBox1.Text, 9600, Parity.None, 8, StopBits.One);
 				port.Open();
-				port.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);
 			}
 
 		}
@@ -71,41 +57,112 @@ namespace WindowsFormsApplication1
 				port = null;
 			}
 		}
-		bool recev = false;
 		private void button4_Click(object sender, EventArgs e)
 		{
-			port.Write("st");//st Start
-			if (port.ReadLine() != "iStart OK.\r") return;
-			port.Write("rf");//rf ReadFlash
-            if (port.ReadLine() != "iRead Flash Done.\r") return;
+			StringBuilder sb = new StringBuilder();
+			portWrite("st");//st Start
+			checkOK();
+			portWrite("rf");//rf ReadFlash
+			checkOK();
 
-			recev = true;
 			for (int i = 0; i < 1024; i++)
 			{
-				port.Write("fb" + getHex(i));
+				portWrite("fb" + getHex4(i));
+				sb.Append(readFromPort(4));//先低后高
 			}
-			recev = false;
-			port.Write("ed");//ed End
-            if (port.ReadLine() != "iEnd OK.\r") return;
-            textBox2.Text = sb.ToString();
-            sb.Clear();
+
+			portWrite("ed");//ed End
+			checkOK();
+			textBox2.Text = sb.ToString();
 		}
-        StringBuilder sb = new StringBuilder();
-		void port_DataReceived(object sender, SerialDataReceivedEventArgs e)
+
+		private void button3_Click(object sender, EventArgs e)
 		{
-			if (recev)
+			//1. Load Command “Write Flash” (see Table 19-16 on page 171).
+			//2. Load Flash Page Buffer.
+			//3. Load Flash High Address and Program Page. Wait after Instr. 3 until SDO goes high for the “Page Programming” cycle to finish.
+			//4. Repeat 2 through 3 until the entire Flash is programmed or until all data has been
+			//programmed.
+			//5. End Page Programming by Loading Command “No Operation”.
+
+			if (textBox2.Text.Length == 0) return;
+
+			portWrite("st");//st Start
+			checkOK();
+			portWrite("er");//st Start
+			checkOK();
+			portWrite("wf");//wf WriteFlash
+			checkOK();
+
+			//16 words attiny24
+			int i;
+			for (i = 0; i < textBox2.Text.Length / 4; i++)
 			{
-				while (port.BytesToRead > 0)
+				//uint8_t valal = GetByte();
+				//uint8_t valdl = GetByte();
+				//uint8_t valdh = GetByte();
+				//Repeat after Instr. 1 - 7until the entire page buffer is filled or until all data within the page is filled.(2)
+				portWrite("pb" + getHex2(i) + textBox2.Text.Substring(i * 4, 4));//Load Flash Page Buffer//先低后高
+				checkOK();
+				if ((i + 1) % 16 == 0)//15 31 47
 				{
-                    sb.Append((char)port.ReadChar());
+					portWrite("ha" + getHex2(i >> 8));
+					checkOK();
+				}
+			}
+			if ((i + 1) % 16 != 0)//1515 31 47
+			{
+				portWrite("ha" + getHex2(i >> 8));
+				checkOK();
+			}
+
+			portWrite("no");//nop
+			checkOK();
+			portWrite("ed");//ed End
+			checkOK();
+		}
+
+		void checkOK()
+		{
+			if (readFromPort(2) != "OK")
+			{
+				textBox3.Text += "error!!\r\n";
+			}
+		}
+
+		void portWrite(string val)
+		{
+			if (port != null)
+			{
+				port.Write(val);
+			}
+			textBox3.Text += val + "\r\n";
+		}
+
+		string readFromPort(int count)
+		{
+			if (count <= 0) return "";
+			StringBuilder _sb = new StringBuilder();
+			while (true)
+			{
+				if (port.BytesToRead > 0)
+				{
+					_sb.Append((char)port.ReadChar());
+					count--;
+					if (count <= 0) return _sb.ToString();
 				}
 			}
 		}
 
+
 		string[] convt = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f" };
-		private string getHex(int val)//"ll"+"hh"
+		private string getHex4(int val)//"ll"+"hh"
 		{
 			return convt[((val & 0xF0) >> 4)] + convt[((val & 0x0F))] + convt[((val & 0xF000) >> 12)] + convt[((val & 0x0F00) >> 8)];
+		}
+		private string getHex2(int val)//"ll"+"hh"
+		{
+			return convt[((val & 0xF0) >> 4)] + convt[((val & 0x0F))];
 		}
 
 		void Form1_DragEnter(object sender, DragEventArgs e)
@@ -134,26 +191,9 @@ namespace WindowsFormsApplication1
 
 		}
 
-		private void button3_Click(object sender, EventArgs e)
+		private void textBox3_TextChanged(object sender, EventArgs e)
 		{
-			if(textBox2.Text.Length==0)return;
 
-			port.Write("st");//st Start
-			if (port.ReadLine() != "iStart OK.") return;
-			port.Write("er");//st Start
-			if (port.ReadLine() != "iStart OK.") return;
-			port.Write("wf");//wf WriteFlash
-			if (port.ReadLine() != "iWrite Flash Done.") return;
-
-			recev = true;
-			//16 words attiny24
-			for (int i = 0; i < textBox2.Text.Length/4; i++)
-			{
-				port.Write("fb" + getHex(i));
-			}
-			recev = false;
-			port.Write("ed");//ed End
-			if (port.ReadLine() != "iEnd OK.") return;
 		}
 	}
 }

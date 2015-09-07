@@ -76,83 +76,83 @@ void loop()
   if(cmd1=='t' && cmd2=='s')            //ts test
   {
     uint8_t val = GetByte();
-    Serial.print(val, HEX);
+    printHex(val);
   }
   else if(cmd1=='s' && cmd2=='t')       //st Start
   {
     Start();
-    Serial.println("iStart OK.");
+    Serial.print("OK");
   }
   else if(cmd1=='e' && cmd2=='d')       //ed End
   {
     End();
-    Serial.println("iEnd OK.");
+    Serial.print("OK");
   }
   else if(cmd1=='e' && cmd2=='r')       //er Erase
   {
     Erase();
-    Serial.println("iErase Done.");
+    Serial.print("OK");
   }
   else if(cmd1=='r' && cmd2=='h')       //rh ReadHighFuses
   {
     uint8_t data = ReadHighFuses();
-    Serial.print(data, HEX);
+    printHex(data);
   }
   else if(cmd1=='r' && cmd2=='l')       //rl ReadLowFuses
   {
     uint8_t data = ReadLowFuses();
-    Serial.print(data, HEX);
+    printHex(data);
   }
   else if(cmd1=='r' && cmd2=='e')       //re ReadExtendedBits
   {
     uint8_t data = ReadExtendedBits();
-    Serial.print(data, HEX);
+    printHex(data);
   }
   else if(cmd1=='r' && cmd2=='k')       //rk ReadLockBits
   {
     uint8_t data = ReadLockBits();
-    Serial.print(data, HEX);
+    printHex(data);
   }
   else if(cmd1=='s' && cmd2=='i')       //si ReadSignatureBytes
   {
     uint8_t data;
     data = ReadSignatureBytes(0);
-    Serial.print(data, HEX);
+    printHex(data);
     
     data = ReadSignatureBytes(1);
-    Serial.print(data, HEX);
+    printHex(data);
     
     data = ReadSignatureBytes(2);
-    Serial.print(data, HEX);
+    printHex(data);
   }
   else if(cmd1=='w' && cmd2=='l')       //wl WriteLowFuses
   {
     uint8_t val = GetByte();
     WriteLowFuses(val);
-    Serial.println("iWrite Low Fuses Done.");
+    Serial.print("OK");
   }
   else if(cmd1=='w' && cmd2=='h')       //wh WriteHighFuses
   {
     uint8_t val = GetByte();
     WriteHighFuses(val);
-    Serial.println("iWrite High Fuses Done.");
+    Serial.print("OK");
   }
   else if(cmd1=='w' && cmd2=='e')       //we WriteExtendedBits
   {
     uint8_t val = GetByte();
     WriteExtendedBits(val);
-    Serial.println("iWrite Extended Bits Done.");
+    Serial.print("OK");
   }
   else if(cmd1=='w' && cmd2=='k')       //wk WriteLockBits
   {
     uint8_t val = GetByte();
     WriteLockBits(val);
-    Serial.println("iWrite Lock Bits Done.");
+    Serial.print("OK");
   }
   else if(cmd1=='w' && cmd2=='f')       //wf WriteFlash
   {
     WriteFlash();
-    Serial.println("iWrite Flash Done.");
+    Serial.print("OK");
   }
   else if(cmd1=='p' && cmd2=='b')       //pb LoadFlashPageBuffer
   {
@@ -160,33 +160,45 @@ void loop()
     uint8_t valdl = GetByte();
     uint8_t valdh = GetByte();
     LoadFlashPageBuffer(valal, valdl, valdh);
-    Serial.println("iLoad Flash Page Buffer Done.");
+    Serial.print("OK");
   }
   else if(cmd1=='h' && cmd2=='a')       //ha LoadFlashHighAddress
   {
     uint8_t valah = GetByte();
     LoadFlashHighAddress(valah);
-    Serial.println("iLoad Flash High Address and Program Page Done.");
+    Serial.print("OK");
   }
   else if(cmd1=='r' && cmd2=='f')       //rf ReadFlash
   {
     ReadFlash();
-    Serial.println("iRead Flash Done.");
+    Serial.print("OK");
   }
   else if(cmd1=='f' && cmd2=='b')       //fb ReadFlashLowAndHighBytes1
   {
     uint8_t valal = GetByte();
     uint8_t valah = GetByte();
     uint16_t data = ReadFlashLowAndHighBytes(valal, valah);
-    Serial.print(data, HEX);
+    printHex(data);
   }
   else if(cmd1=='n' && cmd2=='o')       //no NOP
   {
     NOP();
-    Serial.println("iNOP Done.");
+    Serial.print("OK");
   }
 }
 
+char convt[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+void printHex(uint16_t val){//"ll"+"hh"
+  Serial.print(convt[((val & 0xF0) >> 4)]);
+  Serial.print(convt[((val & 0x0F))]);
+  Serial.print(convt[((val & 0xF000) >> 12)]);
+  Serial.print(convt[((val & 0x0F00) >> 8)]);
+}
+void printHex(uint8_t val){//"ll"+"hh"
+  Serial.print(convt[((val & 0xF0) >> 4)]);
+  Serial.print(convt[((val & 0x0F))]);
+}
 uint8_t GetByte(){
   while(!Serial.available());
   int vh = ConvBCD(Serial.read());
