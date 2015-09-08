@@ -59,7 +59,7 @@ void setup()
   digitalWrite(DATAIN, LOW);
 
   // start serial port at 9600 bps:
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 
@@ -187,7 +187,7 @@ void loop()
   }
 }
 
-char convt[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+char convt[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
 void printHex(uint16_t val){//"ll"+"hh"
   Serial.print(convt[((val & 0xF0) >> 4)]);
