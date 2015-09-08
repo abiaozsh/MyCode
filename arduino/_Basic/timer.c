@@ -34,32 +34,17 @@ void wait(unsigned int ticks)
 
 int main(void)
 {
+
   ClockInit();
   TimerInit();
   DDRA |= _BV(0);
-  //DDRA = 0xFF;
-  //DDRB = 0x07;
   
   for (;;) {
     PORTA |= _BV(0);
-    wait(3906);//0.5s
+    wait(3906);
     PORTA &= ~_BV(0);
     wait(3906);
     
-    /*
-    PORTA |= _BV(0);wait(1000);PORTA &= ~_BV(0);wait(1000);
-    PORTA |= _BV(1);wait(1000);PORTA &= ~_BV(1);wait(1000);
-    PORTA |= _BV(2);wait(1000);PORTA &= ~_BV(2);wait(1000);
-    PORTA |= _BV(3);wait(1000);PORTA &= ~_BV(3);wait(1000);
-    PORTA |= _BV(4);wait(1000);PORTA &= ~_BV(4);wait(1000);
-    PORTA |= _BV(5);wait(1000);PORTA &= ~_BV(5);wait(1000);
-    PORTA |= _BV(6);wait(1000);PORTA &= ~_BV(6);wait(1000);
-    PORTA |= _BV(7);wait(1000);PORTA &= ~_BV(7);wait(1000);
-    
-    PORTB |= _BV(0);wait(1000);PORTB &= ~_BV(0);wait(1000);
-    PORTB |= _BV(1);wait(1000);PORTB &= ~_BV(1);wait(1000);
-    PORTB |= _BV(2);wait(1000);PORTB &= ~_BV(2);wait(1000);
-    */
   }
 }
 

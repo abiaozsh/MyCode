@@ -15,7 +15,6 @@ namespace Uploader
 			try
 			{
 
-
 				port = new SerialPort(args[0], 115200, Parity.None, 8, StopBits.One);
 				port.Open();
 
@@ -42,10 +41,15 @@ namespace Uploader
 
 				//check signature
 				{
-					portWrite("si");
+                    portWrite("st");//st Start
+                    checkOK();
+                    portWrite("si");
 					string sig = readFromPort(6);
 					Console.WriteLine(sig);
-				}
+                    //1E910B
+                    portWrite("ed");//ed End
+                    checkOK();
+                }
 
 				//write
 				{
@@ -70,7 +74,7 @@ namespace Uploader
 						//uint8_t valdl = GetByte();
 						//uint8_t valdh = GetByte();
 						//Repeat after Instr. 1 - 7until the entire page buffer is filled or until all data within the page is filled.(2)
-						Console.WriteLine(sdata.Substring(i * 4, 4));
+						Console.Write(sdata.Substring(i * 4, 4));
 						portWrite("pb" + getHex2(i) + sdata.Substring(i * 4, 4));//Load Flash Page Buffer//先低后高
 						checkOK();
 						if ((i + 1) % 16 == 0)//15 31 47
@@ -79,7 +83,7 @@ namespace Uploader
 							checkOK();
 						}
 					}
-					if ((i + 1) % 16 != 0)//1515 31 47
+					if (i % 16 != 0)//1515 31 47
 					{
 						portWrite("ha" + getHex2(i >> 8));
 						checkOK();
@@ -104,7 +108,7 @@ namespace Uploader
 						portWrite("fb" + getHex4(i));
 						string sret = readFromPort(4);
 						sbresult.Append(sret);//先低后高
-						Console.WriteLine(sret);
+						Console.Write(sret);
 					}
 
 					portWrite("ed");//ed End

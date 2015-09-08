@@ -2,8 +2,8 @@
 #define  DATAIN   3    // Connect to Serial Data Output (A4 SDO) Pin 7
 #define  VCC      4    // Connect to VCC Pin 8
 #define  DATAOUT  5    // Connect to Serial Data Input (A6 SDI) Pin 5 
-#define  CLKOUT   6    // Connect to Serial Clock Input (B0 SCI) Pin 2
-#define  RST      7    // Output to level shifter for !RESET from transistor to Pin 1
+#define  CLKOUT   8    // 6 Connect to Serial Clock Input (B0 SCI) Pin 2
+#define  RST      9    // 7 Output to level shifter for !RESET from transistor to Pin 1
 
 //VCC 					GND
 //B0 (SCI)				A0 (GND)

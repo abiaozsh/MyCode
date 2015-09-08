@@ -16,7 +16,7 @@ int main(void) {
 	DDRA |= _BV(0);
 	
 	TCCR1A = 0;
-	TCCR1B = 2;
+	TCCR1B = 1;
 	TIMSK1 = _BV(TOIE1);
 	
 //  TCCR0A = 0;
@@ -41,7 +41,6 @@ void ClockInit() {
 }
 
 ISR(TIM1_OVF_vect){
-	PORTA |= _BV(0);
-	while(TCNT1<1000);
-	PORTA &= ~_BV(0);
+	PINA |= _BV(0);
+
 }
