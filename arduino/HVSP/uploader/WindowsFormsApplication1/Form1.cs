@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO.Ports;
@@ -78,48 +77,6 @@ namespace WindowsFormsApplication1
 
 		private void button3_Click(object sender, EventArgs e)
 		{
-			//1. Load Command “Write Flash” (see Table 19-16 on page 171).
-			//2. Load Flash Page Buffer.
-			//3. Load Flash High Address and Program Page. Wait after Instr. 3 until SDO goes high for the “Page Programming” cycle to finish.
-			//4. Repeat 2 through 3 until the entire Flash is programmed or until all data has been
-			//programmed.
-			//5. End Page Programming by Loading Command “No Operation”.
-
-			if (textBox2.Text.Length == 0) return;
-
-			portWrite("st");//st Start
-			checkOK();
-			portWrite("er");//st Start
-			checkOK();
-			portWrite("wf");//wf WriteFlash
-			checkOK();
-
-			//16 words attiny24
-			int i;
-			for (i = 0; i < textBox2.Text.Length / 4; i++)
-			{
-				//uint8_t valal = GetByte();
-				//uint8_t valdl = GetByte();
-				//uint8_t valdh = GetByte();
-				//Repeat after Instr. 1 - 7until the entire page buffer is filled or until all data within the page is filled.(2)
-				portWrite("pb" + getHex2(i) + textBox2.Text.Substring(i * 4, 4));//Load Flash Page Buffer//先低后高
-				checkOK();
-				if ((i + 1) % 16 == 0)//15 31 47
-				{
-					portWrite("ha" + getHex2(i >> 8));
-					checkOK();
-				}
-			}
-			if ((i + 1) % 16 != 0)//1515 31 47
-			{
-				portWrite("ha" + getHex2(i >> 8));
-				checkOK();
-			}
-
-			portWrite("no");//nop
-			checkOK();
-			portWrite("ed");//ed End
-			checkOK();
 		}
 
 		void checkOK()
