@@ -14,7 +14,6 @@ namespace Uploader
 		{
 			try
 			{
-
 				port = new SerialPort(args[0], 115200, Parity.None, 8, StopBits.One);
 				port.Open();
 
@@ -41,16 +40,20 @@ namespace Uploader
 
 				//check signature
 				{
-                    portWrite("st");//st Start
-                    checkOK();
-                    portWrite("si");
+					portWrite("st");//st Start
+					checkOK();
+					portWrite("si");
 					string sig = readFromPort(6);
 					Console.WriteLine(sig);
-                    //1E910B
-                    portWrite("ed");//ed End
-                    checkOK();
-                }
-
+					//1E910B
+					portWrite("ed");//ed End
+					checkOK();
+					if (sig != "1E910B")
+					{
+						Console.WriteLine("Signature error!!!");
+						return;
+					}
+				}
 				//write
 				{
 					//1. Load Command “Write Flash” (see Table 19-16 on page 171).
@@ -83,7 +86,7 @@ namespace Uploader
 							checkOK();
 						}
 					}
-					if (i % 16 != 0)//1515 31 47
+					if (i % 16 != 0)//15 31 47
 					{
 						portWrite("ha" + getHex2(i >> 8));
 						checkOK();
@@ -94,6 +97,7 @@ namespace Uploader
 					portWrite("ed");//ed End
 					checkOK();
 				}
+				Console.WriteLine();
 
 				//read
 				StringBuilder sbresult = new StringBuilder();
@@ -114,6 +118,7 @@ namespace Uploader
 					portWrite("ed");//ed End
 					checkOK();
 				}
+				Console.WriteLine();
 
 				if (sdata != sbresult.ToString())
 				{

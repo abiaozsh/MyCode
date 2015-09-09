@@ -1,10 +1,11 @@
-rem set arduinopath=C:\Program Files (x86)\Arduino
-set arduinopath=C:\Program Files\Arduino
+@echo off
+set arduinopath=C:\Program Files (x86)\Arduino
+rem set arduinopath=C:\Program Files\Arduino
 set comPort=COM5
 set filename=lamp
 
 del %filename%.hex
-del %filename%.ii
+del %filename%.i
 del %filename%.o
 del %filename%.s
 del a.out
