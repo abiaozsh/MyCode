@@ -31,9 +31,9 @@ int main(void)
   
   uint8_t status = 0;//off
   
-  uint8_t lastVal = DDRA;
+  uint8_t lastVal = PINA&0x1E;
   for (;;) {
-    uint8_t val = DDRA;
+    uint8_t val = PINA&0x1E;
     
     if(val!=lastVal)
     {
