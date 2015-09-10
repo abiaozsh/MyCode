@@ -1,3 +1,4 @@
+@echo off
 del LED10.hex
 del LED10.ii
 del LED10.o

@@ -1,14 +1,20 @@
-del serial.hex
-del serial.ii
-del serial.o
-del serial.s
-del a.out
+@echo off
 set arduinopath=C:\Program Files (x86)\Arduino
 rem set arduinopath=C:\Program Files\Arduino
-set comPort=COM21
-"%arduinopath%\hardware\tools\avr\bin\avr-g++" -help
-"%arduinopath%\hardware\tools\avr\bin\avr-g++" -Os -mmcu=attiny24 -save-temps -fverbose-asm -I"%arduinopath%\hardware\arduino\cores\arduino" serial.cpp
-"%arduinopath%\hardware\tools\avr\bin\avr-g++" -Os -mmcu=attiny24                           -I"%arduinopath%\hardware\arduino\cores\arduino" serial.cpp -o serial.o
-"%arduinopath%\hardware\tools\avr\bin\avr-objcopy" -O ihex serial.o serial.hex
-"%arduinopath%\hardware\tools\avr\bin\avrdude" -C"%arduinopath%\hardware\tools\avr\etc\avrdude.conf" -pattiny24 -cstk500v1 -P\\.\%comPort% -b19200 -Uflash:w:serial.hex:i 
+set comPort=COM5
+set filename=serial
+set comptype=g++
+set extptype=cpp
+
+del %filename%.hex
+del %filename%.i
+del %filename%.o
+del %filename%.s
+del a.out
+"%arduinopath%\hardware\tools\avr\bin\avr-%comptype%" -Os -fno-inline -mmcu=attiny24 -save-temps -fverbose-asm -I"%arduinopath%\hardware\arduino\cores\arduino" %filename%.%extptype%
+"%arduinopath%\hardware\tools\avr\bin\avr-%comptype%" -Os -fno-inline -mmcu=attiny24                           -I"%arduinopath%\hardware\arduino\cores\arduino" %filename%.%extptype% -o %filename%.o
+"%arduinopath%\hardware\tools\avr\bin\avr-objcopy" -O ihex %filename%.o %filename%.hex
+rem "%arduinopath%\hardware\tools\avr\bin\avrdude" -C"%arduinopath%\hardware\tools\avr\etc\avrdude.conf" -pattiny24 -cstk500v1 -P\\.\%comPort% -b19200 -Uflash:w:%filename%.hex:i 
+"%arduinopath%\Uploader.exe" %comPort% %filename%.hex
+"%arduinopath%\hardware\tools\avr\bin\avr-size" %filename%.hex
 pause

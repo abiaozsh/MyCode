@@ -488,7 +488,10 @@ void Adjust(){
   uint8_t i;
   for(i=0;i<sizeof(CheckTable);i+=4)
   {
-    if((DS1307_DATA[pgm_read_byte_near(CheckTable+i)]&pgm_read_byte_near(CheckTable+i+1))==pgm_read_byte_near(CheckTable+i+2))DS1307_DATA[pgm_read_byte_near(CheckTable+i)]-=pgm_read_byte_near(CheckTable+i+3);
+    if((DS1307_DATA[pgm_read_byte_near(CheckTable+i)]&pgm_read_byte_near(CheckTable+i+1))==pgm_read_byte_near(CheckTable+i+2))
+    {
+      DS1307_DATA[pgm_read_byte_near(CheckTable+i)]-=pgm_read_byte_near(CheckTable+i+3);
+    }
   }
   
   DS1307_DATA[DS1307_DOW]&=0x0F;

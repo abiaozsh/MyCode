@@ -1,13 +1,20 @@
-del motor6.hex
-del motor6.ii
-del motor6.o
-del motor6.s
+@echo off
+set arduinopath=C:\Program Files (x86)\Arduino
+rem set arduinopath=C:\Program Files\Arduino
+set comPort=COM5
+set filename=motor6
+set comptype=g++
+set extptype=cpp
+
+del %filename%.hex
+del %filename%.i
+del %filename%.o
+del %filename%.s
 del a.out
-rem set arduinopath=C:\Program Files (x86)\Arduino
-set arduinopath=C:\Program Files\Arduino
-set comPort=COM8
-"%arduinopath%\hardware\tools\avr\bin\avr-g++" -Os -mmcu=attiny24 -save-temps -fverbose-asm -I"%arduinopath%\hardware\arduino\cores\arduino" motor6.cpp
-"%arduinopath%\hardware\tools\avr\bin\avr-g++" -Os -mmcu=attiny24                           -I"%arduinopath%\hardware\arduino\cores\arduino" motor6.cpp -o motor6.o
-"%arduinopath%\hardware\tools\avr\bin\avr-objcopy" -O ihex motor6.o motor6.hex
-"%arduinopath%\hardware\tools\avr\bin\avrdude" -C"%arduinopath%\hardware\tools\avr\etc\avrdude.conf" -pattiny24 -cstk500v1 -P\\.\%comPort% -b19200 -Uflash:w:motor6.hex:i 
+"%arduinopath%\hardware\tools\avr\bin\avr-%comptype%" -Os -fno-inline -mmcu=attiny24 -save-temps -fverbose-asm -I"%arduinopath%\hardware\arduino\cores\arduino" %filename%.%extptype%
+"%arduinopath%\hardware\tools\avr\bin\avr-%comptype%" -Os -fno-inline -mmcu=attiny24                           -I"%arduinopath%\hardware\arduino\cores\arduino" %filename%.%extptype% -o %filename%.o
+"%arduinopath%\hardware\tools\avr\bin\avr-objcopy" -O ihex %filename%.o %filename%.hex
+rem "%arduinopath%\hardware\tools\avr\bin\avrdude" -C"%arduinopath%\hardware\tools\avr\etc\avrdude.conf" -pattiny24 -cstk500v1 -P\\.\%comPort% -b19200 -Uflash:w:%filename%.hex:i 
+"%arduinopath%\Uploader.exe" %comPort% %filename%.hex
+"%arduinopath%\hardware\tools\avr\bin\avr-size" %filename%.hex
 pause
