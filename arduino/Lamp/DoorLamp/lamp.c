@@ -2,32 +2,40 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
+//2 daylight power out
+//3 switch power out
+//4 daylight analog in
+//5 switch in
+//B0 lamp out
+
+#define PowerOn DDRA |= _BV(3)
+#define PowerOn DDRA |= _BV(3)
+
 void ClockInit();
 
 int main(void) {
-	ClockInit();
+  ClockInit();
 
-	DDRA = 0;PORTA = 0;//all input
-	DDRB = 0;PORTB = 0;//all input
-
-	DDRA |= _BV(0);
-	
-	TCCR0A = 0;
-	TCCR0B = 3;
-	TIMSK0 = _BV(TOIE1);
-	
-	sei();
-	
-	PRR = _BV(PRADC) | _BV(PRUSI);
+  DDRA |= _BV(0);
+  
+  TCCR0A = 0;
+  TCCR0B = 3;
+  TIMSK0 = _BV(TOIE1);
+  
+  sei();
+  
+  PRR = _BV(PRADC) | _BV(PRUSI);
   MCUCR |= _BV(SE);
   ACSR |= _BV(ACD);
   
-	//主循环
-	while(1)
-	{
-		asm volatile("sleep");
-	}
+  //主循环
+  while(1)
+  {
+    asm volatile("sleep");
+  }
 }
+
+uint16_t daylightCount = 0;
 
 void ClockInit() {
 	CLKPR = _BV(CLKPCE);//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
@@ -36,7 +44,22 @@ void ClockInit() {
 }
 
 ISR(TIM0_OVF_vect){
+  daylightCount++;
+  if(daylightCount)
 	PINA |= _BV(0);
+}
+
+uint16_t ARead(uint8_t pin)
+{
+  ADCSRA |= _BV(ADEN);
+  ADMUX = pin;
+
+	sbi(ADCSRA, ADSC);
+
+	while (bit_is_set(ADCSRA, ADSC));
+
+  ADCSRA &= ~_BV(ADEN);
+	return ADC;
 }
 
 /*
