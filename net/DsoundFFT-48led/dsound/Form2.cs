@@ -138,6 +138,11 @@ namespace dsound
 			}
 		}
 
+		private void trackBar1_Scroll(object sender, EventArgs e)
+		{
+			sr.amp = (float)Math.Exp(trackBar1.Value/10f)/10000;
+		}
+
 
 
 	}

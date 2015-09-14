@@ -14,7 +14,7 @@ namespace dsound
 		public int[,] spect = new int[512, 512];
 		public int curLine = 0;
 
-
+		public float amp = 0;
 
 		public const int cNotifyNum = 16;       //缓冲队列的数目
 		private int mNextCuptureOffset = 0;     //该次录音缓冲去的起始点
@@ -241,9 +241,9 @@ namespace dsound
 					{
 						break;
 					}
-					float j = result[i] / n / 32;// /256
+					float j = result[i] * amp;// /256
 
-					spect[curLine, i] = (int)(j * 255);
+					spect[curLine, i] = (int)(j);
 				}
 			}
 
