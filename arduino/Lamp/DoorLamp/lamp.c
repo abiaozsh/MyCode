@@ -2,22 +2,25 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
-//1 daylight analog in
-//2 switch digital in
-//3 daylight power out
-//4 switch power out
-//B0 lamp out1
-//B1 lamp out2
+//mos增加下拉电阻  二极管参考电压
+
+//gnd
+#define ledV    0 //led v--  out
+#define senseIN 1 //sense in
+#define ledIN   2 //led in
+#define senseV  3 //sense v--
+#define voltIN  4 //volt sense
+#define voltV   5 //volt sense v--
+//
+//vcc
+//b0
+//b1
+//rst
+//b2
+//a7 serial out
+//a6
 
 
-
-
-
-
-
-#include <avr/io.h>
-#include <avr/pgmspace.h>
-#include <avr/interrupt.h>
 
 #define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
 
@@ -25,31 +28,35 @@ void ClockInit();
 uint16_t ARead(uint8_t pin);
 
 int main(void) {
-	ClockInit();
-	sei();
+  ClockInit();
+  sei();
 
-	DDRA = 0;PORTA = 0;//all input
-	DDRB = 0;PORTB = 0;//all input
-	
-	uint8_t IsDaylight = 0;
+  DDRA = 0;PORTA = 0;//all input
+  DDRB = 0;PORTB = 0;//all input
+
+  uint8_t IsDaylight = 0;
   uint8_t DaylightCount = 0;
-	PRR = _BV(PRADC) | _BV(PRUSI);
+  PRR = _BV(PRADC) | _BV(PRUSI);
   MCUCR |= _BV(SE);
   MCUCR |= _BV(SM1);
   ACSR |= _BV(ACD);
   WDTCSR |= _BV(WDCE);
   WDTCSR |= _BV(WDP1);//0 0 1 0 8K cycles 0.0625 s
   WDTCSR |= _BV(WDIE);//0 1 Running Interrupt
+  TCCR1A = 0;
+  TCCR1B = 2;//  1/8
+  TCCR1C = 0;
+  TIMSK1 = 0;
 
   while(1)
   {
     DaylightCount++;
     if(DaylightCount==32)//2s check daylight
     {
-      DDRA |= _BV(3);
-      uint16_t val = ARead(1);
-      DDRA &= ~_BV(3);
-      if(val>512)
+      DDRA |= _BV(senseV);
+      uint16_t val = ARead(senseIN);
+      DDRA &= ~_BV(senseV);
+      if(val>512)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       {
         IsDaylight = 1;
       }
@@ -61,28 +68,39 @@ int main(void) {
     }
     if(IsDaylight)
     {
-      DDRA |= _BV(4);
-      uint8_t doorOpen = PINA & _BV(2);
-      DDRA &= ~_BV(4);
-      if(doorOpen)
+      DDRA |= _BV(ledV);
+      uint8_t doorOpen = PINA & _BV(ledIN);
+      DDRA &= ~_BV(ledV);
+      if(doorOpen)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       {
         DDRB |= _BV(0);
         DDRB |= _BV(1);
 
-        PORTA |= _BV(0);
-        TCCR1A = 0;
-        TCCR1B = 2;//  1/8
-        TCCR1C = 0;
-        TIMSK1 = 0;
-        TCNT1 = 0;//timer reset
-        TIFR1 |= _BV(TOV1);//overflow flg reset
-        while(currTick<10)
-        {
-          ;
-        }
-        PORTA &= ~_BV(0);
-
+        uint16_t volt;
+        DDRA |= _BV(voltV);
+        volt = ARead(voltIN);
+        DDRA &= ~_BV(voltV);
         
+        uint16_t i;
+        for(i=0;i<100;i++)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        {
+          if(volt<512)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+          {
+            PORTB |= _BV(0);//open lamp1
+            DDRA |= _BV(voltV);
+            volt = ARead(voltIN);
+            DDRA &= ~_BV(voltV);
+            PORTB &= ~_BV(0);//close lamp1
+          }
+          if(volt<512)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+          {
+            PORTB |= _BV(1);//open lamp1
+            DDRA |= _BV(voltV);
+            volt = ARead(voltIN);
+            DDRA &= ~_BV(voltV);
+            PORTB &= ~_BV(1);//close lamp1
+          }
+        }
         
         DDRB &= ~_BV(0);
         DDRB &= ~_BV(1);
@@ -103,7 +121,7 @@ uint16_t ARead(uint8_t pin)
   ADCSRA |= _BV(ADEN);
   ADMUX = pin;
 
-	sbi(ADCSRA, ADSC);
+	ADCSRA |= _BV(ADSC);
 
 	while (bit_is_set(ADCSRA, ADSC));
 

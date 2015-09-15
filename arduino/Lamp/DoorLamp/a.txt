@@ -1,5 +1,0 @@
-gnd
-led v--  out
-sense in
-led in
-sense v--

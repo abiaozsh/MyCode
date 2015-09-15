@@ -15,8 +15,20 @@ namespace Uploader
 			try
 			{
 				port = new SerialPort(args[0], 115200, Parity.None, 8, StopBits.One);
+				try
+				{
 				port.Open();
-
+				}
+				catch
+				{
+					Console.WriteLine("Port open error：");
+					var list = SerialPort.GetPortNames();
+					foreach(var item in list)
+					{
+						Console.WriteLine(item);
+					}
+					return;
+				}
 				FileStream fs = new FileStream(args[1], FileMode.Open, FileAccess.Read);
 				StreamReader sr = new StreamReader(fs);
 				StringBuilder sbdata = new StringBuilder();
