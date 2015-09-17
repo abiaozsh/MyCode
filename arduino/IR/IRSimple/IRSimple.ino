@@ -2,25 +2,25 @@
 
 uint8_t data[32];
 
-void Setup()
+void setup()
 {
-  Serial.Begin(9600);
+  Serial.begin(9600);
 }
 
-void Loop()
+void loop()
 {
-  while(IRPIN);//µÈ´ıµÍµçÆ½ ÏÂ½µÑØ
-  //9msµÍµçÆ½
-  while(!IRPIN);//µÈ´ı¸ßµçÆ½ ÉÏÉıÑØ
-  //4.5ms¸ßµçÆ½
-  for (int j=0;j<4;j++)         //ÊÕ¼¯ËÄ×éÊı¾İ
+  while(IRPIN);//ç­‰å¾…ä½ç”µå¹³ ä¸‹é™æ²¿
+  //9msä½ç”µå¹³
+  while(!IRPIN);//ç­‰å¾…é«˜ç”µå¹³ ä¸Šå‡æ²¿
+  //4.5msé«˜ç”µå¹³
+  for (int j=0;j<4;j++)         //æ”¶é›†å››ç»„æ•°æ®
   { 
-    for (int k=0;k<8;k++)        //Ã¿×éÊı¾İÓĞ8Î»
+    for (int k=0;k<8;k++)        //æ¯ç»„æ•°æ®æœ‰8ä½
     {
-      while(IRPIN);//µÈ´ıµÍµçÆ½ ÏÂ½µÑØ
-      //0.56msµÍµçÆ½
-      while(!IRPIN);//µÈ´ı¸ßµçÆ½ ÉÏÉıÑØ
-      //?ms¸ßµçÆ½
+      while(IRPIN);//ç­‰å¾…ä½ç”µå¹³ ä¸‹é™æ²¿
+      //0.56msä½ç”µå¹³
+      while(!IRPIN);//ç­‰å¾…é«˜ç”µå¹³ ä¸Šå‡æ²¿
+      //?msé«˜ç”µå¹³
       uint8_t cnt = 0;
       while(IRPIN)
       {
@@ -32,9 +32,9 @@ void Loop()
     }
   }
   
-  for (int j=0;j<4;j++)         //ÊÕ¼¯ËÄ×éÊı¾İ
+  for (int j=0;j<4;j++)         //æ”¶é›†å››ç»„æ•°æ®
   { 
-    for (int k=0;k<8;k++)        //Ã¿×éÊı¾İÓĞ8Î»
+    for (int k=0;k<8;k++)        //æ¯ç»„æ•°æ®æœ‰8ä½
     {
       Serial.print(data[j*8+k]);
       Serial.print(",");
