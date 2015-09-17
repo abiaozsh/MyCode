@@ -24,6 +24,20 @@
 
 #define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
 
+void wait(uint16_t length)
+{
+  TCCR1A = 0;
+  TCCR1B = 1;//  1/64 31.25khz 488hz
+  TCCR1C = 0;
+  TIMSK1 = 0;
+    TCNT1 = 0;TIFR1 |= _BV(TOV1);//overflow flg reset
+    while(currTick<length)//~1s
+    {
+      ;
+    }
+
+}
+
 void ClockInit();
 uint16_t ARead(uint8_t pin);
 
@@ -34,7 +48,7 @@ int main(void) {
   DDRA = 0;PORTA = 0;//all input
   DDRB = 0;PORTB = 0;//all input
 
-  uint8_t IsDaylight = 0;
+  uint8_t IsNight = 0;
   uint8_t DaylightCount = 0;
   PRR = _BV(PRADC) | _BV(PRUSI);
   MCUCR |= _BV(SE);
@@ -56,22 +70,23 @@ int main(void) {
       DDRA |= _BV(senseV);
       uint16_t val = ARead(senseIN);
       DDRA &= ~_BV(senseV);
-      if(val>512)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+      if(1)//val>700<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       {
-        IsDaylight = 1;
+        IsNight = 1;
       }
       else
       {
-        IsDaylight = 0;
+        IsNight = 0;
       }
       DaylightCount = 0;
     }
-    if(IsDaylight)
+    if(IsNight)
     {
       DDRA |= _BV(ledV);
-      uint8_t doorOpen = PINA & _BV(ledIN);
+	  wait(10);
+      uint8_t doorOpen = !(PINA & _BV(ledIN));
       DDRA &= ~_BV(ledV);
-      if(doorOpen)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+      if(1)//doorOpen<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       {
         DDRB |= _BV(0);
         DDRB |= _BV(1);
@@ -82,7 +97,7 @@ int main(void) {
         DDRA &= ~_BV(voltV);
         
         uint16_t i;
-        for(i=0;i<100;i++)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        for(i=0;i<1000;i++)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         {
           if(volt<512)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
           {
@@ -92,6 +107,7 @@ int main(void) {
             DDRA &= ~_BV(voltV);
             PORTB &= ~_BV(0);//close lamp1
           }
+		  wait(20);
           if(volt<512)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
           {
             PORTB |= _BV(1);//open lamp1
@@ -100,6 +116,7 @@ int main(void) {
             DDRA &= ~_BV(voltV);
             PORTB &= ~_BV(1);//close lamp1
           }
+		  wait(20);
         }
         
         DDRB &= ~_BV(0);
@@ -118,6 +135,7 @@ void ClockInit() {
 
 uint16_t ARead(uint8_t pin)
 {
+wait(1);
   ADCSRA |= _BV(ADEN);
   ADMUX = pin;
 
