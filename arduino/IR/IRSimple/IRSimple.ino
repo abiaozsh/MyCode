@@ -48,7 +48,7 @@ void Loop()
 //0.000004 s/tick(*64)
 //0.004 ms/tick(*64)
 //250tick/ms
-void delay14()
+void delay14()//0.004*35 = 0.14ms
 {
   TCNT0=0;
   while(TCNT0<35);
