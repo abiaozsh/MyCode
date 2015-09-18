@@ -12,7 +12,6 @@ BD B5 AD
 void setup()
 {
   Serial.begin(9600);
-  Serial.println("fdsa");
 }
 void RAWTimeline()
 {/*
@@ -20,6 +19,7 @@ void RAWTimeline()
   uint16_t dataidx;
   TCCR1A = 0;
   TCCR1B = 4;//1 0 0 clkI/O/256 (From prescaler)
+  TIMSK1 = 0;
   while(IRPIN);//等待低电平 下降沿
   uint8_t OLDflg = IRPIN;
   dataidx = 0;
