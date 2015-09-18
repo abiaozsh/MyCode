@@ -1,12 +1,13 @@
-#define IRPIN PIND & _BV(3)
+#define IRPIN (PIND & _BV(2))
 
-uint8_t data[32];
+uint16_t data[32];
 
 void setup()
 {
   TCCR0A = 0;
   TCCR0B = 3;
   Serial.begin(9600);
+  TCCR1B = 1;
 }
 
 void loop()
@@ -23,14 +24,12 @@ void loop()
       //0.56ms低电平
       while(!IRPIN);//等待高电平 上升沿
       //?ms高电平
-      uint8_t cnt = 0;
+      TCNT1=0;
       while(IRPIN)
       {
-        delay14();
-        cnt++;
-        if(cnt>100){break;}
+        if(TCNT1>6000){break;}
       }
-      data[j*8+k]=cnt;
+      data[j*8+k]=TCNT1;
     }
   }
   
@@ -43,6 +42,7 @@ void loop()
     }
     Serial.println();
   }
+  Serial.println();
 }
 
 //TCCR0B = 3; //0 1 1 clkI/O/64 (From prescaler) 16Mhz/64
