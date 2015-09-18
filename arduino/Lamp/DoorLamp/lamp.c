@@ -2,8 +2,6 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
-//mos增加下拉电阻  二极管参考电压
-
 //gnd
 #define ledV    0 //led v--  out
 #define senseIN 1 //sense in
@@ -20,6 +18,8 @@
 //a7 serial out
 //a6
 
+volatile uint16_t lightCount = 0;
+volatile uint8_t curLamp = 1;
 
 
 #define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
@@ -27,11 +27,11 @@
 void wait(uint16_t length)
 {
   TCCR1A = 0;
-  TCCR1B = 1;//  1/64 31.25khz 488hz
+  TCCR1B = 1;
   TCCR1C = 0;
   TIMSK1 = 0;
     TCNT1 = 0;TIFR1 |= _BV(TOV1);//overflow flg reset
-    while(currTick<length)//~1s
+    while(currTick<length)
     {
       ;
     }
@@ -57,11 +57,11 @@ int main(void) {
   WDTCSR |= _BV(WDCE);
   WDTCSR |= _BV(WDP1);//0 0 1 0 8K cycles 0.0625 s
   WDTCSR |= _BV(WDIE);//0 1 Running Interrupt
-  TCCR1A = 0;
-  TCCR1B = 2;//  1/8
-  TCCR1C = 0;
-  TIMSK1 = 0;
 
+  TCCR0B = 1;
+  OCR0A = 32;
+  TIMSK0 = _BV(OCIE0A) | _BV(TOIE0);
+  
   while(1)
   {
     DaylightCount++;
@@ -83,7 +83,7 @@ int main(void) {
     if(IsNight)
     {
       DDRA |= _BV(ledV);
-	  wait(10);
+      wait(10);
       uint8_t doorOpen = !(PINA & _BV(ledIN));
       DDRA &= ~_BV(ledV);
       if(1)//doorOpen<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -92,31 +92,15 @@ int main(void) {
         DDRB |= _BV(1);
 
         uint16_t volt;
-        DDRA |= _BV(voltV);
-        volt = ARead(voltIN);
-        DDRA &= ~_BV(voltV);
-        
-        uint16_t i;
-        for(i=0;i<1000;i++)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        lightCount = 0;
+        while(lightCount<100)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         {
+          DDRA |= _BV(voltV);
+          volt = ARead(voltIN);
+          DDRA &= ~_BV(voltV);
           if(volt<512)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
           {
-            PORTB |= _BV(0);//open lamp1
-            DDRA |= _BV(voltV);
-            volt = ARead(voltIN);
-            DDRA &= ~_BV(voltV);
-            PORTB &= ~_BV(0);//close lamp1
           }
-		  wait(20);
-          if(volt<512)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-          {
-            PORTB |= _BV(1);//open lamp1
-            DDRA |= _BV(voltV);
-            volt = ARead(voltIN);
-            DDRA &= ~_BV(voltV);
-            PORTB &= ~_BV(1);//close lamp1
-          }
-		  wait(20);
         }
         
         DDRB &= ~_BV(0);
@@ -135,19 +119,30 @@ void ClockInit() {
 
 uint16_t ARead(uint8_t pin)
 {
-wait(1);
+  wait(1);
   ADCSRA |= _BV(ADEN);
   ADMUX = pin;
 
-	ADCSRA |= _BV(ADSC);
+  ADCSRA |= _BV(ADSC);
 
-	while (bit_is_set(ADCSRA, ADSC));
+  while (bit_is_set(ADCSRA, ADSC));
 
   ADCSRA &= ~_BV(ADEN);
-	return ADC;
+  return ADC;
 }
 
 ISR(WDT_vect){return;}
+
+ISR(TIM0_COMPA_vect){
+  PORTB &= ~_BV(0);
+  PORTB &= ~_BV(1);
+}
+
+ISR(TIM0_OVF_vect){
+  PORTB |= curLamp;
+  curLamp ^= 3;
+  lightCount++;
+}
 
 /*
 ISR(INT0_vect){return;}
