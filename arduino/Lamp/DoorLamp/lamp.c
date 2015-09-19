@@ -39,7 +39,7 @@ void wait(uint16_t length)
 }
 
 void ClockInit();
-uint16_t ARead(uint8_t pin);
+uint8_t ARead(uint8_t pin);
 
 int main(void) {
   ClockInit();
@@ -49,17 +49,17 @@ int main(void) {
   DDRB = 0;PORTB = 0;//all input
 
   uint8_t IsNight = 0;
-  uint8_t DaylightCount = 0;
-  PRR = _BV(PRADC) | _BV(PRUSI);
+  uint8_t DaylightCount = 31;
+  //PRR = _BV(PRADC) | _BV(PRUSI);
   MCUCR |= _BV(SE);
   MCUCR |= _BV(SM1);
-  ACSR |= _BV(ACD);
+ // ACSR |= _BV(ACD);
   WDTCSR |= _BV(WDCE);
   WDTCSR |= _BV(WDP1);//0 0 1 0 8K cycles 0.0625 s
   WDTCSR |= _BV(WDIE);//0 1 Running Interrupt
 
-  TCCR0B = 1;
-  OCR0A = 32;
+  TCCR0B = 2;
+  OCR0A = 20;
   TIMSK0 = _BV(OCIE0A) | _BV(TOIE0);
   
   while(1)
@@ -68,9 +68,9 @@ int main(void) {
     if(DaylightCount==32)//2s check daylight
     {
       DDRA |= _BV(senseV);
-      uint16_t val = ARead(senseIN);
+      uint8_t val = ARead(senseIN);
       DDRA &= ~_BV(senseV);
-      if(1)//val>700<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+      if(val>128)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       {
         IsNight = 1;
       }
@@ -83,22 +83,21 @@ int main(void) {
     if(IsNight)
     {
       DDRA |= _BV(ledV);
-      wait(10);
-      uint8_t doorOpen = !(PINA & _BV(ledIN));
+	  uint8_t doorOpen = ARead(ledIN);
       DDRA &= ~_BV(ledV);
-      if(1)//doorOpen<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+      if(doorOpen>128)//doorOpen>600
       {
         DDRB |= _BV(0);
         DDRB |= _BV(1);
 
-        uint16_t volt;
+        uint8_t volt;
         lightCount = 0;
         while(lightCount<100)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         {
           DDRA |= _BV(voltV);
           volt = ARead(voltIN);
           DDRA &= ~_BV(voltV);
-          if(volt<512)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+          if(volt<128)//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
           {
           }
         }
@@ -112,23 +111,25 @@ int main(void) {
 }
 
 void ClockInit() {
-	CLKPR = _BV(CLKPCE);//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
+	//CLKPR = _BV(CLKPCE);//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
 	//CLKPR = 0;//8Mhz
-	CLKPR = _BV(CLKPS3);//1 0 0 0 1/256  31.25khz
+	//CLKPR = _BV(CLKPS3);//1 0 0 0 1/256  31.25khz
 }
 
-uint16_t ARead(uint8_t pin)
+uint8_t ARead(uint8_t pin)
 {
-  wait(1);
-  ADCSRA |= _BV(ADEN);
+//  wait(100);
+  ADCSRA = 7;
+  ADCSRB |= _BV(ADLAR);
   ADMUX = pin;
+  ADCSRA |= _BV(ADEN);
 
   ADCSRA |= _BV(ADSC);
 
   while (bit_is_set(ADCSRA, ADSC));
-
+  uint8_t ret = ADCH;
   ADCSRA &= ~_BV(ADEN);
-  return ADC;
+  return ret;
 }
 
 ISR(WDT_vect){return;}
