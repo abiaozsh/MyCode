@@ -14,7 +14,7 @@ void setup()
   Serial.begin(9600);
 }
 void RAWTimeline()
-{/*
+{
   uint16_t data[512];
   uint16_t dataidx;
   TCCR1A = 0;
@@ -41,7 +41,7 @@ void RAWTimeline()
     Serial.print(i);
     Serial.print("\t");
     Serial.println(dif);
-  }*/
+  }
 }
 uint8_t GetIR()
 {
@@ -101,6 +101,7 @@ uint8_t GetIR()
 }
 void loop()
 {
-    Serial.println(GetIR(),HEX);
+    RAWTimeline();
+    //Serial.println(GetIR(),HEX);
 }
 
