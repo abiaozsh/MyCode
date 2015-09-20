@@ -37,12 +37,14 @@ int main(void)
     
     if(val!=lastVal)
     {
+	  while(currTick<2);
       if(currTick>10)//0.3s 单击
       {
         if(status==0)
         {
           status = 1;
           AUTOON;
+		  LONGOFF;
         }
         else
         {
@@ -55,6 +57,7 @@ int main(void)
       {
           status = 2;
           LONGON;
+		  AUTOOFF;
       }
       TCNT1 = 0;TIFR1 |= _BV(TOV1);
       lastVal = val;
