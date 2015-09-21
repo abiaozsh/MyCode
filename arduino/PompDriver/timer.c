@@ -11,12 +11,12 @@
 
 int main(void)
 {
-	CLKPR = _BV(CLKPCE);//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
-	//CLKPR = 0;//8Mhz
-	CLKPR = _BV(CLKPS3);//1 0 0 0 1/256  31.25khz
-//8Mhz = 0.000000125 s
-//0.000032
-//0.032768s/tick
+  CLKPR = _BV(CLKPCE);//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
+  //CLKPR = 0;//8Mhz
+  CLKPR = _BV(CLKPS3);//1 0 0 0 1/256  31.25khz
+  //8Mhz = 0.000000125 s
+  //0.000032
+  //0.032768s/tick
   TCCR1A = 0;
   //0.032768s/tick
   //total 2147.483648s
@@ -32,19 +32,20 @@ int main(void)
   uint8_t status = 0;//off
   
   uint8_t lastVal = PINA&0x1E;
-  for (;;) {
+  for (;;) 
+  {
     uint8_t val = PINA&0x1E;
     
     if(val!=lastVal)
     {
-	  while(currTick<2);
-      if(currTick>10)//0.3s 单击
+      while(currTick<15);//0.5s
+      if(currTick>60)//3s 单击
       {
         if(status==0)
         {
           status = 1;
           AUTOON;
-		  LONGOFF;
+          LONGOFF;
         }
         else
         {
@@ -57,7 +58,7 @@ int main(void)
       {
           status = 2;
           LONGON;
-		  AUTOOFF;
+          AUTOOFF;
       }
       TCNT1 = 0;TIFR1 |= _BV(TOV1);
       lastVal = val;
