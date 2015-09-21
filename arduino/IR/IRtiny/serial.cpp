@@ -207,11 +207,11 @@ uint8_t GetIR()
       }
       else
       {
+        data>>=1;//data<<=1;
         //35~105 70
-        data<<=1;
-        if(TCNT0>35)
+        if(TCNT0<35)//if(TCNT0>35)
         {
-          data|=1;
+          data|=0x80;//data|=1;
         }
         dataidx++;
       }

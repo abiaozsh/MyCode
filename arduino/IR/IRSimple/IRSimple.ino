@@ -70,10 +70,10 @@ uint8_t GetIR()
       else
       {
         //35~105 70
-        data<<=1;
-        if(TCNT0>70)
+        data>>=1;//data<<=1;
+        if(TCNT0<70)//if(TCNT0>70)
         {
-          data|=1;
+          data|=0x80;//data|=1;
         }
         dataidx++;
       }
