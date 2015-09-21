@@ -185,20 +185,20 @@ uint8_t SerialRead(uint16_t timeout, uint8_t* timoutParam)
 
 uint8_t GetIR()
 {
-  uint32_t data = 0;
+  uint8_t data = 0;
+  uint8_t datahi = 0;
   uint8_t dataidx = 0;
+  uint8_t byteidx = 0;
   TCCR0A = 0;
   TCCR0B = 4;//0 1 1 clkI/O/64 (From prescaler)
   while(IRPIN);//等待低电平 下降沿
-  DDRB|=_BV(5);
-  PORTB|=_BV(5);
   while(!IRPIN);
   while(IRPIN);
   uint8_t OLDflg = IRPIN;
   TCNT0 = 0;
   TIMSK0 = 0;
   TIFR0 |= _BV(TOV0);
-  while((!(TIFR0 & _BV(TOV0))) && (dataidx<32))
+  while((!(TIFR0 & _BV(TOV0))) && (byteidx<4))
   {
     if(OLDflg != IRPIN)
     {
@@ -207,37 +207,40 @@ uint8_t GetIR()
       }
       else
       {
-        data>>=1;//data<<=1;
         //35~105 70
-        if(TCNT0<35)//if(TCNT0>35)
+        data>>=1;
+        if(TCNT0<35)
         {
-          data|=0x80;//data|=1;
+          data|=0x80;
         }
         dataidx++;
+        if(dataidx==8)
+        {
+          dataidx=0;
+          switch(byteidx)
+          {
+            case 0:
+              if(data!=0xFF)return 0xFF;
+              break;
+            case 1:
+              if(data!=0x00)return 0xFF;
+              break;
+            case 2:
+              datahi = ~data;
+              break;
+          }
+          byteidx++;
+        }
       }
       TCNT0 = 0;
       OLDflg = IRPIN;
     }
   }
-  DDRB&=~_BV(5);
-  PORTB&=~_BV(5);
-  if(data==0)
-  {
-    return 0;
-  }
-  if(((data>>24)&0xFF)!=0)
+  if(data!=datahi)
   {
     return 0xFF;
   }
-  if(((data>>16)&0xFF)!=0xFF)
-  {
-    return 0xFF;
-  }
-  if(((data>>8)&0xFF)!=((~data)&0xFF))
-  {
-    return 0xFF;
-  }
-  return data&0xFF;
+  return data;
 }
 /*
 void RAWTimeline()

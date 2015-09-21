@@ -47,8 +47,10 @@ void RAWTimeline()
 }
 uint8_t GetIR()
 {
-  uint32_t data = 0;
+  uint8_t data = 0;
+  uint8_t datahi = 0;
   uint8_t dataidx = 0;
+  uint8_t byteidx = 0;
   TCCR0A = 0;
   TCCR0B = 4;//1 0 0 clkI/O/256 (From prescaler)
   while(IRPIN);//等待低电平 下降沿
@@ -60,7 +62,7 @@ uint8_t GetIR()
   TCNT0 = 0;
   TIMSK0 = 0;
   TIFR0 |= _BV(TOV0);
-  while((!(TIFR0 & _BV(TOV0))) && (dataidx<32))
+  while((!(TIFR0 & _BV(TOV0))) && (byteidx<4))
   {
     if(OLDflg != IRPIN)
     {
@@ -70,12 +72,29 @@ uint8_t GetIR()
       else
       {
         //35~105 70
-        data>>=1;//data<<=1;
-        if(TCNT0<70)//if(TCNT0>70)
+        data>>=1;
+        if(TCNT0<70)
         {
-          data|=0x80;//data|=1;
+          data|=0x80;
         }
         dataidx++;
+        if(dataidx==8)
+        {
+          dataidx=0;
+          switch(byteidx)
+          {
+            case 0:
+              if(data!=0xFF)return 0xFF;
+              break;
+            case 1:
+              if(data!=0x00)return 0xFF;
+              break;
+            case 2:
+              datahi = ~data;
+              break;
+          }
+          byteidx++;
+        }
       }
       TCNT0 = 0;
       OLDflg = IRPIN;
@@ -83,27 +102,15 @@ uint8_t GetIR()
   }
   DDRB&=~_BV(5);
   PORTB&=~_BV(5);
-  if(data==0)
-  {
-    return 0;
-  }
-  if(((data>>24)&0xFF)!=0)
+  if(data!=datahi)
   {
     return 0xFF;
   }
-  if(((data>>16)&0xFF)!=0xFF)
-  {
-    return 0xFF;
-  }
-  if(((data>>8)&0xFF)!=((~data)&0xFF))
-  {
-    return 0xFF;
-  }
-  return data&0xFF;
+  return data;
 }
 void loop()
 {
-    RAWTimeline();
-    //Serial.println(GetIR(),HEX);
+    //RAWTimeline();
+    Serial.println(GetIR(),HEX);
 }
 
