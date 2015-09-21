@@ -1,6 +1,8 @@
 #define IRPIN (PIND & _BV(2))
 #define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
 /*
+高低位反了
+
 5D 9D 1D
 DD FD 3D
 1F 57 6F
