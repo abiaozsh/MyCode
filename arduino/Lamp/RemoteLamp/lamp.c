@@ -28,6 +28,7 @@ int main(void) {
   TCCR1B |= _BV(WGM13); //WGM12
   
   OCR1A = 0;
+  OCRON;
   eepromval = eeprom_read_word(0);
   val = eepromval;
   if(val>Top)
@@ -166,7 +167,7 @@ int main(void) {
     
     if(val==0)
     {
-      OCROFF;
+      //OCROFF;
       OCR1A = 0;
       SetClockLow();
     }
@@ -174,7 +175,7 @@ int main(void) {
     {
       SetClockHigh();
       OCR1A = val;
-      OCRON;
+      //OCRON;
     }
   }
 }

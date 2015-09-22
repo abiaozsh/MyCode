@@ -2,7 +2,7 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
-#define IRPIN (PINA & _BV(5))
+#define IRPIN (PINA & _BV(6))
 
 #define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
 
@@ -25,7 +25,8 @@ int main(void)
 {
   SetClockLow();
   sei();
-  PCMSK0 |= PCINT5;
+  GIMSK |= _BV(PCIE0);
+  PCMSK0 |= _BV(PCINT6);
   
   //8Mhz = 0.000000125 s
   //0.000032
@@ -37,8 +38,9 @@ int main(void)
   TCCR1C = 0;
   TIMSK1 = 0;
 
-  DDRA = 0;
+  DDRA = _BV(0);
   DDRB = 3;
+  //PORTA |= 0x1E;//DEBUG
   
   TCNT1 = 0;TIFR1 |= _BV(TOV1);
   
@@ -46,7 +48,7 @@ int main(void)
   for (;;) 
   {
     uint8_t val = PINA&0x1E;
-    
+    PINA |= 1;
     if(val!=lastVal)
     {
       while(currTick<15);//0.5s
@@ -148,7 +150,7 @@ void SetClockLow() {
 ISR(PCINT0_vect){
   SetClockHigh();
   uint8_t val = GetIR();
-  
+
   if(val == 0x16)
   {
     status = 0;
