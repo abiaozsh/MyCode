@@ -13,13 +13,17 @@ void SetClockHigh();
 void SetClockLow();
 uint8_t GetIR();
 
-uint16_t val;
-uint16_t eepromval;
-uint16_t Top;
-uint8_t status = 0;//0 operating 1 setting Top
+volatile uint16_t val;
+volatile uint16_t eepromval;
+volatile uint16_t Top;
+volatile uint8_t status = 0;//0 operating 1 setting Top
 
 int main(void) {
   SetClockLow();
+  sei();
+  GIMSK |= _BV(PCIE0);
+  PCMSK0 |= _BV(PCINT6);
+
   Top = 1000;
   //8 1000 PWM, Phase & Freq. Correct ICR1 BOTTOM BOTTOM
   ICR1 = 10000; //8000000/10000 = 800HZ
@@ -40,145 +44,7 @@ int main(void) {
   
   while(1)
   {
-    uint8_t indata = GetIR();
-    
-    switch(indata)
-    {
-      case 0x45: //off
-        val = 0;
-        break;
-      case 0x47: //on
-        val = Top;
-        break;
-      case 0x44: //<<
-      {
-        uint16_t dif = Top/10;
-        if(val>dif)
-        {
-          val-=dif;
-        }
-        else
-        {
-          val = 0;
-        }
-        break;
-      }
-      case 0x40: //>>
-      {
-        uint16_t dif = Top/10;
-        if(Top-val>dif)
-        {
-          val+=dif;
-        }
-        else
-        {
-          val = Top;
-        }
-        break;
-      }
-      case 0x07: //<
-      {
-        uint16_t dif = Top/100;
-        if(val>dif)
-        {
-          val-=dif;
-        }
-        else
-        {
-          val = 0;
-        }
-        break;
-      }
-      case 0x15: //>
-      {
-        uint16_t dif = Top/100;
-        if(Top-val>dif)
-        {
-          val+=dif;
-        }
-        else
-        {
-          val = Top;
-        }
-        break;
-      }
-      case 0x0C: //1
-      {
-        uint32_t tmp = Top*1/10;
-        val = (uint16_t)tmp;
-        break;
-      }
-      case 0x18: //2
-      {
-        uint32_t tmp = Top*2/10;
-        val = (uint16_t)tmp;
-        break;
-      }
-      case 0x5E: //3
-      {
-        uint32_t tmp = Top*3/10;
-        val = (uint16_t)tmp;
-        break;
-      }
-      case 0x08: //4
-      {
-        uint32_t tmp = Top*4/10;
-        val = (uint16_t)tmp;
-        break;
-      }
-      case 0x1C: //5
-      {
-        uint32_t tmp = Top*5/10;
-        val = (uint16_t)tmp;
-        break;
-      }
-      case 0x5A: //6
-      {
-        uint32_t tmp = Top*6/10;
-        val = (uint16_t)tmp;
-        break;
-      }
-      case 0x42: //7
-      {
-        uint32_t tmp = Top*7/10;
-        val = (uint16_t)tmp;
-        break;
-      }
-      case 0x52: //8
-      {
-        uint32_t tmp = Top*8/10;
-        val = (uint16_t)tmp;
-        break;
-      }
-      case 0x4A: //9
-      {
-        uint32_t tmp = Top*9/10;
-        val = (uint16_t)tmp;
-        break;
-      }
-      case 0x09: //(EQ)save
-      {
-        if(val != eepromval)
-        {
-          eepromval = val;
-          eeprom_write_byte((uint8_t*)0,(uint8_t)(eepromval&0xFF));
-          eeprom_write_byte((uint8_t*)1,(uint8_t)((eepromval>>8)&0xFF));
-        }
-      }
-    }
-    
-    if(val==0)
-    {
-      OCROFF;
-      OCR1A = 0;
-      SetClockLow();
-    }
-    else
-    {
-      SetClockHigh();
-      OCR1A = val;
-      OCRON;
-    }
+    asm volatile ("sleep");
   }
 }
 
@@ -189,8 +55,7 @@ uint8_t GetIR(){
   uint8_t byteidx = 0;
   TCCR0A = 0;
   TCCR0B = 4;//0 1 1 clkI/O/64 (From prescaler)
-  while(IRPIN);//等待低电平 下降沿
-  SetClockHigh();
+  //while(IRPIN);//等待低电平 下降沿
   while(!IRPIN);
   while(IRPIN);
   uint8_t OLDflg = IRPIN;
@@ -249,6 +114,150 @@ void SetClockLow() {
 	CLKPR = _BV(CLKPCE);//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
 	CLKPR = _BV(CLKPS3);//1 0 0 0 1/256  31.25khz
 }
+
+ISR(PCINT0_vect){
+  SetClockHigh();
+  uint8_t indata = GetIR();
+  
+  switch(indata)
+  {
+    case 0x45: //off
+      val = 0;
+      break;
+    case 0x47: //on
+      val = Top;
+      break;
+    case 0x44: //<<
+    {
+      uint16_t dif = Top/10;
+      if(val>dif)
+      {
+        val-=dif;
+      }
+      else
+      {
+        val = 0;
+      }
+      break;
+    }
+    case 0x40: //>>
+    {
+      uint16_t dif = Top/10;
+      if(Top-val>dif)
+      {
+        val+=dif;
+      }
+      else
+      {
+        val = Top;
+      }
+      break;
+    }
+    case 0x07: //<
+    {
+      uint16_t dif = Top/100;
+      if(val>dif)
+      {
+        val-=dif;
+      }
+      else
+      {
+        val = 0;
+      }
+      break;
+    }
+    case 0x15: //>
+    {
+      uint16_t dif = Top/100;
+      if(Top-val>dif)
+      {
+        val+=dif;
+      }
+      else
+      {
+        val = Top;
+      }
+      break;
+    }
+    case 0x0C: //1
+    {
+      uint32_t tmp = Top*1/10;
+      val = (uint16_t)tmp;
+      break;
+    }
+    case 0x18: //2
+    {
+      uint32_t tmp = Top*2/10;
+      val = (uint16_t)tmp;
+      break;
+    }
+    case 0x5E: //3
+    {
+      uint32_t tmp = Top*3/10;
+      val = (uint16_t)tmp;
+      break;
+    }
+    case 0x08: //4
+    {
+      uint32_t tmp = Top*4/10;
+      val = (uint16_t)tmp;
+      break;
+    }
+    case 0x1C: //5
+    {
+      uint32_t tmp = Top*5/10;
+      val = (uint16_t)tmp;
+      break;
+    }
+    case 0x5A: //6
+    {
+      uint32_t tmp = Top*6/10;
+      val = (uint16_t)tmp;
+      break;
+    }
+    case 0x42: //7
+    {
+      uint32_t tmp = Top*7/10;
+      val = (uint16_t)tmp;
+      break;
+    }
+    case 0x52: //8
+    {
+      uint32_t tmp = Top*8/10;
+      val = (uint16_t)tmp;
+      break;
+    }
+    case 0x4A: //9
+    {
+      uint32_t tmp = Top*9/10;
+      val = (uint16_t)tmp;
+      break;
+    }
+    case 0x09: //(EQ)save
+    {
+      if(val != eepromval)
+      {
+        eepromval = val;
+        eeprom_write_byte((uint8_t*)0,(uint8_t)(eepromval&0xFF));
+        eeprom_write_byte((uint8_t*)1,(uint8_t)((eepromval>>8)&0xFF));
+      }
+    }
+  }
+  
+  if(val==0)
+  {
+    OCROFF;
+    OCR1A = 0;
+    SetClockLow();
+  }
+  else
+  {
+    SetClockHigh();
+    OCR1A = val;
+    OCRON;
+  }
+}
+
 /*
 ISR(INT0_vect){return;}
 ISR(PCINT0_vect){return;}
