@@ -51,8 +51,8 @@ int main(void)
     PINA |= 1;
     if(val!=lastVal)
     {
-      while(currTick<15);//0.5s
-      if(currTick>60)//3s 单击
+      while(currTick<30);//1s
+      if(currTick>90)//2s 单击
       {
         if(status==0)
         {
