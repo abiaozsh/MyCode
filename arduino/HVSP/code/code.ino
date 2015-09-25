@@ -180,6 +180,29 @@ void loop()
     uint16_t data = ReadFlashLowAndHighBytes(valal, valah);
     printHex(data);
   }
+  else if(cmd1=='w' && cmd2=='p')       //wp WriteEEPROM
+  {
+    WriteEEPROM();
+    Serial.print("OK");
+  }
+  else if(cmd1=='w' && cmd2=='b')       //wb WriteEEPROMByte
+  {
+    uint8_t addr = GetByte();
+    uint8_t data = GetByte();
+    WriteEEPROMByte(addr, data);
+    Serial.print("OK");
+  }
+  else if(cmd1=='r' && cmd2=='p')       //rp ReadFlash
+  {
+    ReadEEPROM();
+    Serial.print("OK");
+  }
+  else if(cmd1=='r' && cmd2=='b')       //rb ReadEEPROMByte
+  {
+    uint8_t addr = GetByte();
+    uint8_t data = ReadEEPROMByte(addr);
+    printHex(data);
+  }
   else if(cmd1=='n' && cmd2=='o')       //no NOP
   {
     NOP();
@@ -459,3 +482,47 @@ uint16_t ReadFlashLowAndHighBytes(uint8_t addLow, uint8_t addHigh){
   return lowBits | (highBits << 8);
 }
 
+void WriteEEPROM(){
+  //Load “Write EEPROM” Command
+  //0_0001_0001_00 0_0100_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x11, 0x4C);
+  //Enter EEPROM Programming mode.
+}
+
+void WriteEEPROMByte(uint8_t address,uint8_t data){
+  //Write EEPROM Byte
+  //0_bbbb_bbbb_00 0_0000_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(address, 0x0C);
+  //0_aaaa_aaaa_00 0_0001_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x1C);
+  //0_eeee_eeee_00 0_0010_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(data, 0x2C);
+  //0_0000_0000_00 0_0110_1101_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x6D);
+  //Repeat Instr. 1 - 6 for each new address. Wait after Instr. 6 until SDO goes high.(4)
+  //0_0000_0000_00 0_0110_0100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x64);
+  //0_0000_0000_00 0_0110_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x6C);
+}
+
+void ReadEEPROM(){
+  //Load “Read EEPROM” Command
+  //0_0000_0011_00 0_0100_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x03, 0x4C);
+  //Enter EEPROM Read mode.
+}
+
+uint8_t ReadEEPROMByte(uint8_t address){
+  //Read EEPROM Byte
+  //0_bbbb_bbbb_00 0_0000_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(address, 0x0C);
+  //0_aaaa_aaaa_00 0_0001_1100_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x1C);
+  //0_0000_0000_00 0_0110_1000_00 x_xxxx_xxxx_xx
+  shiftOut2(0x00, 0x68);
+  //0_0000_0000_00 0_0110_1100_00 q_qqqq_qqq0_00
+  uint8_t data = shiftOut2(0x00, 0x6C);
+  //Repeat Instr. 1, 3 - 4 for each new address. Repeat Instr. 2 for a new 256 byte page.
+  return data;
+}

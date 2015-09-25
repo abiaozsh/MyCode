@@ -111,7 +111,7 @@ void loop() {
     }
     if(v==0x52)//8
     {
-      dat = EEPROM_read();
+      dat = EEPROM_read(0);
       SendInt(dat);
     }
     
