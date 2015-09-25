@@ -1,12 +1,13 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
-#include <avr/eeprom.h>
 
 #define IRPIN (PINA & _BV(1))
 
 #define OCRON  DDRA |= _BV(6);
 #define OCROFF DDRA &= ~_BV(6);
+void EEPROM_write(unsigned int ucAddress, unsigned char ucData);
+unsigned char EEPROM_read(unsigned int ucAddress);
 
 
 void SetClockHigh();
@@ -22,7 +23,7 @@ int main(void) {
   SetClockLow();
   sei();
   GIMSK |= _BV(PCIE0);
-  PCMSK0 |= _BV(PCINT6);
+  PCMSK0 |= _BV(PCINT1);
 
   Top = 1000;
   //8 1000 PWM, Phase & Freq. Correct ICR1 BOTTOM BOTTOM
@@ -31,17 +32,31 @@ int main(void) {
   TCCR1B = 1;
   TCCR1B |= _BV(WGM13); //WGM12
   
-  OCR1A = 0;
-  eepromval |= eeprom_read_byte((uint8_t*)1);
+  eepromval=0;
+  eepromval |= EEPROM_read(1);
   eepromval <<= 8;
-  eepromval |= eeprom_read_byte((uint8_t*)0);
+  eepromval |= EEPROM_read(0);
   val = eepromval;
   if(val>Top)
   {
     val = Top;
   }
+  
+  if(val==0)
+  {
+    OCROFF;
+    OCR1A = 0;
+    SetClockLow();
+  }
+  else
+  {
+    SetClockHigh();
+    OCR1A = val;
+    OCRON;
+  }
   TCNT1 = 0;
   
+  DDRA |= _BV(7);
   while(1)
   {
     asm volatile ("sleep");
@@ -237,9 +252,10 @@ ISR(PCINT0_vect){
     {
       if(val != eepromval)
       {
+		PINA|=_BV(7);
         eepromval = val;
-        eeprom_write_byte((uint8_t*)0,(uint8_t)(eepromval&0xFF));
-        eeprom_write_byte((uint8_t*)1,(uint8_t)((eepromval>>8)&0xFF));
+        EEPROM_write(0,(uint8_t)(eepromval&0xFF));
+        EEPROM_write(1,(uint8_t)((eepromval>>8)&0xFF));
       }
     }
   }
@@ -258,6 +274,32 @@ ISR(PCINT0_vect){
   }
 }
 
+void EEPROM_write(unsigned int ucAddress, unsigned char ucData)
+{
+/* Wait for completion of previous write */
+while(EECR & (1<<EEPE));
+/* Set Programming mode */
+EECR &= ~_BV(EEPM0);
+EECR &= ~_BV(EEPM1);
+/* Set up address and data registers */
+EEAR = ucAddress;
+EEDR = ucData;
+/* Write logical one to EEMPE */
+EECR |= (1<<EEMPE);
+/* Start eeprom write by setting EEPE */
+EECR |= (1<<EEPE);
+}
+unsigned char EEPROM_read(unsigned int ucAddress)
+{
+/* Wait for completion of previous write */
+while(EECR & (1<<EEPE));
+/* Set up address register */
+EEAR = ucAddress;
+/* Start eeprom read by writing EERE */
+EECR |= (1<<EERE);
+/* Return data from data register */
+return EEDR;
+}
 /*
 ISR(INT0_vect){return;}
 ISR(PCINT0_vect){return;}
