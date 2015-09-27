@@ -24,9 +24,9 @@ volatile uint8_t status = 0;//off
 int main(void)
 {
   SetClockLow();
-  sei();
-  GIMSK |= _BV(PCIE0);
-  PCMSK0 |= _BV(PCINT6);
+  ///sei();
+  ///GIMSK |= _BV(PCIE0);
+  ///PCMSK0 |= _BV(PCINT6);
   
   //8Mhz = 0.000000125 s
   //0.000032
@@ -38,7 +38,7 @@ int main(void)
   TCCR1C = 0;
   TIMSK1 = 0;
 
-  DDRA = _BV(0);
+  //DDRA = _BV(0);
   DDRB = 3;
   //PORTA |= 0x1E;//DEBUG
   
@@ -48,11 +48,10 @@ int main(void)
   for (;;) 
   {
     uint8_t val = PINA&0x1E;
-    PINA |= 1;
+    //PINA |= 1;
     if(val!=lastVal)
     {
-      while(currTick<30);//1s
-      if(currTick>90)//2s 单击
+      if(currTick>50)
       {
         if(status==0)
         {
@@ -75,11 +74,12 @@ int main(void)
       }
       TCNT1 = 0;TIFR1 |= _BV(TOV1);
       lastVal = val;
-      
+      while(currTick<10);
     }
   }
 }
 uint8_t GetIR(){
+	return 0;
   uint8_t data = 0;
   uint8_t datahi = 0;
   uint8_t dataidx = 0;
@@ -148,6 +148,7 @@ void SetClockLow() {
 }
 
 ISR(PCINT0_vect){
+	return;///
   SetClockHigh();
   uint8_t val = GetIR();
 
