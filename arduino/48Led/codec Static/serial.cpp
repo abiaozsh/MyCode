@@ -384,6 +384,8 @@ int main(void) {
   //OCR0B = 60;
   TIMSK0 = _BV(OCIE0A);//TOIE0  | _BV(OCIE0B)
 
+  TCCR1B = 4;
+  
   PORT_PNP1_ON;///PORT_PNP1_OFF
   PORT_OE_ON;///PORT_OE_OFF
   
@@ -409,8 +411,11 @@ int main(void) {
     if(dataIdx>=256*48)
     {
       dataIdx = 0;
+	  while(PINC&_BV(0));
+	  TCNT1 = 0;
+	  while(TCNT1<8000);
     }
-    while(TCNT1<100);
+    while(TCNT1<80);
   }
 }
 
