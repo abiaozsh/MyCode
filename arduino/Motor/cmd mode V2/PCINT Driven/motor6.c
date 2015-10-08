@@ -92,8 +92,6 @@ void ClockInit();
 void TimerInit();
 void PCIntInit();
 void adj();
-void startup();
-
 
 int main(void) {
   ClockInit();//初始化时钟：1MHz -> 8MHz
@@ -110,6 +108,7 @@ int main(void) {
   DDR3I = 0;
   PORT3I = 0;
   //主循环
+  sei();
   for(;;) {
     asm volatile("sleep");
   }
@@ -140,7 +139,6 @@ void PCIntInit() {
   PCMSK1 |= _BV(1);
   PCMSK1 |= _BV(2);
   PCMSK0 |= _BV(6);//CLK
-  sei();
 }
 
 void adj() {
@@ -175,7 +173,7 @@ void adj() {
       }
       else
       {
-        NextPower=0;
+        NextPower = 0;
       }
     }
   }
