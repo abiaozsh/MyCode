@@ -2061,8 +2061,6 @@ namespace puzzle
 					}
 				}
 			}
-			g.Flush();
-			pictureBox1.Refresh();
 		}
 
 		private void textBox3_TextChanged(object sender, EventArgs e)
@@ -2097,10 +2095,34 @@ namespace puzzle
 					ulong mask = Data[i][Idx[i]];
 					draw(mask, Colors[i], i == last ? 0 : 1, i);
 				}
+				g.Flush();
+				pictureBox1.Refresh();
 			}
 			catch
 			{
 			}
+		}
+
+		private void button3_Click(object sender, EventArgs e)
+		{
+			foreach (string s in textBox2.Text.Split('\n'))
+			{
+				int[] Idx = new int[12];
+				for (int i = 0; i < 12; i++)
+				{
+					Idx[i] = int.Parse(s.Split(',')[i]);
+				}
+
+				clear();
+				for (int i = 0; i < 12; i++)
+				{
+					ulong mask = Data[i][Idx[i]];
+					draw(mask, Colors[i], 1, i);
+				}
+				g.Flush();
+				bmp.Save(@"d:\img\" + s.Trim() + ".jpg");
+			}
+
 		}
 
 	}
