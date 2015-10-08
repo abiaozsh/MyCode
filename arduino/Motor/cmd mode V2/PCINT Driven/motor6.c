@@ -73,7 +73,7 @@ uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 volatile uint8_t Step = 0;
 volatile   uint8_t Status = 0;//0 halt ,1 running, 2 starting
 volatile   uint8_t StartUpCount1=0;
-volatile uint16_t TargetRPM=2000;//bit16 = start flg rest is data
+volatile uint16_t TargetRPM=1000;//bit16 = start flg rest is data
 volatile uint8_t FStart = 0;
 volatile uint16_t rpm;
 volatile   uint16_t startupCurrent;
@@ -91,44 +91,41 @@ volatile   uint16_t rpmSend;
 void ClockInit();
 void TimerInit();
 void PCIntInit();
-void loop();
-void waita();
 void adj();
 void startup();
 
 
 int main(void) {
-	ClockInit();//初始化时钟：1MHz -> 8MHz
-	TimerInit();//初始化定时器 1/8
-	PCIntInit();//初始化模拟输入
+  ClockInit();//初始化时钟：1MHz -> 8MHz
+  TimerInit();//初始化定时器 1/8
+  PCIntInit();//初始化模拟输入
 
-	//DDRA = 0;PORTA = 0;//all input
-	//DDRB = 0;PORTB = 0;//all input
-
-	//打开输出端口
-	DDR6O = BP1U | BP1D | BP2U | BP2D | BP3U | BP3D;
-	
-	//初始化输出端口
-	PORT6O = BP1D | BP2D | BP3D;
-	
-	//初始化输入端口
-	DDR3I = 0;
-	PORT3I = 0;
-	//主循环
-	loop();
+  //打开输出端口
+  DDR6O = BP1U | BP1D | BP2U | BP2D | BP3U | BP3D;
+  
+  //初始化输出端口
+  PORT6O = BP1D | BP2D | BP3D;
+  
+  //初始化输入端口
+  DDR3I = 0;
+  PORT3I = 0;
+  //主循环
+  for(;;) {
+    asm volatile("sleep");
+  }
 }
 
 void ClockInit() {
-	CLKPR = 128;//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
-	//CLKPR = 3;//1/8
-	CLKPR = 0;//1/1 //8MHz
+  CLKPR = 128;//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
+  //CLKPR = 3;//1/8
+  CLKPR = 0;//1/1 //8MHz
 }
 
 void TimerInit() {
-	TCCR1A = 0;
-	TCCR1B = 2;//  1/8	1MHz 1us
-	TCCR1C = 0;
-	TIMSK1 = 0;
+  TCCR1A = 0;
+  TCCR1B = 2;//  1/8	1MHz 1us
+  TCCR1C = 0;
+  TIMSK1 = 0;
   TIMSK1 |= _BV(OCIE1B);
   TIMSK1 |= _BV(OCIE1A);
   //OCR1A 关断定时器=power
@@ -146,123 +143,57 @@ void PCIntInit() {
   sei();
 }
 
-void loop() {
-	for(;;) {
-//		//定时器清零
-//		TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
-		if(FStart)
-		{
-			CmdPWROn;
-			uint16_t temp = TargetRPM>>1;
-			for(;;)
-			{
-				if(currTick>=temp){
-					CmdPWROff;
-				}
-				if(currTick>=TargetRPM){
-					break;
-				}
-			}
-			//转速调整
-			adj();
-		}
-		else
-		{
-//			Power = NextPower;
-//			if(Power)
-//			{
-//				CmdPWROn;
-//			}
-//			else
-//			{
-//				CmdPWROff;
-//			}
-		
-//			if(Power<200 && rpm>500)
-//			{
-//				//等待过零
-//				waita();
-//				//转速调整
-//				adj();
-//			}
-//			else
-//			{
-//				//转速调整
-//				adj();
-//				//等待过零
-//				waita();
-//			}
-//		}
-//		CmdPWROff;
-//		CmdNextStep;
-//		//记录当前转速
-//		rpm = currTick;
-	}
-}
-
-void waita() {
-//	uint8_t valbase = GetDigitReadBaseVal;//;//;GetDigitRead
-//	uint16_t temp = (rpm>>1);
-	for(;;)
-	{
-		if(currTick>Power){
-			CmdPWROff;
-		}
-		
-		if(FStart && currTick==65535)// power on signal
-		{
-			return;
-		}
-		
-		uint8_t val = GetDigitRead;
-		if(currTick>=temp && val!=valbase){
-			return;
-		}
-	}
-}
-
 void adj() {
-	NextPower=0;
-	if(Status)
-	{
-		if(rpm>StartRpm)//too slow, halt
-		{
-			StartUpCount1 = 0;
-			Status = 0;//halt
-		}
-		else if(rpm>TargetRPM)//bit slow && running
-		{
-			if(rpm>200)//低转速下进行精细运算
-			{
-				uint32_t temp = TargetRPM;
-				temp = temp << 16;//*65536
-				temp = temp / rpm;
-				temp = 65536 - temp;//65536~~>0 (0 为转速非常接近)
-				temp = rpm * temp;
-				temp = temp >> 15;// 数字越大越柔和    /1024
-				NextPower = temp;
-			}
-			else
-			{
-				NextPower = 1000;
-			}
-		}
-	}
-	else
-	{
-		if(rpm<StartRpm&&rpm>(StartRpm>>3))//fast enough but not too fast
-		{
-			StartUpCount1++;
-		}
-		else
-		{
-			StartUpCount1 = 0;
-		}
-		if(StartUpCount1>40)
-		{
-			Status = 1;
-		}
-	}
+  NextPower=0;
+  if(Status)
+  {
+    if(rpm>StartRpm)//too slow, halt
+    {
+      StartUpCount1 = 0;
+      Status = 0;//halt
+    }
+    else
+    {
+      if(rpm>TargetRPM)//bit slow && running
+      {
+        NextPower = 10000;
+        //TODO PID
+        //if(rpm>200)//低转速下进行精细运算
+        //{
+        //	uint32_t temp = TargetRPM;
+        //	temp = temp << 16;//*65536
+        //	temp = temp / rpm;
+        //	temp = 65536 - temp;//65536~~>0 (0 为转速非常接近)
+        //	temp = rpm * temp;
+        //	temp = temp >> 15;// 数字越大越柔和    /1024
+        //	NextPower = temp;
+        //}
+        //else
+        //{
+        //	NextPower = 1000;
+        //}
+      }
+      else
+      {
+        NextPower=0;
+      }
+    }
+  }
+  else
+  {
+    if(rpm<StartRpm&&rpm>(StartRpm>>3))//fast enough but not too fast
+    {
+      StartUpCount1++;
+    }
+    else
+    {
+      StartUpCount1 = 0;
+    }
+    if(StartUpCount1>40)
+    {
+      Status = 1;
+    }
+  }
 }
 
 //1正常运转状态
@@ -345,6 +276,7 @@ ISR(TIM1_COMPB_vect){
 
 
 ISR(PCINT0_vect){//先送高，后送低
+  sei();
   if(drCLK)//上升沿读取
   {
     if(TempDataCnt==8)
@@ -363,15 +295,17 @@ ISR(PCINT0_vect){//先送高，后送低
         TempData|=1;
       }
       
-      if(OutData&1)
       {
-        dwPORTON;
+      ///if(OutData&1)
+      ///{
+      ///  dwPORTON;
+      ///}
+      ///else
+      ///{
+      ///  dwPORTOFF;
+      ///}
+      ///OutData>>=1;
       }
-      else
-      {
-        dwPORTOFF;
-      }
-      OutData>>=1;
       
       TempDataCnt++;
       if(TempDataCnt==8)
@@ -391,7 +325,7 @@ ISR(PCINT0_vect){//先送高，后送低
               if(TIFR1 & _BV(TOV1))
               {
                 //已超时，重启
-                .....
+                //.....
               }
               return;
             case CMD_FORCEOFF:
