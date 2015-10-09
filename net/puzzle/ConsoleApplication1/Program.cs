@@ -14,43 +14,19 @@ namespace ConsoleApplication1
 		{
 			Data = new List<ulong[]>();
 
-			Data.Add(proc(CData.d0));
-			Data.Add(proc(CData.d1));
-			Data.Add(proc(CData.d2));
-			Data.Add(proc(CData.d3));
-			Data.Add(proc(CData.d4));
-			Data.Add(proc(CData.d5));
-			Data.Add(proc(CData.d6));
-			Data.Add(proc(CData.d7));
-			Data.Add(proc(CData.d8));
-			Data.Add(proc(CData.d9));
-			Data.Add(proc(CData.d10));
-			Data.Add(proc(CData.d11));
+			Data.Add(CData.proc(CData.d0));
+			Data.Add(CData.proc(CData.d1));
+			Data.Add(CData.proc(CData.d2));
+			Data.Add(CData.proc(CData.d3));
+			Data.Add(CData.proc(CData.d4));
+			Data.Add(CData.proc(CData.d5));
+			Data.Add(CData.proc(CData.d6));
+			Data.Add(CData.proc(CData.d7));
+			Data.Add(CData.proc(CData.d8));
+			Data.Add(CData.proc(CData.d9));
+			Data.Add(CData.proc(CData.d10));
+			Data.Add(CData.proc(CData.d11));
 
-		}
-		static ulong[] proc(string s)
-		{
-			int cnt = 0;
-			foreach (string s1 in s.Split('\n'))
-			{
-				string[] s2 = s1.Split(',');
-				if (s2[4] != "x")
-				{
-					cnt++;
-				}
-			}
-			ulong[] dat = new ulong[cnt];
-			cnt = 0;
-			foreach (string s1 in s.Split('\n'))
-			{
-				string[] s2 = s1.Split(',');
-				if (s2[4] != "x")
-				{
-					dat[cnt++] = Convert.ToUInt64("0x" + (s2[0].Substring(1)), 16);
-				}
-			}
-
-			return dat;
 		}
 
 

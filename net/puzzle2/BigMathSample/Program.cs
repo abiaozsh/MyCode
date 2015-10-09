@@ -38,7 +38,7 @@ namespace BigMathSample
 			foreach (string s1 in s.Split('\n'))
 			{
 				string[] s2 = s1.Split(',');
-				if (s2[4] != "x")
+				//if (s2[4] != "x")
 				{
 					cnt++;
 				}
@@ -49,7 +49,7 @@ namespace BigMathSample
 			foreach (string s1 in s.Split('\n'))
 			{
 				string[] s2 = s1.Split(',');
-				if (s2[4] != "x")
+				//if (s2[4] != "x")
 				{
 					Data[i * 256 + cnt++] = Convert.ToInt64("0x" + (s2[0].Substring(1)), 16);
 				}

@@ -89,8 +89,6 @@ volatile   uint8_t CMD = 0;
 volatile   uint8_t TempData=0;
 volatile   uint8_t OutData=0;
 volatile   uint8_t TempDataCnt=8;
-volatile   uint8_t DataReceiveCnt=0;
-volatile   uint16_t TargetRPMBuff;
 volatile   uint16_t rpmSend;
 
 void ClockInit();
@@ -239,7 +237,8 @@ void adj() {
   else
   {
     //TODO
-    if(rpm < StartRpm && rpm > (StartRpm>>3) && (rpm>(LastRpm<<1)) && (rpm<(LastRpm>>1)))//fast enough but not too fast
+    // && (rpm>(LastRpm<<1)) && (rpm<(LastRpm>>1))
+    if(rpm < StartRpm && rpm > (StartRpm>>3))//fast enough but not too fast
     {
       StartUpCount1++;
     }
@@ -287,9 +286,14 @@ ISR(TIM1_COMPB_vect){
   }
   LEDOff;
 }
-#define CMD_SENDDATA   13
-#define CMD_FORCEON    27
-#define CMD_FORCEOFF   37
+#define CMD_SENDDATA1Xa   10  /*0~255       1x*/
+#define CMD_SENDDATA1Xb   11  /*256~511     1x*/
+#define CMD_SENDDATA2X    12  /*512~1023    2x*/
+#define CMD_SENDDATA4X    13  /*1024~2047   4x*/
+#define CMD_SENDDATA8X    14  /*2048~4095   8x*/
+#define CMD_SENDDATA16X   15  /*4096~8191  16x*/
+#define CMD_SENDDATA32X   16  /*8192~16383 32x*/
+#define CMD_FORCE         20  /*on/off        */
 
 ISR(PCINT0_vect){//先送高，后送低
   LEDOn;
@@ -329,42 +333,54 @@ ISR(PCINT0_vect){//先送高，后送低
       {
         if(CMD==0)
         {
-          switch(TempData)
+          if(TempData)
           {
-            case CMD_SENDDATA:
-              DataReceiveCnt = 0;
-              TargetRPMBuff = 0;
-              rpmSend = rpm;
-              CMD = TempData;
-              return;
-            case CMD_FORCEON:
-              FStart=1;
-              if(TIFR1 & _BV(TOV1))
-              {
-                //已超时，重启
-                //.....
-              }
-              return;
-            case CMD_FORCEOFF:
-              FStart=0;
-              return;
+            rpmSend = rpm;
+            CMD = TempData;
           }
         }
-        else if(CMD == CMD_SENDDATA)
+        else
         {
-          //High byte first
-          TargetRPMBuff <<= 8;
-          TargetRPMBuff |= TempData;
-          
-          OutData = (uint8_t)rpmSend;
-          rpmSend >>= 8;
-          
-          DataReceiveCnt++;
-          if(DataReceiveCnt==2)
+          switch(cmd)
           {
-            TargetRPM = TargetRPMBuff;
-            CMD = 0;
+            case CMD_SENDDATA1Xa://   10  /*0~255       1x*/
+              TargetRPM = TempData;
+              break;
+            case CMD_SENDDATA1Xb://   11  /*256~511     1x*/
+              TargetRPM = TempData + 256;
+              break;
+            case CMD_SENDDATA2X://    12  /*512~1023    2x*/
+              TargetRPM = (TempData<<1) + 512;
+              break;
+            case CMD_SENDDATA4X://    13  /*1024~2047   4x*/
+              TargetRPM = (TempData<<2) + 1024;
+              break;
+            case CMD_SENDDATA8X://    14  /*2048~4095   8x*/
+              TargetRPM = (TempData<<3) + 2048;
+              break;
+            case CMD_SENDDATA16X://   15  /*4096~8191  16x*/
+              TargetRPM = (TempData<<4) + 4096;
+              break;
+            case CMD_SENDDATA32X://   16  /*8192~16383 32x*/
+              TargetRPM = (TempData<<5) + 8192;
+              break;
+            case CMD_FORCE:
+              if(TempData)
+              {
+                FStart=1;
+                if(TIFR1 & _BV(TOV1))
+                {
+                  //已超时，重启
+                  //.....
+                }
+              }
+              else
+              {
+                FStart=0;
+              }
+              break;
           }
+          cmd = 0;
         }
       }
     }

@@ -30,7 +30,7 @@ namespace WindowsFormsApplication1
 			if (port == null)
 			{
 				//COM4为Arduino使用的串口号，需根据实际情况调整
-				port = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
+				port = new SerialPort("COM3", 115200, Parity.None, 8, StopBits.One);
 				port.Open();
 			}
 		}
@@ -55,79 +55,88 @@ namespace WindowsFormsApplication1
 			}
 		}
 
+		private void Send(byte data)
+		{
+			byte[] d = new byte[1];
+			d[0] = data;
+			Console.WriteLine(data);
+			if (port != null && port.IsOpen)
+			{
+				Thread.Sleep(10);
+				port.Write(d, 0, 1);
+			}
+		}
+
 		private void Form1_Load(object sender, EventArgs e)
 		{
 		}
-		byte CMD_SETHIGH = 13;
-		byte CMD_SETLOW = 17;
-		byte CMD_PUSHDATA = 19;
-		byte CMD_FORCEON = 27;
-		byte CMD_FORCEOFF = 37;
+		byte CMD_SENDDATA1Xa = 10;  /*0~255       1x*/
+		byte CMD_SENDDATA1Xb = 11;  /*256~511     1x*/
+		byte CMD_SENDDATA2X = 12;  /*512~1023    2x*/
+		byte CMD_SENDDATA4X = 13;  /*1024~2047   4x*/
+		byte CMD_SENDDATA8X = 14;  /*2048~4095   8x*/
+		byte CMD_SENDDATA16X = 15;  /*4096~8191  16x*/
+		byte CMD_SENDDATA32X = 16;  /*8192~16383 32x*/
+		byte CMD_FORCE = 20;  /*on/off        */
 
 		private void trackBar1_Scroll(object sender, EventArgs e)
 		{
 			int v = trackBar1.Value;
 			this.Text = v.ToString();
-			byte[] buff = new byte[1];
-			buff[0] = CMD_SETHIGH;
-			port.Write(buff, 0, 1);
-			Thread.Sleep(50);
+			if (v < 256)
+			{
+				Send(CMD_SENDDATA1Xa);
+				Send((byte)(v));
+			}
+			else if (v < 512)
+			{
+				Send(CMD_SENDDATA1Xb);
+				Send((byte)(v - 256));
+			}
+			else if (v < 1024)
+			{
+				Send(CMD_SENDDATA2X);
+				Send((byte)((v - 512) / 2));
+			}
+			else if (v < 2048)
+			{
+				Send(CMD_SENDDATA4X);
+				Send((byte)((v - 1024) / 4));
+			}
+			else if (v < 4096)
+			{
+				Send(CMD_SENDDATA8X);
+				Send((byte)((v - 2048) / 8));
+			}
+			else if (v < 8192)
+			{
+				Send(CMD_SENDDATA16X);
+				Send((byte)((v - 4096) / 16));
+			}
+			else if (v < 16384)
+			{
+				Send(CMD_SENDDATA32X);
+				Send((byte)((v - 8192) / 32));
+			}
+			else
+			{
+			}
 
-			buff[0] = (byte)(v >> 8);
-			port.Write(buff, 0, 1);
-			Thread.Sleep(50);
-
-			buff[0] = CMD_SETLOW;
-			port.Write(buff, 0, 1);
-			Thread.Sleep(50);
-
-			buff[0] = (byte)(v);
-			port.Write(buff, 0, 1);
-			Thread.Sleep(50);
-
-			buff[0] = CMD_PUSHDATA;
-			port.Write(buff, 0, 1);
-			Thread.Sleep(50);
-
-		}
-
-		private void trackBar2_Scroll(object sender, EventArgs e)
-		{
-			double v = trackBar2.Value;
-			this.Text = v.ToString();
-			PortWrite(2, (int)(v));
-
-		}
-
-		private void trackBar3_Scroll(object sender, EventArgs e)
-		{
-			double v = trackBar3.Value;
-			this.Text = v.ToString();
-			PortWrite(3, (int)(v));
-
-		}
-
-		private void trackBar4_Scroll(object sender, EventArgs e)
-		{
-			double v = trackBar4.Value;
-			this.Text = v.ToString();
-			PortWrite(4, (int)(v));
 
 		}
+
 		private void checkBox1_CheckedChanged(object sender, EventArgs e)
 		{
 			byte[] buff = new byte[1];
 			if (checkBox1.Checked)
 			{
-				buff[0] = CMD_FORCEON;
-				port.Write(buff, 0, 1);
-				Thread.Sleep(50);
+				Send(CMD_FORCE);
+				Send(1);
 			}
 			else
 			{
-                buff[0] = CMD_FORCEOFF;
-				port.Write(buff, 0, 1);
-				Thread.Sleep(50);
+				Send(CMD_FORCE);
+				Send(0);
 			}
 		}
 

@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using ConsoleApplication1;
 
 namespace puzzle
 {
@@ -1690,26 +1691,14 @@ namespace puzzle
 			pictureBox1.Refresh();
 		}
 
-		int[] conv = {
-             0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-            10,11,12,13,14,15,16,17,18,-1,
-            19,20,21,22,23,24,25,26,-1,-1,
-            27,28,29,30,31,32,33,-1,-1,-1,
-            34,35,36,37,38,39,-1,-1,-1,-1,
-            40,41,42,43,44,-1,-1,-1,-1,-1,
-            45,46,47,48,-1,-1,-1,-1,-1,-1,
-            49,50,51,-1,-1,-1,-1,-1,-1,-1,
-            52,53,-1,-1,-1,-1,-1,-1,-1,-1,
-            54,-1,-1,-1,-1,-1,-1,-1,-1,-1,
-        };
 		void pictureBox1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
 		{
 			int x = e.X / 20;
 			int y = e.Y / 20;
 
-			if (conv[x + y * 10] != -1)
+			if (CData.conv[x + y * 10] != -1)
 			{
-				data = data ^ ((ulong)1 << conv[x + y * 10]);
+				data = data ^ ((ulong)1 << CData.conv[x + y * 10]);
 			}
 			refresh(data);
 
@@ -1726,9 +1715,9 @@ namespace puzzle
 			{
 				for (int j = 0; j < 10; j++)
 				{
-					if (conv[i + j * 10] != -1)
+					if (CData.conv[i + j * 10] != -1)
 					{
-						if ((_data & ((ulong)1 << conv[i + j * 10])) != 0)
+						if ((_data & ((ulong)1 << CData.conv[i + j * 10])) != 0)
 						{
 							g.FillEllipse(b1, i * 20, j * 20, 19, 19);
 						}
@@ -1822,7 +1811,7 @@ namespace puzzle
 			foreach (string s1 in s.Split('\n'))
 			{
 				string[] s2 = s1.Split(',');
-				if (s2[4] != "x")
+				//if (s2[4] != "x")
 				{
 					cnt++;
 				}
@@ -1832,7 +1821,7 @@ namespace puzzle
 			foreach (string s1 in s.Split('\n'))
 			{
 				string[] s2 = s1.Split(',');
-				if (s2[4] != "x")
+				//if (s2[4] != "x")
 				{
 					dat[cnt++] = Convert.ToUInt64("0x" + (s2[0].Substring(1)), 16);
 				}
@@ -1916,7 +1905,7 @@ namespace puzzle
 						int v = vals[i * 128 + j * 4 + x + y * 32];
 						if (v == 1)
 						{
-							d |= ((ulong)1 << conv[x + y * 10]);
+							d |= ((ulong)1 << CData.conv[x + y * 10]);
 						}
 					}
 				}
@@ -1934,7 +1923,7 @@ namespace puzzle
 						{
 							int error = 0;
 							ulong d = 0;
-							if (conv[ax + ay * 10] != -1)
+							if (CData.conv[ax + ay * 10] != -1)
 							{
 								for (int x = ax; x < ax + 4; x++)
 								{
@@ -1953,14 +1942,14 @@ namespace puzzle
 												error = 1;
 												break;
 											}
-											if (conv[x + y * 10] == -1)
+											if (CData.conv[x + y * 10] == -1)
 											{
 												error = 1;
 												break;
 											}
 											else
 											{
-												d |= ((ulong)1 << conv[x + y * 10]);
+												d |= ((ulong)1 << CData.conv[x + y * 10]);
 											}
 										}
 									}
@@ -1999,7 +1988,7 @@ namespace puzzle
 
 		private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
 		{
-			textBox1.Text = listBox1.Text.Substring(0, 16);
+			textBox1.Text = listBox1.Text.Substring(1, 16);
 		}
 
 		private void button2_Click(object sender, EventArgs e)
@@ -2026,7 +2015,7 @@ namespace puzzle
 			{
 				for (int j = 0; j < 10; j++)
 				{
-					if (conv[i + j * 10] != -1)
+					if (CData.conv[i + j * 10] != -1)
 					{
 						g.FillEllipse(b2, i * 20, j * 20, 19, 19);
 					}
@@ -2044,9 +2033,9 @@ namespace puzzle
 			{
 				for (int j = 0; j < 10; j++)
 				{
-					if (conv[i + j * 10] != -1)
+					if (CData.conv[i + j * 10] != -1)
 					{
-						if ((mask & ((ulong)1 << conv[i + j * 10])) != 0)
+						if ((mask & ((ulong)1 << CData.conv[i + j * 10])) != 0)
 						{
 							if (size == 0)
 							{
