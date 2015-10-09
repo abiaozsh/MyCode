@@ -75,21 +75,20 @@ uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
 uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 
 volatile uint8_t Step = 0;
-volatile   uint8_t Status = 0;//0 halt ,1 running, 2 starting
-volatile   uint8_t StartUpCount1=0;
+uint8_t Status = 0;//0 halt ,1 running, 2 starting
+uint8_t StartUpCount1=0;
 volatile uint16_t TargetRPM=1000;//bit16 = start flg rest is data
 volatile uint8_t FStart = 0;
 volatile uint16_t rpm;
 volatile uint16_t LastRpm;
-volatile   uint16_t startupCurrent;
-volatile   uint16_t Power = 0;
-volatile   uint16_t NextPower = 0;
+volatile uint16_t Power = 0;
+volatile uint16_t NextPower = 0;
 
-volatile   uint8_t CMD = 0;
-volatile   uint8_t TempData=0;
-volatile   uint8_t OutData=0;
-volatile   uint8_t TempDataCnt=8;
-volatile   uint16_t rpmSend;
+uint8_t CMD = 0;
+uint8_t TempData=0;
+uint8_t TempDataCnt=8;
+//uint8_t OutData=0;
+//volatile uint16_t rpmSend;
 
 void ClockInit();
 void TimerInit();
@@ -337,7 +336,7 @@ ISR(PCINT0_vect){//先送高，后送低
         {
           if(TempData)
           {
-            rpmSend = rpm;
+            //rpmSend = rpm;
             CMD = TempData;
           }
         }
@@ -373,7 +372,7 @@ ISR(PCINT0_vect){//先送高，后送低
                 if(TIFR1 & _BV(TOV1))
                 {
                   //已超时，重启
-                  //.....
+                  TCNT1 = 0;TIFR1 |= _BV(TOV1);
                 }
               }
               else
