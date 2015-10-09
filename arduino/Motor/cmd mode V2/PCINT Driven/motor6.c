@@ -40,7 +40,7 @@
 //a6 start signal / restartup signal
 //a7 throttle
 
-#define StartRpm 15000
+#define StartRpm 10000
 
 #define CmdNextStep Step = NextStep[Step];
 uint8_t NextStep[] = {
@@ -194,7 +194,7 @@ ISR(PCINT1_vect){
 }
 
 void adj() {
-  NextPower = 0;
+  //NextPower = 0;
   if(Status)
   {
     if(rpm>StartRpm)//too slow, halt
@@ -206,37 +206,38 @@ void adj() {
     {
       if(rpm>TargetRPM)//little bit slow
       {
-        NextPower = 10000;
+        ///NextPower = 10000;
         //TODO
-        ///uint16_t diff = (rpm-TargetRPM)>>2;
-        ///if(NextPower+diff>10000)
-        ///{
-        ///  NextPower = 10000;
-        ///}
-        ///else
-        ///{
-        ///  NextPower += diff;
-        ///}
+        uint16_t diff = (rpm-TargetRPM)>>3;//2
+        if(NextPower+diff>10000)
+        {
+          NextPower = 10000;
+        }
+        else
+        {
+          NextPower += diff;
+        }
       }
       else//little bit fast
       {
-        NextPower = 0;
+        ///NextPower = 0;
         //TODO
-        ///uint16_t diff = (TargetRPM-rpm)>>1;
-        ///if(NextPower<diff)
-        ///{
-        ///  NextPower = 0;
-        ///}
-        ///else
-        ///{
-        ///  NextPower -= diff;
-        ///}
+        uint16_t diff = (TargetRPM-rpm)>>2;//
+        if(NextPower<diff)
+        {
+          NextPower = 0;
+        }
+        else
+        {
+          NextPower -= diff;
+        }
       }
     }
   }
   else
   {
     //TODO
+	NextPower = 0;
     // && (rpm>(LastRpm<<1)) && (rpm<(LastRpm>>1))
     if(rpm < StartRpm && rpm > (StartRpm>>3))//fast enough but not too fast
     {
@@ -246,9 +247,10 @@ void adj() {
     {
       StartUpCount1 = 0;
     }
-    if(StartUpCount1>40)
+    if(StartUpCount1>20)
     {
       Status = 1;
+	  NextPower = 1000;
     }
   }
 }
@@ -341,7 +343,7 @@ ISR(PCINT0_vect){//先送高，后送低
         }
         else
         {
-          switch(cmd)
+          switch(CMD)
           {
             case CMD_SENDDATA1Xa://   10  /*0~255       1x*/
               TargetRPM = TempData;
@@ -380,10 +382,10 @@ ISR(PCINT0_vect){//先送高，后送低
               }
               break;
           }
-          cmd = 0;
+          CMD = 0;
         }
       }
     }
   }
-  LEDOn;
+  LEDOff;
 }

@@ -13,12 +13,12 @@ int main(void) {
   uint32_t i;
   for(;;) {
     LEDOn;
-    for(i = 0;i<100000;i++)
+    for(i = 0;i<50000;i++)
     {
       asm volatile("nop");
     }
     LEDOff;
-    for(i = 0;i<100000;i++)
+    for(i = 0;i<50000;i++)
     {
       asm volatile("nop");
     }
