@@ -14,6 +14,10 @@
 #define drDAT (PINA & _BV(7)) /*DAT*/
 #define drCLK (PINA & _BV(6)) /*DAT*/
 
+#define LEDInit PORTB &= ~_BV(3);
+#define LEDOn   DDRB |= _BV(3);
+#define LEDOff  DDRB &= ~_BV(3);
+
 //2 1 0
 //5 4 3 2 1 0
 #define PORT6O PORTA
@@ -76,6 +80,7 @@ volatile   uint8_t StartUpCount1=0;
 volatile uint16_t TargetRPM=1000;//bit16 = start flg rest is data
 volatile uint8_t FStart = 0;
 volatile uint16_t rpm;
+volatile uint16_t LastRpm;
 volatile   uint16_t startupCurrent;
 volatile   uint16_t Power = 0;
 volatile   uint16_t NextPower = 0;
@@ -98,6 +103,8 @@ int main(void) {
   TimerInit();//初始化定时器 1/8
   PCIntInit();//初始化模拟输入
 
+  LEDInit;
+  
   //打开输出端口
   DDR6O = BP1U | BP1D | BP2U | BP2D | BP3U | BP3D;
   
@@ -141,59 +148,6 @@ void PCIntInit() {
   PCMSK0 |= _BV(6);//CLK
 }
 
-void adj() {
-  NextPower=0;
-  if(Status)
-  {
-    if(rpm>StartRpm)//too slow, halt
-    {
-      StartUpCount1 = 0;
-      Status = 0;//halt
-    }
-    else
-    {
-      if(rpm>TargetRPM)//bit slow && running
-      {
-        NextPower = 10000;
-        //TODO PID
-        //if(rpm>200)//低转速下进行精细运算
-        //{
-        //	uint32_t temp = TargetRPM;
-        //	temp = temp << 16;//*65536
-        //	temp = temp / rpm;
-        //	temp = 65536 - temp;//65536~~>0 (0 为转速非常接近)
-        //	temp = rpm * temp;
-        //	temp = temp >> 15;// 数字越大越柔和    /1024
-        //	NextPower = temp;
-        //}
-        //else
-        //{
-        //	NextPower = 1000;
-        //}
-      }
-      else
-      {
-        NextPower = 0;
-      }
-    }
-  }
-  else
-  {
-    if(rpm<StartRpm&&rpm>(StartRpm>>3))//fast enough but not too fast
-    {
-      StartUpCount1++;
-    }
-    else
-    {
-      StartUpCount1 = 0;
-    }
-    if(StartUpCount1>40)
-    {
-      Status = 1;
-    }
-  }
-}
-
 //1正常运转状态
 //2低速切断状态/高频抖动状态
 //手动启动状态
@@ -201,6 +155,7 @@ void adj() {
 
 //过零事件
 ISR(PCINT1_vect){
+  LEDOn;
   uint16_t temp = (rpm>>1);//?? >>2
   if(currTick>=temp)
   {
@@ -213,6 +168,7 @@ ISR(PCINT1_vect){
       {
         CmdPWROff;
         CmdNextStep;
+        LastRpm = rpm;
         //记录当前转速
         rpm = currTick;
         //换向前处理结束
@@ -236,12 +192,74 @@ ISR(PCINT1_vect){
       }
     }
   }
+  LEDOff;
 }
+
+void adj() {
+  NextPower = 0;
+  if(Status)
+  {
+    if(rpm>StartRpm)//too slow, halt
+    {
+      StartUpCount1 = 0;
+      Status = 0;//halt
+    }
+    else
+    {
+      if(rpm>TargetRPM)//little bit slow
+      {
+        NextPower = 10000;
+        //TODO
+        ///uint16_t diff = (rpm-TargetRPM)>>2;
+        ///if(NextPower+diff>10000)
+        ///{
+        ///  NextPower = 10000;
+        ///}
+        ///else
+        ///{
+        ///  NextPower += diff;
+        ///}
+      }
+      else//little bit fast
+      {
+        NextPower = 0;
+        //TODO
+        ///uint16_t diff = (TargetRPM-rpm)>>1;
+        ///if(NextPower<diff)
+        ///{
+        ///  NextPower = 0;
+        ///}
+        ///else
+        ///{
+        ///  NextPower -= diff;
+        ///}
+      }
+    }
+  }
+  else
+  {
+    //TODO
+    if(rpm < StartRpm && rpm > (StartRpm>>3) && (rpm>(LastRpm<<1)) && (rpm<(LastRpm>>1)))//fast enough but not too fast
+    {
+      StartUpCount1++;
+    }
+    else
+    {
+      StartUpCount1 = 0;
+    }
+    if(StartUpCount1>40)
+    {
+      Status = 1;
+    }
+  }
+}
+
 ISR(TIM1_COMPA_vect){
   CmdPWROff;
 }
 
 ISR(TIM1_COMPB_vect){
+  LEDOn;
   if(FStart)//强制换向
   {
     CmdPWROff;
@@ -267,13 +285,14 @@ ISR(TIM1_COMPB_vect){
     OCR1B = TargetRPM;
     adj();
   }
+  LEDOff;
 }
 #define CMD_SENDDATA   13
 #define CMD_FORCEON    27
 #define CMD_FORCEOFF   37
 
-
 ISR(PCINT0_vect){//先送高，后送低
+  LEDOn;
   sei();
   if(drCLK)//上升沿读取
   {
@@ -350,4 +369,5 @@ ISR(PCINT0_vect){//先送高，后送低
       }
     }
   }
+  LEDOn;
 }
