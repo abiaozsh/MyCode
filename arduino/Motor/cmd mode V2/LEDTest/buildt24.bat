@@ -17,4 +17,7 @@ del a.out
 rem "%arduinopath%\hardware\tools\avr\bin\avrdude" -C"%arduinopath%\hardware\tools\avr\etc\avrdude.conf" -pattiny24 -cstk500v1 -P\\.\%comPort% -b19200 -Uflash:w:%filename%.hex:i 
 "%arduinopath%\Uploader.exe" %comPort% %filename%.hex
 "%arduinopath%\hardware\tools\avr\bin\avr-size" %filename%.hex
+
+
+rem "%arduinopath%\hardware\tools\avr\bin\avr-size" -A b.elf
 pause
