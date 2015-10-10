@@ -1,16 +1,7 @@
-#define CUR_TIMING TIMING__8M_TCCR0B_1_115200
-#define TCCR0B_Value 1
 
 PROGMEM prog_uint8_t TIMING__8M_TCCR0B_2___9600[] = {104,208, 56,160,  8,113,217, 65,169, 17};
 PROGMEM prog_uint8_t TIMING__8M_TCCR0B_2__14400[] = { 69,138,208, 21, 91,160,230, 43,113,182};
 PROGMEM prog_uint8_t TIMING__8M_TCCR0B_1_115200[] = { 69,138,208, 21, 91,160,230, 43,113,182};
-
-#define DDR_Send DDRA
-#define PORT_Send PORTA
-#define BIT_Send _BV(2)
-#define DDR_Recv DDRA
-#define PIN_Recv PINA
-#define BIT_Recv _BV(1)
 
 void SerialInit();
 void SerialSend(uint8_t val);
