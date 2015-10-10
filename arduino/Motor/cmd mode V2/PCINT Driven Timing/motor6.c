@@ -1,6 +1,15 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
+
+#define CUR_TIMING TIMING__8M_TCCR0B_1_115200
+#define TCCR0B_Value 1
+#define DDR_Send DDRB
+#define PORT_Send PORTB
+#define BIT_Send _BV(0)
+#define DDR_Recv DDRB
+#define PIN_Recv PINB
+#define BIT_Recv _BV(1)
 #include "D:\MyCode\arduino\_Common\serial.h"
 
 #define MaxPonTime 2000
