@@ -40,16 +40,16 @@
 //a6 start signal / restartup signal
 //a7 throttle
 
-#define StartRpm 10000
+#define StartRpm 8192
 
-#define CmdNextStep Step = NextStep[Step];
+#define CmdNextStep Step = NextStep[TempStep];
 uint8_t NextStep[] = {
   1,  2,  3,  4,  5,  0
 };
 //power on
-#define CmdPWROn  PORT6O = PWR_ON[Step];
+#define CmdPWROn  PORT6O = PWR_ON[TempStep];
 //power off
-#define CmdPWROff PORT6O = PWR_OFF[Step];
+#define CmdPWROff PORT6O = PWR_OFF[TempStep];
 
 //下臂常开
 uint8_t PWR_ON[] = {
@@ -69,9 +69,9 @@ uint8_t PWR_OFF[] = {
 	0    + BP1D + BP3D  // 3-2
 };
 
-#define GetDigitRead (PIN3I & DigitRead[Step])
+#define GetDigitRead (PIN3I & DigitRead[TempStep])
 uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
-#define GetDigitReadBaseVal (DigitReadBaseVal[Step])
+#define GetDigitReadBaseVal (DigitReadBaseVal[TempStep])
 uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 
 volatile uint8_t Step = 0;
@@ -80,9 +80,11 @@ uint8_t StartUpCount1=0;
 volatile uint16_t TargetRPM=1000;//bit16 = start flg rest is data
 volatile uint8_t FStart = 0;
 volatile uint16_t rpm;
-volatile uint16_t LastRpm;
-volatile uint16_t Power = 0;
+///volatile uint16_t LastRpm;
 volatile uint16_t NextPower = 0;
+
+uint16_t rpms[8];
+uint8_t rpmsIdx = 0;
 
 uint8_t CMD = 0;
 uint8_t TempData=0;
@@ -156,6 +158,7 @@ ISR(PCINT1_vect){
   uint16_t temp = (rpm>>1);//?? >>2
   if(currTick>=temp)
   {
+    uint8_t TempStep = Step;
     uint8_t valbase = GetDigitReadBaseVal;
     uint8_t val = GetDigitRead;
     //确认过零
@@ -165,7 +168,7 @@ ISR(PCINT1_vect){
       {
         CmdPWROff;
         CmdNextStep;
-        LastRpm = rpm;
+///        LastRpm = rpm;
         //记录当前转速
         rpm = currTick;
         //换向前处理结束
@@ -174,7 +177,7 @@ ISR(PCINT1_vect){
         
         //定时器清零
         TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
-        Power = NextPower;
+        uint16_t Power = NextPower;
         if(Power)
         {
           CmdPWROn;
@@ -193,54 +196,67 @@ ISR(PCINT1_vect){
 }
 
 void adj() {
-  //NextPower = 0;
   if(Status)
   {
-    if(rpm>StartRpm)//too slow, halt
+    rpms[rpmsIdx] = rpm;
+    rpmsIdx++;
+    rpmsIdx&=7;
+    uint8_t i;
+    uint16_t avgrpm=0;
+    for(i=0;i<8;i++)
+    {
+      avgrpm+=rpms[i];
+    }
+    avgrpm>>=3;
+    
+    if(avgrpm>StartRpm)//too slow, halt
     {
       StartUpCount1 = 0;
       Status = 0;//halt
     }
     else
     {
-      if(rpm>TargetRPM)//little bit slow
+      uint16_t tempPower = NextPower;
+      uint16_t TempTargetRPM = TargetRPM;
+      if(avgrpm>TempTargetRPM)//little bit slow
       {
-        ///NextPower = 10000;
-        //TODO
-        uint16_t diff = (rpm-TargetRPM)>>3;//2
-        if(NextPower+diff>10000)
+        uint16_t diff = (avgrpm-TempTargetRPM)>>4;//2
+        if(tempPower+diff>10000)
         {
-          NextPower = 10000;
+          tempPower = 10000;
         }
         else
         {
-          NextPower += diff;
+          tempPower += diff;
         }
       }
       else//little bit fast
       {
-        ///NextPower = 0;
-        //TODO
-        uint16_t diff = (TargetRPM-rpm)>>2;//
-        if(NextPower<diff)
+        uint16_t diff = (TempTargetRPM-avgrpm)>>3;//
+        if(tempPower<diff)
         {
-          NextPower = 0;
+          tempPower = 0;
         }
         else
         {
-          NextPower -= diff;
+          tempPower -= diff;
         }
       }
+      NextPower = tempPower;
     }
   }
   else
   {
     //TODO
-	NextPower = 0;
-    // && (rpm>(LastRpm<<1)) && (rpm<(LastRpm>>1))
-    if(rpm < StartRpm && rpm > (StartRpm>>3))//fast enough but not too fast
+    NextPower = 0;
+    /// && (rpm>(LastRpm<<1)) && (rpm<(LastRpm>>1))
+    uint16_t temprpm;
+    if(temprpm < StartRpm && temprpm > (StartRpm>>2))//fast enough but not too fast
     {
       StartUpCount1++;
+      rpms[rpmsIdx] = temprpm;
+      rpmsIdx++;
+      rpmsIdx&=7;
     }
     else
     {
@@ -249,12 +265,13 @@ void adj() {
     if(StartUpCount1>20)
     {
       Status = 1;
-	  NextPower = 1000;
+      NextPower = 1000;
     }
   }
 }
 
 ISR(TIM1_COMPA_vect){
+  uint8_t TempStep = Step;
   CmdPWROff;
 }
 
@@ -262,6 +279,7 @@ ISR(TIM1_COMPB_vect){
   LEDOn;
   if(FStart)//强制换向
   {
+    uint8_t TempStep = Step;
     CmdPWROff;
     CmdNextStep;
     //记录当前转速
@@ -272,7 +290,7 @@ ISR(TIM1_COMPB_vect){
     
     //定时器清零
     TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
-    Power = NextPower;
+    uint16_t Power = NextPower;
     if(Power)
     {
       CmdPWROn;
@@ -298,7 +316,10 @@ ISR(TIM1_COMPB_vect){
 
 ISR(PCINT0_vect){//先送高，后送低
   LEDOn;
-  sei();
+  if(Status)
+  {
+    sei();
+  }
   if(drCLK)//上升沿读取
   {
     if(TempDataCnt==8)

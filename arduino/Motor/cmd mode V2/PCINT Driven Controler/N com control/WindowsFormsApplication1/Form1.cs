@@ -62,7 +62,7 @@ namespace WindowsFormsApplication1
 			Console.WriteLine(data);
 			if (port != null && port.IsOpen)
 			{
-				Thread.Sleep(10);
+				//Thread.Sleep(5);
 				port.Write(d, 0, 1);
 			}
 		}

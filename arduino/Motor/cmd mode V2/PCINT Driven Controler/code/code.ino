@@ -3,6 +3,8 @@
 #define DATON PORTD |= _BV(2)
 #define DATOFF PORTD &= ~_BV(2)
 
+#define _DELAY_ delayMicroseconds(100);
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
@@ -11,13 +13,13 @@ void setup() {
   DDRB |= _BV(5);
   CLKOFF;
   DATOFF;//startbit
-  delay(1);
+  _DELAY_;
   for(int i=0;i<10;i++)
   {
     CLKON;//rise send data
-    delay(1);
+    _DELAY_;
     CLKOFF;//fall
-    delay(1);
+    _DELAY_;
   }
   send(0);
 }
@@ -35,11 +37,11 @@ void send(uint8_t val)
 {
 
   DATON;//startbit
-  delay(1);
+  _DELAY_;
   CLKON;//rise send data
-  delay(1);
+  _DELAY_;
   CLKOFF;//fall
-  delay(1);
+  _DELAY_;
 
   for(uint8_t i=0;i<8;i++)
   {
@@ -52,11 +54,11 @@ void send(uint8_t val)
       DATOFF;//0
     }
     val<<=1;
-    delay(1);
+    _DELAY_;
     CLKON;//rise send data
-    delay(1);
+    _DELAY_;
     CLKOFF;//fall
-    delay(1);
+    _DELAY_;
   }
 }
 
