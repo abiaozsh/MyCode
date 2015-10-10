@@ -198,24 +198,24 @@ ISR(PCINT1_vect){
 void adj() {
   if(Status)
   {
-    rpms[rpmsIdx] = rpm;
-    rpmsIdx++;
-    rpmsIdx&=7;
-    uint8_t i;
-    uint16_t avgrpm=0;
-    for(i=0;i<8;i++)
-    {
-      avgrpm+=rpms[i];
-    }
-    avgrpm>>=3;
     
-    if(avgrpm>StartRpm)//too slow, halt
+    if(rpm>StartRpm)//too slow, halt
     {
       StartUpCount1 = 0;
       Status = 0;//halt
     }
     else
     {
+      rpms[rpmsIdx] = rpm;
+      rpmsIdx++;
+      rpmsIdx&=7;
+      uint8_t i;
+      uint16_t avgrpm=0;
+      for(i=0;i<8;i++)
+      {
+        avgrpm+=rpms[i];
+      }
+      avgrpm>>=3;
       uint16_t tempPower = NextPower;
       uint16_t TempTargetRPM = TargetRPM;
       if(avgrpm>TempTargetRPM)//little bit slow
@@ -251,6 +251,7 @@ void adj() {
     NextPower = 0;
     /// && (rpm>(LastRpm<<1)) && (rpm<(LastRpm>>1))
     uint16_t temprpm;
+    temprpm = rpm;
     if(temprpm < StartRpm && temprpm > (StartRpm>>2))//fast enough but not too fast
     {
       StartUpCount1++;

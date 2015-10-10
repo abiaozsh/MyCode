@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
+#include "D:\MyCode\arduino\_Common\serial.h"
 
 #define MaxPonTime 2000
 
@@ -8,7 +9,7 @@
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
-#define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
+#define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:OCR1A)
 
 //drA3
 #define drDAT (PINA & _BV(7)) /*DAT*/
@@ -36,9 +37,6 @@
 #define BP3D _BV(1)
 #define BP3U _BV(0)
 #define BP3A _BV(2)
-
-//a6 start signal / restartup signal
-//a7 throttle
 
 #define StartRpm 8192
 
@@ -69,10 +67,8 @@ uint8_t PWR_OFF[] = {
 	0    + BP1D + BP3D  // 3-2
 };
 
-#define GetDigitRead (PIN3I & DigitRead[TempStep])
-uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
-#define GetDigitReadBaseVal (DigitReadBaseVal[TempStep])
-uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
+volatile uint8_t GetDigitRead;
+volatile uint8_t GetDigitReadBaseVal;
 
 volatile uint8_t Step = 0;
 uint8_t Status = 0;//0 halt ,1 running, 2 starting
@@ -95,29 +91,56 @@ uint8_t TempDataCnt=8;
 void ClockInit();
 void TimerInit();
 void PCIntInit();
+void test();
 void adj();
 
 int main(void) {
   ClockInit();//初始化时钟：1MHz -> 8MHz
   TimerInit();//初始化定时器 1/8
-  PCIntInit();//初始化模拟输入
-
   LEDInit;
+  SerialInit();
   
-  //打开输出端口
-  DDR6O = BP1U | BP1D | BP2U | BP2D | BP3U | BP3D;
-  
-  //初始化输出端口
-  PORT6O = BP1D | BP2D | BP3D;
-  
-  //初始化输入端口
-  DDR3I = 0;
-  PORT3I = 0;
-  //主循环
-  sei();
+  uint16_t time;
   for(;;) {
-    asm volatile("sleep");
-  }
+    //case0
+    OCR1A = 10;rpm=1;
+    TCNT1 = 0;
+    test();
+    time = TCNT1;SerialSend('0');SendInt(time);SerialSend('\r');SerialSend('\n');
+    
+    //case1
+    OCR1A = 1;rpm=10;GetDigitRead=1;GetDigitReadBaseVal=0;
+    TCNT1 = 0;
+    test();
+    time = TCNT1;SerialSend('1');SendInt(time);SerialSend('\r');SerialSend('\n');
+    
+    //case2
+    OCR1A = 1;rpm=10;GetDigitRead=1;GetDigitReadBaseVal=1;FStart=1;
+    TCNT1 = 0;
+    test();
+    time = TCNT1;SerialSend('2');SendInt(time);SerialSend('\r');SerialSend('\n');
+
+    //case3
+    OCR1A = 1;rpm=9000;GetDigitRead=1;GetDigitReadBaseVal=1;FStart=0;Status=1;
+    TCNT1 = 0;
+    test();
+    time = TCNT1;SerialSend('3');SendInt(time);SerialSend('\r');SerialSend('\n');
+
+    //case4
+    OCR1A = 1;rpm=1000;GetDigitRead=1;GetDigitReadBaseVal=1;FStart=0;Status=1;
+    rpms[0] = rpm;rpms[1] = rpm;rpms[2] = rpm;rpms[3] = rpm;rpms[4] = rpm;rpms[5] = rpm;rpms[6] = rpm;rpms[7] = rpm;
+    TargetRPM = 2000;
+    TCNT1 = 0;
+    test();
+    time = TCNT1;SerialSend('4');SendInt(time);SerialSend('\r');SerialSend('\n');
+
+    //case5
+    OCR1A = 1;rpm=5000;GetDigitRead=1;GetDigitReadBaseVal=1;FStart=0;Status=0;StartUpCount1=30;
+    TCNT1 = 0;
+    test();
+    time = TCNT1;SerialSend('5');SendInt(time);SerialSend('\r');SerialSend('\n');
+    
+    }
 }
 
 void ClockInit() {
@@ -130,30 +153,11 @@ void TimerInit() {
   TCCR1A = 0;
   TCCR1B = 2;//  1/8	1MHz 1us
   TCCR1C = 0;
-  TIMSK1 = 0;
-  TIMSK1 |= _BV(OCIE1B);
-  TIMSK1 |= _BV(OCIE1A);
-  //OCR1A 关断定时器=power
-  //OCR1B 强制启动定时器=rpm
-  //TIMSK1 |= _BV(TOIE1);
 }
 
-void PCIntInit() {
-  GIMSK |= _BV(PCIE0);
-  GIMSK |= _BV(PCIE1);
-  PCMSK1 |= _BV(0);
-  PCMSK1 |= _BV(1);
-  PCMSK1 |= _BV(2);
-  PCMSK0 |= _BV(6);//CLK
-}
-
-//1正常运转状态
-//2低速切断状态/高频抖动状态
-//手动启动状态
-//3强制启动状态
 
 //过零事件
-ISR(PCINT1_vect){
+void test(){
   LEDOn;
   uint16_t temp = (rpm>>1);//?? >>2
   if(currTick>=temp)
@@ -176,7 +180,7 @@ ISR(PCINT1_vect){
         //换向开始点
         
         //定时器清零
-        TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
+        OCR1A = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
         uint16_t Power = NextPower;
         if(Power)
         {
@@ -187,7 +191,7 @@ ISR(PCINT1_vect){
           CmdPWROff;
         }
         OCR1A = Power;
-        OCR1B = TargetRPM;
+        OCR1A = TargetRPM;
         adj();
       }
     }
@@ -198,24 +202,24 @@ ISR(PCINT1_vect){
 void adj() {
   if(Status)
   {
-    rpms[rpmsIdx] = rpm;
-    rpmsIdx++;
-    rpmsIdx&=7;
-    uint8_t i;
-    uint16_t avgrpm=0;
-    for(i=0;i<8;i++)
-    {
-      avgrpm+=rpms[i];
-    }
-    avgrpm>>=3;
-    
-    if(avgrpm>StartRpm)//too slow, halt
+    if(rpm>StartRpm)//too slow, halt
     {
       StartUpCount1 = 0;
       Status = 0;//halt
     }
     else
     {
+      rpms[rpmsIdx] = rpm;
+      rpmsIdx++;
+      rpmsIdx&=7;
+      uint8_t i;
+      uint16_t avgrpm=0;
+      for(i=0;i<8;i++)
+      {
+        avgrpm+=rpms[i];
+      }
+      avgrpm>>=3;
+      
       uint16_t tempPower = NextPower;
       uint16_t TempTargetRPM = TargetRPM;
       if(avgrpm>TempTargetRPM)//little bit slow
@@ -251,6 +255,7 @@ void adj() {
     NextPower = 0;
     /// && (rpm>(LastRpm<<1)) && (rpm<(LastRpm>>1))
     uint16_t temprpm;
+    temprpm = rpm;
     if(temprpm < StartRpm && temprpm > (StartRpm>>2))//fast enough but not too fast
     {
       StartUpCount1++;
@@ -270,142 +275,6 @@ void adj() {
   }
 }
 
-ISR(TIM1_COMPA_vect){
-  uint8_t TempStep = Step;
-  CmdPWROff;
-}
 
-ISR(TIM1_COMPB_vect){
-  LEDOn;
-  if(FStart)//强制换向
-  {
-    uint8_t TempStep = Step;
-    CmdPWROff;
-    CmdNextStep;
-    //记录当前转速
-    rpm = currTick;
-    //换向前处理结束
-    ////////////////////////////////////////////////////////////////////////////////////////////
-    //换向开始点
-    
-    //定时器清零
-    TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
-    uint16_t Power = NextPower;
-    if(Power)
-    {
-      CmdPWROn;
-    }
-    else
-    {
-      CmdPWROff;
-    }
-    OCR1A = Power;
-    OCR1B = TargetRPM;
-    adj();
-  }
-  LEDOff;
-}
-#define CMD_SENDDATA1Xa   10  /*0~255       1x*/
-#define CMD_SENDDATA1Xb   11  /*256~511     1x*/
-#define CMD_SENDDATA2X    12  /*512~1023    2x*/
-#define CMD_SENDDATA4X    13  /*1024~2047   4x*/
-#define CMD_SENDDATA8X    14  /*2048~4095   8x*/
-#define CMD_SENDDATA16X   15  /*4096~8191  16x*/
-#define CMD_SENDDATA32X   16  /*8192~16383 32x*/
-#define CMD_FORCE         20  /*on/off        */
 
-ISR(PCINT0_vect){//先送高，后送低
-  LEDOn;
-  if(Status)
-  {
-    sei();
-  }
-  if(drCLK)//上升沿读取
-  {
-    if(TempDataCnt==8)
-    {
-      if(drDAT)//起始位
-      {
-        TempData = 0;
-        TempDataCnt = 0;
-      }
-    }
-    else
-    {
-      TempData<<=1;
-      if(drDAT)
-      {
-        TempData|=1;
-      }
-      
-      {
-      ///if(OutData&1)
-      ///{
-      ///  dwPORTON;
-      ///}
-      ///else
-      ///{
-      ///  dwPORTOFF;
-      ///}
-      ///OutData>>=1;
-      }
-      
-      TempDataCnt++;
-      if(TempDataCnt==8)
-      {
-        if(CMD==0)
-        {
-          if(TempData)
-          {
-            //rpmSend = rpm;
-            CMD = TempData;
-          }
-        }
-        else
-        {
-          switch(CMD)
-          {
-            case CMD_SENDDATA1Xa://   10  /*0~255       1x*/
-              TargetRPM = TempData;
-              break;
-            case CMD_SENDDATA1Xb://   11  /*256~511     1x*/
-              TargetRPM = TempData + 256;
-              break;
-            case CMD_SENDDATA2X://    12  /*512~1023    2x*/
-              TargetRPM = (TempData<<1) + 512;
-              break;
-            case CMD_SENDDATA4X://    13  /*1024~2047   4x*/
-              TargetRPM = (TempData<<2) + 1024;
-              break;
-            case CMD_SENDDATA8X://    14  /*2048~4095   8x*/
-              TargetRPM = (TempData<<3) + 2048;
-              break;
-            case CMD_SENDDATA16X://   15  /*4096~8191  16x*/
-              TargetRPM = (TempData<<4) + 4096;
-              break;
-            case CMD_SENDDATA32X://   16  /*8192~16383 32x*/
-              TargetRPM = (TempData<<5) + 8192;
-              break;
-            case CMD_FORCE:
-              if(TempData)
-              {
-                FStart=1;
-                if(TIFR1 & _BV(TOV1))
-                {
-                  //已超时，重启
-                  TCNT1 = 0;TIFR1 |= _BV(TOV1);
-                }
-              }
-              else
-              {
-                FStart=0;
-              }
-              break;
-          }
-          CMD = 0;
-        }
-      }
-    }
-  }
-  LEDOff;
-}
+
