@@ -15,12 +15,12 @@
 #define drCLK (PINA & _BV(6)) /*DAT*/
 
 #define LEDInit PORTB &= ~_BV(3);
-#define LEDOn   ;/*DDRB |= _BV(3);*/
-#define LEDOff  ;/*DDRB &= ~_BV(3);*/
+#define LEDOn   DDRB |= _BV(3);;/**/
+#define LEDOff  DDRB &= ~_BV(3);;/**/
 #define STAOn   ;/*DDRB |= _BV(3);*/
 #define STAOff  ;/*DDRB &= ~_BV(3);*/
-#define PWROn   DDRB |= _BV(3);
-#define PWROff  DDRB &= ~_BV(3);
+#define PWROn   ;/*DDRB |= _BV(3);*/
+#define PWROff  ;/*DDRB &= ~_BV(3);*/
 
 //2 1 0
 //5 4 3 2 1 0
@@ -227,9 +227,9 @@ void adj() {
       if(avgrpm>TempTargetRPM)//little bit slow
       {
         uint16_t diff = ((avgrpm-TempTargetRPM)>>5);//2
-        if(AccuPower+diff>100)
+        if(AccuPower+diff>1000)
         {
-          AccuPower = 100;
+          AccuPower = 1000;
         }
         else
         {
@@ -251,7 +251,7 @@ void adj() {
 
       if(avgrpm>TempTargetRPM)//little bit slow
       {
-	    tempPower = (avgrpm-TempTargetRPM)<<3+AccuPower;
+	    tempPower = ((avgrpm-TempTargetRPM)<<3)+AccuPower;
       }
       else//little bit fast
       {
