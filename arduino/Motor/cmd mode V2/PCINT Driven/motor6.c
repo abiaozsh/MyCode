@@ -15,8 +15,12 @@
 #define drCLK (PINA & _BV(6)) /*DAT*/
 
 #define LEDInit PORTB &= ~_BV(3);
-#define LEDOn   DDRB |= _BV(3);
-#define LEDOff  DDRB &= ~_BV(3);
+#define LEDOn   ;/*DDRB |= _BV(3);*/
+#define LEDOff  ;/*DDRB &= ~_BV(3);*/
+#define STAOn   ;/*DDRB |= _BV(3);*/
+#define STAOff  ;/*DDRB &= ~_BV(3);*/
+#define PWROn   DDRB |= _BV(3);
+#define PWROff  DDRB &= ~_BV(3);
 
 //2 1 0
 //5 4 3 2 1 0
@@ -42,14 +46,14 @@
 
 #define StartRpm 8192
 
-#define CmdNextStep Step = NextStep[TempStep];
+#define CmdNextStep Step = NextStep[Step];
 uint8_t NextStep[] = {
   1,  2,  3,  4,  5,  0
 };
 //power on
-#define CmdPWROn  PORT6O = PWR_ON[TempStep];
+#define CmdPWROn  PORT6O = PWR_ON[Step];PWROn;
 //power off
-#define CmdPWROff PORT6O = PWR_OFF[TempStep];
+#define CmdPWROff PORT6O = PWR_OFF[Step];PWROff;
 
 //ÏÂ±Û³£¿ª
 uint8_t PWR_ON[] = {
@@ -82,6 +86,7 @@ volatile uint8_t FStart = 0;
 volatile uint16_t rpm;
 ///volatile uint16_t LastRpm;
 volatile uint16_t NextPower = 0;
+volatile uint16_t AccuPower = 0;
 
 uint16_t rpms[8];
 uint8_t rpmsIdx = 0;
@@ -203,6 +208,7 @@ void adj() {
     {
       StartUpCount1 = 0;
       Status = 0;//halt
+	  STAOff;
     }
     else
     {
@@ -220,28 +226,38 @@ void adj() {
       uint16_t TempTargetRPM = TargetRPM;
       if(avgrpm>TempTargetRPM)//little bit slow
       {
-        uint16_t diff = (avgrpm-TempTargetRPM)>>4;//2
-        if(tempPower+diff>10000)
+        uint16_t diff = ((avgrpm-TempTargetRPM)>>5);//2
+        if(AccuPower+diff>100)
         {
-          tempPower = 10000;
+          AccuPower = 100;
         }
         else
         {
-          tempPower += diff;
+          AccuPower += diff;
         }
       }
       else//little bit fast
       {
-        uint16_t diff = (TempTargetRPM-avgrpm)>>3;//
-        if(tempPower<diff)
+        uint16_t diff = ((TempTargetRPM-avgrpm)>>5);//
+        if(AccuPower<diff)
         {
-          tempPower = 0;
+          AccuPower = 0;
         }
         else
         {
-          tempPower -= diff;
+          AccuPower -= diff;
         }
       }
+
+      if(avgrpm>TempTargetRPM)//little bit slow
+      {
+	    tempPower = (avgrpm-TempTargetRPM)<<3+AccuPower;
+      }
+      else//little bit fast
+      {
+	    tempPower = AccuPower;
+      }
+	  
       NextPower = tempPower;
     }
   }
@@ -266,6 +282,7 @@ void adj() {
     if(StartUpCount1>20)
     {
       Status = 1;
+	  STAOn;
       NextPower = 1000;
     }
   }
