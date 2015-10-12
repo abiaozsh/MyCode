@@ -30,6 +30,8 @@
         {
 			this.trackBar1 = new System.Windows.Forms.TrackBar();
 			this.checkBox1 = new System.Windows.Forms.CheckBox();
+			this.textBox1 = new System.Windows.Forms.TextBox();
+			this.button1 = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -54,11 +56,30 @@
 			this.checkBox1.UseVisualStyleBackColor = true;
 			this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
 			// 
+			// textBox1
+			// 
+			this.textBox1.Location = new System.Drawing.Point(172, 60);
+			this.textBox1.Name = "textBox1";
+			this.textBox1.Size = new System.Drawing.Size(195, 21);
+			this.textBox1.TabIndex = 9;
+			// 
+			// button1
+			// 
+			this.button1.Location = new System.Drawing.Point(389, 57);
+			this.button1.Name = "button1";
+			this.button1.Size = new System.Drawing.Size(75, 23);
+			this.button1.TabIndex = 10;
+			this.button1.Text = "button1";
+			this.button1.UseVisualStyleBackColor = true;
+			this.button1.Click += new System.EventHandler(this.button1_Click);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1067, 101);
+			this.Controls.Add(this.button1);
+			this.Controls.Add(this.textBox1);
 			this.Controls.Add(this.checkBox1);
 			this.Controls.Add(this.trackBar1);
 			this.Name = "Form1";
@@ -75,6 +96,8 @@
 
 		private System.Windows.Forms.TrackBar trackBar1;
         private System.Windows.Forms.CheckBox checkBox1;
+		private System.Windows.Forms.TextBox textBox1;
+		private System.Windows.Forms.Button button1;
     }
 }
 

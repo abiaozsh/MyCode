@@ -36,7 +36,13 @@
 			this.button2 = new System.Windows.Forms.Button();
 			this.textBox3 = new System.Windows.Forms.TextBox();
 			this.button3 = new System.Windows.Forms.Button();
+			this.pictureBoxa = new System.Windows.Forms.PictureBox();
+			this.pictureBoxb = new System.Windows.Forms.PictureBox();
+			this.pictureBoxc = new System.Windows.Forms.PictureBox();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.pictureBoxa)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.pictureBoxb)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.pictureBoxc)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// pictureBox1
@@ -311,11 +317,38 @@
 			this.button3.UseVisualStyleBackColor = true;
 			this.button3.Click += new System.EventHandler(this.button3_Click);
 			// 
+			// pictureBoxa
+			// 
+			this.pictureBoxa.Location = new System.Drawing.Point(904, 12);
+			this.pictureBoxa.Name = "pictureBoxa";
+			this.pictureBoxa.Size = new System.Drawing.Size(100, 400);
+			this.pictureBoxa.TabIndex = 8;
+			this.pictureBoxa.TabStop = false;
+			// 
+			// pictureBoxb
+			// 
+			this.pictureBoxb.Location = new System.Drawing.Point(218, 248);
+			this.pictureBoxb.Name = "pictureBoxb";
+			this.pictureBoxb.Size = new System.Drawing.Size(680, 100);
+			this.pictureBoxb.TabIndex = 9;
+			this.pictureBoxb.TabStop = false;
+			// 
+			// pictureBoxc
+			// 
+			this.pictureBoxc.Location = new System.Drawing.Point(218, 354);
+			this.pictureBoxc.Name = "pictureBoxc";
+			this.pictureBoxc.Size = new System.Drawing.Size(680, 100);
+			this.pictureBoxc.TabIndex = 9;
+			this.pictureBoxc.TabStop = false;
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(662, 479);
+			this.ClientSize = new System.Drawing.Size(1074, 479);
+			this.Controls.Add(this.pictureBoxc);
+			this.Controls.Add(this.pictureBoxb);
+			this.Controls.Add(this.pictureBoxa);
 			this.Controls.Add(this.button3);
 			this.Controls.Add(this.textBox3);
 			this.Controls.Add(this.button2);
@@ -328,6 +361,9 @@
 			this.Text = "Form1";
 			this.Load += new System.EventHandler(this.Form1_Load);
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.pictureBoxa)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.pictureBoxb)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.pictureBoxc)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -343,6 +379,9 @@
 		private System.Windows.Forms.Button button2;
 		private System.Windows.Forms.TextBox textBox3;
 		private System.Windows.Forms.Button button3;
+		private System.Windows.Forms.PictureBox pictureBoxa;
+		private System.Windows.Forms.PictureBox pictureBoxb;
+		private System.Windows.Forms.PictureBox pictureBoxc;
     }
 }
 

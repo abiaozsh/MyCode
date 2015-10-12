@@ -14,13 +14,14 @@
 #define drDAT (PINA & _BV(7)) /*DAT*/
 #define drCLK (PINA & _BV(6)) /*DAT*/
 
-#define LEDInit PORTB &= ~_BV(3);
-#define LEDOn   DDRB |= _BV(3);;/**/
-#define LEDOff  DDRB &= ~_BV(3);;/**/
-#define STAOn   ;/*DDRB |= _BV(3);*/
-#define STAOff  ;/*DDRB &= ~_BV(3);*/
-#define PWROn   ;/*DDRB |= _BV(3);*/
-#define PWROff  ;/*DDRB &= ~_BV(3);*/
+#define LEDInit DDRB |= _BV(3);
+#define CPUOn   ;/*PORTB |= _BV(3);*/
+#define CPUOff  ;/*PORTB &= ~_BV(3);*/
+#define STAOn   ;/*PORTB |= _BV(3);*/
+#define STAOff  ;/*PORTB &= ~_BV(3);*/
+#define PWROn   ;/*PORTB |= _BV(3);*/
+#define PWROff  ;/*PORTB &= ~_BV(3);*/
+#define RPMFlip PINB |= _BV(3);;/**/
 
 //2 1 0
 //5 4 3 2 1 0
@@ -159,7 +160,7 @@ void PCIntInit() {
 
 //过零事件
 ISR(PCINT1_vect){
-  LEDOn;
+  CPUn;
   uint16_t temp = (rpm>>1);//?? >>2
   if(currTick>=temp)
   {
@@ -172,7 +173,7 @@ ISR(PCINT1_vect){
       if(!FStart)
       {
         CmdPWROff;
-        CmdNextStep;
+        CmdNextStep;RPMFlip;
 ///        LastRpm = rpm;
         //记录当前转速
         rpm = currTick;
@@ -197,7 +198,7 @@ ISR(PCINT1_vect){
       }
     }
   }
-  LEDOff;
+  CPUOff;
 }
 
 void adj() {
@@ -294,12 +295,12 @@ ISR(TIM1_COMPA_vect){
 }
 
 ISR(TIM1_COMPB_vect){
-  LEDOn;
+  CPUOn;
   if(FStart)//强制换向
   {
     uint8_t TempStep = Step;
     CmdPWROff;
-    CmdNextStep;
+    CmdNextStep;RPMFlip;
     //记录当前转速
     rpm = currTick;
     //换向前处理结束
@@ -321,7 +322,7 @@ ISR(TIM1_COMPB_vect){
     OCR1B = TargetRPM;
     adj();
   }
-  LEDOff;
+  CPUOff;
 }
 #define CMD_SENDDATA1Xa   10  /*0~255       1x*/
 #define CMD_SENDDATA1Xb   11  /*256~511     1x*/
@@ -333,7 +334,7 @@ ISR(TIM1_COMPB_vect){
 #define CMD_FORCE         20  /*on/off        */
 
 ISR(PCINT0_vect){//先送高，后送低
-  LEDOn;
+  CPUOn;
   if(Status)
   {
     sei();
@@ -425,5 +426,5 @@ ISR(PCINT0_vect){//先送高，后送低
       }
     }
   }
-  LEDOff;
+  CPUOff;
 }
