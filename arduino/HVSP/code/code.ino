@@ -4,6 +4,7 @@
 #define  DATAOUT  5    // Connect to Serial Data Input (A6 SDI) Pin 5 
 #define  CLKOUT   8    // 6 Connect to Serial Clock Input (B0 SCI) Pin 2
 #define  RST      9    // 7 Output to level shifter for !RESET from transistor to Pin 1
+#define  LED     13
 
 //VCC 					GND
 //B0 (SCI)				A0 (GND)
@@ -246,28 +247,22 @@ uint8_t ConvBCD(uint8_t val){
   return val;
 }
 uint8_t shiftOut2(byte val, byte val1){
+  digitalWrite(LED, HIGH);
   uint8_t inBits = 0;
-
   //Start bit
   digitalWrite(DATAOUT, LOW);
   digitalWrite(INSTOUT, LOW);
   digitalWrite(CLKOUT, HIGH);
   digitalWrite(CLKOUT, LOW);
-
   for (uint8_t i = 0; i < 8; i++)  {
-
     //msb first
     digitalWrite(DATAOUT, !!(val & (1 << (7 - i))));
     digitalWrite(INSTOUT, !!(val1 & (1 << (7 - i))));
-
     inBits <<=1;
     inBits |= digitalRead(DATAIN);
     digitalWrite(CLKOUT, HIGH);
     digitalWrite(CLKOUT, LOW);
-
   }
-
-
   //End bits
   digitalWrite(DATAOUT, LOW);
   digitalWrite(INSTOUT, LOW);
@@ -275,7 +270,8 @@ uint8_t shiftOut2(byte val, byte val1){
   digitalWrite(CLKOUT, LOW);
   digitalWrite(CLKOUT, HIGH);
   digitalWrite(CLKOUT, LOW);
-
+  
+  digitalWrite(LED, LOW);
   return inBits;
 }
 

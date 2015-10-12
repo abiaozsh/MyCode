@@ -14,14 +14,14 @@
 #define drDAT (PINA & _BV(7)) /*DAT*/
 #define drCLK (PINA & _BV(6)) /*DAT*/
 
-#define LEDInit DDRB |= _BV(3);
-#define CPUOn   ;/*PORTB |= _BV(3);*/
-#define CPUOff  ;/*PORTB &= ~_BV(3);*/
-#define STAOn   ;/*PORTB |= _BV(3);*/
-#define STAOff  ;/*PORTB &= ~_BV(3);*/
-#define PWROn   ;/*PORTB |= _BV(3);*/
-#define PWROff  ;/*PORTB &= ~_BV(3);*/
-#define RPMFlip PINB |= _BV(3);;/**/
+#define LEDInit ;/*PORTB |= _BV(3)*/
+#define CPUOn   ;/*DDRB |= _BV(3)*/
+#define CPUOff  ;/*DDRB &= ~_BV(3)*/
+#define STAOn   ;/*PORTB |= _BV(3)*/
+#define STAOff  ;/*PORTB &= ~_BV(3)*/
+#define PWROn   ;/*PORTB |= _BV(3)*/
+#define PWROff  ;/*PORTB &= ~_BV(3)*/
+#define RPMFlip DDRB ^= _BV(3);/**/
 
 //2 1 0
 //5 4 3 2 1 0
@@ -47,7 +47,7 @@
 
 #define StartRpm 8192
 
-#define CmdNextStep Step = NextStep[Step];
+#define CmdNextStep Step = NextStep[Step];RPMFlip;
 uint8_t NextStep[] = {
   1,  2,  3,  4,  5,  0
 };
@@ -160,7 +160,7 @@ void PCIntInit() {
 
 //过零事件
 ISR(PCINT1_vect){
-  CPUn;
+  CPUOn;
   uint16_t temp = (rpm>>1);//?? >>2
   if(currTick>=temp)
   {
@@ -173,7 +173,7 @@ ISR(PCINT1_vect){
       if(!FStart)
       {
         CmdPWROff;
-        CmdNextStep;RPMFlip;
+        CmdNextStep;
 ///        LastRpm = rpm;
         //记录当前转速
         rpm = currTick;
@@ -300,7 +300,7 @@ ISR(TIM1_COMPB_vect){
   {
     uint8_t TempStep = Step;
     CmdPWROff;
-    CmdNextStep;RPMFlip;
+    CmdNextStep;
     //记录当前转速
     rpm = currTick;
     //换向前处理结束

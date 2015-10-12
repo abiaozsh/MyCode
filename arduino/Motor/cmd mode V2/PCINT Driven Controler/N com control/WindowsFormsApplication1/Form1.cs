@@ -42,13 +42,13 @@ namespace WindowsFormsApplication1
 		{
 			if (port.BytesToRead > 0)
 			{
+					datareceive &= 1;
 				port.Read(buff, datareceive, 1);
 				datareceive++;
 				if (datareceive >= 2)
 				{
 					data = buff[0] + ((int)buff[1] << 8);
 
-					textBox1.Text = data.ToString();
 					datareceive &= 1;
 				}
 			}
@@ -163,6 +163,11 @@ namespace WindowsFormsApplication1
 		{
 			datareceive++;
 		}
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            textBox1.Text = data.ToString();
+        }
 
 
 	}
