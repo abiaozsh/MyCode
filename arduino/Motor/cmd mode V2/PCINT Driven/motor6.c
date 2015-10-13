@@ -82,7 +82,7 @@ uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 volatile uint8_t Step = 0;
 uint8_t Status = 0;//0 halt ,1 running, 2 starting
 uint8_t StartUpCount1=0;
-volatile uint16_t TargetRPM=1000;//bit16 = start flg rest is data
+volatile uint16_t TargetRPM=0;//bit16 = start flg rest is data
 volatile uint8_t FStart = 0;
 volatile uint16_t rpm;
 ///volatile uint16_t LastRpm;
@@ -223,19 +223,21 @@ void adj() {
         avgrpm+=rpms[i];
       }
       avgrpm>>=3;
-      uint16_t tempPower = NextPower;
+      uint16_t tempPower;
       uint16_t TempTargetRPM = TargetRPM;
+
       if(avgrpm>TempTargetRPM)//little bit slow
       {
         uint16_t diff = (avgrpm-TempTargetRPM);//2
-        if(AccuPower+diff>6553600)
+        if(AccuPower+diff>2048000)
         {
-          AccuPower = 6553600;
+          AccuPower = 2048000;
         }
         else
         {
           AccuPower += diff;
         }
+        tempPower = ((diff)<<2)+(AccuPower>>8);
       }
       else//little bit fast
       {
@@ -248,14 +250,6 @@ void adj() {
         {
           AccuPower -= diff;
         }
-      }
-
-      if(avgrpm>TempTargetRPM)//little bit slow
-      {
-        tempPower = ((avgrpm-TempTargetRPM)<<2)+(AccuPower>>8);
-      }
-      else//little bit fast
-      {
         tempPower = AccuPower>>8;
       }
 
