@@ -87,7 +87,7 @@ volatile uint8_t FStart = 0;
 volatile uint16_t rpm;
 ///volatile uint16_t LastRpm;
 volatile uint16_t NextPower = 0;
-volatile uint16_t AccuPower = 0;
+uint32_t AccuPower = 0;//volatile uint16_t AccuPower = 0;
 
 uint16_t rpms[8];
 uint8_t rpmsIdx = 0;
@@ -209,7 +209,7 @@ void adj() {
     {
       StartUpCount1 = 0;
       Status = 0;//halt
-	  STAOff;
+      STAOff;
     }
     else
     {
@@ -227,10 +227,10 @@ void adj() {
       uint16_t TempTargetRPM = TargetRPM;
       if(avgrpm>TempTargetRPM)//little bit slow
       {
-        uint16_t diff = ((avgrpm-TempTargetRPM)>>5);//2
-        if(AccuPower+diff>1000)
+        uint16_t diff = (avgrpm-TempTargetRPM);//2
+        if(AccuPower+diff>6553600)
         {
-          AccuPower = 1000;
+          AccuPower = 6553600;
         }
         else
         {
@@ -239,7 +239,7 @@ void adj() {
       }
       else//little bit fast
       {
-        uint16_t diff = ((TempTargetRPM-avgrpm)>>5);//
+        uint16_t diff = (TempTargetRPM-avgrpm);//
         if(AccuPower<diff)
         {
           AccuPower = 0;
@@ -252,13 +252,13 @@ void adj() {
 
       if(avgrpm>TempTargetRPM)//little bit slow
       {
-	    tempPower = ((avgrpm-TempTargetRPM)<<3)+AccuPower;
+        tempPower = ((avgrpm-TempTargetRPM)<<2)+(AccuPower>>8);
       }
       else//little bit fast
       {
-	    tempPower = AccuPower;
+        tempPower = AccuPower>>8;
       }
-	  
+
       NextPower = tempPower;
     }
   }
@@ -269,7 +269,7 @@ void adj() {
     /// && (rpm>(LastRpm<<1)) && (rpm<(LastRpm>>1))
     uint16_t temprpm;
     temprpm = rpm;
-    if(temprpm < StartRpm && temprpm > (StartRpm>>2))//fast enough but not too fast
+    if(temprpm < StartRpm && temprpm > (StartRpm>>3))//fast enough but not too fast
     {
       StartUpCount1++;
       rpms[rpmsIdx] = temprpm;
@@ -283,7 +283,7 @@ void adj() {
     if(StartUpCount1>20)
     {
       Status = 1;
-	  STAOn;
+      STAOn;
       NextPower = 1000;
     }
   }
@@ -309,15 +309,8 @@ ISR(TIM1_COMPB_vect){
     
     //¶¨Ê±Æ÷ÇåÁã
     TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
-    uint16_t Power = NextPower;
-    if(Power)
-    {
-      CmdPWROn;
-    }
-    else
-    {
-      CmdPWROff;
-    }
+    uint16_t Power = TargetRPM>>3;
+    CmdPWROn;
     OCR1A = Power;
     OCR1B = TargetRPM;
     adj();
