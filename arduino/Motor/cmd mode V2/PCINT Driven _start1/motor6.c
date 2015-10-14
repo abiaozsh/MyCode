@@ -351,6 +351,8 @@ ISR(PCINT0_vect){//先送高，后送低
   }
   if(drCLK)//上升沿读取
   {
+	uint8_t tempdrDAT = drDAT;fdsa
+	sei();
     if(TempDataCnt==8)
     {
       if(drDAT)//起始位
