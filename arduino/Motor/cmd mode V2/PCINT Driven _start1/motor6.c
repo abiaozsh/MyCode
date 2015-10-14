@@ -137,7 +137,7 @@ void TimerInit() {
   TCCR1B = 2;//  1/8	1MHz 1us
   TCCR1C = 0;
   TIMSK1 = 0;
-  TIMSK1 |= _BV(OCIE1B);
+  //TIMSK1 |= _BV(OCIE1B);
   TIMSK1 |= _BV(OCIE1A);
   //OCR1A 关断定时器=power
   //OCR1B 强制启动定时器=rpm
