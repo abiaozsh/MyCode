@@ -300,7 +300,7 @@ void adj() {
       {
         Status = 1;
         STAOn;
-        NextPower = 1000;
+        NextPower = 10000;
       }
     }
   }

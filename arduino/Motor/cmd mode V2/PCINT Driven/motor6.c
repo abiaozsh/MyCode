@@ -17,8 +17,8 @@
 #define LEDInit ;/*PORTB |= _BV(3)*/
 #define CPUOn   ;/*DDRB |= _BV(3)*/
 #define CPUOff  ;/*DDRB &= ~_BV(3)*/
-#define STAOn   PORTB |= _BV(3);/**/
-#define STAOff  PORTB &= ~_BV(3);/**/
+#define STAOn   DDRB |= _BV(3);/**/
+#define STAOff  DDRB &= ~_BV(3);/**/
 #define PWROn   ;/*PORTB |= _BV(3)*/
 #define PWROff  ;/*PORTB &= ~_BV(3)*/
 #define RPMFlip ;/*DDRB ^= _BV(3)*/
