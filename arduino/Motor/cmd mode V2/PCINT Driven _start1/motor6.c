@@ -17,11 +17,11 @@
 #define LEDInit ;/*PORTB |= _BV(3)*/
 #define CPUOn   ;/*DDRB |= _BV(3)*/
 #define CPUOff  ;/*DDRB &= ~_BV(3)*/
-#define STAOn   PORTB |= _BV(3);/**/
-#define STAOff  PORTB &= ~_BV(3);/**/
+#define STAOn   ;/*PORTB |= _BV(3)*/
+#define STAOff  ;/*PORTB &= ~_BV(3)*/
 #define PWROn   ;/*PORTB |= _BV(3)*/
 #define PWROff  ;/*PORTB &= ~_BV(3)*/
-#define RPMFlip ;/*DDRB ^= _BV(3)*/
+#define RPMFlip DDRB ^= _BV(3);/**/
 
 //2 1 0
 //5 4 3 2 1 0
@@ -170,32 +170,29 @@ ISR(PCINT1_vect){
     //确认过零
     if(val!=valbase)
     {
-      if(!FStart)
+      CmdPWROff;
+      CmdNextStep;
+///        LastRpm = rpm;
+      //记录当前转速
+      rpm = currTick;
+      //换向前处理结束
+      ////////////////////////////////////////////////////////////////////////////////////////////
+      //换向开始点
+      TempStep = Step;
+      //定时器清零
+      TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
+      uint16_t Power = NextPower;
+      if(Power)
+      {
+        CmdPWROn;
+      }
+      else
       {
         CmdPWROff;
-        CmdNextStep;
-///        LastRpm = rpm;
-        //记录当前转速
-        rpm = currTick;
-        //换向前处理结束
-        ////////////////////////////////////////////////////////////////////////////////////////////
-        //换向开始点
-        TempStep = Step;
-        //定时器清零
-        TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
-        uint16_t Power = NextPower;
-        if(Power)
-        {
-          CmdPWROn;
-        }
-        else
-        {
-          CmdPWROff;
-        }
-        OCR1A = Power;
-        OCR1B = TargetRPM;
-        adj();
       }
+      OCR1A = Power;
+      OCR1B = TargetRPM;
+      adj();
     }
   }
   CPUOff;
@@ -257,27 +254,54 @@ void adj() {
   }
   else
   {
-    //TODO
-    NextPower = 0;
-    /// && (rpm>(LastRpm<<1)) && (rpm<(LastRpm>>1))
-    uint16_t temprpm;
-    temprpm = rpm;
-    if(temprpm < StartRpm && temprpm > (StartRpm>>3))//fast enough but not too fast
+    if(FStart)
     {
-      StartUpCount1++;
-      rpms[rpmsIdx] = temprpm;
-      rpmsIdx++;
-      rpmsIdx&=7;
+      NextPower = 1000;
+      uint16_t temprpm;
+      temprpm = rpm;
+      if(temprpm < StartRpm && temprpm > (StartRpm>>3))//fast enough but not too fast
+      {
+        StartUpCount1++;
+        rpms[rpmsIdx] = temprpm;
+        rpmsIdx++;
+        rpmsIdx&=7;
+      }
+      else
+      {
+        StartUpCount1 = 0;
+      }
+      if(StartUpCount1>120)
+      {
+        Status = 1;
+        STAOn;
+        NextPower = 1000;
+      }
+      FStart--;
     }
     else
     {
-      StartUpCount1 = 0;
-    }
-    if(StartUpCount1>20)
-    {
-      Status = 1;
-      STAOn;
-      NextPower = 1000;
+      //TODO
+      NextPower = 0;
+      /// && (rpm>(LastRpm<<1)) && (rpm<(LastRpm>>1))
+      uint16_t temprpm;
+      temprpm = rpm;
+      if(temprpm < StartRpm && temprpm > (StartRpm>>3))//fast enough but not too fast
+      {
+        StartUpCount1++;
+        rpms[rpmsIdx] = temprpm;
+        rpmsIdx++;
+        rpmsIdx&=7;
+      }
+      else
+      {
+        StartUpCount1 = 0;
+      }
+      if(StartUpCount1>20)
+      {
+        Status = 1;
+        STAOn;
+        NextPower = 1000;
+      }
     }
   }
 }
@@ -288,27 +312,27 @@ ISR(TIM1_COMPA_vect){
 }
 
 ISR(TIM1_COMPB_vect){
-  CPUOn;
-  if(FStart)//强制换向
-  {
-    uint8_t TempStep = Step;
-    CmdPWROff;
-    CmdNextStep;
-    //记录当前转速
-    rpm = currTick;
-    //换向前处理结束
-    ////////////////////////////////////////////////////////////////////////////////////////////
-    //换向开始点
-    TempStep = Step;
-    //定时器清零
-    TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
-    uint16_t Power = TargetRPM>>3;
-    CmdPWROn;
-    OCR1A = Power;
-    OCR1B = TargetRPM;
-    adj();
-  }
-  CPUOff;
+//  CPUOn;
+//  if(FStart)//强制换向
+//  {
+//    uint8_t TempStep = Step;
+//    CmdPWROff;
+//    CmdNextStep;
+//    //记录当前转速
+//    rpm = currTick;
+//    //换向前处理结束
+//    ////////////////////////////////////////////////////////////////////////////////////////////
+//    //换向开始点
+//    TempStep = Step;
+//    //定时器清零
+//    TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
+//    uint16_t Power = TargetRPM>>3;
+//    CmdPWROn;
+//    OCR1A = Power;
+//    OCR1B = TargetRPM;
+//    adj();
+//  }
+//  CPUOff;
 }
 #define CMD_SENDDATA1Xa   10  /*0~255       1x*/
 #define CMD_SENDDATA1Xb   11  /*256~511     1x*/
@@ -394,17 +418,17 @@ ISR(PCINT0_vect){//先送高，后送低
             case CMD_FORCE:
               if(TempData)
               {
-                FStart=1;
-                if(TIFR1 & _BV(TOV1))
-                {
-                  //已超时，重启
-                  TCNT1 = 0;TIFR1 |= _BV(TOV1);
-                }
+                FStart=250;
+                //if(TIFR1 & _BV(TOV1))
+                //{
+                //  //已超时，重启
+                //  TCNT1 = 0;TIFR1 |= _BV(TOV1);
+                //}
               }
-              else
-              {
-                FStart=0;
-              }
+              //else
+              //{
+              //  FStart=0;
+              //}
               break;
           }
           CMD = 0;
