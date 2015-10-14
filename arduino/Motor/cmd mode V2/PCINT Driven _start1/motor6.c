@@ -416,19 +416,7 @@ ISR(PCINT0_vect){//先送高，后送低
               TargetRPM = (TempData<<5) + 8192;
               break;
             case CMD_FORCE:
-              if(TempData)
-              {
-                FStart=250;
-                //if(TIFR1 & _BV(TOV1))
-                //{
-                //  //已超时，重启
-                //  TCNT1 = 0;TIFR1 |= _BV(TOV1);
-                //}
-              }
-              //else
-              //{
-              //  FStart=0;
-              //}
+              FStart=TempData;
               break;
           }
           CMD = 0;
