@@ -8,144 +8,36 @@ namespace ConsoleApplication1
 {
 	class Program
 	{
-		static List<ulong[]> Data;
-
-		static void init()
-		{
-			Data = new List<ulong[]>();
-
-			Data.Add(CData.proc(CData.d0));
-			Data.Add(CData.proc(CData.d1));
-			Data.Add(CData.proc(CData.d2));
-			Data.Add(CData.proc(CData.d3));
-			Data.Add(CData.proc(CData.d4));
-			Data.Add(CData.proc(CData.d5));
-			Data.Add(CData.proc(CData.d6));
-			Data.Add(CData.proc(CData.d7));
-			Data.Add(CData.proc(CData.d8));
-			Data.Add(CData.proc(CData.d9));
-			Data.Add(CData.proc(CData.d10));
-			Data.Add(CData.proc(CData.d11));
-
-		}
-
-
 		static void Main(string[] args)
 		{
-			init();
-			FileStream fs = new FileStream(args[2], FileMode.Append, FileAccess.Write);
-			StreamWriter sw = new StreamWriter(fs);
 
-			int[] Idx = new int[12];
-			{
-				string s = args[0];
-				for (int i = 0; i < 12; i++)
-				{
-					Idx[i] = int.Parse(s.Split(',')[i]);
-				}
-			}
-			int[] Idxend = new int[12];
-			{
-				string s = args[1];
-				for (int i = 0; i < 12; i++)
-				{
-					Idxend[i] = int.Parse(s.Split(',')[i]);
-				}
-			}
+			FileStream fs1 = new FileStream(@"e:\\in.txt", FileMode.Open, FileAccess.Read);
+			StreamReader sr = new StreamReader(fs1);
+			FileStream fs2 = new FileStream(@"e:\\out.txt", FileMode.Create, FileAccess.Write);
+			StreamWriter sw = new StreamWriter(fs2);
 
 			while (true)
 			{
-				for (int times = 0; times < 100000000; times++)
+				ulong data = 0;
+				string line = sr.ReadLine();
+				if (string.IsNullOrEmpty(line))
 				{
-					ulong board = 0;
-					int last = 0;
-					int error = 0;
-					for (int i = 0; i < 12; i++)
+					break;
+				}
+				string s1 = line.Split('\t')[0];
+				string s2 = line.Split('\t')[1];
+				foreach (string s in s1.Split(','))
+				{
+					if (!string.IsNullOrEmpty(s))
 					{
-						ulong mask = Data[i][Idx[i]];
-						if ((board & mask) == 0)
-						{
-							board |= mask;
-						}
-						else
-						{
-							last = i;
-							error = 1;
-							break;
-						}
-					}
-					if (error != 0)
-					{
-						if (last < 11)
-						{
-							Idx[last + 1] = 0;
-						}
-						for (int i = last; i >= 0; i--)
-						{
-							Idx[i]++;
-							if (Idx[i] >= Data[i].Length)
-							{
-								Idx[i] = 0;
-							}
-							else
-							{
-								break;
-							}
-						}
-					}
-					else
-					{
-						string s = "";
-						for (int i = 0; i < 12; i++)
-						{
-							s += Idx[i] + ",";
-						}
-						Console.WriteLine("bingo:" + s);
-						sw.WriteLine(s);
-						sw.Flush();
-						fs.Flush();
-						for (int i = 11; i >= 0; i--)
-						{
-							Idx[i]++;
-							if (Idx[i] >= Data[i].Length)
-							{
-								Idx[i] = 0;
-							}
-							else
-							{
-								break;
-							}
-						}
+						data |= (ulong)1 << (int.Parse(s));
 					}
 				}
-				{
-					string s = "";
-					for (int i = 0; i < 12; i++)
-					{
-						s += Idx[i] + ",";
-					}
-					Console.WriteLine(s);
-				}
-				bool isEnd = true;
-				for (int i = 0; i < 12; i++)
-				{
-					if (Idx[i] < Idxend[i])
-					{
-						isEnd = false;
-						break;
-					}
-					else if (Idx[i] > Idxend[i])
-					{
-						isEnd = true;
-						break;
-					}
-				}
-				if (isEnd)
-				{
-					return;
-				}
+				string hex = CData.getHex4(data);
+				sw.WriteLine('\'' + hex + '\t' + s2);
 			}
-
+			sw.Flush();
+			fs2.Close();
 		}
 	}
 }

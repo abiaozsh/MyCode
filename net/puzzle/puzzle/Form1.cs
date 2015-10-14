@@ -36,68 +36,11 @@ namespace puzzle
 		int[] startXa = { 0, 0, 0, 0, 0, 0 };
 		int[] startYa = { 0, 0, 40, 100, 180, 280 };
 
-		int[] startXb = { 0, 0, 40, 100, 180, 280, 400, 500,580, 640, 1000, 1000 };
+		int[] startXb = { 0, 0, 40, 100, 180, 280, 400, 500, 580, 640, 1000, 1000 };
 		int[] startYb = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 		int[] startXc = { 0, 0, 40, 100, 180, 280, 400, 500, 580, 640, 1000, 1000 };
 		int[] startYc = { 0, 0, 0, 0, 0, 0 };
-
-//0,0
-//0,2
-//1,2
-//0,3
-//1,3
-//0,5
-//1,5
-//2,5
-//0,6
-//1,6
-//2,6
-//0,7
-//1,7
-//2,7
-//0,9
-//1,9
-//2,9
-//3,9
-//0,10
-//1,10
-//2,10
-//3,10
-//0,11
-//1,11
-//2,11
-//3,11
-//0,12
-//1,12
-//2,12
-//3,12
-//0,14
-//1,14
-//2,14
-//3,14
-//4,14
-//0,15
-//1,15
-//2,15
-//3,15
-//4,15
-//0,16
-//1,16
-//2,16
-//3,16
-//4,16
-//0,17
-//1,17
-//2,17
-//3,17
-//4,17
-//0,18
-//1,18
-//2,18
-//3,18
-//4,18
-
 
 		public Form1()
 		{
@@ -118,12 +61,18 @@ namespace puzzle
 			pictureBox1.Refresh();
 
 			pictureBoxa.Image = bmp1;
+			pictureBoxb.Image = bmp2;
+			pictureBoxc.Image = bmp3;
+			clearG();
+		}
+
+		void clearG()
+		{
+			Pen p = new Pen(Color.Black);
 			g1 = Graphics.FromImage(bmp1);
 			g1.Clear(Color.Gray);
-			pictureBoxb.Image = bmp2;
 			g2 = Graphics.FromImage(bmp2);
 			g2.Clear(Color.Gray);
-			pictureBoxc.Image = bmp3;
 			g3 = Graphics.FromImage(bmp3);
 			g3.Clear(Color.Gray);
 			for (int j = 1; j <= 5; j++)
@@ -156,7 +105,7 @@ namespace puzzle
 						20 * j + startYb[j]);
 
 					g2.DrawLine(p,
-						0 + startXb[10-j],
+						0 + startXb[10 - j],
 						i * 20 + startYb[10 - j],
 						20 * j + startXb[10 - j],
 						i * 20 + startYb[10 - j]);
@@ -188,10 +137,26 @@ namespace puzzle
 						i * 20 + startXb[10 - j],
 						20 * j + startYb[10 - j]);
 				}
-
 			}
-		}
+			string blockB = "3,1	7,1	12,1	18,1	23,1	27,1	30,1	6,2	7,2	11,2	12,2	17,2	18,2	22,2	23,2	26,2	27,2	10,3	11,3	12,3	16,3	17,3	18,3	21,3	22,3	23,3	15,4	16,4	17,4	18,4";
+			string blockC = "2,1	5,1	9,1	14,1	20,1	25,1	29,1	5,2	6,2	9,2	10,2	14,2	15,2	20,2	21,2	25,2	26,2	9,3	10,3	11,3	14,3	15,3	16,3	20,3	21,3	22,3	14,4	15,4	16,4	17,4	15,3		16,3	17,3	10,4	11,4	12,4	13,4";
+			Brush b1 = new SolidBrush(Color.Gray);
+			for (int i = 0; i < 30; i++)
+			{
+				int x = int.Parse(blockB.Split('\t')[i].Split(',')[0]);
+				int y = int.Parse(blockB.Split('\t')[i].Split(',')[1]);
+				g2.FillRectangle(b1, x * 20 + 1, y * 20 + 1, 20, 20);
+			}
+			for (int i = 0; i < 30; i++)
+			{
+				int x = int.Parse(blockC.Split('\t')[i].Split(',')[0]);
+				int y = int.Parse(blockC.Split('\t')[i].Split(',')[1]);
+				g3.FillRectangle(b1, x * 20, y * 20 + 1, 20, 20);
+			}
 
+
+
+		}
 		void pictureBox1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
 		{
 			int x = e.X / 20;
@@ -207,55 +172,66 @@ namespace puzzle
 
 		void refresh(ulong _data)
 		{
-			Pen p1 = new Pen(Color.Red);
-			Pen p2 = new Pen(Color.Gray);
-			Brush b1 = new SolidBrush(Color.Red);
+			Brush b1 = new SolidBrush(Color.DarkGray);
 			Brush b2 = new SolidBrush(Color.Gray);
-
-			for (int i = 0; i < 10; i++)
 			{
-				for (int j = 0; j < 10; j++)
+				for (int i = 0; i < 10; i++)
 				{
-					if (CData.conv[i + j * 10] != -1)
+					for (int j = 0; j < 10; j++)
 					{
-						if ((_data & ((ulong)1 << CData.conv[i + j * 10])) != 0)
+						if (CData.conv[i + j * 10] != -1)
 						{
-							g.FillEllipse(b1, i * 20, j * 20, 19, 19);
-						}
-						else
-						{
-							g.FillEllipse(b2, i * 20, j * 20, 19, 19);
+							if ((_data & ((ulong)1 << CData.conv[i + j * 10])) != 0)
+							{
+								g.FillEllipse(b1, i * 20, j * 20, 19, 19);
+							}
+							else
+							{
+								g.FillEllipse(b2, i * 20, j * 20, 19, 19);
+							}
 						}
 					}
 				}
+				g.Flush();
+				pictureBox1.Refresh();
+				textBox1.Text = CData.getHex4(_data);
 			}
-			g.Flush();
-			pictureBox1.Refresh();
-			textBox1.Text = getHex4(_data);
+			{
+				clearG();
+				string drawA = "0,0	0,2	1,2	0,3	1,3	0,5	1,5	2,5	0,6	1,6	2,6	0,7	1,7	2,7	0,9	1,9	2,9	3,9	0,10	1,10	2,10	3,10	0,11	1,11	2,11	3,11	0,12	1,12	2,12	3,12	0,14	1,14	2,14	3,14	4,14	0,15	1,15	2,15	3,15	4,15	0,16	1,16	2,16	3,16	4,16	0,17	1,17	2,17	3,17	4,17	0,18	1,18	2,18	3,18	4,18";
+				string drawB = "14,0	9,0	15,0	14,1	20,0	5,0	10,0	16,0	9,1	15,1	21,0	14,2	20,1	25,0	2,0	6,0	11,0	17,0	5,1	10,1	16,1	22,0	9,2	15,2	21,1	26,0	14,3	20,2	25,1	29,0	0,0	3,0	7,0	12,0	18,0	2,1	6,1	11,1	17,1	23,0	5,2	10,2	16,2	22,1	27,0	9,3	15,3	21,2	26,1	30,0	14,4	20,3	25,2	29,1	32,0";
+				string drawC = "18,0	17,0	23,0	12,0	18,1	16,0	22,0	27,0	11,0	17,1	23,1	7,0	12,1	18,2	15,0	21,0	26,0	30,0	10,0	16,1	22,1	27,1	6,0	11,1	17,2	23,2	3,0	7,1	12,2	18,3	14,0	20,0	25,0	29,0	32,0	9,0	15,1	21,1	26,1	30,1	5,0	10,1	16,2	22,2	27,2	2,0	6,1	11,2	17,3	23,3	0,0	3,1	7,2	12,3	18,4";
+				for (int i = 0; i < 55; i++)
+				{
+					if ((_data & ((ulong)1 << i)) != 0)
+					{
+						{
+							int x = int.Parse(drawA.Split('\t')[i].Split(',')[0]);
+							int y = int.Parse(drawA.Split('\t')[i].Split(',')[1]);
+							g1.FillEllipse(b1, x * 20, y * 20, 19, 19);
+						}
+						{
+							int x = int.Parse(drawB.Split('\t')[i].Split(',')[0]);
+							int y = int.Parse(drawB.Split('\t')[i].Split(',')[1]);
+							g2.FillEllipse(b1, x * 20, y * 20, 19, 19);
+						}
+						{
+							int x = int.Parse(drawC.Split('\t')[i].Split(',')[0]);
+							int y = int.Parse(drawC.Split('\t')[i].Split(',')[1]);
+							g3.FillEllipse(b1, x * 20, y * 20, 19, 19);
+						}
+					}
+				}
+				g1.Flush();
+				g2.Flush();
+				g3.Flush();
+				pictureBoxa.Refresh();
+				pictureBoxb.Refresh();
+				pictureBoxc.Refresh();
+			}
+
 		}
 
-		static string[] convt = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F" };
-		static string getHex4(ulong val)//"ll"+"hh"
-		{
-			return
-				convt[((val & 0xF000000000000000) >> 60)] +
-				convt[((val & 0x0F00000000000000) >> 56)] +
-				convt[((val & 0x00F0000000000000) >> 52)] +
-				convt[((val & 0x000F000000000000) >> 48)] +
-				convt[((val & 0x0000F00000000000) >> 44)] +
-				convt[((val & 0x00000F0000000000) >> 40)] +
-				convt[((val & 0x000000F000000000) >> 36)] +
-				convt[((val & 0x0000000F00000000) >> 32)] +
-				convt[((val & 0x00000000F0000000) >> 28)] +
-				convt[((val & 0x000000000F000000) >> 24)] +
-				convt[((val & 0x0000000000F00000) >> 20)] +
-				convt[((val & 0x00000000000F0000) >> 16)] +
-				convt[((val & 0x000000000000F000) >> 12)] +
-				convt[((val & 0x0000000000000F00) >> 8)] +
-				convt[((val & 0x00000000000000F0) >> 4)] +
-				convt[((val & 0x000000000000000F) >> 0)]
-				;
-		}
 
 		private void pictureBox1_Click(object sender, EventArgs e)
 		{
@@ -275,6 +251,7 @@ namespace puzzle
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
+			CData2.init();
 			Data = new List<ulong[]>();
 
 			Data.Add(proc(CData.d0));
@@ -478,7 +455,7 @@ namespace puzzle
 							}
 							else
 							{
-								sb.AppendLine(i + "\t" + j + "\t" + ax + "\t" + ay + "\t" + getHex4(d));
+								sb.AppendLine(i + "\t" + j + "\t" + ax + "\t" + ay + "\t" + CData.getHex4(d));
 							}
 						}
 					}
@@ -551,6 +528,31 @@ namespace puzzle
 					}
 				}
 			}
+			string drawA = "0,0	0,2	1,2	0,3	1,3	0,5	1,5	2,5	0,6	1,6	2,6	0,7	1,7	2,7	0,9	1,9	2,9	3,9	0,10	1,10	2,10	3,10	0,11	1,11	2,11	3,11	0,12	1,12	2,12	3,12	0,14	1,14	2,14	3,14	4,14	0,15	1,15	2,15	3,15	4,15	0,16	1,16	2,16	3,16	4,16	0,17	1,17	2,17	3,17	4,17	0,18	1,18	2,18	3,18	4,18";
+			string drawB = "14,0	9,0	15,0	14,1	20,0	5,0	10,0	16,0	9,1	15,1	21,0	14,2	20,1	25,0	2,0	6,0	11,0	17,0	5,1	10,1	16,1	22,0	9,2	15,2	21,1	26,0	14,3	20,2	25,1	29,0	0,0	3,0	7,0	12,0	18,0	2,1	6,1	11,1	17,1	23,0	5,2	10,2	16,2	22,1	27,0	9,3	15,3	21,2	26,1	30,0	14,4	20,3	25,2	29,1	32,0";
+			string drawC = "18,0	17,0	23,0	12,0	18,1	16,0	22,0	27,0	11,0	17,1	23,1	7,0	12,1	18,2	15,0	21,0	26,0	30,0	10,0	16,1	22,1	27,1	6,0	11,1	17,2	23,2	3,0	7,1	12,2	18,3	14,0	20,0	25,0	29,0	32,0	9,0	15,1	21,1	26,1	30,1	5,0	10,1	16,2	22,2	27,2	2,0	6,1	11,2	17,3	23,3	0,0	3,1	7,2	12,3	18,4";
+			for (int i = 0; i < 55; i++)
+			{
+				if ((mask & ((ulong)1 << i)) != 0)
+				{
+					{
+						int x = int.Parse(drawA.Split('\t')[i].Split(',')[0]);
+						int y = int.Parse(drawA.Split('\t')[i].Split(',')[1]);
+						g1.FillEllipse(b1, x * 20, y * 20, 19, 19);
+					}
+					{
+						int x = int.Parse(drawB.Split('\t')[i].Split(',')[0]);
+						int y = int.Parse(drawB.Split('\t')[i].Split(',')[1]);
+						g2.FillEllipse(b1, x * 20, y * 20, 19, 19);
+					}
+					{
+						int x = int.Parse(drawC.Split('\t')[i].Split(',')[0]);
+						int y = int.Parse(drawC.Split('\t')[i].Split(',')[1]);
+						g3.FillEllipse(b1, x * 20, y * 20, 19, 19);
+					}
+				}
+			}
+
 		}
 
 		private void textBox3_TextChanged(object sender, EventArgs e)
@@ -590,6 +592,48 @@ namespace puzzle
 			}
 			catch
 			{
+			}
+
+			try
+			{
+				string s = textBox3.Text;
+				int[] Idx = new int[12];
+				for (int i = 0; i < 12; i++)
+				{
+					Idx[i] = int.Parse(s.Split(',')[i]);
+				}
+
+				ulong board = 0;
+				int last = 11;
+				for (int i = 0; i < 12; i++)
+				{
+					ulong mask = CData2.Data[i * 512 + Idx[i]];
+					if ((board & mask) == 0)
+					{
+						board |= mask;
+					}
+					else
+					{
+						last = i;
+						break;
+					}
+				}
+				clearG();
+				for (int i = 0; i <= last; i++)
+				{
+					ulong mask = CData2.Data[i * 512 + Idx[i]];
+					draw(mask, Colors[i], i == last ? 0 : 1, i);
+				}
+				g1.Flush();
+				g2.Flush();
+				g3.Flush();
+				pictureBoxa.Refresh();
+				pictureBoxb.Refresh();
+				pictureBoxc.Refresh();
+			}
+			catch (Exception ex)
+			{
+				ex.ToString();
 			}
 		}
 
