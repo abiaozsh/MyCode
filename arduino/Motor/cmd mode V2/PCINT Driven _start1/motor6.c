@@ -4,24 +4,19 @@
 
 #define MaxPonTime 2000
 
-#ifndef sbi
-#define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
-#endif
-
 #define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
 
 //drA3
 #define drDAT (PINA & _BV(7)) /*DAT*/
 #define drCLK (PINA & _BV(6)) /*DAT*/
 
-#define LEDInit ;/*PORTB |= _BV(3)*/
-#define CPUOn   ;/*DDRB |= _BV(3)*/
-#define CPUOff  ;/*DDRB &= ~_BV(3)*/
-#define STAOn   ;/*PORTB |= _BV(3)*/
-#define STAOff  ;/*PORTB &= ~_BV(3)*/
-#define PWROn   ;/*PORTB |= _BV(3)*/
-#define PWROff  ;/*PORTB &= ~_BV(3)*/
-#define RPMFlip DDRB ^= _BV(3);/**/
+#define CPUOn   DDRB |= _BV(3) ;/**/
+#define CPUOff  DDRB &= ~_BV(3);/**/
+#define STAOn   ;/*DDRB |= _BV(3) */
+#define STAOff  ;/*DDRB &= ~_BV(3)*/
+#define PWROn   ;/*DDRB |= _BV(3) */
+#define PWROff  ;/*DDRB &= ~_BV(3)*/
+#define RPMFlip ;/*DDRB ^= _BV(3)*/
 
 //2 1 0
 //5 4 3 2 1 0
@@ -80,14 +75,14 @@ uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
 uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 
 volatile uint8_t Step = 0;
-uint8_t Status = 0;//0 halt ,1 running, 2 starting
+uint8_t Status = 0;//0 halt ,1 running
 uint8_t StartUpCount1=0;
 volatile uint16_t TargetRPM=0;//bit16 = start flg rest is data
 volatile uint8_t FStart = 0;
 volatile uint16_t rpm;
-///volatile uint16_t LastRpm;
 volatile uint16_t NextPower = 0;
 uint32_t AccuPower = 0;//volatile uint16_t AccuPower = 0;
+volatile uint8_t StartPower = 128;
 
 uint16_t rpms[8];
 uint8_t rpmsIdx = 0;
@@ -108,8 +103,6 @@ int main(void) {
   TimerInit();//初始化定时器 1/8
   PCIntInit();//初始化模拟输入
 
-  LEDInit;
-  
   //打开输出端口
   DDR6O = BP1U | BP1D | BP2U | BP2D | BP3U | BP3D;
   
@@ -153,30 +146,26 @@ void PCIntInit() {
   PCMSK0 |= _BV(6);//CLK
 }
 
-//1正常运转状态
-//2低速切断状态/高频抖动状态
-//手动启动状态
-//3强制启动状态
-
 //过零事件
 ISR(PCINT1_vect){
   CPUOn;
   uint16_t temp;
-  if(rpm<1024)
+  uint16_t tempRpm = rpm;
+  if(tempRpm<1024)
   {
-	temp = (rpm>>1);//?? >>2
+    temp = (tempRpm>>1);//?? >>2
   }
-  else if(rpm<2048)
+  else if(tempRpm<2048)
   {
-	temp = (rpm>>2);//?? >>2
+    temp = (tempRpm>>2);//?? >>2
   }
-  else if(rpm<4096)
+  else if(tempRpm<4096)
   {
-	temp = (rpm>>3);//?? >>2
+    temp = (tempRpm>>3);//?? >>2
   }
   else
   {
-	temp = (rpm>>4);//?? >>2
+    temp = (tempRpm>>4);//?? >>2
   }
   if(currTick>=temp)
   {
@@ -188,7 +177,6 @@ ISR(PCINT1_vect){
     {
       CmdPWROff;
       CmdNextStep;
-///        LastRpm = rpm;
       //记录当前转速
       rpm = currTick;
       //换向前处理结束
@@ -272,9 +260,9 @@ void adj() {
   {
     if(FStart)
     {
-      NextPower = 1000;
       uint16_t temprpm;
       temprpm = rpm;
+      NextPower = ((uint32_t)rpm * StartPower)>>8;
       if(temprpm < StartRpm && temprpm > (StartRpm>>3))//fast enough but not too fast
       {
         StartUpCount1++;
@@ -290,15 +278,12 @@ void adj() {
       {
         Status = 1;
         STAOn;
-        NextPower = 1000;
       }
       FStart--;
     }
     else
     {
-      //TODO
       NextPower = 0;
-      /// && (rpm>(LastRpm<<1)) && (rpm<(LastRpm>>1))
       uint16_t temprpm;
       temprpm = rpm;
       if(temprpm < StartRpm && temprpm > (StartRpm>>3))//fast enough but not too fast
@@ -316,7 +301,7 @@ void adj() {
       {
         Status = 1;
         STAOn;
-        NextPower = 10000;
+        NextPower = ((uint32_t)rpm * StartPower)>>8;
       }
     }
   }
@@ -327,51 +312,29 @@ ISR(TIM1_COMPA_vect){
   CmdPWROff;
 }
 
-ISR(TIM1_COMPB_vect){
-//  CPUOn;
-//  if(FStart)//强制换向
-//  {
-//    uint8_t TempStep = Step;
-//    CmdPWROff;
-//    CmdNextStep;
-//    //记录当前转速
-//    rpm = currTick;
-//    //换向前处理结束
-//    ////////////////////////////////////////////////////////////////////////////////////////////
-//    //换向开始点
-//    TempStep = Step;
-//    //定时器清零
-//    TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
-//    uint16_t Power = TargetRPM>>3;
-//    CmdPWROn;
-//    OCR1A = Power;
-//    OCR1B = TargetRPM;
-//    adj();
-//  }
-//  CPUOff;
-}
-#define CMD_SENDDATA1Xa   10  /*0~255       1x*/
-#define CMD_SENDDATA1Xb   11  /*256~511     1x*/
-#define CMD_SENDDATA2X    12  /*512~1023    2x*/
-#define CMD_SENDDATA4X    13  /*1024~2047   4x*/
-#define CMD_SENDDATA8X    14  /*2048~4095   8x*/
-#define CMD_SENDDATA16X   15  /*4096~8191  16x*/
-#define CMD_SENDDATA32X   16  /*8192~16383 32x*/
-#define CMD_FORCE         20  /*on/off        */
+#define CMD_SENDDATA1Xa   10  /*0~255       1x */
+#define CMD_SENDDATA1Xb   11  /*256~511     1x */
+#define CMD_SENDDATA2X    12  /*512~1023    2x */
+#define CMD_SENDDATA4X    13  /*1024~2047   4x */
+#define CMD_SENDDATA8X    14  /*2048~4095   8x */
+#define CMD_SENDDATA16X   15  /*4096~8191  16x */
+#define CMD_SENDDATA32X   16  /*8192~16383 32x */
+#define CMD_START         20  /*START          */
+#define CMD_STOP          25  /*START          */
+#define CMD_SETSTARTPWR   30  /*set start power*/
 
 ISR(PCINT0_vect){//先送高，后送低
   CPUOn;
-  if(Status)
-  {
-    sei();
-  }
   if(drCLK)//上升沿读取
   {
-	uint8_t tempdrDAT = drDAT;fdsa
-	sei();
+    uint8_t tempdrDAT = drDAT;
+    if(Status)
+    {
+      sei();
+    }
     if(TempDataCnt==8)
     {
-      if(drDAT)//起始位
+      if(tempdrDAT)//起始位
       {
         TempData = 0;
         TempDataCnt = 0;
@@ -380,33 +343,16 @@ ISR(PCINT0_vect){//先送高，后送低
     else
     {
       TempData<<=1;
-      if(drDAT)
+      if(tempdrDAT)
       {
-        TempData|=1;
+        TempData |= 1;
       }
-      
-      {
-      ///if(OutData&1)
-      ///{
-      ///  dwPORTON;
-      ///}
-      ///else
-      ///{
-      ///  dwPORTOFF;
-      ///}
-      ///OutData>>=1;
-      }
-      
       TempDataCnt++;
       if(TempDataCnt==8)
       {
         if(CMD==0)
         {
-          if(TempData)
-          {
-            //rpmSend = rpm;
-            CMD = TempData;
-          }
+          CMD = TempData;
         }
         else
         {
@@ -433,8 +379,17 @@ ISR(PCINT0_vect){//先送高，后送低
             case CMD_SENDDATA32X://   16  /*8192~16383 32x*/
               TargetRPM = (TempData<<5) + 8192;
               break;
-            case CMD_FORCE:
-              FStart=TempData;
+            case CMD_START:
+              GIMSK |= _BV(PCIE1);
+              FStart = TempData;
+              break;
+            case CMD_STOP:
+              GIMSK &= ~_BV(PCIE1);
+              FStart = 0;
+              Status = 0;
+              break;
+            case CMD_SETSTARTPWR:
+              StartPower = TempData;
               break;
           }
           CMD = 0;

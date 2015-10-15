@@ -29,10 +29,15 @@ namespace WindowsFormsApplication1
 			//sw = new StreamWriter(fs);
 			if (port == null)
 			{
-				//COM4为Arduino使用的串口号，需根据实际情况调整
-				port = new SerialPort("COM5", 115200, Parity.None, 8, StopBits.One);
-				port.Open();
-				port.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);
+				try
+				{
+					//COM4为Arduino使用的串口号，需根据实际情况调整
+					port = new SerialPort("COM5", 115200, Parity.None, 8, StopBits.One);
+					port.Open();
+					port.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);
+				}
+				catch
+				{ }
 			}
 		}
 		int datareceive = 0;
@@ -42,7 +47,7 @@ namespace WindowsFormsApplication1
 		{
 			if (port.BytesToRead > 0)
 			{
-					datareceive &= 1;
+				datareceive &= 1;
 				port.Read(buff, datareceive, 1);
 				datareceive++;
 				if (datareceive >= 2)
@@ -84,22 +89,108 @@ namespace WindowsFormsApplication1
 				//Thread.Sleep(5);
 				port.Write(d, 0, 1);
 			}
+			else
+			{
+				try
+				{
+					//COM4为Arduino使用的串口号，需根据实际情况调整
+					port = new SerialPort("COM5", 115200, Parity.None, 8, StopBits.One);
+					port.Open();
+					port.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);
+				}
+				catch { }
+			}
 		}
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
 		}
-		byte CMD_SENDDATA1Xa = 10;  /*0~255       1x*/
-		byte CMD_SENDDATA1Xb = 11;  /*256~511     1x*/
-		byte CMD_SENDDATA2X = 12;  /*512~1023    2x*/
-		byte CMD_SENDDATA4X = 13;  /*1024~2047   4x*/
-		byte CMD_SENDDATA8X = 14;  /*2048~4095   8x*/
-		byte CMD_SENDDATA16X = 15;  /*4096~8191  16x*/
-		byte CMD_SENDDATA32X = 16;  /*8192~16383 32x*/
-		byte CMD_FORCE = 20;  /*on/off        */
+		const byte CMD_FORCE = 20;  /*on/off        */
+
+		const byte CMD_SENDDATA1Xa = 10;  /*0~255       1x*/
+		const byte CMD_SENDDATA1Xb = 11;  /*256~511     1x*/
+		const byte CMD_SENDDATA2X = 12;  /*512~1023    2x*/
+		const byte CMD_SENDDATA4X = 13;  /*1024~2047   4x*/
+		const byte CMD_SENDDATA8X = 14;  /*2048~4095   8x*/
+		const byte CMD_SENDDATA16X = 15;  /*4096~8191  16x*/
+		const byte CMD_SENDDATA32X = 16;  /*8192~16383 32x*/
+		const byte CMD_START = 20;  /*on/off        */
+		const byte CMD_STOP = 25;
+		const byte CMD_SETSTARTPWR = 30;
 
 		private void trackBar1_Scroll(object sender, EventArgs e)
 		{
+			int v = trackBar1.Value;
+			byte cmd = 0;
+			byte val = 0;
+			if (v < 256)
+			{
+				cmd = CMD_SENDDATA1Xa;
+				val = ((byte)(v));
+			}
+			else if (v < 512)
+			{
+				cmd = CMD_SENDDATA1Xb;
+				val = ((byte)(v - 256));
+			}
+			else if (v < 768)
+			{
+				cmd = CMD_SENDDATA2X;
+				val = ((byte)((v - 512)));
+			}
+			else if (v < 1024)
+			{
+				cmd = (CMD_SENDDATA4X);
+				val = ((byte)((v - 768)));
+			}
+			else if (v < 1280)
+			{
+				cmd = (CMD_SENDDATA8X);
+				val = ((byte)((v - 1024)));
+			}
+			else if (v < 1536)
+			{
+				cmd = (CMD_SENDDATA16X);
+				val = ((byte)((v - 1280)));
+			}
+			else if (v < 1792)
+			{
+				cmd = (CMD_SENDDATA32X);
+				val = ((byte)((v - 1536)));
+			}
+			else
+			{
+			}
+			Send(cmd);
+			Send(val);
+			int vv = val;
+
+			switch (cmd)
+			{
+				case CMD_SENDDATA1Xa://   10  /*0~255       1x*/
+					vv = vv;
+					break;
+				case CMD_SENDDATA1Xb://   11  /*256~511     1x*/
+					vv = vv + 256;
+					break;
+				case CMD_SENDDATA2X://    12  /*512~1023    2x*/
+					vv = (vv << 1) + 512;
+					break;
+				case CMD_SENDDATA4X://    13  /*1024~2047   4x*/
+					vv = (vv << 2) + 1024;
+					break;
+				case CMD_SENDDATA8X://    14  /*2048~4095   8x*/
+					vv = (vv << 3) + 2048;
+					break;
+				case CMD_SENDDATA16X://   15  /*4096~8191  16x*/
+					vv = (vv << 4) + 4096;
+					break;
+				case CMD_SENDDATA32X://   16  /*8192~16383 32x*/
+					vv = (vv << 5) + 8192;
+					break;
+			}
+			this.Text = vv.ToString();
+			/*
 			int v = trackBar1.Value;
 			this.Text = v.ToString();
 			if (v < 256)
@@ -140,7 +231,7 @@ namespace WindowsFormsApplication1
 			else
 			{
 			}
-
+			 */
 
 		}
 
@@ -150,7 +241,7 @@ namespace WindowsFormsApplication1
 			if (checkBox1.Checked)
 			{
 				Send(CMD_FORCE);
-				Send(250);
+				Send(1);
 			}
 			else
 			{
@@ -164,10 +255,28 @@ namespace WindowsFormsApplication1
 			datareceive++;
 		}
 
-        private void timer1_Tick(object sender, EventArgs e)
-        {
-            textBox1.Text = data.ToString();
-        }
+		private void timer1_Tick(object sender, EventArgs e)
+		{
+			textBox1.Text = data.ToString();
+		}
+
+		private void button2_Click(object sender, EventArgs e)
+		{
+			Send(CMD_START);
+			Send(250);
+		}
+
+		private void button3_Click(object sender, EventArgs e)
+		{
+			Send(CMD_STOP);
+			Send(0);
+		}
+
+		private void button4_Click(object sender, EventArgs e)
+		{
+			Send(CMD_SETSTARTPWR);
+			Send(byte.Parse(textBox2.Text));
+		}
 
 
 	}
