@@ -161,7 +161,23 @@ void PCIntInit() {
 //过零事件
 ISR(PCINT1_vect){
   CPUOn;
-  uint16_t temp = (rpm>>1);//?? >>2
+  uint16_t temp;
+  if(rpm<1024)
+  {
+	temp = (rpm>>1);//?? >>2
+  }
+  else if(rpm<2048)
+  {
+	temp = (rpm>>2);//?? >>2
+  }
+  else if(rpm<4096)
+  {
+	temp = (rpm>>3);//?? >>2
+  }
+  else
+  {
+	temp = (rpm>>4);//?? >>2
+  }
   if(currTick>=temp)
   {
     uint8_t TempStep = Step;
@@ -300,7 +316,7 @@ void adj() {
       {
         Status = 1;
         STAOn;
-        NextPower = 1000;
+        NextPower = 10000;
       }
     }
   }
@@ -351,6 +367,8 @@ ISR(PCINT0_vect){//先送高，后送低
   }
   if(drCLK)//上升沿读取
   {
+	uint8_t tempdrDAT = drDAT;fdsa
+	sei();
     if(TempDataCnt==8)
     {
       if(drDAT)//起始位

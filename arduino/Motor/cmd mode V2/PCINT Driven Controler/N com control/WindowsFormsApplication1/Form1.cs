@@ -150,7 +150,7 @@ namespace WindowsFormsApplication1
 			if (checkBox1.Checked)
 			{
 				Send(CMD_FORCE);
-				Send(1);
+				Send(250);
 			}
 			else
 			{
