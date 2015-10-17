@@ -45,7 +45,7 @@ namespace WindowsFormsApplication1
 		int data = 0;
 		void port_DataReceived(object sender, SerialDataReceivedEventArgs e)
 		{
-			if (port.BytesToRead > 0)
+			while (port.BytesToRead > 0)
 			{
 				datareceive &= 1;
 				port.Read(buff, datareceive, 1);
@@ -255,10 +255,13 @@ namespace WindowsFormsApplication1
 			datareceive++;
 		}
 
-		private void timer1_Tick(object sender, EventArgs e)
-		{
-			textBox1.Text = data.ToString();
-		}
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            if (data != 0)
+            {
+                textBox1.Text = (data / 8 / 2).ToString() + " " + 40000000f / (data) + "rpm";
+            }
+        }
 
 		private void button2_Click(object sender, EventArgs e)
 		{

@@ -10,13 +10,13 @@
 #define drDAT (PINA & _BV(7)) /*DAT*/
 #define drCLK (PINA & _BV(6)) /*DAT*/
 
-#define CPUOn   DDRB |= _BV(3) ;/**/
-#define CPUOff  DDRB &= ~_BV(3);/**/
+#define CPUOn   ;/*DDRB |= _BV(3) */
+#define CPUOff  ;/*DDRB &= ~_BV(3)*/
 #define STAOn   ;/*DDRB |= _BV(3) */
 #define STAOff  ;/*DDRB &= ~_BV(3)*/
 #define PWROn   ;/*DDRB |= _BV(3) */
 #define PWROff  ;/*DDRB &= ~_BV(3)*/
-#define RPMFlip ;/*DDRB ^= _BV(3)*/
+#define RPMFlip DDRB ^= _BV(3);/**/
 
 //2 1 0
 //5 4 3 2 1 0
@@ -214,15 +214,22 @@ void adj() {
     else
     {
       rpms[rpmsIdx] = rpm;
+      uint16_t avgrpm=0;
+	  uint8_t i = rpmsIdx;
       rpmsIdx++;
       rpmsIdx&=7;
-      uint8_t i;
-      uint16_t avgrpm=0;
-      for(i=0;i<8;i++)
-      {
-        avgrpm+=rpms[i];
-      }
-      avgrpm>>=3;
+      avgrpm+=rpms[i--];i&=7;//0 8
+      avgrpm+=rpms[i--];i&=7;//1 8
+	  rpms[i]>>=1;
+      avgrpm+=rpms[i--];i&=7;//2 4
+      avgrpm+=rpms[i--];i&=7;//3 4
+	  rpms[i]>>=1;
+      avgrpm+=rpms[i--];i&=7;//4 2
+      avgrpm+=rpms[i--];i&=7;//5 2
+      avgrpm+=rpms[i--];i&=7;//6 2
+      avgrpm+=rpms[i--];i&=7;//7 2
+      avgrpm>>=2;
+	  //avgrpm>>=3;
       uint16_t tempPower;
       uint16_t TempTargetRPM = TargetRPM;
 
