@@ -14,9 +14,9 @@
 #define CPUOff  ;/*DDRB &= ~_BV(3)*/
 #define STAOn   ;/*DDRB |= _BV(3) */
 #define STAOff  ;/*DDRB &= ~_BV(3)*/
-#define PWROn   ;/*DDRB |= _BV(3) */
-#define PWROff  ;/*DDRB &= ~_BV(3)*/
-#define RPMFlip DDRB ^= _BV(3);/**/
+#define PWROn   DDRB |= _BV(3) ;/**/
+#define PWROff  DDRB &= ~_BV(3);/**/
+#define RPMFlip ;/*DDRB ^= _BV(3)*/
 
 //2 1 0
 //5 4 3 2 1 0
