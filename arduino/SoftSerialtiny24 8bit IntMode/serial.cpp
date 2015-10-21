@@ -2,12 +2,14 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 	
-#define CUR_TIMING TIMING__8M_TCCR0B_1_115200
-#define TCCR0B_Value 1
+#define CUR_TIMING TIMING__8M_TCCR0B_2___9600
+#define TCCR0B_Value 2
+
+//PROGMEM prog_uint8_t TIMING__8M_TCCR0B_2___9600[] = {102,206, 54,158,  6,111,215, 63,167, 15};
+
+//PROGMEM prog_uint8_t TIMING__8M_TCCR0B_2___9600[] = {103,207, 55,159,  7,112,216, 64,168, 16};
 
 PROGMEM prog_uint8_t TIMING__8M_TCCR0B_2___9600[] = {104,208, 56,160,  8,113,217, 65,169, 17};
-PROGMEM prog_uint8_t TIMING__8M_TCCR0B_2__14400[] = { 69,138,208, 21, 91,160,230, 43,113,182};
-PROGMEM prog_uint8_t TIMING__8M_TCCR0B_1_115200[] = { 0, 69,138,208, 21, 91,160,230, 43,113,182};
 
 #define DDR_Send DDRB
 #define PORT_Send PORTB
@@ -54,24 +56,27 @@ uint8_t buff[8];
 void loop() {
 	for(;;)
 	{
-		while(SerialIdx);
-		StartSend(0);
-		while(SerialIdx);
-		StartSend(0xFF);
-		while(SerialIdx);
-		StartSend(1);   //5  0000 0101
-		while(SerialIdx);
-		StartSend(128);//0
-		while(SerialIdx);
-		StartSend(0x55);// 应该0101 0101    
-		while(SerialIdx);//实际1011 0101
-		StartSend(0xaa);// 应该1010 1010    
-		while(SerialIdx);//实际1011 0010
-		StartSend(0xF0);// 应该1111 0000    
-		while(SerialIdx);//实际0010 1000
-		StartSend(0x0F);// 应该0000 1111    
-                        // 实际0111 1101
-		for(uint32_t i = 0;i<400000;i++)
+
+    uint8_t i=0;
+    while(i!=255)
+    {
+      for(uint32_t l = 0;l<10000;l++){asm volatile("nop");}while(SerialIdx);
+      StartSend(i++);
+    }
+    for(uint32_t l = 0;l<10000;l++){asm volatile("nop");}while(SerialIdx);
+    StartSend(255);
+
+    for(uint32_t l = 0;l<10000;l++){asm volatile("nop");}
+    i=0;
+    while(i!=255)
+    {
+      while(SerialIdx);
+      StartSend(i++);
+    }
+    while(SerialIdx);
+    StartSend(255);
+
+		for(uint32_t l = 0;l<10000000;l++)
 		{
 			asm volatile("nop");
 		}
@@ -95,12 +100,12 @@ void TimerInit() {
 
 void SerialInit(){
 	//UCSR0B = 0;//not forget turnoff usart0 on mega328p
+	PORT_Send |= BIT_Send;
 	DDR_Send |= BIT_Send;
 	DDR_Recv &= ~BIT_Recv;
-	PORT_Send |= BIT_Send;
 }
 
-
+/*
 void StartListening(){
   GIMSK |= _BV(PCIE0);
   PCMSK0 |= BIT_Recv;//CLK
@@ -144,7 +149,7 @@ ISR(TIM0_COMPB_vect){
     DataReceived();
   }
 }
-
+*/
 
 void StartSend(uint8_t val){
   if(SerialIdx)
@@ -154,32 +159,38 @@ void StartSend(uint8_t val){
   TCCR0B = TCCR0B_Value;
   TIMSK0 = 0;
 
-  PORT_Send &= ~BIT_Send;//startbit
+  PORT_Send &= ~BIT_Send;//start bit
   TCNT0 = 0;
 
   SerialData = val;
+  OCR0A = pgm_read_byte_near(CUR_TIMING);
   SerialIdx++;
-  OCR0A = pgm_read_byte_near(CUR_TIMING+SerialIdx);
   TIMSK0 |= _BV(OCIE0A);
 }
 
 //发送
 ISR(TIM0_COMPA_vect){
-  SerialIdx++;
-  if(SerialIdx==11)
+  if(SerialIdx>8)//stop bit
   {
     PORT_Send |= BIT_Send;
+  }
+  else
+  {
+    if(SerialData&1)
+    {
+      PORT_Send |= BIT_Send;
+    }else{
+      PORT_Send &= ~BIT_Send;
+    }
+    SerialData>>=1;
+  }
+  if(SerialIdx==10)
+  {
     SerialIdx = 0;
+    TCCR0B = 0;
     TIMSK0 &= ~_BV(OCIE0A);
-    OCR0A = 0;
-	return;
+    return;
   }
-  if(SerialData&1)
-  {
-    PORT_Send |= BIT_Send;
-  }else{
-    PORT_Send &= ~BIT_Send;
-  }
-  SerialData>>=1;
   OCR0A = pgm_read_byte_near(CUR_TIMING+SerialIdx);
+  SerialIdx++;
 }

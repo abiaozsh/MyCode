@@ -639,22 +639,44 @@ namespace puzzle
 
 		private void button3_Click(object sender, EventArgs e)
 		{
-			foreach (string s in textBox2.Text.Split('\n'))
-			{
-				int[] Idx = new int[12];
-				for (int i = 0; i < 12; i++)
-				{
-					Idx[i] = int.Parse(s.Split(',')[i]);
-				}
+		fdas();
+			//foreach (string s in textBox2.Text.Split('\n'))
+			//{
+			//	int[] Idx = new int[12];
+			//	for (int i = 0; i < 12; i++)
+			//	{
+			//		Idx[i] = int.Parse(s.Split(',')[i]);
+			//	}
+			//
+			//	clear();
+			//	for (int i = 0; i < 12; i++)
+			//	{
+			//		ulong mask = Data[i][Idx[i]];
+			//		draw(mask, Colors[i], 1, i);
+			//	}
+			//	g.Flush();
+			//	bmp.Save(@"d:\img\" + s.Trim() + ".jpg");
+			//}
 
-				clear();
-				for (int i = 0; i < 12; i++)
+		}
+		private void fdas()
+		{
+			bmp = new Bitmap(128, 128);
+			g = Graphics.FromImage(bmp);
+			Font drawFont = new Font("Arial", 12);
+			Brush black = new SolidBrush(Color.Black);
+			for (int i = 0; i < 12; i++)
+			{
+				g.Clear(Colors[i]);
+				for(int x = 0;x<128;x+=25)
 				{
-					ulong mask = Data[i][Idx[i]];
-					draw(mask, Colors[i], 1, i);
+					for (int y = 0; y < 128; y += 20)
+					{
+						g.DrawString(i + " ", drawFont, black, x, y);
+					}
 				}
 				g.Flush();
-				bmp.Save(@"d:\img\" + s.Trim() + ".jpg");
+				bmp.Save(@"e:\" + i + ".bmp", System.Drawing.Imaging.ImageFormat.Bmp);
 			}
 
 		}
