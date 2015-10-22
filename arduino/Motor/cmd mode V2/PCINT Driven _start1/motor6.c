@@ -330,6 +330,8 @@ ISR(TIM1_COMPA_vect){
 #define CMD_STOP          25  /*START          */
 #define CMD_SETSTARTPWR   30  /*set start power*/
 
+槽位对准指令
+
 ISR(PCINT0_vect){//先送高，后送低
   CPUOn;
   if(drCLK)//上升沿读取
