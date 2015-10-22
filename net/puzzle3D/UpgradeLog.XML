@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="myd3d">
+</Property><Property Name="解决方案文件" Value="D:\workspace\myd3d\myd3d-model-ObjSelect\myd3d.sln">
+</Property><Property Name="用户选项文件" Value="D:\workspace\myd3d\myd3d-model-ObjSelect\myd3d.suo">
+</Property><Property Name="Date" Value="2012年5月8日">
+</Property><Property Name="Time" Value="21:04">
+</Property></Properties><Event ErrorLevel="0" Project="" Source="myd3d.sln" Description="文件已成功备份为 D:\workspace\myd3d\myd3d-model-ObjSelect\Backup\myd3d.sln">
+</Event><Event ErrorLevel="0" Project="" Source="myd3d.suo" Description="文件已成功备份为 D:\workspace\myd3d\myd3d-model-ObjSelect\Backup\myd3d.suo">
+</Event><Event ErrorLevel="0" Project="myd3d" Source="myd3d.csproj" Description="项目文件已成功备份为 D:\workspace\myd3d\myd3d-model-ObjSelect\Backup\myd3d.csproj">
+</Event><Event ErrorLevel="0" Project="myd3d" Source="myd3d.csproj.user" Description="项目用户文件成功备份为 D:\workspace\myd3d\myd3d-model-ObjSelect\Backup\myd3d.csproj.user">
+</Event><Event ErrorLevel="0" Project="myd3d" Source="AssemblyInfo.cs" Description="文件已成功备份为 D:\workspace\myd3d\myd3d-model-ObjSelect\Backup\AssemblyInfo.cs">
+</Event><Event ErrorLevel="0" Project="myd3d" Source="d3d.cs" Description="文件已成功备份为 D:\workspace\myd3d\myd3d-model-ObjSelect\Backup\d3d.cs">
+</Event><Event ErrorLevel="0" Project="myd3d" Source="d3d_cls.cs" Description="文件已成功备份为 D:\workspace\myd3d\myd3d-model-ObjSelect\Backup\d3d_cls.cs">
+</Event><Event ErrorLevel="0" Project="myd3d" Source="App.ico" Description="文件已成功备份为 D:\workspace\myd3d\myd3d-model-ObjSelect\Backup\App.ico">
+</Event><Event ErrorLevel="0" Project="myd3d" Source="d3d.resx" Description="文件已成功备份为 D:\workspace\myd3d\myd3d-model-ObjSelect\Backup\d3d.resx">
+</Event><Event ErrorLevel="0" Project="myd3d" Source="myd3d.csproj" Description="项目已成功转换">
+</Event><Event ErrorLevel="3" Project="myd3d" Source="myd3d.csproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="myd3d.sln" Description="成功转换解决方案">
+</Event><Event ErrorLevel="3" Project="" Source="myd3d.sln" Description="Converted">
+</Event><Event ErrorLevel="0" Project="myd3d" Source="myd3d.csproj" Description="扫描完成: 项目文件不需要升级。">
+</Event></UpgradeLog>
