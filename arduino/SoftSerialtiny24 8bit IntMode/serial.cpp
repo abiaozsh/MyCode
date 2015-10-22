@@ -57,15 +57,6 @@ void loop() {
 	for(;;)
 	{
 
-    uint8_t i=0;
-    while(i!=255)
-    {
-      for(uint32_t l = 0;l<10000;l++){asm volatile("nop");}while(SerialIdx);
-      StartSend(i++);
-    }
-    for(uint32_t l = 0;l<10000;l++){asm volatile("nop");}while(SerialIdx);
-    StartSend(255);
-
     for(uint32_t l = 0;l<10000;l++){asm volatile("nop");}
     i=0;
     while(i!=255)
@@ -76,7 +67,7 @@ void loop() {
     while(SerialIdx);
     StartSend(255);
 
-		for(uint32_t l = 0;l<10000000;l++)
+		for(uint32_t l = 0;l<1000000;l++)
 		{
 			asm volatile("nop");
 		}
