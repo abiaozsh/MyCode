@@ -32,7 +32,7 @@ namespace WindowsFormsApplication1
 				try
 				{
 					//COM4为Arduino使用的串口号，需根据实际情况调整
-					port = new SerialPort("COM10", 115200, Parity.None, 8, StopBits.One);
+					port = new SerialPort("COM4", 115200, Parity.None, 8, StopBits.One);
                     //port = new SerialPort("COM5", 115200, Parity.None, 8, StopBits.One);
                     port.Open();
 					port.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);
@@ -42,21 +42,11 @@ namespace WindowsFormsApplication1
 			}
 		}
 
-        byte[] buff1 = new byte[2000];
-        int nidx = 0;
-        void port_DataReceived(object sender, SerialDataReceivedEventArgs e)
-        {
-            while (port.BytesToRead > 0)
-            {
-                port.Read(buff1, nidx++, 1);
-            }
-        }
-
 
         int datareceive = 0;
 		byte[] buff = new byte[2];
 		int data = 0;
-		void port_DataReceived1(object sender, SerialDataReceivedEventArgs e)
+		void port_DataReceived(object sender, SerialDataReceivedEventArgs e)
 		{
 			while (port.BytesToRead > 0)
 			{
