@@ -130,6 +130,7 @@ namespace WindowsFormsApplication1
 		const byte CMD_START = 20;  /*on/off        */
 		const byte CMD_STOP = 25;
 		const byte CMD_SETSTARTPWR = 30;
+		const byte CMD_LINEUP = 40;
 
 		private void trackBar1_Scroll(object sender, EventArgs e)
 		{
@@ -203,49 +204,6 @@ namespace WindowsFormsApplication1
 					break;
 			}
 			this.Text = vv.ToString();
-			/*
-			int v = trackBar1.Value;
-			this.Text = v.ToString();
-			if (v < 256)
-			{
-				Send(CMD_SENDDATA1Xa);
-				Send((byte)(v));
-			}
-			else if (v < 512)
-			{
-				Send(CMD_SENDDATA1Xb);
-				Send((byte)(v - 256));
-			}
-			else if (v < 1024)
-			{
-				Send(CMD_SENDDATA2X);
-				Send((byte)((v - 512) / 2));
-			}
-			else if (v < 2048)
-			{
-				Send(CMD_SENDDATA4X);
-				Send((byte)((v - 1024) / 4));
-			}
-			else if (v < 4096)
-			{
-				Send(CMD_SENDDATA8X);
-				Send((byte)((v - 2048) / 8));
-			}
-			else if (v < 8192)
-			{
-				Send(CMD_SENDDATA16X);
-				Send((byte)((v - 4096) / 16));
-			}
-			else if (v < 16384)
-			{
-				Send(CMD_SENDDATA32X);
-				Send((byte)((v - 8192) / 32));
-			}
-			else
-			{
-			}
-			 */
-
 		}
 
 		private void checkBox1_CheckedChanged(object sender, EventArgs e)
@@ -292,6 +250,12 @@ namespace WindowsFormsApplication1
 		{
 			Send(CMD_SETSTARTPWR);
 			Send(byte.Parse(textBox2.Text));
+		}
+
+		private void button5_Click(object sender, EventArgs e)
+		{
+			Send(CMD_LINEUP);
+			Send(byte.Parse(textBox3.Text));
 		}
 
 

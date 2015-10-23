@@ -50,6 +50,8 @@ uint8_t NextStep[] = {
 #define CmdPWROn  PORT6O = PWR_ON[TempStep];PWROn;
 //power off
 #define CmdPWROff PORT6O = PWR_OFF[TempStep];PWROff;
+//power off
+#define CmdPWRDown PORT6O = 0;PWROff;
 
 //下臂常开
 uint8_t PWR_ON[] = {
@@ -121,7 +123,6 @@ int main(void) {
 
 void ClockInit() {
   CLKPR = 128;//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
-  //CLKPR = 3;//1/8
   CLKPR = 0;//1/1 //8MHz
 }
 
@@ -130,11 +131,7 @@ void TimerInit() {
   TCCR1B = 2;//  1/8	1MHz 1us
   TCCR1C = 0;
   TIMSK1 = 0;
-  //TIMSK1 |= _BV(OCIE1B);
   TIMSK1 |= _BV(OCIE1A);
-  //OCR1A 关断定时器=power
-  //OCR1B 强制启动定时器=rpm
-  //TIMSK1 |= _BV(TOIE1);
 }
 
 void PCIntInit() {
@@ -150,7 +147,7 @@ void PCIntInit() {
 ISR(PCINT1_vect){
   CPUOn;
   uint16_t temp;
-  uint16_t tempRpm = rpm;
+  uint16_t tempRpm = rpm;//过零空窗期不检测
   if(tempRpm<1024)
   {
     temp = (tempRpm>>1);//?? >>2
@@ -215,21 +212,20 @@ void adj() {
     {
       rpms[rpmsIdx] = rpm;
       uint16_t avgrpm=0;
-	  uint8_t i = rpmsIdx;
+      uint8_t i = rpmsIdx;
       rpmsIdx++;
       rpmsIdx&=7;
       avgrpm+=rpms[i--];i&=7;//0 8
       avgrpm+=rpms[i--];i&=7;//1 8
-	  rpms[i]>>=1;
+      rpms[i]>>=1;
       avgrpm+=rpms[i--];i&=7;//2 4
       avgrpm+=rpms[i--];i&=7;//3 4
-	  rpms[i]>>=1;
+      rpms[i]>>=1;
       avgrpm+=rpms[i--];i&=7;//4 2
       avgrpm+=rpms[i--];i&=7;//5 2
       avgrpm+=rpms[i--];i&=7;//6 2
       avgrpm+=rpms[i--];i&=7;//7 2
       avgrpm>>=2;
-	  //avgrpm>>=3;
       uint16_t tempPower;
       uint16_t TempTargetRPM = TargetRPM;
 
@@ -327,10 +323,9 @@ ISR(TIM1_COMPA_vect){
 #define CMD_SENDDATA16X   15  /*4096~8191  16x */
 #define CMD_SENDDATA32X   16  /*8192~16383 32x */
 #define CMD_START         20  /*START          */
-#define CMD_STOP          25  /*START          */
+#define CMD_STOP          25  /*STOP           */
 #define CMD_SETSTARTPWR   30  /*set start power*/
-
-槽位对准指令
+#define CMD_LINEUP        40  /*LINEUP         */
 
 ISR(PCINT0_vect){//先送高，后送低
   CPUOn;
@@ -389,17 +384,48 @@ ISR(PCINT0_vect){//先送高，后送低
               TargetRPM = (TempData<<5) + 8192;
               break;
             case CMD_START:
-              GIMSK |= _BV(PCIE1);
+            {
+              uint8_t TempStep = Step;
+              CmdNextStep;
+              CmdPWROn;
               FStart = TempData;
+              GIMSK |= _BV(PCIE1);
               break;
+            }
             case CMD_STOP:
+            {
+              uint8_t TempStep = Step;
               GIMSK &= ~_BV(PCIE1);
+              CmdPWRDown;
               FStart = 0;
               Status = 0;
               break;
+            }
             case CMD_SETSTARTPWR:
               StartPower = TempData;
               break;
+            case CMD_LINEUP:
+            {
+              uint8_t TempStep = Step;
+              GIMSK &= ~_BV(PCIE1);
+              uint8_t i;
+              uint16_t j;
+              for(i=TempData;i>0;i--)
+              {
+                CmdPWROn;
+                for(j=0;j<i;j++)
+                {
+                  asm volatile("nop");
+                }
+                CmdPWRDown;
+                for(j=0;j<1000;j++)
+                {
+                  asm volatile("nop");
+                }
+              }
+              CmdPWROff;
+              break;
+            }
           }
           CMD = 0;
         }
