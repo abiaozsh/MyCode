@@ -73,7 +73,7 @@ uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 uint8_t Step = 0;
 uint8_t Status = 0;//0 halt ,1 running, 2 starting
 uint8_t StartUpCount1=0;
-volatile uint16_t TargetRPM=2000;//bit16 = start flg rest is data
+volatile uint16_t TargetRPM=0;//bit16 = start flg rest is data
 volatile uint8_t FStart = 0;
 uint16_t rpm;
 uint16_t startupCurrent;
@@ -97,7 +97,7 @@ void startup();
 int main(void) {
 	ClockInit();//初始化时钟：1MHz -> 8MHz
 	TimerInit();//初始化定时器 1/8
-	PCIntInit();//初始化模拟输入
+	//PCIntInit();//初始化模拟输入
 
 	DDRA = 0;PORTA = 0;//all input
 	DDRB = 0;PORTB = 0;//all input
