@@ -71,6 +71,7 @@ uint8_t PWR_OFF[] = {
 uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
 uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 
+volatile uint8_t Switch = 1;
 volatile uint8_t Status = 0;//0 halt ,1 running, 2 starting
 volatile uint8_t Step = 0;
 volatile uint16_t TargetRPM = 0;//bit16 = start flg rest is data
@@ -146,25 +147,28 @@ void PCIntInit() {
 void loop() {
   for(;;) {
     //定时器清零
-    TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
-    Power = NextPower;
-    if(Power)
-    {
-      PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
-    }
-    else
-    {
-      PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-    }
-    OCR1A = Power;
-    //转速调整
-    adj();
-    //等待过零
-    waita();
-    PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-    Step = NextStep[Step];//CmdNextStep;
-    //记录当前转速
-    rpm = currTick;
+	if(Switch)
+	{
+		TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
+		Power = NextPower;
+		if(Power)
+		{
+		  PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
+		}
+		else
+		{
+		  PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
+		}
+		OCR1A = Power;
+		//转速调整
+		adj();
+		//等待过零
+		waita();
+		PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
+		Step = NextStep[Step];//CmdNextStep;
+		//记录当前转速
+		rpm = currTick;
+	}
   }
 }
 
@@ -173,35 +177,32 @@ void waita() {
   uint8_t drMask = DigitRead[Step];
   
   uint16_t temp;
-  ///temp = (rpm>>1);
-  if(rpm<1024)
-  {
-    temp = (rpm>>1);//?? >>2
-  }
-  else if(rpm<2048)
-  {
-    temp = (rpm>>2);//?? >>2
-  }
-  else if(rpm<4096)
-  {
-    temp = (rpm>>3);//?? >>2
-  }
-  else
-  {
-    temp = (rpm>>4);//?? >>2
-  }
-  
+  temp = (rpm>>1);
+//  if(FStart)
+//  {
+//	temp = 0;
+//  }
+//  else
+//  {
+//	if(rpm<1024)
+//	{
+//		temp = (rpm>>1);//?? >>2
+//	}
+//	else if(rpm<2048)
+//	{
+//		temp = (rpm>>2);//?? >>2
+//	}
+//	else if(rpm<4096)
+//	{
+//		temp = (rpm>>3);//?? >>2
+//	}
+//	else
+//	{
+//		temp = (rpm>>4);//?? >>2
+//	}
+//  }
 	for(;;)
 	{
-		///if(currTick>Power){
-		///	PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-		///}
-    
-		///if(FStart && currTick==65535)// power on signal
-		///{
-		///	return;
-		///}
-		
 		uint8_t val = PIN3I & drMask;
 		if(currTick>=temp && val!=valbase){
 			return;
@@ -216,6 +217,7 @@ ISR(TIM1_COMPA_vect){
 void adj() {
   if(Status)
   {
+	//FStart=0;
     if(rpm>StartRpm)//too slow, halt
     {
       StartUpCount1 = 0;
@@ -269,9 +271,9 @@ void adj() {
         NextPower = AccuPower>>8;
       }
     }
-	}
-	else
-	{
+  }
+  else
+  {
     if(FStart)
     {
       NextPower = ((uint32_t)rpm * StartPower)>>8;
@@ -286,8 +288,9 @@ void adj() {
       {
         StartUpCount1 = 0;
       }
-      if(StartUpCount1>120)
+      if(StartUpCount1>60)
       {
+FStart=1;
         Status = 1;
         STAOn;
       }
@@ -385,13 +388,13 @@ ISR(PCINT0_vect){//先送高，后送低
               Step = NextStep[Step];//CmdNextStep;
               PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
               FStart = TempData;
-              GIMSK |= _BV(PCIE1);
+              Switch = 1;
               break;
             }
             case CMD_STOP:
             {
-              GIMSK &= ~_BV(PCIE1);
               PORT6O = 0;PWROff;//CmdPWRDown;
+              Switch = 0;
               FStart = 0;
               Status = 0;
               break;
