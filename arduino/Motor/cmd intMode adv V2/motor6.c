@@ -145,6 +145,7 @@ void PCIntInit() {
 }
 
 void StepEvent(){
+  CPUOn;
   uint8_t TempStep = Step;
   uint8_t valbase = GetDigitReadBaseVal;
   uint8_t val = GetDigitRead;
@@ -193,12 +194,6 @@ void StepEvent(){
     GIMSK &= ~_BV(PCIE1);//关中断
     adj();
   }
-}
-
-//过零事件
-ISR(PCINT1_vect){
-  CPUOn;
-  StepEvent();
   CPUOff;
 }
 
@@ -311,6 +306,11 @@ void adj() {
       }
     }
   }
+}
+
+//过零事件
+ISR(PCINT1_vect){
+  StepEvent();
 }
 
 ISR(TIM1_COMPA_vect){

@@ -171,36 +171,36 @@ void loop() {
 void waita() {
   uint8_t valbase = DigitReadBaseVal[Step];
   uint8_t drMask = DigitRead[Step];
-  uint16_t temp = (rpm>>1);
   
-  
-  ///if(rpm<1024)
-  ///{
-  ///  temp = (rpm>>1);//?? >>2
-  ///}
-  ///else if(rpm<2048)
-  ///{
-  ///  temp = (rpm>>2);//?? >>2
-  ///}
-  ///else if(rpm<4096)
-  ///{
-  ///  temp = (rpm>>3);//?? >>2
-  ///}
-  ///else
-  ///{
-  ///  temp = (rpm>>4);//?? >>2
-  ///}
+  uint16_t temp;
+  ///temp = (rpm>>1);
+  if(rpm<1024)
+  {
+    temp = (rpm>>1);//?? >>2
+  }
+  else if(rpm<2048)
+  {
+    temp = (rpm>>2);//?? >>2
+  }
+  else if(rpm<4096)
+  {
+    temp = (rpm>>3);//?? >>2
+  }
+  else
+  {
+    temp = (rpm>>4);//?? >>2
+  }
   
 	for(;;)
 	{
-		//if(currTick>Power){
-		//	PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-		//}
-		
-		//if(FStart && currTick==65535)// power on signal
-		//{
-		//	return;
-		//}
+		///if(currTick>Power){
+		///	PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
+		///}
+    
+		///if(FStart && currTick==65535)// power on signal
+		///{
+		///	return;
+		///}
 		
 		uint8_t val = PIN3I & drMask;
 		if(currTick>=temp && val!=valbase){

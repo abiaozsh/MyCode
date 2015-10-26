@@ -148,24 +148,6 @@ ISR(PCINT1_vect){
   CPUOn;
   uint16_t temp;
   uint16_t tempRpm = rpm;//过零空窗期不检测
-  全部现代化， 这个文件加入定时器（检查过零）
-  /*
-  if(tempRpm<512)
-  {
-    temp = (tempRpm>>1);//?? >>2
-  }
-  else if(tempRpm<1024)
-  {
-    temp = (tempRpm>>2);//?? >>2
-  }
-  else if(tempRpm<2048)
-  {
-    temp = (tempRpm>>3);//?? >>2
-  }
-  else
-  {
-    temp = (tempRpm>>4);//?? >>2
-  }*/
   
   if(tempRpm<1024)
   {
