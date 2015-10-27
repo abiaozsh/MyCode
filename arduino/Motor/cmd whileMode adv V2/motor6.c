@@ -70,6 +70,8 @@ volatile uint8_t Step = 0;
 volatile uint16_t TargetRPM = 0;//bit16 = start flg rest is data
 volatile uint8_t FStart = 0;
 volatile uint8_t StartPower = 128;
+volatile uint8_t Pitch = 0;
+
 uint8_t Status = 0;//0 halt ,1 running, 2 starting
 uint8_t StartUpCount1=0;
 uint16_t rpm;
@@ -100,8 +102,8 @@ int main(void) {
   TimerInit();//初始化定时器 1/8
   PCIntInit();//初始化模拟输入
 
-  DDRA = 0;PORTA = 0;//all input
-  DDRB = 0;PORTB = 0;//all input
+  //DDRA = 0;PORTA = 0;//all input
+  //DDRB = 0;PORTB = 0;//all input
 
   //等待1秒启动信号 Pin6高电平  wait till 1s power on signal
   int cnt = 0;
@@ -113,8 +115,8 @@ int main(void) {
   PORT6O = BP1D | BP2D | BP3D;
   
   //初始化输入端口
-  DDR3I = 0;
-  PORT3I = 0;
+  //DDR3I = 0;
+  //PORT3I = 0;
   sei();
   //主循环
   loop();
@@ -126,10 +128,10 @@ void ClockInit() {
 }
 
 void TimerInit() {
-  TCCR1A = 0;
+  //TCCR1A = 0;
   TCCR1B = 2;//  1/8	1MHz 1us
-  TCCR1C = 0;
-  TIMSK1 = 0;
+  //TCCR1C = 0;
+  //TIMSK1 = 0;
   TIMSK1 |= _BV(OCIE1A);
 }
 
@@ -209,9 +211,9 @@ void loop() {
 void loop() {
   for(;;) 
   {
-    //定时器清零
     if(Switch)
     {
+      //定时器清零
       TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
       Power = NextPower;
       if(Power)
@@ -227,7 +229,31 @@ void loop() {
       adj();
       //等待过零
       waita();
-      uint16_t tmp = (avgrpm>>3)+currTick;
+      uint16_t tmp;
+      switch(Pitch)
+      {
+        case 0:
+          tmp = currTick;
+        break;
+        case 2:
+          tmp = (avgrpm>>2)+currTick;
+        break;
+        case 3:
+          tmp = (avgrpm>>3)+currTick;
+        break;
+        case 4:
+          tmp = (avgrpm>>4)+currTick;
+        break;
+        case 5:
+          tmp = (avgrpm>>5)+currTick;
+        break;
+        case 6:
+          tmp = (avgrpm>>6)+currTick;
+        break;
+        case 7:
+          tmp = (avgrpm>>7)+currTick;
+        break;
+      }
       while(currTick<tmp);
 
       PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
@@ -294,6 +320,21 @@ void adj() {
     {
       rpms[rpmsIdx] = rpm;
       avgrpm=0;
+
+//      uint8_t i = rpmsIdx;
+//      avgrpm+=rpms[i--];i&=7;//0 8
+//      avgrpm+=rpms[i--];i&=7;//1 8
+//      rpms[i]>>=1;
+//      avgrpm+=rpms[i--];i&=7;//2 4
+//      avgrpm+=rpms[i--];i&=7;//3 4
+//      rpms[i]>>=1;
+//      avgrpm+=rpms[i--];i&=7;//4 2
+//      avgrpm+=rpms[i--];i&=7;//5 2
+//      avgrpm+=rpms[i--];i&=7;//6 2
+//      avgrpm+=rpms[i];//7 2
+//      rpmsIdx = i;
+//      avgrpm>>=2;
+
       uint8_t i = rpmsIdx;
       rpmsIdx++;
       rpmsIdx&=7;
@@ -306,8 +347,11 @@ void adj() {
       avgrpm+=rpms[i--];i&=7;//4 2
       avgrpm+=rpms[i--];i&=7;//5 2
       avgrpm+=rpms[i--];i&=7;//6 2
-      avgrpm+=rpms[i--];i&=7;//7 2
+      avgrpm+=rpms[i];//7 2
       avgrpm>>=2;
+
+
+
       uint16_t TempTargetRPM = TargetRPM;
 
       if(avgrpm>TempTargetRPM)//little bit slow
@@ -397,12 +441,13 @@ void adj() {
 #define CMD_STOP          25  /*STOP           */
 #define CMD_SETSTARTPWR   30  /*set start power*/
 #define CMD_LINEUP        40  /*LINEUP         */
+#define CMD_PITCH         50  /*PITCH          */
 
 ISR(PCINT0_vect){//先送高，后送低
   CPUOn;
   if(drCLK)//上升沿读取
   {
-    if(TempDataCnt==8)
+    if(TempDataCnt == 8)
     {
       if(drDAT)//起始位
       {
@@ -412,15 +457,15 @@ ISR(PCINT0_vect){//先送高，后送低
     }
     else
     {
-      TempData<<=1;
+      TempData <<= 1;
       if(drDAT)
       {
         TempData |= 1;
       }
       TempDataCnt++;
-      if(TempDataCnt==8)
+      if(TempDataCnt == 8)
       {
-        if(CMD==0)
+        if(CMD == 0)
         {
           CMD = TempData;
         }
@@ -488,6 +533,9 @@ ISR(PCINT0_vect){//先送高，后送低
               PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
               break;
             }
+            case CMD_PITCH:
+              Pitch = TempData;
+              break;
           }
           CMD = 0;
         }

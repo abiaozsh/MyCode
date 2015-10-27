@@ -121,6 +121,8 @@ namespace WindowsFormsApplication1
 		const byte CMD_STOP = 25;
 		const byte CMD_SETSTARTPWR = 30;
 		const byte CMD_LINEUP = 40;
+		const byte CMD_PITCH    =     50;  /*PITCH          */
+
 
 		int targetSpeed;
 		private void trackBar1_Scroll(object sender, EventArgs e)
@@ -257,6 +259,13 @@ namespace WindowsFormsApplication1
 		{
 			Send(CMD_LINEUP);
 			Send(byte.Parse(textBox3.Text));
+		}
+
+		private void button6_Click(object sender, EventArgs e)
+		{
+			Send(CMD_PITCH);
+			Send(byte.Parse(textBox4.Text));
+
 		}
 
 
