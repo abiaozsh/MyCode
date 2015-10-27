@@ -294,6 +294,8 @@ void waita() {
   ///    temp = (rpm>>4);//?? >>2
   ///  }
   ///}
+  //while(currTick<temp);
+  //while(valbase==PIN3I & drMask);
   for(;;)
   {
     uint8_t val = PIN3I & drMask;
@@ -321,20 +323,6 @@ void adj() {
       rpms[rpmsIdx] = rpm;
       avgrpm=0;
 
-//      uint8_t i = rpmsIdx;
-//      avgrpm+=rpms[i--];i&=7;//0 8
-//      avgrpm+=rpms[i--];i&=7;//1 8
-//      rpms[i]>>=1;
-//      avgrpm+=rpms[i--];i&=7;//2 4
-//      avgrpm+=rpms[i--];i&=7;//3 4
-//      rpms[i]>>=1;
-//      avgrpm+=rpms[i--];i&=7;//4 2
-//      avgrpm+=rpms[i--];i&=7;//5 2
-//      avgrpm+=rpms[i--];i&=7;//6 2
-//      avgrpm+=rpms[i];//7 2
-//      rpmsIdx = i;
-//      avgrpm>>=2;
-
       uint8_t i = rpmsIdx;
       rpmsIdx++;
       rpmsIdx&=7;
@@ -349,8 +337,6 @@ void adj() {
       avgrpm+=rpms[i--];i&=7;//6 2
       avgrpm+=rpms[i];//7 2
       avgrpm>>=2;
-
-
 
       uint16_t TempTargetRPM = TargetRPM;
 
