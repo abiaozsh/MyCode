@@ -152,7 +152,7 @@ void loop() {
       adj();
       //µÈ´ý¹ýÁã
       waita();
-      uint16_t tmp = (avgrpm>>2)+currTick;
+      uint16_t tmp = (avgrpm>>3)+(avgrpm>>2)+currTick;
       while(currTick<tmp);
 
       PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
