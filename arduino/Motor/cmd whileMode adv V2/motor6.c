@@ -70,7 +70,7 @@ volatile uint8_t Step = 0;
 volatile uint16_t TargetRPM = 0;//bit16 = start flg rest is data
 volatile uint8_t FStart = 0;
 volatile uint8_t StartPower = 128;
-volatile uint8_t Pitch = 0;
+//volatile uint8_t Pitch = 0; Pitch = 2 最合理
 
 uint8_t Status = 0;//0 halt ,1 running, 2 starting
 uint8_t StartUpCount1=0;
@@ -102,9 +102,6 @@ int main(void) {
   TimerInit();//初始化定时器 1/8
   PCIntInit();//初始化模拟输入
 
-  //DDRA = 0;PORTA = 0;//all input
-  //DDRB = 0;PORTB = 0;//all input
-
   //等待1秒启动信号 Pin6高电平  wait till 1s power on signal
   int cnt = 0;
 
@@ -114,9 +111,6 @@ int main(void) {
   //初始化输出端口
   PORT6O = BP1D | BP2D | BP3D;
   
-  //初始化输入端口
-  //DDR3I = 0;
-  //PORT3I = 0;
   sei();
   //主循环
   loop();
@@ -128,10 +122,7 @@ void ClockInit() {
 }
 
 void TimerInit() {
-  //TCCR1A = 0;
   TCCR1B = 2;//  1/8	1MHz 1us
-  //TCCR1C = 0;
-  //TIMSK1 = 0;
   TIMSK1 |= _BV(OCIE1A);
 }
 
@@ -139,74 +130,6 @@ void PCIntInit() {
   GIMSK |= _BV(PCIE0);
   PCMSK0 |= _BV(PCINT6);//CLK
 }
-/*
-original
-void loop() {
-  for(;;) 
-  {
-    //定时器清零
-    if(Switch)
-    {
-      TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
-      Power = NextPower;
-      if(Power)
-      {
-        PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
-      }
-      else
-      {
-        PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-      }
-      OCR1A = Power;
-      //转速调整
-      adj();
-      //等待过零
-      waita();
-      
-      PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-      Step = NextStep[Step];//CmdNextStep;
-      //记录当前转速
-      rpm = currTick;
-
-    }
-  }
-}
-void loop() {
-  for(;;) 
-  {
-    //定时器清零
-    if(Switch)
-    {
-      Power = NextPower;
-      if(Power)
-      {
-        PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
-      }
-      else
-      {
-        PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-      }
-      OCR1A = Power;
-      //转速调整
-      adj();
-      //等待过零
-      waita();
-      
-      //记录当前转速
-      rpm = currTick;
-      
-      //TODO 加个delay
-      TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
-      uint16 tmp = avgrpm>>3;
-      while(currTick<tmp);
-
-      PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-      Step = NextStep[Step];//CmdNextStep;
-
-    }
-  }
-}
-*/
 
 void loop() {
   for(;;) 
@@ -229,31 +152,7 @@ void loop() {
       adj();
       //等待过零
       waita();
-      uint16_t tmp;
-      switch(Pitch)
-      {
-        case 0:
-          tmp = currTick;
-        break;
-        case 2:
-          tmp = (avgrpm>>2)+currTick;
-        break;
-        case 3:
-          tmp = (avgrpm>>3)+currTick;
-        break;
-        case 4:
-          tmp = (avgrpm>>4)+currTick;
-        break;
-        case 5:
-          tmp = (avgrpm>>5)+currTick;
-        break;
-        case 6:
-          tmp = (avgrpm>>6)+currTick;
-        break;
-        case 7:
-          tmp = (avgrpm>>7)+currTick;
-        break;
-      }
+      uint16_t tmp = (avgrpm>>2)+currTick;
       while(currTick<tmp);
 
       PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
@@ -271,31 +170,6 @@ void waita() {
   
   uint16_t temp;
   temp = (rpm>>1);
-  ///if(FStart)
-  ///{
-  ///  temp = 0;
-  ///}
-  ///else
-  ///{
-  ///  if(rpm<1024)
-  ///  {
-  ///    temp = (rpm>>1);//?? >>2
-  ///  }
-  ///  else if(rpm<2048)
-  ///  {
-  ///    temp = (rpm>>2);//?? >>2
-  ///  }
-  ///  else if(rpm<4096)
-  ///  {
-  ///    temp = (rpm>>3);//?? >>2
-  ///  }
-  ///  else
-  ///  {
-  ///    temp = (rpm>>4);//?? >>2
-  ///  }
-  ///}
-  //while(currTick<temp);
-  //while(valbase==PIN3I & drMask);
   for(;;)
   {
     uint8_t val = PIN3I & drMask;
@@ -427,7 +301,6 @@ void adj() {
 #define CMD_STOP          25  /*STOP           */
 #define CMD_SETSTARTPWR   30  /*set start power*/
 #define CMD_LINEUP        40  /*LINEUP         */
-#define CMD_PITCH         50  /*PITCH          */
 
 ISR(PCINT0_vect){//先送高，后送低
   CPUOn;
@@ -519,9 +392,6 @@ ISR(PCINT0_vect){//先送高，后送低
               PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
               break;
             }
-            case CMD_PITCH:
-              Pitch = TempData;
-              break;
           }
           CMD = 0;
         }
