@@ -23,6 +23,7 @@
 #define DDR3I DDRB
 #define PIN3I PINB
 
+p1 p2 调换，实现反向
 #define BP1D _BV(5)
 #define BP1U _BV(4)
 #define BP1A _BV(0)
