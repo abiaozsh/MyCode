@@ -160,11 +160,6 @@ namespace WindowsFormsApplication1
 				cmd = (CMD_SENDDATA16X);
 				val = ((byte)((v - 1280)));
 			}
-			else if (v < 1792)
-			{
-				cmd = (CMD_SENDDATA32X);
-				val = ((byte)((v - 1536)));
-			}
 			else
 			{
 			}
@@ -191,9 +186,6 @@ namespace WindowsFormsApplication1
 					break;
 				case CMD_SENDDATA16X://   15  /*4096~8191  16x*/
 					vv = (vv << 4) + 4096;
-					break;
-				case CMD_SENDDATA32X://   16  /*8192~16383 32x*/
-					vv = (vv << 5) + 8192;
 					break;
 			}
 			targetSpeed = vv;

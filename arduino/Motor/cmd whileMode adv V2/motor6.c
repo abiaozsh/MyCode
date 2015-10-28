@@ -71,7 +71,7 @@ volatile uint8_t StartPower = 128;
 volatile uint8_t Pitch = 1;
 
 uint8_t Status = 0;//0 halt ,1 running, 2 starting
-uint8_t StartUpCount1=0;
+uint8_t StartUpCount=0;
 uint16_t rpm;
 uint16_t Power = 0;
 uint16_t NextPower = 0;
@@ -187,7 +187,7 @@ void adj() {
   {
     if(rpm>StartRpm)//too slow, halt
     {
-      StartUpCount1 = 0;
+      StartUpCount = 0;
       Status = 0;//halt
       STAOff;
     }
@@ -248,16 +248,16 @@ void adj() {
       NextPower = ((uint32_t)rpm * StartPower)>>8;
       if(rpm < StartRpm && rpm > (StartRpm>>3))//fast enough but not too fast
       {
-        StartUpCount1++;
+        StartUpCount++;
         rpms[rpmsIdx] = rpm;
         rpmsIdx++;
         rpmsIdx&=7;
       }
       else
       {
-        StartUpCount1 = 0;
+        StartUpCount = 0;
       }
-      if(StartUpCount1>60)
+      if(StartUpCount>60)
       {
         FStart = 1;
         Status = 1;
@@ -270,16 +270,16 @@ void adj() {
       NextPower = 0;
       if(rpm < StartRpm && rpm > (StartRpm>>3))//fast enough but not too fast
       {
-        StartUpCount1++;
+        StartUpCount++;
         rpms[rpmsIdx] = rpm;
         rpmsIdx++;
         rpmsIdx&=7;
       }
       else
       {
-        StartUpCount1 = 0;
+        StartUpCount = 0;
       }
-      if(StartUpCount1>20)
+      if(StartUpCount>20)
       {
         Status = 1;
         STAOn;
@@ -295,7 +295,6 @@ void adj() {
 #define CMD_SENDDATA4X    13  /*1024~2047   4x */
 #define CMD_SENDDATA8X    14  /*2048~4095   8x */
 #define CMD_SENDDATA16X   15  /*4096~8191  16x */
-#define CMD_SENDDATA32X   16  /*8192~16383 32x */
 #define CMD_START         20  /*START          */
 #define CMD_STOP          25  /*STOP           */
 #define CMD_SETSTARTPWR   30  /*set start power*/
@@ -303,7 +302,6 @@ void adj() {
 #define CMD_PITCH         50  /*PITCH          */
 
 ISR(PCINT0_vect){//先送高，后送低
-  CPUOn;
   if(drCLK)//上升沿读取
   {
     if(TempDataCnt == 8)
@@ -350,9 +348,6 @@ ISR(PCINT0_vect){//先送高，后送低
             case CMD_SENDDATA16X://   15  /*4096~8191  16x*/
               TargetRPM = (TempData<<4) + 4096;
               break;
-            case CMD_SENDDATA32X://   16  /*8192~16383 32x*/
-              TargetRPM = (TempData<<5) + 8192;
-              break;
             case CMD_START:
             {
               Step = NextStep[Step];//CmdNextStep;
@@ -389,6 +384,19 @@ ISR(PCINT0_vect){//先送高，后送低
                   asm volatile("nop");
                 }
               }
+              for(i=0;i<TempData;i++)
+              {
+                PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
+                for(j=0;j<i;j++)
+                {
+                  asm volatile("nop");
+                }
+                PORT6O = 0;PWROff;//CmdPWRDown;
+                for(j=0;j<1000;j++)
+                {
+                  asm volatile("nop");
+                }
+              }
               PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
               break;
             }
@@ -401,5 +409,4 @@ ISR(PCINT0_vect){//先送高，后送低
       }
     }
   }
-  CPUOff;
 }
