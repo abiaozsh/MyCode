@@ -8,8 +8,6 @@
 #define drDAT (PINA & _BV(7)) /*DAT*/
 #define drCLK (PINA & _BV(6)) /*DAT*/
 
-#define CPUOn   ;/*DDRB |= _BV(3) */
-#define CPUOff  ;/*DDRB &= ~_BV(3)*/
 #define STAOn   ;/*DDRB |= _BV(3) */
 #define STAOff  ;/*DDRB &= ~_BV(3)*/
 #define PWROn   DDRB |= _BV(3) ;/**/
@@ -67,15 +65,14 @@ uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 
 volatile uint8_t Switch = 1;
 volatile uint8_t Step = 0;
-volatile uint16_t TargetRPM = 0;//bit16 = start flg rest is data
+volatile uint16_t TargetRPM = 0;
 volatile uint8_t FStart = 0;
 volatile uint8_t StartPower = 128;
-//volatile uint8_t Pitch = 0; Pitch = 2 最合理
+volatile uint8_t Pitch = 1;
 
 uint8_t Status = 0;//0 halt ,1 running, 2 starting
 uint8_t StartUpCount1=0;
 uint16_t rpm;
-uint16_t startupCurrent;
 uint16_t Power = 0;
 uint16_t NextPower = 0;
 uint32_t AccuPower = 0;//volatile uint16_t AccuPower = 0;
@@ -152,14 +149,15 @@ void loop() {
       adj();
       //等待过零
       waita();
-      uint16_t tmp = (avgrpm>>3)+(avgrpm>>2)+currTick;
-      while(currTick<tmp);
-
+      if(Pitch)
+      {
+        uint16_t tmp = (avgrpm>>3)+(avgrpm>>2)+currTick;
+        while(currTick<tmp);
+      }
       PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
       Step = NextStep[Step];//CmdNextStep;
       //记录当前转速
       rpm = currTick;
-
     }
   }
 }
@@ -173,7 +171,8 @@ void waita() {
   for(;;)
   {
     uint8_t val = PIN3I & drMask;
-    if(currTick>=temp && val!=valbase){
+    if(currTick>=temp && val!=valbase)
+    {
       return;
     }
   }
@@ -301,6 +300,7 @@ void adj() {
 #define CMD_STOP          25  /*STOP           */
 #define CMD_SETSTARTPWR   30  /*set start power*/
 #define CMD_LINEUP        40  /*LINEUP         */
+#define CMD_PITCH         50  /*PITCH          */
 
 ISR(PCINT0_vect){//先送高，后送低
   CPUOn;
@@ -392,6 +392,9 @@ ISR(PCINT0_vect){//先送高，后送低
               PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
               break;
             }
+            case CMD_PITCH:
+              Pitch = TempData;
+              break;
           }
           CMD = 0;
         }

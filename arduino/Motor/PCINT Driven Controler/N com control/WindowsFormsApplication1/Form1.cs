@@ -121,7 +121,7 @@ namespace WindowsFormsApplication1
 		const byte CMD_STOP = 25;
 		const byte CMD_SETSTARTPWR = 30;
 		const byte CMD_LINEUP = 40;
-		const byte CMD_PITCH    =     50;  /*PITCH          */
+		const byte CMD_PITCH = 50;  /*PITCH          */
 
 
 		int targetSpeed;
@@ -200,21 +200,6 @@ namespace WindowsFormsApplication1
 			this.Text = vv.ToString();
 		}
 
-		private void checkBox1_CheckedChanged(object sender, EventArgs e)
-		{
-			byte[] buff = new byte[1];
-			if (checkBox1.Checked)
-			{
-				Send(CMD_FORCE);
-				Send(1);
-			}
-			else
-			{
-				Send(CMD_FORCE);
-				Send(0);
-			}
-		}
-
 		private void button1_Click(object sender, EventArgs e)
 		{
 			datareceive++;
@@ -263,9 +248,18 @@ namespace WindowsFormsApplication1
 
 		private void button6_Click(object sender, EventArgs e)
 		{
-			Send(CMD_PITCH);
-			Send(byte.Parse(textBox4.Text));
 
+		}
+
+		private void textBox4_TextChanged(object sender, EventArgs e)
+		{
+
+		}
+
+		private void checkBox2_CheckedChanged(object sender, EventArgs e)
+		{
+			Send(CMD_PITCH);
+			Send((byte)(checkBox2.Checked ? 1 : 0));
 		}
 
 
