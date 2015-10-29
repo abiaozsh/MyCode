@@ -45,12 +45,12 @@ uint8_t NextStep[] = {
 
 //下臂常开
 uint8_t PWR_ON[] = {
-	BP1U + BP1D + BP3D, // 1-2
-	BP1U + BP1D + BP2D, // 1-3
-	BP2U + BP1D + BP2D, // 2-3
-	BP2U + BP3D + BP2D, // 2-1
-	BP3U + BP3D + BP2D, // 3-1
-	BP3U + BP1D + BP3D  // 3-2
+	BP1U + BP1D + BP3D, // 1-2 a
+	BP1U + BP1D + BP2D, // 1-3 b
+	BP2U + BP1D + BP2D, // 2-3 c
+	BP2U + BP3D + BP2D, // 2-1 d
+	BP3U + BP3D + BP2D, // 3-1 e
+	BP3U + BP1D + BP3D  // 3-2 f
 };
 uint8_t PWR_OFF[] = {
 	0    + BP1D + BP3D, // 1-2
@@ -63,6 +63,52 @@ uint8_t PWR_OFF[] = {
 
 uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
 uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
+
+
+
+
+
+
+//下臂常开
+uint8_t PWR_ON[] = {
+	BP2U + BP3D + BP2D,// 2-1 d
+	BP2U + BP1D + BP2D,// 2-3 c
+	BP1U + BP1D + BP2D,// 1-3 b
+	BP1U + BP1D + BP3D,// 1-2 a
+	BP3U + BP1D + BP3D,// 3-2 f
+	BP3U + BP3D + BP2D // 3-1 e
+};
+uint8_t PWR_OFF[] = {
+	0    + BP3D + BP2D, // 2-1 d
+	0    + BP1D + BP2D, // 2-3 c
+	0    + BP1D + BP2D, // 1-3 b
+	0    + BP1D + BP3D, // 1-2 a
+	0    + BP1D + BP3D, // 3-2 f
+	0    + BP3D + BP2D  // 3-1 e
+};
+
+uint8_t DigitRead[] =        {
+  BP3A,// 2-1 d
+  BP1A,// 2-3 c
+  BP2A,// 1-3 b
+  BP3A,// 1-2 a
+  BP1A,// 3-2 f
+  BP2A // 3-1 e
+};
+uint8_t DigitReadBaseVal[] = {
+  BP3A, // 2-1 d
+  0,    // 2-3 c
+  BP2A, // 1-3 b
+  0,    // 1-2 a
+  BP1A, // 3-2 f
+  0     // 3-1 e
+};
+
+uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
+uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
+
+
+
 
 volatile uint8_t Switch = 1;
 volatile uint8_t Step = 0;
@@ -380,7 +426,7 @@ ISR(PCINT0_vect){//先送高，后送低
                   asm volatile("nop");
                 }
                 PORT6O = 0;PWROff;//CmdPWRDown;
-                for(j=0;j<1000;j++)
+                for(j=0;j<3000;j++)
                 {
                   asm volatile("nop");
                 }
@@ -393,7 +439,7 @@ ISR(PCINT0_vect){//先送高，后送低
                   asm volatile("nop");
                 }
                 PORT6O = 0;PWROff;//CmdPWRDown;
-                for(j=0;j<1000;j++)
+                for(j=0;j<3000;j++)
                 {
                   asm volatile("nop");
                 }
