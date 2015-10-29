@@ -19,11 +19,9 @@
 #define PORT6O PORTA
 #define DDR6O DDRA
 
-#define PORT3I PORTB
 #define DDR3I DDRB
 #define PIN3I PINB
 
-p1 p2 调换，实现反向
 #define BP1D _BV(5)
 #define BP1U _BV(4)
 #define BP1A _BV(0)
@@ -39,9 +37,13 @@ p1 p2 调换，实现反向
 
 #define StartRpm 8192
 
-uint8_t NextStep[] = {
+uint8_t NextStepA[] = {
   1,  2,  3,  4,  5,  0
 };
+uint8_t NextStepB[] = {
+  5,  0,  1,  2,  3,  4
+};
+uint8_t* volatile NextStep;
 
 //下臂常开
 uint8_t PWR_ON[] = {
@@ -61,56 +63,53 @@ uint8_t PWR_OFF[] = {
 	0    + BP1D + BP3D  // 3-2
 };
 
-uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
-uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
+uint8_t DigitRead[] =         {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
+uint8_t DigitReadBaseValA[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
+uint8_t DigitReadBaseValB[] = {   0,  BP2A,     0,  BP3A,     0,  BP1A};
+uint8_t* volatile DigitReadBaseVal;
 
 
 
 
 
-
+/*
 //下臂常开
 uint8_t PWR_ON[] = {
+	BP3U + BP1D + BP3D,// 3-2 f
+	BP3U + BP3D + BP2D // 3-1 e
 	BP2U + BP3D + BP2D,// 2-1 d
 	BP2U + BP1D + BP2D,// 2-3 c
 	BP1U + BP1D + BP2D,// 1-3 b
 	BP1U + BP1D + BP3D,// 1-2 a
-	BP3U + BP1D + BP3D,// 3-2 f
-	BP3U + BP3D + BP2D // 3-1 e
 };
 uint8_t PWR_OFF[] = {
+	0    + BP1D + BP3D, // 3-2 f
+	0    + BP3D + BP2D  // 3-1 e
 	0    + BP3D + BP2D, // 2-1 d
 	0    + BP1D + BP2D, // 2-3 c
 	0    + BP1D + BP2D, // 1-3 b
 	0    + BP1D + BP3D, // 1-2 a
-	0    + BP1D + BP3D, // 3-2 f
-	0    + BP3D + BP2D  // 3-1 e
 };
 
 uint8_t DigitRead[] =        {
+  BP1A,// 3-2 f
+  BP2A // 3-1 e
   BP3A,// 2-1 d
   BP1A,// 2-3 c
   BP2A,// 1-3 b
   BP3A,// 1-2 a
-  BP1A,// 3-2 f
-  BP2A // 3-1 e
 };
 uint8_t DigitReadBaseVal[] = {
+  BP1A, // 3-2 f
+  0     // 3-1 e
   BP3A, // 2-1 d
   0,    // 2-3 c
   BP2A, // 1-3 b
   0,    // 1-2 a
-  BP1A, // 3-2 f
-  0     // 3-1 e
 };
+*/
 
-uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
-uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
-
-
-
-
-volatile uint8_t Switch = 1;
+volatile uint8_t Switch = 0;
 volatile uint8_t Step = 0;
 volatile uint16_t TargetRPM = 0;
 volatile uint8_t FStart = 0;
@@ -146,15 +145,14 @@ int main(void) {
   TimerInit();//初始化定时器 1/8
   PCIntInit();//初始化模拟输入
 
-  //等待1秒启动信号 Pin6高电平  wait till 1s power on signal
-  int cnt = 0;
-
   //打开输出端口
   DDR6O = BP1U | BP1D | BP2U | BP2D | BP3U | BP3D;
   
   //初始化输出端口
   PORT6O = BP1D | BP2D | BP3D;
   
+  NextStep = NextStepA;
+  DigitReadBaseVal = DigitReadBaseValA;
   sei();
   //主循环
   loop();
@@ -293,7 +291,7 @@ void adj() {
     if(FStart)
     {
       NextPower = ((uint32_t)rpm * StartPower)>>8;
-      if(rpm < StartRpm && rpm > (StartRpm>>3))//fast enough but not too fast
+      if(rpm < StartRpm)//TODO   && rpm > (StartRpm>>3)
       {
         StartUpCount++;
         rpms[rpmsIdx] = rpm;
@@ -347,9 +345,10 @@ void adj() {
 #define CMD_SETSTARTPWR   30  /*set start power*/
 #define CMD_LINEUP        40  /*LINEUP         */
 #define CMD_PITCH         50  /*PITCH          */
+#define CMD_REVERSE       60  /*REVERSE        */
 
 ISR(PCINT0_vect){//先送高，后送低
-  if(drCLK)//上升沿读取
+  //if(drCLK)//上升沿读取
   {
     if(TempDataCnt == 8)
     {
@@ -415,7 +414,6 @@ ISR(PCINT0_vect){//先送高，后送低
               break;
             case CMD_LINEUP:
             {
-              GIMSK &= ~_BV(PCIE1);
               uint8_t i;
               uint16_t j;
               for(i=TempData;i>0;i--)
@@ -450,6 +448,19 @@ ISR(PCINT0_vect){//先送高，后送低
             case CMD_PITCH:
               Pitch = TempData;
               break;
+            case CMD_REVERSE:
+              if(TempData)
+              {
+                NextStep = NextStepB;
+                DigitReadBaseVal = DigitReadBaseValB;
+              }
+              else
+              {
+                NextStep = NextStepA;
+                DigitReadBaseVal = DigitReadBaseValA;
+              }
+              break;
+              
           }
           CMD = 0;
         }

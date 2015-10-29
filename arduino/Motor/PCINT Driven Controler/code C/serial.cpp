@@ -4,6 +4,7 @@
 
 #define CLKON PORTD |= _BV(3)
 #define CLKOFF PORTD &= ~_BV(3)
+#define CLKFLIP PIND |= _BV(3)
 #define DATON PORTD |= _BV(2)
 #define DATOFF PORTD &= ~_BV(2)
 
@@ -21,9 +22,7 @@ void send(uint8_t val)
 {
   DATON;//startbit
   _DELAY_;
-  CLKON;//rise send data
-  _DELAY_;
-  CLKOFF;//fall
+  CLKFLIP;//rise send data
   _DELAY_;
 
   for(uint8_t i=0;i<8;i++)
@@ -38,9 +37,7 @@ void send(uint8_t val)
     }
     val<<=1;
     _DELAY_;
-    CLKON;//rise send data
-    _DELAY_;
-    CLKOFF;//fall
+    CLKFLIP;//rise send data
     _DELAY_;
   }
 }
@@ -57,14 +54,11 @@ int main(void) {
 
   DDRD = _BV(2) | _BV(3);
   DDRB |= _BV(5);
-  CLKOFF;
   DATOFF;
   _DELAY_;
   for(int i=0;i<10;i++)
   {
-    CLKON;//rise send data
-    _DELAY_;
-    CLKOFF;//fall
+    CLKFLIP;//rise send data
     _DELAY_;
   }
   send(0);
