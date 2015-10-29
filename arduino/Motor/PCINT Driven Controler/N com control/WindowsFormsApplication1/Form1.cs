@@ -208,8 +208,10 @@ namespace WindowsFormsApplication1
 			{
 				targetSpeed = 1;
 			}
-			textBox1.Text = (data / 8 / 2).ToString() + " " + 40000000f / (data) + "rpm  " + 2500000f / (targetSpeed) + "rpm";//12极
-			//textBox1.Text = (data / 8 / 2).ToString() + " " + 53333333f / (data) + "rpm";//9极
+            下拉菜单
+			//textBox1.Text = (data / 8 / 2).ToString() + " " + 40000000f / (data) + "rpm  " + 2500000f / (targetSpeed) + "rpm";//12极
+            textBox1.Text = (data / 8 / 2).ToString() + " " + 80000000f / (data) + "rpm  " + 5000000f / (targetSpeed) + "rpm";//12极
+            //textBox1.Text = (data / 8 / 2).ToString() + " " + 53333333f / (data) + "rpm";//9极
 			//textBox1.Text = (data / 8 / 2).ToString() + " " + 80000000f / (data) + "rpm";//6极
 			//textBox1.Text = (data / 8 / 2).ToString() + " " + 160000000f / (data) + "rpm";//3极
 

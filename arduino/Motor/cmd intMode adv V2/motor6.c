@@ -139,7 +139,7 @@ void PCIntInit() {
   GIMSK |= _BV(PCIE0);
   GIMSK |= _BV(PCIE1);
   PCMSK1 |= _BV(0);
-  PCMSK1 |= _BV(1);
+  PCMSK1 |= _BV(1); 改成动态设置 pin ，现代化
   PCMSK1 |= _BV(2);
   PCMSK0 |= _BV(6);//CLK
 }

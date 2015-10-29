@@ -10,9 +10,9 @@
 
 #define STAOn   ;/*DDRB |= _BV(3) */
 #define STAOff  ;/*DDRB &= ~_BV(3)*/
-#define PWROn   DDRB |= _BV(3) ;/**/
-#define PWROff  DDRB &= ~_BV(3);/**/
-#define RPMFlip ;/*DDRB ^= _BV(3)*/
+#define PWROn   ;/*DDRB |= _BV(3) */
+#define PWROff  ;/*DDRB &= ~_BV(3)*/
+#define RPMFlip DDRB ^= _BV(3);/**/
 
 //2 1 0
 //5 4 3 2 1 0
@@ -67,47 +67,6 @@ uint8_t DigitRead[] =         {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
 uint8_t DigitReadBaseValA[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 uint8_t DigitReadBaseValB[] = {   0,  BP2A,     0,  BP3A,     0,  BP1A};
 uint8_t* volatile DigitReadBaseVal;
-
-
-
-
-
-/*
-//下臂常开
-uint8_t PWR_ON[] = {
-	BP3U + BP1D + BP3D,// 3-2 f
-	BP3U + BP3D + BP2D // 3-1 e
-	BP2U + BP3D + BP2D,// 2-1 d
-	BP2U + BP1D + BP2D,// 2-3 c
-	BP1U + BP1D + BP2D,// 1-3 b
-	BP1U + BP1D + BP3D,// 1-2 a
-};
-uint8_t PWR_OFF[] = {
-	0    + BP1D + BP3D, // 3-2 f
-	0    + BP3D + BP2D  // 3-1 e
-	0    + BP3D + BP2D, // 2-1 d
-	0    + BP1D + BP2D, // 2-3 c
-	0    + BP1D + BP2D, // 1-3 b
-	0    + BP1D + BP3D, // 1-2 a
-};
-
-uint8_t DigitRead[] =        {
-  BP1A,// 3-2 f
-  BP2A // 3-1 e
-  BP3A,// 2-1 d
-  BP1A,// 2-3 c
-  BP2A,// 1-3 b
-  BP3A,// 1-2 a
-};
-uint8_t DigitReadBaseVal[] = {
-  BP1A, // 3-2 f
-  0     // 3-1 e
-  BP3A, // 2-1 d
-  0,    // 2-3 c
-  BP2A, // 1-3 b
-  0,    // 1-2 a
-};
-*/
 
 volatile uint8_t Switch = 0;
 volatile uint8_t Step = 0;
@@ -192,6 +151,7 @@ void loop() {
       OCR1A = Power;
       //转速调整
       adj();
+	  RPMFlip;
       //等待过零
       waita();
       if(Pitch)
