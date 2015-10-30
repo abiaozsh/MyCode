@@ -70,7 +70,7 @@ uint8_t* volatile DigitReadBaseVal;
 
 volatile uint8_t Switch = 0;
 volatile uint8_t Step = 0;
-volatile uint16_t TargetRPM = 0;
+volatile uint16_t TargetRPM = 1000;
 volatile uint8_t FStart = 0;
 volatile uint8_t StartPower = 128;
 volatile uint8_t Pitch = 1;
@@ -152,7 +152,7 @@ void loop() {
       RPMFlip;
       //等待过零
       waita();
-      if(Pitch)
+      if(Pitch && !FStart)
       {
         uint16_t tmp = (avgrpm>>3)+(avgrpm>>2)+currTick;
         while(currTick<tmp);
@@ -374,7 +374,7 @@ ISR(PCINT0_vect){//先送高，后送低
             {
               uint8_t i;
               uint16_t j;
-              for(i=TempData;i>0;i--)
+              for(i=0;i<TempData;i++)
               {
                 PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
                 for(j=0;j<i;j++)
@@ -387,7 +387,7 @@ ISR(PCINT0_vect){//先送高，后送低
                   asm volatile("nop");
                 }
               }
-              for(i=0;i<TempData;i++)
+              for(i=TempData;i>0;i--)
               {
                 PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
                 for(j=0;j<i;j++)
