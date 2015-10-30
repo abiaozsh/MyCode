@@ -3,6 +3,7 @@ obj
 *.out
 *.hex
 *.ii
+*.i
 *.o
 *.s
 *.class

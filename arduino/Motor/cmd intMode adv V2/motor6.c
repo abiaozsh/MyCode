@@ -2,8 +2,6 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
-#define MaxPonTime 2000
-
 #define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
 
 //drA3
@@ -37,21 +35,15 @@
 #define BP3U _BV(0)
 #define BP3A _BV(2)
 
-//a6 start signal / restartup signal
-//a7 throttle
-
 #define StartRpm 8192
 
-#define CmdNextStep Step = NextStep[TempStep];RPMFlip;
-uint8_t NextStep[] = {
+uint8_t NextStepA[] = {
   1,  2,  3,  4,  5,  0
 };
-//power on
-#define CmdPWROn  PORT6O = PWR_ON[TempStep];PWROn;
-//power off
-#define CmdPWROff PORT6O = PWR_OFF[TempStep];PWROff;
-//power off
-#define CmdPWRDown PORT6O = 0;PWROff;
+uint8_t NextStepB[] = {
+  5,  0,  1,  2,  3,  4
+};
+uint8_t* volatile NextStep;
 
 //下臂常开
 uint8_t PWR_ON[] = {
@@ -71,10 +63,10 @@ uint8_t PWR_OFF[] = {
 	0    + BP1D + BP3D  // 3-2
 };
 
-#define GetDigitRead (PIN3I & DigitRead[TempStep])
 uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
-#define GetDigitReadBaseVal (DigitReadBaseVal[TempStep])
-uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
+uint8_t DigitReadBaseValA[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
+uint8_t DigitReadBaseValB[] = {   0,  BP2A,     0,  BP3A,     0,  BP1A};
+uint8_t* volatile DigitReadBaseVal;
 
 volatile uint8_t Step = 0;
 uint8_t Status = 0;//0 halt ,1 running
@@ -111,9 +103,8 @@ int main(void) {
   //初始化输出端口
   PORT6O = BP1D | BP2D | BP3D;
   
-  //初始化输入端口
-  DDR3I = 0;
-  PORT3I = 0;
+  NextStep = NextStepA;
+  DigitReadBaseVal = DigitReadBaseValA;
   //主循环
   sei();
   for(;;) {
@@ -138,22 +129,21 @@ void TimerInit() {
 void PCIntInit() {
   GIMSK |= _BV(PCIE0);
   GIMSK |= _BV(PCIE1);
-  PCMSK1 |= _BV(0);
-  PCMSK1 |= _BV(1); 改成动态设置 pin ，现代化
-  PCMSK1 |= _BV(2);
+  PCMSK1 = DigitRead[Step];
   PCMSK0 |= _BV(6);//CLK
 }
 
 void StepEvent(){
   CPUOn;
   uint8_t TempStep = Step;
-  uint8_t valbase = GetDigitReadBaseVal;
-  uint8_t val = GetDigitRead;
+  uint8_t valbase = (DigitReadBaseVal[TempStep]);
+  uint8_t val = (PIN3I & DigitRead[TempStep]);
   //确认过零
   if(val!=valbase)
   {
-    CmdPWROff;
-    CmdNextStep;
+    PORT6O = PWR_OFF[TempStep];PWROff;//CmdPWROff;
+    Step = NextStep[TempStep];RPMFlip;
+    PCMSK1 = DigitRead[Step];
     //记录当前转速
     rpm = currTick;
     //换向前处理结束
@@ -165,11 +155,11 @@ void StepEvent(){
     uint16_t Power = NextPower;
     if(Power)
     {
-      CmdPWROn;
+      PORT6O = PWR_ON[TempStep];PWROn;//CmdPWROn;
     }
     else
     {
-      CmdPWROff;
+      PORT6O = PWR_OFF[TempStep];PWROff;//CmdPWROff;
     }
     OCR1A = Power;
     uint16_t temp;
@@ -315,7 +305,7 @@ ISR(PCINT1_vect){
 
 ISR(TIM1_COMPA_vect){
   uint8_t TempStep = Step;
-  CmdPWROff;
+  PORT6O = PWR_OFF[TempStep];PWROff;//CmdPWROff;
 }
 ISR(TIM1_COMPB_vect){
   GIMSK |= _BV(PCIE1);//开中断
@@ -393,8 +383,9 @@ ISR(PCINT0_vect){//先送高，后送低
             case CMD_START:
             {
               uint8_t TempStep = Step;
-              CmdNextStep;
-              CmdPWROn;
+              Step = NextStep[TempStep];RPMFlip;
+              PCMSK1 = DigitRead[Step];
+              PORT6O = PWR_ON[TempStep];PWROn;//CmdPWROn;
               FStart = TempData;
               GIMSK |= _BV(PCIE1);
               break;
@@ -403,7 +394,7 @@ ISR(PCINT0_vect){//先送高，后送低
             {
               uint8_t TempStep = Step;
               GIMSK &= ~_BV(PCIE1);
-              CmdPWRDown;
+              PORT6O = 0;PWROff;//CmdPWRDown;
               FStart = 0;
               Status = 0;
               break;
@@ -419,18 +410,18 @@ ISR(PCINT0_vect){//先送高，后送低
               uint16_t j;
               for(i=TempData;i>0;i--)
               {
-                CmdPWROn;
+                PORT6O = PWR_ON[TempStep];PWROn;//CmdPWROn;
                 for(j=0;j<i;j++)
                 {
                   asm volatile("nop");
                 }
-                CmdPWRDown;
+                PORT6O = 0;PWROff;//CmdPWRDown;
                 for(j=0;j<1000;j++)
                 {
                   asm volatile("nop");
                 }
               }
-              CmdPWROff;
+              PORT6O = PWR_OFF[TempStep];PWROff;//CmdPWROff;
               break;
             }
           }

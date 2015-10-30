@@ -122,7 +122,7 @@ namespace WindowsFormsApplication1
 		const byte CMD_SETSTARTPWR = 30;
 		const byte CMD_LINEUP = 40;
 		const byte CMD_PITCH = 50;  /*PITCH          */
-		const byte  CMD_REVERSE   =    60;  /*REVERSE        */
+		const byte CMD_REVERSE = 60;  /*REVERSE        */
 
 
 		int targetSpeed;
@@ -208,12 +208,30 @@ namespace WindowsFormsApplication1
 			{
 				targetSpeed = 1;
 			}
-            下拉菜单
-			//textBox1.Text = (data / 8 / 2).ToString() + " " + 40000000f / (data) + "rpm  " + 2500000f / (targetSpeed) + "rpm";//12极
-            textBox1.Text = (data / 8 / 2).ToString() + " " + 80000000f / (data) + "rpm  " + 5000000f / (targetSpeed) + "rpm";//12极
-            //textBox1.Text = (data / 8 / 2).ToString() + " " + 53333333f / (data) + "rpm";//9极
-			//textBox1.Text = (data / 8 / 2).ToString() + " " + 80000000f / (data) + "rpm";//6极
-			//textBox1.Text = (data / 8 / 2).ToString() + " " + 160000000f / (data) + "rpm";//3极
+			if (comboBox1.Text == "18")
+			{
+				textBox1.Text = (data / 8 / 2).ToString() + " " + 26666666f / (data) + "rpm  " + 1666666f / (targetSpeed) + "rpm";
+			}
+			if (comboBox1.Text == "15")
+			{
+				textBox1.Text = (data / 8 / 2).ToString() + " " + 32000000f / (data) + "rpm  " + 2000000f / (targetSpeed) + "rpm";
+			}
+			if (comboBox1.Text == "12")
+			{
+				textBox1.Text = (data / 8 / 2).ToString() + " " + 40000000f / (data) + "rpm  " + 2500000f / (targetSpeed) + "rpm";
+			}
+			if (comboBox1.Text == "9")
+			{
+				textBox1.Text = (data / 8 / 2).ToString() + " " + 53333333f / (data) + "rpm  " + 3333333f / (targetSpeed) + "rpm";
+			}
+			if (comboBox1.Text == "6")
+			{
+				textBox1.Text = (data / 8 / 2).ToString() + " " + 80000000f / (data) + "rpm  " + 5000000f / (targetSpeed) + "rpm";
+			}
+			if (comboBox1.Text == "3")
+			{
+				textBox1.Text = (data / 8 / 2).ToString() + " " + 160000000f / (data) + "rpm  " + 10000000f / (targetSpeed) + "rpm";
+			}
 
 		}
 
@@ -261,6 +279,11 @@ namespace WindowsFormsApplication1
 		{
 			Send(CMD_REVERSE);
 			Send((byte)(checkBox1.Checked ? 1 : 0));
+		}
+
+		private void textBox1_TextChanged(object sender, EventArgs e)
+		{
+
 		}
 
 

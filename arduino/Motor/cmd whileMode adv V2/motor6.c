@@ -96,8 +96,6 @@ void PCIntInit();
 void loop();
 void waita();
 void adj();
-void startup();
-
 
 int main(void) {
   ClockInit();//初始化时钟：1MHz -> 8MHz
@@ -151,7 +149,7 @@ void loop() {
       OCR1A = Power;
       //转速调整
       adj();
-	  RPMFlip;
+      RPMFlip;
       //等待过零
       waita();
       if(Pitch)
