@@ -1,0 +1,11 @@
+bin
+obj
+*.out
+*.hex
+*.ii
+*.o
+*.s
+*.class
+.metadata
+*.ncb
+release
