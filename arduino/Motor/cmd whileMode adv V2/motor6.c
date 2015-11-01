@@ -219,9 +219,11 @@ void adj() {
       if(avgrpm>TempTargetRPM)//little bit slow
       {
         uint16_t diff = (avgrpm-TempTargetRPM);//2
-        if(AccuPower+diff>2048000)
+        uint32_t threshold = rpm;
+        threshold<<=8;
+        if(AccuPower+diff>threshold)//2048000
         {
-          AccuPower = 2048000;
+          AccuPower = threshold;//2048000
         }
         else
         {
