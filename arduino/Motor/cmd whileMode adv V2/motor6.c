@@ -45,7 +45,7 @@ uint8_t NextStepB[] = {
 };
 uint8_t* volatile NextStep;
 
-//下臂常开
+//下臂常开，反驱
 uint8_t PWR_ON[] = {
 	BP1U + BP1D + BP3D, // 1-2 a
 	BP1U + BP1D + BP2D, // 1-3 b
@@ -70,9 +70,9 @@ uint8_t* volatile DigitReadBaseVal;
 
 volatile uint8_t Switch = 0;
 volatile uint8_t Step = 0;
-volatile uint16_t TargetRPM = 1000;
+volatile uint16_t TargetRPM = 500;
 volatile uint8_t FStart = 0;
-volatile uint8_t StartPower = 128;
+volatile uint8_t MaxPower = 64;
 volatile uint8_t Pitch = 1;
 
 uint8_t Status = 0;//0 halt ,1 running, 2 starting
@@ -244,14 +244,19 @@ void adj() {
         }
         NextPower = AccuPower>>8;
       }
+      uint16_t avgrpmMaxPower = ((uint32_t)avgrpm * MaxPower)>>8;
+      if(NextPower > avgrpmMaxPower)
+      {
+        NextPower = avgrpmMaxPower;
+      }
     }
   }
   else
   {
     if(FStart)
     {
-      NextPower = ((uint32_t)rpm * StartPower)>>8;
-      if(rpm < StartRpm)//TODO   && rpm > (StartRpm>>3)
+      NextPower = ((uint32_t)rpm * MaxPower)>>8;
+      if(rpm < StartRpm)
       {
         StartUpCount++;
         rpms[rpmsIdx] = rpm;
@@ -273,7 +278,7 @@ void adj() {
     else
     {
       NextPower = 0;
-      if(rpm < StartRpm && rpm > (StartRpm>>3))//fast enough but not too fast
+      if(rpm < StartRpm && rpm > (StartRpm>>3))
       {
         StartUpCount++;
         rpms[rpmsIdx] = rpm;
@@ -288,7 +293,7 @@ void adj() {
       {
         Status = 1;
         STAOn;
-        NextPower = ((uint32_t)rpm * StartPower)>>8;
+        NextPower = ((uint32_t)rpm * MaxPower)>>8;
       }
     }
 	}
@@ -302,7 +307,7 @@ void adj() {
 #define CMD_SENDDATA16X   15  /*4096~8191  16x */
 #define CMD_START         20  /*START          */
 #define CMD_STOP          25  /*STOP           */
-#define CMD_SETSTARTPWR   30  /*set start power*/
+#define CMD_SETMAXPWR     30  /*set max power  */
 #define CMD_LINEUP        40  /*LINEUP         */
 #define CMD_PITCH         50  /*PITCH          */
 #define CMD_REVERSE       60  /*REVERSE        */
@@ -369,8 +374,8 @@ ISR(PCINT0_vect){//先送高，后送低
               FStart = 0;
               break;
             }
-            case CMD_SETSTARTPWR:
-              StartPower = TempData;
+            case CMD_SETMAXPWR:
+              MaxPower = TempData;
               break;
             case CMD_LINEUP:
             {
