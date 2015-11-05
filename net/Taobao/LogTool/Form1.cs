@@ -111,28 +111,32 @@ namespace LogTool
 			p.StartInfo = new ProcessStartInfo(newfile);
 			p.Start();
 		}
+		List<Taobao.Mods.ItemList.Data.Auction> List1 = new List<Taobao.Mods.ItemList.Data.Auction>();
+		List<Taobao.Mods.ItemList.Data.Auction> List2 = new List<Taobao.Mods.ItemList.Data.Auction>();
+		List<Taobao.Mods.ItemList.Data.Auction> List3 = new List<Taobao.Mods.ItemList.Data.Auction>();
+		List<Taobao.Mods.ItemList.Data.Auction> List4 = new List<Taobao.Mods.ItemList.Data.Auction>();
 
 		private void button1_Click_1(object sender, EventArgs e)
 		{
-			List<Taobao.Mods.ItemList.Data.Auction> List1 = new List<Taobao.Mods.ItemList.Data.Auction>();
-			List<Taobao.Mods.ItemList.Data.Auction> List2 = new List<Taobao.Mods.ItemList.Data.Auction>();
-			List<Taobao.Mods.ItemList.Data.Auction> List3 = new List<Taobao.Mods.ItemList.Data.Auction>();
-			List<Taobao.Mods.ItemList.Data.Auction> List4 = new List<Taobao.Mods.ItemList.Data.Auction>();
+			List<Taobao.Mods.ItemList.Data.Auction> l1 = new List<Taobao.Mods.ItemList.Data.Auction>();
+			List<Taobao.Mods.ItemList.Data.Auction> l2 = new List<Taobao.Mods.ItemList.Data.Auction>();
+			List<Taobao.Mods.ItemList.Data.Auction> l3 = new List<Taobao.Mods.ItemList.Data.Auction>();
+			List<Taobao.Mods.ItemList.Data.Auction> l4 = new List<Taobao.Mods.ItemList.Data.Auction>();
+			
+			l1.AddRange(List1);
+			l2.AddRange(List2);
+			l3.AddRange(List3);
+			l4.AddRange(List4);
 
-			proc(n1.Text, t1.Text, List1);
-			proc(n2.Text, t2.Text, List2);
-			proc(n3.Text, t3.Text, List3);
-			proc(n4.Text, t4.Text, List4);
+			l1 = filt(l1, l2, l3, l4);
+			l2 = filt(l2, l1, l3, l4);
+			l3 = filt(l3, l2, l1, l4);
+			l4 = filt(l4, l2, l3, l1);
 
-			List1 = filt(List1, List2, List3, List4);
-			List2 = filt(List2, List1, List3, List4);
-			List3 = filt(List3, List2, List1, List4);
-			List4 = filt(List4, List2, List3, List1);
-
-			ShowPage(List1);
-			ShowPage(List2);
-			ShowPage(List3);
-			ShowPage(List4);
+			ShowPage(l1);
+			ShowPage(l2);
+			ShowPage(l3);
+			ShowPage(l4);
 		}
 
 		private void proc(string n, string t, List<Taobao.Mods.ItemList.Data.Auction> l)
@@ -301,6 +305,26 @@ namespace LogTool
 			MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(jsonString));
 			Taobao obj = (Taobao)ser.ReadObject(ms);
 			return obj;
+		}
+
+		private void button2_Click(object sender, EventArgs e)
+		{
+			proc(n1.Text, t1.Text, List1);
+		}
+
+		private void button3_Click(object sender, EventArgs e)
+		{
+			proc(n2.Text, t2.Text, List2);
+		}
+
+		private void button4_Click(object sender, EventArgs e)
+		{
+			proc(n3.Text, t3.Text, List3);
+		}
+
+		private void button5_Click(object sender, EventArgs e)
+		{
+			proc(n4.Text, t4.Text, List4);
 		}
 
 	}
