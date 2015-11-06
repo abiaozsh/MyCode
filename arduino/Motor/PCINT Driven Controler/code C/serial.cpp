@@ -71,25 +71,17 @@ int main(void) {
   sei();
   uint8_t oldval = PIND & _BV(4);
   uint16_t sum = 0;
-  uint8_t cnt = 0;
   while(true)
   {
     uint8_t val = PIND & _BV(4);
     if(oldval!=val)
     {
-      sum += TCNT1;
+      sum = TCNT1;
       TCNT1=0;
       
-      cnt++;
-      if(cnt==8)
-      {
-        SendData = 1;
-        UDR0 = (uint8_t)sum&0xFF;
-        Data = (uint8_t)(sum>>8)&0xFF;
-        cnt = 0;
-        sum = 0;
-      }
-      
+      SendData = 1;
+      UDR0 = (uint8_t)sum&0xFF;
+      Data = (uint8_t)(sum>>8)&0xFF;
       
       oldval = val;
     }

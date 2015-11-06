@@ -41,8 +41,10 @@
 			this.checkBox1 = new System.Windows.Forms.CheckBox();
 			this.comboBox1 = new System.Windows.Forms.ComboBox();
 			this.trackBar2 = new System.Windows.Forms.TrackBar();
+			this.pictureBox1 = new System.Windows.Forms.PictureBox();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar2)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// trackBar1
@@ -52,7 +54,7 @@
 			this.trackBar1.Location = new System.Drawing.Point(-1, 12);
 			this.trackBar1.Maximum = 1535;
 			this.trackBar1.Name = "trackBar1";
-			this.trackBar1.Size = new System.Drawing.Size(811, 42);
+			this.trackBar1.Size = new System.Drawing.Size(834, 42);
 			this.trackBar1.TabIndex = 7;
 			this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
 			// 
@@ -165,16 +167,25 @@
 			this.trackBar2.Location = new System.Drawing.Point(-1, 135);
 			this.trackBar2.Maximum = 255;
 			this.trackBar2.Name = "trackBar2";
-			this.trackBar2.Size = new System.Drawing.Size(811, 42);
+			this.trackBar2.Size = new System.Drawing.Size(834, 42);
 			this.trackBar2.TabIndex = 20;
 			this.trackBar2.Value = 64;
 			this.trackBar2.Scroll += new System.EventHandler(this.trackBar2_Scroll);
+			// 
+			// pictureBox1
+			// 
+			this.pictureBox1.Location = new System.Drawing.Point(12, 183);
+			this.pictureBox1.Name = "pictureBox1";
+			this.pictureBox1.Size = new System.Drawing.Size(800, 256);
+			this.pictureBox1.TabIndex = 21;
+			this.pictureBox1.TabStop = false;
 			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(810, 186);
+			this.ClientSize = new System.Drawing.Size(833, 463);
+			this.Controls.Add(this.pictureBox1);
 			this.Controls.Add(this.trackBar2);
 			this.Controls.Add(this.comboBox1);
 			this.Controls.Add(this.checkBox1);
@@ -191,6 +202,7 @@
 			this.Load += new System.EventHandler(this.Form1_Load);
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar2)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -211,6 +223,7 @@
 		private System.Windows.Forms.CheckBox checkBox1;
 		private System.Windows.Forms.ComboBox comboBox1;
 		private System.Windows.Forms.TrackBar trackBar2;
+		private System.Windows.Forms.PictureBox pictureBox1;
     }
 }
 

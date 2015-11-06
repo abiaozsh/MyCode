@@ -45,6 +45,8 @@ namespace WindowsFormsApplication1
 
 		int datareceive = 0;
 		byte[] buff = new byte[2];
+		int[] datas = new int[800];
+		int datasIdx = 0;
 		int data = 0;
 		void port_DataReceived(object sender, SerialDataReceivedEventArgs e)
 		{
@@ -55,8 +57,24 @@ namespace WindowsFormsApplication1
 				datareceive++;
 				if (datareceive >= 2)
 				{
-					data = buff[0] + ((int)buff[1] << 8);
+					datas[datasIdx++] = buff[0] + ((int)buff[1] << 8);
+					if (datasIdx >= 800)
+					{
+						datasIdx = 0;
+					}
 
+					int idx = datasIdx;
+					for (int i = 0; i < 12; i++)
+					{
+						idx--;
+						if (idx < 0)
+						{
+							idx = 799;
+						}
+						data += datas[idx];
+
+					}
+					data /= 12;
 					datareceive &= 1;
 				}
 			}
@@ -105,8 +123,13 @@ namespace WindowsFormsApplication1
 			}
 		}
 
+		Bitmap bmp;
+		Graphics g;
 		private void Form1_Load(object sender, EventArgs e)
 		{
+			bmp = new Bitmap(800, 256);
+			g = Graphics.FromImage(bmp);
+			pictureBox1.Image = bmp;
 		}
 		const byte CMD_FORCE = 20;  /*on/off        */
 
@@ -210,29 +233,60 @@ namespace WindowsFormsApplication1
 			}
 			if (comboBox1.Text == "18")
 			{
-				textBox1.Text = (data / 8 / 2).ToString() + " " + 26666666f / (data) + "rpm  " + 1666666f / (targetSpeed) + "rpm";
+				textBox1.Text = (data / 2).ToString() + " " + 3333333f / (data) + "rpm  " + 1666666f / (targetSpeed) + "rpm";
 			}
 			if (comboBox1.Text == "15")
 			{
-				textBox1.Text = (data / 8 / 2).ToString() + " " + 32000000f / (data) + "rpm  " + 2000000f / (targetSpeed) + "rpm";
+				textBox1.Text = (data / 2).ToString() + " " + 4000000f / (data) + "rpm  " + 2000000f / (targetSpeed) + "rpm";
 			}
 			if (comboBox1.Text == "12")
 			{
-				textBox1.Text = (data / 8 / 2).ToString() + " " + 40000000f / (data) + "rpm  " + 2500000f / (targetSpeed) + "rpm";
+				textBox1.Text = (data / 2).ToString() + " " + 5000000f / (data) + "rpm  " + 2500000f / (targetSpeed) + "rpm";
 			}
 			if (comboBox1.Text == "9")
 			{
-				textBox1.Text = (data / 8 / 2).ToString() + " " + 53333333f / (data) + "rpm  " + 3333333f / (targetSpeed) + "rpm";
+				textBox1.Text = (data / 2).ToString() + " " + 6666666f / (data) + "rpm  " + 3333333f / (targetSpeed) + "rpm";
 			}
 			if (comboBox1.Text == "6")
 			{
-				textBox1.Text = (data / 8 / 2).ToString() + " " + 80000000f / (data) + "rpm  " + 5000000f / (targetSpeed) + "rpm";
+				textBox1.Text = (data / 2).ToString() + " " + 10000000f / (data) + "rpm  " + 5000000f / (targetSpeed) + "rpm";
 			}
 			if (comboBox1.Text == "3")
 			{
-				textBox1.Text = (data / 8 / 2).ToString() + " " + 160000000f / (data) + "rpm  " + 10000000f / (targetSpeed) + "rpm";
+				textBox1.Text = (data / 2).ToString() + " " + 20000000f / (data) + "rpm  " + 10000000f / (targetSpeed) + "rpm";
 			}
+			//Random r = new Random();
+			//datas[datasIdx++] = (ushort)r.Next();
+			//if (datasIdx >= 800)
+			//{
+			//	datasIdx = 0;
+			//}
 
+
+			g.Clear(Color.Gray);
+			Pen p = new Pen(Color.Black);
+			Pen pr = new Pen(Color.Red);
+			int idx = datasIdx;
+			for (int i = 0; i < 800; i++)
+			{
+				double val = Math.Log((double)datas[idx] / 50f + 1) * 35;
+
+				if (datas[idx] > 8192)
+				{
+					g.DrawLine(pr, i, 0, i, (float)val);
+				}
+				else
+				{
+					g.DrawLine(p, i, 0, i, (float)val);
+				}
+				idx--;
+				if (idx < 0)
+				{
+					idx = 799;
+				}
+			}
+			g.Flush();
+			pictureBox1.Refresh();
 		}
 
 		private void button2_Click(object sender, EventArgs e)
