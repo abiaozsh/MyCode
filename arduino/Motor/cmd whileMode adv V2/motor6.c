@@ -2,12 +2,14 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
-#define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
+#define currTick TCNT1
 
 //drA3
 #define drDAT (PINA & _BV(7)) /*DAT*/
 #define drCLK (PINA & _BV(6)) /*DAT*/
 
+#define CPUFree ;/*DDRB &= ~_BV(3)*/ //free亮灯
+#define CPUBusy ;/*DDRB |= _BV(3) */ //busy暗灯
 #define STAOn   ;/*DDRB |= _BV(3) */
 #define STAOff  ;/*DDRB &= ~_BV(3)*/
 #define PWROn   ;/*DDRB |= _BV(3) */
@@ -90,17 +92,18 @@ uint8_t CMD = 0;
 uint8_t TempData=0;
 uint8_t TempDataCnt=8;
 
-void ClockInit();
-void TimerInit();
-void PCIntInit();
-void loop();
-void waita();
 void adj();
 
 int main(void) {
-  ClockInit();//初始化时钟：1MHz -> 8MHz
-  TimerInit();//初始化定时器 1/8
-  PCIntInit();//初始化模拟输入
+  //初始化时钟：1MHz -> 8MHz
+  CLKPR = 128;//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
+  CLKPR = 0;//1/1 //8MHz
+  //初始化定时器 1/8
+  TCCR1B = 2;//  1/8	1MHz 1us
+  TIMSK1 |= _BV(OCIE1A);
+  //初始化模拟输入
+  GIMSK |= _BV(PCIE0);
+  PCMSK0 |= _BV(PCINT6);//CLK
 
   //打开输出端口
   DDR6O = BP1U | BP1D | BP2U | BP2D | BP3U | BP3D;
@@ -112,25 +115,6 @@ int main(void) {
   DigitReadBaseVal = DigitReadBaseValA;
   sei();
   //主循环
-  loop();
-}
-
-void ClockInit() {
-  CLKPR = 128;//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
-  CLKPR = 0;//1/1 //8MHz
-}
-
-void TimerInit() {
-  TCCR1B = 2;//  1/8	1MHz 1us
-  TIMSK1 |= _BV(OCIE1A);
-}
-
-void PCIntInit() {
-  GIMSK |= _BV(PCIE0);
-  PCMSK0 |= _BV(PCINT6);//CLK
-}
-
-void loop() {
   for(;;) 
   {
     if(Switch)
@@ -138,24 +122,37 @@ void loop() {
       //定时器清零
       TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
       Power = NextPower;
+      uint8_t tempStep = Step;
       if(Power)
       {
-        PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
+        PORT6O = PWR_ON[tempStep];PWROn;//CmdPWROn;
       }
       else
       {
-        PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
+        PORT6O = PWR_OFF[tempStep];PWROff;//CmdPWROff;
       }
       OCR1A = Power;
       //转速调整
       adj();
       RPMFlip;
       //等待过零
-      waita();
+      {
+        uint8_t valbase = DigitReadBaseVal[tempStep];
+        uint8_t drMask = DigitRead[tempStep];
+        
+        uint16_t temp;
+        temp = (rpm>>1);
+        CPUFree;
+        while(currTick<temp);
+        while((PIN3I&drMask)==valbase);
+        CPUBusy;
+      }
       if(Pitch && !FStart)
       {
         uint16_t tmp = (avgrpm>>3)+(avgrpm>>2)+currTick;
+        CPUFree;
         while(currTick<tmp);
+        CPUBusy;
       }
       PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
       Step = NextStep[Step];//CmdNextStep;
@@ -165,24 +162,46 @@ void loop() {
   }
 }
 
-void waita() {
-  uint8_t valbase = DigitReadBaseVal[Step];
-  uint8_t drMask = DigitRead[Step];
-  
-  uint16_t temp;
-  temp = (rpm>>1);
-  for(;;)
-  {
-    uint8_t val = PIN3I & drMask;
-    if(currTick>=temp && val!=valbase)
-    {
-      return;
-    }
-  }
-}
 
 ISR(TIM1_COMPA_vect){
   PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
+}
+
+uint16_t _MaxPower(uint16_t val)
+{
+  switch(MaxPower)
+  {
+    case 0://256
+      return val;
+      break;
+    case 1://192
+      return (val>>1)+(val>>2);
+      break;
+    case 2://128
+      return (val>>1);
+      break;
+    case 3://64
+      return (val>>2);
+      break;
+    case 4://32
+      return (val>>3);
+      break;
+    case 5://16
+      return (val>>4);
+      break;
+    case 6://8
+      return (val>>5);
+      break;
+    case 7://4
+      return (val>>6);
+      break;
+    case 8://2
+      return (val>>7);
+      break;
+    case 9://2
+      return (val>>8);
+      break;
+  }
 }
 
 void adj() {
@@ -244,7 +263,7 @@ void adj() {
         }
         NextPower = AccuPower>>8;
       }
-      uint16_t avgrpmMaxPower = ((uint32_t)avgrpm * MaxPower)>>8;
+      uint16_t avgrpmMaxPower = _MaxPower(avgrpm);
       if(NextPower > avgrpmMaxPower)
       {
         NextPower = avgrpmMaxPower;
@@ -255,7 +274,7 @@ void adj() {
   {
     if(FStart)
     {
-      NextPower = ((uint32_t)rpm * MaxPower)>>8;
+      NextPower = _MaxPower(rpm);
       if(rpm < StartRpm)
       {
         StartUpCount++;
@@ -293,7 +312,7 @@ void adj() {
       {
         Status = 1;
         STAOn;
-        NextPower = ((uint32_t)rpm * MaxPower)>>8;
+        NextPower = _MaxPower(rpm);
       }
     }
 	}

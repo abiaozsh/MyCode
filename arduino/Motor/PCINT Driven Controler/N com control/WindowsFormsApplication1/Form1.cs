@@ -32,7 +32,7 @@ namespace WindowsFormsApplication1
 				try
 				{
 					//COM4为Arduino使用的串口号，需根据实际情况调整
-					port = new SerialPort("COM4", 115200, Parity.None, 8, StopBits.One);
+					port = new SerialPort("COM4", 250000, Parity.None, 8, StopBits.One);
 					//port = new SerialPort("COM5", 115200, Parity.None, 8, StopBits.One);
 					port.Open();
 					port.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);
@@ -336,8 +336,61 @@ namespace WindowsFormsApplication1
 
 		private void trackBar2_Scroll(object sender, EventArgs e)
 		{
-			Send(CMD_SETMAXPWR);
-			Send((byte)trackBar2.Value);
+            byte data = 0;
+            if (trackBar2.Value == 256)
+            {
+                trackBar2.Value = 256;
+                data = 0;
+            }
+            else if (trackBar2.Value >= 192)
+            {
+                trackBar2.Value = 192;
+                data = 1;
+            }
+            else if (trackBar2.Value >= 128)
+            {
+                trackBar2.Value = 128;
+                data = 2;
+            }
+            else if (trackBar2.Value >= 64)
+            {
+                trackBar2.Value = 64;
+                data = 3;
+            }
+            else if (trackBar2.Value >= 32)
+            {
+                trackBar2.Value = 32;
+                data = 4;
+            }
+            else if (trackBar2.Value >= 16)
+            {
+                trackBar2.Value = 16;
+                data = 5;
+            }
+            else if (trackBar2.Value >= 8)
+            {
+                trackBar2.Value = 8;
+                data = 6;
+            }
+            else if (trackBar2.Value >= 4)
+            {
+                trackBar2.Value = 4;
+                data = 7;
+            }
+            else if (trackBar2.Value >= 2)
+            {
+                trackBar2.Value = 2;
+                data = 8;
+            }
+            else if (trackBar2.Value >= 1)
+            {
+                trackBar2.Value = 1;
+                data = 9;
+            }
+
+
+            Send(CMD_SETMAXPWR);
+            Send(data);
 
 		}
 

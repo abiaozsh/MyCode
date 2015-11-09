@@ -66,7 +66,7 @@ int main(void) {
   UCSR0A = 0;
   UCSR0B = _BV(TXEN0) | _BV(RXEN0) | _BV(TXCIE0) | _BV(RXCIE0);
   UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);
-  UBRR0 = 8;//115200
+  UBRR0 = 3;//250000
   
   sei();
   uint8_t oldval = PIND & _BV(4);
