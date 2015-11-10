@@ -131,22 +131,20 @@ namespace WindowsFormsApplication1
 			g = Graphics.FromImage(bmp);
 			pictureBox1.Image = bmp;
 		}
-		const byte CMD_FORCE = 20;  /*on/off        */
 
-		const byte CMD_SENDDATA1Xa = 10;  /*0~255       1x*/
-		const byte CMD_SENDDATA1Xb = 11;  /*256~511     1x*/
-		const byte CMD_SENDDATA2X = 12;  /*512~1023    2x*/
-		const byte CMD_SENDDATA4X = 13;  /*1024~2047   4x*/
-		const byte CMD_SENDDATA8X = 14;  /*2048~4095   8x*/
-		const byte CMD_SENDDATA16X = 15;  /*4096~8191  16x*/
-		const byte CMD_SENDDATA32X = 16;  /*8192~16383 32x*/
-		const byte CMD_START = 20;  /*on/off        */
-		const byte CMD_STOP = 25;
-		const byte CMD_SETMAXPWR = 30;
-		const byte CMD_LINEUP = 40;
-		const byte CMD_PITCH = 50;  /*PITCH          */
-		const byte CMD_REVERSE = 60;  /*REVERSE        */
-
+		const byte CMD_SENDDATA1Xa = 1; /* 0~255 1x */
+		const byte CMD_SENDDATA1Xb = 2; /* 256~511 1x */
+		const byte CMD_SENDDATA2X = 3; /* 512~1023 2x */
+		const byte CMD_SENDDATA4X = 4; /* 1024~2047 4x */
+		const byte CMD_SENDDATA8X = 5; /* 2048~4095 8x */
+		const byte CMD_SENDDATA16X = 6; /* 4096~8191 16x */
+		const byte CMD_START = 7; /* on/off */
+		const byte CMD_STOP = 8;
+		const byte CMD_SETMAXPWR = 9;
+		const byte CMD_LINEUP = 10;
+		const byte CMD_PITCH = 11; /* PITCH */
+		const byte CMD_REVERSE = 12; /* REVERSE */
+		const byte CMD_SETCPU = 13;
 
 		int targetSpeed;
 		private void trackBar1_Scroll(object sender, EventArgs e)
@@ -336,61 +334,84 @@ namespace WindowsFormsApplication1
 
 		private void trackBar2_Scroll(object sender, EventArgs e)
 		{
-            byte data = 0;
-            if (trackBar2.Value == 256)
-            {
-                trackBar2.Value = 256;
-                data = 0;
-            }
-            else if (trackBar2.Value >= 192)
-            {
-                trackBar2.Value = 192;
-                data = 1;
-            }
-            else if (trackBar2.Value >= 128)
-            {
-                trackBar2.Value = 128;
-                data = 2;
-            }
-            else if (trackBar2.Value >= 64)
-            {
-                trackBar2.Value = 64;
-                data = 3;
-            }
-            else if (trackBar2.Value >= 32)
-            {
-                trackBar2.Value = 32;
-                data = 4;
-            }
-            else if (trackBar2.Value >= 16)
-            {
-                trackBar2.Value = 16;
-                data = 5;
-            }
-            else if (trackBar2.Value >= 8)
-            {
-                trackBar2.Value = 8;
-                data = 6;
-            }
-            else if (trackBar2.Value >= 4)
-            {
-                trackBar2.Value = 4;
-                data = 7;
-            }
-            else if (trackBar2.Value >= 2)
-            {
-                trackBar2.Value = 2;
-                data = 8;
-            }
-            else if (trackBar2.Value >= 1)
-            {
-                trackBar2.Value = 1;
-                data = 9;
-            }
+			byte data = 0;
+			if (trackBar2.Value == 256)
+			{
+				trackBar2.Value = 256;
+				data = 0;
+			}
+			else if (trackBar2.Value >= 224)
+			{
+				trackBar2.Value = 224;
+				data = 1;
+			}
+			else if (trackBar2.Value >= 192)
+			{
+				trackBar2.Value = 192;
+				data = 2;
+			}
+			else if (trackBar2.Value >= 160)
+			{
+				trackBar2.Value = 160;
+				data = 3;
+			}
+			else if (trackBar2.Value >= 128)
+			{
+				trackBar2.Value = 128;
+				data = 4;
+			}
+			else if (trackBar2.Value >= 96)
+			{
+				trackBar2.Value = 96;
+				data = 5;
+			}
+			else if (trackBar2.Value >= 64)
+			{
+				trackBar2.Value = 64;
+				data = 6;
+			}
+			else if (trackBar2.Value >= 32)
+			{
+				trackBar2.Value = 32;
+				data = 7;
+			}
+			else if (trackBar2.Value >= 16)
+			{
+				trackBar2.Value = 16;
+				data = 8;
+			}
+			else if (trackBar2.Value >= 8)
+			{
+				trackBar2.Value = 8;
+				data = 9;
+			}
+			else if (trackBar2.Value >= 4)
+			{
+				trackBar2.Value = 4;
+				data = 10;
+			}
+			else if (trackBar2.Value >= 2)
+			{
+				trackBar2.Value = 2;
+				data = 11;
+			}
+			else
+			{
+				trackBar2.Value = 1;
+				data = 12;
+			}
 
+			this.Text = trackBar2.Value.ToString();
 
-            Send(CMD_SETMAXPWR);
-            Send(data);
+			Send(CMD_SETMAXPWR);
+			Send(data);
+
+		}
+
+		private void button4_Click(object sender, EventArgs e)
+		{
+			Send(CMD_SETCPU);
+			Send(byte.Parse(textBox2.Text));
 
 		}
 

@@ -8,13 +8,13 @@
 #define drDAT (PINA & _BV(7)) /*DAT*/
 #define drCLK (PINA & _BV(6)) /*DAT*/
 
-#define CPUFree ;/*DDRB &= ~_BV(3)*/ //free¡¡µ∆
-#define CPUBusy ;/*DDRB |= _BV(3) */ //busy∞µµ∆
+#define CPUFree DDRB |= _BV(3) ;/**/ //free¡¡µ∆
+#define CPUBusy DDRB &= ~_BV(3);/**/ //busy∞µµ∆
 #define STAOn   ;/*DDRB |= _BV(3) */
 #define STAOff  ;/*DDRB &= ~_BV(3)*/
 #define PWROn   ;/*DDRB |= _BV(3) */
 #define PWROff  ;/*DDRB &= ~_BV(3)*/
-#define RPMFlip DDRB ^= _BV(3);/**/
+#define RPMFlip ;/*DDRB ^= _BV(3)*/
 
 //2 1 0
 //5 4 3 2 1 0
@@ -74,7 +74,7 @@ volatile uint8_t Switch = 0;
 volatile uint8_t Step = 0;
 volatile uint16_t TargetRPM = 500;
 volatile uint8_t FStart = 0;
-volatile uint8_t MaxPower = 64;
+volatile uint8_t MaxPower = 4;
 volatile uint8_t Pitch = 1;
 
 uint8_t Status = 0;//0 halt ,1 running, 2 starting
@@ -140,8 +140,7 @@ int main(void) {
         uint8_t valbase = DigitReadBaseVal[tempStep];
         uint8_t drMask = DigitRead[tempStep];
         
-        uint16_t temp;
-        temp = (rpm>>1);
+        uint16_t temp = (rpm>>1);
         CPUFree;
         while(currTick<temp);
         while((PIN3I&drMask)==valbase);
@@ -162,7 +161,6 @@ int main(void) {
   }
 }
 
-
 ISR(TIM1_COMPA_vect){
   PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
 }
@@ -174,33 +172,58 @@ uint16_t _MaxPower(uint16_t val)
     case 0://256
       return val;
       break;
-    case 1://192
-      return (val>>1)+(val>>2);
+    case 1://224
+      return (val>>1)+(val>>2)+(val>>3);
       break;
-    case 2://128
-      return (val>>1);
+    case 2://192
+      return (val>>1)+(val>>2)         ;
       break;
-    case 3://64
-      return (val>>2);
+    case 3://160
+      return (val>>1)         +(val>>3);
       break;
-    case 4://32
-      return (val>>3);
+    case 4://128
+      return (val>>1)                  ;
       break;
-    case 5://16
-      return (val>>4);
+    case 5://96
+      return          (val>>2)+(val>>3);
       break;
-    case 6://8
-      return (val>>5);
+    case 6://64
+      return          (val>>2)         ;
       break;
-    case 7://4
-      return (val>>6);
+    case 7://32
+      return                   (val>>3);
       break;
-    case 8://2
-      return (val>>7);
+    case 8://16
+      return                           (val>>4);
       break;
-    case 9://2
-      return (val>>8);
+    case 9://8
+      return                           (val>>5);
       break;
+    case 10://4
+      return                           (val>>6);
+      break;
+    case 11://2
+      return                           (val>>7);
+      break;
+    case 12://2
+      return                           (val>>8);
+      break;
+  }
+  return val;
+}
+
+void StartUpCountAdd()
+{
+  if(rpm < StartRpm)
+  {
+    StartUpCount++;
+    rpms[rpmsIdx] = rpm;
+    rpmsIdx++;
+    rpmsIdx&=7;
+  }
+  else
+  {
+    StartUpCount = 0;
   }
 }
 
@@ -230,7 +253,7 @@ void adj() {
       avgrpm+=rpms[i--];i&=7;//4 2
       avgrpm+=rpms[i--];i&=7;//5 2
       avgrpm+=rpms[i--];i&=7;//6 2
-      avgrpm+=rpms[i];//7 2
+      avgrpm+=rpms[i--];i&=7;//7 2
       avgrpm>>=2;
 
       uint16_t TempTargetRPM = TargetRPM;
@@ -248,7 +271,7 @@ void adj() {
         {
           AccuPower += diff;
         }
-        NextPower = ((diff)<<2)+(AccuPower>>8);
+        NextPower = (diff<<2)+(AccuPower>>8);
       }
       else//little bit fast
       {
@@ -272,20 +295,10 @@ void adj() {
   }
   else
   {
+    NextPower = _MaxPower(rpm);
     if(FStart)
     {
-      NextPower = _MaxPower(rpm);
-      if(rpm < StartRpm)
-      {
-        StartUpCount++;
-        rpms[rpmsIdx] = rpm;
-        rpmsIdx++;
-        rpmsIdx&=7;
-      }
-      else
-      {
-        StartUpCount = 0;
-      }
+      StartUpCountAdd();
       if(StartUpCount>60)
       {
         FStart = 1;
@@ -296,40 +309,62 @@ void adj() {
     }
     else
     {
-      NextPower = 0;
-      if(rpm < StartRpm && rpm > (StartRpm>>3))
-      {
-        StartUpCount++;
-        rpms[rpmsIdx] = rpm;
-        rpmsIdx++;
-        rpmsIdx&=7;
-      }
-      else
-      {
-        StartUpCount = 0;
-      }
+      StartUpCountAdd();
       if(StartUpCount>20)
       {
         Status = 1;
         STAOn;
-        NextPower = _MaxPower(rpm);
+      }
+      else
+      {
+        NextPower = 0;
       }
     }
 	}
 }
 
-#define CMD_SENDDATA1Xa   10  /*0~255       1x */
-#define CMD_SENDDATA1Xb   11  /*256~511     1x */
-#define CMD_SENDDATA2X    12  /*512~1023    2x */
-#define CMD_SENDDATA4X    13  /*1024~2047   4x */
-#define CMD_SENDDATA8X    14  /*2048~4095   8x */
-#define CMD_SENDDATA16X   15  /*4096~8191  16x */
-#define CMD_START         20  /*START          */
-#define CMD_STOP          25  /*STOP           */
-#define CMD_SETMAXPWR     30  /*set max power  */
-#define CMD_LINEUP        40  /*LINEUP         */
-#define CMD_PITCH         50  /*PITCH          */
-#define CMD_REVERSE       60  /*REVERSE        */
+//#define CMD_SENDDATA1Xa   10  /*0~255       1x */
+//#define CMD_SENDDATA1Xb   11  /*256~511     1x */
+//#define CMD_SENDDATA2X    12  /*512~1023    2x */
+//#define CMD_SENDDATA4X    13  /*1024~2047   4x */
+//#define CMD_SENDDATA8X    14  /*2048~4095   8x */
+//#define CMD_SENDDATA16X   15  /*4096~8191  16x */
+//#define CMD_START         20  /*START          */
+//#define CMD_STOP          25  /*STOP           */
+//#define CMD_SETMAXPWR     30  /*set max power  */
+//#define CMD_LINEUP        40  /*LINEUP         */
+//#define CMD_PITCH         50  /*PITCH          */
+//#define CMD_REVERSE       60  /*REVERSE        */
+//#define CMD_SETCPU        70  /*SETCPU         */
+
+#define CMD_SENDDATA1Xa   1  /*0~255       1x */
+#define CMD_SENDDATA1Xb   2  /*256~511     1x */
+#define CMD_SENDDATA2X    3  /*512~1023    2x */
+#define CMD_SENDDATA4X    4  /*1024~2047   4x */
+#define CMD_SENDDATA8X    5  /*2048~4095   8x */
+#define CMD_SENDDATA16X   6  /*4096~8191  16x */
+#define CMD_START         7  /*START          */
+#define CMD_STOP          8  /*STOP           */
+#define CMD_SETMAXPWR     9  /*set max power  */
+#define CMD_LINEUP        10  /*LINEUP         */
+#define CMD_PITCH         11  /*PITCH          */
+#define CMD_REVERSE       12  /*REVERSE        */
+#define CMD_SETCPU        13  /*SETCPU         */
+
+void lineup(uint8_t t)
+{
+  PORT6O = PWR_ON[Step];//CmdPWROn;
+  while(t--)
+  {
+    asm volatile("nop");
+  }
+  PORT6O = 0;//CmdPWRDown;
+  uint16_t t2=3000;
+  while(t2--)
+  {
+    asm volatile("nop");
+  }
+}
 
 ISR(PCINT0_vect){//œ»ÀÕ∏ﬂ£¨∫ÛÀÕµÕ
   //if(drCLK)//…œ…˝—ÿ∂¡»°
@@ -360,6 +395,8 @@ ISR(PCINT0_vect){//œ»ÀÕ∏ﬂ£¨∫ÛÀÕµÕ
         {
           switch(CMD)
           {
+            case 0:
+              break;
             case CMD_SENDDATA1Xa://   10  /*0~255       1x*/
               TargetRPM = TempData;
               break;
@@ -402,29 +439,11 @@ ISR(PCINT0_vect){//œ»ÀÕ∏ﬂ£¨∫ÛÀÕµÕ
               uint16_t j;
               for(i=0;i<TempData;i++)
               {
-                PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
-                for(j=0;j<i;j++)
-                {
-                  asm volatile("nop");
-                }
-                PORT6O = 0;PWROff;//CmdPWRDown;
-                for(j=0;j<3000;j++)
-                {
-                  asm volatile("nop");
-                }
+                lineup(i);
               }
               for(i=TempData;i>0;i--)
               {
-                PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
-                for(j=0;j<i;j++)
-                {
-                  asm volatile("nop");
-                }
-                PORT6O = 0;PWROff;//CmdPWRDown;
-                for(j=0;j<3000;j++)
-                {
-                  asm volatile("nop");
-                }
+                lineup(i);
               }
               PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
               break;
@@ -444,7 +463,10 @@ ISR(PCINT0_vect){//œ»ÀÕ∏ﬂ£¨∫ÛÀÕµÕ
                 DigitReadBaseVal = DigitReadBaseValA;
               }
               break;
-              
+            case CMD_SETCPU:
+                CLKPR = 128;//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
+                CLKPR = TempData;//1/1 //8MHz
+              break;
           }
           CMD = 0;
         }
