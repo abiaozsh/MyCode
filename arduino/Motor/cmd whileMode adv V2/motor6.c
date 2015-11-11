@@ -2,19 +2,17 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
-#define currTick TCNT1
-
 //drA3
 #define drDAT (PINA & _BV(7)) /*DAT*/
 #define drCLK (PINA & _BV(6)) /*DAT*/
 
-#define CPUFree DDRB |= _BV(3) ;/**/ //free亮灯
-#define CPUBusy DDRB &= ~_BV(3);/**/ //busy暗灯
+#define CPUFree ;/*DDRB |= _BV(3) */ //free亮灯
+#define CPUBusy ;/*DDRB &= ~_BV(3)*/ //busy暗灯
 #define STAOn   ;/*DDRB |= _BV(3) */
 #define STAOff  ;/*DDRB &= ~_BV(3)*/
 #define PWROn   ;/*DDRB |= _BV(3) */
 #define PWROff  ;/*DDRB &= ~_BV(3)*/
-#define RPMFlip ;/*DDRB ^= _BV(3)*/
+#define RPMFlip DDRB ^= _BV(3);/**/
 
 //2 1 0
 //5 4 3 2 1 0
@@ -70,7 +68,7 @@ uint8_t DigitReadBaseValA[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 uint8_t DigitReadBaseValB[] = {   0,  BP2A,     0,  BP3A,     0,  BP1A};
 uint8_t* volatile DigitReadBaseVal;
 
-volatile uint8_t Switch = 0;
+volatile uint8_t Switch = 1;
 volatile uint8_t Step = 0;
 volatile uint16_t TargetRPM = 500;
 volatile uint8_t FStart = 0;
@@ -101,7 +99,7 @@ int main(void) {
   //初始化定时器 1/8
   TCCR1B = 2;//  1/8	1MHz 1us
   TIMSK1 |= _BV(OCIE1A);
-  //初始化模拟输入
+  //初始化输入
   GIMSK |= _BV(PCIE0);
   PCMSK0 |= _BV(PCINT6);//CLK
 
@@ -120,7 +118,7 @@ int main(void) {
     if(Switch)
     {
       //定时器清零
-      TCNT1 = 0;TIFR1 |= _BV(TOV1);//timer reset //overflow flg reset
+      TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
       Power = NextPower;
       uint8_t tempStep = Step;
       if(Power)
@@ -142,21 +140,21 @@ int main(void) {
         
         uint16_t temp = (rpm>>1);
         CPUFree;
-        while(currTick<temp);
+        while(TCNT1<temp);
         while((PIN3I&drMask)==valbase);
         CPUBusy;
       }
       if(Pitch && !FStart)
       {
-        uint16_t tmp = (avgrpm>>3)+(avgrpm>>2)+currTick;
+        uint16_t tmp = (avgrpm>>3)+(avgrpm>>2)+TCNT1;
         CPUFree;
-        while(currTick<tmp);
+        while(TCNT1<tmp);
         CPUBusy;
       }
       PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
       Step = NextStep[Step];//CmdNextStep;
       //记录当前转速
-      rpm = currTick;
+      rpm = TCNT1;
     }
   }
 }
@@ -367,109 +365,104 @@ void lineup(uint8_t t)
 }
 
 ISR(PCINT0_vect){//先送高，后送低
-  //if(drCLK)//上升沿读取
+  if(TempDataCnt == 8)
   {
+    if(drDAT)//起始位
+    {
+      TempData = 0;
+      TempDataCnt = 0;
+    }
+  }
+  else
+  {
+    TempData <<= 1;
+    if(drDAT)
+    {
+      TempData |= 1;
+    }
+    TempDataCnt++;
     if(TempDataCnt == 8)
     {
-      if(drDAT)//起始位
+      if(CMD == 0)
       {
-        TempData = 0;
-        TempDataCnt = 0;
+        CMD = TempData;
       }
-    }
-    else
-    {
-      TempData <<= 1;
-      if(drDAT)
+      else
       {
-        TempData |= 1;
-      }
-      TempDataCnt++;
-      if(TempDataCnt == 8)
-      {
-        if(CMD == 0)
+        switch(CMD)
         {
-          CMD = TempData;
-        }
-        else
-        {
-          switch(CMD)
+          case CMD_SENDDATA1Xa://   10  /*0~255       1x*/
+            TargetRPM = TempData;
+            break;
+          case CMD_SENDDATA1Xb://   11  /*256~511     1x*/
+            TargetRPM = TempData + 256;
+            break;
+          case CMD_SENDDATA2X://    12  /*512~1023    2x*/
+            TargetRPM = (TempData<<1) + 512;
+            break;
+          case CMD_SENDDATA4X://    13  /*1024~2047   4x*/
+            TargetRPM = (TempData<<2) + 1024;
+            break;
+          case CMD_SENDDATA8X://    14  /*2048~4095   8x*/
+            TargetRPM = (TempData<<3) + 2048;
+            break;
+          case CMD_SENDDATA16X://   15  /*4096~8191  16x*/
+            TargetRPM = (TempData<<4) + 4096;
+            break;
+          case CMD_START:
           {
-            case 0:
-              break;
-            case CMD_SENDDATA1Xa://   10  /*0~255       1x*/
-              TargetRPM = TempData;
-              break;
-            case CMD_SENDDATA1Xb://   11  /*256~511     1x*/
-              TargetRPM = TempData + 256;
-              break;
-            case CMD_SENDDATA2X://    12  /*512~1023    2x*/
-              TargetRPM = (TempData<<1) + 512;
-              break;
-            case CMD_SENDDATA4X://    13  /*1024~2047   4x*/
-              TargetRPM = (TempData<<2) + 1024;
-              break;
-            case CMD_SENDDATA8X://    14  /*2048~4095   8x*/
-              TargetRPM = (TempData<<3) + 2048;
-              break;
-            case CMD_SENDDATA16X://   15  /*4096~8191  16x*/
-              TargetRPM = (TempData<<4) + 4096;
-              break;
-            case CMD_START:
-            {
-              Step = NextStep[Step];//CmdNextStep;
-              PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
-              FStart = TempData;
-              Switch = 1;
-              break;
-            }
-            case CMD_STOP:
-            {
-              PORT6O = 0;PWROff;//CmdPWRDown;
-              Switch = 0;
-              FStart = 0;
-              break;
-            }
-            case CMD_SETMAXPWR:
-              MaxPower = TempData;
-              break;
-            case CMD_LINEUP:
-            {
-              uint8_t i;
-              uint16_t j;
-              for(i=0;i<TempData;i++)
-              {
-                lineup(i);
-              }
-              for(i=TempData;i>0;i--)
-              {
-                lineup(i);
-              }
-              PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-              break;
-            }
-            case CMD_PITCH:
-              Pitch = TempData;
-              break;
-            case CMD_REVERSE:
-              if(TempData)
-              {
-                NextStep = NextStepB;
-                DigitReadBaseVal = DigitReadBaseValB;
-              }
-              else
-              {
-                NextStep = NextStepA;
-                DigitReadBaseVal = DigitReadBaseValA;
-              }
-              break;
-            case CMD_SETCPU:
-                CLKPR = 128;//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
-                CLKPR = TempData;//1/1 //8MHz
-              break;
+            Step = NextStep[Step];//CmdNextStep;
+            PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
+            FStart = TempData;
+            Switch = 1;
+            break;
           }
-          CMD = 0;
+          case CMD_STOP:
+          {
+            PORT6O = 0;PWROff;//CmdPWRDown;
+            Switch = 0;
+            FStart = 0;
+            break;
+          }
+          case CMD_SETMAXPWR:
+            MaxPower = TempData;
+            break;
+          case CMD_LINEUP:
+          {
+            uint8_t i;
+            uint16_t j;
+            for(i=0;i<TempData;i++)
+            {
+              lineup(i);
+            }
+            for(i=TempData;i>0;i--)
+            {
+              lineup(i);
+            }
+            PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
+            break;
+          }
+          case CMD_PITCH:
+            Pitch = TempData;
+            break;
+          case CMD_REVERSE:
+            if(TempData)
+            {
+              NextStep = NextStepB;
+              DigitReadBaseVal = DigitReadBaseValB;
+            }
+            else
+            {
+              NextStep = NextStepA;
+              DigitReadBaseVal = DigitReadBaseValA;
+            }
+            break;
+          case CMD_SETCPU:
+              CLKPR = 128;//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
+              CLKPR = TempData;//1/1 //8MHz
+            break;
         }
+        CMD = 0;
       }
     }
   }

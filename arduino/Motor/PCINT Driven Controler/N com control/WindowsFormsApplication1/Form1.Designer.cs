@@ -44,6 +44,7 @@
 			this.pictureBox1 = new System.Windows.Forms.PictureBox();
 			this.button4 = new System.Windows.Forms.Button();
 			this.textBox2 = new System.Windows.Forms.TextBox();
+			this.button6 = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar2)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -200,11 +201,22 @@
 			this.textBox2.TabIndex = 22;
 			this.textBox2.Text = "0";
 			// 
+			// button6
+			// 
+			this.button6.Location = new System.Drawing.Point(765, 58);
+			this.button6.Name = "button6";
+			this.button6.Size = new System.Drawing.Size(47, 23);
+			this.button6.TabIndex = 24;
+			this.button6.Text = "test";
+			this.button6.UseVisualStyleBackColor = true;
+			this.button6.Click += new System.EventHandler(this.button6_Click_1);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(833, 463);
+			this.Controls.Add(this.button6);
 			this.Controls.Add(this.button4);
 			this.Controls.Add(this.textBox2);
 			this.Controls.Add(this.pictureBox1);
@@ -248,6 +260,7 @@
 		private System.Windows.Forms.PictureBox pictureBox1;
 		private System.Windows.Forms.Button button4;
 		private System.Windows.Forms.TextBox textBox2;
+		private System.Windows.Forms.Button button6;
     }
 }
 

@@ -32,7 +32,7 @@ namespace WindowsFormsApplication1
 				try
 				{
 					//COM4为Arduino使用的串口号，需根据实际情况调整
-					port = new SerialPort("COM4", 250000, Parity.None, 8, StopBits.One);
+					port = new SerialPort("COM4", 9600, Parity.None, 8, StopBits.One);
 					//port = new SerialPort("COM5", 115200, Parity.None, 8, StopBits.One);
 					port.Open();
 					port.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);
@@ -112,14 +112,14 @@ namespace WindowsFormsApplication1
 			}
 			else
 			{
-				try
-				{
-					//COM4为Arduino使用的串口号，需根据实际情况调整
-					port = new SerialPort("COM5", 115200, Parity.None, 8, StopBits.One);
-					port.Open();
-					port.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);
-				}
-				catch { }
+				//try
+				//{
+				//	//COM4为Arduino使用的串口号，需根据实际情况调整
+				//	port = new SerialPort("COM4", 9600, Parity.None, 8, StopBits.One);
+				//	port.Open();
+				//	port.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);
+				//}
+				//catch { }
 			}
 		}
 
@@ -413,6 +413,11 @@ namespace WindowsFormsApplication1
 			Send(CMD_SETCPU);
 			Send(byte.Parse(textBox2.Text));
 
+		}
+
+		private void button6_Click_1(object sender, EventArgs e)
+		{
+			Send(0x55);
 		}
 
 

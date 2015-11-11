@@ -12,7 +12,7 @@
 
 void delay()
 {
-  for(uint16_t i = 0;i< 200;i++)
+  for(uint16_t i = 0;i< 300;i++)
   {
     asm volatile("nop");
   }
@@ -44,7 +44,7 @@ void send(uint8_t val)
 
 volatile uint8_t SendData = 0;
 volatile uint8_t Data;
-
+uint8_t cnt;
 
 int main(void) {
   TCCR1A = 0;
@@ -66,23 +66,27 @@ int main(void) {
   UCSR0A = 0;
   UCSR0B = _BV(TXEN0) | _BV(RXEN0) | _BV(TXCIE0) | _BV(RXCIE0);
   UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);
-  UBRR0 = 3;//250000
+  UBRR0 = 103;//9600
   
   sei();
   uint8_t oldval = PIND & _BV(4);
-  uint16_t sum = 0;
+  uint32_t sum = 0;
   while(true)
   {
     uint8_t val = PIND & _BV(4);
     if(oldval!=val)
     {
-      sum = TCNT1;
+      sum += TCNT1;
       TCNT1=0;
+      cnt++;
       
-      SendData = 1;
-      UDR0 = (uint8_t)sum&0xFF;
-      Data = (uint8_t)(sum>>8)&0xFF;
-      
+      if(cnt==0)
+      {
+        SendData = 1;
+        UDR0 = (uint8_t)(sum>>8)&0xFF;
+        Data = (uint8_t)(sum>>16)&0xFF;
+        sum=0;
+      }
       oldval = val;
     }
   }
@@ -90,6 +94,16 @@ int main(void) {
 
 ISR(USART_RX_vect){
   uint8_t val = UDR0;
+  if(val==0x55)
+  {
+    DDRB|=_BV(5);
+    PORTB|=_BV(5);
+  }
+  else
+  {
+    DDRB&=~_BV(5);
+    PORTB&=~_BV(5);
+  }
   send(val);
 }
 
