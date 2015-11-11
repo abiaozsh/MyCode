@@ -25,6 +25,21 @@ namespace LogTool
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
+			try
+			{
+				slots[0] = new Slot();
+				slots[1] = new Slot();
+				slots[2] = new Slot();
+				slots[3] = new Slot();
+				listBox1.Items.Add(slots[0]);
+				listBox1.Items.Add(slots[1]);
+				listBox1.Items.Add(slots[2]);
+				listBox1.Items.Add(slots[3]);
+			}
+			catch (Exception ex)
+			{
+				ex.ToString();
+			}
 		}
 
 		public void ShowPage(List<Taobao.Mods.ItemList.Data.Auction> data)
@@ -86,7 +101,7 @@ namespace LogTool
 				sw.WriteLine("</td>");
 
 				sw.WriteLine("<td>");
-				sw.WriteLine("<a href='http:" + item.shopcard.shopLink + "' target='_blank'>" + item.nick + "</a>");
+				sw.WriteLine((item.shopcard.isTmall ? "TM " : "") + "<a href='http:" + item.shopLink + "' target='_blank'>" + item.nick + "</a>");
 				sw.WriteLine("</td>");
 
 				sw.WriteLine("</tr>");
@@ -111,10 +126,18 @@ namespace LogTool
 			p.StartInfo = new ProcessStartInfo(newfile);
 			p.Start();
 		}
-		List<Taobao.Mods.ItemList.Data.Auction> List1 = new List<Taobao.Mods.ItemList.Data.Auction>();
-		List<Taobao.Mods.ItemList.Data.Auction> List2 = new List<Taobao.Mods.ItemList.Data.Auction>();
-		List<Taobao.Mods.ItemList.Data.Auction> List3 = new List<Taobao.Mods.ItemList.Data.Auction>();
-		List<Taobao.Mods.ItemList.Data.Auction> List4 = new List<Taobao.Mods.ItemList.Data.Auction>();
+
+		class Slot
+		{
+			public string Title = "";
+			public List<Taobao.Mods.ItemList.Data.Auction> List = new List<Taobao.Mods.ItemList.Data.Auction>();
+			public override string ToString()
+			{
+				return Title;
+			}
+		}
+
+		Slot[] slots = new Slot[4];
 
 		private void button1_Click_1(object sender, EventArgs e)
 		{
@@ -122,11 +145,11 @@ namespace LogTool
 			List<Taobao.Mods.ItemList.Data.Auction> l2 = new List<Taobao.Mods.ItemList.Data.Auction>();
 			List<Taobao.Mods.ItemList.Data.Auction> l3 = new List<Taobao.Mods.ItemList.Data.Auction>();
 			List<Taobao.Mods.ItemList.Data.Auction> l4 = new List<Taobao.Mods.ItemList.Data.Auction>();
-			
-			l1.AddRange(List1);
-			l2.AddRange(List2);
-			l3.AddRange(List3);
-			l4.AddRange(List4);
+
+			if (slots[0] != null) l1.AddRange(slots[0].List);
+			if (slots[1] != null) l2.AddRange(slots[1].List);
+			if (slots[2] != null) l3.AddRange(slots[2].List);
+			if (slots[3] != null) l4.AddRange(slots[3].List);
 
 			l1 = filt(l1, l2, l3, l4);
 			l2 = filt(l2, l1, l3, l4);
@@ -139,17 +162,18 @@ namespace LogTool
 			ShowPage(l4);
 		}
 
-		private void proc(string n, string t, List<Taobao.Mods.ItemList.Data.Auction> l)
+		private void proc(string n, string t, string h, string lo, List<Taobao.Mods.ItemList.Data.Auction> l)
 		{
 			if (!string.IsNullOrEmpty(n))
 			{
 				for (int i = 0; i < int.Parse(n); i++)
 				{
-					var tb = Request(t, i);
+					var tb = Request(t, i, h, lo);
 					l.AddRange(tb.mods.itemlist.data.auctions);
 				}
 			}
 		}
+
 		private List<Taobao.Mods.ItemList.Data.Auction> filt(List<Taobao.Mods.ItemList.Data.Auction> l, List<Taobao.Mods.ItemList.Data.Auction> l1, List<Taobao.Mods.ItemList.Data.Auction> l2, List<Taobao.Mods.ItemList.Data.Auction> l3)
 		{
 			List<Taobao.Mods.ItemList.Data.Auction> ret = new List<Taobao.Mods.ItemList.Data.Auction>();
@@ -247,11 +271,12 @@ namespace LogTool
 							public string view_fee;
 							public string item_loc;
 							public string comment_count;
+							public string shopLink;
 							public Shopcard shopcard;
 
 							public class Shopcard
 							{
-								public string shopLink;
+								public bool isTmall;
 							}
 						}
 					}
@@ -259,21 +284,27 @@ namespace LogTool
 			}
 		}
 
-		public Taobao Request(string search, int no)
+		public Taobao Request(string search, int no, string h, string l)
 		{
 			this.Text = search + " " + no;
 			string _url;
+			string filter = "";
+			if (!string.IsNullOrEmpty(h) || !string.IsNullOrEmpty(l))
+			{
+				filter = "&filter=reserve_price[" + l + "," + h + "]";
+			}
+			string sort = "&sort=sale-desc";
 			if (no == 0)
 			{
-				_url = "https://s.taobao.com/search?q=" + search + "&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20151105&ie=utf8";
+				_url = "https://s.taobao.com/search?q=" + search + "&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20151105&ie=utf8" + filter + sort;
 			}
 			else if (no == 1)
 			{
-				_url = "https://s.taobao.com/search?q=" + search + "&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20151105&ie=utf8&bcoffset=0&p4plefttype=3%2C1&p4pleftnum=1%2C3&s=44";
+				_url = "https://s.taobao.com/search?q=" + search + "&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20151105&ie=utf8&bcoffset=0&p4plefttype=3%2C1&p4pleftnum=1%2C3&s=44" + filter + sort;
 			}
 			else
 			{
-				_url = "https://s.taobao.com/search?q=" + search + "&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20151105&ie=utf8&bcoffset=-3&p4plefttype=3%2C1&p4pleftnum=1%2C3&ntoffset=-3&s=" + (no * 44);
+				_url = "https://s.taobao.com/search?q=" + search + "&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20151105&ie=utf8&bcoffset=-3&p4plefttype=3%2C1&p4pleftnum=1%2C3&ntoffset=-3&s=" + (no * 44) + filter + sort;
 			}
 			System.Net.HttpWebRequest Myrq = (System.Net.HttpWebRequest)System.Net.HttpWebRequest.Create(_url);
 			System.Net.HttpWebResponse myrp = (System.Net.HttpWebResponse)Myrq.GetResponse();
@@ -309,22 +340,17 @@ namespace LogTool
 
 		private void button2_Click(object sender, EventArgs e)
 		{
-			proc(n1.Text, t1.Text, List1);
-		}
-
-		private void button3_Click(object sender, EventArgs e)
-		{
-			proc(n2.Text, t2.Text, List2);
-		}
-
-		private void button4_Click(object sender, EventArgs e)
-		{
-			proc(n3.Text, t3.Text, List3);
-		}
-
-		private void button5_Click(object sender, EventArgs e)
-		{
-			proc(n4.Text, t4.Text, List4);
+			var item = (Slot)listBox1.SelectedItem;
+			if (item != null)
+			{
+				proc(pages.Text, search.Text, priceHi.Text, priceLo.Text, item.List);
+				item.Title = pages.Text + "," + search.Text + "," + priceHi.Text + "," + priceLo.Text;
+				listBox1.Items.Clear();
+				listBox1.Items.Add(slots[0]);
+				listBox1.Items.Add(slots[1]);
+				listBox1.Items.Add(slots[2]);
+				listBox1.Items.Add(slots[3]);
+			}
 		}
 
 	}
