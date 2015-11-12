@@ -68,7 +68,6 @@ uint8_t DigitReadBaseValA[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 uint8_t DigitReadBaseValB[] = {   0,  BP2A,     0,  BP3A,     0,  BP1A};
 uint8_t* volatile DigitReadBaseVal;
 
-volatile uint8_t Switch = 1;
 volatile uint8_t Step = 0;
 volatile uint16_t TargetRPM = 500;
 volatile uint8_t FStart = 0;
@@ -115,47 +114,44 @@ int main(void) {
   //主循环
   for(;;) 
   {
-    if(Switch)
+    //定时器清零
+    TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
+    Power = NextPower;
+    uint8_t tempStep = Step;
+    if(Power)
     {
-      //定时器清零
-      TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
-      Power = NextPower;
-      uint8_t tempStep = Step;
-      if(Power)
-      {
-        PORT6O = PWR_ON[tempStep];PWROn;//CmdPWROn;
-      }
-      else
-      {
-        PORT6O = PWR_OFF[tempStep];PWROff;//CmdPWROff;
-      }
-      OCR1A = Power;
-      //转速调整
-      adj();
-      RPMFlip;
-      //等待过零
-      {
-        uint8_t valbase = DigitReadBaseVal[tempStep];
-        uint8_t drMask = DigitRead[tempStep];
-        
-        uint16_t temp = (rpm>>1);
-        CPUFree;
-        while(TCNT1<temp);
-        while((PIN3I&drMask)==valbase);
-        CPUBusy;
-      }
-      if(Pitch && !FStart)
-      {
-        uint16_t tmp = (avgrpm>>3)+(avgrpm>>2)+TCNT1;
-        CPUFree;
-        while(TCNT1<tmp);
-        CPUBusy;
-      }
-      PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-      Step = NextStep[Step];//CmdNextStep;
-      //记录当前转速
-      rpm = TCNT1;
+      PORT6O = PWR_ON[tempStep];PWROn;//CmdPWROn;
     }
+    else
+    {
+      PORT6O = PWR_OFF[tempStep];PWROff;//CmdPWROff;
+    }
+    OCR1A = Power;
+    //转速调整
+    adj();
+    RPMFlip;
+    //等待过零
+    {
+      uint8_t valbase = DigitReadBaseVal[tempStep];
+      uint8_t drMask = DigitRead[tempStep];
+      
+      uint16_t temp = (rpm>>1);
+      CPUFree;
+      while(TCNT1<temp);
+      while((PIN3I&drMask)==valbase);
+      CPUBusy;
+    }
+    if(Pitch && !FStart)
+    {
+      uint16_t tmp = (avgrpm>>3)+(avgrpm>>2)+TCNT1;
+      CPUFree;
+      while(TCNT1<tmp);
+      CPUBusy;
+    }
+    PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
+    Step = NextStep[Step];//CmdNextStep;
+    //记录当前转速
+    rpm = TCNT1;
   }
 }
 
@@ -206,6 +202,8 @@ uint16_t _MaxPower(uint16_t val)
     case 12://2
       return                           (val>>8);
       break;
+    default:
+      return 0;
   }
   return val;
 }
@@ -342,12 +340,11 @@ void adj() {
 #define CMD_SENDDATA8X    5  /*2048~4095   8x */
 #define CMD_SENDDATA16X   6  /*4096~8191  16x */
 #define CMD_START         7  /*START          */
-#define CMD_STOP          8  /*STOP           */
-#define CMD_SETMAXPWR     9  /*set max power  */
-#define CMD_LINEUP        10  /*LINEUP         */
-#define CMD_PITCH         11  /*PITCH          */
-#define CMD_REVERSE       12  /*REVERSE        */
-#define CMD_SETCPU        13  /*SETCPU         */
+#define CMD_SETMAXPWR     8  /*set max power  */
+#define CMD_LINEUP        9  /*LINEUP         */
+#define CMD_PITCH         10  /*PITCH          */
+#define CMD_REVERSE       11  /*REVERSE        */
+#define CMD_SETCPU        12  /*SETCPU         */
 
 void lineup(uint8_t t)
 {
@@ -414,14 +411,6 @@ ISR(PCINT0_vect){//先送高，后送低
             Step = NextStep[Step];//CmdNextStep;
             PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
             FStart = TempData;
-            Switch = 1;
-            break;
-          }
-          case CMD_STOP:
-          {
-            PORT6O = 0;PWROff;//CmdPWRDown;
-            Switch = 0;
-            FStart = 0;
             break;
           }
           case CMD_SETMAXPWR:

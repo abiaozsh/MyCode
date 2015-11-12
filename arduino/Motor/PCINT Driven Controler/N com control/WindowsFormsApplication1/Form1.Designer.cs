@@ -63,9 +63,9 @@
 			// 
 			// button1
 			// 
-			this.button1.Location = new System.Drawing.Point(12, 84);
+			this.button1.Location = new System.Drawing.Point(296, 56);
 			this.button1.Name = "button1";
-			this.button1.Size = new System.Drawing.Size(75, 23);
+			this.button1.Size = new System.Drawing.Size(39, 23);
 			this.button1.TabIndex = 10;
 			this.button1.Text = "flip";
 			this.button1.UseVisualStyleBackColor = true;
@@ -78,7 +78,7 @@
 			// 
 			// button2
 			// 
-			this.button2.Location = new System.Drawing.Point(403, 58);
+			this.button2.Location = new System.Drawing.Point(14, 92);
 			this.button2.Name = "button2";
 			this.button2.Size = new System.Drawing.Size(75, 23);
 			this.button2.TabIndex = 11;
@@ -88,7 +88,7 @@
 			// 
 			// button3
 			// 
-			this.button3.Location = new System.Drawing.Point(484, 58);
+			this.button3.Location = new System.Drawing.Point(14, 121);
 			this.button3.Name = "button3";
 			this.button3.Size = new System.Drawing.Size(75, 23);
 			this.button3.TabIndex = 11;
@@ -98,7 +98,7 @@
 			// 
 			// textBox3
 			// 
-			this.textBox3.Location = new System.Drawing.Point(577, 87);
+			this.textBox3.Location = new System.Drawing.Point(491, 57);
 			this.textBox3.Name = "textBox3";
 			this.textBox3.Size = new System.Drawing.Size(71, 21);
 			this.textBox3.TabIndex = 13;
@@ -106,7 +106,7 @@
 			// 
 			// button5
 			// 
-			this.button5.Location = new System.Drawing.Point(577, 58);
+			this.button5.Location = new System.Drawing.Point(414, 56);
 			this.button5.Name = "button5";
 			this.button5.Size = new System.Drawing.Size(71, 23);
 			this.button5.TabIndex = 14;
@@ -119,7 +119,7 @@
 			this.checkBox2.AutoSize = true;
 			this.checkBox2.Checked = true;
 			this.checkBox2.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkBox2.Location = new System.Drawing.Point(403, 91);
+			this.checkBox2.Location = new System.Drawing.Point(95, 92);
 			this.checkBox2.Name = "checkBox2";
 			this.checkBox2.Size = new System.Drawing.Size(84, 16);
 			this.checkBox2.TabIndex = 17;
@@ -139,7 +139,7 @@
 			// 
 			this.checkBox1.AutoSize = true;
 			this.checkBox1.CheckAlign = System.Drawing.ContentAlignment.TopLeft;
-			this.checkBox1.Location = new System.Drawing.Point(403, 113);
+			this.checkBox1.Location = new System.Drawing.Point(185, 92);
 			this.checkBox1.Name = "checkBox1";
 			this.checkBox1.Size = new System.Drawing.Size(66, 16);
 			this.checkBox1.TabIndex = 18;
@@ -157,7 +157,7 @@
             "12",
             "15",
             "18"});
-			this.comboBox1.Location = new System.Drawing.Point(296, 58);
+			this.comboBox1.Location = new System.Drawing.Point(341, 57);
 			this.comboBox1.Name = "comboBox1";
 			this.comboBox1.Size = new System.Drawing.Size(46, 20);
 			this.comboBox1.TabIndex = 19;
@@ -167,17 +167,17 @@
 			// 
 			this.trackBar2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.trackBar2.Location = new System.Drawing.Point(-1, 135);
+			this.trackBar2.Location = new System.Drawing.Point(95, 121);
 			this.trackBar2.Maximum = 256;
 			this.trackBar2.Name = "trackBar2";
-			this.trackBar2.Size = new System.Drawing.Size(834, 42);
+			this.trackBar2.Size = new System.Drawing.Size(718, 42);
 			this.trackBar2.TabIndex = 20;
 			this.trackBar2.Value = 64;
 			this.trackBar2.Scroll += new System.EventHandler(this.trackBar2_Scroll);
 			// 
 			// pictureBox1
 			// 
-			this.pictureBox1.Location = new System.Drawing.Point(12, 183);
+			this.pictureBox1.Location = new System.Drawing.Point(13, 169);
 			this.pictureBox1.Name = "pictureBox1";
 			this.pictureBox1.Size = new System.Drawing.Size(800, 256);
 			this.pictureBox1.TabIndex = 21;
@@ -185,7 +185,7 @@
 			// 
 			// button4
 			// 
-			this.button4.Location = new System.Drawing.Point(677, 58);
+			this.button4.Location = new System.Drawing.Point(583, 57);
 			this.button4.Name = "button4";
 			this.button4.Size = new System.Drawing.Size(71, 23);
 			this.button4.TabIndex = 23;
@@ -195,7 +195,7 @@
 			// 
 			// textBox2
 			// 
-			this.textBox2.Location = new System.Drawing.Point(677, 87);
+			this.textBox2.Location = new System.Drawing.Point(660, 56);
 			this.textBox2.Name = "textBox2";
 			this.textBox2.Size = new System.Drawing.Size(71, 21);
 			this.textBox2.TabIndex = 22;
@@ -203,7 +203,7 @@
 			// 
 			// button6
 			// 
-			this.button6.Location = new System.Drawing.Point(765, 58);
+			this.button6.Location = new System.Drawing.Point(749, 56);
 			this.button6.Name = "button6";
 			this.button6.Size = new System.Drawing.Size(47, 23);
 			this.button6.TabIndex = 24;

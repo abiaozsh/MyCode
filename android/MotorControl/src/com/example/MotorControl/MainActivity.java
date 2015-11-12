@@ -25,12 +25,11 @@ public class MainActivity extends Activity {
 	final byte CMD_SENDDATA8X = 5; /* 2048~4095 8x */
 	final byte CMD_SENDDATA16X = 6; /* 4096~8191 16x */
 	final byte CMD_START = 7; /* on/off */
-	final byte CMD_STOP = 8;
-	final byte CMD_SETMAXPWR = 9;
-	final byte CMD_LINEUP = 10;
-	final byte CMD_PITCH = 11; /* PITCH */
-	final byte CMD_REVERSE = 12; /* REVERSE */
-	final byte CMD_SETCPU = 13;
+	final byte CMD_SETMAXPWR = 8;
+	final byte CMD_LINEUP = 9;
+	final byte CMD_PITCH = 10; /* PITCH */
+	final byte CMD_REVERSE = 11; /* REVERSE */
+	final byte CMD_SETCPU = 12;
 
 	TextView tv1;
 	TextView tv2;
@@ -65,12 +64,13 @@ public class MainActivity extends Activity {
 			Button b2 = (Button) findViewById(R.id.button2);
 			b2.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
-					com.Send(CMD_STOP);
-					com.Send(0);
-					tv1.setText("stop");
+					com.Send(CMD_SETMAXPWR);
+					com.Send(255);
+					s2.setProgress(0);
+					tv2.setText("0");
 				}
 			});
-			
+
 			Button b3 = (Button) findViewById(R.id.button3);
 			b3.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
@@ -80,8 +80,7 @@ public class MainActivity extends Activity {
 					tv1.setText("test end");
 				}
 			});
-			
-			
+
 			Button b4 = (Button) findViewById(R.id.button4);
 			b4.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
@@ -90,78 +89,64 @@ public class MainActivity extends Activity {
 					tv1.setText("Init end");
 				}
 			});
-			
-			
+
 			s1 = (SeekBar) findViewById(R.id.seekBar1);
 			s1.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 
 				@Override
 				public void onProgressChanged(SeekBar arg0, int arg1,
 						boolean arg2) {
-					
+
 					int v = s1.getProgress();
 					int cmd = 0;
 					int val = 0;
-					if (v < 256)
-					{
+					if (v < 256) {
 						cmd = CMD_SENDDATA1Xa;
 						val = (v);
-					}
-					else if (v < 512)
-					{
+					} else if (v < 512) {
 						cmd = CMD_SENDDATA1Xb;
 						val = ((v - 256));
-					}
-					else if (v < 768)
-					{
+					} else if (v < 768) {
 						cmd = CMD_SENDDATA2X;
 						val = ((v - 512));
-					}
-					else if (v < 1024)
-					{
+					} else if (v < 1024) {
 						cmd = (CMD_SENDDATA4X);
 						val = (((v - 768)));
-					}
-					else if (v < 1280)
-					{
+					} else if (v < 1280) {
 						cmd = (CMD_SENDDATA8X);
 						val = (((v - 1024)));
-					}
-					else if (v < 1536)
-					{
+					} else if (v < 1536) {
 						cmd = (CMD_SENDDATA16X);
 						val = (((v - 1280)));
-					}
-					else
-					{
+					} else {
 					}
 					com.Send(cmd);
 					com.Send(val);
 					int vv = val;
-					int targetSpeed=0;
-					switch ((byte)cmd)
-					{
-						case CMD_SENDDATA1Xa://   10  /*0~255       1x*/
-							targetSpeed = vv;
-							break;
-						case CMD_SENDDATA1Xb://   11  /*256~511     1x*/
-							targetSpeed = vv + 256;
-							break;
-						case CMD_SENDDATA2X://    12  /*512~1023    2x*/
-							targetSpeed = (vv << 1) + 512;
-							break;
-						case CMD_SENDDATA4X://    13  /*1024~2047   4x*/
-							targetSpeed = (vv << 2) + 1024;
-							break;
-						case CMD_SENDDATA8X://    14  /*2048~4095   8x*/
-							targetSpeed = (vv << 3) + 2048;
-							break;
-						case CMD_SENDDATA16X://   15  /*4096~8191  16x*/
-							targetSpeed = (vv << 4) + 4096;
-							break;
+					int targetSpeed = 0;
+					switch ((byte) cmd) {
+					case CMD_SENDDATA1Xa:// 10 /*0~255 1x*/
+						targetSpeed = vv;
+						break;
+					case CMD_SENDDATA1Xb:// 11 /*256~511 1x*/
+						targetSpeed = vv + 256;
+						break;
+					case CMD_SENDDATA2X:// 12 /*512~1023 2x*/
+						targetSpeed = (vv << 1) + 512;
+						break;
+					case CMD_SENDDATA4X:// 13 /*1024~2047 4x*/
+						targetSpeed = (vv << 2) + 1024;
+						break;
+					case CMD_SENDDATA8X:// 14 /*2048~4095 8x*/
+						targetSpeed = (vv << 3) + 2048;
+						break;
+					case CMD_SENDDATA16X:// 15 /*4096~8191 16x*/
+						targetSpeed = (vv << 4) + 4096;
+						break;
 					}
 
-					tv1.setText(Integer.toString(val)+","+Integer.toString(targetSpeed));
+					tv1.setText(Integer.toString(val) + ","
+							+ Integer.toString(targetSpeed));
 
 				}
 
@@ -182,71 +167,48 @@ public class MainActivity extends Activity {
 						boolean arg2) {
 					byte data = 0;
 					int val = 0;
-					if (s2.getProgress() == 256)
-					{
+					if (s2.getProgress() == 256) {
 						val = 256;
 						data = 0;
-					}
-					else if (s2.getProgress() >= 224)
-					{
+					} else if (s2.getProgress() >= 224) {
 						val = 224;
 						data = 1;
-					}
-					else if (s2.getProgress() >= 192)
-					{
+					} else if (s2.getProgress() >= 192) {
 						val = 192;
 						data = 2;
-					}
-					else if (s2.getProgress() >= 160)
-					{
+					} else if (s2.getProgress() >= 160) {
 						val = 160;
 						data = 3;
-					}
-					else if (s2.getProgress() >= 128)
-					{
+					} else if (s2.getProgress() >= 128) {
 						val = 128;
 						data = 4;
-					}
-					else if (s2.getProgress() >= 96)
-					{
+					} else if (s2.getProgress() >= 96) {
 						val = 96;
 						data = 5;
-					}
-					else if (s2.getProgress() >= 64)
-					{
+					} else if (s2.getProgress() >= 64) {
 						val = 64;
 						data = 6;
-					}
-					else if (s2.getProgress() >= 32)
-					{
+					} else if (s2.getProgress() >= 32) {
 						val = 32;
 						data = 7;
-					}
-					else if (s2.getProgress() >= 16)
-					{
+					} else if (s2.getProgress() >= 16) {
 						val = 16;
 						data = 8;
-					}
-					else if (s2.getProgress() >= 8)
-					{
+					} else if (s2.getProgress() >= 8) {
 						val = 8;
 						data = 9;
-					}
-					else if (s2.getProgress() >= 4)
-					{
+					} else if (s2.getProgress() >= 4) {
 						val = 4;
 						data = 10;
-					}
-					else if (s2.getProgress() >= 2)
-					{
+					} else if (s2.getProgress() >= 2) {
 						val = 2;
 						data = 11;
-					}
-					else
-					{
+					} else {
 						val = 1;
 						data = 12;
 					}
+					
+					s2.setProgress(val);
 
 					com.Send(CMD_SETMAXPWR);
 					com.Send(data);

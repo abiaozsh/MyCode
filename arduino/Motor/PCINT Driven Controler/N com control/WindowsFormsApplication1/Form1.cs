@@ -139,12 +139,11 @@ namespace WindowsFormsApplication1
 		const byte CMD_SENDDATA8X = 5; /* 2048~4095 8x */
 		const byte CMD_SENDDATA16X = 6; /* 4096~8191 16x */
 		const byte CMD_START = 7; /* on/off */
-		const byte CMD_STOP = 8;
-		const byte CMD_SETMAXPWR = 9;
-		const byte CMD_LINEUP = 10;
-		const byte CMD_PITCH = 11; /* PITCH */
-		const byte CMD_REVERSE = 12; /* REVERSE */
-		const byte CMD_SETCPU = 13;
+		const byte CMD_SETMAXPWR = 8;
+		const byte CMD_LINEUP = 9;
+		const byte CMD_PITCH = 10; /* PITCH */
+		const byte CMD_REVERSE = 11; /* REVERSE */
+		const byte CMD_SETCPU = 12;
 
 		int targetSpeed;
 		private void trackBar1_Scroll(object sender, EventArgs e)
@@ -295,8 +294,10 @@ namespace WindowsFormsApplication1
 
 		private void button3_Click(object sender, EventArgs e)
 		{
-			Send(CMD_STOP);
-			Send(0);
+			trackBar2.Value = 0;
+			this.Text = "0";
+			Send(CMD_SETMAXPWR);
+			Send(255);
 		}
 
 		private void button5_Click(object sender, EventArgs e)
