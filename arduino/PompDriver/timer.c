@@ -17,6 +17,7 @@ uint8_t GetIR();
   
 volatile uint8_t status = 0;//off
 
+uint16_t times[4];
 
 // 1 2 3 4 switch in
 // 5 IRin
@@ -38,6 +39,11 @@ int main(void)
   TCCR1C = 0;
   TIMSK1 = 0;
 
+  times[0] = 10000;
+  times[1] = 10000;
+  times[2] = 10000;
+  times[3] = 10000;
+  
   //DDRA = _BV(0);
   DDRB = 3;
   //PORTA |= 0x1E;//DEBUG
@@ -51,7 +57,12 @@ int main(void)
     //PINA |= 1;
     if(val!=lastVal)
     {
-      if(currTick>50)
+      times[3] = times[2];
+      times[2] = times[1];
+      times[1] = times[0];
+      times[0] = currTick;
+      
+      if(times[0]>50)
       {
         if(status==0)
         {
@@ -66,7 +77,7 @@ int main(void)
           LONGOFF;
         }
       }
-      else//双击
+      if(times[0]<50 && times[1]<50 && times[2]>50)
       {
         status = 2;
         LONGON;
@@ -74,7 +85,7 @@ int main(void)
       }
       TCNT1 = 0;TIFR1 |= _BV(TOV1);
       lastVal = val;
-      while(currTick<10);
+      while(currTick<5);
     }
   }
 }
