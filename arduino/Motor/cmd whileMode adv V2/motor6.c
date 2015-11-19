@@ -319,20 +319,6 @@ void adj() {
 	}
 }
 
-//#define CMD_SENDDATA1Xa   10  /*0~255       1x */
-//#define CMD_SENDDATA1Xb   11  /*256~511     1x */
-//#define CMD_SENDDATA2X    12  /*512~1023    2x */
-//#define CMD_SENDDATA4X    13  /*1024~2047   4x */
-//#define CMD_SENDDATA8X    14  /*2048~4095   8x */
-//#define CMD_SENDDATA16X   15  /*4096~8191  16x */
-//#define CMD_START         20  /*START          */
-//#define CMD_STOP          25  /*STOP           */
-//#define CMD_SETMAXPWR     30  /*set max power  */
-//#define CMD_LINEUP        40  /*LINEUP         */
-//#define CMD_PITCH         50  /*PITCH          */
-//#define CMD_REVERSE       60  /*REVERSE        */
-//#define CMD_SETCPU        70  /*SETCPU         */
-
 #define CMD_SENDDATA1Xa   1  /*0~255       1x */
 #define CMD_SENDDATA1Xb   2  /*256~511     1x */
 #define CMD_SENDDATA2X    3  /*512~1023    2x */

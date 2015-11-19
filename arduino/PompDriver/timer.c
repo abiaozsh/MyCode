@@ -77,11 +77,20 @@ int main(void)
           LONGOFF;
         }
       }
-      if(times[0]<50 && times[1]<50 && times[2]>50)
+      else
       {
-        status = 2;
-        LONGON;
-        AUTOOFF;
+        if(times[0]<50 && times[1]<50 && times[2]>50)
+        {
+          status = 2;
+          LONGON;
+          AUTOOFF;
+        }
+        else
+        {
+          status = 0;
+          AUTOOFF;
+          LONGOFF;
+        }
       }
       TCNT1 = 0;TIFR1 |= _BV(TOV1);
       lastVal = val;
