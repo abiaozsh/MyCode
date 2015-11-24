@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsFormsApplication1", "WindowsFormsApplication1\WindowsFormsApplication1.csproj", "{A406ECC1-930A-4437-A410-37B635DC2E50}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Uploader", "Uploader\Uploader.csproj", "{FF3C864E-AD71-496A-AD08-9C235FA92FE0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A406ECC1-930A-4437-A410-37B635DC2E50}.Debug|x86.ActiveCfg = Debug|x86
+		{A406ECC1-930A-4437-A410-37B635DC2E50}.Debug|x86.Build.0 = Debug|x86
+		{A406ECC1-930A-4437-A410-37B635DC2E50}.Release|x86.ActiveCfg = Release|x86
+		{A406ECC1-930A-4437-A410-37B635DC2E50}.Release|x86.Build.0 = Release|x86
+		{FF3C864E-AD71-496A-AD08-9C235FA92FE0}.Debug|x86.ActiveCfg = Debug|x86
+		{FF3C864E-AD71-496A-AD08-9C235FA92FE0}.Debug|x86.Build.0 = Debug|x86
+		{FF3C864E-AD71-496A-AD08-9C235FA92FE0}.Release|x86.ActiveCfg = Release|x86
+		{FF3C864E-AD71-496A-AD08-9C235FA92FE0}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
