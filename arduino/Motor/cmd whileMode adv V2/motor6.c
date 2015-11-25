@@ -14,6 +14,8 @@
 #define PWROff  ;/*DDRB &= ~_BV(3)*/
 #define RPMFlip DDRB ^= _BV(3);/**/
 
+#define HISPEED 300
+
 //2 1 0
 //5 4 3 2 1 0
 #define PORT6O PORTA
@@ -141,7 +143,7 @@ int main(void) {
       while((PIN3I&drMask)==valbase);
       CPUBusy;
     }
-    if(Pitch && !FStart)
+    if((rpm>HISPEED) && Pitch && !FStart)
     {
       uint16_t tmp = (avgrpm>>3)+(avgrpm>>2)+TCNT1;
       CPUFree;
@@ -234,58 +236,72 @@ void adj() {
     }
     else
     {
-      rpms[rpmsIdx] = rpm;
-      avgrpm=0;
-
-      uint8_t i = rpmsIdx;
-      rpmsIdx++;
-      rpmsIdx&=7;
-      avgrpm+=rpms[i--];i&=7;//0 8
-      avgrpm+=rpms[i--];i&=7;//1 8
-      rpms[i]>>=1;
-      avgrpm+=rpms[i--];i&=7;//2 4
-      avgrpm+=rpms[i--];i&=7;//3 4
-      rpms[i]>>=1;
-      avgrpm+=rpms[i--];i&=7;//4 2
-      avgrpm+=rpms[i--];i&=7;//5 2
-      avgrpm+=rpms[i--];i&=7;//6 2
-      avgrpm+=rpms[i--];i&=7;//7 2
-      avgrpm>>=2;
-
-      uint16_t TempTargetRPM = TargetRPM;
-
-      if(avgrpm>TempTargetRPM)//little bit slow
+      if(rpm>HISPEED)
       {
-        uint16_t diff = (avgrpm-TempTargetRPM);//2
-        uint32_t threshold = rpm;
-        threshold<<=8;
-        if(AccuPower+diff>threshold)//2048000
+        rpms[rpmsIdx] = rpm;
+        avgrpm=0;
+
+        uint8_t i = rpmsIdx;
+        rpmsIdx++;
+        rpmsIdx&=7;
+        avgrpm+=rpms[i--];i&=7;//0 8
+        avgrpm+=rpms[i--];i&=7;//1 8
+        rpms[i]>>=1;
+        avgrpm+=rpms[i--];i&=7;//2 4
+        avgrpm+=rpms[i--];i&=7;//3 4
+        rpms[i]>>=1;
+        avgrpm+=rpms[i--];i&=7;//4 2
+        avgrpm+=rpms[i--];i&=7;//5 2
+        avgrpm+=rpms[i--];i&=7;//6 2
+        avgrpm+=rpms[i--];i&=7;//7 2
+        avgrpm>>=2;
+
+        uint16_t TempTargetRPM = TargetRPM;
+
+        if(avgrpm>TempTargetRPM)//little bit slow
         {
-          AccuPower = threshold;//2048000
+          uint16_t diff = (avgrpm-TempTargetRPM);//2
+          uint32_t threshold = rpm;
+          threshold<<=8;
+          if(AccuPower+diff>threshold)//2048000
+          {
+            AccuPower = threshold;//2048000
+          }
+          else
+          {
+            AccuPower += diff;
+          }
+          NextPower = (diff<<2)+(AccuPower>>8);
+        }
+        else//little bit fast
+        {
+          uint16_t diff = (TempTargetRPM-avgrpm);//
+          if(AccuPower<diff)
+          {
+            AccuPower = 0;
+          }
+          else
+          {
+            AccuPower -= diff;
+          }
+          NextPower = AccuPower>>8;
+        }
+        uint16_t avgrpmMaxPower = _MaxPower(avgrpm);
+        if(NextPower > avgrpmMaxPower)
+        {
+          NextPower = avgrpmMaxPower;
+        }
+      }
+      else
+      {
+        if(rpm>TargetRPM)
+        {
+          NextPower = 1000;
         }
         else
         {
-          AccuPower += diff;
+          NextPower = 0;
         }
-        NextPower = (diff<<2)+(AccuPower>>8);
-      }
-      else//little bit fast
-      {
-        uint16_t diff = (TempTargetRPM-avgrpm);//
-        if(AccuPower<diff)
-        {
-          AccuPower = 0;
-        }
-        else
-        {
-          AccuPower -= diff;
-        }
-        NextPower = AccuPower>>8;
-      }
-      uint16_t avgrpmMaxPower = _MaxPower(avgrpm);
-      if(NextPower > avgrpmMaxPower)
-      {
-        NextPower = avgrpmMaxPower;
       }
     }
   }
