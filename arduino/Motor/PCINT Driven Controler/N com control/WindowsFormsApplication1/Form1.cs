@@ -140,7 +140,8 @@ namespace WindowsFormsApplication1
 		const byte CMD_SENDDATA16X = 6; /* 4096~8191 16x */
 		const byte CMD_START = 7; /* on/off */
 		const byte CMD_SETMAXPWR = 8;
-		const byte CMD_LINEUP = 9;
+		//const byte CMD_LINEUP = 9;
+		const byte CMD_SAVESET = 9;
 		const byte CMD_PITCH = 10; /* PITCH */
 		const byte CMD_REVERSE = 11; /* REVERSE */
 		const byte CMD_SETCPU = 12;
@@ -302,8 +303,8 @@ namespace WindowsFormsApplication1
 
 		private void button5_Click(object sender, EventArgs e)
 		{
-			Send(CMD_LINEUP);
-			Send(byte.Parse(textBox3.Text));
+			//Send(CMD_LINEUP);
+			//Send(byte.Parse(textBox3.Text));
 		}
 
 		private void button6_Click(object sender, EventArgs e)
@@ -411,14 +412,28 @@ namespace WindowsFormsApplication1
 
 		private void button4_Click(object sender, EventArgs e)
 		{
-			Send(CMD_SETCPU);
-			Send(byte.Parse(textBox2.Text));
-
 		}
 
 		private void button6_Click_1(object sender, EventArgs e)
 		{
 			Send(0x55);
+		}
+
+		private void button7_Click(object sender, EventArgs e)
+		{
+			Send(CMD_SAVESET);
+			Send(0);
+		}
+
+		private void checkBox3_CheckedChanged(object sender, EventArgs e)
+		{
+			Send(CMD_SETCPU);
+			Send(checkBox3.Checked ? (byte)1 : (byte)0);
+		}
+
+		private void textBox2_TextChanged(object sender, EventArgs e)
+		{
+
 		}
 
 

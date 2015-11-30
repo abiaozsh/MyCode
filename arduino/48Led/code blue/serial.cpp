@@ -2,20 +2,6 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
-/*
-#define CUR_TIMING TIMING_16M_TCCR1B_1_115200
-#define TCCR1B_Value 1
-
-PROGMEM prog_uint16_t TIMING_16M_TCCR1B_1_115200[] = {  138,  277,  416,  555,  694,  833,  972, 1111, 1250, 1388};
-
-#define DDR_Send DDRD
-#define PORT_Send PORTD
-#define BIT_Send _BV(1)
-#define DDR_Recv DDRD
-#define PIN_Recv PIND
-#define BIT_Recv _BV(0)
-*/
-
 //d0,d1 serial
 //d2~d7 6 io 74hc595
 #define DDR_595_6 DDRD
@@ -35,6 +21,7 @@ PROGMEM prog_uint16_t TIMING_16M_TCCR1B_1_115200[] = {  138,  277,  416,  555,  
 #define PORT_PNP1_OFF PORTC &= ~_BV(3)
 
 #define DDR_PNP2_ON   DDRC  |=  _BV(2)
+#define DDR_PNP2_OFF  DDRC  &= ~_BV(2)
 #define PORT_PNP2_ON  PORTC |=  _BV(2)
 #define PORT_PNP2_OFF PORTC &= ~_BV(2)
 
@@ -45,7 +32,6 @@ PROGMEM prog_uint16_t TIMING_16M_TCCR1B_1_115200[] = {  138,  277,  416,  555,  
 #define DDR_LED2_ON   DDRB  |=  _BV(5)
 #define PORT_LED2_ON  PORTB |=  _BV(5)
 #define PORT_LED2_OFF PORTB &= ~_BV(5)
-
 
 PROGMEM  prog_uint8_t DitherTable[] = {
 0xff,0x7f,0xbf,0x3f,0xdf,0x5f,0x9f,0x1f,0xef,0x6f,0xaf,0x2f,0xcf,0x4f,0x8f,0x0f,
@@ -96,59 +82,6 @@ volatile uint8_t buff0[48];
 volatile uint8_t buff1[48];
 volatile uint8_t buffidx = 0;
 
-/*
-void SerialSend(uint8_t val){
-	cli();
-	TCCR1B = TCCR1B_Value;
-	TCNT1 = 0;
-	uint16_t timing;
-	PORT_Send &= ~BIT_Send;timing = pgm_read_word_near(CUR_TIMING);while(TCNT1<timing);//startbit
-	uint8_t chkbit = 0x01;
-	for(uint8_t i = 1;i<=8;i++)
-	{
-		if(val&chkbit){PORT_Send |= BIT_Send;}else{PORT_Send &= ~BIT_Send;}chkbit<<=1;timing = pgm_read_word_near(CUR_TIMING + i);while(TCNT1<timing);
-	}
-	PORT_Send |= BIT_Send;timing = pgm_read_word_near(CUR_TIMING + 9);while(TCNT1<timing);
-	sei();
-}
-
-PROGMEM prog_uint32_t num10s[] = {
-1000000000,
-100000000,
-10000000,
-1000000,
-100000,
-10000,
-1000,
-100,
-10,
-1,
-};
-
-void SendInt(uint32_t val){
-	uint32_t num = val;
-	for(uint8_t idx = 0; idx < 10 ; idx++)
-	{
-		uint8_t outNum = 0;
-		uint32_t CmpNum = pgm_read_dword_near(num10s + idx);
-		for(uint8_t i = 0; i < 10 ; i++)
-		{
-			if(num>=CmpNum)
-			{
-				num -= CmpNum;
-				outNum++;
-			}
-			else
-			{
-				break;
-			}
-		}
-		SerialSend('0' + outNum);
-	}
-}
-*/
-
-
 void SendLine();
 void Conv();
 
@@ -157,7 +90,7 @@ int main(void) {
   DDR_595_6 = 0xFC;//B11111100;
   DDR_CLK_ON;
   DDR_OE_ON;
-  DDR_PNP1_ON;
+  PORT_PNP2_OFF;//DDR_PNP1_ON;
 
   //刷新定时器初始化
   //2 0 1 0 CTC OCRA Immediate MAX
@@ -177,8 +110,8 @@ int main(void) {
   UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);
   UBRR0 = 7;//115200
   
-  PORT_PNP1_ON;///PORT_PNP1_OFF
-  PORT_OE_ON;///PORT_OE_OFF
+  DDR_PNP2_OFF;//PORT_PNP1_ON;
+  PORT_OE_ON;
   
   AltBuff = buff0;
   currBuff = buff1;
@@ -217,10 +150,10 @@ ISR(USART_RX_vect){
 
 //TIMER0_OVF_vect
 ISR(TIMER0_COMPA_vect){
-  PORT_PNP1_ON;
+  DDR_PNP2_OFF;//PORT_PNP1_ON;
   PORT_OE_OFF;
-  PORT_OE_ON;///PORT_PNP1_OFF;//关闭输出,开始传输
-  PORT_PNP1_OFF;
+  PORT_OE_ON;
+  DDR_PNP2_ON;//PORT_PNP1_OFF;
   uint8_t data[8];
   
   CurrentDT = pgm_read_byte_near(DitherTable + Count256);
@@ -261,24 +194,4 @@ ISR(TIMER0_COMPA_vect){
   PORT_595_6 = data7;PORT_CLK_ON;PORT_CLK_OFF;
   PORT_CLK_ON; //shift clock up
   PORT_CLK_OFF; //shift clock down
-  
-  /*
-	UCSR0B = 0;//not forget turnoff usart0 on mega328p
-	DDR_Send |= BIT_Send;
-	DDR_Recv &= ~BIT_Recv;
-	PORT_Send |= BIT_Send;
-	
-	uint8_t time = TCNT0;
-	TIMSK0 = 0;
-	cli();
-	while(true)
-	{
-		SendInt(time);
-		SerialSend('\r');
-		SerialSend('\n');
-		for(long i=0;i<300000;i++)
-		{
-		volatile long vv=0;vv++;
-		}
-	}*/
 }

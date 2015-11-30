@@ -220,7 +220,7 @@ uint16_t _MaxPower(uint16_t val)
   switch(MaxPower)
   {
     case 0://256
-      return val;
+      return 2000;
       break;
     case 1://224
       return (val>>1)+(val>>2)+(val>>3);
@@ -397,25 +397,10 @@ void adj() {
 #define CMD_SENDDATA16X   6  /*4096~8191  16x */
 #define CMD_START         7  /*START          */
 #define CMD_SETMAXPWR     8  /*set max power  */
-#define CMD_LINEUP        9  /*LINEUP/savesetting */
-#define CMD_PITCH         10  /*PITCH          */
-#define CMD_REVERSE       11  /*REVERSE        */
-#define CMD_SETCPU        12  /*SETCPU         */
-
-//void lineup(uint8_t t)
-//{
-//  PORT6O = PWR_ON[Step];//CmdPWROn;
-//  while(t--)
-//  {
-//    asm volatile("nop");
-//  }
-//  PORT6O = 0;//CmdPWRDown;
-//  uint16_t t2=3000;
-//  while(t2--)
-//  {
-//    asm volatile("nop");
-//  }
-//}
+#define CMD_SAVESET       9  /*savesetting    */
+#define CMD_PITCH         10  /*PITCH         */
+#define CMD_REVERSE       11  /*REVERSE       */
+#define CMD_SETCPU        12  /*SETCPU        */
 
 ISR(PCINT0_vect){//先送高，后送低
   if(TempDataCnt == 8)
@@ -472,19 +457,8 @@ ISR(PCINT0_vect){//先送高，后送低
           case CMD_SETMAXPWR:
             MaxPower = TempData;
             break;
-          case CMD_LINEUP:
+          case CMD_SAVESET:
           {
-            //uint8_t i;
-            //uint16_t j;
-            //for(i=0;i<TempData;i++)
-            //{
-            //  lineup(i);
-            //}
-            //for(i=TempData;i>0;i--)
-            //{
-            //  lineup(i);
-            //}
-            //PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
             EEPROM_write(PITCH,Pitch);
             EEPROM_write(MAXPOWER,MaxPower);
             EEPROM_write(TARGETRPMHI,(uint8_t)((TargetRPM>>8)&0xFF));
@@ -509,10 +483,6 @@ ISR(PCINT0_vect){//先送高，后送低
               DigitReadBaseVal = DigitReadBaseValA;
             }
             break;
-          //case CMD_SETCPU:
-          //    CLKPR = 128;//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
-          //    CLKPR = TempData;//1/1 //8MHz
-          //  break;
           case CMD_SETCPU:
               CPUCalc = TempData;
             break;

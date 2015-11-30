@@ -29,7 +29,7 @@ namespace dsound
                 if (port == null)
                 {
                     //COM4为Arduino使用的串口号，需根据实际情况调整
-                    port = new SerialPort("COM6", 250000, Parity.None, 8, StopBits.One);
+                    port = new SerialPort("COM4", 250000, Parity.None, 8, StopBits.One);
                     port.Open();
                 }
             }
@@ -38,7 +38,7 @@ namespace dsound
                 MessageBox.Show("error");
             }
 
-            Bitmap p1 = (Bitmap)Bitmap.FromFile(@"d:\无标题.png");
+			Bitmap p1 = (Bitmap)Bitmap.FromFile(@"..\bitmap.png");
 
             byte[] data = new byte[1000000];
 
@@ -55,7 +55,7 @@ namespace dsound
                 for (int i = 0; i < p1.Width; i++)
                 {
                     Send(data, i * 48);
-                    Thread.Sleep(2);
+                    Thread.Sleep(200);
                 }
             }
 
