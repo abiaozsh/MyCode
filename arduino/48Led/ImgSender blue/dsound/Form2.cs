@@ -38,7 +38,7 @@ namespace dsound
 				MessageBox.Show("error");
 			}
 
-			Bitmap p1 = (Bitmap)Bitmap.FromFile(@"..\bitmap.png");
+			Bitmap p1 = (Bitmap)Bitmap.FromFile(@"..\..\..\..\bitmap.png");
 
 			byte[] data = new byte[1000000];
 
@@ -50,6 +50,7 @@ namespace dsound
 				}
 			}
 
+            Thread.Sleep(1000);
 			while (true)
 			{
 				for (int i = 0; i < p1.Width; i++)
@@ -74,7 +75,7 @@ namespace dsound
 		private void Send(byte[] data, int idx)
 		{
 			byte[] light = new byte[1];
-			light[0] = 1;
+			light[0] = 180;
 			if (port != null && port.IsOpen)
 			{
 				port.Write(data, idx, 48);

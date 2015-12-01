@@ -95,10 +95,11 @@ int main(void) {
   //刷新定时器初始化
   //2 0 1 0 CTC OCRA Immediate MAX
   TCCR0A = 0;//_BV(WGM01);//Initial Value 0 0 0 0 0 0 0 0
-  TCCR0B = 2;
+  TCCR0B = 3;
   TCNT0 = 0;
-  OCR0A = 1;//60周期 30us
-  TIMSK0 = _BV(OCIE0A) | _BV(TOIE0);
+  OCR0A = 128;//60周期 30us
+  OCR0B = 130;//60周期 30us
+  TIMSK0 = _BV(OCIE0B) | _BV(OCIE0A) | _BV(TOIE0);
 
   TCCR1A = 0;
   TCCR1B = 5;//1/1024 (16000000/1024=15625)tick/s
@@ -132,7 +133,7 @@ ISR(USART_RX_vect){
     tempBuff = currBuff;
     currBuff = AltBuff;
     AltBuff = tempBuff;
-    OCR0A = val;
+    OCR0B = val;
   }
 }
 
@@ -151,9 +152,6 @@ ISR(USART_RX_vect){
 }
 
 ISR(TIMER0_OVF_vect){
-  //亮
-  DDR_PNP2_ON;//PORT_PNP1_ON;
-  PORT_OE_OFF;//(on)
   
   //输出
   {
@@ -198,7 +196,14 @@ ISR(TIMER0_OVF_vect){
 
 //TIMER0_OVF_vect
 ISR(TIMER0_COMPA_vect){
+  //亮
+  PORT_OE_OFF;//(on)
+  DDR_PNP2_ON;//PORT_PNP1_ON;
+}
+
+//TIMER0_OVF_vect
+ISR(TIMER0_COMPB_vect){
   //暗
-  PORT_OE_ON;//(off)
   DDR_PNP2_OFF;//PORT_PNP1_OFF;
+  PORT_OE_ON;//(off)
 }
