@@ -61,7 +61,7 @@ PROGMEM  prog_uint8_t AddressTable[] = {
 26,21,32,15,38, 9,
 44, 3, 4,47,10,41,
 16,35,22,29,28,23,
-34,17,40,11,46, 5
+34,17,40,11,46, 5, 48
 };
 
 volatile uint8_t Count256;
@@ -78,8 +78,8 @@ volatile uint8_t data7;
 
 volatile uint8_t* volatile currBuff;//正在写入
 volatile uint8_t* volatile AltBuff;//显示用
-volatile uint8_t buff0[48];
-volatile uint8_t buff1[48];
+volatile uint8_t buff0[49];
+volatile uint8_t buff1[49];
 volatile uint8_t buffidx = 0;
 
 void SendLine();
@@ -94,23 +94,23 @@ int main(void) {
 
   //刷新定时器初始化
   //2 0 1 0 CTC OCRA Immediate MAX
-  TCCR0A = _BV(WGM01);//Initial Value 0 0 0 0 0 0 0 0
+  TCCR0A = 0;//_BV(WGM01);//Initial Value 0 0 0 0 0 0 0 0
   TCCR0B = 2;
   TCNT0 = 0;
-  OCR0A = 60;//60周期 30us
-  TIMSK0 = _BV(OCIE0A);
+  OCR0A = 1;//60周期 30us
+  TIMSK0 = _BV(OCIE0A) | _BV(TOIE0);
 
   TCCR1A = 0;
   TCCR1B = 5;//1/1024 (16000000/1024=15625)tick/s
   TCCR1C = 0;
   TIMSK1 = 0;
 
-  UCSR0A = 2;
-  UCSR0B = 128+16+8;//_BV(TXEN0) | _BV(RXEN0) | _BV(RXCIE0);
+  UCSR0A = _BV(U2X0);//U2Xn=1
+  UCSR0B = _BV(RXCIE0) | _BV(RXEN0);
   UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);
-  UBRR0 = 7;//115200
+  UBRR0 = 7;//250000
   
-  DDR_PNP2_OFF;//PORT_PNP1_ON;
+  DDR_PNP2_ON;//PORT_PNP1_ON;
   PORT_OE_ON;
   
   AltBuff = buff0;
@@ -122,15 +122,17 @@ int main(void) {
 }
 
 ISR(USART_RX_vect){
-  currBuff[pgm_read_byte_near(AddressTable+buffidx)] = UDR0;
+  uint8_t val = UDR0;
+  currBuff[pgm_read_byte_near(AddressTable+buffidx)] = val;
   buffidx++;
-  if(buffidx==48)
+  if(buffidx==49)
   {
     buffidx = 0;
     volatile uint8_t* tempBuff;
     tempBuff = currBuff;
     currBuff = AltBuff;
     AltBuff = tempBuff;
+    OCR0A = val;
   }
 }
 
@@ -148,50 +150,55 @@ ISR(USART_RX_vect){
   ::"m" (num));\
 }
 
+ISR(TIMER0_OVF_vect){
+  //亮
+  DDR_PNP2_ON;//PORT_PNP1_ON;
+  PORT_OE_OFF;//(on)
+  
+  //输出
+  {
+    uint8_t data[8];
+    CurrentDT = pgm_read_byte_near(DitherTable + Count256);
+    asm volatile("push r26");//16 17
+    asm volatile("push r27");
+    asm volatile("push r16");
+    asm volatile("push r17");
+    asm volatile("push r18");
+    asm volatile("lds r26,AltBuff");
+    asm volatile("lds r27,(AltBuff)+1");
+    asm volatile("lds r16,CurrentDT");
+    proc(data7);
+    proc(data6);
+    proc(data5);
+    proc(data4);
+    proc(data3);
+    proc(data2);
+    proc(data1);
+    proc(data0);
+    asm volatile("pop r18");
+    asm volatile("pop r17");
+    asm volatile("pop r16");
+    asm volatile("pop r27");
+    asm volatile("pop r26");
+    Count256++;
+    PORT_CLK_OFF;
+    PORT_595_6 = data0;PORT_CLK_ON;PORT_CLK_OFF;
+    PORT_595_6 = data1;PORT_CLK_ON;PORT_CLK_OFF;
+    PORT_595_6 = data2;PORT_CLK_ON;PORT_CLK_OFF;
+    PORT_595_6 = data3;PORT_CLK_ON;PORT_CLK_OFF;
+    PORT_595_6 = data4;PORT_CLK_ON;PORT_CLK_OFF;
+    PORT_595_6 = data5;PORT_CLK_ON;PORT_CLK_OFF;
+    PORT_595_6 = data6;PORT_CLK_ON;PORT_CLK_OFF;
+    PORT_595_6 = data7;PORT_CLK_ON;PORT_CLK_OFF;
+    PORT_CLK_ON; //shift clock up
+    PORT_CLK_OFF; //shift clock down
+  }
+
+}
+
 //TIMER0_OVF_vect
 ISR(TIMER0_COMPA_vect){
-  DDR_PNP2_OFF;//PORT_PNP1_ON;
-  PORT_OE_OFF;
-  PORT_OE_ON;
-  DDR_PNP2_ON;//PORT_PNP1_OFF;
-  uint8_t data[8];
-  
-  CurrentDT = pgm_read_byte_near(DitherTable + Count256);
-  asm volatile("push r26");//16 17
-  asm volatile("push r27");
-  asm volatile("push r16");
-  asm volatile("push r17");
-  asm volatile("push r18");
-
-  asm volatile("lds r26,AltBuff");
-  asm volatile("lds r27,(AltBuff)+1");
-  asm volatile("lds r16,CurrentDT");
-  
-  proc(data7);
-  proc(data6);
-  proc(data5);
-  proc(data4);
-  proc(data3);
-  proc(data2);
-  proc(data1);
-  proc(data0);
-  
-  asm volatile("pop r18");
-  asm volatile("pop r17");
-  asm volatile("pop r16");
-  asm volatile("pop r27");
-  asm volatile("pop r26");
-  Count256++;
-  
-  PORT_CLK_OFF;
-  PORT_595_6 = data0;PORT_CLK_ON;PORT_CLK_OFF;
-  PORT_595_6 = data1;PORT_CLK_ON;PORT_CLK_OFF;
-  PORT_595_6 = data2;PORT_CLK_ON;PORT_CLK_OFF;
-  PORT_595_6 = data3;PORT_CLK_ON;PORT_CLK_OFF;
-  PORT_595_6 = data4;PORT_CLK_ON;PORT_CLK_OFF;
-  PORT_595_6 = data5;PORT_CLK_ON;PORT_CLK_OFF;
-  PORT_595_6 = data6;PORT_CLK_ON;PORT_CLK_OFF;
-  PORT_595_6 = data7;PORT_CLK_ON;PORT_CLK_OFF;
-  PORT_CLK_ON; //shift clock up
-  PORT_CLK_OFF; //shift clock down
+  //暗
+  PORT_OE_ON;//(off)
+  DDR_PNP2_OFF;//PORT_PNP1_OFF;
 }
