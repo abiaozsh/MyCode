@@ -11,6 +11,8 @@
 #define CPUBusy ;/*DDRB &= ~_BV(3)*/ //busy暗灯
 #define STAOn   DDRB |= _BV(3) ;/**/
 #define STAOff  DDRB &= ~_BV(3);/**/
+#define FSTOn   ;/*DDRB |= _BV(3) */
+#define FSTOff  ;/*DDRB &= ~_BV(3)*/
 #define PWROn   ;/*DDRB |= _BV(3) */
 #define PWROff  ;/*DDRB &= ~_BV(3)*/
 #define RPMFlip ;/*DDRB ^= _BV(3)*/
@@ -49,7 +51,6 @@ volatile uint8_t CPUCalc = 1;
 volatile uint8_t noskip = 1;
 volatile uint8_t Status = 0;//0 halt ,1 running, 2 starting
 
-uint8_t StartUpCount=0;
 uint16_t rpm;
 uint16_t Power = 0;
 uint16_t NextPower = 0;
@@ -128,7 +129,7 @@ int main(void) {
   for(;;) 
   {
     //定时器清零
-    TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
+    TCNT1 = 0;
     Power = NextPower;
     uint8_t tempStep = Step;
     if(Power)
@@ -141,6 +142,25 @@ int main(void) {
     }
     OCR1A = Power;
     //转速调整
+    if(CPUCalc){
+      rpms[rpmsIdx] = rpm;
+      avgrpm=0;
+
+      uint8_t i = rpmsIdx;
+      rpmsIdx++;
+      rpmsIdx&=7;
+      avgrpm+=rpms[i--];i&=7;//0 8
+      avgrpm+=rpms[i--];i&=7;//1 8
+      rpms[i]>>=1;
+      avgrpm+=rpms[i--];i&=7;//2 4
+      avgrpm+=rpms[i--];i&=7;//3 4
+      rpms[i]>>=1;
+      avgrpm+=rpms[i--];i&=7;//4 2
+      avgrpm+=rpms[i--];i&=7;//5 2
+      avgrpm+=rpms[i--];i&=7;//6 2
+      avgrpm+=rpms[i--];i&=7;//7 2
+      avgrpm>>=2;
+    }
     adj();
     RPMFlip;
     //等待过零
@@ -155,7 +175,7 @@ int main(void) {
       while(((PIN3I&drMask)==valbase) && noskip);
       CPUBusy;
     }
-    if(Pitch && !FStart)
+    if(Pitch && !FStart)//
     {
       uint16_t tempcalc;
       if(CPUCalc)
@@ -236,31 +256,12 @@ void adj() {
   {
     if(rpm>StartRpm)//too slow, halt
     {
-      StartUpCount = 0;
       Status = 0;STAOff;
     }
     else
     {
       if(CPUCalc)
       {
-        rpms[rpmsIdx] = rpm;
-        avgrpm=0;
-
-        uint8_t i = rpmsIdx;
-        rpmsIdx++;
-        rpmsIdx&=7;
-        avgrpm+=rpms[i--];i&=7;//0 8
-        avgrpm+=rpms[i--];i&=7;//1 8
-        rpms[i]>>=1;
-        avgrpm+=rpms[i--];i&=7;//2 4
-        avgrpm+=rpms[i--];i&=7;//3 4
-        rpms[i]>>=1;
-        avgrpm+=rpms[i--];i&=7;//4 2
-        avgrpm+=rpms[i--];i&=7;//5 2
-        avgrpm+=rpms[i--];i&=7;//6 2
-        avgrpm+=rpms[i--];i&=7;//7 2
-        avgrpm>>=2;
-
         uint16_t TempTargetRPM = TargetRPM;
 
         if(avgrpm>TempTargetRPM)//little bit slow
@@ -312,28 +313,13 @@ void adj() {
   }
   else
   {
-    NextPower = _MaxPower(rpm);
-    if(!FStart)
+    if(FStart)
     {
-      if(rpm < StartRpm)
-      {
-        StartUpCount++;
-        rpms[rpmsIdx] = rpm;
-        rpmsIdx++;
-        rpmsIdx&=7;
-      }
-      else
-      {
-        StartUpCount = 0;
-      }
-      if(StartUpCount>20)
-      {
-        Status = 1;STAOn;
-      }
-      else
-      {
-        NextPower = 0;
-      }
+      NextPower = _MaxPower(rpm);
+    }
+    else
+    {
+      NextPower = 0;
     }
 	}
 }
@@ -400,13 +386,14 @@ ISR(PCINT0_vect){//先送高，后送低
           case CMD_START:
           {
             noskip = 0;
-            FStart = 1;
+            FStart = 1;FSTOn;
             break;
           }
           case CMD_NOSTART:
           {
-            FStart = 0;
+            FStart = 0;FSTOff;
             Status = 1;STAOn;
+            break;
           }
           case CMD_SETMAXPWR:
             MaxPower = TempData;

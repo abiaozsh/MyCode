@@ -98,7 +98,7 @@ int main(void) {
       while(((PIN3I&drMask)==valbase) && noskip);
       CPUBusy;
     }
-    if(!FStart)
+    if(!drP6)
     {
       uint16_t tempcalc;
       tempcalc = rpm;
@@ -141,7 +141,7 @@ void adj() {
   }
   else
   {
-    if(FStart)
+    if(drP6)
     {
       NextPower = _MaxPower(rpm);
     }
@@ -157,12 +157,12 @@ ISR(PCINT0_vect){
   {
     if(drP6)
     {
-      FStart = 1;
+      //FStart = 1;
       noskip = 0;
     }
     else
     {
-      FStart = 0;
+      //FStart = 0;
       Status = 1;STAOn;
     }
   }

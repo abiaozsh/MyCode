@@ -296,13 +296,13 @@ namespace WindowsFormsApplication1
 
 		void button2_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
 		{
-			Send(CMD_START);
+			Send(CMD_NOSTART);
 			Send(128);
 		}
 
 		void button2_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
 		{
-			Send(CMD_NOSTART);
+			Send(CMD_START);
 			Send(128);
 		}
 
