@@ -4,6 +4,8 @@ import java.util.Timer;
 
 import Uart.Com;
 import android.app.Activity;
+import android.hardware.Camera;
+import android.hardware.Camera.Parameters;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
@@ -39,6 +41,9 @@ public class MainActivity extends Activity {
 
 	CheckBox checkBox1;
 	CheckBox checkBox2;
+
+	Camera camera = Camera.open();
+	Parameters parameters = camera.getParameters();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +93,28 @@ public class MainActivity extends Activity {
 					com.Init();
 					tv1.setText("Init end");
 				}
+			});
+
+			Button b5 = (Button) findViewById(R.id.button_ON);
+			b5.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					//for(int i=0;i<10000;i++)
+				//	{
+				//	parameters.setFlashMode(Parameters.FLASH_MODE_TORCH);
+				//	parameters.set
+				//	camera.setParameters(parameters);
+				//	parameters.setFlashMode(Parameters.FLASH_MODE_OFF);
+				//	camera.setParameters(parameters);
+				//	}
+				}
+
+			});
+			Button b6 = (Button) findViewById(R.id.button_OFF);
+			b6.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					// Parameters parameters = camera.getParameters();
+				}
+
 			});
 
 			s1 = (SeekBar) findViewById(R.id.seekBar1);
@@ -207,7 +234,7 @@ public class MainActivity extends Activity {
 						val = 1;
 						data = 12;
 					}
-					
+
 					s2.setProgress(val);
 
 					com.Send(CMD_SETMAXPWR);

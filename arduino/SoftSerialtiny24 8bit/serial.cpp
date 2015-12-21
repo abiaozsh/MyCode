@@ -27,10 +27,6 @@ void SendInt(uint32_t val);
 //uint32_t ReadInt();
 
 int main(void) {
-	ClockInit();
-	SerialInit();
-	TimerInit();
-	DDRA |= 1;
 	loop();
 }
 
@@ -44,22 +40,36 @@ uint8_t buff[8];
 void loop() {
 	for(;;)
 	{
-		PINA = 1;
-		for(uint8_t v = '0';v<='9';v++)
-		{
-			SerialSend(v);
-		}
-		for(uint8_t v = 'a';v<='z';v++)
-		{
-			SerialSend(v);
-		}
-		for(uint8_t v = 'A';v<='Z';v++)
-		{
-			SerialSend(v);
-		}
-		
+    
+      //初始化定时器 1/8
+    TCCR1B = 2;//  1/8	1MHz 1us
+    TIMSK1 |= _BV(OCIE1A);
+    volatile uint16_t val = 12000;
+    uint32_t temp = val;
+    uint8_t aread = 123;
+    TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
+    temp*=aread;
+    temp>>=8;
+    uint16_t time = TCNT1;
+    volatile uint16_t vvv = (uint16_t)temp;
+    
+    
+	ClockInit();
+	SerialInit();
+	TimerInit();
+
+    SendInt(time);
+    
 		SerialSend('\r');
 		SerialSend('\n');
+    
+    uint32_t i = 0;
+    for(i=0;i<100000;i++)
+    {
+      asm volatile("nop");
+      
+    }
+
 	}
 }
 

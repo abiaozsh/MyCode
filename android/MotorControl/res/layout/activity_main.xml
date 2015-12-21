@@ -73,14 +73,11 @@
             android:layout_height="49dp"
             android:text="Reverse" />
 
-    </LinearLayout>
-
     <SeekBar
         android:id="@+id/seekBar1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/linearLayout1"
-        android:layout_below="@+id/linearLayout1"
         android:layout_marginTop="24dp"
         android:max="1535" />
 
@@ -92,5 +89,19 @@
         android:layout_below="@+id/seekBar1"
         android:layout_marginTop="39dp"
         android:max="256" />
+ 		    <Button
+		        android:id="@+id/button_ON"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:text="on" />
+    		    <Button
+		        android:id="@+id/button_OFF"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:text="off" />
+ 		    
+    </LinearLayout>
 
+    
+    
 </RelativeLayout>
