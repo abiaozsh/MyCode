@@ -145,6 +145,7 @@ namespace WindowsFormsApplication1
 		const byte CMD_PITCH = 10; /* PITCH */
 		const byte CMD_REVERSE = 11; /* REVERSE */
 		const byte CMD_SETCPU = 12;
+		const byte CMD_NOSTART = 13;
 
 		int targetSpeed;
 		private void trackBar1_Scroll(object sender, EventArgs e)
@@ -287,10 +288,22 @@ namespace WindowsFormsApplication1
 			pictureBox1.Refresh();
 		}
 
-		private void button2_Click(object sender, EventArgs e)
+		//private void button2_Click(object sender, EventArgs e)
+		//{
+		//	Send(CMD_START);
+		//	Send(128);
+		//}
+
+		void button2_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
 		{
 			Send(CMD_START);
-			Send(250);
+			Send(128);
+		}
+
+		void button2_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
+		{
+			Send(CMD_NOSTART);
+			Send(128);
 		}
 
 		private void button3_Click(object sender, EventArgs e)

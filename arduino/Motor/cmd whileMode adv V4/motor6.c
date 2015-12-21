@@ -9,11 +9,11 @@
 
 #define CPUFree ;/*DDRB |= _BV(3) */ //free亮灯
 #define CPUBusy ;/*DDRB &= ~_BV(3)*/ //busy暗灯
-#define STAOn   ;/*DDRB |= _BV(3) */
-#define STAOff  ;/*DDRB &= ~_BV(3)*/
+#define STAOn   DDRB |= _BV(3) ;/**/
+#define STAOff  DDRB &= ~_BV(3);/**/
 #define PWROn   ;/*DDRB |= _BV(3) */
 #define PWROff  ;/*DDRB &= ~_BV(3)*/
-#define RPMFlip DDRB ^= _BV(3);/**/
+#define RPMFlip ;/*DDRB ^= _BV(3)*/
 
 #define REVERSE      0
 #define TARGETRPMHI  1
@@ -46,8 +46,9 @@ volatile uint16_t TargetRPM = 500;
 volatile uint8_t MaxPower = 4;
 volatile uint8_t Pitch = 1;
 volatile uint8_t CPUCalc = 1;
+volatile uint8_t noskip = 1;
+volatile uint8_t Status = 0;//0 halt ,1 running, 2 starting
 
-uint8_t Status = 0;//0 halt ,1 running, 2 starting
 uint8_t StartUpCount=0;
 uint16_t rpm;
 uint16_t Power = 0;
@@ -106,16 +107,16 @@ int main(void) {
   //初始化输出端口
   PORT6O = BP1D | BP2D | BP3D;
   
-  //if(EEPROM_read(REVERSE))
-  //{
-  //  NextStep = NextStepB;
-  //  DigitReadBaseVal = DigitReadBaseValB;
-  //}
-  //else
-  //{
+  if(EEPROM_read(REVERSE))
+  {
+    NextStep = NextStepB;
+    DigitReadBaseVal = DigitReadBaseValB;
+  }
+  else
+  {
     NextStep = NextStepA;
     DigitReadBaseVal = DigitReadBaseValA;
-  //}
+  }
 
   TargetRPM = EEPROM_read(TARGETRPMHI)<<8|EEPROM_read(TARGETRPMLO);
   MaxPower = EEPROM_read(MAXPOWER);
@@ -150,7 +151,8 @@ int main(void) {
       uint16_t temp = (rpm>>1);
       CPUFree;
       while(TCNT1<temp);
-      while((PIN3I&drMask)==valbase);
+      noskip = 1;
+      while(((PIN3I&drMask)==valbase) && noskip);
       CPUBusy;
     }
     if(Pitch && !FStart)
@@ -229,29 +231,13 @@ uint16_t _MaxPower(uint16_t val)
   return val;
 }
 
-void StartUpCountAdd()
-{
-  if(rpm < StartRpm)
-  {
-    StartUpCount++;
-    rpms[rpmsIdx] = rpm;
-    rpmsIdx++;
-    rpmsIdx&=7;
-  }
-  else
-  {
-    StartUpCount = 0;
-  }
-}
-
 void adj() {
   if(Status)
   {
     if(rpm>StartRpm)//too slow, halt
     {
       StartUpCount = 0;
-      Status = 0;//halt
-      STAOff;
+      Status = 0;STAOff;
     }
     else
     {
@@ -327,24 +313,22 @@ void adj() {
   else
   {
     NextPower = _MaxPower(rpm);
-    if(FStart)
+    if(!FStart)
     {
-      StartUpCountAdd();
-      if(StartUpCount>60)
+      if(rpm < StartRpm)
       {
-        FStart = 1;
-        Status = 1;
-        STAOn;
+        StartUpCount++;
+        rpms[rpmsIdx] = rpm;
+        rpmsIdx++;
+        rpmsIdx&=7;
       }
-      FStart--;
-    }
-    else
-    {
-      StartUpCountAdd();
+      else
+      {
+        StartUpCount = 0;
+      }
       if(StartUpCount>20)
       {
-        Status = 1;
-        STAOn;
+        Status = 1;STAOn;
       }
       else
       {
@@ -366,6 +350,7 @@ void adj() {
 #define CMD_PITCH         10  /*PITCH         */
 #define CMD_REVERSE       11  /*REVERSE       */
 #define CMD_SETCPU        12  /*SETCPU        */
+#define CMD_NOSTART       13  /*START off     */
 
 ISR(PCINT0_vect){//先送高，后送低
   if(TempDataCnt == 8)
@@ -414,10 +399,14 @@ ISR(PCINT0_vect){//先送高，后送低
             break;
           case CMD_START:
           {
-            Step = NextStep[Step];//CmdNextStep;
-            PORT6O = PWR_ON[Step];PWROn;//CmdPWROn;
-            FStart = TempData;
+            noskip = 0;
+            FStart = 1;
             break;
+          }
+          case CMD_NOSTART:
+          {
+            FStart = 0;
+            Status = 1;STAOn;
           }
           case CMD_SETMAXPWR:
             MaxPower = TempData;
@@ -437,13 +426,13 @@ ISR(PCINT0_vect){//先送高，后送低
           case CMD_REVERSE:
             if(TempData)
             {
-              //EEPROM_write(REVERSE,1);
+              EEPROM_write(REVERSE,1);
               NextStep = NextStepB;
               DigitReadBaseVal = DigitReadBaseValB;
             }
             else
             {
-              //EEPROM_write(REVERSE,0);
+              EEPROM_write(REVERSE,0);
               NextStep = NextStepA;
               DigitReadBaseVal = DigitReadBaseValA;
             }
