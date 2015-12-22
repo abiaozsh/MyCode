@@ -9,11 +9,18 @@ PROGMEM prog_uint8_t TIMING__8M_TCCR0B_2___9600[] = {104,208, 56,160,  8,113,217
 PROGMEM prog_uint8_t TIMING__8M_TCCR0B_2__14400[] = { 69,138,208, 21, 91,160,230, 43,113,182};
 PROGMEM prog_uint8_t TIMING__8M_TCCR0B_1_115200[] = { 69,138,208, 21, 91,160,230, 43,113,182};
 
-#define DDR_Send DDRA
-#define PORT_Send PORTA
-#define BIT_Send _BV(2)
-#define DDR_Recv DDRA
-#define PIN_Recv PINA
+//#define DDR_Send DDRA
+//#define PORT_Send PORTA
+//#define BIT_Send _BV(2)
+//#define DDR_Recv DDRA
+//#define PIN_Recv PINA
+//#define BIT_Recv _BV(1)
+
+#define DDR_Send DDRB
+#define PORT_Send PORTB
+#define BIT_Send _BV(0)
+#define DDR_Recv DDRB
+#define PIN_Recv PINB
 #define BIT_Recv _BV(1)
 
 void ClockInit();
@@ -41,6 +48,7 @@ void loop() {
 	for(;;)
 	{
     
+    //28 耗时
       //初始化定时器 1/8
     TCCR1B = 2;//  1/8	1MHz 1us
     TIMSK1 |= _BV(OCIE1A);
@@ -50,7 +58,7 @@ void loop() {
     TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
     temp*=aread;
     temp>>=8;
-    uint16_t time = TCNT1;
+    uint16_t time = TCNT1;//28 耗时
     volatile uint16_t vvv = (uint16_t)temp;
     
     
