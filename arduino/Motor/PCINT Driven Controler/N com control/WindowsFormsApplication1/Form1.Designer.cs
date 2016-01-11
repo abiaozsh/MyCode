@@ -43,16 +43,18 @@
 			this.button6 = new System.Windows.Forms.Button();
 			this.button7 = new System.Windows.Forms.Button();
 			this.checkBox3 = new System.Windows.Forms.CheckBox();
+			this.trackBar3 = new System.Windows.Forms.TrackBar();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar2)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.trackBar3)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// trackBar1
 			// 
 			this.trackBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.trackBar1.Location = new System.Drawing.Point(13, 93);
+			this.trackBar1.Location = new System.Drawing.Point(10, 136);
 			this.trackBar1.Maximum = 1535;
 			this.trackBar1.Name = "trackBar1";
 			this.trackBar1.Size = new System.Drawing.Size(812, 42);
@@ -82,8 +84,9 @@
 			this.button2.TabIndex = 11;
 			this.button2.Text = "start";
 			this.button2.UseVisualStyleBackColor = true;
-			this.button2.MouseDown += new System.Windows.Forms.MouseEventHandler(button2_MouseDown);
-			this.button2.MouseUp += new System.Windows.Forms.MouseEventHandler(button2_MouseUp);
+			this.button2.Click += new System.EventHandler(this.button2_Click);
+			this.button2.MouseDown += new System.Windows.Forms.MouseEventHandler(this.button2_MouseDown);
+			this.button2.MouseUp += new System.Windows.Forms.MouseEventHandler(this.button2_MouseUp);
 			// 
 			// button3
 			// 
@@ -158,7 +161,7 @@
 			// 
 			// pictureBox1
 			// 
-			this.pictureBox1.Location = new System.Drawing.Point(22, 155);
+			this.pictureBox1.Location = new System.Drawing.Point(13, 184);
 			this.pictureBox1.Name = "pictureBox1";
 			this.pictureBox1.Size = new System.Drawing.Size(800, 256);
 			this.pictureBox1.TabIndex = 21;
@@ -198,15 +201,27 @@
 			this.checkBox3.UseVisualStyleBackColor = true;
 			this.checkBox3.CheckedChanged += new System.EventHandler(this.checkBox3_CheckedChanged);
 			// 
+			// trackBar3
+			// 
+			this.trackBar3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.trackBar3.Location = new System.Drawing.Point(12, 88);
+			this.trackBar3.Maximum = 256;
+			this.trackBar3.Name = "trackBar3";
+			this.trackBar3.Size = new System.Drawing.Size(812, 42);
+			this.trackBar3.TabIndex = 20;
+			this.trackBar3.Scroll += new System.EventHandler(this.trackBar3_Scroll);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(844, 438);
+			this.ClientSize = new System.Drawing.Size(844, 452);
 			this.Controls.Add(this.checkBox3);
 			this.Controls.Add(this.button7);
 			this.Controls.Add(this.button6);
 			this.Controls.Add(this.pictureBox1);
+			this.Controls.Add(this.trackBar3);
 			this.Controls.Add(this.trackBar2);
 			this.Controls.Add(this.comboBox1);
 			this.Controls.Add(this.checkBox1);
@@ -222,6 +237,7 @@
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar2)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.trackBar3)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -244,6 +260,7 @@
 		private System.Windows.Forms.Button button6;
 		private System.Windows.Forms.Button button7;
 		private System.Windows.Forms.CheckBox checkBox3;
+		private System.Windows.Forms.TrackBar trackBar3;
     }
 }
 

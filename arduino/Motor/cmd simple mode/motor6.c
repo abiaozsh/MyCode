@@ -3,21 +3,19 @@
 #include <avr/interrupt.h>
 #include "../config.h"
 
-#define drP6 (PINA & _BV(6))
+//drA3
+#define drDAT (PINA & _BV(7)) /*DAT*/
+#define drCLK (PINA & _BV(6)) /*DAT*/
 
 #define CPUFree ;/*DDRB |= _BV(3) */ //free亮灯
 #define CPUBusy ;/*DDRB &= ~_BV(3)*/ //busy暗灯
 #define STAOn   DDRB |= _BV(3) ;/**/
 #define STAOff  DDRB &= ~_BV(3);/**/
+#define FSTOn   ;/*DDRB |= _BV(3) */
+#define FSTOff  ;/*DDRB &= ~_BV(3)*/
 #define PWROn   ;/*DDRB |= _BV(3) */
 #define PWROff  ;/*DDRB &= ~_BV(3)*/
 #define RPMFlip ;/*DDRB ^= _BV(3)*/
-
-#define DBGOn   ;/*DDRB |= _BV(3) */
-#define DBGOff  ;/*DDRB &= ~_BV(3)*/
-
-//a6 start signal / restartup signal
-//a7 throttle
 
 #define StartRpm 8192
 
@@ -30,12 +28,12 @@ uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 
 volatile uint8_t Step = 0;
 volatile uint8_t FStart = 0;
-volatile uint8_t aread;
-volatile uint8_t Status = 0;//0 halt ,1 running, 2 starting
+volatile uint8_t MaxPower = 0;
+volatile uint8_t Pitch = 1;
 volatile uint8_t noskip = 1;
+volatile uint8_t Status = 0;//0 halt ,1 running, 2 starting
 
 uint16_t rpm;
-uint16_t Power = 0;
 uint16_t NextPower = 0;
 
 uint8_t CMD = 0;
@@ -53,12 +51,8 @@ int main(void) {
   TIMSK1 |= _BV(OCIE1A);
   //初始化输入
   GIMSK |= _BV(PCIE0);
-  PCMSK0 |= _BV(PCINT6);//start button
+  PCMSK0 |= _BV(PCINT6);//CLK
 
-  ADMUX = 7;//A7 power
-  ADCSRA = _BV(ADEN) | _BV(ADSC) | _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2) | _BV(ADIE) | _BV(ADATE);
-  ADCSRB = _BV(ADLAR);
-  
   //打开输出端口
   DDR6O = BP1U | BP1D | BP2U | BP2D | BP3U | BP3D;
   
@@ -70,8 +64,8 @@ int main(void) {
   for(;;) 
   {
     //定时器清零
-    TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
-    Power = NextPower;
+    TCNT1 = 0;
+    uint16_t Power = NextPower;
     uint8_t tempStep = Step;
     if(Power)
     {
@@ -97,7 +91,7 @@ int main(void) {
       while(((PIN3I&drMask)==valbase) && noskip);
       CPUBusy;
     }
-    if(!drP6)
+    if(Pitch && !FStart)//
     {
       uint16_t tmp = (rpm>>3)+(rpm>>2)+TCNT1;
       CPUFree;
@@ -119,7 +113,7 @@ uint16_t _MaxPower(uint16_t val){
   uint32_t temp = val;
   //28 耗时
   //224clock
-  temp*=aread;
+  temp*=MaxPower;
   temp>>=8;
   return (uint16_t)temp;
 }
@@ -139,28 +133,86 @@ void adj(){
   }
   else
   {
-    if(drP6)
+    if(FStart)
     {
       NextPower = _MaxPower(rpm);
     }
 	}
 }
 
-ISR(PCINT0_vect){
-  if(noskip)
+#define CMD_SENDDATA1Xa   1  /*0~255       1x */
+#define CMD_SENDDATA1Xb   2  /*256~511     1x */
+#define CMD_SENDDATA2X    3  /*512~1023    2x */
+#define CMD_SENDDATA4X    4  /*1024~2047   4x */
+#define CMD_SENDDATA8X    5  /*2048~4095   8x */
+#define CMD_SENDDATA16X   6  /*4096~8191  16x */
+#define CMD_START         7  /*START          */
+#define CMD_SETMAXPWR     8  /*set max power  */
+#define CMD_SAVESET       9  /*savesetting    */
+#define CMD_PITCH         10  /*PITCH         */
+#define CMD_REVERSE       11  /*REVERSE       */
+#define CMD_SETCPU        12  /*SETCPU        */
+#define CMD_NOSTART       13  /*START off     */
+#define CMD_SETPWRSIMP    14  /*set power simple */
+
+ISR(PCINT0_vect){//先送高，后送低
+  if(TempDataCnt == 8)
   {
-    if(drP6)
+    if(drDAT)//起始位
     {
-      noskip = 0;
+      TempData = 0;
+      TempDataCnt = 0;
     }
-    else
+  }
+  else
+  {
+    TempData <<= 1;
+    if(drDAT)
     {
-      Status = 1;STAOn;
+      TempData |= 1;
+    }
+    TempDataCnt++;
+    if(TempDataCnt == 8)
+    {
+      if(CMD == 0)
+      {
+        CMD = TempData;
+      }
+      else
+      {
+        switch(CMD)
+        {
+          case CMD_SENDDATA1Xa:break;
+          case CMD_SENDDATA1Xb:break;
+          case CMD_SENDDATA2X:break;
+          case CMD_SENDDATA4X:break;
+          case CMD_SENDDATA8X:break;
+          case CMD_SENDDATA16X:break;
+          case CMD_START:
+          {
+            FStart = 1;FSTOn;
+            noskip = 0;
+            break;
+          }
+          case CMD_NOSTART:
+          {
+            FStart = 0;FSTOff;
+            Status = 1;STAOn;
+            break;
+          }
+          case CMD_SETMAXPWR:break;
+          case CMD_SAVESET:break;
+          case CMD_PITCH:
+            Pitch = TempData;
+            break;
+          case CMD_REVERSE:break;
+          case CMD_SETCPU:break;
+          case CMD_SETPWRSIMP:
+            MaxPower = TempData;
+            break;
+        }
+        CMD = 0;
+      }
     }
   }
 }
-
-ISR(ADC_vect){
-  aread = ADCH;
-}
-

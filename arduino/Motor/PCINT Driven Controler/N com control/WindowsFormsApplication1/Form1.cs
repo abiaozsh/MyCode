@@ -146,6 +146,7 @@ namespace WindowsFormsApplication1
 		const byte CMD_REVERSE = 11; /* REVERSE */
 		const byte CMD_SETCPU = 12;
 		const byte CMD_NOSTART = 13;
+		const byte CMD_SETMAXPWR2 = 14;
 
 		int targetSpeed;
 		private void trackBar1_Scroll(object sender, EventArgs e)
@@ -294,17 +295,17 @@ namespace WindowsFormsApplication1
 		//	Send(128);
 		//}
 
-		void button2_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
-		{
-			Send(CMD_NOSTART);
-			Send(128);
-		}
-
 		void button2_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
 		{
 			Send(CMD_START);
-			Send(128);
+			Send(0);
 		}
+		void button2_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
+		{
+			Send(CMD_NOSTART);
+			Send(0);
+		}
+
 
 		private void button3_Click(object sender, EventArgs e)
 		{
@@ -445,6 +446,17 @@ namespace WindowsFormsApplication1
 		}
 
 		private void textBox2_TextChanged(object sender, EventArgs e)
+		{
+
+		}
+
+		private void trackBar3_Scroll(object sender, EventArgs e)
+		{
+			Send(CMD_SETMAXPWR2);
+			Send((byte)trackBar2.Value);
+		}
+
+		private void button2_Click(object sender, EventArgs e)
 		{
 
 		}
