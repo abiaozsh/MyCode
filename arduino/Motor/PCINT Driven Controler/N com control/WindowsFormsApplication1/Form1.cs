@@ -430,6 +430,7 @@ namespace WindowsFormsApplication1
 
 		private void button6_Click_1(object sender, EventArgs e)
 		{
+			textBox2.Text = "123";
 			Send(0x55);
 		}
 

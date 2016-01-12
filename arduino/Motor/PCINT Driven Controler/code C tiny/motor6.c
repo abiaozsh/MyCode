@@ -11,13 +11,6 @@
 #define TCCR1B_Value 1
 PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1_115200[] = {   69,  138,  208,  277,  347,  416,  486,  555,  625,  694};
 
-//#define DDR_Send DDRA
-//#define PORT_Send PORTA
-//#define BIT_Send _BV(2)
-//#define DDR_Recv DDRA
-//#define PIN_Recv PINA
-//#define BIT_Recv _BV(1)
-
 #define DDR_Send DDRB
 #define PORT_Send PORTB
 #define BIT_Send _BV(0)
@@ -49,18 +42,17 @@ void loop() {
 	for(;;)
 	{
     uint8_t data = SerialRead();
-  PORTA = 0xFF;
     PORTA = data;
 	}
 }
 
 void TimerInit() {
+	//TCCR0A = 0;
+	//TIMSK0 = 0;
+
 	TCCR1A = 0;
 	TCCR1C = 0;
 	TIMSK1 = 0;
-
-	//TCCR0A = 0;
-	//TIMSK0 = 0;
 }
 
 void SerialInit(){
