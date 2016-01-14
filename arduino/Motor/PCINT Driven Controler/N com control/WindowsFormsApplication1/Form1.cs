@@ -104,7 +104,7 @@ namespace WindowsFormsApplication1
 		{
 			byte[] d = new byte[1];
 			d[0] = data;
-			Console.WriteLine(data);
+			//Console.WriteLine(data);
 			if (port != null && port.IsOpen)
 			{
 				//Thread.Sleep(5);
@@ -239,6 +239,7 @@ namespace WindowsFormsApplication1
 
 		private void timer1_Tick(object sender, EventArgs e)
 		{
+            return;
 			if (data == 0)
 			{
 				data = 1;
@@ -469,8 +470,8 @@ namespace WindowsFormsApplication1
 
 		private void trackBar3_Scroll(object sender, EventArgs e)
 		{
-			Send(CMD_SETMAXPWR2);
-			Send((byte)trackBar2.Value);
+            Send(CMD_SETPWRSIMP);
+			Send((byte)trackBar3.Value);
 		}
 
 		private void button2_Click(object sender, EventArgs e)

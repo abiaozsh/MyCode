@@ -9,12 +9,12 @@
 
 #define CPUFree ;/*DDRB |= _BV(3) */ //free¡¡µ∆
 #define CPUBusy ;/*DDRB &= ~_BV(3)*/ //busy∞µµ∆
-#define STAOn   DDRB |= _BV(3) ;/**/
-#define STAOff  DDRB &= ~_BV(3);/**/
+#define STAOn   ;/*DDRB |= _BV(3) */
+#define STAOff  ;/*DDRB &= ~_BV(3)*/
 #define FSTOn   ;/*DDRB |= _BV(3) */
 #define FSTOff  ;/*DDRB &= ~_BV(3)*/
-#define PWROn   ;/*DDRB |= _BV(3) */
-#define PWROff  ;/*DDRB &= ~_BV(3)*/
+#define PWROn   DDRB |= _BV(3) ;/**/
+#define PWROff  DDRB &= ~_BV(3);/**/
 #define RPMFlip ;/*DDRB ^= _BV(3)*/
 
 #define StartRpm 8192
