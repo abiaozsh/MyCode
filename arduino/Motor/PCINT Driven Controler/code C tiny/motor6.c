@@ -89,9 +89,9 @@ uint8_t SerialRead()
 	timing = pgm_read_word_near(CUR_TIMING);while(TCNT1<timing);//startbit
 
   uint8_t i;
-	for(i = 1;i<=8;i++)
+	for(i = 1;i<=5;i++)
 	{
-		val>>=1;val |= (PIN_Recv&BIT_Recv?0x80:0);timing = pgm_read_word_near(CUR_TIMING + i);while(TCNT1<timing);
+		val>>=1;val |= (PIN_Recv&BIT_Recv?0x10:0);timing = pgm_read_word_near(CUR_TIMING + i);while(TCNT1<timing);
 	}
 	return val;
 }

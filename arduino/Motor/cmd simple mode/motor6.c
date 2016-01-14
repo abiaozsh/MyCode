@@ -22,9 +22,13 @@
 uint8_t NextStep[] = {
   1,  2,  3,  4,  5,  0
 };
+//uint8_t NextStep[] = {
+//  5,  0,  1,  2,  3,  4
+//};
 
 uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
 uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
+//uint8_t DigitReadBaseVal[] = {   0,  BP2A,     0,  BP3A,     0,  BP1A};
 
 volatile uint8_t Step = 0;
 volatile uint8_t FStart = 0;
@@ -140,20 +144,20 @@ void adj(){
 	}
 }
 
-#define CMD_SENDDATA1Xa   1  /*0~255       1x */
-#define CMD_SENDDATA1Xb   2  /*256~511     1x */
-#define CMD_SENDDATA2X    3  /*512~1023    2x */
-#define CMD_SENDDATA4X    4  /*1024~2047   4x */
-#define CMD_SENDDATA8X    5  /*2048~4095   8x */
-#define CMD_SENDDATA16X   6  /*4096~8191  16x */
-#define CMD_START         7  /*START          */
-#define CMD_SETMAXPWR     8  /*set max power  */
-#define CMD_SAVESET       9  /*savesetting    */
-#define CMD_PITCH         10  /*PITCH         */
-#define CMD_REVERSE       11  /*REVERSE       */
-#define CMD_SETCPU        12  /*SETCPU        */
-#define CMD_NOSTART       13  /*START off     */
-#define CMD_SETPWRSIMP    14  /*set power simple */
+#define CMD_START         1  /*START          */
+#define CMD_NOSTART       2  /*START off     */
+#define CMD_SETPWRSIMP    3  /*set power simple */
+#define CMD_PITCH         4  /*PITCH         */
+#define CMD_SENDDATA1Xa   5  /*0~255       1x */
+#define CMD_SENDDATA1Xb   6  /*256~511     1x */
+#define CMD_SENDDATA2X    7  /*512~1023    2x */
+#define CMD_SENDDATA4X    8  /*1024~2047   4x */
+#define CMD_SENDDATA8X    9  /*2048~4095   8x */
+#define CMD_SENDDATA16X   10  /*4096~8191  16x */
+#define CMD_SETMAXPWR     11  /*set max power  */
+#define CMD_SAVESET       12  /*savesetting    */
+#define CMD_REVERSE       13  /*REVERSE       */
+#define CMD_SETCPU        14  /*SETCPU        */
 
 ISR(PCINT0_vect){//先送高，后送低
   if(TempDataCnt == 8)
@@ -182,12 +186,6 @@ ISR(PCINT0_vect){//先送高，后送低
       {
         switch(CMD)
         {
-          case CMD_SENDDATA1Xa:break;
-          case CMD_SENDDATA1Xb:break;
-          case CMD_SENDDATA2X:break;
-          case CMD_SENDDATA4X:break;
-          case CMD_SENDDATA8X:break;
-          case CMD_SENDDATA16X:break;
           case CMD_START:
           {
             FStart = 1;FSTOn;
@@ -200,15 +198,11 @@ ISR(PCINT0_vect){//先送高，后送低
             Status = 1;STAOn;
             break;
           }
-          case CMD_SETMAXPWR:break;
-          case CMD_SAVESET:break;
-          case CMD_PITCH:
-            Pitch = TempData;
-            break;
-          case CMD_REVERSE:break;
-          case CMD_SETCPU:break;
           case CMD_SETPWRSIMP:
             MaxPower = TempData;
+            break;
+          case CMD_PITCH:
+            Pitch = TempData;
             break;
         }
         CMD = 0;

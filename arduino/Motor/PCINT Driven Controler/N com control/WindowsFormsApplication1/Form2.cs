@@ -29,8 +29,8 @@ namespace WindowsFormsApplication1
 				try
 				{
 					//COM4为Arduino使用的串口号，需根据实际情况调整
-					port = new SerialPort("COM4", 9600, Parity.None, 8, StopBits.One);
-					//port = new SerialPort("COM5", 115200, Parity.None, 8, StopBits.One);
+					//port = new SerialPort("COM4", 115200, Parity.None, 8, StopBits.One);
+					port = new SerialPort("COM4", 115200, Parity.None, 8, StopBits.One);
 					port.Open();
 					//port.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);
 				}
@@ -70,10 +70,10 @@ namespace WindowsFormsApplication1
 		private void button1_Click(object sender, EventArgs e)
 		{
 			byte b = byte.Parse(textBox1.Text);
-			b++;
-			textBox1.Text = b.ToString();
 			textBox2.Text = System.Convert.ToString(b, 2).PadLeft(8, '0').Replace('0','_');
 			Send1(b);
+			b++;
+			textBox1.Text = b.ToString();
 		}
 
 

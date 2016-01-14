@@ -202,8 +202,7 @@ ISR(TIM1_COMPA_vect){
   PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
 }
 
-uint16_t _MaxPower(uint16_t val)
-{
+uint16_t _MaxPower(uint16_t val){
   switch(MaxPower)
   {
     case 0://256
@@ -324,19 +323,34 @@ void adj() {
 	}
 }
 
-#define CMD_SENDDATA1Xa   1  /*0~255       1x */
-#define CMD_SENDDATA1Xb   2  /*256~511     1x */
-#define CMD_SENDDATA2X    3  /*512~1023    2x */
-#define CMD_SENDDATA4X    4  /*1024~2047   4x */
-#define CMD_SENDDATA8X    5  /*2048~4095   8x */
-#define CMD_SENDDATA16X   6  /*4096~8191  16x */
-#define CMD_START         7  /*START          */
-#define CMD_SETMAXPWR     8  /*set max power  */
-#define CMD_SAVESET       9  /*savesetting    */
-#define CMD_PITCH         10  /*PITCH         */
-#define CMD_REVERSE       11  /*REVERSE       */
-#define CMD_SETCPU        12  /*SETCPU        */
-#define CMD_NOSTART       13  /*START off     */
+//#define CMD_SENDDATA1Xa   1  /*0~255       1x */
+//#define CMD_SENDDATA1Xb   2  /*256~511     1x */
+//#define CMD_SENDDATA2X    3  /*512~1023    2x */
+//#define CMD_SENDDATA4X    4  /*1024~2047   4x */
+//#define CMD_SENDDATA8X    5  /*2048~4095   8x */
+//#define CMD_SENDDATA16X   6  /*4096~8191  16x */
+//#define CMD_START         7  /*START          */
+//#define CMD_SETMAXPWR     8  /*set max power  */
+//#define CMD_SAVESET       9  /*savesetting    */
+//#define CMD_PITCH         10  /*PITCH         */
+//#define CMD_REVERSE       11  /*REVERSE       */
+//#define CMD_SETCPU        12  /*SETCPU        */
+//#define CMD_NOSTART       13  /*START off     */
+
+#define CMD_START         1  /*START          */
+#define CMD_NOSTART       2  /*START off     */
+#define CMD_SETPWRSIMP    3  /*set power simple */
+#define CMD_PITCH         4  /*PITCH         */
+#define CMD_SENDDATA1Xa   5  /*0~255       1x */
+#define CMD_SENDDATA1Xb   6  /*256~511     1x */
+#define CMD_SENDDATA2X    7  /*512~1023    2x */
+#define CMD_SENDDATA4X    8  /*1024~2047   4x */
+#define CMD_SENDDATA8X    9  /*2048~4095   8x */
+#define CMD_SENDDATA16X   10  /*4096~8191  16x */
+#define CMD_SETMAXPWR     11  /*set max power  */
+#define CMD_SAVESET       12  /*savesetting    */
+#define CMD_REVERSE       13  /*REVERSE       */
+#define CMD_SETCPU        14  /*SETCPU        */
 
 ISR(PCINT0_vect){//œ»ÀÕ∏ﬂ£¨∫ÛÀÕµÕ
   if(TempDataCnt == 8)
