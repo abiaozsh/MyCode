@@ -13,10 +13,10 @@ PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1_115200[] = {   69,  138,  208,  277,  
 
 #define DDR_Send DDRB
 #define PORT_Send PORTB
-#define BIT_Send _BV(0)
+#define BIT_Send _BV(1)
 #define DDR_Recv DDRB
 #define PIN_Recv PINB
-#define BIT_Recv _BV(1)
+#define BIT_Recv _BV(0)
 
 void ClockInit();
 void loop();

@@ -4,6 +4,8 @@
 #include "../config.h"
 
 //drA3
+//gnd
+//vcc
 #define drDAT (PINA & _BV(7)) /*DAT*/
 #define drCLK (PINA & _BV(6)) /*DAT*/
 

@@ -35,7 +35,7 @@ namespace WindowsFormsApplication1
 					port = new SerialPort("COM4", 9600, Parity.None, 8, StopBits.One);
 					//port = new SerialPort("COM5", 115200, Parity.None, 8, StopBits.One);
 					port.Open();
-					port.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);
+					//port.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);
 				}
 				catch
 				{ }
@@ -48,37 +48,6 @@ namespace WindowsFormsApplication1
 		int[] datas = new int[800];
 		int datasIdx = 0;
 		int data = 0;
-		void port_DataReceived(object sender, SerialDataReceivedEventArgs e)
-		{
-			while (port.BytesToRead > 0)
-			{
-				datareceive &= 1;
-				port.Read(buff, datareceive, 1);
-				datareceive++;
-				if (datareceive >= 2)
-				{
-					datas[datasIdx++] = buff[0] + ((int)buff[1] << 8);
-					if (datasIdx >= 800)
-					{
-						datasIdx = 0;
-					}
-
-					int idx = datasIdx;
-					for (int i = 0; i < 12; i++)
-					{
-						idx--;
-						if (idx < 0)
-						{
-							idx = 799;
-						}
-						data += datas[idx];
-
-					}
-					data /= 12;
-					datareceive &= 1;
-				}
-			}
-		}
 
 		void Form1_FormClosed(object sender, FormClosedEventArgs e)
 		{
@@ -88,17 +57,6 @@ namespace WindowsFormsApplication1
 			}
 		}
 
-		private void PortWrite(int chn, int data)
-		{
-			byte[] d = new byte[2];
-			d[0] = (byte)(0x050 | chn);
-			d[1] = (byte)(data & 0x0FF);
-			if (port != null && port.IsOpen)
-			{
-				Thread.Sleep(10);
-				port.Write(d, 1, 1);
-			}
-		}
 
 		private void Send(byte data)
 		{
@@ -123,30 +81,9 @@ namespace WindowsFormsApplication1
 			}
 		}
 
-		Bitmap bmp;
-		Graphics g;
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			bmp = new Bitmap(800, 256);
-			g = Graphics.FromImage(bmp);
-			pictureBox1.Image = bmp;
 		}
-
-		//const byte CMD_SENDDATA1Xa = 1; /* 0~255 1x */
-		//const byte CMD_SENDDATA1Xb = 2; /* 256~511 1x */
-		//const byte CMD_SENDDATA2X = 3; /* 512~1023 2x */
-		//const byte CMD_SENDDATA4X = 4; /* 1024~2047 4x */
-		//const byte CMD_SENDDATA8X = 5; /* 2048~4095 8x */
-		//const byte CMD_SENDDATA16X = 6; /* 4096~8191 16x */
-		//const byte CMD_START = 7; /* on/off */
-		//const byte CMD_SETMAXPWR = 8;
-		////const byte CMD_LINEUP = 9;
-		//const byte CMD_SAVESET = 9;
-		//const byte CMD_PITCH = 10; /* PITCH */
-		//const byte CMD_REVERSE = 11; /* REVERSE */
-		//const byte CMD_SETCPU = 12;
-		//const byte CMD_NOSTART = 13;
-		//const byte CMD_SETMAXPWR2 = 14;
 
 		const byte CMD_START = 1;/*START          */
 		const byte CMD_NOSTART = 2;/*START off     */
@@ -239,7 +176,16 @@ namespace WindowsFormsApplication1
 
 		private void timer1_Tick(object sender, EventArgs e)
 		{
-            return;
+			if (mousedown)
+			{
+                if (trackBar3.Value < 255)
+                {
+                    trackBar3.Value++;
+                }
+				trackBar3_Scroll(null, null);
+			}
+			return;
+			/*
 			if (data == 0)
 			{
 				data = 1;
@@ -304,6 +250,7 @@ namespace WindowsFormsApplication1
 			}
 			g.Flush();
 			pictureBox1.Refresh();
+			*/
 		}
 
 		//private void button2_Click(object sender, EventArgs e)
@@ -312,15 +259,18 @@ namespace WindowsFormsApplication1
 		//	Send(128);
 		//}
 
+		bool mousedown = false;
 		void button2_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
 		{
 			Send(CMD_START);
 			Send(0);
+			mousedown = true;
 		}
 		void button2_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
 		{
 			Send(CMD_NOSTART);
 			Send(0);
+			mousedown = false;
 		}
 
 
@@ -447,7 +397,6 @@ namespace WindowsFormsApplication1
 
 		private void button6_Click_1(object sender, EventArgs e)
 		{
-			textBox2.Text = "123";
 			Send(0x55);
 		}
 
@@ -470,7 +419,7 @@ namespace WindowsFormsApplication1
 
 		private void trackBar3_Scroll(object sender, EventArgs e)
 		{
-            Send(CMD_SETPWRSIMP);
+			Send(CMD_SETPWRSIMP);
 			Send((byte)trackBar3.Value);
 		}
 
