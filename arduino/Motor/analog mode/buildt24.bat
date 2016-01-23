@@ -1,7 +1,7 @@
 @echo off
 if exist "C:\Program Files (x86)\Arduino" set arduinopath=C:\Program Files (x86)\Arduino
 if exist "C:\Program Files\Arduino" set arduinopath=C:\Program Files\Arduino
-set comPort=COM5
+set comPort=COM4
 set filename=motor6
 set comptype=gcc
 set extptype=c

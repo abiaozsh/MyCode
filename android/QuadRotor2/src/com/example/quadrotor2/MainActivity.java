@@ -3,7 +3,6 @@ package com.example.quadrotor2;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.text.DecimalFormat;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -17,10 +16,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.view.Menu;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.TextView;
 
 public class MainActivity extends Activity implements MySensorListener {
 	MySensor ms;
@@ -28,7 +23,15 @@ public class MainActivity extends Activity implements MySensorListener {
 	Com com;
 	Timer t;
 
-	public double currentPower = 0; // 0~1000 0:idle 1000:full power
+	public StringBuilder Message = new StringBuilder();
+	public byte Z = 0;
+	public byte CMD_START = 1;/* START */
+	public byte CMD_NOSTART = 2;/* START off */
+	public byte CMD_SETPWRSIMP = 3;/* set power simple */
+	public byte CMD_PITCH = 4;/* PITCH */
+
+	public double currentPower = 0;
+
 	public double adjGryoxConst = 0;
 	public double adjGryoyConst = 0;
 	public double adjGryozConst = 0;
@@ -36,23 +39,22 @@ public class MainActivity extends Activity implements MySensorListener {
 	public double adjGryoyTemp = 0;
 	public double adjGryozTemp = 0;
 
-	public int poweron = 0;
-	public int test;
+	public int poweron = 2;
 
-	double pwm1;// up +
-	double pwm2;// down +
-	double pwm3;// left -
-	double pwm4;// right -
+	public double pwm1;// up +
+	public double pwm2;// down +
+	public double pwm3;// left -
+	public double pwm4;// right -
+	public double minPower = 10;
 
-	double CurrGryox;
-	double CurrGryoy;
-	double CurrGryoz;
-	TextView tv;
-	TextView txtup;
-	TextView txtrightleft;
-	TextView txtdown;
+	public double CurrGryoxAccum = 0;
+	public double CurrGryoyAccum = 0;
+	public double CurrGryozAccum = 0;
+	public double CurrGryox;
+	public double CurrGryoy;
+	public double CurrGryoz;
 
-	MyHandler myHandler;
+	// MyHandler myHandler;
 	MyHandlerCmd myHandlerCmd;
 
 	class Task extends TimerTask {
@@ -62,102 +64,85 @@ public class MainActivity extends Activity implements MySensorListener {
 			this.act = act;
 		}
 
+		// 20ms运行一次
 		@Override
 		public void run() {
 			try {
-				Message msg = myHandler.obtainMessage();
-				Bundle b = new Bundle();
-				DecimalFormat df1 = new DecimalFormat("0.000");
 
 				pwm1 = currentPower;
 				pwm2 = currentPower;
 				pwm3 = currentPower;
 				pwm4 = currentPower;
 
-				pwm1 += CurrGryox;
-				pwm2 -= CurrGryox;
-				pwm3 += CurrGryoy;
-				pwm4 -= CurrGryoy;
-				pwm1 += CurrGryoz;
-				pwm2 += CurrGryoz;
-				pwm3 -= CurrGryoz;
-				pwm4 -= CurrGryoz;
+				// PID
+				{
+					CurrGryoxAccum = 0;// += CurrGryox;
+					CurrGryoyAccum = 0;// += CurrGryoy;
+					CurrGryozAccum = 0;// += CurrGryoz;
 
-				if (pwm1 > 1000)
-					pwm1 = 1000;
-				if (pwm1 < 0)
-					pwm1 = 0;
+					pwm1 += CurrGryox + (CurrGryoxAccum / 100);
+					pwm2 -= CurrGryox + (CurrGryoxAccum / 100);
 
-				if (pwm2 > 1000)
-					pwm2 = 1000;
-				if (pwm2 < 0)
-					pwm2 = 0;
+					pwm3 += CurrGryoy + (CurrGryoyAccum / 100);
+					pwm4 -= CurrGryoy + (CurrGryoyAccum / 100);
 
-				if (pwm3 > 1000)
-					pwm3 = 1000;
-				if (pwm3 < 0)
-					pwm3 = 0;
+					pwm1 += CurrGryoz + (CurrGryozAccum / 100);
+					pwm2 += CurrGryoz + (CurrGryozAccum / 100);
+					pwm3 -= CurrGryoz + (CurrGryozAccum / 100);
+					pwm4 -= CurrGryoz + (CurrGryozAccum / 100);
+				}
 
-				if (pwm4 > 1000)
-					pwm4 = 1000;
-				if (pwm4 < 0)
-					pwm4 = 0;
+				if (pwm1 > 255)
+					pwm1 = 255;
+				if (pwm1 < minPower)
+					pwm1 = minPower;
+
+				if (pwm2 > 255)
+					pwm2 = 255;
+				if (pwm2 < minPower)
+					pwm2 = minPower;
+
+				if (pwm3 > 255)
+					pwm3 = 255;
+				if (pwm3 < minPower)
+					pwm3 = minPower;
+
+				if (pwm4 > 255)
+					pwm4 = 255;
+				if (pwm4 < minPower)
+					pwm4 = minPower;
 
 				pwm1 = Math.round(pwm1);
 				pwm2 = Math.round(pwm2);
 				pwm3 = Math.round(pwm3);
 				pwm4 = Math.round(pwm4);
 
-				b.putString("Gryo", df1.format(CurrGryox) + ",  " + df1.format(CurrGryoy) + ",  " + df1.format(CurrGryoz));
-				msg.setData(b);
-				myHandler.sendMessage(msg);
+				cam.sendData.currentPower = currentPower;
+				cam.sendData.adjGryoxConst = adjGryoxConst;
+				cam.sendData.adjGryoyConst = adjGryoyConst;
+				cam.sendData.adjGryozConst = adjGryozConst;
+				cam.sendData.adjGryoxTemp = adjGryoxTemp;
+				cam.sendData.adjGryoyTemp = adjGryoyTemp;
+				cam.sendData.adjGryozTemp = adjGryozTemp;
+				cam.sendData.poweron = poweron;
+				cam.sendData.pwm1 = pwm1;
+				cam.sendData.pwm2 = pwm2;
+				cam.sendData.pwm3 = pwm3;
+				cam.sendData.pwm4 = pwm4;
+				cam.sendData.minPower = minPower;
+				cam.sendData.CurrGryoxAccum = CurrGryoxAccum;
+				cam.sendData.CurrGryoyAccum = CurrGryoyAccum;
+				cam.sendData.CurrGryozAccum = CurrGryozAccum;
+				cam.sendData.CurrGryox = CurrGryox;
+				cam.sendData.CurrGryoy = CurrGryoy;
+				cam.sendData.CurrGryoz = CurrGryoz;
+
+				cam.sendData.Message = Message.toString();
 				if (poweron == 1) {
-					b.putString("pwm1", Integer.toString((int) (17000 + pwm1 * (24000 - 17000) / 1000)));
-					b.putString("pwm2", Integer.toString((int) (17000 + pwm2 * (24000 - 17000) / 1000)));
-					b.putString("pwm3", Integer.toString((int) (17000 + pwm3 * (24000 - 17000) / 1000)));
-					b.putString("pwm4", Integer.toString((int) (17000 + pwm4 * (24000 - 17000) / 1000)));
-					act.com.Write(0, (int) (17000 + pwm1 * (24000 - 17000) / 1000));
-					act.com.Write(1, (int) (17000 + pwm2 * (24000 - 17000) / 1000));
-					act.com.Write(2, (int) (17000 + pwm3 * (24000 - 17000) / 1000));
-					act.com.Write(3, (int) (17000 + pwm4 * (24000 - 17000) / 1000));
+					act.com.Send(CMD_SETPWRSIMP, (byte) pwm1, CMD_SETPWRSIMP, (byte) pwm2, CMD_SETPWRSIMP, (byte) pwm3, CMD_SETPWRSIMP, (byte) pwm4);
 				} else if (poweron == 2) {
-					if (test == 1) {
-						b.putString("pwm1", "test");
-						act.com.Write(1, 16000);
-						act.com.Write(2, 16000);
-						act.com.Write(3, 16000);
-						act.com.Write(0, 17000);
-					}
-					if (test == 2) {
-						b.putString("pwm2", "test");
-						act.com.Write(0, 16000);
-						act.com.Write(2, 16000);
-						act.com.Write(3, 16000);
-						act.com.Write(1, 17000);
-					}
-					if (test == 3) {
-						b.putString("pwm3", "test");
-						act.com.Write(0, 16000);
-						act.com.Write(1, 16000);
-						act.com.Write(3, 16000);
-						act.com.Write(2, 17000);
-					}
-					if (test == 4) {
-						b.putString("pwm4", "test");
-						act.com.Write(0, 16000);
-						act.com.Write(1, 16000);
-						act.com.Write(2, 16000);
-						act.com.Write(3, 17000);
-					}
 				} else if (poweron == 0) {
-					b.putString("pwm1", Double.toString(0));
-					b.putString("pwm2", Double.toString(0));
-					b.putString("pwm3", Double.toString(0));
-					b.putString("pwm4", Double.toString(0));
-					act.com.Write(0, 16000);
-					act.com.Write(1, 16000);
-					act.com.Write(2, 15000);
-					act.com.Write(3, 16000);
+					act.com.Send(CMD_SETPWRSIMP, Z, CMD_SETPWRSIMP, Z, CMD_SETPWRSIMP, Z, CMD_SETPWRSIMP, Z);
 				}
 
 			} catch (Throwable t) {
@@ -167,6 +152,7 @@ public class MainActivity extends Activity implements MySensorListener {
 	}
 
 	class ThreadControl extends Thread {
+		@SuppressWarnings("resource")
 		public void run() {
 			ServerSocket ss = null;
 			while (true) {
@@ -174,7 +160,6 @@ public class MainActivity extends Activity implements MySensorListener {
 					try {
 						ss = new ServerSocket(5000);
 					} catch (Exception e) {
-
 					}
 				}
 				try {
@@ -204,32 +189,23 @@ public class MainActivity extends Activity implements MySensorListener {
 			super(L);
 		}
 
-		int ADJXC = 1;
-		int ADJYC = 2;
-		int ADJZC = 3;
-		int ADJPWR = 4;
-		int CALI = 5;
-		int RST = 6;
-		int START = 7;
-		int STOP = 8;
-		int TEST = 9;
-		int SETPWR = 10;
-		int ADJXT = 11;
-		int ADJYT = 12;
-		int ADJZT = 13;
-
-		public void IntToByte(int val, byte[] ret, int offset) {
-			ret[offset + 3] = (byte) (val >> 24 & 0xff);
-			ret[offset + 2] = (byte) (val >> 16 & 0xff);
-			ret[offset + 1] = (byte) (val >> 8 & 0xff);
-			ret[offset + 0] = (byte) (val & 0xff);
-		}
-
-		public int ByteToInt(byte[] src, int offset) {
-			int value;
-			value = (int) ((src[offset] & 0xFF) | ((src[offset + 1] & 0xFF) << 8) | ((src[offset + 2] & 0xFF) << 16) | ((src[offset + 3] & 0xFF) << 24));
-			return value;
-		}
+		final int ADJXC = 1;
+		final int ADJYC = 2;
+		final int ADJZC = 3;
+		final int ADJXT = 4;
+		final int ADJYT = 5;
+		final int ADJZT = 6;
+		final int ADJPWR = 7;
+		final int CALI = 8;
+		final int RST = 9;
+		final int PWRON = 10;
+		final int PWROFF = 11;
+		final int SETPWR = 12;
+		final int SETSTARTPWR1 = 13;
+		final int SETSTARTPWR2 = 14;
+		final int SETSTARTPWR3 = 15;
+		final int SETSTARTPWR4 = 16;
+		final int SETMINPWR = 17;
 
 		@Override
 		public void handleMessage(Message msg) {
@@ -238,89 +214,119 @@ public class MainActivity extends Activity implements MySensorListener {
 			int cmd = data[0];
 			double value = getDouble(data, 1);
 
-			if (cmd == ADJXC) {
+			switch (cmd) {
+			case ADJXC:
 				adjGryoxConst = value;
-			}
-			if (cmd == ADJYC) {
+				break;
+			case ADJYC:
 				adjGryoyConst = value;
-			}
-			if (cmd == ADJZC) {
+				break;
+			case ADJZC:
 				adjGryozConst = value;
-			}
-			if (cmd == ADJXT) {
+				break;
+			case ADJXT:
 				adjGryoxTemp = value;
-			}
-			if (cmd == ADJYT) {
+				break;
+			case ADJYT:
 				adjGryoyTemp = value;
-			}
-			if (cmd == ADJZT) {
+				break;
+			case ADJZT:
 				adjGryozTemp = value;
-			}
-
-			if (cmd == ADJPWR) {
+				break;
+			case ADJPWR:
 				currentPower += value;
-			}
-
-			if (cmd == SETPWR) {
-				currentPower =  value;
-			}
-
-			if (cmd == CALI) {
+				break;
+			case SETPWR:
+				currentPower = value;
+				break;
+			case CALI:
 				ms.CalibrateGyro();
-			}
-
-			if (cmd == RST) {
+				break;
+			case RST:
 				com.Init();
-				currentPower = 0; // 0~1000 0:idle 1000:full power
+				currentPower = 0;
 				adjGryoxConst = 0;
 				adjGryoxConst = 0;
 				adjGryoxConst = 0;
-			}
-
-			if (cmd == START) {
+				break;
+			case PWRON:
 				poweron = 1;
-			}
-			if (cmd == STOP) {
+				Message.delete(0, Message.length());
+				break;
+			case PWROFF:
 				poweron = 0;
-			}
-			if (cmd == TEST) {
+				break;
+			case SETSTARTPWR1:
 				poweron = 2;
-				test = (int)value;
+				if (value >= 10000) {
+					// com.Send(CMD_SETPWRSIMP, (byte) (value - 10000), Z, Z, Z, Z, Z, Z);
+					com.Send(CMD_START, Z, Z, Z, Z, Z, Z, Z);
+					Message.append("start1\r\n");
+				} else if (value >= 0) {
+					com.Send(CMD_SETPWRSIMP, (byte) (value), Z, Z, Z, Z, Z, Z);
+					Message.append("val1"+Byte.toString((byte) (value))+"\r\n");
+				} else {
+					com.Send(CMD_NOSTART, Z, Z, Z, Z, Z, Z, Z);
+					Message.append("nostart1\r\n");
+				}
+				break;
+			case SETSTARTPWR2:
+				poweron = 2;
+				if (value >= 10000) {
+					// com.Send(Z, Z, CMD_SETPWRSIMP, (byte) (value - 10000), Z, Z, Z, Z);
+					com.Send(Z, Z, CMD_START, Z, Z, Z, Z, Z);
+				} else if (value >= 0) {
+					com.Send(Z, Z, CMD_SETPWRSIMP, (byte) (value), Z, Z, Z, Z);
+				} else {
+					com.Send(Z, Z, CMD_NOSTART, Z, Z, Z, Z, Z);
+				}
+				break;
+			case SETSTARTPWR3:
+				poweron = 2;
+				if (value >= 10000) {
+					// com.Send(Z, Z, Z, Z, CMD_SETPWRSIMP, (byte) (value - 10000), Z, Z);
+					com.Send(Z, Z, Z, Z, CMD_START, Z, Z, Z);
+				} else if (value >= 0) {
+					com.Send(Z, Z, Z, Z, CMD_SETPWRSIMP, (byte) (value), Z, Z);
+				} else {
+					com.Send(Z, Z, Z, Z, CMD_NOSTART, Z, Z, Z);
+				}
+				break;
+			case SETSTARTPWR4:
+				poweron = 2;
+				if (value >= 10000) {
+					// com.Send(Z, Z, Z, Z, Z, Z, CMD_SETPWRSIMP, (byte) (value - 10000));
+					com.Send(Z, Z, Z, Z, Z, Z, CMD_START, Z);
+				} else if (value >= 0) {
+					com.Send(Z, Z, Z, Z, Z, Z, CMD_SETPWRSIMP, (byte) (value));
+				} else {
+					com.Send(Z, Z, Z, Z, Z, Z, CMD_NOSTART, Z);
+				}
+				break;
+			case SETMINPWR:
+				minPower = value;
+				break;
 			}
 
 		}
 	}
 
-	class MyHandler extends Handler {
-		public MyHandler() {
-		}
-
-		public MyHandler(Looper L) {
-			super(L);
-		}
-
-		@Override
-		public void handleMessage(Message msg) {
-			Bundle b = msg.getData();
-			String Gryo = b.getString("Gryo");
-			tv.setText(Gryo);
-			String p1 = b.getString("pwm1");
-			String p2 = b.getString("pwm2");
-			String p3 = b.getString("pwm3");
-			String p4 = b.getString("pwm4");
-			txtup.setText(p2);
-			txtrightleft.setText(p4 + "     " + p3);
-			txtdown.setText(p1);
-
-		}
-	}
+	/*
+	 * class MyHandler extends Handler { public MyHandler() { }
+	 * 
+	 * public MyHandler(Looper L) { super(L); }
+	 * 
+	 * @Override public void handleMessage(Message msg) { Bundle b = msg.getData(); String Gryo = b.getString("Gryo"); String p1 = b.getString("pwm1"); String p2 = b.getString("pwm2"); String p3 = b.getString("pwm3"); String p4 = b.getString("pwm4");
+	 * 
+	 * } }
+	 */
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		try {
-			myHandler = new MyHandler(MainActivity.this.getMainLooper());
+			// myHandler = new MyHandler(MainActivity.this.getMainLooper());
 			myHandlerCmd = new MyHandlerCmd(MainActivity.this.getMainLooper());
 			ms = new MySensor(this, this);
 
@@ -333,52 +339,6 @@ public class MainActivity extends Activity implements MySensorListener {
 
 			cam = new MyCamera();
 			cam.Init();
-
-			tv = (TextView) findViewById(R.id.textView1);
-			txtup = (TextView) findViewById(R.id.txtup);
-			txtrightleft = (TextView) findViewById(R.id.txtrightleft);
-			txtdown = (TextView) findViewById(R.id.txtdown);
-			Button b = (Button) findViewById(R.id.button1);
-			b.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					ms.CalibrateGyro();
-				}
-			});
-			Button b2 = (Button) findViewById(R.id.button2);
-			b2.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					com.Init();
-					currentPower = 0; // 0~1000 0:idle 1000:full power
-				}
-			});
-			Button test1 = (Button) findViewById(R.id.buttonTest1);
-			test1.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					poweron = 2;
-					test = 1;
-				}
-			});
-			Button test2 = (Button) findViewById(R.id.buttonTest2);
-			test2.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					poweron = 2;
-					test = 2;
-				}
-			});
-			Button test3 = (Button) findViewById(R.id.buttonTest3);
-			test3.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					poweron = 2;
-					test = 3;
-				}
-			});
-			Button test4 = (Button) findViewById(R.id.buttonTest4);
-			test4.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					poweron = 2;
-					test = 4;
-				}
-			});
 
 		} catch (Throwable t) {
 
@@ -411,38 +371,25 @@ public class MainActivity extends Activity implements MySensorListener {
 		adjGryoyTemp = 0;
 		adjGryozTemp = 0;
 
-		putDouble(cam.dataSend, this.CurrGryox, 0);
-		putDouble(cam.dataSend, this.CurrGryoy, 8);
-		putDouble(cam.dataSend, this.CurrGryoz, 16);
-
 	}
 
-	public static void putDouble(byte[] bb, double x, int index) {
-		// byte[] b = new byte[8];
-		long l = Double.doubleToLongBits(x);
-		for (int i = 0; i < 8; i++) {
-			bb[index + i] = (byte) l;
-			l = l >> 8;
-		}
-	}
-	public static double getDouble(byte[] b, int index)
-	{
+	public static double getDouble(byte[] b, int index) {
 		long l;
 		l = b[0 + index];
 		l &= 0xff;
-		l |= ((long)b[1 + index] << 8);
+		l |= ((long) b[1 + index] << 8);
 		l &= 0xffff;
-		l |= ((long)b[2 + index] << 16);
+		l |= ((long) b[2 + index] << 16);
 		l &= 0xffffff;
-		l |= ((long)b[3 + index] << 24);
+		l |= ((long) b[3 + index] << 24);
 		l &= 0xffffffffl;
-		l |= ((long)b[4 + index] << 32);
+		l |= ((long) b[4 + index] << 32);
 		l &= 0xffffffffffl;
-		l |= ((long)b[5 + index] << 40);
+		l |= ((long) b[5 + index] << 40);
 		l &= 0xffffffffffffl;
-		l |= ((long)b[6 + index] << 48);
+		l |= ((long) b[6 + index] << 48);
 		l &= 0xffffffffffffffl;
-		l |= ((long)b[7 + index] << 56);
+		l |= ((long) b[7 + index] << 56);
 		return Double.longBitsToDouble(l);
 	}
 

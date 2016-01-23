@@ -142,8 +142,6 @@ namespace WindowsFormsApplication4
 				clientSocket.Send(data);
 
 				clientSocket.Close();
-
-				textBox1.Focus();
 			}
 			catch
 			{
@@ -154,49 +152,57 @@ namespace WindowsFormsApplication4
 		{
 			while (true)
 			{
-				//receive message
-				Socket serverSocket = sSocket.Accept();
-				//byte[] recByte = new byte[1024 * 1024];
+				byte[] buff1;
+				byte[] buff2 = new byte[0];
+				int len;
+				int cnt;
+				try
+				{
+					//receive message
+					Socket serverSocket = sSocket.Accept();
 
-				//int bytes = serverSocket. Receive(recByte, recByte.Length, 0);
-				NetworkStream ns = new NetworkStream(serverSocket);
+					NetworkStream ns = new NetworkStream(serverSocket);
 
-				byte[] buff = new byte[64];
+					buff1 = new byte[2];
+					
+					cnt = ns.Read(buff1, 0, 2);
+					len = ((int)buff1[0]) + (((int)buff1[1]) << 8);
+					buff2 = new byte[len];
+					
+					
+					ns.Read(buff2, 0, len);
 
-				ns.Read(buff, 0, 64);
+					Image img = Image.FromStream(ns);
 
-				Image img = Image.FromStream(ns);
+					ns.Close();
+					serverSocket.Close();
 
-				ns.Close();
-				serverSocket.Close();
-
-				var tempBitmap = new Bitmap(320, 240);
-				var gTempBitmap = System.Drawing.Graphics.FromImage(tempBitmap);
-				gTempBitmap.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
-				gTempBitmap.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-				gTempBitmap.Clear(Color.White);
-				gTempBitmap.DrawImage(img, new Rectangle(0, 0, 320, 240), new Rectangle(0, 0, img.Width, img.Height), GraphicsUnit.Pixel);
-				gTempBitmap.Dispose();
-				tempBitmap.RotateFlip(RotateFlipType.Rotate180FlipX);
-				pictureBox1.Image = tempBitmap;
-
-
-				procBuff(buff);
-
+					var tempBitmap = new Bitmap(320, 240);
+					var gTempBitmap = System.Drawing.Graphics.FromImage(tempBitmap);
+					gTempBitmap.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
+					gTempBitmap.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+					gTempBitmap.Clear(Color.White);
+					gTempBitmap.DrawImage(img, new Rectangle(0, 0, 320, 240), new Rectangle(0, 0, img.Width, img.Height), GraphicsUnit.Pixel);
+					gTempBitmap.Dispose();
+					tempBitmap.RotateFlip(RotateFlipType.Rotate180FlipX);
+					pictureBox1.Image = tempBitmap;
+				}
+				catch (Exception ex)
+				{
+					//procBuff(System.Text.Encoding.Default.GetBytes(ex.ToString()));
+				}
+				procBuff(buff2);
 			}
 		}
 
-		double CurrGryox;
-		double CurrGryoy;
-		double CurrGryoz;
+		string txt;
 
 		delegate void Cinvokes();
 
 		public void procBuff(byte[] buff)
 		{
-			CurrGryox = getDouble(buff, 0);
-			CurrGryoy = getDouble(buff, 8);
-			CurrGryoz = getDouble(buff, 16);
+
+			txt = System.Text.Encoding.Default.GetString(buff);
 
 			Cinvokes ivk = new Cinvokes(Updata);
 
@@ -205,24 +211,26 @@ namespace WindowsFormsApplication4
 
 		private void Updata()
 		{
-			label1.Text = CurrGryox.ToString();
-			label2.Text = CurrGryoy.ToString();
-			label3.Text = CurrGryoz.ToString();
+			textBox1.Text = txt;
 		}
 
 		int ADJXC = 1;
 		int ADJYC = 2;
 		int ADJZC = 3;
-		int ADJPWR = 4;
-		int CALI = 5;
-		int RST = 6;
-		int START = 7;
-		int STOP = 8;
-		int TEST = 9;
-		int SETPWR = 10;
-		int ADJXT = 11;
-		int ADJYT = 12;
-		int ADJZT = 13;
+		int ADJXT = 4;
+		int ADJYT = 5;
+		int ADJZT = 6;
+		int ADJPWR = 7;
+		int CALI = 8;
+		int RST = 9;
+		int PWRON = 10;
+		int PWROFF = 11;
+		int SETPWR = 12;
+		int SETSTARTPWR1 = 13;
+		int SETSTARTPWR2 = 14;
+		int SETSTARTPWR3 = 15;
+		int SETSTARTPWR4 = 16;
+		int SETMINPWR = 17;
 
 		private void button1_Click(object sender, EventArgs e)
 		{
@@ -236,32 +244,12 @@ namespace WindowsFormsApplication4
 
 		private void button3_Click(object sender, EventArgs e)
 		{
-			Send(START, 0);
+			Send(PWRON, 0);
 		}
 
 		private void button4_Click(object sender, EventArgs e)
 		{
-			Send(STOP, 0);
-		}
-
-		private void button5_Click(object sender, EventArgs e)
-		{
-			Send(TEST, 1);
-		}
-
-		private void button6_Click(object sender, EventArgs e)
-		{
-			Send(TEST, 2);
-		}
-
-		private void button7_Click(object sender, EventArgs e)
-		{
-			Send(TEST, 3);
-		}
-
-		private void button8_Click(object sender, EventArgs e)
-		{
-			Send(TEST, 4);
+			Send(PWROFF, 0);
 		}
 
 		void textBox1_KeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
@@ -278,10 +266,6 @@ namespace WindowsFormsApplication4
 			}
 		}
 
-		private void trackBar1_Scroll(object sender, EventArgs e)
-		{
-			Send(SETPWR, trackBar1.Value);//0~1000
-		}
 
 		int x;
 		int y;
@@ -330,5 +314,51 @@ namespace WindowsFormsApplication4
 			Send(ADJXC, (double)trackBar3.Value / 10000);
 		}
 
+		private void start1_CheckedChanged(object sender, EventArgs e)
+		{
+			Send(SETSTARTPWR1, start1.Checked ? 20000 : -1);
+		}
+		private void pwr1_Scroll(object sender, EventArgs e)
+		{
+			Send(SETSTARTPWR1, pwr1.Value);
+		}
+
+		private void start2_CheckedChanged(object sender, EventArgs e)
+		{
+            Send(SETSTARTPWR2, start2.Checked ? 20000 : -1);
+		}
+		private void pwr2_Scroll(object sender, EventArgs e)
+		{
+			Send(SETSTARTPWR2, pwr2.Value);
+		}
+
+		private void start3_CheckedChanged(object sender, EventArgs e)
+		{
+            Send(SETSTARTPWR3, start3.Checked ? 20000 : -1);
+		}
+		private void pwr3_Scroll(object sender, EventArgs e)
+		{
+			Send(SETSTARTPWR3, pwr3.Value);
+		}
+
+		private void start4_CheckedChanged(object sender, EventArgs e)
+		{
+            Send(SETSTARTPWR4, start4.Checked ? 20000 : -1);
+		}
+		private void pwr4_Scroll(object sender, EventArgs e)
+		{
+			Send(SETSTARTPWR4, pwr4.Value);
+		}
+
+
+		private void trackBar1_Scroll(object sender, EventArgs e)
+		{
+			Send(SETMINPWR, trackBar1.Value);
+		}
+
+		private void trackBar2_Scroll(object sender, EventArgs e)
+		{
+			Send(SETPWR, trackBar2.Value);
+		}
 	}
 }

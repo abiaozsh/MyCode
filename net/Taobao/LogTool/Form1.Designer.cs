@@ -35,6 +35,7 @@
 			this.priceHi = new System.Windows.Forms.TextBox();
 			this.listBox1 = new System.Windows.Forms.ListBox();
 			this.priceLo = new System.Windows.Forms.TextBox();
+			this.button3 = new System.Windows.Forms.Button();
 			this.SuspendLayout();
 			// 
 			// button1
@@ -94,11 +95,22 @@
 			this.priceLo.Size = new System.Drawing.Size(128, 21);
 			this.priceLo.TabIndex = 53;
 			// 
+			// button3
+			// 
+			this.button3.Location = new System.Drawing.Point(386, 216);
+			this.button3.Name = "button3";
+			this.button3.Size = new System.Drawing.Size(75, 23);
+			this.button3.TabIndex = 54;
+			this.button3.Text = "button3";
+			this.button3.UseVisualStyleBackColor = true;
+			this.button3.Click += new System.EventHandler(this.button3_Click);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(726, 337);
+			this.Controls.Add(this.button3);
 			this.Controls.Add(this.priceLo);
 			this.Controls.Add(this.listBox1);
 			this.Controls.Add(this.priceHi);
@@ -123,6 +135,7 @@
 		private System.Windows.Forms.TextBox priceHi;
 		private System.Windows.Forms.ListBox listBox1;
 		private System.Windows.Forms.TextBox priceLo;
+		private System.Windows.Forms.Button button3;
 	}
 }
 

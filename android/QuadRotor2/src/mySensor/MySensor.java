@@ -28,13 +28,13 @@ public class MySensor implements SensorEventListener {
 			if (item.getType() == Sensor.TYPE_GYROSCOPE && !item.getVendor().startsWith("Google")) {
 				gyro = item;
 			}
-			if (item.getType() == Sensor.TYPE_GYROSCOPE && item.getVendor().startsWith("Google")) {
+			/*if (item.getType() == Sensor.TYPE_GYROSCOPE && item.getVendor().startsWith("Google")) {
 				gyro2 = item;
 			}
 
 			if (item.getType() == Sensor.TYPE_LINEAR_ACCELERATION && item.getVendor().startsWith("Google")) {
 				acce = item;
-			}
+			}*/
 
 			// if (item.getType() == Sensor.TYPE_ACCELEROMETER
 			// && !item.getVendor().startsWith("Google")) {
@@ -49,7 +49,7 @@ public class MySensor implements SensorEventListener {
 
 		int delay = SensorManager.SENSOR_DELAY_FASTEST;
 		sensorManager.registerListener(this, gyro, delay);
-		sensorManager.registerListener(this, acce, delay);
+		//sensorManager.registerListener(this, acce, delay);
 		// sensorManager.registerListener(this, gyro2, delay);
 
 	}
@@ -116,7 +116,7 @@ public class MySensor implements SensorEventListener {
 		}
 	}
 
-	private void CalibrateAcce(SensorEvent e) {
+	/*private void CalibrateAcce(SensorEvent e) {
 		float x = e.values[0];
 		float y = e.values[1];
 		float z = e.values[2];
@@ -139,7 +139,7 @@ public class MySensor implements SensorEventListener {
 				AcceCaliz /= 90;
 			}
 		}
-	}
+	}*/
 
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {
 		// accuracy = accuracy;
@@ -168,7 +168,8 @@ public class MySensor implements SensorEventListener {
 			CurrGryoz += z;
 
 			msl.onSensorChanged(CurrGryox, CurrGryoy, CurrGryoz, CurrAccex, CurrAccey, CurrAccez);
-		} else if (e.sensor == acce) {
+		}
+		/*else if (e.sensor == acce) {
 			if (Cali_cnt_Acce > 0) {
 				CalibrateAcce(e);
 				return;
@@ -187,6 +188,6 @@ public class MySensor implements SensorEventListener {
 			CurrAccez += z;
 
 			msl.onSensorChanged(CurrGryox, CurrGryoy, CurrGryoz, CurrAccex, CurrAccey, CurrAccez);
-		}
+		}*/
 	}
 }
