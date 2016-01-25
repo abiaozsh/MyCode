@@ -231,6 +231,14 @@ namespace WindowsFormsApplication4
 		int SETSTARTPWR3 = 15;
 		int SETSTARTPWR4 = 16;
 		int SETMINPWR = 17;
+		int RST2 = 18;
+		int LFW = 19;
+		int LBK = 20;
+		int LOF = 21;
+		int RFW = 22;
+		int RBK = 23;
+		int ROF = 24;
+		int PUSHDATA = 25;
 
 		private void button1_Click(object sender, EventArgs e)
 		{
@@ -240,6 +248,11 @@ namespace WindowsFormsApplication4
 		private void button2_Click(object sender, EventArgs e)
 		{
 			Send(RST, 0);
+		}
+
+		private void button5_Click(object sender, EventArgs e)
+		{
+			Send(RST2, 0);
 		}
 
 		private void button3_Click(object sender, EventArgs e)
@@ -360,5 +373,48 @@ namespace WindowsFormsApplication4
 		{
 			Send(SETPWR, trackBar2.Value);
 		}
+
+		void textBox2_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
+		{
+			if (e.KeyCode == Keys.Q)
+			{
+				Send(LFW, 0);
+			}
+			if (e.KeyCode == Keys.A)
+			{
+				Send(LBK, 0);
+			}
+			if (e.KeyCode == Keys.W)
+			{
+				Send(RFW, 0);
+			}
+			if (e.KeyCode == Keys.S)
+			{
+				Send(RBK, 0);
+			}
+			Send(PUSHDATA, 0);
+		}
+
+		void textBox2_KeyUp(object sender, System.Windows.Forms.KeyEventArgs e)
+		{
+			if (e.KeyCode == Keys.Q)
+			{
+				Send(LOF, 0);
+			}
+			if (e.KeyCode == Keys.A)
+			{
+				Send(LOF, 0);
+			}
+			if (e.KeyCode == Keys.W)
+			{
+				Send(ROF, 0);
+			}
+			if (e.KeyCode == Keys.S)
+			{
+				Send(ROF, 0);
+			}
+			Send(PUSHDATA, 0);
+		}
+
 	}
 }

@@ -30,7 +30,32 @@ public class Com {
 		} else {
 		}
 	}
+	public void Init8() {
+		int baudRate = 115200;
+		byte dataBit = 8;
+		byte stopBit = 1;
+		byte parity = 0;
+		byte flowControl = 0;
+		if (com.isConnected()) {
+			com.UartInit();
+			com.SetConfig(baudRate, dataBit, stopBit, parity, flowControl);
+		} else {
+		}
+	}
 
+	public void Send(byte data1, byte data2, byte data3, byte data4) {
+		byte[] d = new byte[5];
+		d[0] = 23;
+		d[1] = data1;
+		d[2] = data2;
+		d[3] = data3;
+		d[4] = data4;
+		try {
+			com.WriteData(d, 5);
+		} catch (Exception e) {
+		}
+	}
+	
 	public void Send(byte dataA1, byte dataA2, byte dataB1, byte dataB2, byte dataC1, byte dataC2, byte dataD1, byte dataD2) {
 		//phone
 		///////////////////////////////////////////////////////////////////////////////////////

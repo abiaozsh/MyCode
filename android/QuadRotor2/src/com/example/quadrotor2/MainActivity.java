@@ -54,6 +54,11 @@ public class MainActivity extends Activity implements MySensorListener {
 	public double CurrGryoy;
 	public double CurrGryoz;
 
+	public byte data1;
+	public byte data2;
+	public byte data3;
+	public byte data4;
+
 	// MyHandler myHandler;
 	MyHandlerCmd myHandlerCmd;
 
@@ -136,6 +141,10 @@ public class MainActivity extends Activity implements MySensorListener {
 				cam.sendData.CurrGryox = CurrGryox;
 				cam.sendData.CurrGryoy = CurrGryoy;
 				cam.sendData.CurrGryoz = CurrGryoz;
+				cam.sendData.data1 = data1;
+				cam.sendData.data2 = data2;
+				cam.sendData.data3 = data3;
+				cam.sendData.data4 = data4;
 
 				cam.sendData.Message = Message.toString();
 				if (poweron == 1) {
@@ -206,6 +215,14 @@ public class MainActivity extends Activity implements MySensorListener {
 		final int SETSTARTPWR3 = 15;
 		final int SETSTARTPWR4 = 16;
 		final int SETMINPWR = 17;
+		final int RST2 = 18;
+		final int LFW = 19;
+		final int LBK = 20;
+		final int LOF = 21;
+		final int RFW = 22;
+		final int RBK = 23;
+		final int ROF = 24;
+		final int PUSHDATA = 25;
 
 		@Override
 		public void handleMessage(Message msg) {
@@ -249,6 +266,36 @@ public class MainActivity extends Activity implements MySensorListener {
 				adjGryoxConst = 0;
 				adjGryoxConst = 0;
 				break;
+			case RST2:
+				com.Init();
+				break;
+			case LFW:
+				data1 = (byte) 1;
+				data2 = (byte) 240;
+				break;
+			case LBK:
+				data1 = (byte) 2;
+				data2 = (byte) 240;
+				break;
+			case LOF:
+				data1 = (byte) 0;
+				data2 = (byte) 0;
+				break;
+			case RFW:
+				data3 = (byte) 3;
+				data4 = (byte) 240;
+				break;
+			case RBK:
+				data3 = (byte) 4;
+				data4 = (byte) 240;
+				break;
+			case ROF:
+				data3 = (byte) 0;
+				data4 = (byte) 0;
+				break;
+			case PUSHDATA:
+				com.Send(data1, data2, data3, data4);
+				break;
 			case PWRON:
 				poweron = 1;
 				Message.delete(0, Message.length());
@@ -261,13 +308,10 @@ public class MainActivity extends Activity implements MySensorListener {
 				if (value >= 10000) {
 					// com.Send(CMD_SETPWRSIMP, (byte) (value - 10000), Z, Z, Z, Z, Z, Z);
 					com.Send(CMD_START, Z, Z, Z, Z, Z, Z, Z);
-					Message.append("start1\r\n");
 				} else if (value >= 0) {
 					com.Send(CMD_SETPWRSIMP, (byte) (value), Z, Z, Z, Z, Z, Z);
-					Message.append("val1"+Byte.toString((byte) (value))+"\r\n");
 				} else {
 					com.Send(CMD_NOSTART, Z, Z, Z, Z, Z, Z, Z);
-					Message.append("nostart1\r\n");
 				}
 				break;
 			case SETSTARTPWR2:
