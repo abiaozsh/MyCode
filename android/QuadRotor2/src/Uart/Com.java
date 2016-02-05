@@ -9,6 +9,8 @@ import com.wch.wchusbdriver.CH34xAndroidDriver;
 public class Com {
 	public CH34xAndroidDriver com;
 
+	public StringBuilder Message;
+
 	private static final String ACTION_USB_PERMISSION = "com.wch.wchusbdriver.USB_PERMISSION";
 
 	public Com(Activity activity) {
@@ -27,9 +29,16 @@ public class Com {
 		if (com.isConnected()) {
 			com.UartInit();
 			com.SetConfig(baudRate, dataBit, stopBit, parity, flowControl);
+			if (Message != null) {
+				Message.append("init5");
+			}
 		} else {
+			if (Message != null) {
+				Message.append("init-5-");
+			}
 		}
 	}
+
 	public void Init8() {
 		int baudRate = 115200;
 		byte dataBit = 8;
@@ -39,7 +48,13 @@ public class Com {
 		if (com.isConnected()) {
 			com.UartInit();
 			com.SetConfig(baudRate, dataBit, stopBit, parity, flowControl);
+			if (Message != null) {
+				Message.append("init8");
+			}
 		} else {
+			if (Message != null) {
+				Message.append("init-8-");
+			}
 		}
 	}
 
@@ -55,20 +70,20 @@ public class Com {
 		} catch (Exception e) {
 		}
 	}
-	
+
 	public void Send(byte dataA1, byte dataA2, byte dataB1, byte dataB2, byte dataC1, byte dataC2, byte dataD1, byte dataD2) {
-		//phone
-		///////////////////////////////////////////////////////////////////////////////////////
-		//txtup.setText(p2);
-		//txtrightleft.setText(p4 + "     " + p3);
-		//txtdown.setText(p1);
-		///////////////////////////////////////////////////////////////////////////////////////
-		
-		//board
-		//up 2
-		//left 4 right 3
-		//down 1
-		
+		// phone
+		// /////////////////////////////////////////////////////////////////////////////////////
+		// txtup.setText(p2);
+		// txtrightleft.setText(p4 + "     " + p3);
+		// txtdown.setText(p1);
+		// /////////////////////////////////////////////////////////////////////////////////////
+
+		// board
+		// up 2
+		// left 4 right 3
+		// down 1
+
 		byte[] d = new byte[20];
 
 		// 0x00;

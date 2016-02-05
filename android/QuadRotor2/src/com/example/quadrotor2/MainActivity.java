@@ -267,31 +267,31 @@ public class MainActivity extends Activity implements MySensorListener {
 				adjGryoxConst = 0;
 				break;
 			case RST2:
-				com.Init();
+				com.Init8();
 				break;
 			case LFW:
 				data1 = (byte) 1;
-				data2 = (byte) 240;
+				data2 = (byte) 50;
 				break;
 			case LBK:
 				data1 = (byte) 2;
-				data2 = (byte) 240;
+				data2 = (byte) 50;
 				break;
 			case LOF:
 				data1 = (byte) 0;
-				data2 = (byte) 0;
+				data2 = (byte) 128;
 				break;
 			case RFW:
 				data3 = (byte) 3;
-				data4 = (byte) 240;
+				data4 = (byte) 50;
 				break;
 			case RBK:
 				data3 = (byte) 4;
-				data4 = (byte) 240;
+				data4 = (byte) 50;
 				break;
 			case ROF:
 				data3 = (byte) 0;
-				data4 = (byte) 0;
+				data4 = (byte) 128;
 				break;
 			case PUSHDATA:
 				com.Send(data1, data2, data3, data4);
@@ -375,6 +375,7 @@ public class MainActivity extends Activity implements MySensorListener {
 			ms = new MySensor(this, this);
 
 			com = new Com(this);
+			com.Message = Message;
 			t = new Timer();
 			Task tsk = new Task(this);
 			t.scheduleAtFixedRate(tsk, 0, 20);
