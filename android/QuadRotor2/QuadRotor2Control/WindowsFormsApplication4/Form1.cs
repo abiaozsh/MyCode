@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Net.Sockets;
 using System.Net;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace WindowsFormsApplication4
 {
@@ -420,6 +421,25 @@ namespace WindowsFormsApplication4
 		{
 
 		}
+
+        int x;
+        int y;
+        int u;
+        int v;
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            joy.JOYINFOEX info = new joy.JOYINFOEX();
+            info.dwSize = Marshal.SizeOf(typeof(joy.JOYINFOEX));
+            info.dwFlags = 0x00000080; 
+            joy.joyGetPosEx(0, ref info);
+
+             x = info.dwXpos;
+             y = info.dwYpos;
+             u = info.dwZpos;
+             v = info.dwRpos;
+
+             this.Text = x.ToString() + " " + y.ToString() + " " + u.ToString() + " " + v.ToString() + " ";
+        }
 
 	}
 }

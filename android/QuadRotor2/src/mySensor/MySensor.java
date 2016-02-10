@@ -82,23 +82,33 @@ public class MySensor implements SensorEventListener {
 			Accex[dataIdx] = CurrAccex;
 			Accey[dataIdx] = CurrAccey;
 			Accez[dataIdx] = CurrAccez;
-			dataIdx++;
-			if (dataIdx == 64) {
-				dataIdx = 0;
-			}
 
 			double x = 0;
 			double y = 0;
 			double z = 0;
-
+      double accu = 0;
+      double fact = 1;
+      int idx = dataIdx;
 			for (int i = 0; i < 64; i++) {
-				x += Accex[i];
-				y += Accey[i];
-				z += Accez[i];
+				x += Accex[idx]*fact;
+				y += Accey[idx]*fact;
+				z += Accez[idx]*fact;
+        accu+=fact;
+        fact = fact *0.5;
+        idx--;
+        if (idx == -1) {
+          idx = 63;
+        }
 			}
-			x /= 64;
-			y /= 64;
-			z /= 64;
+      
+			dataIdx++;
+			if (dataIdx == 64) {
+				dataIdx = 0;
+			}
+      
+			x /= accu;
+			y /= accu;
+			z /= accu;
 
 			//这边要反一下的
 			x -= CurrGryoy;

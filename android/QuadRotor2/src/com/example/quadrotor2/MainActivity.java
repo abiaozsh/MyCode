@@ -38,6 +38,7 @@ public class MainActivity extends Activity implements MySensorListener {
 
 	public float adjxConst = 0;
 	public float adjyConst = 0;
+  public float adjZConst = 0;
 	public String senseData;
 	public int poweron = 2;
 
@@ -80,6 +81,9 @@ public class MainActivity extends Activity implements MySensorListener {
 				// PID
 				{
 
+          side add
+          adjZConst
+        
 					pwm4 += gravityx * 20 + (gravityyAccum / 100);
 					pwm3 -= gravityx * 20 + (gravityyAccum / 100);
 
@@ -227,6 +231,9 @@ public class MainActivity extends Activity implements MySensorListener {
 				break;
 			case ADJYC:
 				adjyConst = (float) value;
+				break;
+			case ADJZC:
+				adjZConst = (float) value;
 				break;
 			case ADJPWR:
 				currentPower += value;
