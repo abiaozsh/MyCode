@@ -14,6 +14,7 @@ import android.util.Log;
 
 public class MyCamera {
 	public static String ComputerIP = "192.168.43.46";
+	//public static String ComputerIP = "192.168.43.46";
 	// public static String ComputerIP = "192.168.0.10";
 
 	public Camera c;
@@ -23,14 +24,11 @@ public class MyCamera {
 	public class SendData {
 		public double currentPower = 0;
 
-		public double adjGryoxConst = 0;
-		public double adjGryoyConst = 0;
-		public double adjGryozConst = 0;
-		public double adjGryoxTemp = 0;
-		public double adjGryoyTemp = 0;
-		public double adjGryozTemp = 0;
-
 		public int poweron = 0;
+
+		public float adjxConst = 0;
+		public float adjyConst = 0;
+		public String senseData;
 
 		public double pwm1;// up +
 		public double pwm2;// down +
@@ -38,12 +36,11 @@ public class MyCamera {
 		public double pwm4;// right -
 		public double minPower = 10;
 
-		public double CurrGryoxAccum = 0;
-		public double CurrGryoyAccum = 0;
-		public double CurrGryozAccum = 0;
-		public double CurrGryox;
-		public double CurrGryoy;
-		public double CurrGryoz;
+		public double gravityx = 0;
+		public double gravityy = 0;
+		public double gravityxAccum = 0;
+		public double gravityyAccum = 0;
+
 		public byte data1;
 		public byte data2;
 		public byte data3;
@@ -95,30 +92,33 @@ class StreamIt implements Camera.PreviewCallback {
 			try {
 				YuvImage image = new YuvImage(data, format, size.width, size.height, null);
 				StringBuffer sb = new StringBuffer();
+				
+				String fmt = "%0+11.6f";
+				String fmt2 = "%0+5.1f";
+								
+				sb.append("currentPower:" + String.format(fmt,mc.sendData.currentPower) + "\r\n");
 
-				sb.append("currentPower:" + Double.toString(mc.sendData.currentPower) + "\r\n");
-
-				sb.append("adjGryoxConst:" + Double.toString(mc.sendData.adjGryoxConst) + "\t");
-				sb.append("adjGryoyConst:" + Double.toString(mc.sendData.adjGryoyConst) + "\t");
-				sb.append("adjGryozConst:" + Double.toString(mc.sendData.adjGryozConst) + "\r\n");
-				sb.append("adjGryoxTemp:" + Double.toString(mc.sendData.adjGryoxTemp) + "\t");
-				sb.append("adjGryoyTemp:" + Double.toString(mc.sendData.adjGryoyTemp) + "\t");
-				sb.append("adjGryozTemp:" + Double.toString(mc.sendData.adjGryozTemp) + "\r\n");
+				sb.append("adjxConst:" + String.format(fmt,mc.sendData.adjxConst) + "\t");
+				sb.append("adjyConst:" + String.format(fmt,mc.sendData.adjyConst) + "\r\n");
+				sb.append(mc.sendData.senseData + "\r\n");
 
 				sb.append("poweron:" + Integer.toString(mc.sendData.poweron) + "\r\n");
 
-				sb.append("pwm1:" + Double.toString(mc.sendData.pwm1) + "\t");
-				sb.append("pwm2:" + Double.toString(mc.sendData.pwm2) + "\t");
-				sb.append("pwm3:" + Double.toString(mc.sendData.pwm3) + "\t");
-				sb.append("pwm4:" + Double.toString(mc.sendData.pwm4) + "\r\n");
-				sb.append("minPower:" + Double.toString(mc.sendData.minPower) + "\r\n");
+				// up 2
+				// left 4 right 3
+				// down 1
+				sb.append("\r\n");
+				sb.append("     pwm2:" + String.format(fmt2,mc.sendData.pwm2) + "\r\n");
+				sb.append("pwm4:" + String.format(fmt2,mc.sendData.pwm4) + "\t");
+				sb.append("pwm3:" + String.format(fmt2,mc.sendData.pwm3) + "\r\n");
+				sb.append("     pwm1:" + String.format(fmt2,mc.sendData.pwm1) + "\r\n");
+				sb.append("\r\n");
+				sb.append("minPower:" + String.format(fmt,mc.sendData.minPower) + "\r\n");
 
-				sb.append("CurrGryoxAccum:" + Double.toString(mc.sendData.CurrGryoxAccum) + "\t");
-				sb.append("CurrGryoyAccum:" + Double.toString(mc.sendData.CurrGryoyAccum) + "\t");
-				sb.append("CurrGryozAccum:" + Double.toString(mc.sendData.CurrGryozAccum) + "\r\n");
-				sb.append("CurrGryox:" + Double.toString(mc.sendData.CurrGryox) + "\t");
-				sb.append("CurrGryoy:" + Double.toString(mc.sendData.CurrGryoy) + "\t");
-				sb.append("CurrGryoz:" + Double.toString(mc.sendData.CurrGryoz) + "\r\n");
+				sb.append("gravityx:" + String.format(fmt,mc.sendData.gravityx) + "\t");
+				sb.append("gravityy:" + String.format(fmt,mc.sendData.gravityy) + "\r\n");
+				sb.append("gravityxAccum:" +String.format(fmt,mc.sendData.gravityxAccum) + "\t");
+				sb.append("gravityyAccum:" + String.format(fmt,mc.sendData.gravityyAccum) + "\r\n");
 
 				sb.append("data1:" + Byte.toString(mc.sendData.data1) + "\t");
 				sb.append("data2:" + Byte.toString(mc.sendData.data2) + "\t");

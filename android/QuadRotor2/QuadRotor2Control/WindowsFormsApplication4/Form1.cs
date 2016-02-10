@@ -164,12 +164,12 @@ namespace WindowsFormsApplication4
 					NetworkStream ns = new NetworkStream(serverSocket);
 
 					buff1 = new byte[2];
-					
+
 					cnt = ns.Read(buff1, 0, 2);
 					len = ((int)buff1[0]) + (((int)buff1[1]) << 8);
 					buff2 = new byte[len];
-					
-					
+
+
 					ns.Read(buff2, 0, len);
 
 					Image img = Image.FromStream(ns);
@@ -279,30 +279,26 @@ namespace WindowsFormsApplication4
 			}
 		}
 
-
-		int x;
-		int y;
 		int down = 0;
 
 		void pictureBox2_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
 		{
-			x = e.X;
-			y = e.Y;
+
 			down = 1;
 		}
 
 		void pictureBox2_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
 		{
-			if (x == e.X && y == e.Y)
-			{
-				Send(ADJXT, x - 50);
-				Send(ADJYT, y - 50);
-			}
-			else
-			{
-				Send(ADJXC, 0);
-				Send(ADJYC, 0);
-			}
+			//if (x == e.X && y == e.Y)
+			//{
+			//	Send(ADJXT, x - 50);
+			//	Send(ADJYT, y - 50);
+			//}
+			//else
+			//{
+			//	Send(ADJXC, 0);
+			//	Send(ADJYC, 0);
+			//}
 			down = 0;
 		}
 
@@ -310,21 +306,25 @@ namespace WindowsFormsApplication4
 		{
 			if (down == 1)
 			{
-				//Send(ADJXC, ((double)(x - e.X)) / 1000);
-				//Send(ADJYC, ((double)(y - e.Y)) / 1000);
+				int x;
+				int y;
+				x = e.X;
+				y = e.Y;
+				Send(ADJXC, (50f - x) / 100f);
+				Send(ADJYC, (y - 50f) / 100f);
 			}
 		}
 
 		private void trackBar4_Scroll(object sender, EventArgs e)
 		{
 			label4.Text = trackBar4.Value.ToString();
-			Send(ADJXC, (double)trackBar4.Value / 10000);
+			Send(ADJYC, (double)trackBar4.Value / 100);
 		}
 
 		private void trackBar3_Scroll(object sender, EventArgs e)
 		{
 			label5.Text = trackBar3.Value.ToString();
-			Send(ADJXC, (double)trackBar3.Value / 10000);
+			Send(ADJXC, (double)trackBar3.Value / 100);
 		}
 
 		private void start1_CheckedChanged(object sender, EventArgs e)
@@ -338,7 +338,7 @@ namespace WindowsFormsApplication4
 
 		private void start2_CheckedChanged(object sender, EventArgs e)
 		{
-            Send(SETSTARTPWR2, start2.Checked ? 20000 : -1);
+			Send(SETSTARTPWR2, start2.Checked ? 20000 : -1);
 		}
 		private void pwr2_Scroll(object sender, EventArgs e)
 		{
@@ -347,7 +347,7 @@ namespace WindowsFormsApplication4
 
 		private void start3_CheckedChanged(object sender, EventArgs e)
 		{
-            Send(SETSTARTPWR3, start3.Checked ? 20000 : -1);
+			Send(SETSTARTPWR3, start3.Checked ? 20000 : -1);
 		}
 		private void pwr3_Scroll(object sender, EventArgs e)
 		{
@@ -356,7 +356,7 @@ namespace WindowsFormsApplication4
 
 		private void start4_CheckedChanged(object sender, EventArgs e)
 		{
-            Send(SETSTARTPWR4, start4.Checked ? 20000 : -1);
+			Send(SETSTARTPWR4, start4.Checked ? 20000 : -1);
 		}
 		private void pwr4_Scroll(object sender, EventArgs e)
 		{
@@ -414,6 +414,11 @@ namespace WindowsFormsApplication4
 				Send(ROF, 0);
 			}
 			Send(PUSHDATA, 0);
+		}
+
+		private void pictureBox2_Click(object sender, EventArgs e)
+		{
+
 		}
 
 	}

@@ -16,6 +16,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.view.Menu;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.EditText;
 
 public class MainActivity extends Activity implements MySensorListener {
 	MySensor ms;
@@ -32,13 +36,9 @@ public class MainActivity extends Activity implements MySensorListener {
 
 	public double currentPower = 0;
 
-	public double adjGryoxConst = 0;
-	public double adjGryoyConst = 0;
-	public double adjGryozConst = 0;
-	public double adjGryoxTemp = 0;
-	public double adjGryoyTemp = 0;
-	public double adjGryozTemp = 0;
-
+	public float adjxConst = 0;
+	public float adjyConst = 0;
+	public String senseData;
 	public int poweron = 2;
 
 	public double pwm1;// up +
@@ -47,12 +47,10 @@ public class MainActivity extends Activity implements MySensorListener {
 	public double pwm4;// right -
 	public double minPower = 10;
 
-	public double CurrGryoxAccum = 0;
-	public double CurrGryoyAccum = 0;
-	public double CurrGryozAccum = 0;
-	public double CurrGryox;
-	public double CurrGryoy;
-	public double CurrGryoz;
+	public double gravityx = 0;
+	public double gravityy = 0;
+	public double gravityxAccum = 0;
+	public double gravityyAccum = 0;
 
 	public byte data1;
 	public byte data2;
@@ -81,20 +79,13 @@ public class MainActivity extends Activity implements MySensorListener {
 
 				// PID
 				{
-					CurrGryoxAccum = 0;// += CurrGryox;
-					CurrGryoyAccum = 0;// += CurrGryoy;
-					CurrGryozAccum = 0;// += CurrGryoz;
 
-					pwm1 += CurrGryox + (CurrGryoxAccum / 100);
-					pwm2 -= CurrGryox + (CurrGryoxAccum / 100);
+					pwm4 += gravityx * 20 + (gravityyAccum / 100);
+					pwm3 -= gravityx * 20 + (gravityyAccum / 100);
 
-					pwm3 += CurrGryoy + (CurrGryoyAccum / 100);
-					pwm4 -= CurrGryoy + (CurrGryoyAccum / 100);
+					pwm1 += gravityy * 20 + (gravityxAccum / 100);
+					pwm2 -= gravityy * 20 + (gravityxAccum / 100);
 
-					pwm1 += CurrGryoz + (CurrGryozAccum / 100);
-					pwm2 += CurrGryoz + (CurrGryozAccum / 100);
-					pwm3 -= CurrGryoz + (CurrGryozAccum / 100);
-					pwm4 -= CurrGryoz + (CurrGryozAccum / 100);
 				}
 
 				if (pwm1 > 255)
@@ -123,24 +114,23 @@ public class MainActivity extends Activity implements MySensorListener {
 				pwm4 = Math.round(pwm4);
 
 				cam.sendData.currentPower = currentPower;
-				cam.sendData.adjGryoxConst = adjGryoxConst;
-				cam.sendData.adjGryoyConst = adjGryoyConst;
-				cam.sendData.adjGryozConst = adjGryozConst;
-				cam.sendData.adjGryoxTemp = adjGryoxTemp;
-				cam.sendData.adjGryoyTemp = adjGryoyTemp;
-				cam.sendData.adjGryozTemp = adjGryozTemp;
 				cam.sendData.poweron = poweron;
+
+				cam.sendData.adjxConst = adjxConst;
+				cam.sendData.adjyConst = adjyConst;
+				cam.sendData.senseData = senseData;
+
 				cam.sendData.pwm1 = pwm1;
 				cam.sendData.pwm2 = pwm2;
 				cam.sendData.pwm3 = pwm3;
 				cam.sendData.pwm4 = pwm4;
 				cam.sendData.minPower = minPower;
-				cam.sendData.CurrGryoxAccum = CurrGryoxAccum;
-				cam.sendData.CurrGryoyAccum = CurrGryoyAccum;
-				cam.sendData.CurrGryozAccum = CurrGryozAccum;
-				cam.sendData.CurrGryox = CurrGryox;
-				cam.sendData.CurrGryoy = CurrGryoy;
-				cam.sendData.CurrGryoz = CurrGryoz;
+
+				cam.sendData.gravityx = gravityx;
+				cam.sendData.gravityy = gravityy;
+				cam.sendData.gravityxAccum = gravityxAccum;
+				cam.sendData.gravityyAccum = gravityyAccum;
+
 				cam.sendData.data1 = data1;
 				cam.sendData.data2 = data2;
 				cam.sendData.data3 = data3;
@@ -233,22 +223,10 @@ public class MainActivity extends Activity implements MySensorListener {
 
 			switch (cmd) {
 			case ADJXC:
-				adjGryoxConst = value;
+				adjxConst = (float) value;
 				break;
 			case ADJYC:
-				adjGryoyConst = value;
-				break;
-			case ADJZC:
-				adjGryozConst = value;
-				break;
-			case ADJXT:
-				adjGryoxTemp = value;
-				break;
-			case ADJYT:
-				adjGryoyTemp = value;
-				break;
-			case ADJZT:
-				adjGryozTemp = value;
+				adjyConst = (float) value;
 				break;
 			case ADJPWR:
 				currentPower += value;
@@ -256,15 +234,9 @@ public class MainActivity extends Activity implements MySensorListener {
 			case SETPWR:
 				currentPower = value;
 				break;
-			case CALI:
-				ms.CalibrateGyro();
-				break;
 			case RST:
 				com.Init();
 				currentPower = 0;
-				adjGryoxConst = 0;
-				adjGryoxConst = 0;
-				adjGryoxConst = 0;
 				break;
 			case RST2:
 				com.Init8();
@@ -364,6 +336,7 @@ public class MainActivity extends Activity implements MySensorListener {
 	 * 
 	 * } }
 	 */
+	EditText et;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -384,6 +357,14 @@ public class MainActivity extends Activity implements MySensorListener {
 
 			cam = new MyCamera();
 			cam.Init();
+			et = (EditText) findViewById(R.id.editText1);
+			et.setText(MyCamera.ComputerIP);
+			Button b = (Button) findViewById(R.id.button1);
+			b.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					MyCamera.ComputerIP = (String) et.getText().toString();
+				}
+			});
 
 		} catch (Throwable t) {
 
@@ -404,18 +385,22 @@ public class MainActivity extends Activity implements MySensorListener {
 		}
 	}
 
-	public void onSensorChanged(double CurrGryox, double CurrGryoy, double CurrGryoz, double CurrAccex, double CurrAccey, double CurrAccez) {
+	public void onSensorChanged(double CurrGryox, double CurrGryoy, double CurrGryoz, double CurrAccex, double CurrAccey, double CurrAccez, double x, double y, double z) {
 
-		ms.ModifyGryo(adjGryoxConst + adjGryoxTemp, adjGryoyConst + adjGryoyTemp, adjGryozConst + adjGryozTemp);
+		ms.setAdj(adjxConst, adjyConst, 0);
 
-		this.CurrGryox = CurrGryox + adjGryoxConst + adjGryoxTemp;
-		this.CurrGryoy = CurrGryoy + adjGryoyConst + adjGryoyTemp;
-		this.CurrGryoz = CurrGryoz + adjGryozConst + adjGryozTemp;
+		this.gravityx = x;
+		this.gravityy = y;
+		String fmt = "%0+11.6f";
+		String temp = "";
+		temp += "CurrGryox:" + String.format(fmt, CurrGryox) + "\t";
+		temp += "CurrGryoy:" + String.format(fmt, CurrGryoy) + "\t";
+		temp += "CurrGryoz:" + String.format(fmt, CurrGryoz) + "\r\n";
 
-		adjGryoxTemp = 0;
-		adjGryoyTemp = 0;
-		adjGryozTemp = 0;
-
+		temp += "CurrAccex:" + String.format(fmt, CurrAccex) + "\t";
+		temp += "CurrAccey:" + String.format(fmt, CurrAccey) + "\t";
+		temp += "CurrAccez:" + String.format(fmt, CurrAccez) + "\r\n";
+		this.senseData = temp;
 	}
 
 	public static double getDouble(byte[] b, int index) {

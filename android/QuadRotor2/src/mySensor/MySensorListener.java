@@ -1,5 +1,14 @@
 package mySensor;
 
 public interface MySensorListener {
-	public void onSensorChanged(double CurrGryox, double CurrGryoy, double CurrGryoz, double CurrAccex, double CurrAccey, double CurrAccez);
+	public void onSensorChanged(
+			double CurrGryox,
+			double CurrGryoy, 
+			double CurrGryoz, 
+			double CurrAccex, 
+			double CurrAccey, 
+			double CurrAccez,
+			double x,
+			double y,
+			double z);
 }

@@ -139,6 +139,7 @@
 			this.pictureBox2.Size = new System.Drawing.Size(100, 100);
 			this.pictureBox2.TabIndex = 9;
 			this.pictureBox2.TabStop = false;
+			this.pictureBox2.Click += new System.EventHandler(this.pictureBox2_Click);
 			this.pictureBox2.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pictureBox2_MouseDown);
 			this.pictureBox2.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pictureBox2_MouseMove);
 			this.pictureBox2.MouseUp += new System.Windows.Forms.MouseEventHandler(this.pictureBox2_MouseUp);
@@ -155,8 +156,8 @@
 			// trackBar3
 			// 
 			this.trackBar3.Location = new System.Drawing.Point(609, 465);
-			this.trackBar3.Maximum = 20;
-			this.trackBar3.Minimum = -20;
+			this.trackBar3.Maximum = 100;
+			this.trackBar3.Minimum = -100;
 			this.trackBar3.Name = "trackBar3";
 			this.trackBar3.Size = new System.Drawing.Size(97, 42);
 			this.trackBar3.TabIndex = 11;
@@ -165,8 +166,8 @@
 			// trackBar4
 			// 
 			this.trackBar4.Location = new System.Drawing.Point(643, 377);
-			this.trackBar4.Maximum = 20;
-			this.trackBar4.Minimum = -20;
+			this.trackBar4.Maximum = 100;
+			this.trackBar4.Minimum = -100;
 			this.trackBar4.Name = "trackBar4";
 			this.trackBar4.Orientation = System.Windows.Forms.Orientation.Vertical;
 			this.trackBar4.Size = new System.Drawing.Size(42, 82);
