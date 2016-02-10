@@ -32,13 +32,11 @@ namespace WindowsFormsApplication1
 				try
 				{
 					//COM4为Arduino使用的串口号，需根据实际情况调整
-					port = new SerialPort("COM3", 115200, Parity.None, 5, StopBits.One);
+					port = new SerialPort("COM4", 115200, Parity.None, 5, StopBits.One);
 					port.Open();
 				}
 				catch
-				{
-                    this.Text = "error";
-                }
+				{ }
 			}
 		}
 
@@ -77,9 +75,12 @@ namespace WindowsFormsApplication1
             d[18] = (byte)((((dataD2 & 0x01) >> 0) << 4) | (((dataC2 & 0x01) >> 0) << 3) | (((dataB2 & 0x01) >> 0) << 2) | (((dataA2 & 0x01) >> 0) << 1) | 0x01);
             d[19] = (byte)((((0x0000 & 0x01) >> 0) << 4) | (((0x0000 & 0x01) >> 0) << 3) | (((0x0000 & 0x01) >> 0) << 2) | (((0x0000 & 0x01) >> 0) << 1) | 0x00);//stop bit
 
-			if (port != null && port.IsOpen)
+			//if (port != null && port.IsOpen)
 			{
 				port.Write(d, 0, 20);
+			}
+			//else
+			{
 			}
 		}
 
