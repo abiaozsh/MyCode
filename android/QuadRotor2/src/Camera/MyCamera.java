@@ -41,11 +41,6 @@ public class MyCamera {
 		public double gravityxAccum = 0;
 		public double gravityyAccum = 0;
 
-		public byte data1;
-		public byte data2;
-		public byte data3;
-		public byte data4;
-
 		public String Message;
 	}
 
@@ -119,11 +114,6 @@ class StreamIt implements Camera.PreviewCallback {
 				sb.append("gravityy:" + String.format(fmt,mc.sendData.gravityy) + "\r\n");
 				sb.append("gravityxAccum:" +String.format(fmt,mc.sendData.gravityxAccum) + "\t");
 				sb.append("gravityyAccum:" + String.format(fmt,mc.sendData.gravityyAccum) + "\r\n");
-
-				sb.append("data1:" + Byte.toString(mc.sendData.data1) + "\t");
-				sb.append("data2:" + Byte.toString(mc.sendData.data2) + "\t");
-				sb.append("data3:" + Byte.toString(mc.sendData.data3) + "\t");
-				sb.append("data4:" + Byte.toString(mc.sendData.data4) + "\r\n");
 
 				sb.append("msg:" + mc.sendData.Message + "\r\n");
 

@@ -58,15 +58,11 @@ public class Com {
 		}
 	}
 
-	public void Send(byte data1, byte data2, byte data3, byte data4) {
-		byte[] d = new byte[5];
-		d[0] = 23;
-		d[1] = data1;
-		d[2] = data2;
-		d[3] = data3;
-		d[4] = data4;
+	public void Send(byte data) {
+		byte[] d = new byte[1];
+		d[0] = data;
 		try {
-			com.WriteData(d, 5);
+			com.WriteData(d, 1);
 		} catch (Exception e) {
 		}
 	}

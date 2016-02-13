@@ -53,11 +53,6 @@ public class MainActivity extends Activity implements MySensorListener {
 	public double gravityxAccum = 0;
 	public double gravityyAccum = 0;
 
-	public byte data1;
-	public byte data2;
-	public byte data3;
-	public byte data4;
-
 	// MyHandler myHandler;
 	MyHandlerCmd myHandlerCmd;
 
@@ -81,8 +76,8 @@ public class MainActivity extends Activity implements MySensorListener {
 				// PID
 				{
 
-          side add
-          adjZConst
+          //side add
+          //adjZConst
         
 					pwm4 += gravityx * 20 + (gravityyAccum / 100);
 					pwm3 -= gravityx * 20 + (gravityyAccum / 100);
@@ -134,11 +129,6 @@ public class MainActivity extends Activity implements MySensorListener {
 				cam.sendData.gravityy = gravityy;
 				cam.sendData.gravityxAccum = gravityxAccum;
 				cam.sendData.gravityyAccum = gravityyAccum;
-
-				cam.sendData.data1 = data1;
-				cam.sendData.data2 = data2;
-				cam.sendData.data3 = data3;
-				cam.sendData.data4 = data4;
 
 				cam.sendData.Message = Message.toString();
 				if (poweron == 1) {
@@ -217,6 +207,18 @@ public class MainActivity extends Activity implements MySensorListener {
 		final int RBK = 23;
 		final int ROF = 24;
 		final int PUSHDATA = 25;
+		
+        int AL = 0x04;
+        int AH = 0x08;
+        int BL = 0x10;
+        int BH = 0x20;
+        int CL = 0x80;
+        int CH = 0x40;
+        int DL = 0x01;
+        int DH = 0x02;
+
+        int A = 0;
+        int B = 0;
 
 		@Override
 		public void handleMessage(Message msg) {
@@ -249,31 +251,42 @@ public class MainActivity extends Activity implements MySensorListener {
 				com.Init8();
 				break;
 			case LFW:
-				data1 = (byte) 1;
-				data2 = (byte) 50;
+				A = 1;
 				break;
 			case LBK:
-				data1 = (byte) 2;
-				data2 = (byte) 50;
+				A = -1;
 				break;
 			case LOF:
-				data1 = (byte) 0;
-				data2 = (byte) 128;
+				A = 0;
 				break;
 			case RFW:
-				data3 = (byte) 3;
-				data4 = (byte) 50;
+				B = 1;
 				break;
 			case RBK:
-				data3 = (byte) 4;
-				data4 = (byte) 50;
+				B = -1;
 				break;
 			case ROF:
-				data3 = (byte) 0;
-				data4 = (byte) 128;
+				B = 0;
 				break;
 			case PUSHDATA:
-				com.Send(data1, data2, data3, data4);
+	            int val = 0;
+	            if (A == 1)
+	            {
+	                val |= AH | BL;
+	            }
+	            if (A == -1)
+	            {
+	                val |= AL | BH;
+	            }
+	            if (B == 1)
+	            {
+	                val |= CL | DH;
+	            }
+	            if (B == -1)
+	            {
+	                val |= CH | DL;
+	            }
+	            com.Send((byte)val);
 				break;
 			case PWRON:
 				poweron = 1;
