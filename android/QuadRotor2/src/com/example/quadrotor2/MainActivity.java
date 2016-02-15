@@ -38,7 +38,7 @@ public class MainActivity extends Activity implements MySensorListener {
 
 	public float adjxConst = 0;
 	public float adjyConst = 0;
-  public float adjZConst = 0;
+	public float adjZConst = 0;
 	public String senseData;
 	public int poweron = 2;
 
@@ -76,15 +76,21 @@ public class MainActivity extends Activity implements MySensorListener {
 				// PID
 				{
 
-          //side add
-          //adjZConst
-        
-					pwm4 += gravityx * 20 + (gravityyAccum / 100);
-					pwm3 -= gravityx * 20 + (gravityyAccum / 100);
+					// side add
+					// adjZConst
 
-					pwm1 += gravityy * 20 + (gravityxAccum / 100);
-					pwm2 -= gravityy * 20 + (gravityxAccum / 100);
+					pwm4 += gravityx * 20;// + (gravityyAccum / 100)
+					pwm3 -= gravityx * 20;// + (gravityyAccum / 100)
 
+					pwm1 += gravityy * 20;// + (gravityxAccum / 100)
+					pwm2 -= gravityy * 20;// + (gravityxAccum / 100)
+
+					
+					pwm4 += adjZConst;//+- ~30
+					pwm3 += adjZConst;
+					pwm1 -= adjZConst;
+					pwm2 -= adjZConst;
+					
 				}
 
 				if (pwm1 > 255)
@@ -187,9 +193,9 @@ public class MainActivity extends Activity implements MySensorListener {
 		final int ADJZC = 3;
 		final int ADJXT = 4;
 		final int ADJYT = 5;
-		final int ADJZT = 6;
+		final int SETCAMB = 6;
 		final int ADJPWR = 7;
-		final int CALI = 8;
+		final int SETCAMF = 8;
 		final int RST = 9;
 		final int PWRON = 10;
 		final int PWROFF = 11;
@@ -207,18 +213,18 @@ public class MainActivity extends Activity implements MySensorListener {
 		final int RBK = 23;
 		final int ROF = 24;
 		final int PUSHDATA = 25;
-		
-        int AL = 0x04;
-        int AH = 0x08;
-        int BL = 0x10;
-        int BH = 0x20;
-        int CL = 0x80;
-        int CH = 0x40;
-        int DL = 0x01;
-        int DH = 0x02;
 
-        int A = 0;
-        int B = 0;
+		int AL = 0x04;
+		int AH = 0x08;
+		int BL = 0x10;
+		int BH = 0x20;
+		int CL = 0x80;
+		int CH = 0x40;
+		int DL = 0x01;
+		int DH = 0x02;
+
+		int A = 0;
+		int B = 0;
 
 		@Override
 		public void handleMessage(Message msg) {
@@ -242,6 +248,14 @@ public class MainActivity extends Activity implements MySensorListener {
 				break;
 			case SETPWR:
 				currentPower = value;
+				break;
+			case SETCAMB:
+				cam.facing = cam.B;
+				cam.Init();
+				break;
+			case SETCAMF:
+				cam.facing = cam.F;
+				cam.Init();
 				break;
 			case RST:
 				com.Init();
@@ -269,24 +283,20 @@ public class MainActivity extends Activity implements MySensorListener {
 				B = 0;
 				break;
 			case PUSHDATA:
-	            int val = 0;
-	            if (A == 1)
-	            {
-	                val |= AH | BL;
-	            }
-	            if (A == -1)
-	            {
-	                val |= AL | BH;
-	            }
-	            if (B == 1)
-	            {
-	                val |= CL | DH;
-	            }
-	            if (B == -1)
-	            {
-	                val |= CH | DL;
-	            }
-	            com.Send((byte)val);
+				int val = 0;
+				if (A == 1) {
+					val |= AH | BL;
+				}
+				if (A == -1) {
+					val |= AL | BH;
+				}
+				if (B == 1) {
+					val |= CL | DH;
+				}
+				if (B == -1) {
+					val |= CH | DL;
+				}
+				com.Send((byte) val);
 				break;
 			case PWRON:
 				poweron = 1;

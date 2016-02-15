@@ -51,45 +51,11 @@ namespace WindowsFormsApplication4
 			{
 				ex.ToString();
 			}
-
-			/*
-			// Enumerate joysticks in the system.
-			foreach (DeviceInstance instance in Manager.GetDevices(DeviceClass.GameControl, EnumDevicesFlags.AttachedOnly))
-			{
-				// Create the device.  Just pick the first one
-				applicationDevice = new Device(instance.InstanceGuid);
-				break;
-			}
-
-			// Set the data format to the c_dfDIJoystick pre-defined format.
-			applicationDevice.SetDataFormat(DeviceDataFormat.Joystick);
-			// Set the cooperative level for the device.
-			applicationDevice.SetCooperativeLevel(this, CooperativeLevelFlags.Exclusive | CooperativeLevelFlags.Foreground);
-			*/
-
-
-
 		}
 
-
-		void Form1_KeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
+		void Form1_FormClosed(object sender, System.Windows.Forms.FormClosedEventArgs e)
 		{
-		}
-		public void IntToByte(int val, byte[] ret, int offset)
-		{
-			ret[offset + 3] = (byte)(val >> 24 & 0xff);
-			ret[offset + 2] = (byte)(val >> 16 & 0xff);
-			ret[offset + 1] = (byte)(val >> 8 & 0xff);
-			ret[offset + 0] = (byte)(val & 0xff);
-		}
-		public int ByteToInt(byte[] src, int offset)
-		{
-			int value;
-			value = (int)((src[offset] & 0xFF)
-					| ((src[offset + 1] & 0xFF) << 8)
-					| ((src[offset + 2] & 0xFF) << 16)
-					| ((src[offset + 3] & 0xFF) << 24));
-			return value;
+			Application.Exit();
 		}
 
 		public static void putDouble(byte[] bb, double x, int index)
@@ -101,26 +67,6 @@ namespace WindowsFormsApplication4
 				bb[index + i] = (byte)l;
 				l = l >> 8;
 			}
-		}
-		public static double getDouble(byte[] b, int index)
-		{
-			long l;
-			l = b[0 + index];
-			l &= 0xff;
-			l |= ((long)b[1 + index] << 8);
-			l &= 0xffff;
-			l |= ((long)b[2 + index] << 16);
-			l &= 0xffffff;
-			l |= ((long)b[3 + index] << 24);
-			l &= 0xffffffffl;
-			l |= ((long)b[4 + index] << 32);
-			l &= 0xffffffffffl;
-			l |= ((long)b[5 + index] << 40);
-			l &= 0xffffffffffffl;
-			l |= ((long)b[6 + index] << 48);
-			l &= 0xffffffffffffffl;
-			l |= ((long)b[7 + index] << 56);
-			return BitConverter.Int64BitsToDouble(l);
 		}
 
 		public void Send(int param1, double param2)
@@ -148,6 +94,9 @@ namespace WindowsFormsApplication4
 			{
 			}
 		}
+
+		public bool FLIPH = false;
+		public bool FLIPV = false;
 
 		public void NetThread()
 		{
@@ -185,30 +134,41 @@ namespace WindowsFormsApplication4
 					gTempBitmap.Clear(Color.White);
 					gTempBitmap.DrawImage(img, new Rectangle(0, 0, 320, 240), new Rectangle(0, 0, img.Width, img.Height), GraphicsUnit.Pixel);
 					gTempBitmap.Dispose();
-					tempBitmap.RotateFlip(RotateFlipType.Rotate180FlipX);
+					
+					if (FLIPH)
+					{
+						tempBitmap.RotateFlip(RotateFlipType.RotateNoneFlipX);
+					}
+
+					if (FLIPV)
+					{
+						tempBitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
+					}
+
 					pictureBox1.Image = tempBitmap;
 				}
 				catch (Exception ex)
 				{
 					//procBuff(System.Text.Encoding.Default.GetBytes(ex.ToString()));
 				}
-				procBuff(buff2);
+
+				txt = System.Text.Encoding.Default.GetString(buff2);
+
+				Cinvokes ivk = new Cinvokes(Updata);
+				try
+				{
+					this.BeginInvoke(ivk, null);
+				}
+				catch (Exception ex)
+				{
+					break;
+				}
 			}
 		}
 
 		string txt;
 
 		delegate void Cinvokes();
-
-		public void procBuff(byte[] buff)
-		{
-
-			txt = System.Text.Encoding.Default.GetString(buff);
-
-			Cinvokes ivk = new Cinvokes(Updata);
-
-			this.BeginInvoke(ivk, null);
-		}
 
 		private void Updata()
 		{
@@ -220,9 +180,9 @@ namespace WindowsFormsApplication4
 		int ADJZC = 3;
 		int ADJXT = 4;
 		int ADJYT = 5;
-		int ADJZT = 6;
+		int SETCAMB = 6;
 		int ADJPWR = 7;
-		int CALI = 8;
+		int SETCAMF = 8;
 		int RST = 9;
 		int PWRON = 10;
 		int PWROFF = 11;
@@ -241,10 +201,6 @@ namespace WindowsFormsApplication4
 		int ROF = 24;
 		int PUSHDATA = 25;
 
-		private void button1_Click(object sender, EventArgs e)
-		{
-			Send(CALI, 0);
-		}
 
 		private void button2_Click(object sender, EventArgs e)
 		{
@@ -316,16 +272,10 @@ namespace WindowsFormsApplication4
 			}
 		}
 
-		private void trackBar4_Scroll(object sender, EventArgs e)
-		{
-			label4.Text = trackBar4.Value.ToString();
-			Send(ADJYC, (double)trackBar4.Value / 100);
-		}
-
 		private void trackBar3_Scroll(object sender, EventArgs e)
 		{
-			label5.Text = trackBar3.Value.ToString();
-			Send(ADJXC, (double)trackBar3.Value / 100);
+			this.Text = trackBar3.Value.ToString();
+			Send(ADJZC, (double)trackBar3.Value);
 		}
 
 		private void start1_CheckedChanged(object sender, EventArgs e)
@@ -379,19 +329,19 @@ namespace WindowsFormsApplication4
 		{
 			if (e.KeyCode == Keys.Q)
 			{
-				Send(LFW, 0);
+                Send(LBK, 0);
 			}
 			if (e.KeyCode == Keys.A)
 			{
-				Send(LBK, 0);
+                Send(LFW, 0);
 			}
 			if (e.KeyCode == Keys.W)
 			{
-				Send(RFW, 0);
+                Send(RBK, 0);
 			}
 			if (e.KeyCode == Keys.S)
 			{
-				Send(RBK, 0);
+                Send(RFW, 0);
 			}
 			Send(PUSHDATA, 0);
 		}
@@ -422,24 +372,51 @@ namespace WindowsFormsApplication4
 
 		}
 
-        int x;
-        int y;
-        int u;
-        int v;
-        private void timer1_Tick(object sender, EventArgs e)
-        {
-            joy.JOYINFOEX info = new joy.JOYINFOEX();
-            info.dwSize = Marshal.SizeOf(typeof(joy.JOYINFOEX));
-            info.dwFlags = 0x00000080; 
-            joy.joyGetPosEx(0, ref info);
+		int x;
+		int y;
+		int u;
+		int v;
+		private void timer1_Tick(object sender, EventArgs e)
+		{
+			joy.JOYINFOEX info = new joy.JOYINFOEX();
+			info.dwSize = Marshal.SizeOf(typeof(joy.JOYINFOEX));
+			info.dwFlags = 0x00000080;
+			joy.joyGetPosEx(0, ref info);
 
-             x = info.dwXpos;
-             y = info.dwYpos;
-             u = info.dwZpos;
-             v = info.dwRpos;
+			x = info.dwXpos;
+			y = info.dwYpos;
+			u = info.dwZpos;
+			v = info.dwRpos;
 
-             this.Text = x.ToString() + " " + y.ToString() + " " + u.ToString() + " " + v.ToString() + " ";
-        }
+			this.Text = x.ToString() + " " + y.ToString() + " " + u.ToString() + " " + v.ToString() + " ";
+		}
+
+		private void radioButton2_CheckedChanged(object sender, EventArgs e)
+		{
+			Send(SETCAMB, 0);
+
+		}
+
+		private void radioButton1_CheckedChanged(object sender, EventArgs e)
+		{
+			Send(SETCAMF, 0);
+
+		}
+
+		private void pictureBox1_Click(object sender, EventArgs e)
+		{
+
+		}
+
+		private void button1_Click(object sender, EventArgs e)
+		{
+			FLIPH = !FLIPH;
+		}
+
+		private void button6_Click(object sender, EventArgs e)
+		{
+			FLIPV = !FLIPV;
+		}
 
 	}
 }

@@ -10,15 +10,16 @@ import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
-import android.util.Log;
 
 public class MyCamera {
 	public static String ComputerIP = "192.168.43.46";
-	//public static String ComputerIP = "192.168.43.46";
 	// public static String ComputerIP = "192.168.0.10";
 
-	public Camera c;
-
+	public Camera c = null;
+	public int facing = CameraInfo.CAMERA_FACING_BACK;
+	public int F = CameraInfo.CAMERA_FACING_FRONT;
+	public int B = CameraInfo.CAMERA_FACING_BACK;
+	
 	public SendData sendData = new SendData();
 
 	public class SendData {
@@ -45,18 +46,23 @@ public class MyCamera {
 	}
 
 	public void Init() {
+		if (c != null) {
+			c.stopPreview();
+			c.setPreviewCallback(null);
+			c.release();
+			c = null;
+		}
 		int id = 0;
 		for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
 			Camera.CameraInfo info = new Camera.CameraInfo();
 			Camera.getCameraInfo(i, info);
-			if (info.facing == CameraInfo.CAMERA_FACING_FRONT) {
-				// if (info.facing == CameraInfo.CAMERA_FACING_BACK) {
+			if (info.facing == facing) {
 				id = i;
 			}
 		}
-		c = Camera.open(id);
-
+		
 		try {
+			c = Camera.open(id);
 			c.setPreviewCallback(new StreamIt(this)); // 设置回调的类
 			c.startPreview(); // 开始预览
 			c.autoFocus(null); // 自动对焦
@@ -67,7 +73,7 @@ public class MyCamera {
 }
 
 class StreamIt implements Camera.PreviewCallback {
-	static int i = 0;
+
 	MyCamera mc;
 
 	MyThread[] threadPool = new MyThread[5];
@@ -78,62 +84,57 @@ class StreamIt implements Camera.PreviewCallback {
 
 	@Override
 	public void onPreviewFrame(byte[] data, Camera camera) {
-		i++;
-		if (i == 1) {
-			i = 0;
-			Parameters param = camera.getParameters();
-			Size size = param.getPreviewSize();
-			int format = param.getPreviewFormat();// ImageFormat.NV21
+		Parameters param = camera.getParameters();
+		Size size = param.getPreviewSize();
+		int format = param.getPreviewFormat();// ImageFormat.NV21
+		try {
+			YuvImage image = new YuvImage(data, format, size.width, size.height, null);
+			StringBuffer sb = new StringBuffer();
+
+			String fmt = "%0+11.6f";
+			String fmt2 = "%0+5.1f";
+
+			sb.append("currentPower:" + String.format(fmt, mc.sendData.currentPower) + "\r\n");
+
+			sb.append("adjxConst:" + String.format(fmt, mc.sendData.adjxConst) + "\t");
+			sb.append("adjyConst:" + String.format(fmt, mc.sendData.adjyConst) + "\r\n");
+			sb.append(mc.sendData.senseData + "\r\n");
+
+			sb.append("poweron:" + Integer.toString(mc.sendData.poweron) + "\r\n");
+
+			// up 2
+			// left 4 right 3
+			// down 1
+			sb.append("\r\n");
+			sb.append("     pwm2:" + String.format(fmt2, mc.sendData.pwm2) + "\r\n");
+			sb.append("pwm4:" + String.format(fmt2, mc.sendData.pwm4) + "\t");
+			sb.append("pwm3:" + String.format(fmt2, mc.sendData.pwm3) + "\r\n");
+			sb.append("     pwm1:" + String.format(fmt2, mc.sendData.pwm1) + "\r\n");
+			sb.append("\r\n");
+			sb.append("minPower:" + String.format(fmt, mc.sendData.minPower) + "\r\n");
+
+			sb.append("gravityx:" + String.format(fmt, mc.sendData.gravityx) + "\t");
+			sb.append("gravityy:" + String.format(fmt, mc.sendData.gravityy) + "\r\n");
+			sb.append("gravityxAccum:" + String.format(fmt, mc.sendData.gravityxAccum) + "\t");
+			sb.append("gravityyAccum:" + String.format(fmt, mc.sendData.gravityyAccum) + "\r\n");
+
+			sb.append("msg:" + mc.sendData.Message + "\r\n");
+
 			try {
-				YuvImage image = new YuvImage(data, format, size.width, size.height, null);
-				StringBuffer sb = new StringBuffer();
-				
-				String fmt = "%0+11.6f";
-				String fmt2 = "%0+5.1f";
-								
-				sb.append("currentPower:" + String.format(fmt,mc.sendData.currentPower) + "\r\n");
-
-				sb.append("adjxConst:" + String.format(fmt,mc.sendData.adjxConst) + "\t");
-				sb.append("adjyConst:" + String.format(fmt,mc.sendData.adjyConst) + "\r\n");
-				sb.append(mc.sendData.senseData + "\r\n");
-
-				sb.append("poweron:" + Integer.toString(mc.sendData.poweron) + "\r\n");
-
-				// up 2
-				// left 4 right 3
-				// down 1
-				sb.append("\r\n");
-				sb.append("     pwm2:" + String.format(fmt2,mc.sendData.pwm2) + "\r\n");
-				sb.append("pwm4:" + String.format(fmt2,mc.sendData.pwm4) + "\t");
-				sb.append("pwm3:" + String.format(fmt2,mc.sendData.pwm3) + "\r\n");
-				sb.append("     pwm1:" + String.format(fmt2,mc.sendData.pwm1) + "\r\n");
-				sb.append("\r\n");
-				sb.append("minPower:" + String.format(fmt,mc.sendData.minPower) + "\r\n");
-
-				sb.append("gravityx:" + String.format(fmt,mc.sendData.gravityx) + "\t");
-				sb.append("gravityy:" + String.format(fmt,mc.sendData.gravityy) + "\r\n");
-				sb.append("gravityxAccum:" +String.format(fmt,mc.sendData.gravityxAccum) + "\t");
-				sb.append("gravityyAccum:" + String.format(fmt,mc.sendData.gravityyAccum) + "\r\n");
-
-				sb.append("msg:" + mc.sendData.Message + "\r\n");
-
-				try {
-					aa: for (int i = 0; i < 5; i++) {
-						if (threadPool[i] == null || threadPool[i].free) {
-							threadPool[i] = new MyThread();
-							threadPool[i].SetData(image, size, sb.toString().getBytes());
-							threadPool[i].start();
-							break aa;
-						}
+				aa: for (int i = 0; i < 5; i++) {
+					if (threadPool[i] == null || threadPool[i].free) {
+						threadPool[i] = new MyThread();
+						threadPool[i].SetData(image, size, sb.toString().getBytes());
+						threadPool[i].start();
+						break aa;
 					}
-				} catch (Throwable e) {
-					e.toString();
 				}
-			} catch (Exception ex) {
-				Log.e("Sys", "Error:" + ex.getMessage());
+			} catch (Throwable e) {
 			}
+		} catch (Exception ex) {
 		}
 	}
+
 }
 
 class MyThread extends Thread {
