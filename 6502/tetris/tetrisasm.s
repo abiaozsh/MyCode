@@ -28,10 +28,8 @@ _block:
     .byte $70,$00,$30,$00,$A5,$00,$00,$00,$25,$09,$00,$06,$00,$00,$00,$00 ;B 6
     .byte $07,$00,$4E,$00,$06,$00,$00,$00,$70,$00,$F5,$04,$00,$00,$00,$00 ;C
     .byte $70,$00,$C5,$00,$60,$00,$00,$00,$D5,$04,$60,$00,$00,$00,$00,$00 ;D 7
-_chg1:
-    .byte $00,$01,$05,$03,$01,$05,$06,$07,$08,$07,$06,$0B,$03,$0B,$0E,$08 ;E chg1
-_chg2:
-    .byte $00,$01,$04,$03,$04,$01,$06,$07,$06,$09,$0A,$07,$0C,$09,$03,$0A ;F chg2
+_chg:
+    .byte $00,$11,$45,$33,$41,$15,$66,$77,$68,$97,$A6,$7B,$C3,$9B,$3E,$A8 ;E chg
 _bottom:
     .byte $11,$11,$04,$00,$11,$11,$04,$00,$22,$00,$22,$00,$22,$00,$22,$00 ;0
     .byte $22,$01,$32,$00,$22,$01,$32,$00,$21,$02,$23,$00,$21,$02,$23,$00 ;1
@@ -41,18 +39,8 @@ _left:
     .byte $04,$01,$04,$01,$02,$02,$02,$02,$03,$02,$03,$02,$03,$02,$03,$02 ;4
     .byte $03,$02,$03,$02,$03,$02,$03,$02,$03,$02,$03,$02,$00,$00,$00,$00 ;5
 _dataUser:
-    ;     $00,$01,$02,$03,$04,$05,$06,$07,$08,$09
     .byte $02,$02,$10,$10,$02,$0D,$10,$68,$07,$0D,$00,$00,$00,$00,$00,$00 ;6 player1
     .byte $02,$13,$10,$98,$0B,$0E,$58,$70,$10,$0E,$00,$00,$00,$00,$00,$00 ;7 player2
-_datarnd:
-    .byte $45,$32,$42,$34,$26,$21,$54,$32,$26,$46,$40,$06,$66,$10,$41,$11 ;<<rnd
-    .byte $62,$16,$20,$04,$42,$02,$35,$51,$12,$53,$50,$36,$55,$40,$03,$52 ;<<rnd
-    .byte $03,$31,$56,$66,$62,$00,$14,$26,$33,$52,$02,$20,$43,$13,$03,$01 ;<<rnd
-    .byte $20,$31,$54,$21,$40,$15,$20,$33,$34,$52,$66,$53,$46,$33,$46,$16 ;<<rnd
-    .byte $23,$43,$55,$40,$61,$14,$46,$11,$11,$50,$36,$32,$20,$65,$00,$63 ;<<rnd
-    .byte $05,$45,$23,$16,$44,$10,$63,$62,$26,$14,$34,$50,$25,$25,$22,$14 ;<<rnd
-    .byte $51,$46,$44,$06,$13,$22,$53,$44,$10,$61,$25,$62,$55,$40,$34,$21 ;<<rnd
-    .byte $50,$36,$11,$30,$61,$40,$62,$50,$56,$05,$34,$05,$41,$51,$06,$50 ;<<rnd
     
 .define DRAW_BOARD    $00
 .define DRAW_SP       $02
@@ -74,63 +62,54 @@ _datarnd:
 .define PTR2007             $1E
 
 ;page0 0x0000 ~0x00FF
-.define nmiflg              $01
-.define rand0               $20
-.define getRnd7_ret         $21
-.define AnyTouch_i          $22
-.define AnyTouch_j          $23
-.define Touch_i             $24
-.define getBlock_i          $25
-.define getBlock_j          $26
-.define getBlock_idx        $27
-.define getBlock_ret        $28
-.define setBoard_x          $29
-.define setBoard_y          $2A
-.define setBoard_val        $2B
-.define setBoard_base       $2C
-.define getBase_x           $2D
-.define getBase_y           $2E
-.define getBase_hi          $2F
-.define getBase_lo          $30
-.define getBase_tmp         $31
-.define getBase_item        $32
-.define getSPBase_item      $33
-.define getSPBase_x         $34
-.define getSPBase_y         $35
-.define DrawLine_i          $36
-.define DrawLine_y          $37
-.define DrawShape_i         $38
-.define DrawShape_j         $39
-.define Clear_i             $3A
-.define TouchDo_i           $3B
-.define TouchDo_j           $3C
-.define TouchDo_k           $3D
-.define movelr_n            $3E
-.define rotate_n            $40
-.define rotate_tempPosX     $41
-.define main_i              $42
-.define main_j              $43
-.define currentPlayer       $44
-.define player1On           $45
-.define player2On           $46
-.define readJoystick_player $47
-.define CurSP_player        $48
-.define CurBoard_player     $49
+.define getBlock_i          $20
+.define getBlock_j          $21
+.define getBlock_idx        $22
+.define getBlock_ret        $23
+.define setBoard_x          $24
+.define setBoard_y          $25
+.define setBoard_val        $26
+.define setBoard_base       $27
+.define getBase_x           $28
+.define getBase_y           $29
+.define getBase_hi          $2A
+.define getBase_lo          $2B
+.define getBase_tmp         $2C
+.define getBase_item        $2D
+.define getSPBase_item      $2E
+.define getSPBase_x         $2F
+.define getSPBase_y         $30
+.define DrawLine_i          $31
+.define DrawLine_y          $32
+.define DrawShape_i         $33
+.define DrawShape_j         $34
+.define Clear_i             $35
+.define TouchDo_j           $36
+.define TouchDo_k           $37
+.define rotate_n            $38
+.define currentPlayer       $39
+.define readJoystick_player $3A
+.define CurSP_player        $3B
+.define CurBoard_player     $3C
+.define nmiflg              $3D
+.define temp                $3E
+.define rand0               $3F
 
 ;current player
-.define PosX             $50
-.define PosY             $51
-.define NextShapeNo      $52
-.define NowShapeNo       $53
-.define NowDirectionNo   $54
-.define lastkey          $55
-.define key1             $56
-.define key2             $57
-.define Score0           $58
-.define Score1           $59
-.define Score2           $5A
-.define Score3           $5B
-.define TimeCount        $5C
+.define PosX             $40
+.define PosY             $41
+.define NextShapeNo      $42
+.define NowShapeNo       $43
+.define NowDirectionNo   $44
+.define lastkey          $45
+.define key1             $46
+.define key2             $47
+.define Score0           $48
+.define Score1           $49
+.define Score2           $4A
+.define Score3           $4B
+.define TimeCount        $4C
+.define isOn             $4D
 
 
 ;page1: 0x0100 ~0x01FF stack
@@ -155,25 +134,24 @@ _datarnd:
 .segment    "CODE"
 
 .proc    _nmi: near
-    rts;rti
+  sta temp
+  dec rand0
+  bpl lbl1;<0
+    lda #$06
+    sta rand0
+  lbl1:
+  sec;lda #$80
+  ror nmiflg;sta nmiflg
+  lda temp
+  rts;rti
 .endproc
 
 .proc    _waitvblank: near
-    ldy #$00
-    lda (PTR2002),Y
-    bmi else1
-        lbl1:
-        lda (PTR2002),Y
-        bmi lbl1
-        lbl2:
-        inc rand0
-        lda (PTR2002),Y
-        bpl lbl2
-        rts
-    else1:
-    inc rand0
-    lda (PTR2002),Y
-    bpl else1
+    lbl1:
+    rol nmiflg;lda nmiflg
+    bcc lbl1;bpl lbl1
+    clc;lda #$00
+    ror nmiflg;sta nmiflg
     rts
 .endproc
 
@@ -211,11 +189,11 @@ _datarnd:
 .endproc
 
 .proc    _st2005: near
-    ;*(char*)(0x2005) = 0;
+    ;[0x2005] = 0;
     lda #$00
     tay
     sta (PTR2005),Y
-    ;*(char*)(0x2005) = 0;
+    ;[0x2005] = 0;
     sta (PTR2005),Y
     rts
 .endproc
@@ -241,7 +219,7 @@ _datarnd:
     sta getBase_y
     jsr _getBase
     
-    jsr _waitvblank
+    jsr _waitvblank;绘图PPU前调用
     ldy #$00
     lda getBase_hi
     sta (PTR2006),Y
@@ -265,14 +243,29 @@ _datarnd:
     rts
 .endproc
 
+.proc _split:near;入参：C A，返回A
+  bcc else1
+    lsr
+    lsr
+    lsr
+    lsr
+    rts
+  else1:
+    and #$0F
+  rts
+.endproc
+
 .proc _getBlock: near
+    ;A:getBlock_idx
+    ;sta getBlock_idx
     ;getBlock_i <<= 1;
-    lda getBlock_i
-    asl
+    ;lda getBlock_i
+    asl getBlock_i
     ;getBlock_idx += getBlock_i;
-    clc
-    adc getBlock_idx
+    ;clc
+    adc getBlock_i
     sta getBlock_idx
+    lsr getBlock_i
 
     ;getBlock_j >>= 1;
     lda getBlock_j
@@ -286,20 +279,9 @@ _datarnd:
     
     ;if(getBlock_j & 1)
     lda getBlock_j
-    and #$01
-    beq else1
-        ;getBlock_ret = (data1[getBlock_idx]>>4)&0x0F;
-        lda _block,X
-        lsr
-        lsr
-        lsr
-        lsr
-        sta getBlock_ret
-        rts
-    else1:
-    ;getBlock_ret = data1[getBlock_idx]&0x0F;
+    lsr;and #$01
     lda _block,X
-    and #$0F
+    jsr _split
     sta getBlock_ret
     rts
 .endproc
@@ -325,7 +307,6 @@ _datarnd:
     ;getBlock_idx += getBlock_temp;
     clc
     adc getBlock_idx
-    sta getBlock_idx
     jsr _getBlock
     rts
 .endproc
@@ -340,7 +321,6 @@ _datarnd:
     asl
     asl
     asl
-    sta getBlock_idx
     jsr _getBlock
     rts
 .endproc
@@ -375,20 +355,9 @@ _datarnd:
     tax
     ;if(getBlock_j & 1)
     lda getBlock_j
-    and #$01
-    beq else1
-        ;getBlock_ret = (data2[getBlock_idx]>>4)&0x0F;
-        lda _bottom,X
-        lsr
-        lsr
-        lsr
-        lsr
-        sta getBlock_ret
-        rts
-    else1:
-    ;getBlock_ret = data2[getBlock_idx]&0x0F;
+    lsr;and #$01
     lda _bottom,X
-    and #$0F
+    jsr _split
     sta getBlock_ret
     rts
 .endproc
@@ -435,14 +404,14 @@ _datarnd:
     
     ;setBoard_y = setBoard_x & 1;
     lda setBoard_x
-    and #$01
+    lsr;and #$01
     rts
 .endproc
 
 .proc    _setBoard: near
     jsr _calcBoardAddress
     ;if(setBoard_y)
-    beq else1
+    bcc else1;beq else1
         ;setBoard_val<<=4;
         lda setBoard_val
         asl
@@ -469,59 +438,17 @@ _datarnd:
 
 .proc    _getBoard: near
     jsr _calcBoardAddress
-    ;if(setBoard_y)
-    beq else1
-        ;return Board[base] >> 4;;high 4
-        ldx setBoard_base
-        lda Board,X
-        lsr
-        lsr
-        lsr
-        lsr
-        sta setBoard_val
-        rts
-    else1:
-    ;return Board[base] & 0x0F;;low 4
     ldx setBoard_base
     lda Board,X
-    and #$0F
+    jsr _split
     sta setBoard_val
-    rts
-.endproc
-
-.proc    _getRnd7: near
-    ;return Math.floor(Math.random()*7);
-    ;v = datarnd[(rand0&0x7F)];
-    lda rand0
-    and #$7F
-    tax
-    ;lda %v,X",datarnd);
-    ;sta getRnd7_ret);
-    
-    ;if(rand0&0x80)
-    lda rand0
-    and #$80
-    
-    beq else1
-        ;return (v>>4);
-        lda _datarnd,X
-        lsr
-        lsr
-        lsr
-        lsr
-        ;sta getRnd7_ret); not need
-        rts
-    else1:
-    ;return v&0x0F;
-    lda _datarnd,X
-    and #$0F
-    ;sta getRnd7_ret); not need
     rts
 .endproc
 
 .proc    _DrawBuffToPPU: near
     clc
     adc CurSP_player
+    jsr _waitvblank;绘图PPU前调用
     sta $2003
     ;for(i=0;i<16;i++)
     ;DrawShape_i=0;
@@ -590,25 +517,25 @@ _datarnd:
     ldy #$00
     
     ;DrawShape_i=4;
-    lda #$04
-    sta DrawShape_i
+    lda #$03
+    sta getBlock_i;DrawShape_i
     ;for(i=4;i>0;i--)
     fori:
         ;DrawShape_j=4;
-        lda #$04
-        sta DrawShape_j
+        lda #$03
+        sta getBlock_j;DrawShape_j
         ;for(j=4;j>0;j--)
         forj:
             ;getBlock_i = DrawShape_i-1;
-            ldx DrawShape_i
-            dex
-            stx getBlock_i
+            ;ldx DrawShape_i
+            ;stx getBlock_i
+            ldx getBlock_i
             stx getSPBase_x
 
             ;getBlock_j = DrawShape_j-1;
-            ldx DrawShape_j
-            dex
-            stx getBlock_j
+            ;ldx DrawShape_j
+            ;stx getBlock_j
+            ldx getBlock_j
             stx getSPBase_y
 
             jsr _getNextBlock
@@ -619,12 +546,11 @@ _datarnd:
                 sta getSPBase_item
                 jsr _getSPBase
             else1:
-        dec DrawShape_j
-        bne forj
-    dec DrawShape_i
-    bne fori
+        dec getBlock_j;DrawShape_j
+        bpl forj
+    dec getBlock_i;DrawShape_i
+    bpl fori
 
-    jsr _waitvblank
     ;*(char*)(0x2003)=16; ;i<<2
     lda #$10
     jsr _DrawBuffToPPU
@@ -636,35 +562,33 @@ _datarnd:
     ldy #$00
 
     ;DrawShape_i=4;
-    lda #$04
-    sta DrawShape_i
+    lda #$03
+    sta getBlock_i;DrawShape_i
     ;for(i=4;i>0;i--)
     fori:
         ;DrawShape_j=4;
-        lda #$04
-        sta DrawShape_j
+        lda #$03
+        sta getBlock_j;DrawShape_j
         ;for(j=4;j>0;j--)
         forj:
             ;getBlock_i=DrawShape_i-1;
-            ldx DrawShape_i
-            dex
-            stx getBlock_i
+            ;ldx DrawShape_i
+            ;stx getBlock_i
+            lda getBlock_i
             ;getSPBase_x = DrawShape_i - 1 + PosX
             ;lda DrawShape_i);
-            txa
             clc
             adc PosX
             sta getSPBase_x
 
             
             ;getBlock_j=DrawShape_j-1;
-            ldx DrawShape_j
-            dex
-            stx getBlock_j
-
+            ;ldx DrawShape_j
+            ;stx getBlock_j
+            
+            lda getBlock_j
             ;getSPBase_y = DrawShape_j-1+19-PosY
             ;lda DrawShape_j);
-            txa
             clc
             adc #$13;19
             sec
@@ -679,12 +603,11 @@ _datarnd:
                 sta getSPBase_item
                 jsr _getSPBase
             else1:
-        dec DrawShape_j
-        bne forj
-    dec DrawShape_i
-    bne fori
+        dec getBlock_j;DrawShape_j
+        bpl forj
+    dec getBlock_i;DrawShape_i
+    bpl fori
 
-    jsr _waitvblank
     ;*(char*)(0x2003)=0; ;i<<2
     lda #$00
     jsr _DrawBuffToPPU
@@ -700,31 +623,20 @@ _datarnd:
         sta $2007
     dex
     bne fori
-
     jsr _st2005
-    jsr _waitvblank
     rts
 .endproc
 
 .proc    _Clear: near
     ;for(i=0;i<100;i++)
-    ldx #$63;99 times
+    ldx #$64;99 times
+    ldy CurBoard_player
+    lda #$00
     fori:
-        ;Board[i]=0;
-        txa
-        clc
-        adc CurBoard_player
-        tay
-        lda #$00
         sta Board,Y
+        iny
     dex
     bne fori
-    ;Board[0]=0;
-    lda #$00
-    ldx CurBoard_player
-    sta Board,X
-
-    jsr _waitvblank
 
     ;calc base address
     lda #DRAW_BOARD
@@ -737,6 +649,7 @@ _datarnd:
     lda #$14;20 times
     sta Clear_i
     fori2:
+        jsr _waitvblank;绘图PPU前调用
         ;*(char*)(0x2006)=getBase_hi;
         lda getBase_hi
         sta $2006
@@ -750,7 +663,6 @@ _datarnd:
         lda getBase_hi
         adc #$00
         sta getBase_hi
-
         jsr _ClearLine
     dec Clear_i
     bne fori2
@@ -779,8 +691,8 @@ _datarnd:
     ;PosX = 3;
     lda #$03
     sta PosX
-    
-    jsr _getRnd7
+
+    lda rand0 ;jsr_getRnd7
     ;NextShapeNo = getRnd7_ret;
     ;lda getRnd7_ret); a is getRnd7_ret
     sta NextShapeNo
@@ -790,13 +702,12 @@ _datarnd:
 
 .proc    _Touch: near
     ;for(Touch_i=4;Touch_i>0;Touch_i--)
-    lda #$04;20 times
-    sta Touch_i
+    lda #$03;20 times
+    sta getBlock_j;Touch_i
     fori:
         ;getBlock_j = Touch_i-1;
-        ldx Touch_i
-        dex
-        stx getBlock_j
+        ;ldx Touch_i
+        ;stx getBlock_j
 
         jsr _getNowBottom
         ;if(getBlock_ret)
@@ -811,10 +722,8 @@ _datarnd:
             ;setBoard_x=PosX+Touch_i-1;
             lda PosX
             clc
-            adc Touch_i
-            tax
-            dex
-            stx setBoard_x
+            adc getBlock_j;Touch_i
+            sta setBoard_x
 
             ;setBoard_y=PosY-getBlock_ret;
             lda PosY
@@ -827,8 +736,8 @@ _datarnd:
             ;lda setBoard_val);  a is setBoard_val
             bne ret1
         else1:
-    dec Touch_i
-    bne fori
+    dec getBlock_j;Touch_i
+    bpl fori
     
     ;return 0;
     lda #$00
@@ -892,8 +801,7 @@ _datarnd:
     dec DrawLine_i
     bne fori1
     
-    
-    jsr _waitvblank
+    jsr _waitvblank;绘图PPU前调用
     ;*(char*)(0x2006)=DrawBuff[0];
     ldx #$00
     lda DrawBuff,X
@@ -922,40 +830,38 @@ _datarnd:
     ;{
         ;TouchDo_idx=0;
         ldy #$00
-        ;for(TouchDo_i=4;TouchDo_i>0;TouchDo_i--)
-        lda #$04
-        sta TouchDo_i
+        ;for(TouchDo_i=3;TouchDo_i>=0;TouchDo_i--)
+        lda #$03
+        sta getBlock_i;TouchDo_i
         fori1:
-            ;for(TouchDo_j=4;TouchDo_j>0;TouchDo_j--)
-            lda #$04
-            sta TouchDo_j
+            ;for(TouchDo_j=3;TouchDo_j>=0;TouchDo_j--)
+            lda #$03
+            sta getBlock_j;TouchDo_j
             forj1:
-                ;getBlock_i=TouchDo_i-1;
-                ldx TouchDo_i
-                dex
-                stx getBlock_i
-                ;setBoard_x=TouchDo_i-1+PosX;
-                ;getBase_x =TouchDo_i-1+PosX;
+                ;getBlock_i=TouchDo_i;
+                lda getBlock_i;ldx TouchDo_i
+                ;stx getBlock_i
+                ;setBoard_x=TouchDo_i+PosX;
+                ;getBase_x =TouchDo_i+PosX;
                 ;ldx TouchDo_i);
                 ;dex");
-                txa
+                ;txa
                 clc
                 adc PosX
                 sta setBoard_x
                 sta getBase_x
                 
-                ;getBlock_j=TouchDo_j-1;
-                ldx TouchDo_j
-                dex
-                stx getBlock_j
+                ;getBlock_j=TouchDo_j;
+                ;ldx TouchDo_j
+                ;stx getBlock_j
 
-                ;setBoard_y=PosY-(TouchDo_j-1);
-                ;getBase_y =PosY-(TouchDo_j-1);
+                ;setBoard_y=PosY-(TouchDo_j);
+                ;getBase_y =PosY-(TouchDo_j);
                 lda PosY
                 ;inx");
                 ;txa");
                 sec
-                sbc getBlock_j;getBlock_j is TouchDo_j-1
+                sbc getBlock_j;getBlock_j is TouchDo_j
                 sta setBoard_y
                 sta getBase_y
 
@@ -985,14 +891,14 @@ _datarnd:
                     sta DrawBuff,Y
                     iny
                 else1:
-            dec TouchDo_j
-            bne forj1
-        dec TouchDo_i
-        bne fori1
+            dec getBlock_j;TouchDo_j
+            bpl forj1
+        dec getBlock_i;TouchDo_i
+        bpl fori1
     
         ;idx=0;
         ldy #$00
-        jsr _waitvblank
+        jsr _waitvblank;绘图PPU前调用
         ;for(TouchDo_i=4;TouchDo_i>0;TouchDo_i--)
         ldx #$04
         fori2:
@@ -1015,182 +921,176 @@ _datarnd:
 
     ;clear line
     ;{
-        ;for(TouchDo_j=20;TouchDo_j>0;TouchDo_j--)
-        lda #$14
+        ;for(TouchDo_j=19;TouchDo_j>=0;TouchDo_j--)
+        lda #$13
         sta TouchDo_j
         forj3:
             ;TouchDo_line=1;
             ;lda #$01");
             ;sta TouchDo_line);
-            ;for(TouchDo_i=10;TouchDo_i>0;TouchDo_i--)
-            lda #$0A
-            sta TouchDo_i
+            ;for(TouchDo_i=9;TouchDo_i>=0;TouchDo_i--)
+            lda #$09
+            sta setBoard_x;TouchDo_i 保证setBoard_x在_getBoard 中未被修改
             fori3:
-                ;setBoard_x=TouchDo_i-1;
-                ldx TouchDo_i
-                dex
-                stx setBoard_x
-                ;setBoard_y=TouchDo_j-1;    
+                ;setBoard_x=TouchDo_i;
+                ;ldx TouchDo_i
+                ;stx setBoard_x
+                ;setBoard_y=TouchDo_j;    
                 ldx TouchDo_j
-                dex
                 stx setBoard_y
                 jsr _getBoard
                 ;if(setBoard_val==0)
                 ;lda setBoard_val); a is setBoard_val
-                bne else2
+                beq continue;bne else2
                     ;TouchDo_line=0;
                     ;lda #$00"); a is 0
                     ;sta TouchDo_line);
-                    lda #$00
-                    jmp break1
-                else2:
-            dec TouchDo_i
-            bne fori3
-            lda #$01
-            break1:
+                    ;lda #$00
+                    ;jmp else5;break1
+                ;else2:
+            dec setBoard_x;TouchDo_i
+            bpl fori3
+            ;lda #$01
+            ;break1:
             ;if(TouchDo_line)
             ;ldx TouchDo_line);
-            beq else5
+            ;beq else5
             ;bne if5);
             ;jmp else5);
 
-                jsr _DrawScore
-                ;for(TouchDo_k=0;TouchDo_k<10;TouchDo_k++)
-                lda #$0A;10 times
-                sta TouchDo_k
-                fork1:
-                    ;setBoard_x=TouchDo_k-1;
-                    ldx TouchDo_k
-                    dex
-                    stx setBoard_x
-                    
-                    ;if(TouchDo_j-2>=0)
-                    lda TouchDo_j
-                    sec
-                    sbc #$02
-                    bmi else3
-                        ;setBoard_y=TouchDo_j-2;
-                        sta setBoard_y
-                        jsr _getBoard;in setBoard_val
-                        ;setBoard_val=data1[setBoard_val+0xE0];
-                        ;lda setBoard_val); a is setBoard_val
-                        ;clc
-                        ;adc #$E0
-                        tax
-                        lda _chg1,X
-                        sta setBoard_val
-                        jsr _setBoard
-                    else3:
-
-                    ;setBoard_y=TouchDo_j;
-                    ldx TouchDo_j
-                    stx setBoard_y
-                    jsr _getBoard
-                    ;setBoard_val=data1[setBoard_val+0xF0];
-                    ;lda setBoard_val); a is setBoard_val
-                    ;clc
-                    ;adc #$F0
-                    tax
-                    lda _chg2,X
-                    sta setBoard_val
-                    jsr _setBoard
-                    
-                dec TouchDo_k
-                bne fork1
+            jsr _DrawScore
+            ;for(TouchDo_k=0;TouchDo_k<9;TouchDo_k++)
+            lda #$09;10 times
+            sta setBoard_x;TouchDo_k 保证setBoard_x在_getBoard 中未被修改
+            fork1:
+                ;setBoard_x=TouchDo_k-1;
+                ;ldx TouchDo_k
+                ;stx setBoard_x
                 
-                ;if(TouchDo_j-2>=0)
-                lda TouchDo_j
-                sec
-                sbc #$02
-                bmi else4
-                    ;DrawLine_y=TouchDo_j-2;
-                    sta DrawLine_y
-                    jsr _DrawLine
-                else4:
-                
-                ;for(TouchDo_k=TouchDo_j-1;TouchDo_k<19;TouchDo_k++)
+                ;if(TouchDo_j-1>=0)
                 ldx TouchDo_j
                 dex
-                stx TouchDo_k
-                fork2:
-                    ;for(TouchDo_i=10;TouchDo_i>0;TouchDo_i--)
-                    lda #$0A
-                    sta TouchDo_i
-                    fori4:
-                        ;setBoard_x=TouchDo_i-1;
-                        ldx TouchDo_i
-                        dex
-                        stx setBoard_x
-                        
-                        ;setBoard_y=TouchDo_k+1;
-                        ldx TouchDo_k
-                        inx
-                        stx setBoard_y
-                        jsr _getBoard
+                bmi else3
+                    ;setBoard_y=TouchDo_j-1;
+                    stx setBoard_y
+                    jsr _getBoard;in setBoard_val
+                    ;setBoard_val=data1[setBoard_val+0xE0];
+                    ;lda setBoard_val); a is setBoard_val
+                    ;clc
+                    ;adc #$E0
+                    tax
+                    lda _chg,X
+                    and #$0F
+                    sta setBoard_val
+                    jsr _setBoard
+                else3:
 
-                        ;setBoard_y=TouchDo_k;
-                        ldx TouchDo_k
-                        stx setBoard_y
-                        jsr _setBoard
-                    dec TouchDo_i
-                    bne fori4
+                ;setBoard_y=TouchDo_j+1;因为一般不会刷最上面一行，所以不用判断TouchDo_j+1是否大于等于20
+                ldx TouchDo_j
+                inx
+                stx setBoard_y
+                jsr _getBoard
+                ;setBoard_val=data1[setBoard_val+0xF0];
+                ;lda setBoard_val); a is setBoard_val
+                ;clc
+                ;adc #$F0
+                tax
+                lda _chg,X
+                lsr
+                lsr
+                lsr
+                lsr
+                sta setBoard_val
+                jsr _setBoard
+                
+            dec setBoard_x;TouchDo_k
+            bpl fork1
+            
+            ;if(TouchDo_j-1>=0)
+            ldx TouchDo_j
+            dex
+            bmi else4
+                ;DrawLine_y=TouchDo_j-1;
+                stx DrawLine_y
+                jsr _DrawLine
+            else4:
+            
+            ;for(TouchDo_k=TouchDo_j;TouchDo_k<19;TouchDo_k++)
+            ldx TouchDo_j
+            ;dex
+            stx TouchDo_k
+            fork2:
+                ;for(TouchDo_i=9;TouchDo_i>=0;TouchDo_i--)
+                lda #$09
+                sta setBoard_x;TouchDo_i
+                fori4:
+                    ;setBoard_x=TouchDo_i;
+                    ;ldx TouchDo_i
+                    ;stx setBoard_x
                     
-                    ;DrawLine_y=TouchDo_k;
+                    ;setBoard_y=TouchDo_k+1;
                     ldx TouchDo_k
-                    stx DrawLine_y
-                    jsr _DrawLine
-                inc TouchDo_k
-                lda TouchDo_k
-                cmp #$13
-                bne fork2
-            else5:
+                    inx
+                    stx setBoard_y
+                    jsr _getBoard
+
+                    ;setBoard_y=TouchDo_k;
+                    ldx TouchDo_k
+                    stx setBoard_y
+                    jsr _setBoard
+                dec setBoard_x;TouchDo_i
+                bpl fori4
+                
+                ;DrawLine_y=TouchDo_k;
+                ldx TouchDo_k
+                stx DrawLine_y
+                jsr _DrawLine
+            inc TouchDo_k
+            lda TouchDo_k
+            cmp #$13
+            bne fork2
+            
+            continue:
         dec TouchDo_j
-        beq forjext
+        bmi forjext
         jmp forj3
         forjext:
     ;}
     
     ;is gameover
-    ;{
-        ;for(TouchDo_i=0;TouchDo_i<10;TouchDo_i++)
-        lda #$0A
-        sta TouchDo_i
-        fori5:
-            ;setBoard_x=TouchDo_i-1;
-            ldx TouchDo_i
-            dex
-            stx setBoard_x
-            ;setBoard_y=18;
-            ldx #$12
-            stx setBoard_y
-            jsr _getBoard
+    ;for(TouchDo_i=0;TouchDo_i<=9;TouchDo_i++)
+    lda #$09
+    sta setBoard_x;TouchDo_i
+    fori5:
+        ;setBoard_x=TouchDo_i-1;
+        ;ldx TouchDo_i
+        ;stx setBoard_x
+        ;setBoard_y=18;
+        ldx #$12
+        stx setBoard_y
+        jsr _getBoard
 
-            ;if(setBoard_val)
-            ;lda setBoard_val); a is setBoard_val
-            beq else6
-                jsr _Clear
-                jmp break2
-            else6:
-        dec TouchDo_i
-        bne fori5
-        break2:
-        ;
-    ;}
+        ;if(setBoard_val)
+        ;lda setBoard_val); a is setBoard_val
+        beq else6
+            jsr _Clear
+            jmp break2
+        else6:
+    dec setBoard_x;TouchDo_i
+    bpl fori5
+    break2:
     
     jsr _NextShape
-    ;draw shape
-    jsr _DrawShape
     rts
-
 .endproc
 
-.proc    _AnyTouch: near
+.proc    _AnyTouch: near ; 返回：C
     ;if(PosX<0)
     lda PosX
     bpl else1
     beq else1
         ;AnyTouch_ret=1;
-        lda #$01
+        sec;lda #$01
         rts
     else1:
 
@@ -1202,23 +1102,22 @@ _datarnd:
     cmp #$0B
     bmi else2
         ;AnyTouch_ret=1;
-        lda #$01
+        sec;lda #$01
         ;sta AnyTouch_ret);
         rts
     else2:
     
     ;for(AnyTouch_i=4;AnyTouch_i>0;AnyTouch_i--)
-    lda #$04
-    sta AnyTouch_i
+    lda #$03
+    sta getBlock_i;AnyTouch_i
     fori:
         ;for(AnyTouch_j=4;AnyTouch_j>0;AnyTouch_j--)
-        lda #$04
-        sta AnyTouch_j
+        lda #$03
+        sta getBlock_j;AnyTouch_j
         forj:
             ;getBlock_j = AnyTouch_j-1;
-            ldx AnyTouch_j
-            dex
-            stx getBlock_j
+            ;ldx AnyTouch_j
+            ;stx getBlock_j
 
             jsr _getNowBottom
             ;if(getBlock_ret-1-PosY>0)  ->  (getBlock_ret-1-1>=PosY)
@@ -1228,28 +1127,25 @@ _datarnd:
             cpx PosY
             bmi else3
                 ;AnyTouch_ret=1;
-                lda #$01
+                sec;lda #$01
                 rts
             else3:
             
             ;getBlock_i=AnyTouch_i-1;
-            ldx AnyTouch_i
-            dex
-            stx getBlock_i
+            ;lda AnyTouch_i
+            ;sta getBlock_i
+            lda getBlock_i
             ;setBoard_x=PosX+AnyTouch_i-1;
-            txa
             clc
             adc PosX
             sta setBoard_x
 
 
             ;getBlock_j=AnyTouch_j-1;
-            ldx AnyTouch_j
-            dex
-            stx getBlock_j
+            ;ldx AnyTouch_j
+            ;stx getBlock_j
             ;setBoard_y=PosY-(AnyTouch_j-1);
-            ldx PosY
-            txa
+            lda PosY
             sec
             sbc getBlock_j
             sta setBoard_y
@@ -1264,15 +1160,15 @@ _datarnd:
             lda getBlock_ret
             beq else4
                 ;AnyTouch_ret=1;
-                lda #$01
+                sec;lda #$01
                 rts
             else4:
-        dec AnyTouch_j
-        bne forj
-    dec AnyTouch_i
-    bne fori
+        dec getBlock_j;AnyTouch_j
+        bpl forj
+    dec getBlock_i;AnyTouch_i
+    bpl fori
     ;AnyTouch_ret=0;
-    lda #$00
+    clc;lda #$00
     rts
 .endproc
 
@@ -1283,6 +1179,9 @@ _datarnd:
     adc rotate_n
     and #$03
     sta NowDirectionNo
+    ;rotate_tempPosX=PosX;
+    lda PosX
+    pha;sta rotate_tempPosX
     
     jsr _getNowLeft
     ;if(PosX+getBlock_ret>10) -> (PosX+getBlock_ret>=11)
@@ -1291,59 +1190,53 @@ _datarnd:
     adc PosX
     cmp #$0B
     bmi else1
-        ;rotate_tempPosX=PosX;
-        lda PosX
-        sta rotate_tempPosX
         ;PosX=10-getBlock_ret;
         lda #$0A
         sec
         sbc getBlock_ret
         sta PosX
-        
-        jsr _AnyTouch
-        ;if(0==AnyTouch_ret)jmp jp2
-        ;lda AnyTouch_ret); a is AnyTouch_ret
-        beq jp2
-            ;PosX=rotate_tempPosX;
-            lda rotate_tempPosX
-            sta PosX
-            jmp jp1
     else1:
     
+    ;旋转偏移后，如果触碰的话，返回保存的值，并旋回
     jsr _AnyTouch
     ;if(AnyTouch_ret)jmp jp1);
     ;lda AnyTouch_ret);
-    beq jp2
-    jp1:
-    ;NowDirectionNo=(NowDirectionNo-rotate_n)&3;
-    lda NowDirectionNo
-    sec
-    sbc rotate_n
-    and #$03
-    sta NowDirectionNo
-    jp2:
-    jsr _DrawShape
+    pla
+    bcc else2
+        ;PosX=rotate_tempPosX;
+        ;lda rotate_tempPosX
+        sta PosX
+        ;NowDirectionNo=(NowDirectionNo-rotate_n)&3;
+        lda NowDirectionNo
+        sec
+        sbc rotate_n
+        and #$03
+        sta NowDirectionNo
+    else2:
     rts
 .endproc
 
-.proc    _movelr: near
-    ;PosX+=movelr_n;
-    lda PosX
-    clc
-    adc movelr_n
-    sta PosX
+.proc    _movel: near
+    inc PosX
 
     jsr _AnyTouch
     ;if(AnyTouch_ret)
     ;lda AnyTouch_ret);
-    beq else1
-        ;PosX-=movelr_n;
-        lda PosX
-        sec
-        sbc movelr_n
-        sta PosX
+    bcc else1
+        dec PosX
     else1:
-    jsr _DrawShape
+    rts
+.endproc
+
+.proc    _mover: near
+    dec PosX
+
+    jsr _AnyTouch
+    ;if(AnyTouch_ret)
+    ;lda AnyTouch_ret);
+    bcc else1
+        inc PosX
+    else1:
     rts
 .endproc
 
@@ -1372,7 +1265,6 @@ _datarnd:
     else1:
     ;PosY--;
     dec PosY
-    jsr _DrawShape
     rts
 .endproc
 
@@ -1412,7 +1304,7 @@ _datarnd:
     sta getBase_x
     sta getBase_y
     jsr _getBase
-    jsr _waitvblank
+    jsr _waitvblank;绘图PPU前调用
     ldx #$04
     fori1:
         lda getBase_hi
@@ -1469,6 +1361,27 @@ _datarnd:
 
 .proc    _mainSub: near
     jsr _loadplayer
+    lda isOn
+    bne else2
+        ;check player1 key
+        jsr _readJoystick
+        ;lda key1); a is key1
+        beq else4
+            lda #$01
+            sta isOn
+            jsr _Clear
+            jsr _Clear4by4
+            jsr _NextShape
+            jsr _NextShape
+            lda #$32
+            sta TimeCount
+            lda #$FF
+            sta lastkey
+        else4:
+        jsr _saveplayer
+        rts
+    else2:
+
     ;one second count
     ;if(TimeCount--==0)
     dec TimeCount
@@ -1486,54 +1399,38 @@ _datarnd:
     ;key2 = key2 & key1;
     and key1
     ;if(key2!=0)
-    beq else2
-        sta key2
-        ;if(key2&0x01){movelr_n=1;movelr();};button_RIGHT
-        and #$01
-        beq elseKey1
-            ;lda #$01"); a is 01
-            sta movelr_n
-            jsr _movelr
-        elseKey1:
-        ;if(key2&0x02){movelr_n=-1;movelr();};button_LEFT
-        lda key2
-        and #$02
-        beq elseKey2
-            lda #$FF
-            sta movelr_n
-            jsr _movelr
-        elseKey2:
-        ;if(key2&0x04)down();;button_DOWN
-        lda key2
-        and #$04
-        beq elseKey3
-            jsr _down
-        elseKey3:
-        ;if(key2&0x08)slowdown();;button_UP
-        lda key2
-        and #$08
-        beq elseKey4
-            jsr _slowdown
-        elseKey4:
-        ;if(key2&0x10);;button_START
-        ;if(key2&0x20);;button_SELECT
-        ;if(key2&0x40){rotate_n=-1;rotate();};button_B
-        lda key2
-        and #$40
-        beq elseKey5
-            lda #$FF
-            sta rotate_n
-            jsr _rotate
-        elseKey5:
-        ;if(key2&0x80){rotate_n=1;rotate();};button_A
-        lda key2
-        and #$80
-        beq elseKey6
-            lda #$01
-            sta rotate_n
-            jsr _rotate
-        elseKey6:
-    else2:
+    sta key2
+    lsr key2;if(key2&0x01){movelr_n=1;movelr();};button_RIGHT
+    bcc elseKey1
+        jsr _movel
+    elseKey1:
+    lsr key2;if(key2&0x02){movelr_n=-1;movelr();};button_LEFT
+    bcc elseKey2
+        jsr _mover
+    elseKey2:
+    lsr key2;if(key2&0x04)down();;button_DOWN
+    bcc elseKey3
+        jsr _down
+    elseKey3:
+    lsr key2;if(key2&0x08)slowdown();;button_UP
+    bcc elseKey4
+        jsr _slowdown
+    elseKey4:
+    lsr key2;if(key2&0x10);;button_START
+    lsr key2;if(key2&0x20);;button_SELECT
+    lsr key2;if(key2&0x40){rotate_n=-1;rotate();};button_B
+    bcc elseKey5
+        lda #$FF
+        sta rotate_n
+        jsr _rotate
+    elseKey5:
+    lsr key2;if(key2&0x80){rotate_n=1;rotate();};button_A
+    bcc elseKey6
+        lda #$01
+        sta rotate_n
+        jsr _rotate
+    elseKey6:
+    jsr _DrawShape
     ;lastkey = key1;
     lda key1
     sta lastkey
@@ -1570,28 +1467,13 @@ _datarnd:
     rts
 .endproc
 
-.proc    _init: near
-    jsr _Clear
-    jsr _Clear4by4
-    jsr _NextShape
-    jsr _NextShape
-    lda #$32
-    sta TimeCount
-    jsr _saveplayer
-    rts
-.endproc
-
 .proc    _initTitle: near
     ldx #$11
-    stx $2007
-    inx
-    stx $2007
-    inx
-    stx $2007
-    inx
-    stx $2007
-    inx
-    stx $2007
+    loop1:
+      stx $2007
+      inx
+    cpx #$16
+    bne loop1
     rts
 .endproc
 
@@ -1611,7 +1493,7 @@ _datarnd:
         bne fori
     ;}
 	;open nmi
-	lda #%10000000
+	lda #%10000000;#% 二进制
 	sta (PTR2000),Y
 	jsr _waitvblank
     ;set color
@@ -1654,7 +1536,7 @@ _datarnd:
     ;}
     ;set background black
     ;{
-		jsr _waitvblank
+    jsr _waitvblank
         ;ldy #$00"); y is still 0
         ;*(char*)(0x2006)=0x20;
         lda #$20
@@ -1662,27 +1544,28 @@ _datarnd:
         ;*(char*)(0x2006)=0x20;
         sta (PTR2006),Y
         
-        ;total 380
-        lda #$80
-        sta main_i
-        lda #$03
-        sta main_j
-        ldx #$10
+        ;total 0x380
+        ldx #$80;lda #$80
+        ;sta main_i
+        ldy #$03;lda #$03
+        ;sta main_j
+        lda #$10
         for4:
-            stx $2007
-            lda main_i
+            sta $2007
+            cpx #$00
             bne else5
-                dec main_j
+                dey;dec main_j
             else5:
-            dec main_i
-        lda main_i
+            dex;dec main_i
+        cpx #$00;lda main_i
         bne for4
-        lda main_j
+        cpy #$00;lda main_j
         bne for4
     ;}
+    ;now Y is 0
     ;show init title
     ;{
-		jsr _waitvblank
+    jsr _waitvblank
         ;*(char*)(0x2006)=0x20;
         lda #$20
         sta (PTR2006),Y
@@ -1701,7 +1584,7 @@ _datarnd:
     ;}
     ;{
         ;open rander
-        lda #%00011110
+        lda #%00011110;#% 二进制
         sta (PTR2001),Y
         jsr _st2005
     ;}
@@ -1709,46 +1592,12 @@ _datarnd:
     ;{
         while1:
             ;if(!player1On)
-            lda player1On
-            bne else1
-                ;check player1 key
-                jsr _Player1
-                jsr _readJoystick
-                ;lda key1); a is key1
-                beq else1
-                    lda #$01
-                    sta player1On
-                    jsr _init
-            else1:
-        
+            jsr _Player1
+            jsr _mainSub
+
             ;if(!player2On)
-            lda player2On
-            bne else2
-                ;check player1 key
-                jsr _Player2
-                jsr _readJoystick
-                ;lda key1); a is key1
-                beq else2
-                    lda #$01
-                    sta player2On
-                    jsr _init
-            else2:
-
-            jsr _waitvblank
-            
-            ;if(player1On)
-            lda player1On
-            beq else3
-                jsr _Player1
-                jsr _mainSub
-            else3:
-
-            ;if(player2On)
-            lda player2On
-            beq else4
-                jsr _Player2
-                jsr _mainSub
-            else4:
+            jsr _Player2
+            jsr _mainSub
 
         jmp while1
     ;}

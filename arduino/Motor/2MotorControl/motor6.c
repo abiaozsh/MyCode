@@ -2,6 +2,9 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
+#define STAOn   DDRB |= _BV(3) ;/**/
+#define STAOff  DDRB &= ~_BV(3);/**/
+
 #define CUR_TIMING TIMING__8M_TCCR1B_1_115200
 #define TCCR1B_Value 1
 PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1_115200[] = {   69,  138,  208,  277,  347,  416,  486,  555,  625,  694};
@@ -88,11 +91,11 @@ int main(void) {
     uint8_t data = SerialRead();
     if(data==23)
     {
+      STAOn;
       uint8_t data1 = SerialRead();
       uint8_t data2 = SerialRead();
       uint8_t data3 = SerialRead();
       uint8_t data4 = SerialRead();
-      
       
       STEP1_A = STEP1[data1];
       STEP2_A = STEP2[data1];
@@ -100,6 +103,10 @@ int main(void) {
       STEP1_B = STEP1[data3];
       STEP2_B = STEP2[data3];
       lenB = data4;
+    }
+    else
+    {
+      STAOff;
     }
   }
 }

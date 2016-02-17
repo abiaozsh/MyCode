@@ -49,6 +49,7 @@ void loop() {
 	{
     
     //28 耗时
+    //224clock
       //初始化定时器 1/8
     TCCR1B = 2;//  1/8	1MHz 1us
     TIMSK1 |= _BV(OCIE1A);
