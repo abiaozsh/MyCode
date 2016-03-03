@@ -280,40 +280,6 @@ _dataUser:
 .proc _getBlock: near
     asl
     asl
-    tax
-    lda getBlock_i
-    asl;<<
-    asl;<<
-    adc getBlock_j
-    sta getBlock_temp
-    lda #$03
-    sta getBlock_idx
-    loop1:
-      lda _block,X
-      and #$0F
-      cmp getBlock_temp
-      beq break1
-      inx
-    dec getBlock_idx
-    bpl loop1
-    ;not fount
-    lda #$00
-    sta getBlock_ret
-    rts
-    break1:;found
-    lda _block,X
-    lsr
-    lsr
-    lsr
-    lsr
-    sta getBlock_ret
-    rts
-.endproc
-
-
-.proc _getBlockV2: near
-    asl
-    asl
     adc getBlockV2_idx
     tax
     lda _block,X
@@ -497,7 +463,7 @@ _dataUser:
       lda NextShapeNo
       asl
       asl
-      jsr _getBlockV2
+      jsr _getBlock
       
       lda getBlock_i
       sta getSPBase_x
@@ -510,8 +476,7 @@ _dataUser:
       jsr _getSPBaseAndSetDrawBuff
 
       
-      jsr _combine_NowShapeNo_NowDirectionNo
-      jsr _getBlockV2
+      jsr _getNowBlock
 
       lda getBlock_i
       ;getSPBase_x = getBlock_i + PosX
@@ -701,76 +666,56 @@ _dataUser:
 .endproc
 
 .proc _TouchDo: near
-    ;add to board
-    ;{
-        ;for(TouchDo_i=3;TouchDo_i>=0;TouchDo_i--)
-        lda #$03
-        sta getBlock_i;TouchDo_i
-        fori1:
-            ;for(TouchDo_j=3;TouchDo_j>=0;TouchDo_j--)
-            lda #$03
-            sta getBlock_j;TouchDo_j
-            forj1:
-                ;getBlock_i=TouchDo_i;
-                lda getBlock_i;ldx TouchDo_i
-                ;stx getBlock_i
-                ;setBoard_x=TouchDo_i+PosX;
-                ;getBase_x =TouchDo_i+PosX;
-                clc
-                adc PosX
-                sta setBoard_x
-                sta getBase_x
+    lda #$03
+    sta getBlockV2_idx
+    fori:
+      jsr _getNowBlock
+
+      lda getBlock_i
+      clc
+      adc PosX
+      sta setBoard_x
+      sta getBase_x
                 
-                ;setBoard_y=PosY-(TouchDo_j);
-                ;getBase_y =PosY-(TouchDo_j);
-                lda PosY
-                sec
-                sbc getBlock_j;getBlock_j is TouchDo_j
-                sta setBoard_y
-                sta getBase_y
+      lda PosY
+      sec
+      sbc getBlock_j
+      sta setBoard_y
+      sta getBase_y
 
-                jsr _getNowBlock
-                ;if(getBlock_ret)
-                ;lda getBlock_ret); a is getBlock_ret
-                beq else1
-                    ;lda getBlock_ret
-                    pha
-                    ;setBoard_val=getBlock_ret;
-                    sta setBoard_val;a is getBlock_ret
-                    jsr _setBoard
+      lda getBlock_ret
+      pha
+      
+      sta setBoard_val
+      jsr _setBoard
 
-                    jsr _getBoardBase;会改变Y
-                    
-                    lda getBase_lo
-                    pha
-                    
-                    lda getBase_hi
-                    pha
-                    
-                else1:
-            dec getBlock_j;TouchDo_j
-            bpl forj1
-        dec getBlock_i;TouchDo_i
-        bpl fori1
+      jsr _getBoardBase;会改变Y
+      
+      lda getBase_lo
+      pha
+      
+      lda getBase_hi
+      pha
+    dec getBlockV2_idx
+    bpl fori
     
-        ;idx=0;
-        jsr _waitvblank;绘图PPU前调用 ;Y is 0
-        ;for(TouchDo_i=4;TouchDo_i>0;TouchDo_i--)
-        ldx #$03
-        fori2:
-            ;*(char*)(0x2006)=DrawBuff[idx++];
-            pla
-            sta (PTR2006),Y
-            ;*(char*)(0x2006)=DrawBuff[idx++];
-            pla
-            sta (PTR2006),Y
-            ;*(char*)(0x2007)=DrawBuff[idx++];
-            pla
-            sta (PTR2007),Y
-        dex
-        bpl fori2
-        jsr _st2005
-    ;}
+    ;idx=0;
+    jsr _waitvblank;绘图PPU前调用 ;Y is 0
+    ;for(TouchDo_i=4;TouchDo_i>0;TouchDo_i--)
+    ldx #$03
+    fori2:
+        ;*(char*)(0x2006)=DrawBuff[idx++];
+        pla
+        sta (PTR2006),Y
+        ;*(char*)(0x2006)=DrawBuff[idx++];
+        pla
+        sta (PTR2006),Y
+        ;*(char*)(0x2007)=DrawBuff[idx++];
+        pla
+        sta (PTR2007),Y
+    dex
+    bpl fori2
+    jsr _st2005
 
     ;clear line
     ;{
@@ -908,59 +853,43 @@ _dataUser:
 
     jsr _isRightTouch
     bpl ret1
-    
-    ;for(AnyTouch_i=4;AnyTouch_i>0;AnyTouch_i--)
+
+    ;for(AnyTouch_j=4;AnyTouch_j>0;AnyTouch_j--)
     lda #$03
-    sta getBlock_i;AnyTouch_i
+    sta getBlock_j;AnyTouch_j
+    forj:
+
+        jsr _getNowBottom
+        ;if(getBlock_ret-1-PosY>0)  ->  (getBlock_ret-1-1>=PosY)
+        tax;ldx getBlock_ret); a is getBlock_ret
+        dex
+        dex
+        cpx PosY
+        bpl ret1
+        
+    dec getBlock_j;AnyTouch_j
+    bpl forj
+
+    
+    lda #$03
+    sta getBlockV2_idx
     fori:
-        ;for(AnyTouch_j=4;AnyTouch_j>0;AnyTouch_j--)
-        lda #$03
-        sta getBlock_j;AnyTouch_j
-        forj:
-            ;getBlock_j = AnyTouch_j-1;
-            ;ldx AnyTouch_j
-            ;stx getBlock_j
+      jsr _getNowBlock
 
-            jsr _getNowBottom
-            ;if(getBlock_ret-1-PosY>0)  ->  (getBlock_ret-1-1>=PosY)
-            tax;ldx getBlock_ret); a is getBlock_ret
-            dex
-            dex
-            cpx PosY
-            bpl ret1
-            
-            ;getBlock_i=AnyTouch_i-1;
-            ;lda AnyTouch_i
-            ;sta getBlock_i
-            lda getBlock_i
-            ;setBoard_x=PosX+AnyTouch_i-1;
-            clc
-            adc PosX
-            sta setBoard_x
+      lda getBlock_i
+      clc
+      adc PosX
+      sta setBoard_x
 
+      lda PosY
+      sec
+      sbc getBlock_j
+      sta setBoard_y
 
-            ;getBlock_j=AnyTouch_j-1;
-            ;ldx AnyTouch_j
-            ;stx getBlock_j
-            ;setBoard_y=PosY-(AnyTouch_j-1);
-            lda PosY
-            sec
-            sbc getBlock_j
-            sta setBoard_y
-            
-            jsr _getNowBlock
+      jsr _getBoard
 
-            jsr _getBoard
-
-            ;if(getBlock_ret==0||setBoard_val==0){}else
-            ;lda setBoard_val); a is setBoard_val
-            beq else4
-            lda getBlock_ret
-            bne ret1
-            else4:
-        dec getBlock_j;AnyTouch_j
-        bpl forj
-    dec getBlock_i;AnyTouch_i
+      bne ret1
+    dec getBlockV2_idx
     bpl fori
 
     clc;not AnyTouch
