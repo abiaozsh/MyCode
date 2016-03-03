@@ -1598,10 +1598,10 @@ _dataUser:
     ;{
         while1:
             ;if(!player1On)
+            jsr _Player1
             lda player1On
             bne else1
                 ;check player1 key
-                jsr _Player1
                 jsr _readJoystick
                 ;lda key1); a is key1
                 beq else1
@@ -1609,12 +1609,23 @@ _dataUser:
                     sta player1On
                     jsr _init
             else1:
-        
+            
+            ;if(player1On)
+            lda player1On
+            beq else3
+                jsr _mainSub
+            else3:
+
+            
+            
+            
+            
+            
             ;if(!player2On)
+            jsr _Player2
             lda player2On
             bne else2
                 ;check player1 key
-                jsr _Player2
                 jsr _readJoystick
                 ;lda key1); a is key1
                 beq else2
@@ -1623,19 +1634,9 @@ _dataUser:
                     jsr _init
             else2:
 
-            ;jsr _waitvblank
-            
-            ;if(player1On)
-            lda player1On
-            beq else3
-                jsr _Player1
-                jsr _mainSub
-            else3:
-
             ;if(player2On)
             lda player2On
             beq else4
-                jsr _Player2
                 jsr _mainSub
             else4:
 
