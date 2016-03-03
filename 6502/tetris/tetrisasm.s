@@ -62,7 +62,6 @@ _dataUser:
 .define PTR2007             $1E
 
 ;page0 0x0000 ~0x00FF
-.define rand0               $20
 ;.define getRnd7_ret         $21
 ;.define AnyTouch_i          $22
 ;.define AnyTouch_j          $23
@@ -95,8 +94,8 @@ _dataUser:
 .define movelr_n            $3E
 .define rotate_n            $40
 ;.define rotate_tempPosX     $41
-.define main_i              $42
-.define main_j              $43
+;.define main_i              $42
+;.define main_j              $43
 .define currentPlayer       $44
 .define player1On           $45
 .define player2On           $46
@@ -105,6 +104,7 @@ _dataUser:
 .define CurBoard_player     $49
 .define nmiflg              $4A
 .define temp                $4B
+.define rand0               $20
 
 ;current player
 .define PosX             $50
@@ -1475,15 +1475,11 @@ _dataUser:
 
 .proc    _initTitle: near
     ldx #$11
-    stx $2007
-    inx
-    stx $2007
-    inx
-    stx $2007
-    inx
-    stx $2007
-    inx
-    stx $2007
+    loop1:
+      stx $2007
+      inx
+    cpx #$16
+    bne loop1
     rts
 .endproc
 
@@ -1555,23 +1551,24 @@ _dataUser:
         sta (PTR2006),Y
         
         ;total 0x380
-        lda #$80
-        sta main_i
-        lda #$03
-        sta main_j
-        ldx #$10
+        ldx #$80;lda #$80
+        ;sta main_i
+        ldy #$03;lda #$03
+        ;sta main_j
+        lda #$10
         for4:
-            stx $2007
-            lda main_i
+            sta $2007
+            cpx #$00
             bne else5
-                dec main_j
+                dey;dec main_j
             else5:
-            dec main_i
-        lda main_i
+            dex;dec main_i
+        cpx #$00;lda main_i
         bne for4
-        lda main_j
+        cpy #$00;lda main_j
         bne for4
     ;}
+    ;now Y is 0
     ;show init title
     ;{
     jsr _waitvblank
