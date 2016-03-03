@@ -270,20 +270,13 @@ _dataUser:
     ;(clc)
     adc getBlock_i
     asl;<<
-    sta getBlock_idx
-    ;lsr getBlock_i
-    ;getBlock_j >>= 1;
-    lda getBlock_j
-    lsr;>>
-    ;getBlock_idx += getBlock_j;
+    asl;C<<(最高位在C)
+    php
     clc
-    adc getBlock_idx
-    ;sta getBlock_idx);
-    ;ldx getBlock_idx);
+    adc getBlock_j
+    plp
+    ror;C>>C(恢复最高位) getBlock_j的最低位
     tax
-    ;if(getBlock_j & 1)
-    lda getBlock_j
-    lsr;test #$01
     lda _block,X
     jsr _split
     sta getBlock_ret
@@ -311,11 +304,11 @@ _dataUser:
 .proc _getNowBottom: near
     ;char idx = (NowShapeNo<<3)+(NowDirectionNo<<1)+(j>>1);
     jsr _combine_NowShapeNo_NowDirectionNo
-    asl
+    asl;<<
     sta getBlock_idx
     ;getBlock_j >>= 1;
     lda getBlock_j
-    lsr
+    lsr;>>
     ;getBlock_idx += getBlock_j;
     clc
     adc getBlock_idx
