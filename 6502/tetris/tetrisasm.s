@@ -94,7 +94,7 @@ _dataUser:
 .define TouchDo_k           $3D
 .define movelr_n            $3E
 .define rotate_n            $40
-.define rotate_tempPosX     $41
+;.define rotate_tempPosX     $41
 .define main_i              $42
 .define main_j              $43
 .define currentPlayer       $44
@@ -1097,18 +1097,16 @@ _dataUser:
     break2:
     
     jsr _NextShape
-    jsr _DrawShape
     rts
-
 .endproc
 
-.proc    _AnyTouch: near
+.proc    _AnyTouch: near ; 返回：C
     ;if(PosX<0)
     lda PosX
     bpl else1
     beq else1
         ;AnyTouch_ret=1;
-        lda #$01
+        sec;lda #$01
         rts
     else1:
 
@@ -1120,7 +1118,7 @@ _dataUser:
     cmp #$0B
     bmi else2
         ;AnyTouch_ret=1;
-        lda #$01
+        sec;lda #$01
         ;sta AnyTouch_ret);
         rts
     else2:
@@ -1145,7 +1143,7 @@ _dataUser:
             cpx PosY
             bmi else3
                 ;AnyTouch_ret=1;
-                lda #$01
+                sec;lda #$01
                 rts
             else3:
             
@@ -1178,7 +1176,7 @@ _dataUser:
             lda getBlock_ret
             beq else4
                 ;AnyTouch_ret=1;
-                lda #$01
+                sec;lda #$01
                 rts
             else4:
         dec getBlock_j;AnyTouch_j
@@ -1186,7 +1184,7 @@ _dataUser:
     dec getBlock_i;AnyTouch_i
     bpl fori
     ;AnyTouch_ret=0;
-    lda #$00
+    clc;lda #$00
     rts
 .endproc
 
@@ -1197,6 +1195,9 @@ _dataUser:
     adc rotate_n
     and #$03
     sta NowDirectionNo
+    ;rotate_tempPosX=PosX;
+    lda PosX
+    pha;sta rotate_tempPosX
     
     jsr _getNowLeft
     ;if(PosX+getBlock_ret>10) -> (PosX+getBlock_ret>=11)
@@ -1205,59 +1206,53 @@ _dataUser:
     adc PosX
     cmp #$0B
     bmi else1
-        ;rotate_tempPosX=PosX;
-        lda PosX
-        sta rotate_tempPosX
         ;PosX=10-getBlock_ret;
         lda #$0A
         sec
         sbc getBlock_ret
         sta PosX
-        
-        jsr _AnyTouch
-        ;if(0==AnyTouch_ret)jmp jp2
-        ;lda AnyTouch_ret); a is AnyTouch_ret
-        beq jp2
-            ;PosX=rotate_tempPosX;
-            lda rotate_tempPosX
-            sta PosX
-            jmp jp1
     else1:
     
+    ;旋转偏移后，如果触碰的话，返回保存的值，并旋回
     jsr _AnyTouch
     ;if(AnyTouch_ret)jmp jp1);
     ;lda AnyTouch_ret);
-    beq jp2
-    jp1:
-    ;NowDirectionNo=(NowDirectionNo-rotate_n)&3;
-    lda NowDirectionNo
-    sec
-    sbc rotate_n
-    and #$03
-    sta NowDirectionNo
-    jp2:
-    jsr _DrawShape
+    pla
+    bcc else2
+        ;PosX=rotate_tempPosX;
+        ;lda rotate_tempPosX
+        sta PosX
+        ;NowDirectionNo=(NowDirectionNo-rotate_n)&3;
+        lda NowDirectionNo
+        sec
+        sbc rotate_n
+        and #$03
+        sta NowDirectionNo
+    else2:
     rts
 .endproc
 
-.proc    _movelr: near
-    ;PosX+=movelr_n;
-    lda PosX
-    clc
-    adc movelr_n
-    sta PosX
+.proc    _movel: near
+    inc PosX
 
     jsr _AnyTouch
     ;if(AnyTouch_ret)
     ;lda AnyTouch_ret);
-    beq else1
-        ;PosX-=movelr_n;
-        lda PosX
-        sec
-        sbc movelr_n
-        sta PosX
+    bcc else1
+        dec PosX
     else1:
-    jsr _DrawShape
+    rts
+.endproc
+
+.proc    _mover: near
+    dec PosX
+
+    jsr _AnyTouch
+    ;if(AnyTouch_ret)
+    ;lda AnyTouch_ret);
+    bcc else1
+        inc PosX
+    else1:
     rts
 .endproc
 
@@ -1286,7 +1281,6 @@ _dataUser:
     else1:
     ;PosY--;
     dec PosY
-    jsr _DrawShape
     rts
 .endproc
 
@@ -1403,15 +1397,11 @@ _dataUser:
     sta key2
     lsr key2;if(key2&0x01){movelr_n=1;movelr();};button_RIGHT
     bcc elseKey1
-        lda #$01
-        sta movelr_n
-        jsr _movelr
+        jsr _movel
     elseKey1:
     lsr key2;if(key2&0x02){movelr_n=-1;movelr();};button_LEFT
     bcc elseKey2
-        lda #$FF
-        sta movelr_n
-        jsr _movelr
+        jsr _mover
     elseKey2:
     lsr key2;if(key2&0x04)down();;button_DOWN
     bcc elseKey3
@@ -1435,6 +1425,7 @@ _dataUser:
         sta rotate_n
         jsr _rotate
     elseKey6:
+    jsr _DrawShape
     ;lastkey = key1;
     lda key1
     sta lastkey
@@ -1563,7 +1554,7 @@ _dataUser:
         ;*(char*)(0x2006)=0x20;
         sta (PTR2006),Y
         
-        ;total 380
+        ;total 0x380
         lda #$80
         sta main_i
         lda #$03
@@ -1635,7 +1626,7 @@ _dataUser:
                     jsr _init
             else2:
 
-            jsr _waitvblank
+            ;jsr _waitvblank
             
             ;if(player1On)
             lda player1On
