@@ -62,64 +62,53 @@ _dataUser:
 .define PTR2007             $1E
 
 ;page0 0x0000 ~0x00FF
-;.define getRnd7_ret         $21
-;.define AnyTouch_i          $22
-;.define AnyTouch_j          $23
-;.define Touch_i             $24
-.define getBlock_i          $25
-.define getBlock_j          $26
-.define getBlock_idx        $27
-.define getBlock_ret        $28
-.define setBoard_x          $29
-.define setBoard_y          $2A
-.define setBoard_val        $2B
-.define setBoard_base       $2C
-.define getBase_x           $2D
-.define getBase_y           $2E
-.define getBase_hi          $2F
-.define getBase_lo          $30
-.define getBase_tmp         $31
-.define getBase_item        $32
-.define getSPBase_item      $33
-.define getSPBase_x         $34
-.define getSPBase_y         $35
-.define DrawLine_i          $36
-.define DrawLine_y          $37
-.define DrawShape_i         $38
-.define DrawShape_j         $39
-.define Clear_i             $3A
-.define TouchDo_i           $3B
-.define TouchDo_j           $3C
-.define TouchDo_k           $3D
-.define movelr_n            $3E
-.define rotate_n            $40
-;.define rotate_tempPosX     $41
-;.define main_i              $42
-;.define main_j              $43
-.define currentPlayer       $44
-.define player1On           $45
-.define player2On           $46
-.define readJoystick_player $47
-.define CurSP_player        $48
-.define CurBoard_player     $49
-.define nmiflg              $4A
-.define temp                $4B
-.define rand0               $20
+.define getBlock_i          $20
+.define getBlock_j          $21
+.define getBlock_idx        $22
+.define getBlock_ret        $23
+.define setBoard_x          $24
+.define setBoard_y          $25
+.define setBoard_val        $26
+.define setBoard_base       $27
+.define getBase_x           $28
+.define getBase_y           $29
+.define getBase_hi          $2A
+.define getBase_lo          $2B
+.define getBase_tmp         $2C
+.define getBase_item        $2D
+.define getSPBase_item      $2E
+.define getSPBase_x         $2F
+.define getSPBase_y         $30
+.define DrawLine_i          $31
+.define DrawLine_y          $32
+.define DrawShape_i         $33
+.define DrawShape_j         $34
+.define Clear_i             $35
+.define TouchDo_j           $36
+.define TouchDo_k           $37
+.define rotate_n            $38
+.define currentPlayer       $39
+.define readJoystick_player $3A
+.define CurSP_player        $3B
+.define CurBoard_player     $3C
+.define nmiflg              $3D
+.define rand0               $3E
 
 ;current player
-.define PosX             $50
-.define PosY             $51
-.define NextShapeNo      $52
-.define NowShapeNo       $53
-.define NowDirectionNo   $54
-.define lastkey          $55
-.define key1             $56
-.define key2             $57
-.define Score0           $58
-.define Score1           $59
-.define Score2           $5A
-.define Score3           $5B
-.define TimeCount        $5C
+.define PosX             $40
+.define PosY             $41
+.define NextShapeNo      $42
+.define NowShapeNo       $43
+.define NowDirectionNo   $44
+.define lastkey          $45
+.define key1             $46
+.define key2             $47
+.define Score0           $48
+.define Score1           $49
+.define Score2           $4A
+.define Score3           $4B
+.define TimeCount        $4C
+.define isOn             $4D
 
 
 ;page1: 0x0100 ~0x01FF stack
@@ -144,7 +133,8 @@ _dataUser:
 .segment    "CODE"
 
 .proc    _nmi: near
-  sta temp
+  php
+  pha
   dec rand0
   bpl lbl1;<0
     lda #$06
@@ -152,17 +142,18 @@ _dataUser:
   lbl1:
   sec;lda #$80
   ror nmiflg;sta nmiflg
-  lda temp
-  rts;rti
+  pla
+  plp
+  rts
 .endproc
 
 .proc    _waitvblank: near
-  lbl1:
-  rol nmiflg;lda nmiflg
-  bcc lbl1;bpl lbl1
-  clc;lda #$00
-  ror nmiflg;sta nmiflg
-  rts
+    lbl1:
+    rol nmiflg;lda nmiflg
+    bcc lbl1;bpl lbl1
+    clc;lda #$00
+    ror nmiflg;sta nmiflg
+    rts
 .endproc
 
 .proc    _getBase: near
@@ -266,13 +257,16 @@ _dataUser:
 .endproc
 
 .proc _getBlock: near
+    ;A:getBlock_idx
+    ;sta getBlock_idx
     ;getBlock_i <<= 1;
-    lda getBlock_i
-    asl
+    ;lda getBlock_i
+    asl getBlock_i
     ;getBlock_idx += getBlock_i;
-    clc
-    adc getBlock_idx
+    ;clc
+    adc getBlock_i
     sta getBlock_idx
+    lsr getBlock_i
 
     ;getBlock_j >>= 1;
     lda getBlock_j
@@ -314,7 +308,6 @@ _dataUser:
     ;getBlock_idx += getBlock_temp;
     clc
     adc getBlock_idx
-    sta getBlock_idx
     jsr _getBlock
     rts
 .endproc
@@ -329,7 +322,6 @@ _dataUser:
     asl
     asl
     asl
-    sta getBlock_idx
     jsr _getBlock
     rts
 .endproc
@@ -472,7 +464,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _getSPBase: near
+.proc    _getSPBase: near;入参A ：getSPBase_item
     lda currentPlayer;player 0x00,0x10
     clc
     adc getSPBase_item
@@ -638,21 +630,14 @@ _dataUser:
 
 .proc    _Clear: near
     ;for(i=0;i<100;i++)
-    ldx #$63;99 times
+    ldx #$64;99 times
+    ldy CurBoard_player
+    lda #$00
     fori:
-        ;Board[i]=0;
-        txa
-        clc
-        adc CurBoard_player
-        tay
-        lda #$00
         sta Board,Y
+        iny
     dex
     bne fori
-    ;Board[0]=0;
-    lda #$00
-    ldx CurBoard_player
-    sta Board,X
 
     ;calc base address
     lda #DRAW_BOARD
@@ -1355,9 +1340,7 @@ _dataUser:
         sta PosX,X
         dey
     dex
-    bne fori
-    lda Player,Y;0
-    sta PosX,X
+    bpl fori
     rts
 .endproc
 
@@ -1369,14 +1352,33 @@ _dataUser:
         sta Player,Y
         dey
     dex
-    bne fori
-    lda PosX,X
-    sta Player,Y
+    bpl fori
     rts
 .endproc
 
 .proc    _mainSub: near
     jsr _loadplayer
+    lda isOn
+    bne else2
+        ;check player1 key
+        jsr _readJoystick
+        ;lda key1); a is key1
+        beq else4
+            lda #$01
+            sta isOn
+            jsr _Clear
+            jsr _Clear4by4
+            jsr _NextShape
+            jsr _NextShape
+            lda #$32
+            sta TimeCount
+            lda #$FF
+            sta lastkey
+        else4:
+        jsr _saveplayer
+        rts
+    else2:
+
     ;one second count
     ;if(TimeCount--==0)
     dec TimeCount
@@ -1459,17 +1461,6 @@ _dataUser:
     ;CurBoard_player=100;
     lda #$64
     sta CurBoard_player
-    rts
-.endproc
-
-.proc    _init: near
-    jsr _Clear
-    jsr _Clear4by4
-    jsr _NextShape
-    jsr _NextShape
-    lda #$32
-    sta TimeCount
-    jsr _saveplayer
     rts
 .endproc
 
@@ -1599,46 +1590,11 @@ _dataUser:
         while1:
             ;if(!player1On)
             jsr _Player1
-            lda player1On
-            bne else1
-                ;check player1 key
-                jsr _readJoystick
-                ;lda key1); a is key1
-                beq else1
-                    lda #$01
-                    sta player1On
-                    jsr _init
-            else1:
-            
-            ;if(player1On)
-            lda player1On
-            beq else3
-                jsr _mainSub
-            else3:
+            jsr _mainSub
 
-            
-            
-            
-            
-            
             ;if(!player2On)
             jsr _Player2
-            lda player2On
-            bne else2
-                ;check player1 key
-                jsr _readJoystick
-                ;lda key1); a is key1
-                beq else2
-                    lda #$01
-                    sta player2On
-                    jsr _init
-            else2:
-
-            ;if(player2On)
-            lda player2On
-            beq else4
-                jsr _mainSub
-            else4:
+            jsr _mainSub
 
         jmp while1
     ;}
