@@ -54,7 +54,7 @@ _block:
 ;    .byte $12,$01,$31,$00,$22,$02,$33,$00 ;2
 ;    .byte $21,$01,$32,$00,$22,$02,$23,$00 ;3
 _left:
-    .byte $14,$14,$22,$22,$23,$23,$23,$23,$23,$23,$23,$23,$23,$23         ;4
+    .byte $03,$03,$11,$11,$12,$12,$12,$12,$12,$12,$12,$12,$12,$12         ;4
 _chg:
     .byte $00,$11,$45,$33,$41,$15,$66,$77,$68,$97,$A6,$7B,$C3,$9B,$3E,$A8 ;E chg
 _dataUser:
@@ -312,22 +312,6 @@ _dataUser:
     rts
 .endproc
 
-.proc _isRightTouch: near
-    ;char idx = (NowShapeNo<<1)+(NowDirectionNo>>1);
-    jsr _combine_NowShapeNo_NowDirectionNo
-    lsr
-    tax
-    lda _left,X
-    jsr _split
-    sta getBlock_ret ;必须设值
-    ;if(getBlock_ret+PosX-10>0)  ->  !(getBlock_ret+PosX<11)
-    ;lda getBlock_ret); a is getBlock_ret
-    clc
-    adc PosX
-    cmp #$0B;11
-    rts
-.endproc
-
 .proc _calcBoardAddress: near
     ;x:0~9 y:0~19
     ;setBoard_base = (setBoard_y*10) + (setBoard_x>>1) + CurBoard_player
@@ -420,6 +404,7 @@ _dataUser:
     ;DrawShape_temp = ((getSPBase_y+1)<<3+(_dataUser+TOP,X))-1
     ;DrawShape_temp = ((getSPBase_y)<<3+8-1+(_dataUser+TOP,X))
     ;DrawShape_temp = DrawShape_j;
+    ;DrawBuff[DrawShape_idx++]=DrawShape_temp;
     lda getSPBase_y
     asl
     asl
@@ -428,8 +413,6 @@ _dataUser:
     adc #$07
     clc
     adc _dataUser+TOP,X
-
-    ;DrawBuff[DrawShape_idx++]=DrawShape_temp;
     sta DrawBuff,Y
     iny
 
@@ -480,7 +463,7 @@ _dataUser:
     dec getBlock_idx
     bpl fori
 
-    ;*(char*)(0x2003)=16; ;i<<2
+    ;*(char*)(0x2003)=16;
     lda #$10
     ;jsr _SendBuffToPPU
     clc
@@ -540,38 +523,6 @@ _dataUser:
     lda #$03
     sta PosX
 
-    rts
-.endproc
-
-.proc _isTouch: near
-    lda #$03
-    sta getBlock_idx
-    fori:
-        jsr _getNowBlock
-        lda PosY
-        ;if(getBlock_ret-1==PosY)goto ret1;触底
-        sec
-        sbc getBlock_j
-        beq ret1
-        tax
-        dex
-        stx setBoard_y
-        
-        ;setBoard_x=PosX+Touch_i-1;
-        lda PosX
-        clc
-        adc getBlock_i;Touch_i
-        sta setBoard_x
-
-        jsr _getBoard
-        bne ret1
-    dec getBlock_idx
-    bpl fori
-    
-    clc;not Touch
-    rts
-    ret1:
-    sec;is Touch
     rts
 .endproc
 
@@ -641,23 +592,23 @@ _dataUser:
     sta getBlock_idx
     fori:
       jsr _getNowBlock
+      
+      ;(lda getBlock_ret)
+      pha
+      sta setBoard_val
 
       lda getBlock_i
       clc
       adc PosX
       sta setBoard_x
       sta getBase_x
-                
+
       lda PosY
       sec
       sbc getBlock_j
       sta setBoard_y
       sta getBase_y
 
-      lda getBlock_ret
-      pha
-      
-      sta setBoard_val
       jsr _setBoard
 
       jsr _getBoardBase;会改变Y
@@ -813,38 +764,58 @@ _dataUser:
     rts
 .endproc
 
+.proc _isTouch: near
+    lda #$03
+    sta getBlock_idx
+    fori:
+        jsr _getNowBlock
+        lda PosY
+        ;if(PosY-1-getBlock_j<0)goto ret1;触底
+        sec
+        sbc getBlock_j
+        bmi ret1
+        sta setBoard_y
+        
+        lda getBlock_i
+        clc
+        adc PosX
+        sta setBoard_x
+
+        jsr _getBoard
+        bne ret1
+    dec getBlock_idx
+    bpl fori
+    clc;not Touch
+    rts
+    ret1:
+    sec;is Touch
+    rts
+.endproc
+
+.proc _isRightTouch: near
+    ;char idx = (NowShapeNo<<1)+(NowDirectionNo>>1);
+    jsr _combine_NowShapeNo_NowDirectionNo
+    lsr
+    tax
+    lda _left,X
+    jsr _split
+    sta getBlock_ret ;必须设值
+    clc
+    adc PosX
+    cmp #$0A;10
+    rts
+.endproc
+
 .proc _AnyTouch: near ; 返回：C
     ;if(PosX<0)
     lda PosX
     bmi ret1
 
     jsr _isRightTouch
+    ;if((right-1)+PosX-(11-1))>=0 return 1
     bpl ret1
 
-    lda #$03
-    sta getBlock_idx
-    fori:
-      jsr _getNowBlock
-
-      lda getBlock_i
-      clc
-      adc PosX
-      sta setBoard_x
-
-      ;if PosY < getBlock_j-1 goto ret1
-      lda PosY
-      sec
-      sbc getBlock_j
-      bmi ret1
-      sta setBoard_y
-
-      jsr _getBoard
-
-      bne ret1
-    dec getBlock_idx
-    bpl fori
-
-    clc;not AnyTouch
+    jsr _isTouch
     rts
     ret1:
     sec
@@ -863,9 +834,10 @@ _dataUser:
     pha;sta rotate_tempPosX
     
     jsr _isRightTouch;如果旋转后伸出右边界的话， 往里推
+    ;if((ret-1)+PosX-(11-1))<0 not do
     bmi else1
-        ;PosX=10-getBlock_ret;
-        lda #$0A
+        ;PosX=(10-1)-(ret-1);
+        lda #$09
         sec
         sbc getBlock_ret
         sta PosX
@@ -891,12 +863,13 @@ _dataUser:
 .endproc
 
 .proc _slowdown: near
+    dec PosY
     jsr _isTouch
     bcc else1
-        jsr _TouchDo
-        rts
+      inc PosY
+      jsr _TouchDo
+      rts
     else1:
-    dec PosY
     rts
 .endproc
 
@@ -1014,8 +987,8 @@ _dataUser:
     bcc elseKey3
         ;jsr _down
         loop1:
-            jsr _isTouch
             dec PosY
+            jsr _isTouch
         bcc loop1
         inc PosY
         jsr _TouchDo
@@ -1114,8 +1087,6 @@ _dataUser:
     sta (PTR2000),Y;Y is 0
     ;set color
     ;{
-    ;main_temp
-        
         jsr _waitvblank;Y is 0
         lda #$00
         ldx #$00
