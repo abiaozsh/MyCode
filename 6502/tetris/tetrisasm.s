@@ -43,8 +43,7 @@ _bottom:
     .byte $11,$02,$33,$00,$22,$02,$13,$00,$12,$01,$31,$00,$22,$02,$33,$00 ;2
     .byte $21,$01,$32,$00,$22,$02,$23,$00                                 ;3
 _left:
-    .byte $04,$01,$04,$01,$02,$02,$02,$02,$03,$02,$03,$02,$03,$02,$03,$02 ;4
-    .byte $03,$02,$03,$02,$03,$02,$03,$02,$03,$02,$03,$02                 ;5
+    .byte $14,$14,$22,$22,$23,$23,$23,$23,$23,$23,$23,$23,$23,$23         ;4
 _chg:
     .byte $00,$11,$45,$33,$41,$15,$66,$77,$68,$97,$A6,$7B,$C3,$9B,$3E,$A8 ;E chg
 _dataUser:
@@ -309,9 +308,6 @@ _dataUser:
 .proc _getNowBlock: near
     ;char idx = (NowShapeNo<<5)+(NowDirectionNo<<3)+(getBlock_i<<1)+(getBlock_j>>1);
     jsr _combine_NowShapeNo_NowDirectionNo
-    ;asl
-    ;asl  put to _getBlock
-    ;asl
     ;getBlock_idx += getBlock_temp;
     jsr _getBlock
     rts
@@ -339,11 +335,15 @@ _dataUser:
 .endproc
 
 .proc _isRightTouch: near
-    ;char idx = (NowShapeNo<<2)+NowDirectionNo;
+    ;char idx = (NowShapeNo<<1)+(NowDirectionNo>>1);
     jsr _combine_NowShapeNo_NowDirectionNo
+    lsr
     ;getBlock_ret = data3[getBlock_idx];
     tax
+    lda NowDirectionNo
+    lsr
     lda _left,X
+    jsr _split
     sta getBlock_ret ;必须设值
     ;if(getBlock_ret+PosX-10>0)  ->  !(getBlock_ret+PosX<11)
     ;lda getBlock_ret); a is getBlock_ret

@@ -1,8 +1,8 @@
 Modules list:
 -------------
 tetrisasm.o:
-    CODE              Offs = 000000   Size = 000534
-    RODATA            Offs = 000000   Size = 000164
+    CODE              Offs = 000000   Size = 00053B
+    RODATA            Offs = 000000   Size = 000156
     CHARS             Offs = 000000   Size = 000200
 ..\lib\neschr.lib(crt0chr.o):
     HEADER            Offs = 000000   Size = 000010
@@ -17,14 +17,14 @@ Name                  Start   End     Size
 CHARS                 000000  0001FF  000200
 HEADER                000000  00000F  000010
 STARTUP               008000  008006  000007
-CODE                  008007  00853A  000534
-RODATA                00A000  00A163  000164
+CODE                  008007  008541  00053B
+RODATA                00A000  00A155  000156
 VECTORS               00FFF6  010001  00000C
 
 
 Exports list:
 -------------
-__STARTUP__               000001 REA    _main                     0084BD RLA    
+__STARTUP__               000001 REA    _main                     0084C4 RLA    
 _nmi                      008007 RLA    
 
 
