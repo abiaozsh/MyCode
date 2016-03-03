@@ -1257,23 +1257,25 @@ _dataUser:
 
     ;*(char*)(0x4016/7)=01;
     lda #$01
+    sta key1
     sta $4016,X
     ;*(char*)(0x4016/7)=00;
     lda #$00
     sta $4016,X
     ;key1=0;
-    sta key1
 
-    ldy #$08
+    ;ldy #$08
     fori:
         ;key1=(key1<<1)|*(char*)(0x4016/7)&1;
         lda $4016,X
-        and #$01
-        asl key1
-        ora key1
-        sta key1
-    dey
-    bne fori
+        ror
+        rol key1
+        ;and #$01
+        ;asl key1
+        ;ora key1
+        ;sta key1
+    ;dey
+    bcc fori
     lda key1
     rts
 
@@ -1361,7 +1363,7 @@ _dataUser:
     ;lda key1); a is key1
     eor lastkey
     ;key2 = key2 & key1;
-    and key1
+    and key1;取得有变化并且被按下的键，就是刚被按下的瞬间
     ;if(key2!=0)
     sta key2
     lsr key2;if(key2&0x01){movelr_n=1;movelr();};button_RIGHT
