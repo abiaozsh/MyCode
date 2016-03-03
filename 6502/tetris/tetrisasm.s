@@ -74,9 +74,6 @@ _dataUser:
 .define getBase_y           $29
 .define getBase_hi          $2A
 .define getBase_lo          $2B
-.define getBase_tmp         $2C
-.define getBase_item        $2D
-;.define getSPBase_item      $2E
 .define getSPBase_x         $2F
 .define getSPBase_y         $30
 .define DrawLine_i          $31
@@ -157,21 +154,21 @@ _dataUser:
 .endproc
 
 .proc    _getBase: near
-    lda currentPlayer ;player 0x00,0x10
+    ;lda currentPlayer ;player 0x00,0x10
     clc
-    adc getBase_item
+    adc currentPlayer;getBase_item
     tax
     lda _dataUser+TOP,X
     clc
     adc getBase_y
+    lsr;>>
     lsr
     lsr
-    lsr
-    sta getBase_tmp
+    pha
     lda _dataUser+TOP,X
     clc
     adc getBase_y
-    asl
+    asl;<<
     asl
     asl
     asl
@@ -183,8 +180,8 @@ _dataUser:
     clc
     adc #$20
     sta getBase_lo
-    lda #$20
-    adc getBase_tmp
+    pla
+    adc #$20
     sta getBase_hi
     rts
 .endproc
@@ -213,11 +210,11 @@ _dataUser:
     bne fory
 
     else1:
-    lda #DRAW_SCORE
-    sta getBase_item
     lda #$00
     sta getBase_x
     sta getBase_y
+    lda #DRAW_SCORE
+    ;sta getBase_item
     jsr _getBase
     
     jsr _waitvblank;绘图PPU前调用
@@ -627,12 +624,12 @@ _dataUser:
     bne fori
 
     ;calc base address
-    lda #DRAW_BOARD
-    sta getBase_item
     lda #$00
     tay;ldy #$00
     sta getBase_x
     sta getBase_y
+    lda #DRAW_BOARD
+    ;sta getBase_item
     jsr _getBase
 
     
@@ -749,12 +746,12 @@ _dataUser:
 .endproc
 
 .proc    _getBoardBase: near
-    lda #DRAW_BOARD
-    sta getBase_item
     lda #$13;19-getBase_y
     sec
     sbc getBase_y
     sta getBase_y
+    lda #DRAW_BOARD
+    ;sta getBase_item
     jsr _getBase
     rts
 .endproc
@@ -1257,38 +1254,29 @@ _dataUser:
 
     ;*(char*)(0x4016/7)=01;
     lda #$01
-    sta key1
+    sta key1;key1=1;  1<<8
     sta $4016,X
     ;*(char*)(0x4016/7)=00;
     lda #$00
     sta $4016,X
-    ;key1=0;
+    
 
-    ;ldy #$08
     fori:
-        ;key1=(key1<<1)|*(char*)(0x4016/7)&1;
         lda $4016,X
         ror
         rol key1
-        ;and #$01
-        ;asl key1
-        ;ora key1
-        ;sta key1
-    ;dey
-    bcc fori
+    bcc fori;key1=1;  1<<8
     lda key1
     rts
-
 .endproc
 
 .proc    _Clear4by4: near
-    lda #DRAW_NEXT
-    sta getBase_item
     lda #$00
     tay
-    
     sta getBase_x
     sta getBase_y
+    lda #DRAW_NEXT
+    ;sta getBase_item
     jsr _getBase
     jsr _waitvblank;绘图PPU前调用
     ldx #$04
