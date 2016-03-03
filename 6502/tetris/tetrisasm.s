@@ -116,7 +116,7 @@ _dataUser:
 .define Board            $0200
 ;size:16*2(0x020)  player  data 1,2
 .define Player           $02C8
-;size:16(0x010)
+;size:16*2(0x020) now and next
 .define DrawBuff         $02E8
 
 ;* %b - Numerical 8-bit value
@@ -312,7 +312,6 @@ _dataUser:
 
 .proc    _getNextBlock: near
     ;char idx = (NextShapeNo<<5)+(i<<1)+(j>>1);
-    ;getBlock_idx = NextShapeNo;
     lda NextShapeNo
     ;getBlock_idx <<= 5;
     asl
@@ -444,24 +443,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _SendBuffToPPU: near
-    clc
-    adc CurSP_player
-    jsr _waitvblank;绘图PPU前调用 ;XY is 0
-    sta (PTR2003),Y
-    ;for(i=0;i<16;i++)
-    ;DrawShape_i=0;
-    fori2:
-        ;*(char*)(0x2004)=DrawBuff[DrawShape_i];
-        lda DrawBuff,X
-        sta (PTR2004),Y
-    inx
-    cpx #$10
-    bne fori2
-    rts
-.endproc
-
-.proc    _getSPBase: near;入参A ：getSPBase_item
+.proc    _getSPBaseAndSetDrawBuff: near;入参A ：getSPBase_item
     ;lda currentPlayer;player 0x00,0x10
     clc
     adc currentPlayer;getSPBase_item
@@ -510,7 +492,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _DrawShapeNext: near
+.proc    _DrawShapeNowAndNext: near
     ;DrawShape_idx=0;
     ldy #$00
     
@@ -524,26 +506,54 @@ _dataUser:
         sta getBlock_j;DrawShape_j
         ;for(j=4;j>0;j--)
         forj:
-            ;getBlock_i = DrawShape_i-1;
-            ;ldx DrawShape_i
-            ;stx getBlock_i
-            lda getBlock_i
-            sta getSPBase_x
+            ;{
+                ;getBlock_i = DrawShape_i-1;
+                ;ldx DrawShape_i
+                ;stx getBlock_i
+                lda getBlock_i
+                sta getSPBase_x
 
-            ;getBlock_j = DrawShape_j-1;
-            ;ldx DrawShape_j
-            ;stx getBlock_j
-            lda getBlock_j
-            sta getSPBase_y
+                ;getBlock_j = DrawShape_j-1;
+                ;ldx DrawShape_j
+                ;stx getBlock_j
+                lda getBlock_j
+                sta getSPBase_y
 
-            jsr _getNextBlock
-            ;if(getBlock_ret)
-            ;lda getBlock_ret); a is getBlock_ret
-            beq else1
-                lda #DRAW_NEXT_SP
-                ;sta getSPBase_item
-                jsr _getSPBase
-            else1:
+                jsr _getNextBlock
+                ;if(getBlock_ret)
+                ;lda getBlock_ret); a is getBlock_ret
+                beq else2
+                    lda #DRAW_NEXT_SP
+                    ;sta getSPBase_item
+                    jsr _getSPBaseAndSetDrawBuff
+                else2:
+            ;}
+
+            ;{
+                lda getBlock_i
+                ;getSPBase_x = getBlock_i + PosX
+                clc
+                adc PosX
+                sta getSPBase_x
+
+                
+                lda getBlock_j
+                ;getSPBase_y = getBlock_j + 19 - PosY
+                clc
+                adc #$13;19
+                sec
+                sbc PosY
+                sta getSPBase_y
+
+                jsr _getNowBlock
+                ;if(getBlock_ret)
+                ; lda getBlock_ret); a is getBlock_ret
+                beq else1
+                    lda #DRAW_SP
+                    ;sta getSPBase_item
+                    jsr _getSPBaseAndSetDrawBuff
+                else1:
+            ;}
         dec getBlock_j;DrawShape_j
         bpl forj
     dec getBlock_i;DrawShape_i
@@ -551,64 +561,20 @@ _dataUser:
 
     ;*(char*)(0x2003)=16; ;i<<2
     lda #$10
-    jsr _SendBuffToPPU
-    rts
-.endproc
-
-.proc    _DrawShapeNow: near
-    ;DrawShape_idx=0;
-    ldy #$00
-
-    ;DrawShape_i=4;
-    lda #$03
-    sta getBlock_i;DrawShape_i
-    ;for(i=4;i>0;i--)
-    fori:
-        ;DrawShape_j=4;
-        lda #$03
-        sta getBlock_j;DrawShape_j
-        ;for(j=4;j>0;j--)
-        forj:
-            ;getBlock_i=DrawShape_i-1;
-            ;ldx DrawShape_i
-            ;stx getBlock_i
-            lda getBlock_i
-            ;getSPBase_x = DrawShape_i - 1 + PosX
-            ;lda DrawShape_i);
-            clc
-            adc PosX
-            sta getSPBase_x
-
-            
-            ;getBlock_j=DrawShape_j-1;
-            ;ldx DrawShape_j
-            ;stx getBlock_j
-            
-            lda getBlock_j
-            ;getSPBase_y = DrawShape_j-1+19-PosY
-            ;lda DrawShape_j);
-            clc
-            adc #$13;19
-            sec
-            sbc PosY
-            sta getSPBase_y
-
-            jsr _getNowBlock
-            ;if(getBlock_ret)
-            ; lda getBlock_ret); a is getBlock_ret
-            beq else1
-                lda #DRAW_SP
-                ;sta getSPBase_item
-                jsr _getSPBase
-            else1:
-        dec getBlock_j;DrawShape_j
-        bpl forj
-    dec getBlock_i;DrawShape_i
-    bpl fori
-
-    ;*(char*)(0x2003)=0; ;i<<2
-    lda #$00
-    jsr _SendBuffToPPU
+    ;jsr _SendBuffToPPU
+    clc
+    adc CurSP_player
+    jsr _waitvblank;绘图PPU前调用 ;XY is 0
+    sta (PTR2003),Y
+    ;for(i=0;i<16;i++)
+    ;DrawShape_i=0;
+    fori2:
+        ;*(char*)(0x2004)=DrawBuff[DrawShape_i];
+        lda DrawBuff,X
+        sta (PTR2004),Y
+    inx
+    cpx #$20
+    bne fori2
     rts
 .endproc
 
@@ -1379,8 +1345,7 @@ _dataUser:
         sta rotate_n
         jsr _rotate
     elseKey6:
-    jsr _DrawShapeNow
-    jsr _DrawShapeNext
+    jsr _DrawShapeNowAndNext
     ;lastkey = key1;
     lda key1
     sta lastkey
