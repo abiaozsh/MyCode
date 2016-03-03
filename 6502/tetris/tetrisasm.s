@@ -458,7 +458,6 @@ _dataUser:
       ;sta getSPBase_item
       jsr _getSPBaseAndSetDrawBuff
 
-      
       jsr _getNowBlock
 
       lda getBlock_i
@@ -489,8 +488,6 @@ _dataUser:
     jsr _waitvblank;绘图PPU前调用 ;Y is 0
     ldx #$1F
     sta (PTR2003),Y
-    ;for(i=0;i<16;i++)
-    ;DrawShape_i=0;
     fori2:
         ;*(char*)(0x2004)=DrawBuff[DrawShape_i];
         lda DrawBuff,X
@@ -547,29 +544,18 @@ _dataUser:
 .endproc
 
 .proc _isTouch: near
-;    lda #$03
-;    sta getBlock_idx
-;    fori:
-;      jsr _getNowBlock
-;
-;      lda getBlock_i
-;      
-;                
-;      lda getBlock_j
-;
-;    dec getBlock_idx
-;    bpl fori
-
-
     lda #$03
     sta getBlock_idx
     fori:
         jsr _getNowBlock
-        lda getBlock_j
+        lda PosY
         ;if(getBlock_ret-1==PosY)goto ret1;触底
-        tax;ldx getBlock_ret); a is getBlock_ret
-        cpx PosY
+        sec
+        sbc getBlock_j
         beq ret1
+        tax
+        dex
+        stx setBoard_y
         
         ;setBoard_x=PosX+Touch_i-1;
         lda PosX
@@ -577,14 +563,6 @@ _dataUser:
         adc getBlock_i;Touch_i
         sta setBoard_x
 
-        ;setBoard_y=PosY-getBlock_ret;
-        lda PosY
-        sec
-        sbc getBlock_j
-        sec
-        sbc #$01
-        sta setBoard_y
-        
         jsr _getBoard
         bne ret1
     dec getBlock_idx
@@ -845,19 +823,6 @@ _dataUser:
 
     lda #$03
     sta getBlock_idx
-    forj:
-        jsr _getNowBlock
-        lda getBlock_j
-        tax
-        dex
-        cpx PosY
-        bpl ret1
-    dec getBlock_idx
-    bpl forj
-
-    
-    lda #$03
-    sta getBlock_idx
     fori:
       jsr _getNowBlock
 
@@ -866,9 +831,11 @@ _dataUser:
       adc PosX
       sta setBoard_x
 
+      ;if PosY < getBlock_j-1 goto ret1
       lda PosY
       sec
       sbc getBlock_j
+      bmi ret1
       sta setBoard_y
 
       jsr _getBoard
@@ -1012,7 +979,7 @@ _dataUser:
     dec TimeCount
     bne else1
         ;TimeCount=50;
-        lda #$32;50
+        lda #$FE;#$32;50
         sta TimeCount
         jsr _slowdown
     else1:
