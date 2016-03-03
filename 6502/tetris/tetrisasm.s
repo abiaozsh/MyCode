@@ -37,16 +37,16 @@ _block:
     .byte $70,$00,$30,$00,$A5,$00,$00,$00,$25,$09,$00,$06,$00,$00,$00,$00 ;B 6
     .byte $07,$00,$4E,$00,$06,$00,$00,$00,$70,$00,$F5,$04,$00,$00,$00,$00 ;C
     .byte $70,$00,$C5,$00,$60,$00,$00,$00,$D5,$04,$60,$00,$00,$00,$00,$00 ;D 7
-_chg:
-    .byte $00,$11,$45,$33,$41,$15,$66,$77,$68,$97,$A6,$7B,$C3,$9B,$3E,$A8 ;E chg
 _bottom:
     .byte $11,$11,$04,$00,$11,$11,$04,$00,$22,$00,$22,$00,$22,$00,$22,$00 ;0
     .byte $22,$01,$32,$00,$22,$01,$32,$00,$21,$02,$23,$00,$21,$02,$23,$00 ;1
     .byte $11,$02,$33,$00,$22,$02,$13,$00,$12,$01,$31,$00,$22,$02,$33,$00 ;2
-    .byte $21,$01,$32,$00,$22,$02,$23,$00,$00,$00,$00,$00,$00,$00,$00,$00 ;3
+    .byte $21,$01,$32,$00,$22,$02,$23,$00                                 ;3
 _left:
     .byte $04,$01,$04,$01,$02,$02,$02,$02,$03,$02,$03,$02,$03,$02,$03,$02 ;4
-    .byte $03,$02,$03,$02,$03,$02,$03,$02,$03,$02,$03,$02,$00,$00,$00,$00 ;5
+    .byte $03,$02,$03,$02,$03,$02,$03,$02,$03,$02,$03,$02                 ;5
+_chg:
+    .byte $00,$11,$45,$33,$41,$15,$66,$77,$68,$97,$A6,$7B,$C3,$9B,$3E,$A8 ;E chg
 _dataUser:
     .byte $02,$02,$10,$10,$02,$0D,$10,$68,$07,$0D,$00,$00,$00,$00,$00,$00 ;6 player1
     .byte $02,$13,$10,$98,$0B,$0E,$58,$70,$10,$0E,$00,$00,$00,$00,$00,$00 ;7 player2
@@ -73,8 +73,6 @@ _dataUser:
 .define PTR2005             $1A
 .define PTR2006             $1C
 .define PTR2007             $1E
-
-;.define PTRDrawBuff         $20
 
 ;page0 0x0000 ~0x00FF
 .define getBlock_i          $30
@@ -148,7 +146,7 @@ _dataUser:
 
 .segment    "CODE"
 
-.proc    _nmi: near
+.proc _nmi: near
   php
   pha
   dec rand7
@@ -163,7 +161,7 @@ _dataUser:
   rts
 .endproc
 
-.proc    _waitvblank: near
+.proc _waitvblank: near
     lbl1:
     rol nmiflg;lda nmiflg
     bcc lbl1;bpl lbl1
@@ -174,10 +172,10 @@ _dataUser:
     rts
 .endproc
 
-.proc    _getBase: near; 会改变Y
-    ;lda currentPlayer ;player 0x00,0x10
+.proc _getBase: near; 会改变Y
+    ;A:getBase_item
     clc
-    adc currentPlayer;getBase_item
+    adc currentPlayer;player 0x00,0x10
     tax
     lda _dataUser+TOP,X
     clc
@@ -206,7 +204,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _st2005: near
+.proc _st2005: near
     ;[0x2005] = 0;
     lda #$00
     tay
@@ -216,20 +214,19 @@ _dataUser:
     rts
 .endproc
 
-.proc    _DrawScore: near
+.proc _DrawScore: near
     ldx #$03
     fory:
         inc Score0,X
         lda Score0,X
-        sec
-        sbc #($0A + POS_ZERO)
+        cmp #($0A + POS_ZERO)
         bne break1
         lda #POS_ZERO
         sta Score0,X
     dex
     bpl fory
-
     break1:
+    
     lda #$00
     sta getBase_x
     sta getBase_y
@@ -302,7 +299,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _combine_NowShapeNo_NowDirectionNo: near
+.proc _combine_NowShapeNo_NowDirectionNo: near
     lda NowShapeNo
     ;getBlock_idx <<= 5;
     asl
@@ -312,7 +309,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _getNowBlock: near
+.proc _getNowBlock: near
     ;char idx = (NowShapeNo<<5)+(NowDirectionNo<<3)+(getBlock_i<<1)+(getBlock_j>>1);
     jsr _combine_NowShapeNo_NowDirectionNo
     ;asl
@@ -323,7 +320,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _getNowBottom: near
+.proc _getNowBottom: near
     ;char idx = (NowShapeNo<<3)+(NowDirectionNo<<1)+(j>>1);
     jsr _combine_NowShapeNo_NowDirectionNo
     asl
@@ -345,13 +342,13 @@ _dataUser:
     rts
 .endproc
 
-.proc    _isRightTouch: near
+.proc _isRightTouch: near
     ;char idx = (NowShapeNo<<2)+NowDirectionNo;
     jsr _combine_NowShapeNo_NowDirectionNo
     ;getBlock_ret = data3[getBlock_idx];
     tax
     lda _left,X
-    ;sta getBlock_ret 不必设值了，返回在A
+    sta getBlock_ret ;必须设值
     ;if(getBlock_ret+PosX-10>0)  ->  !(getBlock_ret+PosX<11)
     ;lda getBlock_ret); a is getBlock_ret
     clc
@@ -360,18 +357,18 @@ _dataUser:
     rts
 .endproc
 
-.proc    _calcBoardAddress: near
+.proc _calcBoardAddress: near
     ;x:0~9 y:0~19
-    ;setBoard_base = (setBoard_y<<2) + setBoard_y + (setBoard_x>>1) + CurBoard_player
+    ;setBoard_base = (setBoard_y*10) + (setBoard_x>>1) + CurBoard_player
     ;base =y*5
     ;setBoard_base=setBoard_y;
     lda setBoard_y
     asl
     asl
-    ;clc
+    ;(clc)
     adc setBoard_y
-    asl
-    ;clc
+    asl;A=setBoard_y*10
+    ;(clc)
     adc setBoard_x
     lsr
     clc
@@ -384,7 +381,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _setBoard: near
+.proc _setBoard: near
     jsr _calcBoardAddress;out:C
     ;if(setBoard_y)
     bcc else1;beq else1
@@ -412,7 +409,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _getBoard: near
+.proc _getBoard: near
     jsr _calcBoardAddress;out:C
     ldx setBoard_base
     lda Board,X
@@ -421,7 +418,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _getSPBaseAndSetDrawBuff: near;入参A ：getSPBase_item
+.proc _getSPBaseAndSetDrawBuff: near;入参A ：getSPBase_item
     ;lda currentPlayer;player 0x00,0x10
     clc
     adc currentPlayer;getSPBase_item
@@ -467,7 +464,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _DrawShapeNowAndNext: near
+.proc _DrawShapeNowAndNext: near
     ;DrawShape_idx=0;
     ldy #$00
     
@@ -551,20 +548,20 @@ _dataUser:
     clc
     adc CurSP_player
     jsr _waitvblank;绘图PPU前调用 ;XY is 0
-    sta (PTR2003,X)
+    sta (PTR2003),Y
     ;for(i=0;i<16;i++)
     ;DrawShape_i=0;
     fori2:
         ;*(char*)(0x2004)=DrawBuff[DrawShape_i];
-        lda DrawBuff,Y
-        sta (PTR2004,X)
-    iny
-    cpy #$20
+        lda DrawBuff,X
+        sta (PTR2004),Y
+    inx
+    cpx #$20
     bne fori2
     rts
 .endproc
 
-.proc    _Clear: near
+.proc _Clear: near
     ;for(i=0;i<100;i++)
     ldx #$64;99 times
     ldy CurBoard_player
@@ -592,7 +589,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _NextShape: near
+.proc _NextShape: near
     ;NowShapeNo = NextShapeNo;
     lda NextShapeNo
     sta NowShapeNo
@@ -610,7 +607,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _isTouch: near
+.proc _isTouch: near
     lda #$03
     sta getBlock_j
     fori:
@@ -651,7 +648,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _getBoardBase: near; 会改变Y
+.proc _getBoardBase: near; 会改变Y
     lda #$13;19-getBase_y
     sec
     sbc getBase_y
@@ -662,7 +659,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _DrawLine: near
+.proc _DrawLine: near
     ;getBase_y=DrawLine_y;
     ;lda DrawLine_y
     stx getBase_y
@@ -688,24 +685,23 @@ _dataUser:
     
     jsr _waitvblank;绘图PPU前调用 ;XY is 0
     lda getBase_hi
-    sta (PTR2006,X)
-
+    sta (PTR2006),Y
     lda getBase_lo
-    sta (PTR2006,X)
+    sta (PTR2006),Y
     
     ;for(i=2;i<12;i++)
-    ldy #$09
+    ldx #$09
     fori2:
         ;*(char*)(0x2007)=DrawBuff[i];
         pla
-        sta (PTR2007,X)
-        dey
+        sta (PTR2007),Y
+        dex
     bpl fori2
     jsr _st2005
     rts
 .endproc
 
-.proc    _adjUpDown: near
+.proc _adjUpDown: near
   stx setBoard_y
   jsr _getBoard;in setBoard_val
   tax
@@ -713,11 +709,9 @@ _dataUser:
   rts
 .endproc
 
-.proc    _TouchDo: near
+.proc _TouchDo: near
     ;add to board
     ;{
-        ;TouchDo_idx=0;
-        ldy #$00
         ;for(TouchDo_i=3;TouchDo_i>=0;TouchDo_i--)
         lda #$03
         sta getBlock_i;TouchDo_i
@@ -736,10 +730,6 @@ _dataUser:
                 sta setBoard_x
                 sta getBase_x
                 
-                ;getBlock_j=TouchDo_j;
-                ;ldx TouchDo_j
-                ;stx getBlock_j
-
                 ;setBoard_y=PosY-(TouchDo_j);
                 ;getBase_y =PosY-(TouchDo_j);
                 lda PosY
@@ -840,12 +830,10 @@ _dataUser:
                 ldx TouchDo_j
                 inx
                 jsr _adjUpDown
-                ;lsr
-                ;lsr
-                ;lsr
-                ;lsr
-                clc
-                jsr _split
+                lsr
+                lsr
+                lsr
+                lsr
                 sta setBoard_val
                 jsr _setBoard
             dec setBoard_x;TouchDo_k
@@ -924,7 +912,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _AnyTouch: near ; 返回：C
+.proc _AnyTouch: near ; 返回：C
     ;if(PosX<0)
     lda PosX
     bmi ret1
@@ -1032,7 +1020,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _slowdown: near
+.proc _slowdown: near
     jsr _isTouch
     bcc else1
         jsr _TouchDo
@@ -1042,7 +1030,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _readJoystick: near
+.proc _readJoystick: near
     ldx readJoystick_player
 
     ;*(char*)(0x4016/7)=01;
@@ -1062,7 +1050,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _Clear4by4: near
+.proc _Clear4by4: near
     lda #$00
     sta getBase_x
     lda #$03
@@ -1087,7 +1075,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _mainSub: near
+.proc _mainSub: near
     ;jsr _loadplayer
     ;{
         ldy currentPlayer
@@ -1200,7 +1188,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _initTitle: near
+.proc _initTitle: near
     ;*(char*)(0x2006)=0x20;
     lda #$20
     sta (PTR2006),Y
@@ -1216,7 +1204,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _setPalette: near
+.proc _setPalette: near
     ldy #$3F
     sty $2006
 
@@ -1236,7 +1224,7 @@ _dataUser:
     rts
 .endproc
 
-.proc    _main: near
+.proc _main: near
     ;init ptr
     ;{
         lda #$20
@@ -1279,13 +1267,13 @@ _dataUser:
         ;*(char*)(0x2006)=0x20;
         sta (PTR2006),Y
         
-        ;total 0x380
-        ldx #$80;lda #$80
-        ;sta main_i
+        ;total 0x0380(32*28=896)
         ldy #$03;lda #$03
         ;sta main_j
-        lda #POS_BLACK
+        ldx #$80;lda #$80
+        ;sta main_i
         for4:
+            lda #POS_BLACK
             sta $2007
             cpx #$00
             bne else5
