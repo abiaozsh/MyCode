@@ -4,9 +4,9 @@ del tetris.map.txt
 del tetris.nes
 ..\binFile\ca65 -t nes tetrisasm.s
 ..\binFile\ld65 tetrisasm.o ..\lib\neschr.lib --config ..\lib\neschr.cfg -o tetris.nes -m tetris.map.txt
-..\sim\famtasia.exe tetris.nes
+rem ..\sim\famtasia.exe tetris.nes
 rem ..\sim\Jnes tetris.nes
-
+..\sim\FCdebug\VirtuaNES.exe tetris.nes
 pause
 
 
