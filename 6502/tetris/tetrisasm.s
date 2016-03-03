@@ -1400,54 +1400,41 @@ _dataUser:
     ;key2 = key2 & key1;
     and key1
     ;if(key2!=0)
-    beq else2
-        sta key2
-        ;if(key2&0x01){movelr_n=1;movelr();};button_RIGHT
-        and #$01
-        beq elseKey1
-            ;lda #$01"); a is 01
-            sta movelr_n
-            jsr _movelr
-        elseKey1:
-        ;if(key2&0x02){movelr_n=-1;movelr();};button_LEFT
-        lda key2
-        and #$02
-        beq elseKey2
-            lda #$FF
-            sta movelr_n
-            jsr _movelr
-        elseKey2:
-        ;if(key2&0x04)down();;button_DOWN
-        lda key2
-        and #$04
-        beq elseKey3
-            jsr _down
-        elseKey3:
-        ;if(key2&0x08)slowdown();;button_UP
-        lda key2
-        and #$08
-        beq elseKey4
-            jsr _slowdown
-        elseKey4:
-        ;if(key2&0x10);;button_START
-        ;if(key2&0x20);;button_SELECT
-        ;if(key2&0x40){rotate_n=-1;rotate();};button_B
-        lda key2
-        and #$40
-        beq elseKey5
-            lda #$FF
-            sta rotate_n
-            jsr _rotate
-        elseKey5:
-        ;if(key2&0x80){rotate_n=1;rotate();};button_A
-        lda key2
-        and #$80
-        beq elseKey6
-            lda #$01
-            sta rotate_n
-            jsr _rotate
-        elseKey6:
-    else2:
+    sta key2
+    lsr key2;if(key2&0x01){movelr_n=1;movelr();};button_RIGHT
+    bcc elseKey1
+        lda #$01
+        sta movelr_n
+        jsr _movelr
+    elseKey1:
+    lsr key2;if(key2&0x02){movelr_n=-1;movelr();};button_LEFT
+    bcc elseKey2
+        lda #$FF
+        sta movelr_n
+        jsr _movelr
+    elseKey2:
+    lsr key2;if(key2&0x04)down();;button_DOWN
+    bcc elseKey3
+        jsr _down
+    elseKey3:
+    lsr key2;if(key2&0x08)slowdown();;button_UP
+    bcc elseKey4
+        jsr _slowdown
+    elseKey4:
+    lsr key2;if(key2&0x10);;button_START
+    lsr key2;if(key2&0x20);;button_SELECT
+    lsr key2;if(key2&0x40){rotate_n=-1;rotate();};button_B
+    bcc elseKey5
+        lda #$FF
+        sta rotate_n
+        jsr _rotate
+    elseKey5:
+    lsr key2;if(key2&0x80){rotate_n=1;rotate();};button_A
+    bcc elseKey6
+        lda #$01
+        sta rotate_n
+        jsr _rotate
+    elseKey6:
     ;lastkey = key1;
     lda key1
     sta lastkey
