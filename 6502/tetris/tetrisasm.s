@@ -46,10 +46,13 @@ _block:
     .byte $B0,$41,$34,$68,$70,$84,$25,$46,$71,$35,$58,$A9,$50,$21,$92,$66;6 L
     .byte $70,$E4,$45,$68,$71,$54,$F5,$46,$71,$54,$C5,$69,$50,$D1,$42,$65;7 T
 _bottom:
-    .byte $11,$11,$04,$00,$11,$11,$04,$00,$22,$00,$22,$00,$22,$00,$22,$00 ;0
-    .byte $22,$01,$32,$00,$22,$01,$32,$00,$21,$02,$23,$00,$21,$02,$23,$00 ;1
-    .byte $11,$02,$33,$00,$22,$02,$13,$00,$12,$01,$31,$00,$22,$02,$33,$00 ;2
-    .byte $21,$01,$32,$00,$22,$02,$23,$00                                 ;3
+    .byte $11,$11,$04,$00,$11,$11,$04,$00
+    .byte $22,$00,$22,$00,$22,$00,$22,$00 ;0
+    .byte $22,$01,$32,$00,$22,$01,$32,$00
+    .byte $21,$02,$23,$00,$21,$02,$23,$00 ;1
+    .byte $11,$02,$33,$00,$22,$02,$13,$00
+    .byte $12,$01,$31,$00,$22,$02,$33,$00 ;2
+    .byte $21,$01,$32,$00,$22,$02,$23,$00 ;3
 _left:
     .byte $14,$14,$22,$22,$23,$23,$23,$23,$23,$23,$23,$23,$23,$23         ;4
 _chg:
@@ -113,6 +116,8 @@ _dataUser:
 .define rand7               $4C
 .define main_temp           $4D
 .define getBlock_idx        $4E
+
+.define getBlockV2_idx      $4F
 
 ;current player
 .define CURRENT_PLAYER   $50
@@ -305,6 +310,29 @@ _dataUser:
     rts
 .endproc
 
+
+.proc _getBlockV2: near
+    asl
+    asl
+    adc getBlockV2_idx
+    tax
+    lda _block,X
+    pha
+    and #$03
+    sta getBlock_j
+    pla
+    lsr
+    lsr
+    pha
+    and #$03
+    sta getBlock_i
+    pla
+    lsr
+    lsr
+    sta getBlock_ret
+    rts
+.endproc
+
 .proc _combine_NowShapeNo_NowDirectionNo: near
     lda NowShapeNo
     asl
@@ -463,74 +491,46 @@ _dataUser:
     ;DrawShape_idx=0;
     ldy #$00
     
-    ;DrawShape_i=4;
     lda #$03
-    sta getBlock_i;DrawShape_i
-    ;for(i=4;i>0;i--)
+    sta getBlockV2_idx
     fori:
-        ;DrawShape_j=4;
-        lda #$03
-        sta getBlock_j;DrawShape_j
-        ;for(j=4;j>0;j--)
-        forj:
-            ;{
-                ;getBlock_i = DrawShape_i-1;
-                ;ldx DrawShape_i
-                ;stx getBlock_i
-                lda getBlock_i
-                sta getSPBase_x
+      lda NextShapeNo
+      asl
+      asl
+      jsr _getBlockV2
+      
+      lda getBlock_i
+      sta getSPBase_x
 
-                ;getBlock_j = DrawShape_j-1;
-                ;ldx DrawShape_j
-                ;stx getBlock_j
-                lda getBlock_j
-                sta getSPBase_y
+      lda getBlock_j
+      sta getSPBase_y
 
-                ;jsr _getNextBlock
-                ;{
-                    ;char idx = NextShapeNo<<4;
-                    lda NextShapeNo
-                    asl
-                    asl
-                    jsr _getBlock
-                ;}
-                ;if(getBlock_ret)
-                ;lda getBlock_ret); a is getBlock_ret
-                beq else2
-                    lda #DRAW_NEXT_SP
-                    ;sta getSPBase_item
-                    jsr _getSPBaseAndSetDrawBuff
-                else2:
-            ;}
+      lda #DRAW_NEXT_SP
+      ;sta getSPBase_item
+      jsr _getSPBaseAndSetDrawBuff
 
-            ;{
-                lda getBlock_i
-                ;getSPBase_x = getBlock_i + PosX
-                clc
-                adc PosX
-                sta getSPBase_x
+      
+      jsr _combine_NowShapeNo_NowDirectionNo
+      jsr _getBlockV2
 
-                
-                lda getBlock_j
-                ;getSPBase_y = getBlock_j + 19 - PosY
-                clc
-                adc #$13;19
-                sec
-                sbc PosY
-                sta getSPBase_y
+      lda getBlock_i
+      ;getSPBase_x = getBlock_i + PosX
+      clc
+      adc PosX
+      sta getSPBase_x
 
-                jsr _getNowBlock
-                ;if(getBlock_ret)
-                ; lda getBlock_ret); a is getBlock_ret
-                beq else1
-                    lda #DRAW_SP
-                    ;sta getSPBase_item
-                    jsr _getSPBaseAndSetDrawBuff
-                else1:
-            ;}
-        dec getBlock_j;DrawShape_j
-        bpl forj
-    dec getBlock_i;DrawShape_i
+      lda getBlock_j
+      ;getSPBase_y = getBlock_j + 19 - PosY
+      clc
+      adc #$13;19
+      sec
+      sbc PosY
+      sta getSPBase_y
+
+      lda #DRAW_SP
+      ;sta getSPBase_item
+      jsr _getSPBaseAndSetDrawBuff
+    dec getBlockV2_idx
     bpl fori
 
     ;*(char*)(0x2003)=16; ;i<<2
