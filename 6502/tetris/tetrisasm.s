@@ -447,22 +447,9 @@ _dataUser:
 
 .proc    _getBoard: near
     jsr _calcBoardAddress
-    ;if(setBoard_y)
-    bcc else1;beq else1
-        ;return Board[base] >> 4;;high 4
-        ldx setBoard_base
-        lda Board,X
-        lsr
-        lsr
-        lsr
-        lsr
-        sta setBoard_val
-        rts
-    else1:
-    ;return Board[base] & 0x0F;;low 4
     ldx setBoard_base
     lda Board,X
-    and #$0F
+    jsr _split
     sta setBoard_val
     rts
 .endproc
