@@ -168,11 +168,10 @@ _dataUser:
     clc;lda #$00
     ror nmiflg;sta nmiflg
     ldy #$00
-    ldx #$00
     rts
 .endproc
 
-.proc _getBase: near; 会改变Y
+.proc _getBase: near; 会改变Y,入参：A:getBase_item   返回：A:getBase_hi
     ;A:getBase_item
     clc
     adc currentPlayer;player 0x00,0x10
@@ -234,7 +233,7 @@ _dataUser:
     ;sta getBase_item
     jsr _getBase
     
-    jsr _waitvblank;绘图PPU前调用 ;XY is 0
+    jsr _waitvblank;绘图PPU前调用 ;Y is 0
     lda getBase_hi
     sta (PTR2006),Y
     lda getBase_lo
@@ -279,7 +278,6 @@ _dataUser:
     adc getBlock_i
     sta getBlock_idx
     lsr getBlock_i
-
     ;getBlock_j >>= 1;
     lda getBlock_j
     lsr
@@ -289,7 +287,6 @@ _dataUser:
     ;sta getBlock_idx);
     ;ldx getBlock_idx);
     tax
-    
     ;if(getBlock_j & 1)
     lda getBlock_j
     lsr;test #$01
@@ -325,7 +322,6 @@ _dataUser:
     jsr _combine_NowShapeNo_NowDirectionNo
     asl
     sta getBlock_idx
-
     ;getBlock_j >>= 1;
     lda getBlock_j
     lsr
@@ -424,6 +420,28 @@ _dataUser:
     adc currentPlayer;getSPBase_item
     tax
     
+    ;DrawShape_temp=(DrawShape_i-1)<<3
+    lda getSPBase_x
+    asl
+    asl
+    asl
+    clc
+    adc _dataUser+LEFT,X
+
+    ;DrawBuff[DrawShape_idx++]=DrawShape_temp;
+    sta DrawBuff,Y
+    iny
+    
+    ;DrawBuff[DrawShape_idx++]=0;
+    lda #$00
+    sta DrawBuff,Y
+    iny
+    
+    ;DrawBuff[DrawShape_idx++]=getBlock_ret;
+    lda getBlock_ret
+    sta DrawBuff,Y
+    iny
+    
     ;DrawShape_temp = ((getSPBase_y+1)<<3+(_dataUser+TOP,X))-1
     ;DrawShape_temp = ((getSPBase_y)<<3+8-1+(_dataUser+TOP,X))
     ;DrawShape_temp = DrawShape_j;
@@ -440,27 +458,6 @@ _dataUser:
     sta DrawBuff,Y
     iny
 
-    ;DrawBuff[DrawShape_idx++]=getBlock_ret;
-    lda getBlock_ret
-    sta DrawBuff,Y
-    iny
-
-    ;DrawBuff[DrawShape_idx++]=0;
-    lda #$00
-    sta DrawBuff,Y
-    iny
-    
-    ;DrawShape_temp=(DrawShape_i-1)<<3
-    lda getSPBase_x
-    asl
-    asl
-    asl
-    clc
-    adc _dataUser+LEFT,X
-
-    ;DrawBuff[DrawShape_idx++]=DrawShape_temp;
-    sta DrawBuff,Y
-    iny
     rts
 .endproc
 
@@ -547,7 +544,8 @@ _dataUser:
     ;jsr _SendBuffToPPU
     clc
     adc CurSP_player
-    jsr _waitvblank;绘图PPU前调用 ;XY is 0
+    jsr _waitvblank;绘图PPU前调用 ;Y is 0
+    ldx #$1F
     sta (PTR2003),Y
     ;for(i=0;i<16;i++)
     ;DrawShape_i=0;
@@ -555,9 +553,8 @@ _dataUser:
         ;*(char*)(0x2004)=DrawBuff[DrawShape_i];
         lda DrawBuff,X
         sta (PTR2004),Y
-    inx
-    cpx #$20
-    bne fori2
+    dex
+    bpl fori2
     rts
 .endproc
 
@@ -683,7 +680,7 @@ _dataUser:
     dey
     bpl fori1
     
-    jsr _waitvblank;绘图PPU前调用 ;XY is 0
+    jsr _waitvblank;绘图PPU前调用 ;Y is 0
     lda getBase_hi
     sta (PTR2006),Y
     lda getBase_lo
@@ -763,23 +760,21 @@ _dataUser:
         bpl fori1
     
         ;idx=0;
-        jsr _waitvblank;绘图PPU前调用 ;XY is 0
+        jsr _waitvblank;绘图PPU前调用 ;Y is 0
         ;for(TouchDo_i=4;TouchDo_i>0;TouchDo_i--)
+        ldx #$03
         fori2:
             ;*(char*)(0x2006)=DrawBuff[idx++];
             pla
-            sta (PTR2006,X)
-            iny
+            sta (PTR2006),Y
             ;*(char*)(0x2006)=DrawBuff[idx++];
             pla
-            sta (PTR2006,X)
-            iny
+            sta (PTR2006),Y
             ;*(char*)(0x2007)=DrawBuff[idx++];
             pla
-            sta (PTR2007,X)
-            iny
-        cpy #$0C
-        bne fori2
+            sta (PTR2007),Y
+        dex
+        bpl fori2
         jsr _st2005
     ;}
 
@@ -1059,7 +1054,7 @@ _dataUser:
         lda #DRAW_NEXT
         ;sta getBase_item
         jsr _getBase
-        jsr _waitvblank;绘图PPU前调用 ;XY is 0
+        jsr _waitvblank;绘图PPU前调用 ;Y is 0
         lda getBase_hi
         sta (PTR2006),Y
         lda getBase_lo
@@ -1249,7 +1244,7 @@ _dataUser:
         
         jsr _waitvblank;Y is 0
         lda #$00
-        ;ldx #$00 x is 0
+        ldx #$00
         ;$3F00   | $10   |       | Image Palette
         jsr _setPalette
         
