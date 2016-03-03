@@ -37,7 +37,7 @@ _block:
 ;    .byte $70,$00,$30,$00,$A5,$00,$00,$00,$25,$09,$00,$06,$00,$00,$00,$00 ;B 6 L
 ;    .byte $07,$00,$4E,$00,$06,$00,$00,$00,$70,$00,$F5,$04,$00,$00,$00,$00 ;C
 ;    .byte $70,$00,$C5,$00,$60,$00,$00,$00,$D5,$04,$60,$00,$00,$00,$00,$00 ;D 7 T
-
+    ;      00  10  20  30
     .byte $70,$34,$38,$6C,$50,$21,$22,$43,$70,$34,$38,$6C,$50,$21,$22,$43;1 长条
     .byte $B0,$91,$84,$A5,$B0,$91,$84,$A5,$B0,$91,$84,$A5,$B0,$91,$84,$A5;2 方
     .byte $71,$B4,$A5,$68,$50,$91,$85,$46,$71,$B4,$A5,$68,$50,$91,$85,$46;3 Z
@@ -87,7 +87,7 @@ _dataUser:
 ;page0 0x0000 ~0x00FF
 .define getBlock_i          $30
 .define getBlock_j          $31
-.define getBlock_temp       $32
+.define getBlock_idx        $32
 .define getBlock_ret        $33
 .define setBoard_x          $34
 .define setBoard_y          $35
@@ -115,9 +115,6 @@ _dataUser:
 .define nmiflg              $4B
 .define rand7               $4C
 .define main_temp           $4D
-.define getBlock_idx        $4E
-
-.define getBlockV2_idx      $4F
 
 ;current player
 .define CURRENT_PLAYER   $50
@@ -280,7 +277,7 @@ _dataUser:
 .proc _getBlock: near
     asl
     asl
-    adc getBlockV2_idx
+    adc getBlock_idx
     tax
     lda _block,X
     pha
@@ -458,7 +455,7 @@ _dataUser:
     ldy #$00
     
     lda #$03
-    sta getBlockV2_idx
+    sta getBlock_idx
     fori:
       lda NextShapeNo
       asl
@@ -495,7 +492,7 @@ _dataUser:
       lda #DRAW_SP
       ;sta getSPBase_item
       jsr _getSPBaseAndSetDrawBuff
-    dec getBlockV2_idx
+    dec getBlock_idx
     bpl fori
 
     ;*(char*)(0x2003)=16; ;i<<2
@@ -564,37 +561,47 @@ _dataUser:
 .endproc
 
 .proc _isTouch: near
-    lda #$03
-    sta getBlock_j
-    fori:
-        jsr _getNowBottom
-        ;if(getBlock_ret)
-        ;lda getBlock_ret); a is getBlock_ret
-        beq else1
-            ;if(getBlock_ret-1==PosY)goto ret1;触底
-            tax;ldx getBlock_ret); a is getBlock_ret
-            dex
-            cpx PosY
-            beq ret1
-            
-            ;setBoard_x=PosX+Touch_i-1;
-            lda PosX
-            clc
-            adc getBlock_j;Touch_i
-            sta setBoard_x
+;    lda #$03
+;    sta getBlock_idx
+;    fori:
+;      jsr _getNowBlock
+;
+;      lda getBlock_i
+;      
+;                
+;      lda getBlock_j
+;
+;    dec getBlock_idx
+;    bpl fori
 
-            ;setBoard_y=PosY-getBlock_ret;
-            lda PosY
-            sec
-            sbc getBlock_ret
-            sta setBoard_y
-            
-            jsr _getBoard
-            ;if(setBoard_val)goto ret1;
-            ;lda setBoard_val);  a is setBoard_val
-            bne ret1
-        else1:
-    dec getBlock_j;Touch_i
+
+    lda #$03
+    sta getBlock_idx
+    fori:
+        jsr _getNowBlock
+        lda getBlock_j
+        ;if(getBlock_ret-1==PosY)goto ret1;触底
+        tax;ldx getBlock_ret); a is getBlock_ret
+        cpx PosY
+        beq ret1
+        
+        ;setBoard_x=PosX+Touch_i-1;
+        lda PosX
+        clc
+        adc getBlock_i;Touch_i
+        sta setBoard_x
+
+        ;setBoard_y=PosY-getBlock_ret;
+        lda PosY
+        sec
+        sbc getBlock_j
+        sec
+        sbc #$01
+        sta setBoard_y
+        
+        jsr _getBoard
+        bne ret1
+    dec getBlock_idx
     bpl fori
     
     clc;not Touch
@@ -667,7 +674,7 @@ _dataUser:
 
 .proc _TouchDo: near
     lda #$03
-    sta getBlockV2_idx
+    sta getBlock_idx
     fori:
       jsr _getNowBlock
 
@@ -696,7 +703,7 @@ _dataUser:
       
       lda getBase_hi
       pha
-    dec getBlockV2_idx
+    dec getBlock_idx
     bpl fori
     
     ;idx=0;
@@ -728,10 +735,6 @@ _dataUser:
             lda #$09
             sta setBoard_x;TouchDo_i 保证setBoard_x在_getBoard 中未被修改
             fori3:
-                ;setBoard_x=TouchDo_i;
-                ;ldx TouchDo_i
-                ;stx setBoard_x
-                ;setBoard_y=TouchDo_j;    
                 ldx TouchDo_j
                 stx setBoard_y
                 jsr _getBoard
@@ -854,6 +857,20 @@ _dataUser:
     jsr _isRightTouch
     bpl ret1
 
+    
+;    lda #$03
+;    sta getBlock_idx
+;    fori:
+;      jsr _getNowBlock
+;
+;      lda getBlock_i
+;      
+;                
+;      lda getBlock_j
+;
+;    dec getBlock_idx
+;    bpl fori
+    
     ;for(AnyTouch_j=4;AnyTouch_j>0;AnyTouch_j--)
     lda #$03
     sta getBlock_j;AnyTouch_j
@@ -872,7 +889,7 @@ _dataUser:
 
     
     lda #$03
-    sta getBlockV2_idx
+    sta getBlock_idx
     fori:
       jsr _getNowBlock
 
@@ -889,7 +906,7 @@ _dataUser:
       jsr _getBoard
 
       bne ret1
-    dec getBlockV2_idx
+    dec getBlock_idx
     bpl fori
 
     clc;not AnyTouch
