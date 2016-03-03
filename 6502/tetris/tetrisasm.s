@@ -45,14 +45,14 @@ _block:
     .byte $70,$34,$88,$49,$72,$54,$25,$A6,$50,$91,$35,$69,$B0,$21,$42,$64;5 反L
     .byte $B0,$41,$34,$68,$70,$84,$25,$46,$71,$35,$58,$A9,$50,$21,$92,$66;6 L
     .byte $70,$E4,$45,$68,$71,$54,$F5,$46,$71,$54,$C5,$69,$50,$D1,$42,$65;7 T
-_bottom:
-    .byte $11,$11,$04,$00,$11,$11,$04,$00
-    .byte $22,$00,$22,$00,$22,$00,$22,$00 ;0
-    .byte $22,$01,$32,$00,$22,$01,$32,$00
-    .byte $21,$02,$23,$00,$21,$02,$23,$00 ;1
-    .byte $11,$02,$33,$00,$22,$02,$13,$00
-    .byte $12,$01,$31,$00,$22,$02,$33,$00 ;2
-    .byte $21,$01,$32,$00,$22,$02,$23,$00 ;3
+;_bottom:
+;    .byte $11,$11,$04,$00,$11,$11,$04,$00
+;    .byte $22,$00,$22,$00,$22,$00,$22,$00 ;0
+;    .byte $22,$01,$32,$00,$22,$01,$32,$00
+;    .byte $21,$02,$23,$00,$21,$02,$23,$00 ;1
+;    .byte $11,$02,$33,$00,$22,$02,$13,$00
+;    .byte $12,$01,$31,$00,$22,$02,$33,$00 ;2
+;    .byte $21,$01,$32,$00,$22,$02,$23,$00 ;3
 _left:
     .byte $14,$14,$22,$22,$23,$23,$23,$23,$23,$23,$23,$23,$23,$23         ;4
 _chg:
@@ -309,20 +309,6 @@ _dataUser:
     ;char idx = (NowShapeNo<<5)+(NowDirectionNo<<3)+(getBlock_i<<1)+(getBlock_j>>1);
     jsr _combine_NowShapeNo_NowDirectionNo
     jsr _getBlock
-    rts
-.endproc
-
-.proc _getNowBottom: near
-    ;char idx = (NowShapeNo<<3)+(NowDirectionNo<<1)+(j>>1);
-    jsr _combine_NowShapeNo_NowDirectionNo
-    asl;<<
-    asl;<<
-    adc getBlock_j
-    lsr;>>
-    tax
-    lda _bottom,X
-    jsr _split
-    sta getBlock_ret
     rts
 .endproc
 
@@ -857,34 +843,16 @@ _dataUser:
     jsr _isRightTouch
     bpl ret1
 
-    
-;    lda #$03
-;    sta getBlock_idx
-;    fori:
-;      jsr _getNowBlock
-;
-;      lda getBlock_i
-;      
-;                
-;      lda getBlock_j
-;
-;    dec getBlock_idx
-;    bpl fori
-    
-    ;for(AnyTouch_j=4;AnyTouch_j>0;AnyTouch_j--)
     lda #$03
-    sta getBlock_j;AnyTouch_j
+    sta getBlock_idx
     forj:
-
-        jsr _getNowBottom
-        ;if(getBlock_ret-1-PosY>0)  ->  (getBlock_ret-1-1>=PosY)
-        tax;ldx getBlock_ret); a is getBlock_ret
-        dex
+        jsr _getNowBlock
+        lda getBlock_j
+        tax
         dex
         cpx PosY
         bpl ret1
-        
-    dec getBlock_j;AnyTouch_j
+    dec getBlock_idx
     bpl forj
 
     
