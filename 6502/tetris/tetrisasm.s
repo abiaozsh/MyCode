@@ -60,7 +60,7 @@ _chg:
 _dataUser:
     .byte $02,$02,$10,$10,$02,$0D,$10,$68,$07,$0D,$00,$00,$00,$00,$00,$00 ;6 player1
     .byte $02,$13,$10,$98,$0B,$0E,$58,$70,$10,$0E,$00,$00,$00,$00,$00,$00 ;7 player2
-    
+    player的地址有点搞混了，需要整理
 .define DRAW_BOARD    $00
 .define DRAW_SP       $02
 .define DRAW_NEXT     $04
@@ -536,7 +536,7 @@ _dataUser:
         sta setBoard_y
         jsr _getBoard
         ;lda setBoard_val); a is setBoard_val
-        ;pha
+        pha
     dey
     bpl fori1
     
@@ -549,8 +549,7 @@ _dataUser:
     ;for(i=2;i<12;i++)
     ldx #$09
     fori2:
-        ;pla
-        lda #$00
+        pla
         sta (PTR2007),Y
         dex
     bpl fori2
@@ -930,7 +929,7 @@ _dataUser:
     dec TimeCount
     bne else1
         ;TimeCount=50;
-        lda #$FE;#$32;50
+        lda #$32;50
         sta TimeCount
         jsr _slowdown
     else1:
