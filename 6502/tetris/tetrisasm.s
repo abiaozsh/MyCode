@@ -76,7 +76,7 @@ _dataUser:
 .define getBase_lo          $2B
 .define getBase_tmp         $2C
 .define getBase_item        $2D
-.define getSPBase_item      $2E
+;.define getSPBase_item      $2E
 .define getSPBase_x         $2F
 .define getSPBase_y         $30
 .define DrawLine_i          $31
@@ -465,9 +465,9 @@ _dataUser:
 .endproc
 
 .proc    _getSPBase: near;入参A ：getSPBase_item
-    lda currentPlayer;player 0x00,0x10
+    ;lda currentPlayer;player 0x00,0x10
     clc
-    adc getSPBase_item
+    adc currentPlayer;getSPBase_item
     tax
     
     ;DrawShape_temp = DrawShape_j;
@@ -544,7 +544,7 @@ _dataUser:
             ;lda getBlock_ret); a is getBlock_ret
             beq else1
                 lda #DRAW_NEXT_SP
-                sta getSPBase_item
+                ;sta getSPBase_item
                 jsr _getSPBase
             else1:
         dec getBlock_j;DrawShape_j
@@ -601,7 +601,7 @@ _dataUser:
             ; lda getBlock_ret); a is getBlock_ret
             beq else1
                 lda #DRAW_SP
-                sta getSPBase_item
+                ;sta getSPBase_item
                 jsr _getSPBase
             else1:
         dec getBlock_j;DrawShape_j
@@ -612,19 +612,6 @@ _dataUser:
     ;*(char*)(0x2003)=0; ;i<<2
     lda #$00
     jsr _DrawBuffToPPU
-    rts
-.endproc
-
-.proc    _ClearLine: near
-    lda #$00
-    ;for(i=10;i>0;i--)
-    ldx #$0A;10 times
-    fori:
-        ;*(char*)(0x2007)=0;
-        sta $2007
-    dex
-    bne fori
-    jsr _st2005
     rts
 .endproc
 
@@ -657,14 +644,22 @@ _dataUser:
         ;*(char*)(0x2006)=getBase_lo;
         lda getBase_lo
         sta $2006
-        
         clc
         adc #$20
         sta getBase_lo
         lda getBase_hi
         adc #$00
         sta getBase_hi
-        jsr _ClearLine
+        
+        lda #$00
+        ;for(i=10;i>0;i--)
+        ldx #$0A;10 times
+        forf:
+            ;*(char*)(0x2007)=0;
+            sta $2007
+        dex
+        bne forf
+        jsr _st2005
     dec Clear_i
     bne fori2
     
@@ -703,7 +698,7 @@ _dataUser:
 
 .proc    _Touch: near
     ;for(Touch_i=4;Touch_i>0;Touch_i--)
-    lda #$03;20 times
+    lda #$03
     sta getBlock_j;Touch_i
     fori:
         ;getBlock_j = Touch_i-1;
@@ -741,12 +736,12 @@ _dataUser:
     bpl fori
     
     ;return 0;
-    lda #$00
+    clc;lda #$00
     ;sta Touch_ret);
     rts
     ret1:
     ;return 1;
-    lda #$01
+    sec;lda #$01
     ;sta Touch_ret);
     rts
 .endproc
@@ -1219,10 +1214,7 @@ _dataUser:
 
 .proc    _movel: near
     inc PosX
-
     jsr _AnyTouch
-    ;if(AnyTouch_ret)
-    ;lda AnyTouch_ret);
     bcc else1
         dec PosX
     else1:
@@ -1231,10 +1223,7 @@ _dataUser:
 
 .proc    _mover: near
     dec PosX
-
     jsr _AnyTouch
-    ;if(AnyTouch_ret)
-    ;lda AnyTouch_ret);
     bcc else1
         inc PosX
     else1:
@@ -1242,29 +1231,21 @@ _dataUser:
 .endproc
 
 .proc    _down: near
-    jsr _Touch
-    ;while(Touch_ret==0)
-    while1:
-    ;lda Touch_ret);
-    bne endwhile1
-        ;PosY--;
-        dec PosY
+    loop1:
         jsr _Touch
-    jmp while1
-    endwhile1:
+        dec PosY
+    bcc loop1
+    inc PosY
     jsr _TouchDo
     rts
 .endproc
 
 .proc    _slowdown: near
     jsr _Touch
-    ;if(Touch_ret)
-    ;lda Touch_ret);
-    beq else1
+    bcc else1
         jsr _TouchDo
         rts
     else1:
-    ;PosY--;
     dec PosY
     rts
 .endproc
