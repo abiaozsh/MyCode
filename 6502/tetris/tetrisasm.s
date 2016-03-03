@@ -697,21 +697,10 @@ _dataUser:
     sta getBase_x
     jsr _getBoardBase;会改变Y
     ;DrawBuff[0]=getBase_hi;
-    ldy #$00
-    lda getBase_hi
-    sta (PTRDrawBuff),Y
-    ;DrawBuff[1]=getBase_lo;
-    iny
-    lda getBase_lo
-    sta (PTRDrawBuff),Y
-    
-    lda #$00
-    sta setBoard_x;setBoard_x is count 0~9
 
-    ;for(l=0;l<10;l++)
-    lda #$0A;10 times
-    sta DrawLine_i
+    ldy #$00
     fori1:
+        sty setBoard_x
         ;setBoard_x=l;
         ;setBoard_y=DrawLine_y;
         lda DrawLine_y
@@ -719,32 +708,26 @@ _dataUser:
         jsr _getBoard
         ;DrawBuff[2+l]=setBoard_val;
         ;lda setBoard_val); a is setBoard_val
-        ldy setBoard_x
-        iny
-        iny
         sta (PTRDrawBuff),Y
-
-        inc setBoard_x;setBoard_x++
-    dec DrawLine_i
+        iny
+    cpy #$0A
     bne fori1
     
     jsr _waitvblank;绘图PPU前调用 ;XY is 0
     ;*(char*)(0x2006)=DrawBuff[0];
-    lda (PTRDrawBuff),Y
+    lda getBase_hi
     sta (PTR2006,X)
-    iny;y=1
     ;*(char*)(0x2006)=DrawBuff[1];
-    lda (PTRDrawBuff),Y
+    lda getBase_lo
     sta (PTR2006,X)
-    iny;y=2
     
-    ;for(i=2;i<12;i++)
+    ;for(i=2;i<10;i++)
     fori2:
         ;*(char*)(0x2007)=DrawBuff[i];
         lda (PTRDrawBuff),Y
         sta (PTR2007,X)
         iny
-    cpy #$0C
+    cpy #$0A
     bne fori2
     jsr _st2005
     rts
