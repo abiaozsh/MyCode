@@ -267,19 +267,14 @@ _dataUser:
 .proc _getBlock: near
     asl
     asl
-    asl
-    ;A:getBlock_idx
-    ;getBlock_i <<= 1;
-    ;lda getBlock_i
-    asl getBlock_i
-    ;getBlock_idx += getBlock_i;
-    ;clc
+    ;(clc)
     adc getBlock_i
+    asl;<<
     sta getBlock_idx
-    lsr getBlock_i
+    ;lsr getBlock_i
     ;getBlock_j >>= 1;
     lda getBlock_j
-    lsr
+    lsr;>>
     ;getBlock_idx += getBlock_j;
     clc
     adc getBlock_idx
