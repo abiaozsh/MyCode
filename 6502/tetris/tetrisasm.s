@@ -76,7 +76,6 @@ _dataUser:
 ;page0 0x0000 ~0x00FF
 .define getBlock_i          $30
 .define getBlock_j          $31
-.define getBlock_idx        $32
 .define getBlock_ret        $33
 .define setBoard_x          $34
 .define setBoard_y          $35
@@ -285,7 +284,6 @@ _dataUser:
 
 .proc _combine_NowShapeNo_NowDirectionNo: near
     lda NowShapeNo
-    ;getBlock_idx <<= 5;
     asl
     asl
     clc
@@ -296,7 +294,6 @@ _dataUser:
 .proc _getNowBlock: near
     ;char idx = (NowShapeNo<<5)+(NowDirectionNo<<3)+(getBlock_i<<1)+(getBlock_j>>1);
     jsr _combine_NowShapeNo_NowDirectionNo
-    ;getBlock_idx += getBlock_temp;
     jsr _getBlock
     rts
 .endproc
@@ -305,17 +302,10 @@ _dataUser:
     ;char idx = (NowShapeNo<<3)+(NowDirectionNo<<1)+(j>>1);
     jsr _combine_NowShapeNo_NowDirectionNo
     asl;<<
-    sta getBlock_idx
-    ;getBlock_j >>= 1;
-    lda getBlock_j
+    asl;<<
+    adc getBlock_j
     lsr;>>
-    ;getBlock_idx += getBlock_j;
-    clc
-    adc getBlock_idx
     tax
-    ;if(getBlock_j & 1)
-    lda getBlock_j
-    lsr;and #$01
     lda _bottom,X
     jsr _split
     sta getBlock_ret
@@ -326,10 +316,7 @@ _dataUser:
     ;char idx = (NowShapeNo<<1)+(NowDirectionNo>>1);
     jsr _combine_NowShapeNo_NowDirectionNo
     lsr
-    ;getBlock_ret = data3[getBlock_idx];
     tax
-    lda NowDirectionNo
-    lsr
     lda _left,X
     jsr _split
     sta getBlock_ret ;必须设值
@@ -480,7 +467,6 @@ _dataUser:
                 ;{
                     ;char idx = (NextShapeNo<<5)+(i<<1)+(j>>1);
                     lda NextShapeNo
-                    ;getBlock_idx <<= 5;
                     asl
                     asl
                     ;asl
@@ -1039,8 +1025,7 @@ _dataUser:
     lda #$03
     sta getBase_y
     fori1:
-        lda #DRAW_NEXT
-        ;sta getBase_item
+        lda #DRAW_NEXT;sta getBase_item
         jsr _getBase
         jsr _waitvblank;绘图PPU前调用 ;Y is 0
         lda getBase_hi
