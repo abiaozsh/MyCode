@@ -630,20 +630,22 @@ _dataUser:
     lda #DRAW_BOARD
     sta getBase_item
     lda #$00
+    tay;ldy #$00
     sta getBase_x
     sta getBase_y
     jsr _getBase
 
+    
     lda #$14;20 times
     sta Clear_i
     fori2:
         jsr _waitvblank;绘图PPU前调用
         ;*(char*)(0x2006)=getBase_hi;
         lda getBase_hi
-        sta $2006
+        sta (PTR2006),Y
         ;*(char*)(0x2006)=getBase_lo;
         lda getBase_lo
-        sta $2006
+        sta (PTR2006),Y
         clc
         adc #$20
         sta getBase_lo
@@ -656,7 +658,7 @@ _dataUser:
         ldx #$0A;10 times
         forf:
             ;*(char*)(0x2007)=0;
-            sta $2007
+            sta (PTR2007),Y
         dex
         bne forf
         jsr _st2005
@@ -1313,51 +1315,35 @@ _dataUser:
     rts
 .endproc
 
-.proc    _loadplayer: near
-    ldy currentPlayer
-    ldx #$0F
-    fori:
-        lda Player,Y
-        sta PosX,X
-        dey
-    dex
-    bpl fori
-    rts
-.endproc
-
-.proc    _saveplayer: near
-    ldy currentPlayer
-    ldx #$0F
-    fori:
-        lda PosX,X
-        sta Player,Y
-        dey
-    dex
-    bpl fori
-    rts
-.endproc
-
 .proc    _mainSub: near
-    jsr _loadplayer
+    ;jsr _loadplayer
+    ;{
+        ldy currentPlayer
+        ldx #$0F
+        for_loadplayer:
+            lda Player,Y
+            sta PosX,X
+            dey
+        dex
+        bpl for_loadplayer
+    ;}
     lda isOn
     bne else2
         ;check player1 key
         jsr _readJoystick
         ;lda key1); a is key1
         beq else4
-            lda #$01
-            sta isOn
+            sta lastkey
             jsr _Clear
             jsr _Clear4by4
             jsr _NextShape
             jsr _NextShape
             lda #$32
             sta TimeCount
-            lda #$FF
-            sta lastkey
+            ;lda #$01
+            sta isOn
         else4:
-        jsr _saveplayer
-        rts
+        jmp _saveplayer
     else2:
 
     ;one second count
@@ -1412,7 +1398,18 @@ _dataUser:
     ;lastkey = key1;
     lda key1
     sta lastkey
-    jsr _saveplayer
+    _saveplayer:
+    ;jsr _saveplayer
+    ;{
+        ldy currentPlayer
+        ldx #$0F
+        for_saveplayer:
+            lda PosX,X
+            sta Player,Y
+            dey
+        dex
+        bpl for_saveplayer
+    ;}
     rts
 .endproc
 
