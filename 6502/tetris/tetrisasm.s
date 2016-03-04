@@ -12,15 +12,6 @@
 
 .include        "tetrischr.inc"
 
-;555
-;4
-;3333
-;
-;asl5: +6 -9
-;asl4: +5 -8
-;asl3: +4 -8
-
-
 .segment    "RODATA"
 _block:
 ;    .byte $07,$00,$03,$00,$03,$00,$06,$00,$25,$42,$00,$00,$00,$00,$00,$00 ;0
@@ -60,7 +51,7 @@ _chg:
 _dataUser:
     .byte $02,$02,$10,$10,$02,$0D,$10,$68,$07,$0D,$00,$00,$00,$00,$00,$00 ;6 player1
     .byte $02,$13,$10,$98,$0B,$0E,$58,$70,$10,$0E,$00,$00,$00,$00,$00,$00 ;7 player2
-    player的地址有点搞混了，需要整理
+    ;player的地址有点搞混了，需要整理
 .define DRAW_BOARD    $00
 .define DRAW_SP       $02
 .define DRAW_NEXT     $04
@@ -75,46 +66,44 @@ _dataUser:
 
 ;don't forget "lda  ($08,X)"   "lda  ($00),y"  zero page transfer
 
-.define PTR2000             $10
-.define PTR2001             $12
-.define PTR2002             $14
-.define PTR2003             $16
-.define PTR2004             $18
-.define PTR2005             $1A
-.define PTR2006             $1C
-.define PTR2007             $1E
+.define PTR2000             $00
+.define PTR2001             $02
+.define PTR2002             $04
+.define PTR2003             $06
+.define PTR2004             $08
+.define PTR2005             $0A
+.define PTR2006             $0C
+.define PTR2007             $0E
 
 ;page0 0x0000 ~0x00FF
-.define getBlock_i          $30
-.define getBlock_j          $31
-.define getBlock_idx        $32
-.define getBlock_ret        $33
-.define setBoard_x          $34
-.define setBoard_y          $35
-.define setBoard_val        $36
-.define setBoard_base       $37
-.define getBase_x           $38
-.define getBase_y           $39
-.define getBase_hi          $3A
-.define getBase_lo          $3B
-.define getSPBase_x         $3C
-.define getSPBase_y         $3D
-.define DrawLine_i          $3E
-.define DrawLine_y          $3F
-.define DrawShape_i         $40
-.define DrawShape_j         $41
-.define Clear_i             $42
-.define TouchDo_j           $43
-.define TouchDo_k           $44
-.define TouchDo_temp        $45
-.define rotate_n            $46
-.define currentPlayer       $47
-.define readJoystick_player $48
-.define CurSP_player        $49
-.define CurBoard_player     $4A
-.define nmiflg              $4B
-.define rand7               $4C
-.define main_temp           $4D
+.define getBlock_i          $10
+.define getBlock_j          $11
+.define getBlock_idx        $12
+.define getBlock_ret        $13
+.define setBoard_x          $14
+.define setBoard_y          $15
+.define setBoard_val        $16
+.define setBoard_base       $17
+.define getBase_x           $18
+.define getBase_y           $19
+.define getBase_hi          $1A
+.define getBase_lo          $1B
+.define getSPBase_x         $1C
+.define getSPBase_y         $1D
+.define DrawLine_i          $1E
+.define DrawLine_y          $1F
+.define DrawShape_i         $20
+.define DrawShape_j         $21
+.define Clear_i             $22
+.define TouchDo_j           $23
+.define TouchDo_k           $24
+.define TouchDo_temp        $25
+.define rotate_n            $26
+.define currentPlayer       $27
+.define readJoystick_player $28
+.define CurSP_player        $29
+.define CurBoard_player     $2A
+.define rand7               $2B
 
 ;current player
 .define CURRENT_PLAYER   $50
@@ -144,38 +133,23 @@ _dataUser:
 ;size:16*2*2(0x040) now and next SPBuff
 .define DrawBuff         $0400
 
-;* %b - Numerical 8-bit value
-;* %w - Numerical 16-bit value
-;* %l - Numerical 32-bit value
-;* %v - Assembler name of a (global) variable or function
-;* %o - Stack offset of a (local) variable
-;* %g - Assembler name of a C label
-;* %s - The argument is converted to a string
-;* %% - The % sign itself
-
 .segment    "CODE"
 
 .proc _nmi: near
-  php
-  pha
-  dec rand7
-  bpl lbl1;<0
-    lda #$06
-    sta rand7
-  lbl1:
-  sec;lda #$80
-  ror nmiflg;sta nmiflg
-  pla
-  plp
-  rts
+  ;rts
 .endproc
 
 .proc _waitvblank: near
     lbl1:
-    rol nmiflg;lda nmiflg
-    bcc lbl1;bpl lbl1
-    clc;lda #$00
-    ror nmiflg;sta nmiflg
+    lda $2002;lda nmiflg
+    bpl lbl1;bpl lbl1
+
+    dec rand7
+    bpl lbl2;<0
+      lda #$06
+      sta rand7
+    lbl2:
+
     ldy #$00
     rts
 .endproc
@@ -900,7 +874,7 @@ _dataUser:
         for_loadplayer:
             lda Player,Y
             sta CURRENT_PLAYER,X
-            dey
+            iny
         dex
         bpl for_loadplayer
     ;}
@@ -913,14 +887,13 @@ _dataUser:
             sta lastkey
             jsr _Clear4by4
             jsr _Clear
-            jsr _Clear4by4
-            jsr _Clear
             jsr _NextShape
             jsr _NextShape
-            lda #$32
+            lda #$19;25
             sta TimeCount
             sta isOn;lda #$01
         else4:
+        jsr _waitvblank
         jmp _saveplayer
     else2:
 
@@ -929,7 +902,7 @@ _dataUser:
     dec TimeCount
     bne else1
         ;TimeCount=50;
-        lda #$32;50
+        lda #$19;25
         sta TimeCount
         jsr _slowdown
     else1:
@@ -1000,7 +973,7 @@ _dataUser:
         for_saveplayer:
             lda CURRENT_PLAYER,X
             sta Player,Y
-            dey
+            iny
         dex
         bpl for_saveplayer
     ;}
@@ -1060,13 +1033,13 @@ _dataUser:
     ;}
     
     ;open nmi
-    lda #%10000000;#% 二进制
-    sta (PTR2000),Y;Y is 0
+    ;lda #%10000000;#% 二进制
+    ;sta (PTR2000),Y;Y is 0
     ;set color
     ;{
         jsr _waitvblank;Y is 0
         lda #$00
-        ldx #$00
+        tax;ldx #$00
         ;$3F00   | $10   |       | Image Palette
         jsr _setPalette
         
