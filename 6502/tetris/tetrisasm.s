@@ -14,21 +14,6 @@
 
 .segment    "RODATA"
 _block:
-;    .byte $07,$00,$03,$00,$03,$00,$06,$00,$25,$42,$00,$00,$00,$00,$00,$00 ;0
-;    .byte $07,$00,$03,$00,$03,$00,$06,$00,$25,$42,$00,$00,$00,$00,$00,$00 ;1 1 长条
-;    .byte $9B,$00,$A8,$00,$00,$00,$00,$00,$9B,$00,$A8,$00,$00,$00,$00,$00 ;2
-;    .byte $9B,$00,$A8,$00,$00,$00,$00,$00,$9B,$00,$A8,$00,$00,$00,$00,$00 ;3 2 方
-;    .byte $70,$00,$AB,$00,$06,$00,$00,$00,$95,$00,$80,$04,$00,$00,$00,$00 ;4
-;    .byte $70,$00,$AB,$00,$06,$00,$00,$00,$95,$00,$80,$04,$00,$00,$00,$00 ;5 3 Z
-;    .byte $07,$00,$98,$00,$60,$00,$00,$00,$B0,$04,$A5,$00,$00,$00,$00,$00 ;6
-;    .byte $07,$00,$98,$00,$60,$00,$00,$00,$B0,$04,$A5,$00,$00,$00,$00,$00 ;7 4 反Z
-;    .byte $07,$00,$03,$00,$48,$00,$00,$00,$00,$07,$25,$0A,$00,$00,$00,$00 ;8
-;    .byte $95,$00,$30,$00,$60,$00,$00,$00,$2B,$04,$06,$00,$00,$00,$00,$00 ;9 5 反L
-;    .byte $4B,$00,$03,$00,$06,$00,$00,$00,$07,$00,$28,$04,$00,$00,$00,$00 ;A
-;    .byte $70,$00,$30,$00,$A5,$00,$00,$00,$25,$09,$00,$06,$00,$00,$00,$00 ;B 6 L
-;    .byte $07,$00,$4E,$00,$06,$00,$00,$00,$70,$00,$F5,$04,$00,$00,$00,$00 ;C
-;    .byte $70,$00,$C5,$00,$60,$00,$00,$00,$D5,$04,$60,$00,$00,$00,$00,$00 ;D 7 T
-    ;      00  10  20  30
     .byte $70,$34,$38,$6C,$50,$21,$22,$43,$70,$34,$38,$6C,$50,$21,$22,$43;1 长条
     .byte $B0,$91,$84,$A5,$B0,$91,$84,$A5,$B0,$91,$84,$A5,$B0,$91,$84,$A5;2 方
     .byte $71,$B4,$A5,$68,$50,$91,$85,$46,$71,$B4,$A5,$68,$50,$91,$85,$46;3 Z
@@ -36,27 +21,22 @@ _block:
     .byte $70,$34,$88,$49,$72,$54,$25,$A6,$50,$91,$35,$69,$B0,$21,$42,$64;5 反L
     .byte $B0,$41,$34,$68,$70,$84,$25,$46,$71,$35,$58,$A9,$50,$21,$92,$66;6 L
     .byte $70,$E4,$45,$68,$71,$54,$F5,$46,$71,$54,$C5,$69,$50,$D1,$42,$65;7 T
-;_bottom:
-;    .byte $11,$11,$04,$00,$11,$11,$04,$00
-;    .byte $22,$00,$22,$00,$22,$00,$22,$00 ;0
-;    .byte $22,$01,$32,$00,$22,$01,$32,$00
-;    .byte $21,$02,$23,$00,$21,$02,$23,$00 ;1
-;    .byte $11,$02,$33,$00,$22,$02,$13,$00
-;    .byte $12,$01,$31,$00,$22,$02,$33,$00 ;2
-;    .byte $21,$01,$32,$00,$22,$02,$23,$00 ;3
-_left:
-    .byte $03,$03,$11,$11,$12,$12,$12,$12,$12,$12,$12,$12,$12,$12         ;4
+_left:;(0x0A-_left)
+   ;.byte $03,$03,$11,$11,$12,$12,$12,$12,$12,$12,$12,$12,$12,$12         ;4
+    .byte $96,$96,$88,$88,$87,$87,$87,$87,$87,$87,$87,$87,$87,$87         ;4
 _chg:
     .byte $00,$11,$45,$33,$41,$15,$66,$77,$68,$97,$A6,$7B,$C3,$9B,$3E,$A8 ;E chg
 _dataUser:
-    .byte $02,$02,$10,$10,$02,$0D,$10,$68,$07,$0D,$00,$00,$00,$00,$00,$00 ;6 player1
-    .byte $02,$13,$10,$98,$0B,$0E,$58,$70,$10,$0E,$00,$00,$00,$00,$00,$00 ;7 player2
-    ;player的地址有点搞混了，需要整理
+;      DRAW_BOARD,    DRAW_SP,    DRAW_NEXT,  DRAW_NEXT_SP,  DRAW_SCORE,
+    .byte $02,$02,    $10,$10,    $02,$0D  ,       $10,$68,     $07,$0D,$00,$00,$00,$00,$00,$00 ;6 player1
+    .byte $02,$13,    $10,$98,    $0B,$0E  ,       $58,$70,     $10,$0E,$00,$00,$00,$00,$00,$00 ;7 player2
+
 .define DRAW_BOARD    $00
 .define DRAW_SP       $02
 .define DRAW_NEXT     $04
 .define DRAW_NEXT_SP  $06
 .define DRAW_SCORE    $08
+
 .define TOP           $00
 .define LEFT          $01
 
@@ -88,39 +68,35 @@ _dataUser:
 .define getBase_y           $19
 .define getBase_hi          $1A
 .define getBase_lo          $1B
-.define getSPBase_x         $1C
-.define getSPBase_y         $1D
-.define DrawLine_i          $1E
-.define DrawLine_y          $1F
-.define DrawShape_i         $20
-.define DrawShape_j         $21
-.define Clear_i             $22
-.define TouchDo_j           $23
-.define TouchDo_k           $24
-.define TouchDo_temp        $25
-.define rotate_n            $26
-.define currentPlayer       $27
-.define readJoystick_player $28
-.define CurSP_player        $29
-.define CurBoard_player     $2A
-.define rand7               $2B
+.define DrawLine_i          $1C
+.define DrawLine_y          $1D
+.define DrawShape_i         $1E
+.define DrawShape_j         $1F
+.define TouchDo_j           $20
+.define TouchDo_k           $21
+.define TouchDo_temp        $22
+.define rotate_n            $23
+.define currentPlayer       $24;(currentPlayer+_dataUser   currentPlayer+Player)
+.define readJoystick_player $25
+.define CurSP_player        $26
+.define CurBoard_player     $27
+.define rand7               $28
 
 ;current player
-.define CURRENT_PLAYER   $50
-.define PosX             $50
-.define PosY             $51
-.define NextShapeNo      $52
-.define NowShapeNo       $53
-.define NowDirectionNo   $54
-.define lastkey          $55
-.define key1             $56
-.define key2             $57
-.define Score0           $58
-.define Score1           $59
-.define Score2           $5A
-.define Score3           $5B
-.define TimeCount        $5C
-.define isOn             $5D
+.define CURRENT_PLAYER      $30
+.define PosX                $30
+.define PosY                $31
+.define NextShapeNo         $32
+.define NowShapeNo          $33
+.define NowDirectionNo      $34
+.define lastkey             $35
+.define key                 $36
+.define Score0              $37
+.define Score1              $38
+.define Score2              $39
+.define Score3              $3A
+.define TimeCount           $3B
+.define isOn                $3C
 
 
 ;page1: 0x0100 ~0x01FF stack
@@ -140,9 +116,11 @@ _dataUser:
 .endproc
 
 .proc _waitvblank: near
+    ldy #$00
+
     lbl1:
-    lda $2002;lda nmiflg
-    bpl lbl1;bpl lbl1
+    lda (PTR2002),Y
+    bpl lbl1
 
     dec rand7
     bpl lbl2;<0
@@ -150,23 +128,23 @@ _dataUser:
       sta rand7
     lbl2:
 
-    ldy #$00
     rts
 .endproc
 
-.proc _getBase: near; 会改变Y,入参：A:getBase_item   返回：A:getBase_hi
+.proc _getBase: near; 会改变Y,入参：A:getBase_item , currentPlayer , getBase_y , getBase_x    返回：getBase_lo , A:getBase_hi
     ;A:getBase_item
     clc
     adc currentPlayer;player 0x00,0x10
     tax
-    lda _dataUser+TOP,X
-    clc
-    adc getBase_y
+    
+    lda getBase_y
+    ;(clc)
+    adc _dataUser+TOP,X;(_dataUser+TOP+currentPlayer)
     tay
     lsr;>>
     lsr
     lsr
-    pha
+    pha;(high)
     tya
     asl;<<
     asl
@@ -174,10 +152,10 @@ _dataUser:
     asl
     asl
     clc
-    adc _dataUser+LEFT,X
-    clc
+    adc _dataUser+LEFT,X;(_dataUser+LEFT+currentPlayer)
+    ;(clc)
     adc getBase_x
-    clc
+    ;(clc)
     adc #$20
     sta getBase_lo
     pla
@@ -221,7 +199,6 @@ _dataUser:
     sta (PTR2006),Y
     lda getBase_lo
     sta (PTR2006),Y
-    clc
 
     lda Score0
     sta (PTR2007),Y
@@ -274,8 +251,7 @@ _dataUser:
     lda NowShapeNo
     asl
     asl
-    clc
-    adc NowDirectionNo
+    ora NowDirectionNo
     rts
 .endproc
 
@@ -344,21 +320,19 @@ _dataUser:
 .endproc
 
 .proc _getSPBaseAndSetDrawBuff: near;入参A ：getSPBase_item
-    ;lda currentPlayer;player 0x00,0x10
-    clc
-    adc currentPlayer;getSPBase_item
+    ora currentPlayer;getSPBase_item
     tax
     
-    ;DrawBuff[DrawShape_idx++] = ((getSPBase_y+1)<<3+(_dataUser+TOP,X))-1
-    ;DrawBuff[DrawShape_idx++] = ((getSPBase_y)<<3+8-1+(_dataUser+TOP,X))
-    lda getSPBase_y
+    ;DrawBuff[DrawShape_idx++] = ((getBase_y+1)<<3+(_dataUser+TOP,X))-1
+    ;DrawBuff[DrawShape_idx++] = ((getBase_y)<<3+8-1+(_dataUser+TOP,X))
+    lda getBase_y
     asl
     asl
     asl
+    ;(clc)
+    adc _dataUser+TOP,X;(_dataUser+TOP+currentPlayer)
     ;(clc)
     adc #$07
-    ;(clc)
-    adc _dataUser+TOP,X
     sta DrawBuff,Y
     iny
     
@@ -373,12 +347,12 @@ _dataUser:
     iny
     
     ;DrawBuff[DrawShape_idx++]=(DrawShape_i-1)<<3
-    lda getSPBase_x
+    lda getBase_x
     asl
     asl
     asl
     ;(clc)
-    adc _dataUser+LEFT,X
+    adc _dataUser+LEFT,X;(_dataUser+LEFT+currentPlayer)
     sta DrawBuff,Y
     iny
     
@@ -397,33 +371,31 @@ _dataUser:
     jsr _getBlock
     
     lda getBlock_i
-    sta getSPBase_x
+    sta getBase_x
 
     lda getBlock_j
-    sta getSPBase_y
+    sta getBase_y
 
-    lda #DRAW_NEXT_SP
-    ;sta getSPBase_item
+    lda #DRAW_NEXT_SP;sta getSPBase_item
     jsr _getSPBaseAndSetDrawBuff
 
     jsr _getNowBlock
 
     lda getBlock_i
-    ;getSPBase_x = getBlock_i + PosX
+    ;getBase_x = getBlock_i + PosX
     clc
     adc PosX
-    sta getSPBase_x
+    sta getBase_x
 
     lda getBlock_j
-    ;getSPBase_y = getBlock_j + 19 - PosY
+    ;getBase_y = getBlock_j + 19 - PosY
     clc
     adc #$13;19
     sec
     sbc PosY
-    sta getSPBase_y
+    sta getBase_y
 
-    lda #DRAW_SP
-    ;sta getSPBase_item
+    lda #DRAW_SP;sta getSPBase_item
     jsr _getSPBaseAndSetDrawBuff
   dec getBlock_idx
   bpl fori
@@ -448,7 +420,6 @@ _dataUser:
     lda #$13;20 times
     sta DrawLine_y
     fori2:
-        ldx DrawLine_y
         jsr _DrawLine
     dec DrawLine_y
     bpl fori2
@@ -480,7 +451,7 @@ _dataUser:
     rts
 .endproc
 
-.proc _getBoardBase: near; 会改变Y
+.proc _getBoardBase: near; 会改变Y 返回：getBase_lo , A:getBase_hi
     lda #$13;19-getBase_y
     sec
     sbc getBase_y
@@ -492,13 +463,6 @@ _dataUser:
 .endproc
 
 .proc _DrawLine: near
-    ;getBase_y=DrawLine_y;
-    ;lda DrawLine_y
-    stx getBase_y
-    ;getBase_x=0;
-    lda #$00
-    sta getBase_x
-    jsr _getBoardBase;会改变Y
 
     ;for(l=0;l<10;l++)
     ldy #$09;10 times
@@ -514,6 +478,14 @@ _dataUser:
     dey
     bpl fori1
     
+    ;getBase_y=DrawLine_y;
+    ;lda DrawLine_y
+    lda DrawLine_y
+    sta getBase_y
+    ;getBase_x=0;
+    lda #$00
+    sta getBase_x
+    jsr _getBoardBase;会改变Y
     jsr _waitvblank;绘图PPU前调用 ;Y is 0
     lda getBase_hi
     sta (PTR2006),Y
@@ -536,6 +508,10 @@ _dataUser:
   jsr _getBoard;in setBoard_val
   tax
   lda _chg,X
+  ror TouchDo_temp
+  jsr _split
+  sta setBoard_val
+  jsr _setBoard
   rts
 .endproc
 
@@ -563,7 +539,7 @@ _dataUser:
 
     jsr _setBoard
 
-    jsr _getBoardBase;会改变Y
+    jsr _getBoardBase;会改变Y 返回：getBase_lo , A:getBase_hi
     
     lda getBase_lo
     pha
@@ -621,22 +597,17 @@ _dataUser:
               dex
               bmi else3
                   ;setBoard_y=TouchDo_j-1;
+                  clc
+                  rol TouchDo_temp
                   jsr _adjUpDown
-                  and #$0F
-                  sta setBoard_val
-                  jsr _setBoard
               else3:
 
               ;setBoard_y=TouchDo_j+1;因为一般不会刷最上面一行，所以不用判断TouchDo_j+1是否大于等于20
               ldx TouchDo_j
               inx
+              sec
+              rol TouchDo_temp
               jsr _adjUpDown
-              lsr
-              lsr
-              lsr
-              lsr
-              sta setBoard_val
-              jsr _setBoard
           dec setBoard_x;TouchDo_k
           bpl fork1
           
@@ -748,10 +719,7 @@ _dataUser:
     tax
     lda _left,X
     jsr _split
-    sta getBlock_ret ;必须设值
-    clc
-    adc PosX
-    cmp #$0A;10
+    cmp PosX;[9-_left]-PosX
     rts
 .endproc
 
@@ -761,8 +729,8 @@ _dataUser:
     bmi ret1
 
     jsr _isRightTouch
-    ;if((right-1)+PosX-(11-1))>=0 return 1
-    bpl ret1
+    ;if([9-_left]-PosX)<0 return 1
+    bmi ret1
 
     jsr _isTouch
     rts
@@ -774,6 +742,7 @@ _dataUser:
 .proc _rotate: near
     ;NowDirectionNo=(NowDirectionNo+rotate_n)&3;
     lda NowDirectionNo
+    pha
     clc
     adc rotate_n
     and #$03
@@ -784,11 +753,8 @@ _dataUser:
     
     jsr _isRightTouch;如果旋转后伸出右边界的话， 往里推
     ;if((ret-1)+PosX-(11-1))<0 not do
-    bmi else1
-        ;PosX=(10-1)-(ret-1);
-        lda #$09
-        sec
-        sbc getBlock_ret
+    bpl else1
+        ;PosX=[9-_left]
         sta PosX
     else1:
     
@@ -796,17 +762,12 @@ _dataUser:
     jsr _AnyTouch
     ;if(AnyTouch_ret)jmp jp1);
     ;lda AnyTouch_ret);
-    pla
+    pla;PosX
+    tax;PosX
+    pla;NowDirectionNo
     bcc else2
-        ;PosX=rotate_tempPosX;
-        ;lda rotate_tempPosX
-        sta PosX
-        ;NowDirectionNo=(NowDirectionNo-rotate_n)&3;
-        lda NowDirectionNo
-        sec
-        sbc rotate_n
-        and #$03
         sta NowDirectionNo
+        stx PosX
     else2:
     rts
 .endproc
@@ -827,7 +788,7 @@ _dataUser:
 
     ;*(char*)(0x4016/7)=01;
     lda #$01
-    sta key1;key1=1;  1<<8
+    sta key;key1=1;  1<<8
     sta $4016,X
     ;*(char*)(0x4016/7)=00;
     lda #$00
@@ -836,9 +797,9 @@ _dataUser:
     fori:
         lda $4016,X
         ror
-        rol key1
+        rol key
     bcc fori;key1=1;  1<<8
-    lda key1
+    lda key
     rts
 .endproc
 
@@ -908,14 +869,18 @@ _dataUser:
     else1:
     
     jsr _readJoystick
+    pha
     ;key2 = key1 ^ lastkey;
     ;lda key1); a is key1
     eor lastkey
     ;key2 = key2 & key1;
-    and key1;取得有变化并且被按下的键，就是刚被按下的瞬间
+    and key;取得有变化并且被按下的键，就是刚被按下的瞬间
     ;if(key2!=0)
-    sta key2
-    lsr key2;if(key2&0x01){movelr_n=1;movelr();};button_RIGHT
+    sta key
+    ;lastkey = key1;
+    pla
+    sta lastkey
+    lsr key;if(key2&0x01){movelr_n=1;movelr();};button_RIGHT
     bcc elseKey1
         ;jsr _movel
         inc PosX
@@ -924,7 +889,7 @@ _dataUser:
             dec PosX
         else3:
     elseKey1:
-    lsr key2;if(key2&0x02){movelr_n=-1;movelr();};button_LEFT
+    lsr key;if(key2&0x02){movelr_n=-1;movelr();};button_LEFT
     bcc elseKey2
         ;jsr _mover
         dec PosX
@@ -933,7 +898,7 @@ _dataUser:
             inc PosX
         else5:
     elseKey2:
-    lsr key2;if(key2&0x04)down();;button_DOWN
+    lsr key;if(key2&0x04)down();;button_DOWN
     bcc elseKey3
         ;jsr _down
         loop1:
@@ -943,28 +908,25 @@ _dataUser:
         inc PosY
         jsr _TouchDo
     elseKey3:
-    lsr key2;if(key2&0x08)slowdown();;button_UP
+    lsr key;if(key2&0x08)slowdown();;button_UP
     bcc elseKey4
         jsr _slowdown
     elseKey4:
-    lsr key2;if(key2&0x10);;button_START
-    lsr key2;if(key2&0x20);;button_SELECT
-    lsr key2;if(key2&0x40){rotate_n=-1;rotate();};button_B
+    lsr key;if(key2&0x10);;button_START
+    lsr key;if(key2&0x20);;button_SELECT
+    lsr key;if(key2&0x40){rotate_n=-1;rotate();};button_B
     bcc elseKey5
         lda #$FF
         sta rotate_n
         jsr _rotate
     elseKey5:
-    lsr key2;if(key2&0x80){rotate_n=1;rotate();};button_A
+    lsr key;if(key2&0x80){rotate_n=1;rotate();};button_A
     bcc elseKey6
         lda #$01
         sta rotate_n
         jsr _rotate
     elseKey6:
     jsr _DrawShapeNowAndNext
-    ;lastkey = key1;
-    lda key1
-    sta lastkey
     _saveplayer:
     ;jsr _saveplayer
     ;{
@@ -1109,12 +1071,12 @@ _dataUser:
             ;currentPlayer = 0x10;
             lda #$10
             sta currentPlayer
+            ;CurSP_player=0x20;
+            asl;(lda #$20)
+            sta CurSP_player
             ;readJoystick_player = 1;
             lda #$01
             sta readJoystick_player
-            ;CurSP_player=0x20;
-            lda #$20
-            sta CurSP_player
             ;CurBoard_player=100;
             lda #$64
             sta CurBoard_player
