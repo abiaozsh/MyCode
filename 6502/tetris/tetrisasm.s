@@ -72,7 +72,6 @@ _dataUser:
 .define currentPlayer       $1D;(currentPlayer+_dataUser   currentPlayer+Player)
 .define readJoystick_player $1E
 .define CurSP_player        $1F
-.define CurBoard_player     $20
 .define rand7               $21
 
 ;current player
@@ -91,6 +90,8 @@ _dataUser:
 .define TimeCount           $3B
 .define isOn                $3C
 
+.define PTRBoard            $40
+
 
 ;page1: 0x0100 ~0x01FF stack
 
@@ -99,8 +100,10 @@ _dataUser:
 .define Player           $0200
 ;size:16*2*2(0x040) now and next SPBuff
 .define DrawBuff         $0300
-;size:100*2(0x0C8) player board 1,2
-.define Board            $0400
+;size:100*2(0x0C8) player board 1
+.define Board1           $0400
+;size:100*2(0x0C8) player board 2
+.define Board2           $0500
 
 .segment    "CODE"
 
@@ -219,49 +222,27 @@ _dataUser:
 
 .proc _calcBoardAddress: near
     ;x:0~9 y:0~19
-    ;setBoard_base = (getBoard_y*10) + (getBoard_x>>1) + CurBoard_player
-    ;base =y*5
-    ;setBoard_base=getBoard_y;
+    ;setBoard_base = (getBoard_y*10) + (getBoard_x)
     lda getBoard_y
     asl
     asl
-    ;(clc)
     adc getBoard_y
-    asl;A=getBoard_y*10
-    ;(clc)
+    asl
     adc getBoard_x
-    lsr;C return
-    ora CurBoard_player
     tay
-    lda Board,Y
     rts
 .endproc
 
 .proc _setBoard: near
-    jsr _calcBoardAddress;out:C
-    ;if(getBoard_y)
-    bcc else1;beq else1
-        ;setBoard_val<<=4;
-        asl setBoard_val
-        asl setBoard_val
-        asl setBoard_val
-        asl setBoard_val
-        ;Board[setBoard_base] = (Board[setBoard_base] & 0x0F) | setBoard_val;;high 4
-        and #$0F
-        ora setBoard_val
-        sta Board,Y
-        rts
-    else1:
-    ;Board[setBoard_base] = (Board[setBoard_base] & 0xF0) | setBoard_val;;low 4
-    and #$F0
-    ora setBoard_val
-    sta Board,Y
+    jsr _calcBoardAddress
+    lda setBoard_val
+    sta (PTRBoard),Y
     rts
 .endproc
 
 .proc _getBoard: near
-    jsr _calcBoardAddress;out:C
-    jsr _split;in C
+    jsr _calcBoardAddress
+    lda (PTRBoard),Y
     sta setBoard_val
     rts
 .endproc
@@ -291,7 +272,7 @@ _dataUser:
     adc _dataUser+LEFT,X;(_dataUser+LEFT+currentPlayer)
     sta getBase_lo
     pla
-    adc #$20;(高位基址+20+进位)
+    adc #$20;(高位基址+$20+进位)
     sta getBase_hi
     rts
 .endproc
@@ -383,11 +364,11 @@ _dataUser:
 
 .proc _Clear: near
     ;for(i=0;i<100;i++)
-    ldx #$63;99 times
-    ldy CurBoard_player
+    ldx #$FF;99 times
     lda #$00
+    tay;ldy 00
     fori:
-        sta Board,Y
+        sta (PTRBoard),Y
         iny
     dex
     bne fori
@@ -613,18 +594,13 @@ _dataUser:
           bpl fork1
           
           ;for(TouchDo_k=TouchDo_j;TouchDo_k<19;TouchDo_k++)
-          ldx TouchDo_j
-          ;dex
-          stx TouchDo_k
+          lda TouchDo_j
+          sta TouchDo_k
           fork2:
               ;for(TouchDo_i=9;TouchDo_i>=0;TouchDo_i--)
               lda #$09
               sta getBoard_x;TouchDo_i
               fori4:
-                  ;getBoard_x=TouchDo_i;
-                  ;ldx TouchDo_i
-                  ;stx getBoard_x
-                  
                   ;getBoard_y=TouchDo_k+1;
                   ldx TouchDo_k
                   inx
@@ -829,7 +805,7 @@ _dataUser:
             sta TimeCount
             sta isOn;lda #$01
         else4:
-        ;jsr _waitvblank
+        jsr _waitvblank
         jmp _saveplayer
     else2:
 
@@ -1029,6 +1005,10 @@ _dataUser:
     ;}
     ;main cycle
     ;{
+        lda #(Board1 & $FF)
+        ;lda #(Board2 & $FF)
+        sta PTRBoard
+        
         while1:
             ;jsr _Player1
             ;currentPlayer = 0;
@@ -1038,8 +1018,9 @@ _dataUser:
             sta readJoystick_player
             ;CurSP_player=0;
             sta CurSP_player
-            ;CurBoard_player=0;
-            sta CurBoard_player
+
+            lda #((Board1 >> 8) & $FF)
+            sta PTRBoard+1
             jsr _mainSub
 
             ;jsr _Player2
@@ -1052,9 +1033,9 @@ _dataUser:
             ;readJoystick_player = 1;
             lda #$01
             sta readJoystick_player
-            ;CurBoard_player=100;
-            lda #$80
-            sta CurBoard_player
+            
+            lda #((Board2 >> 8) & $FF)
+            sta PTRBoard+1
             jsr _mainSub
         jmp while1
     ;}
