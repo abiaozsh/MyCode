@@ -95,12 +95,12 @@ _dataUser:
 ;page1: 0x0100 ~0x01FF stack
 
 ;page2: 0x0200 ~0x02FF
-;size:100*2(0x0C8) player board 1,2
-.define Board            $0200
 ;size:16*2(0x020)  player  data 1,2
-.define Player           $0300
+.define Player           $0200
 ;size:16*2*2(0x040) now and next SPBuff
-.define DrawBuff         $0400
+.define DrawBuff         $0300
+;size:100*2(0x0C8) player board 1,2
+.define Board            $0400
 
 .segment    "CODE"
 
@@ -189,8 +189,8 @@ _dataUser:
     asl
     asl
     adc getBlock__idx
-    tax
-    lda _block,X
+    tay
+    lda _block,Y
     pha
     and #$03
     sta getBlock_j;(0000 00XX)
@@ -232,8 +232,8 @@ _dataUser:
     adc getBoard_x
     lsr;C return
     ora CurBoard_player
-    tax
-    lda Board,X
+    tay
+    lda Board,Y
     rts
 .endproc
 
@@ -249,13 +249,13 @@ _dataUser:
         ;Board[setBoard_base] = (Board[setBoard_base] & 0x0F) | setBoard_val;;high 4
         and #$0F
         ora setBoard_val
-        sta Board,X
+        sta Board,Y
         rts
     else1:
     ;Board[setBoard_base] = (Board[setBoard_base] & 0xF0) | setBoard_val;;low 4
     and #$F0
     ora setBoard_val
-    sta Board,X
+    sta Board,Y
     rts
 .endproc
 
@@ -298,7 +298,7 @@ _dataUser:
 
 .proc _getSPBaseAndSetDrawBuff: near;入参A ：getSPBase_item
     ora currentPlayer;getSPBase_item
-    tax
+    tay
     
     ;DrawBuff[DrawShape_idx++] = ((getBoard_y+1)<<3+(_dataUser+TOP,X))-1
     ;DrawBuff[DrawShape_idx++] = ((getBoard_y)<<3+8-1+(_dataUser+TOP,X))
@@ -307,19 +307,19 @@ _dataUser:
     asl
     asl
     ;(clc)
-    adc _dataUser+TOP,X;(_dataUser+TOP+currentPlayer)
-    sta DrawBuff,Y
-    iny
+    adc _dataUser+TOP,Y;(_dataUser+TOP+currentPlayer)
+    sta DrawBuff,X
+    inx
     
     ;DrawBuff[DrawShape_idx++]=getBlock_ret;
     lda setBoard_val;getBlock_ret
-    sta DrawBuff,Y
-    iny
+    sta DrawBuff,X
+    inx
 
     ;DrawBuff[DrawShape_idx++]=0;
     lda #$00
-    sta DrawBuff,Y
-    iny
+    sta DrawBuff,X
+    inx
     
     ;DrawBuff[DrawShape_idx++]=(DrawShape_i-1)<<3
     lda getBoard_x
@@ -327,15 +327,15 @@ _dataUser:
     asl
     asl
     ;(clc)
-    adc _dataUser+LEFT,X;(_dataUser+LEFT+currentPlayer)
-    sta DrawBuff,Y
-    iny
+    adc _dataUser+LEFT,Y;(_dataUser+LEFT+currentPlayer)
+    sta DrawBuff,X
+    inx
     
     rts
 .endproc
 
 .proc _DrawShapeNowAndNext: near
-  ldy CurSP_player
+  ldx CurSP_player
 
   lda #$03
   sta getBlock__idx
@@ -440,9 +440,9 @@ _dataUser:
 .proc _DrawLine: near
 
     ;for(l=0;l<10;l++)
-    ldy #$09;10 times
+    ldx #$09;10 times
     fori1:
-        sty getBoard_x
+        stx getBoard_x
         ;getBoard_x=l;
         ;getBoard_y=DrawLine_y;
         lda DrawLine_y
@@ -450,7 +450,7 @@ _dataUser:
         jsr _getBoard
         ;lda setBoard_val); a is setBoard_val
         pha
-    dey
+    dex
     bpl fori1
     
     ;getBoard_y=DrawLine_y;
