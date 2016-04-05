@@ -34,6 +34,7 @@
 			this.button2 = new System.Windows.Forms.Button();
 			this.trackBar1 = new System.Windows.Forms.TrackBar();
 			this.trackBar2 = new System.Windows.Forms.TrackBar();
+			this.button3 = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar2)).BeginInit();
@@ -91,11 +92,22 @@
 			this.trackBar2.TabIndex = 10;
 			this.trackBar2.Scroll += new System.EventHandler(this.trackBar2_Scroll);
 			// 
+			// button3
+			// 
+			this.button3.Location = new System.Drawing.Point(253, 13);
+			this.button3.Name = "button3";
+			this.button3.Size = new System.Drawing.Size(75, 23);
+			this.button3.TabIndex = 11;
+			this.button3.Text = "save bmp";
+			this.button3.UseVisualStyleBackColor = true;
+			this.button3.Click += new System.EventHandler(this.button3_Click);
+			// 
 			// Form3
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(764, 632);
+			this.Controls.Add(this.button3);
 			this.Controls.Add(this.trackBar2);
 			this.Controls.Add(this.trackBar1);
 			this.Controls.Add(this.button2);
@@ -121,5 +133,6 @@
 		private System.Windows.Forms.Button button2;
 		private System.Windows.Forms.TrackBar trackBar1;
 		private System.Windows.Forms.TrackBar trackBar2;
+		private System.Windows.Forms.Button button3;
 	}
 }

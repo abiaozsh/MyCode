@@ -13,86 +13,51 @@ namespace Stack
 {
 	public partial class Form2 : Form
 	{
+		public string[] files;
+		public int basex;
+		public int basey;
+		public int width;
+		public int height;
+		List<Report> reports = new List<Report>();
+
 		public Form2()
 		{
 			InitializeComponent();
 		}
 
-		public Bitmap ArrayToBitmap(int[] img, int w, int h)
-		{
-			Bitmap bmp = new Bitmap(w, h, PixelFormat.Format24bppRgb);
-
-			Rectangle rect = new Rectangle(0, 0, w, h);
-			System.Drawing.Imaging.BitmapData bmpData = bmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite, bmp.PixelFormat);
-			IntPtr ptr = bmpData.Scan0;
-			int bytes = Math.Abs(bmpData.Stride) * h;
-			byte[] rgbValues = new byte[bytes];
-
-			for (int i = 0; i < h; i++)
-			{
-				int idx = (Math.Abs(bmpData.Stride) * i);
-				for (int j = 0; j < w; j++)
-				{
-					byte val = (byte)(img[j + i * w] / 3);
-					rgbValues[idx++] = val;
-					rgbValues[idx++] = val;
-					rgbValues[idx++] = val;
-				}
-			}
-			System.Runtime.InteropServices.Marshal.Copy(rgbValues, 0, ptr, bytes);
-
-			bmp.UnlockBits(bmpData);
-
-			return bmp;
-		}
-
-		public Bitmap ArrayToBitmap(long[] img, int w, int h, long max)
-		{
-			Bitmap bmp = new Bitmap(w, h, PixelFormat.Format24bppRgb);
-
-			Rectangle rect = new Rectangle(0, 0, w, h);
-			System.Drawing.Imaging.BitmapData bmpData = bmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite, bmp.PixelFormat);
-			IntPtr ptr = bmpData.Scan0;
-			int bytes = Math.Abs(bmpData.Stride) * h;
-			byte[] rgbValues = new byte[bytes];
-
-			for (int i = 0; i < h; i++)
-			{
-				int idx = (Math.Abs(bmpData.Stride) * i);
-				for (int j = 0; j < w; j++)
-				{
-					byte val = (byte)(img[j + i * w] * 255 / max);
-					rgbValues[idx++] = val;
-					rgbValues[idx++] = val;
-					rgbValues[idx++] = val;
-				}
-			}
-			System.Runtime.InteropServices.Marshal.Copy(rgbValues, 0, ptr, bytes);
-
-			bmp.UnlockBits(bmpData);
-
-			return bmp;
-		}
-
-		private int[] BitmapToArray(Bitmap bmp, int w, int h, int basex, int basey)
+		private static int[] BitmapToArray(Bitmap bmp, int w, int h, int basex, int basey)
 		{
 			int[] img = new int[w * h];
 
 			Rectangle rect = new Rectangle(0, basey, bmp.Width, basey + h);
-			System.Drawing.Imaging.BitmapData bmpData = bmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite, bmp.PixelFormat);
+			System.Drawing.Imaging.BitmapData bmpData = bmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
+
+			int bits = 0;
+			if (bmp.PixelFormat == PixelFormat.Format24bppRgb)
+			{
+				bits = 3;
+			}
+			if (bmp.PixelFormat == PixelFormat.Format32bppRgb)
+			{
+				bits = 4;
+			}
 			IntPtr ptr = bmpData.Scan0;
 			int bytes = Math.Abs(bmpData.Stride) * h;
 			byte[] rgbValues = new byte[bytes];
 			System.Runtime.InteropServices.Marshal.Copy(ptr, rgbValues, 0, bytes);
 			for (int i = 0; i < h; i++)
 			{
-				int idx = (Math.Abs(bmpData.Stride) * i) + basex * 3;
+				int idx = (Math.Abs(bmpData.Stride) * i) + basex * bits;
 				for (int j = 0; j < w; j++)
 				{
 					int c = 0;
 					c += rgbValues[idx++];
 					c += rgbValues[idx++];
 					c += rgbValues[idx++];
+					if (bmp.PixelFormat == PixelFormat.Format32bppRgb)
+					{
+						idx++;
+					}
 					img[j + i * w] = c;
 				}
 			}
@@ -106,78 +71,46 @@ namespace Stack
 		private void button1_Click(object sender, EventArgs e)
 		{
 			StringBuilder offset = new StringBuilder();
-			int basex = 80;
-			int basey = 145;
-			long mindiff;
-			int minx = basex;
-			int miny = basey;
-			Bitmap bmp1 = (Bitmap)Image.FromFile(@"E:\bmp\aa000.bmp");
+			Bitmap bmp1 = (Bitmap)Image.FromFile(files[0]);
 			int[] imgBase = BitmapToArray(bmp1, 64, 64, basex, basey);
-			pictureBox1.Image = ArrayToBitmap(imgBase, 64, 64);
-            for (int i = 0; i < 378; i++)
-			{
-				int offx;
-				int offy;
-				Proc(minx, miny, imgBase, @"E:\bmp\aa" + i.ToString().PadLeft(3, '0') + ".bmp", out mindiff, out offx, out offy);
-				minx += offx;
-				miny += offy;
-				string s = i + "," + (minx - basex) + "," + (miny - basey) + "," + mindiff;
-				this.Text = s;
-				offset.AppendLine(s);
-
-				Application.DoEvents();
-			}
-
-			textBox1.Text = offset.ToString();
-		}
-
-		public void Proc(int basex, int basey, int[] imgBase, string compImg, out long mindiff, out int minx, out int miny)
-		{
 			int threads = 4;
-
-
-			Bitmap bmp2 = (Bitmap)Image.FromFile(compImg);
-			int[] imgComp = BitmapToArray(bmp2, 128, 128, basex - 32, basey - 32);
-			pictureBox2.Image = ArrayToBitmap(imgComp, 128, 128);
-
-			long[] diff = new long[64 * 64];
-			long maxdiff = 0;
-			mindiff = long.MaxValue;
-			minx = 0;
-			miny = 0;
-
-			ThProc[] p = new ThProc[threads];
+			ThProc[] ps = new ThProc[threads];
 			for (int i = 0; i < threads; i++)
 			{
-				p[i] = new ThProc();
-				p[i].imgBase = imgBase;
-				p[i].imgComp = imgComp;
-				p[i].diff = diff;
+				ps[i] = new ThProc();
+				ps[i].imgBase = imgBase;
+				ps[i].files = new List<string>();
+				ps[i].basex = basex;
+				ps[i].basey = basey;
 			}
 
-			p[0].start = 0;
-			p[0].end = 16;
-			p[1].start = 16;
-			p[1].end = 32;
-			p[2].start = 32;
-			p[2].end = 48;
-			p[3].start = 48;
-			p[3].end = 64;
+			Array.Sort(files);
 
+			int threadIdx = 0;
+			for (int i = 0; i < files.Length; i++)
+			{
+				ps[threadIdx].files.Add(files[i]);
+				threadIdx++;
+				if (threadIdx == threads)
+				{
+					threadIdx = 0;
+				}
+			}
 			for (int i = 0; i < threads; i++)
 			{
-				Thread t = new Thread(new ThreadStart(p[i].th));
+				Thread t = new Thread(new ThreadStart(ps[i].th));
 				t.Start();
 			}
-
 			while (true)
 			{
 				int done = 1;
 				for (int i = 0; i < threads; i++)
 				{
-					if (p[i].done == 0)
+					if (ps[i].done == 0)
 					{
 						done = 0;
+						this.Text = ps[i].prog;
+						Application.DoEvents();
 						break;
 					}
 				}
@@ -185,83 +118,246 @@ namespace Stack
 				{
 					break;
 				}
-				Thread.Sleep(1);
+				Thread.Sleep(100);
 			}
-
 
 			for (int i = 0; i < threads; i++)
 			{
-				if (p[i].maxdiff > maxdiff)
-				{
-					maxdiff = p[i].maxdiff;
-				}
-				if (p[i].mindiff < mindiff)
-				{
-					mindiff = p[i].mindiff;
-					minx = p[i].minx;
-					miny = p[i].miny;
-				}
+				reports.AddRange(ps[i].reports);
 			}
 
-			pictureBox3.Image = ArrayToBitmap(diff, 64, 64, maxdiff);
+			reports.Sort(
+				delegate(Report c1, Report c2)
+				{
+					return c1.file.CompareTo(c2.file);
+				});
 
-			minx -= 32;
-			miny -= 32;
+			trackBar1.Minimum = 0;
+			trackBar1.Maximum = reports.Count - 1;
+
+			this.Text = "done";
 		}
+
 
 		public class ThProc
 		{
-			public int start;
-			public int end;
 			public int[] imgBase;
-			public int[] imgComp;
-			public long maxdiff = 0;
-			public long mindiff = long.MaxValue;
-			public int minx = 0;
-			public int miny = 0;
-			public long[] diff;
+			public List<Report> reports;
+			public List<string> files;
 			public int done = 0;
+			public int basex;
+			public int basey;
+			public string prog;
 
 			public void th()
 			{
-				for (int i = start; i < end; i++)
+				reports = new List<Report>();
+
+				int minx = basex;
+				int miny = basey;
+
+				foreach (var item in files)
 				{
-					for (int j = 0; j < 64; j++)
+					long mindiff;
+					int offx;
+					int offy;
+					try
 					{
-						long diffn = 0;
-
-						for (int y = 0; y < 64; y++)
-						{
-							int idx = y * 64;
-							int idx2 = (y + j) * 128 + i;
-							for (int x = 0; x < 64; x++)
-							{
-								int _diff = imgBase[idx++] - imgComp[idx2++];
-								_diff = Math.Abs(_diff);
-								diffn += _diff;
-							}
-						}
-						if (diffn > maxdiff)
-						{
-							maxdiff = diffn;
-						}
-						if (diffn < mindiff)
-						{
-							mindiff = diffn;
-							minx = i;
-							miny = j;
-						}
-
-						diff[i + j * 64] = diffn;
+						Form2.Proc(minx, miny, imgBase, item, out mindiff, out offx, out offy);
 					}
+					catch
+					{
+						minx = basex;
+						miny = basey;
+						Form2.Proc(minx, miny, imgBase, item, out mindiff, out offx, out offy);
+					}
+					minx += offx;
+					miny += offy;
+					Report r = new Report();
+					r.offx = (minx - basex);
+					r.offy = (miny - basey);
+					r.mindiff = mindiff;
+					r.file = item;
+					reports.Add(r);
+					prog = item;
 				}
 				done = 1;
 			}
 		}
 
+		public static void Proc(int basex, int basey, int[] imgBase, string compImg, out long mindiff, out int minx, out int miny)
+		{
+			Bitmap bmp2 = (Bitmap)Image.FromFile(compImg);
+			int[] imgComp = BitmapToArray(bmp2, 128, 128, basex - 32, basey - 32);
+
+			long[] diff = new long[64 * 64];
+			long maxdiff = 0;
+			mindiff = long.MaxValue;
+			minx = 0;
+			miny = 0;
+
+			for (int i = 0; i < 64; i++)
+			{
+				for (int j = 0; j < 64; j++)
+				{
+					long diffn = 0;
+
+					for (int y = 0; y < 64; y++)
+					{
+						int idx = y * 64;
+						int idx2 = (y + j) * 128 + i;
+						for (int x = 0; x < 64; x++)
+						{
+							int _diff = imgBase[idx++] - imgComp[idx2++];
+							_diff = Math.Abs(_diff);
+							diffn += _diff;
+						}
+					}
+					if (diffn > maxdiff)
+					{
+						maxdiff = diffn;
+					}
+					if (diffn < mindiff)
+					{
+						mindiff = diffn;
+						minx = i;
+						miny = j;
+					}
+
+					diff[i + j * 64] = diffn;
+				}
+			}
+
+			minx -= 32;
+			miny -= 32;
+		}
+
+
 		private void Form2_Load(object sender, EventArgs e)
 		{
 
 		}
+
+		private void button2_Click(object sender, EventArgs e)
+		{
+			Form3 f = new Form3();
+			f.reports = reports;
+			f.width = width;
+			f.height = height;
+			f.Show();
+		}
+
+		private void trackBar1_Scroll(object sender, EventArgs e)
+		{
+			Calc();
+		}
+
+		public void Calc()
+		{
+			Report report = reports[trackBar1.Value];
+			Bitmap bmp1 = (Bitmap)Image.FromFile(reports[0].file);
+			int[] Rbase;
+			int[] Gbase;
+			int[] Bbase;
+			Form3.BitmapToArray(bmp1, width, height, out Rbase, out Gbase, out Bbase);
+
+
+			Bitmap bmp2 = (Bitmap)Image.FromFile(report.file);
+			int[] R;
+			int[] G;
+			int[] B;
+			Form3.BitmapToArray(bmp2, width, height, out R, out G, out B);
+
+			Form3.Stack(Rbase, Gbase, Bbase, R, G, B, report.offx, report.offy, width, height);
+
+			var bmp = Form3.ArrayToBitmap(Rbase, Gbase, Bbase, width, height, 512, 0);
+
+			//reports
+			pictureBox1.Image = bmp;
+			this.Text = trackBar1.Value.ToString();
+		}
+
+		int clickx;
+		int clicky;
+
+		void pictureBox1_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
+		{
+			if (reports == null || reports.Count == 0) return;
+			Report report = reports[trackBar1.Value];
+			report.offx += (clickx - e.X);
+			report.offy += (clicky - e.Y);
+			Calc();
+		}
+
+		void pictureBox1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
+		{
+			clickx = e.X;
+			clicky = e.Y;
+		}
+
+		void Form2_KeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
+		{
+			Report report = reports[trackBar1.Value];
+			if (e.KeyChar == 'w')
+			{
+				report.offy++;
+			}
+			if (e.KeyChar == 's')
+			{
+				report.offy--;
+			}
+			if (e.KeyChar == 'a')
+			{
+				report.offx++;
+			}
+			if (e.KeyChar == 'd')
+			{
+				report.offx--;
+			}
+			Calc();
+			e.Handled = true;
+		}
+
+		private void button4_Click(object sender, EventArgs e)
+		{
+			reports = new List<Report>();
+			string[] soff = textBox1.Text.Split('\n');
+			for (int i = 0; i < soff.Length; i++)
+			{
+				Report r = new Report();
+				r.file = soff[i].Split(',')[0];
+				r.offx = int.Parse(soff[i].Split(',')[1]);
+				r.offy = int.Parse(soff[i].Split(',')[2]);
+				r.mindiff = int.Parse(soff[i].Split(',')[3]);
+
+				reports.Add(r);
+			}
+
+			trackBar1.Minimum = 0;
+			trackBar1.Maximum = reports.Count - 1;
+		}
+
+		private void button3_Click(object sender, EventArgs e)
+		{
+
+			StringBuilder sb = new StringBuilder();
+			foreach (var item in reports)
+			{
+				sb.AppendLine(item.file + "," + item.offx + "," + item.offy + "," + item.mindiff);
+			}
+			textBox1.Text = sb.ToString();
+
+		}
+
+
 	}
+
+	public class Report
+	{
+		public string file;
+		public int offx;
+		public int offy;
+		public long mindiff;
+	}
+
 }

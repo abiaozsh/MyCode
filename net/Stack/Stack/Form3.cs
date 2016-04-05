@@ -13,6 +13,11 @@ namespace Stack
 {
 	public partial class Form3 : Form
 	{
+		public int width;
+		public int height;
+		public List<Report> reports = new List<Report>();
+
+
 		public Form3()
 		{
 			InitializeComponent();
@@ -23,24 +28,28 @@ namespace Stack
 
 		private void button1_Click(object sender, EventArgs e)
 		{
-			RBase = new int[640 * 480];
-			GBase = new int[640 * 480];
-			BBase = new int[640 * 480];
+			RBase = new int[width * height];
+			GBase = new int[width * height];
+			BBase = new int[width * height];
 
-			string[] soff = textBox1.Text.Split('\n');
-			for (int i = 0; i < 378; i++)
+			foreach (var item in reports)
 			{
 
-				int offx = int.Parse(soff[i].Split(',')[1]);
-				int offy = int.Parse(soff[i].Split(',')[2]);
+				int offx = item.offx;
+				int offy = item.offy;
 
+				Bitmap bmp2 = (Bitmap)Image.FromFile(item.file);
+				int[] R;
+				int[] G;
+				int[] B;
+				BitmapToArray(bmp2, width, height, out R, out G, out B);
 
-				Stack(RBase, GBase, BBase, @"E:\bmp\aa" + i.ToString().PadLeft(3, '0') + ".bmp", offx, offy);
+				Stack(RBase, GBase, BBase, R, G, B, offx, offy, width, height);
 			}
 
-			FileStream fs = new FileStream(@"e:\bmp\out.dat", FileMode.Create, FileAccess.Write);
+			FileStream fs = new FileStream(@"d:\out.txt", FileMode.Create, FileAccess.Write);
 			StreamWriter sw = new StreamWriter(fs);
-			for (int i = 0; i < 640 * 480; i++)
+			for (int i = 0; i < width * height; i++)
 			{
 				sw.WriteLine(RBase[i] + "," + GBase[i] + "," + BBase[i]);
 			}
@@ -51,14 +60,14 @@ namespace Stack
 
 		private void button2_Click(object sender, EventArgs e)
 		{
-			RBase = new int[640 * 480];
-			GBase = new int[640 * 480];
-			BBase = new int[640 * 480];
+			RBase = new int[width * height];
+			GBase = new int[width * height];
+			BBase = new int[width * height];
 
-			FileStream fs = new FileStream(@"e:\bmp\out.dat", FileMode.Open, FileAccess.Read);
+			FileStream fs = new FileStream(@"d:\out.txt", FileMode.Open, FileAccess.Read);
 			StreamReader sr = new StreamReader(fs);
 			int max = 0;
-			for (int i = 0; i < 640 * 480; i++)
+			for (int i = 0; i < width * height; i++)
 			{
 				string line = sr.ReadLine();
 
@@ -82,12 +91,12 @@ namespace Stack
 			trackBar1.Maximum = max;
 			trackBar2.Maximum = max;
 			trackBar2.Value = max;
-			pictureBox1.Image = ArrayToBitmap(RBase, GBase, BBase, 640, 480, trackBar2.Value, trackBar1.Value);
+			pictureBox1.Image = ArrayToBitmap(RBase, GBase, BBase, width, height, trackBar2.Value, trackBar1.Value);
 
 		}
 
 
-		public Bitmap ArrayToBitmap(int[] R, int[] G, int[] B, int w, int h, int top, int bottom)
+		public static Bitmap ArrayToBitmap(int[] R, int[] G, int[] B, int w, int h, int top, int bottom)
 		{
 			Bitmap bmp = new Bitmap(w, h, PixelFormat.Format24bppRgb);
 			if (top - bottom <= 0) return bmp;
@@ -114,11 +123,9 @@ namespace Stack
 
 			bmp.UnlockBits(bmpData);
 
-			bmp.Save(@"e:\bmp\out.bmp", ImageFormat.Bmp);
-
 			return bmp;
 		}
-		public byte Conv(int val, int top, int bottom)
+		public static byte Conv(int val, int top, int bottom)
 		{
 			long v = val;
 			v -= bottom;
@@ -129,7 +136,7 @@ namespace Stack
 			return (byte)v;
 		}
 
-		private void BitmapToArray(Bitmap bmp, int w, int h, out int[] R, out int[] G, out int[] B)
+		public static void BitmapToArray(Bitmap bmp, int w, int h, out int[] R, out int[] G, out int[] B)
 		{
 			R = new int[w * h];
 			G = new int[w * h];
@@ -150,31 +157,28 @@ namespace Stack
 					R[idx2] = rgbValues[idx++];
 					G[idx2] = rgbValues[idx++];
 					B[idx2] = rgbValues[idx++];
+					if (bmp.PixelFormat == PixelFormat.Format32bppRgb)
+					{
+						idx++;
+					}
 					idx2++;
 				}
 			}
 			bmp.UnlockBits(bmpData);
 		}
 
-		public void Stack(int[] RBase, int[] GBase, int[] BBase, string filename, int offx, int offy)
+		public static void Stack(int[] RBase, int[] GBase, int[] BBase, int[] R, int[] G, int[] B, int offx, int offy, int width, int height)
 		{
 
-
-			Bitmap bmp2 = (Bitmap)Image.FromFile(filename);
-			int[] R;
-			int[] G;
-			int[] B;
-			BitmapToArray(bmp2, 640, 480, out R, out G, out B);
-
-			for (int j = 0; j < 480; j++)
+			for (int j = 0; j < height; j++)
 			{
 				if (offx > 0)
 				{
-					int idx = j * 640;
-					int idx2 = (j + offy) * 640 + offx;
-					if (j + offy >= 480 || j + offy < 0) continue;
+					int idx = j * width;
+					int idx2 = (j + offy) * width + offx;
+					if (j + offy >= height || j + offy < 0) continue;
 
-					for (int i = 0; i < 640 - Math.Abs(offx); i++)
+					for (int i = 0; i < width - Math.Abs(offx); i++)
 					{
 						RBase[idx] += R[idx2];
 						GBase[idx] += G[idx2];
@@ -185,11 +189,11 @@ namespace Stack
 				}
 				else
 				{
-					int idx = j * 640 - offx;
-					int idx2 = (j + offy) * 640;
-					if (j + offy >= 480 || j + offy < 0) continue;
+					int idx = j * width - offx;
+					int idx2 = (j + offy) * width;
+					if (j + offy >= height || j + offy < 0) continue;
 
-					for (int i = 0; i < 640 - Math.Abs(offx); i++)
+					for (int i = 0; i < width - Math.Abs(offx); i++)
 					{
 						RBase[idx] += R[idx2];
 						GBase[idx] += G[idx2];
@@ -209,21 +213,22 @@ namespace Stack
 
 		private void button3_Click(object sender, EventArgs e)
 		{
-			pictureBox1.Image = ArrayToBitmap(RBase, GBase, BBase, 640, 480, trackBar2.Value, trackBar1.Value);
+			var bmp = ArrayToBitmap(RBase, GBase, BBase, width, height, trackBar2.Value, trackBar1.Value);
+			pictureBox1.Image = bmp;
+			bmp.Save(@"e:\bmp\out.bmp", ImageFormat.Bmp);
 
 		}
 
 		private void trackBar1_Scroll(object sender, EventArgs e)
 		{
-			pictureBox1.Image = ArrayToBitmap(RBase, GBase, BBase, 640, 480, trackBar2.Value, trackBar1.Value);
+			pictureBox1.Image = ArrayToBitmap(RBase, GBase, BBase, width, height, trackBar2.Value, trackBar1.Value);
 
 		}
 
 		private void trackBar2_Scroll(object sender, EventArgs e)
 		{
-			pictureBox1.Image = ArrayToBitmap(RBase, GBase, BBase, 640, 480, trackBar2.Value, trackBar1.Value);
+			pictureBox1.Image = ArrayToBitmap(RBase, GBase, BBase, width, height, trackBar2.Value, trackBar1.Value);
 
 		}
-
 	}
 }
