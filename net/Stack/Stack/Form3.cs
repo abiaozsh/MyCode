@@ -47,7 +47,7 @@ namespace Stack
 				Stack(RBase, GBase, BBase, R, G, B, offx, offy, width, height);
 			}
 
-			FileStream fs = new FileStream(@"d:\out.txt", FileMode.Create, FileAccess.Write);
+			FileStream fs = new FileStream(textBox2.Text, FileMode.Create, FileAccess.Write);
 			StreamWriter sw = new StreamWriter(fs);
 			for (int i = 0; i < width * height; i++)
 			{
@@ -64,7 +64,7 @@ namespace Stack
 			GBase = new int[width * height];
 			BBase = new int[width * height];
 
-			FileStream fs = new FileStream(@"d:\out.txt", FileMode.Open, FileAccess.Read);
+			FileStream fs = new FileStream(textBox2.Text, FileMode.Open, FileAccess.Read);
 			StreamReader sr = new StreamReader(fs);
 			int max = 0;
 			for (int i = 0; i < width * height; i++)
