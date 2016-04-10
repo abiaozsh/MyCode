@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="horizontal" >
+    
+<!-- Settings -->
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_margin="1.5dip"
+        android:layout_marginBottom="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_weight="1"
+        android:background="#202020"
+        android:orientation="vertical"
+        android:tag="configure block" >
+		    		  
+	    <LinearLayout
+	        android:layout_width="fill_parent"
+	        android:layout_height="fill_parent"
+	        android:layout_weight="1"
+	        android:orientation="vertical" >
+		    	 
+		 	<Button android:id="@+id/configButton"
+		 			android:layout_height="fill_parent"
+		 			android:layout_width="fill_parent"
+					android:layout_margin="3dp"
+		 			android:gravity="center" 
+		 			android:scaleType="centerInside"
+		 			android:background="@drawable/button_pattern"
+		 			android:layout_weight="1"
+		 			android:text="Refresh"
+		 	/>	
+		 	<Button android:id="@+id/testButton"
+		 			android:layout_height="fill_parent"
+		 			android:layout_width="fill_parent"
+					android:layout_margin="3dp"
+		 			android:gravity="center" 
+		 			android:scaleType="centerInside"
+		 			android:background="@drawable/button_pattern"
+		 			android:layout_weight="1"
+		 			android:text="Test"
+		 	/>	
+		 		</LinearLayout>
+    
+    	    <LinearLayout 
+	    android:orientation="vertical"
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent"
+	    android:layout_weight="1"
+	    >
+		    	 
+	 	<EditText
+	 	    android:id="@+id/Text1"
+	 	    android:layout_width="fill_parent"
+	 	    android:layout_height="fill_parent"
+	 	    android:layout_margin="10dp"
+	 	    android:layout_weight="1"
+	 	    android:background="#0877A6"
+	 	    android:focusableInTouchMode="true"
+	 	    android:text="192.168.0.5"
+	 	    android:gravity="left|center_vertical" />
+
+		 		</LinearLayout>
+    
+    </LinearLayout>
+		
+	  
+<!-- Read byte -->
+	<LinearLayout 
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+	android:layout_marginTop="5dp"
+	android:layout_marginBottom="5dp"
+	android:layout_margin="1.5dip"    
+	android:background="#202020"
+    android:tag="Read block"
+    android:layout_weight="1"
+    >
+	 			
+	 	<EditText
+	 	    android:id="@+id/Text2"
+	 	    android:layout_width="fill_parent"
+	 	    android:layout_height="fill_parent"
+	 	    android:layout_margin="10dp"
+	 	    android:layout_weight="1"
+	 	    android:background="#0877A6"
+	 	    android:focusableInTouchMode="false"
+	 	    android:gravity="left|center_vertical" />
+
+	</LinearLayout>
+    
+<!-- Write byte -->
+</LinearLayout>
