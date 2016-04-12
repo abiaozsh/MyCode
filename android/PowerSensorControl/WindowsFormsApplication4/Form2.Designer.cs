@@ -32,6 +32,7 @@
 			this.pictureBox1 = new System.Windows.Forms.PictureBox();
 			this.textBox1 = new System.Windows.Forms.TextBox();
 			this.label1 = new System.Windows.Forms.Label();
+			this.textBox2 = new System.Windows.Forms.TextBox();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -70,6 +71,15 @@
 			this.label1.TabIndex = 4;
 			this.label1.Text = "label1";
 			// 
+			// textBox2
+			// 
+			this.textBox2.Location = new System.Drawing.Point(344, 7);
+			this.textBox2.MaxLength = 0;
+			this.textBox2.Multiline = true;
+			this.textBox2.Name = "textBox2";
+			this.textBox2.Size = new System.Drawing.Size(56, 67);
+			this.textBox2.TabIndex = 5;
+			// 
 			// Form2
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -79,6 +89,7 @@
 			this.Controls.Add(this.textBox1);
 			this.Controls.Add(this.button1);
 			this.Controls.Add(this.pictureBox1);
+			this.Controls.Add(this.textBox2);
 			this.Name = "Form2";
 			this.Text = "Form2";
 			this.Load += new System.EventHandler(this.Form2_Load);
@@ -94,5 +105,6 @@
 		private System.Windows.Forms.PictureBox pictureBox1;
 		private System.Windows.Forms.TextBox textBox1;
 		private System.Windows.Forms.Label label1;
+		private System.Windows.Forms.TextBox textBox2;
 	}
 }
