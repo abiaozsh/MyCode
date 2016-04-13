@@ -405,7 +405,7 @@ public class UartLoopBackActivity extends Activity {
 							int actualNumBytes = uartInterface.ReadData(readBuffer, 65536);
 
 							if (actualNumBytes > 0) {
-								Strbuff += String.copyValueOf(readBuffer, 0, actualNumBytes);
+			 					Strbuff += String.copyValueOf(readBuffer, 0, actualNumBytes);
 								actualNumBytes = 0;
 								while (true) {
 									int idx = Strbuff.indexOf('\n');
@@ -417,28 +417,33 @@ public class UartLoopBackActivity extends Activity {
 										try {
 											intval = Integer.parseInt(stemp);
 										} catch (Exception ee) {
-
+											intval = -1;
 										}
-										boolean ret = PROC(intval);
-										if (ret) {
-											datas[0] = datas[1];
-											datas[1] = datas[2];
-											datas[2] = datas[3];
-											datas[3] = datas[4];
-											datas[4] = datas[5];
-											datas[5] = datas[6];
-											datas[6] = datas[7];
-											datas[7] = System.currentTimeMillis();
-											try {
-												DateFormat sdf = new SimpleDateFormat("yyyy_MM_dd");
-												String filename = sdf.format(datas[7]) + ".txt";
+										if (intval >= 1024) {
+											intval = -1;
+										}
+										if (intval != -1) {
+											boolean ret = PROC(intval);
+											if (ret) {
+												datas[0] = datas[1];
+												datas[1] = datas[2];
+												datas[2] = datas[3];
+												datas[3] = datas[4];
+												datas[4] = datas[5];
+												datas[5] = datas[6];
+												datas[6] = datas[7];
+												datas[7] = System.currentTimeMillis();
+												try {
+													DateFormat sdf = new SimpleDateFormat("yyyy_MM_dd");
+													String filename = sdf.format(datas[7]) + ".txt";
 
-												FileOutputStream fos = openFileOutput(filename, Activity.MODE_APPEND);
-												OutputStreamWriter sw = new OutputStreamWriter(fos);
-												sw.write(Long.toString(datas[7]) + "\r\n");
-												sw.flush();
-												fos.close();
-											} catch (Exception e) {
+													FileOutputStream fos = openFileOutput(filename, Activity.MODE_APPEND);
+													OutputStreamWriter sw = new OutputStreamWriter(fos);
+													sw.write(Long.toString(datas[7]) + "\r\n");
+													sw.flush();
+													fos.close();
+												} catch (Exception e) {
+												}
 											}
 										}
 									} else {
