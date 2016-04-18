@@ -32,7 +32,7 @@ namespace WindowsFormsApplication4
 
 		private void button1_Click(object sender, EventArgs e)
 		{
-			string dir = @"f:\data\";
+			string dir = @"e:\data\";
 
 			string[] files = Directory.GetFiles(dir);
 
@@ -55,7 +55,7 @@ namespace WindowsFormsApplication4
 				lastval = d.raw;
 			}
 
-			
+
 
 
 			start = datas[0].raw;
@@ -67,26 +67,26 @@ namespace WindowsFormsApplication4
 			pictureBox1.MouseDown += new MouseEventHandler(pictureBox1_MouseDown);
 			pictureBox1.MouseUp += new MouseEventHandler(pictureBox1_MouseUp);
 			pictureBox1.MouseWheel += new MouseEventHandler(pictureBox1_MouseWheel);
-            this.MouseWheel += new MouseEventHandler(Form2_MouseWheel);
+			this.MouseWheel += new MouseEventHandler(Form2_MouseWheel);
 		}
 
-        void Form2_MouseWheel(object sender, MouseEventArgs e)
-        {
-            double ms = end - start;
-            ms *= 0.1;
-            if (e.Delta>0)
-            {
-                start = start + ms;
-                end = end - ms;
-            }
-            else
-            {
-                start = start - ms;
-                end = end + ms;
-            }
-            Draw();
+		void Form2_MouseWheel(object sender, MouseEventArgs e)
+		{
+			double ms = end - start;
+			ms *= 0.1;
+			if (e.Delta > 0)
+			{
+				start = start + ms;
+				end = end - ms;
+			}
+			else
+			{
+				start = start - ms;
+				end = end + ms;
+			}
+			Draw();
 
-        }
+		}
 
 		void LoadData(string file)
 		{
@@ -128,6 +128,11 @@ namespace WindowsFormsApplication4
 		void pictureBox1_MouseDown(object sender, MouseEventArgs e)
 		{
 			oldx = e.X;
+
+			double ms = end - start;
+			double currentms = start + ms * e.X / 1024.0;
+			DateTime current = new DateTime(1970, 1, 1).AddHours(8).AddMilliseconds(datas[FindTop(currentms)].raw);
+			textBox1.Text = current.ToString("MM-dd HH:mm:ss fff") + "  " + datas[FindTop(currentms)].raw.ToString();
 		}
 
 		void pictureBox1_MouseMove(object sender, MouseEventArgs e)
@@ -260,6 +265,69 @@ namespace WindowsFormsApplication4
 		private void pictureBox1_Click(object sender, EventArgs e)
 		{
 
+		}
+
+		private void textBox2_TextChanged(object sender, EventArgs e)
+		{
+
+			long start = 1460856147337;//04-17 09:22:27 337  
+			long end = 1460856278385;//04-17 09:24:38 385
+
+			long start1 = 1460856296202;//04-17 09:24:56 202
+			long end1 = 1460856341316;//04-17 09:25:41 316
+			FileStream fs = new FileStream(@"e:\data\0417.txt", FileMode.Open, FileAccess.Read);
+			StreamReader sr = new StreamReader(fs);
+
+			while (true)
+			{
+				string line = sr.ReadLine();
+				if (line == null) break;
+				long val = long.Parse(line);
+
+				Data d;
+				d.t = new DateTime(1970, 1, 1).AddHours(8).AddMilliseconds(val);
+				d.raw = val;
+				d.p = 0;
+				d.range = 0;
+				d.glitch = 0;
+
+				datas.Add(d);
+			}
+			fs.Close();
+			datas.Sort(delegate(Data a, Data b)
+			{
+				return a.raw.CompareTo(b.raw);
+			});
+
+			long lastval = 0;
+			for (int i = 0; i < datas.Count; i++)
+			{
+				Data d = datas[i];
+				d.p = 2250000.0 / (d.raw - lastval);// (w)
+				datas[i] = d;
+				lastval = d.raw;
+			}
+
+			int idxs = FindTop(start);
+			int idxe = FindBottom(end);
+
+			double power = 0;
+			if (idxs != -1 && idxe != -1)
+			{
+				long diff = datas[idxe].raw - datas[idxs].raw;
+				power = 2250000.0 / (diff / (idxe - idxs));
+			}
+
+			double diff2 = 2250000.0 / power;
+
+			long cnt = (long)((end1 - start1) / diff2);
+
+			StringBuilder sb = new StringBuilder();
+			for(int i=0;i<cnt;i++){
+				long val = start1 + ((end1 - start1) * i / cnt);
+				sb.AppendLine(val.ToString());
+			}
+			textBox2.Text = sb.ToString();
 		}
 
 	}
