@@ -33,7 +33,7 @@ namespace WindowsFormsApplication4
 		private void button1_Click(object sender, EventArgs e)
 		{
 			string dir = @"e:\data\";
-
+			datas = new List<Data>();
 			string[] files = Directory.GetFiles(dir);
 
 			foreach (string file in files)
@@ -330,90 +330,54 @@ namespace WindowsFormsApplication4
 			textBox2.Text = sb.ToString();
 		}
 
-	}
-}
-/*if (false)
+		private void button2_Click(object sender, EventArgs e)
+		{
+			string[] data = Form1.DATA.Split('\n');
+			datas = new List<Data>();
+			foreach (string line in data)
 			{
+				if (line == "") continue;
+				long val = long.Parse(line.Trim());
 
-				for (int i = 0; i < datas.Count - 7; i++)
-				{
-					long data0 = datas[i].raw;
-					long data1 = datas[i + 1].raw;
-					long data2 = datas[i + 2].raw;
-					long data3 = datas[i + 3].raw;
-					long data4 = datas[i + 4].raw;
-					long data5 = datas[i + 5].raw;
-					long data6 = datas[i + 6].raw;
+				Data d;
+				d.t = new DateTime(1970, 1, 1).AddHours(8).AddMilliseconds(val);
+				d.raw = val;
+				d.p = 0;
+				d.range = 0;
+				d.glitch = 0;
 
-					long space0 = data1 - data0;
-					long space1 = data2 - data1;
-					long space2 = data4 - data2;
-					long space3 = data5 - data4;
-					long space4 = data6 - data5;
-
-					long avg = space0 + space1 + space3 + space4;
-					long range = Math.Abs(space0 * 4 - avg) +
-						Math.Abs(space1 * 4 - avg) +
-						Math.Abs(space3 * 4 - avg) +
-						Math.Abs(space4 * 4 - avg);
-					Data temp = datas[i + 3];
-					temp.range = range;
-					temp.glitch = Math.Abs(space2 * 4 - avg);
-					datas[i + 3] = temp;
-				}
-
-
-
-
-				StringBuilder report = new StringBuilder();
-
-				for (int i = 0; i < datas.Count; i++)
-				{
-					long diff;
-					if (i == 0)
-					{
-						diff = 0;
-					}
-					else
-					{
-						diff = (datas[i].raw - datas[i - 1].raw);
-					}
-					double avg = 0;
-					if (i >= 2 && i < datas.Count - 2)
-					{
-						avg += datas[i - 2].glitch;
-						avg += datas[i - 1].glitch;
-						avg += datas[i + 1].glitch;
-						avg += datas[i + 2].glitch;
-					}
-					report.Append(datas[i].raw).Append("\t");
-					report.Append(diff).Append("\t");
-					report.Append(datas[i].t.ToString("MM-dd HH:mm:ss fff")).Append("\t");
-					report.Append(((float)datas[i].p)).Append("\t");
-					report.Append(datas[i].range).Append("\t");
-					report.Append(datas[i].glitch).Append("\t");
-					report.Append((avg / datas[i].glitch)).Append("\t");
-					report.Append(((avg / datas[i].glitch) > 40 ? "GGG" : ""));
-
-					report.AppendLine();
-				}
-				//textBox2.Text = report.ToString();
-			List<Data> new_datas = new List<Data>();
-			for (int i = 0; i < datas.Count; i++)
-			{
-				double avg = 0;
-				if (i >= 2 && i < datas.Count - 2)
-				{
-					avg += datas[i - 2].glitch;
-					avg += datas[i - 1].glitch;
-					avg += datas[i + 1].glitch;
-					avg += datas[i + 2].glitch;
-				}
-				if (avg / datas[i].glitch < 100)
-				{
-					new_datas.Add(datas[i]);
-				}
+				datas.Add(d);
 			}
 
-			datas = new_datas;
-			}*/
+			datas.Sort(delegate(Data a, Data b)
+			{
+				return a.raw.CompareTo(b.raw);
+			});
+
+			long lastval = 0;
+			for (int i = 0; i < datas.Count; i++)
+			{
+				Data d = datas[i];
+				d.p = 2250000.0 / (d.raw - lastval);// (w)
+				datas[i] = d;
+				lastval = d.raw;
+			}
+
+
+
+
+			start = datas[0].raw;
+			end = datas[datas.Count - 1].raw;
+
+			Draw();
+
+			pictureBox1.MouseMove += new MouseEventHandler(pictureBox1_MouseMove);
+			pictureBox1.MouseDown += new MouseEventHandler(pictureBox1_MouseDown);
+			pictureBox1.MouseUp += new MouseEventHandler(pictureBox1_MouseUp);
+			pictureBox1.MouseWheel += new MouseEventHandler(pictureBox1_MouseWheel);
+			this.MouseWheel += new MouseEventHandler(Form2_MouseWheel);
+
+		}
+
+	}
+}

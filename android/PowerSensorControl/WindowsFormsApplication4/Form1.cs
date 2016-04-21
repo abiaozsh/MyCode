@@ -15,6 +15,8 @@ namespace WindowsFormsApplication4
 {
 	public partial class Form1 : Form
 	{
+		public static string DATA;
+
 		public Form1()
 		{
 			InitializeComponent();
@@ -104,6 +106,7 @@ namespace WindowsFormsApplication4
 
 			textBox2.Text = file;
 			textBox3.Text = content;
+			DATA = content;
 			//string dir = Send(12, 0, false);
 
 		}
