@@ -127,12 +127,12 @@ namespace WindowsFormsApplication4
 					ns.Close();
 					serverSocket.Close();
 
-					var tempBitmap = new Bitmap(320, 240);
+					var tempBitmap = new Bitmap(640, 480);
 					var gTempBitmap = System.Drawing.Graphics.FromImage(tempBitmap);
 					gTempBitmap.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
 					gTempBitmap.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
 					gTempBitmap.Clear(Color.White);
-					gTempBitmap.DrawImage(img, new Rectangle(0, 0, 320, 240), new Rectangle(0, 0, img.Width, img.Height), GraphicsUnit.Pixel);
+					gTempBitmap.DrawImage(img, new Rectangle(0, 0, 640,480), new Rectangle(0, 0, img.Width, img.Height), GraphicsUnit.Pixel);
 					gTempBitmap.Dispose();
 					
 					if (FLIPH)
