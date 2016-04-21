@@ -178,13 +178,7 @@ public class UartLoopBackActivity extends Activity {
 
 		testButton = (Button) findViewById(R.id.testButton);
 		testButton.setOnClickListener(new TestListener());
-
-		uartInterface = new CH34xAndroidDriver((UsbManager) getSystemService(Context.USB_SERVICE), this, ACTION_USB_PERMISSION);
-
-		if (!uartInterface.UsbFeatureSupported()) {
-			Toast.makeText(this, "No Support USB host API", Toast.LENGTH_SHORT).show();
-			uartInterface = null;
-		}
+		uartInterface = new CH34xAndroidDriver((UsbManager) getSystemService(Context.USB_SERVICE), UartLoopBackActivity.this, ACTION_USB_PERMISSION);
 
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 
@@ -225,23 +219,25 @@ public class UartLoopBackActivity extends Activity {
 			/* flow control */
 			flowControl = 0;
 
-			if (false == isConfiged) {
-				isConfiged = true;
+			uartInterface.ResumeUsbList();
+			if (!uartInterface.UsbFeatureSupported()) {
+				Text1.setText("not support");
+			} else {
 				if (uartInterface.isConnected()) {
 					flags = uartInterface.UartInit();
 					if (!flags) {
-						Toast.makeText(global_context, "Init Uart Error", Toast.LENGTH_SHORT).show();
+						Text1.setText("Init error");
 					} else {
 						if (uartInterface.SetConfig(baudRate, dataBit, stopBit, parity, flowControl)) {
+							Text1.setText("set ok");
+						} else {
+							Text1.setText("set error");
 						}
 					}
-				}
-
-				if (isConfiged == true) {
-					configButton.setEnabled(false);
+				} else {
+					Text1.setText("not Connected");
 				}
 			}
-
 		}
 
 	}
@@ -251,21 +247,9 @@ public class UartLoopBackActivity extends Activity {
 		@Override
 		public void onClick(View v) {
 
-			datas[7] = System.currentTimeMillis();
+			uartInterface.CloseDevice();
 
-			try {
-				DateFormat sdf = new SimpleDateFormat("yyyy_MM_dd");
-				String filename = sdf.format(datas[7]) + ".txt";
-
-				FileOutputStream fos = openFileOutput(filename, Activity.MODE_APPEND);
-				OutputStreamWriter sw = new OutputStreamWriter(fos);
-				sw.write(Long.toString(datas[7]) + "\r\n");
-				sw.flush();
-				fos.close();
-			} catch (Exception e) {
-			}
-
-			Text1.setText(Long.toString(datas[7]));
+			Text1.setText("close done");
 		}
 
 	}
@@ -336,31 +320,7 @@ public class UartLoopBackActivity extends Activity {
 		return ret;
 	}
 
-	protected void onResume() {
-		super.onResume();
-		if (2 == uartInterface.ResumeUsbList()) {
-			uartInterface.CloseDevice();
-		}
-	}
-
-	protected void onStop() {
-		if (READ_ENABLE == true) {
-			READ_ENABLE = false;
-		}
-		super.onStop();
-	}
-
-	protected void onDestroy() {
-		if (uartInterface != null) {
-			if (uartInterface.isConnected()) {
-				uartInterface.CloseDevice();
-			}
-			uartInterface = null;
-		}
-
-		super.onDestroy();
-	}
-
+	
 	String Strbuff = "";
 	String watts = "";
 	int intval = 0;
@@ -405,7 +365,7 @@ public class UartLoopBackActivity extends Activity {
 							int actualNumBytes = uartInterface.ReadData(readBuffer, 65536);
 
 							if (actualNumBytes > 0) {
-			 					Strbuff += String.copyValueOf(readBuffer, 0, actualNumBytes);
+								Strbuff += String.copyValueOf(readBuffer, 0, actualNumBytes);
 								actualNumBytes = 0;
 								while (true) {
 									int idx = Strbuff.indexOf('\n');
