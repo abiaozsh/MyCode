@@ -211,7 +211,7 @@ final class FileSystem
 				}
 				catch (Exception e)
 				{
-					server.log(e);
+					Log.log(e);
 				}
 				res.sendRedirect(".");
 				return;

@@ -71,7 +71,7 @@ final class Processor extends Thread
 
                 req.server = server;
 
-                server.log("requested:" + req.getPath() + "[" + req.getRemoteAddr() + ":" + req.getRemotePort() + "]");
+                Log.log("requested:" + req.getPath() + "[" + req.getRemoteAddr() + ":" + req.getRemotePort() + "]");
 
                 RequestDispatcher rd = server.getRequestDispatcher(req.getPath());
 
@@ -98,7 +98,7 @@ final class Processor extends Thread
         }
         catch (Exception e)
         {
-            server.log(e);
+            Log.log(e);
         }
         finally
         {

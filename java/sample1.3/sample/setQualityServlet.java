@@ -27,6 +27,14 @@ public class setQualityServlet extends Servlet
 		{
 			session.set("quality", quality);
 		}
-		res.sendRedirect("/jsp/control.jsp");
+		Session s = req.getSession();
+		if (s.get("Redirect") != null)
+		{
+			res.sendRedirect((String) s.get("Redirect"));
+		}
+		else
+		{
+			res.sendRedirect("/jsp/control.jsp");
+		}
 	}
 }

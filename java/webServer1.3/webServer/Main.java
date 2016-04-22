@@ -2,11 +2,11 @@
 public class Main {
 
     public static void main(String[] Args) throws Exception {
-        Server sv = new Server();
-        sv.init("webServer.log");
-        sv.readConfigFromFile("config.xml");
-        sv.applyConfig();
-        sv.startService();
+        Server.serverInstance = new Server();
+        Server.serverInstance.init("config.xml");
+        Log.initLog(Server.serverInstance.currentConfig.logFile);
+        Server.serverInstance.applyConfig();
+        Server.serverInstance.startService();
         System.out.println("Server started.");
     }
 }

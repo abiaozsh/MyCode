@@ -17,11 +17,12 @@
  
  <sessionExpires>300</sessionExpires>
  
+ <logFile>webServer.log</logFile>
  <configPage>
   <enabled>true</enabled>
   <url>/config</url>
   <userName>admin</userName>
-  <passWord>ISMvKXpXpadDiUoOSoAfww==</passWord>
+  <passWord>4QrcOUm6Wau+VuBX8g+IPg==</passWord>
  </configPage>
  
  <fileSystem>
@@ -31,7 +32,7 @@
   <allowUpLoad>true</allowUpLoad>
   <allowDel>true</allowDel>
   <userName>zhengsh</userName>
-  <passWord>3FF34C93F0C80AA7689C8A9B9672A9A9</passWord>
+  <passWord></passWord>
  </fileSystem>
  
  <fileSystem>
