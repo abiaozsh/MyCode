@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">AutoCamera</string>
+    <string name="action_settings">Settings</string>
+    <string name="config">Config</string>
+    <string name="read_bytes">Read Bytes</string>
+    <string name="write_bytes">Write Bytes</string>
+    <string name="write">Write</string>
+    
+</resources>
