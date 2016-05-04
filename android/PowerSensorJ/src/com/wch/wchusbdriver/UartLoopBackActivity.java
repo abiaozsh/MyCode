@@ -21,7 +21,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 public class UartLoopBackActivity extends Activity {
 	private static final String ACTION_USB_PERMISSION = "com.wch.wchusbdriver.USB_PERMISSION";
@@ -71,7 +70,15 @@ public class UartLoopBackActivity extends Activity {
 					ins.read(data);
 
 					if (data[0] == 10) {// get Current Data
-						SendData(watts, ous);
+						String w = "";
+						for (int i = 7; i >= 1; i--) {
+							double watt = 0;
+							if (datas[i] - datas[i - 1] > 0) {
+								watt = 2250000.0 / (datas[i] - datas[i - 1]);// (w)
+							}
+							w += Double.toString(watt) + "\r\n";
+						}
+						SendData(w, ous);
 					} else if (data[0] == 12) {// getFileList
 						String[] fl = fileList();
 
@@ -90,9 +97,8 @@ public class UartLoopBackActivity extends Activity {
 						int idx = data[1];
 						SendData(fl[idx], ous);
 						InputStream fis = UartLoopBackActivity.this.openFileInput(fl[idx]);
-						byte[] filebuff = new byte[1024000];
-						int len = fis.read(filebuff);
-						SendData(filebuff, len, ous);
+						int len = fis.available();
+						SendDatax(len, ous, fis);
 						fis.close();
 					}
 
@@ -122,14 +128,17 @@ public class UartLoopBackActivity extends Activity {
 				ous.write(sizebuff);
 				sizebuff[0] = (byte) ((sendBuff.length >> 16) & 0x0FF);
 				ous.write(sizebuff);
+				sizebuff[0] = (byte) ((sendBuff.length >> 24) & 0x0FF);
+				ous.write(sizebuff);
 
 				ous.write(sendBuff);
 			} catch (Exception e) {
 			}
 		}
 
-		private void SendData(byte[] sendBuff, int length, OutputStream ous) {
+		private void SendDatax(int length, OutputStream ous, InputStream fis) {
 			try {
+
 				byte[] sizebuff = new byte[1];
 
 				sizebuff[0] = (byte) (length & 0x0FF);
@@ -138,8 +147,17 @@ public class UartLoopBackActivity extends Activity {
 				ous.write(sizebuff);
 				sizebuff[0] = (byte) ((length >> 16) & 0x0FF);
 				ous.write(sizebuff);
+				sizebuff[0] = (byte) ((length >> 24) & 0x0FF);
+				ous.write(sizebuff);
 
-				ous.write(sendBuff, 0, length);
+				byte[] filebuff = new byte[1024];
+				while (true) {
+
+					int len = fis.read(filebuff);
+					if (len <= 0)
+						break;
+					ous.write(filebuff);
+				}
 			} catch (Exception e) {
 			}
 
@@ -156,9 +174,9 @@ public class UartLoopBackActivity extends Activity {
 
 		@Override
 		public void handleMessage(Message msg) {
-			Bundle b = msg.getData();
-			byte[] data = b.getByteArray("data");
-			int cmd = data[0];
+			// Bundle b = msg.getData();
+			// byte[] data = b.getByteArray("data");
+			// int cmd = data[0];
 		}
 	}
 
@@ -166,7 +184,7 @@ public class UartLoopBackActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-
+		INIT();
 		/* create editable text objects */
 		Text1 = (EditText) findViewById(R.id.Text1);
 		Text2 = (EditText) findViewById(R.id.Text2);
@@ -254,18 +272,37 @@ public class UartLoopBackActivity extends Activity {
 
 	}
 
-	static int T1 = 100;
-	static int T2 = 100;
+	/*
+	 * static int T1 = 100; static int T2 = 100; private static int pos = 0; private static int count8 = 0; private static int[] buff = new int[256]; private static int sum8 = 0; private static int PEAKSense = 0; private static int LOWSense = 0; private static int CoolDown = 0;
+	 * 
+	 * private static boolean PROC(int val) { boolean ret = false; sum8 += val; count8++; if (count8 == 8) { count8 = 0; buff[pos++] = sum8 / 8; pos &= 0x0FF; sum8 = 0; int total = 0; { int idx = pos - 4; idx &= 0x0FF; for (int i = 0; i < 256 - 4; i++) { idx--; idx &= 0x0FF; total += buff[idx]; } total /= 256 - 4; }
+	 * 
+	 * { int idx = pos; int active = 0; for (int i = 0; i < 4; i++) { idx--; idx &= 0x0FF; if (total - buff[idx] > T1) active = 1; } if (active != 0) { LOWSense = 8; } }
+	 * 
+	 * if ((buff[(pos - 3) & 0x0FF] - buff[(pos - 1) & 0x0FF]) > T2) { PEAKSense = 8; }
+	 * 
+	 * if (LOWSense > 0 && PEAKSense > 0) { if (CoolDown == 0) { CoolDown = 16; ret = true; } }
+	 * 
+	 * if (PEAKSense > 0) PEAKSense--; if (LOWSense > 0) LOWSense--; if (CoolDown > 0) CoolDown--; } return ret; }
+	 */
+
+	static int T1 = 70;
+	static int CD = 25;
 	private static int pos = 0;
 	private static int count8 = 0;
 	private static int[] buff = new int[256];
 	private static int sum8 = 0;
-	private static int PEAKSense = 0;
 	private static int LOWSense = 0;
 	private static int CoolDown = 0;
 
-	private static boolean PROC(int val) {
-		boolean ret = false;
+	private static void INIT() {
+		for (int i = 0; i < 256; i++) {
+			buff[i] = 512;
+		}
+	}
+
+	private static int PROC(int val) {
+		int ret = 0;
 		sum8 += val;
 		count8++;
 		if (count8 == 8) {
@@ -291,27 +328,22 @@ public class UartLoopBackActivity extends Activity {
 				for (int i = 0; i < 4; i++) {
 					idx--;
 					idx &= 0x0FF;
-					if (total - buff[idx] > T1)
-						active = 1;
+					if (buff[idx] - total > T1)
+						active++;
 				}
-				if (active != 0) {
-					LOWSense = 8;
+				if (active >= 2) {
+					LOWSense = 1;
 				}
 			}
 
-			if ((buff[(pos - 3) & 0x0FF] - buff[(pos - 1) & 0x0FF]) > T2) {
-				PEAKSense = 8;
-			}
-
-			if (LOWSense > 0 && PEAKSense > 0) {
+			if (LOWSense > 0)// && PEAKSense > 0
+			{
 				if (CoolDown == 0) {
-					CoolDown = 16;
-					ret = true;
+					CoolDown = CD;
+					ret = 1;
 				}
 			}
 
-			if (PEAKSense > 0)
-				PEAKSense--;
 			if (LOWSense > 0)
 				LOWSense--;
 			if (CoolDown > 0)
@@ -320,7 +352,6 @@ public class UartLoopBackActivity extends Activity {
 		return ret;
 	}
 
-	
 	String Strbuff = "";
 	String watts = "";
 	int intval = 0;
@@ -367,61 +398,95 @@ public class UartLoopBackActivity extends Activity {
 							if (actualNumBytes > 0) {
 								Strbuff += String.copyValueOf(readBuffer, 0, actualNumBytes);
 								actualNumBytes = 0;
-								while (true) {
-									int idx = Strbuff.indexOf('\n');
-									if (idx == 0) {
-										Strbuff = Strbuff.substring(1);
-									} else if (idx > 0) {
-										String stemp = Strbuff.substring(0, idx - 1);
-										Strbuff = Strbuff.substring(idx + 1);
-										try {
-											intval = Integer.parseInt(stemp);
-										} catch (Exception ee) {
-											intval = -1;
-										}
-										if (intval >= 1024) {
-											intval = -1;
-										}
-										if (intval != -1) {
-											boolean ret = PROC(intval);
-											if (ret) {
-												datas[0] = datas[1];
-												datas[1] = datas[2];
-												datas[2] = datas[3];
-												datas[3] = datas[4];
-												datas[4] = datas[5];
-												datas[5] = datas[6];
-												datas[6] = datas[7];
-												datas[7] = System.currentTimeMillis();
-												try {
-													DateFormat sdf = new SimpleDateFormat("yyyy_MM_dd");
-													String filename = sdf.format(datas[7]) + ".txt";
 
-													FileOutputStream fos = openFileOutput(filename, Activity.MODE_APPEND);
-													OutputStreamWriter sw = new OutputStreamWriter(fos);
-													sw.write(Long.toString(datas[7]) + "\r\n");
-													sw.flush();
-													fos.close();
-												} catch (Exception e) {
+								if (true) {
+									while (true) {
+										int idx = Strbuff.indexOf('\n');
+										if (idx == 0) {
+											Strbuff = Strbuff.substring(1);
+										} else if (idx > 0) {
+											String stemp = Strbuff.substring(0, idx - 1);
+											Strbuff = Strbuff.substring(idx + 1);
+											try {
+												intval = Integer.parseInt(stemp);
+											} catch (Exception ee) {
+												intval = -1;
+											}
+											if (intval >= 1024) {
+												intval = -1;
+											}
+											if (intval != -1) {
+												int ret = PROC(intval);
+												if (ret != 0) {
+													datas[0] = datas[1];
+													datas[1] = datas[2];
+													datas[2] = datas[3];
+													datas[3] = datas[4];
+													datas[4] = datas[5];
+													datas[5] = datas[6];
+													datas[6] = datas[7];
+													datas[7] = System.currentTimeMillis();
+													try {
+														DateFormat sdf = new SimpleDateFormat("yyyy_MM_dd");
+														String filename = sdf.format(datas[7]) + ".txt";
+
+														FileOutputStream fos = openFileOutput(filename, Activity.MODE_APPEND);
+														OutputStreamWriter sw = new OutputStreamWriter(fos);
+														sw.write(Long.toString(datas[7]) + "\r\n");
+														sw.flush();
+														fos.close();
+													} catch (Exception e) {
+													}
+
+													double watt = 0;
+													for (int i = 7; i >= 1; i--) {
+														if (datas[i] - datas[i - 1] > 0) {
+															watt += 2250000.0 / (datas[i] - datas[i - 1]);// (w)
+														}
+													}
+													watt /= 7;
+													
+													if (watt > 300) {
+														T1 = 70;
+														CD = 25;
+													} else {
+														T1 = 50;
+														CD = 100;
+													}
 												}
 											}
+										} else {
+											break;
 										}
-									} else {
-										break;
-									}
-								}
-
-								watts = "";
-								for (int i = 7; i >= 1; i--) {
-									double watt = 0;
-									if (datas[i] - datas[i - 1] > 0) {
-										watt = 2250000.0 / (datas[i] - datas[i - 1]);// (w)
 									}
 
-									watts += Double.toString(watt) + "\r\n";
+									watts = "";
+									for (int i = 7; i >= 1; i--) {
+										double watt = 0;
+										if (datas[i] - datas[i - 1] > 0) {
+											watt = 2250000.0 / (datas[i] - datas[i - 1]);// (w)
+										}
+
+										watts += Double.toString(watt) + "\r\n";
+
+									}
+
+								} else {
+									watts = Strbuff.substring(0, 20);
+									try {
+										DateFormat sdf = new SimpleDateFormat("yyyy_MM_dd");
+										String filename = sdf.format(datas[7]) + ".txt";
+
+										FileOutputStream fos = openFileOutput(filename, Activity.MODE_APPEND);
+										OutputStreamWriter sw = new OutputStreamWriter(fos);
+										sw.write(Strbuff);
+										Strbuff = "";
+										sw.flush();
+										fos.close();
+									} catch (Exception e) {
+									}
 
 								}
-
 								mhandler.sendMessage(msg);
 							}
 						} catch (Exception ex) {
