@@ -1,7 +1,7 @@
 rem @echo off
 if exist "C:\Program Files (x86)\Arduino" set arduinopath=C:\Program Files (x86)\Arduino
 if exist "C:\Program Files\Arduino" set arduinopath=C:\Program Files\Arduino
-set comPort=COM10
+set comPort=COM9
 set filename=serial
 set comptype=g++
 set extptype=c

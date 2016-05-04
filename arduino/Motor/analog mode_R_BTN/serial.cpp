@@ -64,14 +64,11 @@ uint8_t PWR_OFF6O[] = {
   0    + BP2D  // 3-2
 };
 
-
-
-#define drP6 (!(PINB & _BV(3)))
-
 #define STAOn   PORTB |= _BV(5) ;/**/
 #define STAOff  PORTB &= ~_BV(5);/**/
 
-#define StartRpm (8192*2)
+//????
+#define StartRpm (8192*3)
 
 uint8_t NextStep[] = {
   1,  2,  3,  4,  5,  0
@@ -81,15 +78,17 @@ uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
 uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 
 volatile uint8_t Step = 0;
-volatile uint8_t FStart = 0;
-volatile uint8_t aread;
+volatile uint8_t aval;
 volatile uint8_t PowerType;
 volatile uint8_t Status = 0;//0 halt ,1 running, 2 starting
 volatile uint8_t noskip = 1;
+#define StartBtn (!(PINB & _BV(3)))
+//volatile uint8_t StartBtn = 0;
 
 uint16_t rpm;
 uint16_t Power = 0;
 uint16_t NextPower = 0;
+uint8_t NextPowerType;
 
 uint8_t CMD = 0;
 uint8_t TempData=0;
@@ -113,26 +112,23 @@ int main(void) {
   //打开输出端口
   DDR6O = BP1U | BP1D | BP2U | BP2D | BP3U | BP3D;
   DDR3O = BP1B | BP2B | BP3B;
-
   DDRB |= _BV(5);
   DDRC |= _BV(5);
   DDRC |= _BV(4);
+  
   sei();
   //主循环
   for(;;) 
   {
     //定时器清零
     TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
-    Power = NextPower;
     uint8_t tempStep = Step;
-    if(PowerType == 1)//Power on
+    if(NextPowerType == 1)//Power on
     {
-      PORTC|=_BV(5);
       PORT6O = PWR_ON6O[tempStep];
     }
-    else if(PowerType == 2)//Recycle
+    else if(NextPowerType == 2)//Recycle
     {
-      PORTC|=_BV(4);
       PORT6O = RECYCLE6O[tempStep];
       PORT3O |= RECYCLE3O[tempStep];
     }
@@ -140,7 +136,7 @@ int main(void) {
     {
       PORT6O = PWR_OFF6O[tempStep];
     }
-    OCR1A = Power;
+    OCR1A = NextPower;
     //转速调整
     adj();
     //等待过零
@@ -153,7 +149,7 @@ int main(void) {
       noskip = 1;
       while(((PIN3I&drMask)==valbase) && noskip);
     }
-    if(!drP6)
+    if(!StartBtn)
     {
       uint16_t tmp = (rpm>>3)+(rpm>>2)+TCNT1;
       while(TCNT1<tmp);
@@ -169,43 +165,21 @@ int main(void) {
 ISR(TIMER1_COMPA_vect){
   PORT3O &= ~(BP1B | BP2B | BP3B);
   PORT6O = PWR_OFF6O[Step];
-  PORTC&=~_BV(4);
-  PORTC&=~_BV(5);
 }
 
 void _CalcPower(){
   uint32_t temp = rpm;
-  uint8_t val;
-  
-  if (aread > 128)
-  {
-    val = (aread - 128)<<1;
-    PowerType = 1;
-    
-    //PORTC&=~_BV(4);
-  }
-  else if (aread < 64)
-  {
-    val = (64 - aread)<<1;
-    PowerType = 2;
-    
-    //PORTC&=~_BV(5);
-  }
-  else
-  {
-    val = 0;
-  }
-  
   //28 耗时
   //224clock
-  temp*=val;
+  temp*=aval;
   temp>>=8;
   NextPower = (uint16_t)temp;
+  NextPowerType = PowerType;
 }
 
 void adj(){
   NextPower = 0;
-  PowerType = 0;
+  NextPowerType = 0;
   if(Status)
   {
     if(rpm>StartRpm)//too slow, halt
@@ -219,7 +193,7 @@ void adj(){
   }
   else
   {
-    if(drP6)
+    if(StartBtn)
     {
       _CalcPower();
     }
@@ -229,7 +203,7 @@ void adj(){
 ISR(PCINT0_vect){
   if(noskip)
   {
-    if(drP6)
+    if(StartBtn)
     {
       noskip = 0;
     }
@@ -242,5 +216,26 @@ ISR(PCINT0_vect){
 
 
 ISR(ADC_vect){
-  aread = ADCH;
+  uint8_t aread = ADCH;
+  if (aread > 128)
+  {
+    aval = (aread - 128)<<1;//0~256
+    PowerType = 1;
+    PORTC &= ~_BV(4);
+    PORTC |=  _BV(5);
+  }
+  else if (aread < 64)
+  {
+    aval = (64 - aread)<<1;//0~128
+    PowerType = 2;
+    PORTC |=  _BV(4);
+    PORTC &= ~_BV(5);
+  }
+  else
+  {
+    aval = 0;
+    PowerType = 0;
+    PORTC &= ~_BV(4);
+    PORTC &= ~_BV(5);
+  }
 }
