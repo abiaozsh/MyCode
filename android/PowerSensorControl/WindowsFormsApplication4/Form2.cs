@@ -90,14 +90,15 @@ namespace WindowsFormsApplication4
 
         void LoadData(string file)
         {
+            if (!file.EndsWith(".txt")) return;
             FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read);
             StreamReader sr = new StreamReader(fs);
-
+            fs.ReadByte();
             while (true)
             {
                 string line = sr.ReadLine();
                 if (line == null) break;
-                long val = long.Parse(line);
+                long val = long.Parse(line.Trim());
 
                 Data d;
                 d.t = new DateTime(1970, 1, 1).AddHours(8).AddMilliseconds(val);
