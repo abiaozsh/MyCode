@@ -57,7 +57,7 @@ final class ConfigServlet extends Servlet
 
 		if ("makeXML".equals(action))
 		{
-			server.currentConfig.SaveConfig();
+			server.currentConfig.SaveConfig(server.configFile);
 
 			makeMsg(req, res, server, "makeXML done");
 			return;
@@ -83,7 +83,7 @@ final class ConfigServlet extends Servlet
 		{
 			try
 			{
-				server.currentConfig.port = Integer.parseInt(value);
+				server.currentConfig.setPort(Integer.parseInt(value));
 			}
 			catch (Exception e)
 			{
@@ -96,7 +96,7 @@ final class ConfigServlet extends Servlet
 		{
 			try
 			{
-				server.currentConfig.SSLactive = Boolean.parseBoolean(value);
+				server.currentConfig.setSSLactive(Boolean.parseBoolean(value));
 			}
 			catch (Exception e)
 			{
@@ -108,7 +108,7 @@ final class ConfigServlet extends Servlet
 		{
 			try
 			{
-				server.currentConfig.SSLport = Integer.parseInt(value);
+				server.currentConfig.setSSLport(Integer.parseInt(value));
 			}
 			catch (Exception e)
 			{
@@ -119,17 +119,17 @@ final class ConfigServlet extends Servlet
 
 		if ("set_SSLclientKeysFile".equals(action))
 		{
-			server.currentConfig.SSLclientKeysFile = value;
+			server.currentConfig.setSSLclientKeysFile(value);
 		}
 
 		if ("set_SSLkeyStorePass".equals(action))
 		{
-			server.currentConfig.SSLkeyStorePass = value;
+			server.currentConfig.setSSLkeyStorePass(value);
 		}
 
 		if ("set_SSLkeyPassword".equals(action))
 		{
-			server.currentConfig.SSLkeyPassword = value;
+			server.currentConfig.setSSLkeyPassword(value);
 		}
 
 		if ("set_javaCompiler".equals(action))
@@ -140,7 +140,7 @@ final class ConfigServlet extends Servlet
 				value = value.substring(0, value.length() - 3);
 				value = "file:///" + value + "lib" + Server.SEP + "tools.jar";
 			}
-			server.currentConfig.javaCompiler = value;
+			server.currentConfig.setJavaCompiler(value);
 		}
 
 		if ("set_defaultEncoding".equals(action))
@@ -148,7 +148,7 @@ final class ConfigServlet extends Servlet
 			try
 			{
 				Charset.forName(value);
-				server.currentConfig.defaultEncoding = value;
+				server.currentConfig.setDefaultEncoding(value);
 			}
 			catch (UnsupportedCharsetException e)
 			{
@@ -161,7 +161,7 @@ final class ConfigServlet extends Servlet
 		{
 			try
 			{
-				server.currentConfig.sessionExpires = Integer.parseInt(value);
+				server.currentConfig.setSessionExpires(Integer.parseInt(value));
 			}
 			catch (Exception e)
 			{
@@ -174,7 +174,7 @@ final class ConfigServlet extends Servlet
 		{
 			try
 			{
-				server.currentConfig.configPageEnabled = Boolean.parseBoolean(value);
+				server.currentConfig.setConfigPageEnabled(Boolean.parseBoolean(value));
 			}
 			catch (Exception e)
 			{
@@ -186,11 +186,11 @@ final class ConfigServlet extends Servlet
 		{
 			synchronized (server.servlets)
 			{
-				ServletPack sp = server.servlets.remove(server.currentConfig.configPage);
+				ServletPack sp = server.servlets.remove(server.currentConfig.getConfigPageUrl());
 				sp.url = value;
 				server.servlets.put(value, sp);
 			}
-			server.currentConfig.configPage = value;
+			server.currentConfig.setConfigPageUrl(value);
 
 		}
 
@@ -206,7 +206,7 @@ final class ConfigServlet extends Servlet
 				pwd = Util.MD5(value);
 			}
 
-			if (pwd.equals(server.currentConfig.configPassWord))
+			if (pwd.equals(server.currentConfig.getConfigPassWord()))
 			{
 				String value1 = req.getPOSTParam("value1");
 
@@ -216,8 +216,8 @@ final class ConfigServlet extends Servlet
 
 				if (value1.equals(value2))
 				{
-					server.currentConfig.configUserName = value3;
-					server.currentConfig.configPassWord = Util.MD5(value1);
+					server.currentConfig.setConfigUserName(value3);
+					server.currentConfig.setConfigPassWord(Util.MD5(value1));
 				}
 				else
 				{
@@ -236,7 +236,7 @@ final class ConfigServlet extends Servlet
 		{
 			int n = Integer.parseInt(value);
 			session.removePrivate("edit_fileSystem");
-			server.currentConfig.fileSystems.remove(n);
+			server.currentConfig.deleteFileSystems(n);
 		}
 
 		if ("edit_fileSystem".equals(action))
@@ -252,8 +252,9 @@ final class ConfigServlet extends Servlet
 			String allowList = req.getPOSTParam("value2");
 			String allowUpLoad = req.getPOSTParam("value3");
 			String allowDel = req.getPOSTParam("value4");
-			String passWord = req.getPOSTParam("value5");
-			String userName = req.getPOSTParam("value6");
+			String isDownload = req.getPOSTParam("value5");
+			String passWord = req.getPOSTParam("value6");
+			String userName = req.getPOSTParam("value7");
 
 			Integer n = (Integer) session.getPrivate("edit_fileSystem");
 			if ("".equals(passWord))
@@ -267,14 +268,16 @@ final class ConfigServlet extends Servlet
 			if (n != null)
 			{
 				int l = n.intValue();
-				ServerConfig.FileSystem cfs = server.currentConfig.fileSystems.get(l);
+				ServerConfig.FileSystem cfs = new ServerConfig.FileSystem();
 				cfs.url = url;
 				cfs.rootPath = rootPath;
 				cfs.allowList = Boolean.parseBoolean(allowList);
 				cfs.allowUpLoad = Boolean.parseBoolean(allowUpLoad);
 				cfs.allowDel = Boolean.parseBoolean(allowDel);
+				cfs.isDownload = Boolean.parseBoolean(isDownload);
 				cfs.userName = userName;
 				cfs.passWord = passWord;
+				server.currentConfig.updateFileSystems(l, cfs);
 				session.removePrivate("edit_fileSystem");
 			}
 			else
@@ -287,7 +290,7 @@ final class ConfigServlet extends Servlet
 				cfs.allowDel = Boolean.parseBoolean(allowDel);
 				cfs.userName = userName;
 				cfs.passWord = passWord;
-				server.currentConfig.fileSystems.add(cfs);
+				server.currentConfig.insertFileSystems(cfs);
 			}
 		}
 
@@ -295,7 +298,7 @@ final class ConfigServlet extends Servlet
 		{
 			int n = Integer.parseInt(value);
 			session.removePrivate("edit_jspProcessors");
-			server.currentConfig.jspProcessors.remove(n);
+			server.currentConfig.deleteJspProcessors(n);
 		}
 
 		if ("edit_jspProcessors".equals(action))
@@ -313,9 +316,10 @@ final class ConfigServlet extends Servlet
 			if (n != null)
 			{
 				int l = n.intValue();
-				ServerConfig.JspProcessor cjp = server.currentConfig.jspProcessors.get(l);
+				ServerConfig.JspProcessor cjp = new ServerConfig.JspProcessor();
 				cjp.url = url;
 				cjp.rootPath = rootPath;
+				server.currentConfig.updateJspProcessors(l, cjp);
 				session.removePrivate("edit_jspProcessors");
 			}
 			else
@@ -323,7 +327,7 @@ final class ConfigServlet extends Servlet
 				ServerConfig.JspProcessor cjp = new ServerConfig.JspProcessor();
 				cjp.url = url;
 				cjp.rootPath = rootPath;
-				server.currentConfig.jspProcessors.add(cjp);
+				server.currentConfig.insertJspProcessors(cjp);
 			}
 		}
 
@@ -331,7 +335,7 @@ final class ConfigServlet extends Servlet
 		{
 			int n = Integer.parseInt(value);
 			session.removePrivate("edit_servlets");
-			server.currentConfig.servlets.remove(n);
+			server.currentConfig.deleteServlets(n);
 		}
 
 		if ("edit_servlets".equals(action))
@@ -344,14 +348,17 @@ final class ConfigServlet extends Servlet
 		{
 			String url = value;
 			String classFileName = req.getPOSTParam("value1");
+			boolean isSingleton = Boolean.parseBoolean(req.getPOSTParam("value2"));
 
 			Integer n = (Integer) session.getPrivate("edit_servlets");
 			if (n != null)
 			{
 				int l = n.intValue();
-				ServerConfig.Servlet cs = server.currentConfig.servlets.get(l);
+				ServerConfig.Servlet cs = new ServerConfig.Servlet();
 				cs.url = url;
 				cs.classFileName = classFileName;
+				cs.isSingleton = isSingleton;
+				server.currentConfig.updateServlets(l, cs);
 				session.removePrivate("edit_servlets");
 			}
 			else
@@ -359,7 +366,8 @@ final class ConfigServlet extends Servlet
 				ServerConfig.Servlet cs = new ServerConfig.Servlet();
 				cs.url = url;
 				cs.classFileName = classFileName;
-				server.currentConfig.servlets.add(cs);
+				cs.isSingleton = isSingleton;
+				server.currentConfig.insertServlets(cs);
 			}
 		}
 
@@ -378,13 +386,13 @@ final class ConfigServlet extends Servlet
 		{
 			u1 = username;
 		}
-		if (server.currentConfig.configUserName == null)
+		if (server.currentConfig.getConfigUserName() == null)
 		{
 			u2 = "";
 		}
 		else
 		{
-			u2 = server.currentConfig.configUserName;
+			u2 = server.currentConfig.getConfigUserName();
 		}
 
 		if (password == null || "".equals(password))
@@ -396,13 +404,13 @@ final class ConfigServlet extends Servlet
 			p1 = Util.MD5(password);
 		}
 
-		if (server.currentConfig.configPassWord == null)
+		if (server.currentConfig.getConfigPassWord() == null)
 		{
 			p2 = "";
 		}
 		else
 		{
-			p2 = server.currentConfig.configPassWord;
+			p2 = server.currentConfig.getConfigPassWord();
 		}
 
 		if (u1.equals(u2) && p2.equals(p1))
@@ -454,7 +462,7 @@ final class ConfigServlet extends Servlet
 		out.println("{");
 		out.println(" setScroll(document.formMain.scroll.value);");
 		out.println("}");
-		out.println("function do_action(action,value,value1,value2,value3,value4,value5,value6)");
+		out.println("function do_action(action,value,value1,value2,value3,value4,value5,value6,value7)");
 		out.println("{");
 		out.println("	document.formMain.scroll.value = getScroll();");
 		out.println("	document.formMain.action.value = action;");
@@ -465,6 +473,7 @@ final class ConfigServlet extends Servlet
 		out.println("	document.formMain.value4.value = value4;");
 		out.println("	document.formMain.value5.value = value5;");
 		out.println("	document.formMain.value6.value = value6;");
+		out.println("	document.formMain.value7.value = value7;");
 		out.println("	document.formMain.submit();");
 		out.println("}");
 		out.println("function getScroll(){");
@@ -486,7 +495,7 @@ final class ConfigServlet extends Servlet
 		out.println("</script>");
 		out.println("</head>");
 		out.println("<body onload = \"on_load();\">");
-		out.println("<form name = 'formMain' action = '" + server.currentConfig.configPage + "' method = 'post'>");
+		out.println("<form name = 'formMain' action = '" + server.currentConfig.getConfigPageUrl() + "' method = 'post'>");
 		out.println("<input type = hidden name = \"action\" id = \"action\">");
 		out.println("<input type = hidden name = \"value\"  id = \"value\">");
 		out.println("<input type = hidden name = \"value1\" id = \"value1\">");
@@ -495,6 +504,7 @@ final class ConfigServlet extends Servlet
 		out.println("<input type = hidden name = \"value4\" id = \"value4\">");
 		out.println("<input type = hidden name = \"value5\" id = \"value5\">");
 		out.println("<input type = hidden name = \"value6\" id = \"value6\">");
+		out.println("<input type = hidden name = \"value7\" id = \"value7\">");
 
 		Integer sc = (Integer) session.getPrivate("config_scroll_position");
 		int scroll = 0;
@@ -510,70 +520,70 @@ final class ConfigServlet extends Servlet
 		out.println("  <td><a href = \"javascript:do_action('makeXML');\">Write config to XML.</a></td>");
 		out.println("  <td><a href = \"javascript:do_action('shutdown');\">Shutdown server.</a></td>");
 		out.println("  <td><a href = \"javascript:do_action('logout');\">Logout.</a></td>");
-		out.println("  <td><a href = \"" + server.currentConfig.configPage + "\" onclick = \"window.open('" + server.currentConfig.configPage + "?action=status');\">show server status.</a></td>");
+		out.println("  <td><a href = \"" + server.currentConfig.getConfigPageUrl() + "\" onclick = \"window.open('" + server.currentConfig.getConfigPageUrl() + "?action=status');\">show server status.</a></td>");
 		out.println(" </tr>");
 		out.println("</table>");
 		out.println("<table border=\"1\">");
 		out.println(" <tr>");
 		out.println("  <td>port:</td>");
-		out.println("  <td><input type = text id = 'port' value = '" + server.currentConfig.port + "'></td>");
+		out.println("  <td><input type = text id = 'port' value = '" + server.currentConfig.getPort() + "'></td>");
 		out.println("  <td><input type = button value = 'set' onclick = \"do_action('set_port',port.value);\"></td>");
 		out.println(" </tr>");
 		out.println(" <tr>");
 		out.println("  <td>SSLactive:</td>");
-		out.println("  <td>" + getPullDown("SSLactive", server.currentConfig.SSLactive) + "</td>");
+		out.println("  <td>" + getPullDown("SSLactive", server.currentConfig.getSSLactive()) + "</td>");
 		out.println("  <td><input type = button value = 'set' onclick = \"do_action('set_SSLactive',SSLactive.value);\"></td>");
 		out.println(" </tr>");
-		if (server.currentConfig.SSLactive)
+		if (server.currentConfig.getSSLactive())
 		{
 			out.println(" <tr>");
 			out.println("  <td>SSLport:</td>");
-			out.println("  <td><input type = text id = 'SSLport' value = '" + server.currentConfig.SSLport + "'></td>");
+			out.println("  <td><input type = text id = 'SSLport' value = '" + server.currentConfig.getSSLport() + "'></td>");
 			out.println("  <td><input type = button value = 'set' onclick = \"do_action('set_SSLport',SSLport.value);\"></td>");
 			out.println(" </tr>");
 			out.println(" <tr>");
 			out.println("  <td>clientKeysFile:</td>");
-			out.println("  <td><input type = text id = 'SSLclientKeysFile' value = '" + server.currentConfig.SSLclientKeysFile + "'></td>");
+			out.println("  <td><input type = text id = 'SSLclientKeysFile' value = '" + server.currentConfig.getSSLclientKeysFile() + "'></td>");
 			out.println("  <td><input type = button value = 'set' onclick = \"do_action('set_SSLclientKeysFile',SSLclientKeysFile.value);\"></td>");
 			out.println(" </tr>");
 			out.println(" <tr>");
 			out.println("  <td>SSLkeyStorePass:</td>");
-			out.println("  <td><input type = password id = 'SSLkeyStorePass' value = '" + server.currentConfig.SSLkeyStorePass + "'></td>");
+			out.println("  <td><input type = password id = 'SSLkeyStorePass' value = '" + server.currentConfig.getSSLkeyStorePass() + "'></td>");
 			out.println("  <td><input type = button value = 'set' onclick = \"do_action('set_SSLkeyStorePass',SSLkeyStorePass.value);\"></td>");
 			out.println(" </tr>");
 			out.println(" <tr>");
 			out.println("  <td>SSLkeyPassword:</td>");
-			out.println("  <td><input type = password id = 'SSLkeyPassword' value = '" + server.currentConfig.SSLkeyPassword + "'></td>");
+			out.println("  <td><input type = password id = 'SSLkeyPassword' value = '" + server.currentConfig.getSSLkeyPassword() + "'></td>");
 			out.println("  <td><input type = button value = 'set' onclick = \"do_action('set_SSLkeyPassword',SSLkeyPassword.value);\"></td>");
 			out.println(" </tr>");
 		}
 		out.println(" <tr>");
 		out.println("  <td>javaCompiler:</td>");
-		out.println("  <td><input type = text id = 'javaCompiler' value = '" + server.currentConfig.javaCompiler + "'></td>");
+		out.println("  <td><input type = text id = 'javaCompiler' value = '" + server.currentConfig.getJavaCompiler() + "'></td>");
 		out.println("  <td><input type = button value = 'set' onclick = \"do_action('set_javaCompiler',javaCompiler.value);\">");
 		out.println("  <input type = button value = 'autoSet' onclick = \"do_action('set_javaCompiler','');\"></td>");
 		out.println(" </tr>");
 		out.println(" <tr>");
 		out.println("  <td>defaultEncoding:</td>");
-		out.println("  <td><input type = text id = 'defaultEncoding' value = '" + server.currentConfig.defaultEncoding + "'></td>");
+		out.println("  <td><input type = text id = 'defaultEncoding' value = '" + server.currentConfig.getDefaultEncoding() + "'></td>");
 		out.println("  <td><input type = button value = 'set' onclick = \"do_action('set_defaultEncoding',defaultEncoding.value);\"></td>");
 		out.println(" </tr>");
 		out.println(" ");
 		out.println(" <tr>");
 		out.println("  <td>sessionExpires(in ms):</td>");
-		out.println("  <td><input type = text id = 'sessionExpires' value = '" + server.currentConfig.sessionExpires + "'></td>");
+		out.println("  <td><input type = text id = 'sessionExpires' value = '" + server.currentConfig.getSessionExpires() + "'></td>");
 		out.println("  <td><input type = button value = 'set' onclick = \"do_action('set_sessionExpires',sessionExpires.value);\"></td>");
 		out.println(" </tr>");
 		out.println(" ");
 		out.println(" <tr>");
 		out.println("  <td>configPageEnabled:</td>");
-		out.println("  <td>" + getPullDown("configPageEnabled", server.currentConfig.configPageEnabled) + "</td>");
+		out.println("  <td>" + getPullDown("configPageEnabled", server.currentConfig.getConfigPageEnabled()) + "</td>");
 		out.println("  <td><input type = button value = 'set' onclick = \"do_action('set_configPageEnabled',configPageEnabled.value);\"></td>");
 		out.println(" </tr>");
 		out.println(" ");
 		out.println(" <tr>");
 		out.println("  <td>configPageURL:</td>");
-		out.println("  <td><input type = text id = 'configPage' value = '" + server.currentConfig.configPage + "'></td>");
+		out.println("  <td><input type = text id = 'configPage' value = '" + server.currentConfig.getConfigPageUrl() + "'></td>");
 		out.println("  <td><input type = button value = 'set' onclick = \"do_action('set_configPage',configPage.value);\"></td>");
 		out.println(" </tr>");
 		out.println(" <tr>");
@@ -594,7 +604,7 @@ final class ConfigServlet extends Servlet
 		out.println(" </tr>");
 		out.println(" <tr>");
 		out.println("  <td>config admin userName:</td>");
-		out.println("  <td><input type = text id = 'configUser' value = '" + server.currentConfig.configUserName + "'></td>");
+		out.println("  <td><input type = text id = 'configUser' value = '" + server.currentConfig.getConfigUserName() + "'></td>");
 		out.println("  <td>&nbsp;</td>");
 		out.println(" </tr>");
 		out.println(" <tr>");
@@ -621,46 +631,50 @@ final class ConfigServlet extends Servlet
 		out.println("  <td>allowList</td>");
 		out.println("  <td>allowUpLoad</td>");
 		out.println("  <td>allowDel</td>");
+		out.println("  <td>isDownload</td>");
 		out.println("  <td>userName</td>");
 		out.println("  <td>passWord</td>");
 		out.println("  <td>operation</td>");
 		out.println(" </tr>");
 
-		for (int i = 0; i < server.currentConfig.fileSystems.size(); i++)
+		Integer n = (Integer) session.getPrivate("edit_fileSystem");
+		for (int i = 0; i < server.currentConfig.getFileSystems().size(); i++)
 		{
-			ServerConfig.FileSystem cfs = server.currentConfig.fileSystems.get(i);
-			out.println(" <tr>");
-			out.println("  <td><a href = '" + cfs.url + "'>" + cfs.url + "</a></td>");
-			out.println("  <td>" + cfs.rootPath + "</td>");
-			out.println("  <td>" + cfs.allowList + "</td>");
-			out.println("  <td>" + cfs.allowUpLoad + "</td>");
-			out.println("  <td>" + cfs.allowDel + "</td>");
-			out.println("  <td>" + (cfs.userName == null || "".equals(cfs.userName) ? "&nbsp;" : cfs.userName) + "</td>");
-			out.println("  <td>" + (cfs.passWord == null ? "&nbsp;" : "******") + "</td>");
-			out.println("  <td>");
-			out.println("   <input type = button value = 'edit' onclick = \"do_action('edit_fileSystem'," + i + ");\">");
-			out.println("   <input type = button value = 'del' onclick = \"do_action('del_fileSystem'," + i + ");\">");
-			out.println("  </td>");
-			out.println(" </tr>");
+			ServerConfig.FileSystem cfs = server.currentConfig.getFileSystems().get(i);
+			if (n != null && n.intValue() == i)
+			{
+				out.println(" <tr>");
+				out.println("  <td><input type = text id = 'url' value = '" + cfs.url + "'></td>");
+				out.println("  <td><input type = text id = 'rootPath' value = '" + cfs.rootPath + "'></td>");
+				out.println("  <td>" + getPullDown("allowList", cfs.allowList) + "</td>");
+				out.println("  <td>" + getPullDown("allowUpLoad", cfs.allowUpLoad) + "</td>");
+				out.println("  <td>" + getPullDown("allowDel", cfs.allowDel) + "</td>");
+				out.println("  <td>" + getPullDown("isDownload", cfs.isDownload) + "</td>");
+				out.println("  <td><input type = text id = 'userName' value = '" + (cfs.userName == null ? "" : cfs.userName) + "'></td>");
+				out.println("  <td><input type = password id = 'passWord' value = ''></td>");
+				out.println("  <td><input type = button value = 'update' onclick = \"do_action('upd_fileSystem',url.value,rootPath.value,allowList.value,allowUpLoad.value,allowDel.value,isDownload.value,passWord.value,userName.value);\"></td>");
+				out.println(" </tr>");
+			}
+			else
+			{
+				out.println(" <tr>");
+				out.println("  <td><a href = '" + cfs.url + "'>" + cfs.url + "</a></td>");
+				out.println("  <td>" + cfs.rootPath + "</td>");
+				out.println("  <td>" + cfs.allowList + "</td>");
+				out.println("  <td>" + cfs.allowUpLoad + "</td>");
+				out.println("  <td>" + cfs.allowDel + "</td>");
+				out.println("  <td>" + cfs.isDownload + "</td>");
+				out.println("  <td>" + (cfs.userName == null || "".equals(cfs.userName) ? "&nbsp;" : cfs.userName) + "</td>");
+				out.println("  <td>" + (cfs.passWord == null ? "&nbsp;" : "******") + "</td>");
+				out.println("  <td>");
+				out.println("   <input type = button value = 'edit' onclick = \"do_action('edit_fileSystem'," + i + ");\">");
+				out.println("   <input type = button value = 'del' onclick = \"do_action('del_fileSystem'," + i + ");\">");
+				out.println("  </td>");
+				out.println(" </tr>");
+			}
 		}
 
-		Integer n = (Integer) session.getPrivate("edit_fileSystem");
-		if (n != null)
-		{
-			int l = n.intValue();
-			ServerConfig.FileSystem cfs = server.currentConfig.fileSystems.get(l);
-			out.println(" <tr>");
-			out.println("  <td><input type = text id = 'url' value = '" + cfs.url + "'></td>");
-			out.println("  <td><input type = text id = 'rootPath' value = '" + cfs.rootPath + "'></td>");
-			out.println("  <td>" + getPullDown("allowList", cfs.allowList) + "</td>");
-			out.println("  <td>" + getPullDown("allowUpLoad", cfs.allowUpLoad) + "</td>");
-			out.println("  <td>" + getPullDown("allowDel", cfs.allowDel) + "</td>");
-			out.println("  <td><input type = text id = 'userName' value = '" + (cfs.userName == null ? "" : cfs.userName) + "'></td>");
-			out.println("  <td><input type = password id = 'passWord' value = ''></td>");
-			out.println("  <td><input type = button value = 'update' onclick = \"do_action('upd_fileSystem',url.value,rootPath.value,allowList.value,allowUpLoad.value,allowDel.value,passWord.value,userName.value);\"></td>");
-			out.println(" </tr>");
-		}
-		else
+		if (n == null)
 		{
 			out.println(" <tr>");
 			out.println("  <td><input type = text id = 'url' value = ''></td>");
@@ -668,6 +682,7 @@ final class ConfigServlet extends Servlet
 			out.println("  <td>" + getPullDown("allowList", false) + "</td>");
 			out.println("  <td>" + getPullDown("allowUpLoad", false) + "</td>");
 			out.println("  <td>" + getPullDown("allowDel", false) + "</td>");
+			out.println("  <td>" + getPullDown("isDownload", false) + "</td>");
 			out.println("  <td><input type = text id = 'userName' value = ''></td>");
 			out.println("  <td><input type = password id = 'passWord' value = ''></td>");
 			out.println("  <td><input type = button value = 'add' onclick = \"do_action('add_fileSystem',url.value,rootPath.value,allowList.value,allowUpLoad.value,allowDel.value,passWord.value,userName.value);\"></td>");
@@ -683,31 +698,32 @@ final class ConfigServlet extends Servlet
 		out.println("  <td>operation</td>");
 		out.println(" </tr>");
 
-		for (int i = 0; i < server.currentConfig.jspProcessors.size(); i++)
+		n = (Integer) session.getPrivate("edit_jspProcessors");
+		for (int i = 0; i < server.currentConfig.getJspProcessors().size(); i++)
 		{
-			ServerConfig.JspProcessor cjp = server.currentConfig.jspProcessors.get(i);
-			out.println(" <tr>");
-			out.println("  <td><a href = '" + cjp.url + "'>" + cjp.url + "</a></td>");
-			out.println("  <td>" + cjp.rootPath + "</td>");
-			out.println("  <td>");
-			out.println("   <input type = button value = 'edit' onclick = \"do_action('edit_jspProcessors'," + i + ");\">");
-			out.println("   <input type = button value = 'del' onclick = \"do_action('del_jspProcessors'," + i + ");\">");
-			out.println("  </td>");
-			out.println(" </tr>");
+			ServerConfig.JspProcessor cjp = server.currentConfig.getJspProcessors().get(i);
+			if (n != null && n.intValue() == i)
+			{
+				out.println(" <tr>");
+				out.println("  <td><input type = text id = 'JSPurl' value = '" + cjp.url + "'></td>");
+				out.println("  <td><input type = text id = 'JSProotPath' value = '" + cjp.rootPath + "'></td>");
+				out.println("  <td><input type = button value = 'update' onclick = \"do_action('upd_jspProcessors',JSPurl.value,JSProotPath.value);\"></td>");
+				out.println(" </tr>");
+			}
+			else
+			{
+				out.println(" <tr>");
+				out.println("  <td><a href = '" + cjp.url + "'>" + cjp.url + "</a></td>");
+				out.println("  <td>" + cjp.rootPath + "</td>");
+				out.println("  <td>");
+				out.println("   <input type = button value = 'edit' onclick = \"do_action('edit_jspProcessors'," + i + ");\">");
+				out.println("   <input type = button value = 'del' onclick = \"do_action('del_jspProcessors'," + i + ");\">");
+				out.println("  </td>");
+				out.println(" </tr>");
+			}
 		}
 
-		n = (Integer) session.getPrivate("edit_jspProcessors");
-		if (n != null)
-		{
-			int l = n.intValue();
-			ServerConfig.JspProcessor cjp = server.currentConfig.jspProcessors.get(l);
-			out.println(" <tr>");
-			out.println("  <td><input type = text id = 'JSPurl' value = '" + cjp.url + "'></td>");
-			out.println("  <td><input type = text id = 'JSProotPath' value = '" + cjp.rootPath + "'></td>");
-			out.println("  <td><input type = button value = 'update' onclick = \"do_action('upd_jspProcessors',JSPurl.value,JSProotPath.value);\"></td>");
-			out.println(" </tr>");
-		}
-		else
+		if (n == null)
 		{
 			out.println(" <tr>");
 			out.println("  <td><input type = text id = 'JSPurl' value = ''></td>");
@@ -722,39 +738,44 @@ final class ConfigServlet extends Servlet
 		out.println(" <tr>");
 		out.println("  <td>url</td>");
 		out.println("  <td>class</td>");
+		out.println("  <td>isSingleton</td>");
 		out.println("  <td>operation</td>");
 		out.println(" </tr>");
 
-		for (int i = 0; i < server.currentConfig.servlets.size(); i++)
+		n = (Integer) session.getPrivate("edit_servlets");
+		for (int i = 0; i < server.currentConfig.getServlets().size(); i++)
 		{
-			ServerConfig.Servlet cs = server.currentConfig.servlets.get(i);
-			out.println(" <tr>");
-			out.println("  <td><a href = '" + cs.url + "'>" + cs.url + "</a></td>");
-			out.println("  <td>" + cs.classFileName + "</td>");
-			out.println("  <td>");
-			out.println("   <input type = button value = 'edit' onclick = \"do_action('edit_servlets'," + i + ");\">");
-			out.println("   <input type = button value = 'del' onclick = \"do_action('del_servlets'," + i + ");\">");
-			out.println("  </td>");
-			out.println(" </tr>");
+			ServerConfig.Servlet cs = server.currentConfig.getServlets().get(i);
+			if (n != null && n.intValue() == i)
+			{
+				out.println(" <tr>");
+				out.println("  <td><input type = text id = 'ServletUrl' value = '" + cs.url + "'></td>");
+				out.println("  <td><input type = text id = 'class_name' value = '" + cs.classFileName + "'></td>");
+				out.println("  <td>" + getPullDown("isSingleton", cs.isSingleton) + "</td>");
+				out.println("  <td><input type = button value = 'update' onclick = \"do_action('upd_servlets',ServletUrl.value,class_name.value,isSingleton.value);\"></td>");
+				out.println(" </tr>");
+			}
+			else
+			{
+				out.println(" <tr>");
+				out.println("  <td><a href = '" + cs.url + "'>" + cs.url + "</a></td>");
+				out.println("  <td>" + cs.classFileName + "</td>");
+				out.println("  <td>" + cs.isSingleton + "</td>");
+				out.println("  <td>");
+				out.println("   <input type = button value = 'edit' onclick = \"do_action('edit_servlets'," + i + ");\">");
+				out.println("   <input type = button value = 'del' onclick = \"do_action('del_servlets'," + i + ");\">");
+				out.println("  </td>");
+				out.println(" </tr>");
+			}
 		}
 
-		n = (Integer) session.getPrivate("edit_servlets");
-		if (n != null)
-		{
-			int l = n.intValue();
-			ServerConfig.Servlet cs = server.currentConfig.servlets.get(l);
-			out.println(" <tr>");
-			out.println("  <td><input type = text id = 'ServletUrl' value = '" + cs.url + "'></td>");
-			out.println("  <td><input type = text id = 'class_name' value = '" + cs.classFileName + "'></td>");
-			out.println("  <td><input type = button value = 'update' onclick = \"do_action('upd_servlets',ServletUrl.value,class_name.value);\"></td>");
-			out.println(" </tr>");
-		}
-		else
+		if (n == null)
 		{
 			out.println(" <tr>");
 			out.println("  <td><input type = text id = 'ServletUrl' value = ''></td>");
 			out.println("  <td><input type = text id = 'class_name' value = ''></td>");
-			out.println("  <td><input type = button value = 'add' onclick = \"do_action('add_servlets',ServletUrl.value,class_name.value);\"></td>");
+			out.println("  <td>" + getPullDown("isSingleton", false) + "</td>");
+			out.println("  <td><input type = button value = 'add' onclick = \"do_action('add_servlets',ServletUrl.value,class_name.value,isSingleton.value);\"></td>");
 			out.println(" </tr>");
 		}
 		out.println("</table>");
@@ -798,7 +819,7 @@ final class ConfigServlet extends Servlet
 		out.println("<body>");
 		out.println(msg);
 		out.println("<br>");
-		out.println("<a href=" + server.currentConfig.configPage + ">return</a>");
+		out.println("<a href=" + server.currentConfig.getConfigPageUrl() + ">return</a>");
 		out.println("</body>");
 		out.println("</html>");
 	}
@@ -808,7 +829,7 @@ final class ConfigServlet extends Servlet
 		PrintWriter out = res.getWriter();
 		out.println("<html>");
 		out.println("<body>");
-		out.println("<form name = 'formMain' action = '" + server.currentConfig.configPage + "' method = 'post'>");
+		out.println("<form name = 'formMain' action = '" + server.currentConfig.getConfigPageUrl() + "' method = 'post'>");
 		out.println("<input type = \"hidden\" name = \"action\" id = \"action\" value=\"login\">");
 		out.println("username:<input type = \"text\" name = \"username\"  id = \"username\"><br>");
 		out.println("password:<input type = \"password\" name = \"password\" id = \"password\"><br>");

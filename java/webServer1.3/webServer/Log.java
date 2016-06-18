@@ -11,7 +11,7 @@ public class Log
 	{
 		try
 		{
-			if (logInFile != null)
+			if (logInFile != null && logInFile != "")
 			{
 				FileOutputStream fos = new FileOutputStream(logInFile, true);
 				log = new PrintStream(fos, true, "utf-8");

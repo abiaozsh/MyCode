@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
@@ -37,11 +38,13 @@ final class FileSystem
 
 	private boolean allowDel = false;
 
+	private boolean isDownload = true;
+
 	private String userName = null;
 
 	private String passWord = null;
 
-	FileSystem(String url, String rootPath, boolean allowList, boolean allowUpLoad, boolean allowDel, String userName, String passWord)
+	FileSystem(String url, String rootPath, boolean allowList, boolean allowUpLoad, boolean allowDel, boolean isDownload, String userName, String passWord)
 	{
 		this.url = url;
 
@@ -59,6 +62,8 @@ final class FileSystem
 		this.allowUpLoad = allowUpLoad;
 
 		this.allowDel = allowDel;
+
+		this.isDownload = isDownload;
 
 		this.userName = userName;
 
@@ -126,10 +131,10 @@ final class FileSystem
 	void doReq(String path, Request req, Response res, Server server) throws Exception
 	{
 		Session session = req.getSession();
-		
-        String action = req.getPOSTParam("action");
 
-        if (userName != null || passWord != null)
+		String action = req.getPOSTParam("action");
+
+		if (userName != null || passWord != null)
 		{
 			if ("login".equals(action))
 			{
@@ -137,7 +142,7 @@ final class FileSystem
 
 				if (pass)
 				{
-					session.setPrivate("FileLogin"+this.url, "T");
+					session.setPrivate("FileLogin" + this.url, "T");
 				}
 				else
 				{
@@ -146,13 +151,13 @@ final class FileSystem
 			}
 			else if ("logout".equals(action))
 			{
-				session.setPrivate("FileLogin"+this.url, null);
+				session.setPrivate("FileLogin" + this.url, null);
 				makeLogin(req, res);
 				return;
 			}
 			else
 			{
-				if (!"T".equals(session.getPrivate("FileLogin"+this.url)))
+				if (!"T".equals(session.getPrivate("FileLogin" + this.url)))
 				{
 					makeLogin(req, res);
 					return;
@@ -238,33 +243,57 @@ final class FileSystem
 			}
 			else
 			{
-				int start;
-				int end;
-
-				String Range = req.getHTTPParam("Range");
-
-				start = 0;
-				end = (int) file.length() - 1;
-
-				if (Range != null)
+				if (isDownload)
 				{
-					Range = Range.substring(6);
-					String[] Ranges = Range.split(",");
-					if (Ranges.length > 0)
+					int start;
+					int end;
+
+					String Range = req.getHTTPParam("Range");
+
+					start = 0;
+					end = (int) file.length() - 1;
+
+					if (Range != null)
 					{
-						Ranges = Ranges[0].split("-");
+						Range = Range.substring(6);
+						String[] Ranges = Range.split(",");
 						if (Ranges.length > 0)
 						{
-							start = Util.strToInt(Ranges[0]);
-						}
-						if (Ranges.length > 1)
-						{
-							end = Util.strToInt(Ranges[1]);
+							Ranges = Ranges[0].split("-");
+							if (Ranges.length > 0)
+							{
+								start = Util.strToInt(Ranges[0]);
+							}
+							if (Ranges.length > 1)
+							{
+								end = Util.strToInt(Ranges[1]);
+							}
 						}
 					}
-				}
 
-				setFileHead(file, start, end, res);
+					setFileHead(file, start, end, res);
+				}
+				else
+				{
+					FileInputStream fis = new FileInputStream(file);
+					InputStreamReader isr = new InputStreamReader(fis, server.currentConfig.getDefaultEncoding());
+					try
+					{
+						PrintWriter pw = res.getWriter();
+						char[] cbuff = new char[1024];
+						while (true)
+						{
+							int len = isr.read(cbuff);
+							if (len <= 0) break;
+							pw.write(cbuff, 0, len);
+						}
+					}
+					finally
+					{
+						isr.close();
+						fis.close();
+					}
+				}
 			}
 		}
 	}
@@ -396,21 +425,21 @@ final class FileSystem
 			return 0;
 		}
 	}
-	
-    private static void makeLogin(Request req, Response res) throws Exception
-    {
-        PrintWriter out = res.getWriter();
-        out.println("<html>");
-        out.println("<body>");
-        out.println("<form name = 'formMain' method = 'post'>");
-        out.println("<input type = \"hidden\" name = \"action\" id = \"action\" value=\"login\">");
-        out.println("username:<input type = \"text\" name = \"username\"  id = \"username\"><br>");
-        out.println("password:<input type = \"password\" name = \"password\" id = \"password\"><br>");
-        out.println("<input type = \"submit\"><br>");
-        out.println("</form>");
-        out.println("</body>");
-        out.println("</html>");
-    }
+
+	private static void makeLogin(Request req, Response res) throws Exception
+	{
+		PrintWriter out = res.getWriter();
+		out.println("<html>");
+		out.println("<body>");
+		out.println("<form name = 'formMain' method = 'post'>");
+		out.println("<input type = \"hidden\" name = \"action\" id = \"action\" value=\"login\">");
+		out.println("username:<input type = \"text\" name = \"username\"  id = \"username\"><br>");
+		out.println("password:<input type = \"password\" name = \"password\" id = \"password\"><br>");
+		out.println("<input type = \"submit\"><br>");
+		out.println("</form>");
+		out.println("</body>");
+		out.println("</html>");
+	}
 
 	private void getList(File file, Request req, Response res) throws Exception
 	{

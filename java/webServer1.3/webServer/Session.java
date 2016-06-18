@@ -25,7 +25,7 @@ public final class Session {
         }
         synchronized (server.sessionCleaner) {
             cleanTask = new SessionCleaner(this, server);
-            server.sessionCleaner.schedule(cleanTask, server.currentConfig.sessionExpires * 1000);
+            server.sessionCleaner.schedule(cleanTask, server.currentConfig.getSessionExpires() * 1000);
             Server.debug("new Session: " + ID + " at " + Util.getTime());
         }
     }
@@ -35,7 +35,7 @@ public final class Session {
             cleanTask.cancel();
             server.sessionCleaner.purge();
             cleanTask = new SessionCleaner(this, server);
-            server.sessionCleaner.schedule(cleanTask, server.currentConfig.sessionExpires * 1000);
+            server.sessionCleaner.schedule(cleanTask, server.currentConfig.getSessionExpires() * 1000);
             Server.debug("touch Session: " + ID + " at " + Util.getTime());
         }
     }

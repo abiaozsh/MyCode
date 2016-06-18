@@ -55,7 +55,7 @@ public class RequestDispatcher
 				ServletPack sp = server.servlets.get(target);
 				if (sp != null)
 				{
-					servlet = sp.newInstance();
+					servlet = sp.getInstance();
 				}
 			}
 			if (servlet != null)

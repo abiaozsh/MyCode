@@ -30,7 +30,8 @@ public final class Server
 	public static Server serverInstance = null;
 
 	ServerConfig currentConfig = null;
-
+	String configFile = "";
+	
 	ArrayList<JspProcessor> jspProcessors = null;
 
 	ArrayList<FileSystem> fileSystems = null;
@@ -94,28 +95,28 @@ public final class Server
 		applicationData = new HashMap<String, Object>();
 
 		currentConfig = new ServerConfig();
-		currentConfig.readConfigFromFile(configFile);
-		currentConfig.configFile = configFile;
+		currentConfig.LoadConfig(configFile);
+		this.configFile = configFile;
 	}
 
 	void applyConfig()
 	{
 
 		jspProcessors = new ArrayList<JspProcessor>();
-		for (ServerConfig.JspProcessor cjp : currentConfig.jspProcessors)
+		for (ServerConfig.JspProcessor cjp : currentConfig.getJspProcessors())
 		{
 			jspProcessors.add(new JspProcessor(cjp.url, cjp.rootPath));
 		}
 
 		fileSystems = new ArrayList<FileSystem>();
-		for (ServerConfig.FileSystem cfs : currentConfig.fileSystems)
+		for (ServerConfig.FileSystem cfs : currentConfig.getFileSystems())
 		{
-			fileSystems.add(new FileSystem(cfs.url, cfs.rootPath, cfs.allowList, cfs.allowUpLoad, cfs.allowDel, cfs.userName, cfs.passWord));
+			fileSystems.add(new FileSystem(cfs.url, cfs.rootPath, cfs.allowList, cfs.allowUpLoad, cfs.allowDel, cfs.isDownload, cfs.userName, cfs.passWord));
 		}
 
-		if (currentConfig.javaCompiler != null)
+		if (currentConfig.getJavaCompiler() != null)
 		{
-			String path = currentConfig.javaCompiler;
+			String path = currentConfig.getJavaCompiler();
 			if (path.startsWith("file:///"))
 			{
 				if (path.substring(8).indexOf(":") >= 0 || path.substring(8).startsWith("/"))
@@ -177,7 +178,7 @@ public final class Server
 
 		servlets = new HashMap<String, ServletPack>();
 
-		for (ServerConfig.Servlet sc : currentConfig.servlets)
+		for (ServerConfig.Servlet sc : currentConfig.getServlets())
 		{
 			String classFileName = sc.classFileName;
 			try
@@ -186,8 +187,11 @@ public final class Server
 
 				sp.clazz = classloader.loadClass(classFileName);
 
-				//TODO ?
-				//sp.clazz.newInstance();
+				if (sc.isSingleton)
+				{
+					sp.Instance = sp.getInstance();
+					sp.isSingleton = true;
+				}
 
 				sp.url = sc.url;
 
@@ -203,12 +207,12 @@ public final class Server
 			}
 		}
 
-		if (currentConfig.configPageEnabled && currentConfig.configPage != null)
+		if (currentConfig.getConfigPageEnabled() && currentConfig.getConfigPageUrl() != null)
 		{
 			ServletPack sp = new ServletPack();
 			sp.clazz = ConfigServlet.class;
-			sp.url = currentConfig.configPage;
-			servlets.put(currentConfig.configPage, sp);
+			sp.url = currentConfig.getConfigPageUrl();
+			servlets.put(currentConfig.getConfigPageUrl(), sp);
 		}
 	}
 
@@ -273,15 +277,16 @@ final class ServerThread extends Thread
 			this.server = server;
 			if (SSL)
 			{
-				System.out.println("listening port:" + server.currentConfig.SSLport + "(SSL)");
-				Log.log("listening port:" + server.currentConfig.SSLport + "(SSL)");
+				System.out.println("listening port:" + server.currentConfig.getSSLport() + "(SSL)");
+				Log.log("listening port:" + server.currentConfig.getSSLport() + "(SSL)");
 				sv = getSSLServerSocket(server.currentConfig);
 			}
 			else
 			{
-				System.out.println("listening port:" + server.currentConfig.port);
-				Log.log("listening port:" + server.currentConfig.port);
-				sv = new ServerSocket(server.currentConfig.port);
+				int port = server.currentConfig.getPort();
+				System.out.println("listening port:" + port);
+				Log.log("listening port:" + port);
+				sv = new ServerSocket(port);
 			}
 		}
 		catch (Exception e)
@@ -367,13 +372,13 @@ final class ServerThread extends Thread
 	{
 		ServerSocket s = null;
 
-		char keyStorePass[] = currentConfig.SSLkeyStorePass.toCharArray();
-		char keyPassword[] = currentConfig.SSLkeyPassword.toCharArray();
+		char keyStorePass[] = currentConfig.getSSLkeyStorePass().toCharArray();
+		char keyPassword[] = currentConfig.getSSLkeyPassword().toCharArray();
 
 		// KeyStore ks = KeyStore.getInstance("JKS");
 		KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 
-		ks.load(new FileInputStream(currentConfig.SSLclientKeysFile), keyStorePass);
+		ks.load(new FileInputStream(currentConfig.getSSLclientKeysFile()), keyStorePass);
 
 		// KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -389,7 +394,7 @@ final class ServerThread extends Thread
 
 		SSLServerSocketFactory factory = sslContext.getServerSocketFactory();
 
-		s = factory.createServerSocket(currentConfig.SSLport);
+		s = factory.createServerSocket(currentConfig.getSSLport());
 
 		return s;
 	}
@@ -415,7 +420,7 @@ final class Monitor extends Thread
 			server.st = new ServerThread(server, false);
 			server.st.setName("Request Listener");
 			server.st.start();
-			if (server.currentConfig.SSLactive)
+			if (server.currentConfig.getSSLactive())
 			{
 				server.sst = new ServerThread(server, true);
 				server.sst.setName("Request Listener(ssl)");
@@ -456,7 +461,7 @@ final class Monitor extends Thread
 			{
 				server.st.shutdown();
 			}
-			if (server.currentConfig.SSLactive)
+			if (server.currentConfig.getSSLactive())
 			{
 				if (server.sst != null)
 				{
@@ -482,8 +487,16 @@ class ServletPack
 
 	Class<?> clazz;
 
-	Servlet newInstance()
+	Servlet Instance;
+
+	boolean isSingleton;
+
+	Servlet getInstance()
 	{
+		if (isSingleton)
+		{
+			return Instance;
+		}
 		try
 		{
 			Servlet servlet = (Servlet) clazz.newInstance();

@@ -66,7 +66,7 @@ public class Response
 
     final static int STATUS_TEXT = 2;
 
-    final static int STATUS_INPUT = 3;
+    final static int STATUS_STREAM = 3;
 
     final static int STATUS_REDIRECT = 4;
 
@@ -94,7 +94,7 @@ public class Response
         super.finalize();
     }
 
-    Response(Request req, Server server)
+    Response(Server server)//Request req, 
     {
         head = HEAD200;
         contents = new HashMap<String, String>();
@@ -166,7 +166,7 @@ public class Response
             }
             else
             {
-                this.characterEncoding = server.currentConfig.defaultEncoding;
+                this.characterEncoding = server.currentConfig.getDefaultEncoding();
             }
             if (GZIP)
             {
@@ -210,7 +210,7 @@ public class Response
         if (status == 0)
         {
             contentType = "application/octet-stream";
-            status = STATUS_INPUT;
+            status = STATUS_STREAM;
             inputStream = is;
             this.inputStreamClose = inputStreamClose;
             inputStreamLength = isLength;
