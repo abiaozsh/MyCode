@@ -19,12 +19,12 @@
 		    		  
 	    <LinearLayout
 	        android:layout_width="fill_parent"
-	        android:layout_height="fill_parent"
+	        android:layout_height= "match_parent"
 	        android:layout_weight="1"
-	        android:orientation="vertical" >
+	        android:orientation="horizontal">"
 		    	 
 		 	<Button android:id="@+id/configButton"
-		 			android:layout_height="fill_parent"
+		 			android:layout_height= "200px"
 		 			android:layout_width="fill_parent"
 					android:layout_margin="3dp"
 		 			android:gravity="center" 
@@ -34,7 +34,7 @@
 		 			android:text="Init"
 		 	/>	
 		 	<Button android:id="@+id/testButton"
-		 			android:layout_height="fill_parent"
+		 			android:layout_height= "200px"
 		 			android:layout_width="fill_parent"
 					android:layout_margin="3dp"
 		 			android:gravity="center" 
@@ -43,26 +43,31 @@
 		 			android:layout_weight="1"
 		 			android:text="Test"
 		 	/>	
-		 		</LinearLayout>
-    
-    	    <LinearLayout 
+ 		</LinearLayout>
+
+   	    <LinearLayout 
 	    android:orientation="vertical"
 	    android:layout_width="fill_parent"
-	    android:layout_height="fill_parent"
+	    android:layout_height="match_parent"
 	    android:layout_weight="1"
 	    >
 		    	 
 	 	<EditText
 	 	    android:id="@+id/Text1"
 	 	    android:layout_width="fill_parent"
-	 	    android:layout_height="fill_parent"
+	 	    android:layout_height="130px"
 	 	    android:layout_margin="10dp"
 	 	    android:layout_weight="1"
 	 	    android:background="#0877A6"
 	 	    android:focusableInTouchMode="false"
 	 	    android:gravity="left|center_vertical" />
-
-		 		</LinearLayout>
+	 	
+        <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"/>
+	    
+ 		</LinearLayout>
     
     </LinearLayout>
 		
