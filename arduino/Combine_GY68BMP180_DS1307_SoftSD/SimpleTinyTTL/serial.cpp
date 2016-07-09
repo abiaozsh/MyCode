@@ -46,14 +46,11 @@
 void wait(uint16_t length)//125/ms
 {
   TCCR1A = 0;
-  TCCR1B = 3;//1MHz 125/ms
+  TCCR1B = 3;//1/8MHz 125/ms
   TCCR1C = 0;
   TIMSK1 = 0;
-  TCNT1 = 0;TIFR1 |= _BV(TOV1);//overflow flg reset
-  while(currTick<length)
-  {
-    ;
-  }
+  TCNT1 = 0;//overflow flg reset
+  while(TCNT1<length);
 }
 
 void dly()
@@ -238,7 +235,7 @@ unsigned long bmp085ReadUP(){
 
   // Wait for conversion, delay time dependent on OSS
   //delay(2 + (3<<OSS));//3*8 24+2 26ms
-  wait(125*26);
+  wait(125*100);
 
   // Read register 0xF6 (MSB), 0xF7 (LSB), and 0xF8 (XLSB)
   msb = bmp085Read(0xF6);
@@ -300,12 +297,10 @@ void loop() {
     uint16_t mc = bmp085ReadInt(0xBC); SerialSend('j');SerialSend(':');SendInt(mc); SerialSend('|');
     uint16_t md = bmp085ReadInt(0xBE); SerialSend('k');SerialSend(':');SendInt(md); SerialSend('|');
     
+    for(int i=0;i<20;i++){
     uint16_t t = bmp085ReadUT();       SerialSend('t');SerialSend(':');SendInt(t); SerialSend('|');
-    uint16_t p = bmp085ReadUP();       SerialSend('p');SerialSend(':');SendInt(p); SerialSend('|');
-    
-    //0.1s
-    wait(125*100);
-
+    uint32_t p = bmp085ReadUP();       SerialSend('p');SerialSend(':');SendInt(p); SerialSend('|');
+    }
 	}
 }
 
