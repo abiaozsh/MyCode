@@ -10,7 +10,6 @@ public class sample extends JspPage {
   public boolean authorization(String username, String password){
 
 return "abc".equals(username) && "abc".equals(password);
-
 	 }
 
 private String sample()

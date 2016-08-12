@@ -4,7 +4,7 @@
  <port>81</port>
  
  <SSL>
-  <active>true</active>
+  <active>false</active>
   <port>445</port>
   <clientKeysFile>clientKeys.key</clientKeysFile>
   <keyStorePass>123456</keyStorePass>
@@ -55,13 +55,13 @@
  </fileSystem>
  
  <fileSystem>
-  <url>/diske/</url>
-  <rootPath>e:\</rootPath>
-  <allowList>true</allowList>
+  <url>/js/</url>
+  <rootPath>js\</rootPath>
+  <allowList>false</allowList>
   <allowUpLoad>false</allowUpLoad>
   <allowDel>false</allowDel>
-  <userName>admin</userName>
-  <passWord>uYCu8m0wTlCO+9yXSWeIoA==</passWord>
+  <userName></userName>
+  <passWord></passWord>
  </fileSystem>
  
  <fileSystem>
@@ -83,6 +83,11 @@
   <url>/Control</url>
   <class>sample.Control</class>
  </servlet>
+  
+ <servlet>
+  <url>/ControlV2</url>
+  <class>sample.ControlV2</class>
+ </servlet>
  
  <servlet>
   <url>/screen.jpg</url>
@@ -97,6 +102,11 @@
  <servlet>
   <url>/MouseAction</url>
   <class>sample.MouseAction</class>
+ </servlet>
+ 
+ <servlet>
+  <url>/KeyAction</url>
+  <class>sample.KeyAction</class>
  </servlet>
  
  <servlet>
@@ -122,11 +132,6 @@
  <servlet>
   <url>/MessageBoxAction</url>
   <class>sample.MessageboxAction</class>
- </servlet>
- 
- <servlet>
-  <url>/KeyAction</url>
-  <class>sample.KeyAction</class>
  </servlet>
  
  <servlet>

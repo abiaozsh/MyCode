@@ -134,7 +134,7 @@ final class FileSystem
 
 		String action = req.getPOSTParam("action");
 
-		if (userName != null || passWord != null)
+		if (userName != null && passWord != null && !"".equals(userName) && !"".equals(passWord))
 		{
 			if ("login".equals(action))
 			{

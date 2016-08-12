@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <config>
  
  <port>81</port>
@@ -18,6 +18,7 @@
  <sessionExpires>300</sessionExpires>
  
  <logFile>webServer.log</logFile>
+ 
  <configPage>
   <enabled>true</enabled>
   <url>/config</url>
@@ -25,54 +26,16 @@
   <passWord>4QrcOUm6Wau+VuBX8g+IPg==</passWord>
  </configPage>
  
- <fileSystem>
-  <url>/c/</url>
-  <rootPath>c:\</rootPath>
-  <allowList>true</allowList>
-  <allowUpLoad>true</allowUpLoad>
-  <allowDel>true</allowDel>
-  <userName>zhengsh</userName>
-  <passWord></passWord>
- </fileSystem>
  
- <fileSystem>
-  <url>/filesystem/</url>
-  <rootPath>fileSystem\</rootPath>
-  <allowList>false</allowList>
-  <allowUpLoad>false</allowUpLoad>
-  <allowDel>false</allowDel>
-  <userName></userName>
-  <passWord></passWord>
- </fileSystem>
- 
- <fileSystem>
-  <url>/d/</url>
-  <rootPath>d:\</rootPath>
-  <allowList>true</allowList>
-  <allowUpLoad>true</allowUpLoad>
-  <allowDel>true</allowDel>
-  <userName></userName>
-  <passWord></passWord>
- </fileSystem>
- 
- <fileSystem>
-  <url>/e/</url>
-  <rootPath>e:\</rootPath>
-  <allowList>true</allowList>
-  <allowUpLoad>true</allowUpLoad>
-  <allowDel>true</allowDel>
-  <userName></userName>
-  <passWord></passWord>
- </fileSystem>
- 
- <jsp>
-  <url>/jsp/</url>
-  <rootPath>jsp\</rootPath>
- </jsp>
- 
- <servlet>
-  <url>/</url>
-  <class>sample.Root</class>
- </servlet>
- 
+<javaCompiler/>
+<fileSystem>
+<rootPath>c:\</rootPath>
+<url>/c/</url>
+<allowList>true</allowList>
+<allowUpLoad>false</allowUpLoad>
+<allowDel>false</allowDel>
+<isDownload>true</isDownload>
+<userName/>
+<passWord/>
+</fileSystem>
 </config>

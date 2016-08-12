@@ -335,6 +335,25 @@ public class ServerConfig
 		setValue(defaultEncoding, val);
 	}
 
+	public static class FileSystem implements Serializable
+	{
+		String url = null;
+
+		String rootPath = null;
+
+		boolean allowList = false;
+
+		boolean allowUpLoad = false;
+
+		boolean allowDel = false;
+
+		boolean isDownload = true;
+
+		String userName = null;
+
+		String passWord = null;
+	}
+
 	public ArrayList<FileSystem> getFileSystems()
 	{
 		try
@@ -427,6 +446,13 @@ public class ServerConfig
 		return;
 	}
 
+	public static class JspProcessor implements Serializable
+	{
+		String url = null;
+
+		String rootPath = null;
+	}
+
 	public ArrayList<JspProcessor> getJspProcessors()
 	{
 		try
@@ -503,6 +529,15 @@ public class ServerConfig
 		return;
 	}
 
+	public static class Servlet implements Serializable
+	{
+		String classFileName = null;
+
+		String url = null;
+
+		boolean isSingleton = false;
+	}
+
 	public ArrayList<Servlet> getServlets()
 	{
 		try
@@ -526,6 +561,7 @@ public class ServerConfig
 		}
 		catch (Exception ex)
 		{
+			Log.log(ex);
 			return new ArrayList<Servlet>();
 		}
 	}
@@ -609,41 +645,6 @@ public class ServerConfig
 		return newChild;
 	}
 
-	public static class FileSystem implements Serializable
-	{
-		String url = null;
-
-		String rootPath = null;
-
-		boolean allowList = false;
-
-		boolean allowUpLoad = false;
-
-		boolean allowDel = false;
-
-		boolean isDownload = true;
-
-		String userName = null;
-
-		String passWord = null;
-	}
-
-	public static class JspProcessor implements Serializable
-	{
-		String url = null;
-
-		String rootPath = null;
-	}
-
-	public static class Servlet implements Serializable
-	{
-		String classFileName = null;
-
-		String url = null;
-
-		boolean isSingleton = false;
-	}
-
 	void LoadConfig(String configFile)
 	{
 		try
@@ -714,7 +715,7 @@ public class ServerConfig
 
 	private boolean getBoolean(Node n)
 	{
-		if ("true".equals(getValueNull(n).trim()))
+		if ("true".equals(getValue(n).trim()))
 		{
 			return true;
 		}

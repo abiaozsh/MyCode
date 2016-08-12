@@ -17,11 +17,9 @@ import com.sun.image.codec.jpeg.JPEGCodec;
 import com.sun.image.codec.jpeg.JPEGEncodeParam;
 import com.sun.image.codec.jpeg.JPEGImageEncoder;
 
-public class ScreenServlet extends Servlet
-{
+public class ScreenServlet extends Servlet {
 	@Override
-	public void doReq(Request req, Response res, Server server) throws Exception
-	{
+	public void doReq(Request req, Response res, Server server) throws Exception {
 
 		Session session = req.getSession();
 		int iquality = strToInt((String) session.get("quality"));
@@ -29,41 +27,33 @@ public class ScreenServlet extends Servlet
 			res.sendRedirect("Login");
 			return;
 		}
-		if (iquality < 100)
-		{
+		if (iquality < 100) {
 			res.setGZIP(false);
-			
-			//res.setFileName("screen.jpg");
-			
+
+			// res.setFileName("screen.jpg");
+
 			float fquality;
-			if (iquality > 0)
-			{
+			if (iquality > 0) {
 				fquality = (iquality) / 100f;
-			}
-			else
-			{
+			} else {
 				fquality = 0.5f;
 			}
 			BufferedImage b = captureScreen();
 			OutputStream out = res.getOutputStream();
-			
+
 			res.setContentType("image/jpeg");
 
 			JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
-			try
-			{
+			try {
 				JPEGEncodeParam param = JPEGCodec.getDefaultJPEGEncodeParam(b);
 				param.setQuality(fquality, false);
 				encoder.setJPEGEncodeParam(param);
 				encoder.encode(b);
-			}
-			catch (Exception e)
-			{
+			} catch (Exception e) {
 				System.out.print(e);
 			}
 		}
-		if (iquality == 100)
-		{
+		if (iquality == 100) {
 			res.setFileName("screen.bmp");
 			BufferedImage b = captureScreen();
 			Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -73,27 +63,25 @@ public class ScreenServlet extends Servlet
 		}
 	}
 
-	private BufferedImage captureScreen()
-	{
-		try
-		{
+	private BufferedImage captureScreen() {
+		try {
 			Robot robot = new Robot();
 			Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
+			// TODO
+			scrSize.width = 640;
+			scrSize.height = 480;
 			BufferedImage bufImg = robot.createScreenCapture(new Rectangle(0, 0, scrSize.width, scrSize.height));
 			return bufImg;
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			System.out.println(e.toString());
 			return null;
 		}
 	}
 
-	public static byte[] getByte(int[] value, int w, int h)
-	{
-		try
-		{
-			byte[] head = { 0x42, 0x4d, 0, 0, 0, 0, 0, 0, 0, 0, 0x36, 0, 0, 0 }; // BM /
+	public static byte[] getByte(int[] value, int w, int h) {
+		try {
+			byte[] head = { 0x42, 0x4d, 0, 0, 0, 0, 0, 0, 0, 0, 0x36, 0, 0, 0 }; // BM
+																					// /
 			// file
 			// end
 			// /
@@ -114,10 +102,8 @@ public class ScreenServlet extends Servlet
 			};
 			byte bits[] = new byte[w * h * 3];
 			int k = 0;
-			for (int i = h - 1; i >= 0; i--)
-			{
-				for (int j = 0; j < w; j++)
-				{
+			for (int i = h - 1; i >= 0; i--) {
+				for (int j = 0; j < w; j++) {
 					int v = value[k];
 					bits[(j + i * w) * 3] = (byte) (v & 0xFF);
 					bits[(j + i * w) * 3 + 1] = (byte) ((v >> 8) & 0xFF);
@@ -127,36 +113,27 @@ public class ScreenServlet extends Servlet
 			}
 			byte[] binout = new byte[bits.length + head.length + info.length];
 			int idx = 0;
-			for (int i = 0; i < head.length; i++)
-			{
+			for (int i = 0; i < head.length; i++) {
 				binout[idx++] = head[i];
 			}
-			for (int i = 0; i < info.length; i++)
-			{
+			for (int i = 0; i < info.length; i++) {
 				binout[idx++] = info[i];
 			}
-			for (int i = 0; i < bits.length; i++)
-			{
+			for (int i = 0; i < bits.length; i++) {
 				binout[idx++] = bits[i];
 			}
 			return binout;
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			System.out.print(e);
 			return null;
 		}
 	}
 
-	private int strToInt(String sNum)
-	{
+	private int strToInt(String sNum) {
 		int iNum = 0;
-		try
-		{
+		try {
 			iNum = Integer.parseInt(sNum);
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			iNum = 0;
 		}
 		return iNum;

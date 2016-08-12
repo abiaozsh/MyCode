@@ -28,6 +28,7 @@ public class Root extends Servlet
 		out.println("<body>");
 		out.println("<a href = '/jsp/control.jsp'>servlet jsp sample</a><br>");
 		out.println("<a href = '/Control'>servlet sample</a><br>");
+		out.println("<a href = '/ControlV2'>servlet sample2</a><br>");
 		out.println("<a href = '/file/'>download sample</a><br>");
 		out.println("<a href = '/jsp/upload.jsp'>upload sample</a><br>");
 		out.println("<a href = '/Sample'>cookie sample</a><br>");
