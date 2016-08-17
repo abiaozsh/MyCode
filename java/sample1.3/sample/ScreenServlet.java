@@ -67,9 +67,6 @@ public class ScreenServlet extends Servlet {
 		try {
 			Robot robot = new Robot();
 			Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
-			// TODO
-			scrSize.width = 640;
-			scrSize.height = 480;
 			BufferedImage bufImg = robot.createScreenCapture(new Rectangle(0, 0, scrSize.width, scrSize.height));
 			return bufImg;
 		} catch (Exception e) {

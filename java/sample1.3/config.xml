@@ -11,11 +11,11 @@
   <keyPassword>123456</keyPassword>
  </SSL>
  
- <javaCompilerPath>file:///C:\Program Files\Java\jdk1.6.0_06\lib\tools.jar</javaCompilerPath>
+ <javaCompilerPath>file:///C:\Program Files\Java\jdk1.7.0_01\lib\tools.jar</javaCompilerPath>
  
  <defaultEncoding>utf-8</defaultEncoding>
  
- <sessionExpires>300</sessionExpires>
+ <sessionExpires>30000</sessionExpires>
  
  <configPage>
   <enabled>true</enabled>
