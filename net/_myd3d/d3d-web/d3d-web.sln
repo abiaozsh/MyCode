@@ -1,0 +1,21 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "d3d-web", "d3d-web.csproj", "{58A75D12-B7C6-4A66-9712-D4A091352A2F}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{58A75D12-B7C6-4A66-9712-D4A091352A2F}.Debug.ActiveCfg = Debug|.NET
+		{58A75D12-B7C6-4A66-9712-D4A091352A2F}.Debug.Build.0 = Debug|.NET
+		{58A75D12-B7C6-4A66-9712-D4A091352A2F}.Release.ActiveCfg = Release|.NET
+		{58A75D12-B7C6-4A66-9712-D4A091352A2F}.Release.Build.0 = Release|.NET
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
