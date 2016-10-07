@@ -1,7 +1,18 @@
-#define IRPIN (PIND & _BV(2))
+#define IRPIN (PINB & _BV(4))
 #define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
 /*
+正确
+45 46 47
+44 40 43
+07 15 09
+16 19 0D
+0C 18 5E
+08 1C 5A
+42 52 4A
+
 高低位反了
+
+
 
 5D 9D 1D
 DD FD 3D
