@@ -14,8 +14,6 @@ uint8_t index3 = 0;
 uint8_t index30 = 0;
 uint8_t index10 = 0;
 
-volatile uint8_t dataD;
-volatile uint8_t dataB;
 volatile uint8_t dataC;
 
 volatile uint8_t buff[30];
@@ -98,77 +96,153 @@ int main(void) {
   DDRB = _BV(0)|_BV(1)|_BV(2)|_BV(3);
   DDRC = _BV(0)|_BV(1)|_BV(2);
   
-  TCCR1A = 0 | _BV(WGM11);// ; | _BV(WGM10)
-  TCCR1B = 2;//0 0 1 clkI/O/1 (No prescaling)    16000000 / 8 / 512 / 30
+  //TCCR1A = 0;// | _BV(WGM11) | _BV(WGM10);// ; 
+  //TCCR1B = 1;//0 0 1 clkI/O/1 (No prescaling)    16000000 / 8 / 512 / 30
   //2 0 0 1 0 PWM, Phase Correct, 9-bit 0x01FF TOP BOTTOM
   //WGM11
+  
+  
+  TCCR1A = _BV(WGM11);
+  TCCR1B = 1 | _BV(WGM13) | _BV(WGM12);
+  ICR1 = 0x2000;
+  
   TIMSK1 = _BV(TOIE1) | _BV(OCIE1A) | _BV(OCIE1B);
   TCNT1 = 0;
-  OCR1A = 0;
+
   sei();
+  
+  {
+    buff[ 0] = 255;
+    buff[10] = 255;
+    buff[20] = 255;
+
+    buff[ 1] = 0;
+    buff[11] = 0;
+    buff[21] = 0;
+    
+    buff[ 2] = 255;
+    buff[12] = 255;
+    buff[22] = 255;
+    
+    buff[ 3] = 255;
+    buff[13] = 255;
+    buff[23] = 255;
+    
+    buff[ 4] = 255;
+    buff[14] = 255;
+    buff[24] = 255;
+    
+    buff[ 5] = 0;
+    buff[15] = 0;
+    buff[25] = 0;
+
+    buff[ 6] = 0;
+    buff[16] = 0;
+    buff[26] = 0;
+    
+    buff[ 7] = 0;
+    buff[17] = 0;
+    buff[27] = 0;
+    
+    buff[ 8] = 0;
+    buff[18] = 0;
+    buff[28] = 0;
+    
+    buff[ 9] = 0;
+    buff[19] = 0;
+    buff[29] = 0;
+
+  }
+  
+  uint8_t idx = 0;
+  uint8_t color = 0;
   while(true){
     uint8_t val = GetIR();
+    if(val==0)continue;
+    
+    uint8_t n = 0;
     
     if(val==0x45)
     {
-      buff[0] = 0;
+      n = 0;
     }
     if(val==0x46)
     {
-      buff[0] = 1;
+      n = 1;
     }
     if(val==0x47)
     {
-      buff[0] = 2;
+      n = 2;
     }
     if(val==0x44)
     {
-      buff[0] = 64;
+      n = 64;
     }
     if(val==0x40)
     {
-      buff[0] = 128;
+      n = 128;
     }
     if(val==0x43)
     {
-      buff[0] = 255;
+      n = 255;
+    }
+    
+    switch(val)
+    {
+      case 0x16:idx = 0;break;
+      case 0x0C:idx = 1;break;
+      case 0x18:idx = 2;break;
+      case 0x5E:idx = 3;break;
+      case 0x08:idx = 4;break;
+      case 0x1C:idx = 5;break;
+      case 0x5A:idx = 6;break;
+      case 0x42:idx = 7;break;
+      case 0x52:idx = 8;break;
+      case 0x4A:idx = 9;break;
+    }
+    switch(val)
+    {
+      case 0x07:color =  0;break;
+      case 0x15:color = 10;break;
+      case 0x09:color = 20;break;
     }
 
+    buff[idx+color] = n;
   }
 }
 
 ISR(TIMER1_OVF_vect){
-  OCR1AH = 1;
+  OCR1AH = 3;
   OCR1AL = buff[index30+index10];
-  OCR1BH = 0;
-  OCR1BL = 0xFF;
-  
-  dataD = indexD[index10];
-  dataB = indexB[index10];
-  dataC = indexC[index3];
-  
-    index3++;
-    index30+=10;
-    if(index3==3){
-      index3 = 0;
-      index30 = 0;
-  index10++;
-  if(index10==10){
-    index10 = 0;
-  }
-    }
-}
-//close
-ISR(TIMER1_COMPA_vect){
+  OCR1BH = 2;
+  OCR1BL = 0xFE;
+
+  //off
   PORTD |=  _BV(2)|_BV(3)|_BV(4)|_BV(5)|_BV(6)|_BV(7);
   PORTB |=  _BV(0)|_BV(1)|_BV(2)|_BV(3);
-  PORTC &= ~(_BV(0)|_BV(1)|_BV(2));
+  //on
+  PORTD &= ~indexD[index10];
+  PORTB &= ~indexB[index10];
+  dataC = indexC[index3];
+
+  index3++;
+  index30+=10;
+  if(index3==3){
+    index3 = 0;
+    index30 = 0;
+    index10++;
+    if(index10==10){
+      index10 = 0;
+    }
+  }
 }
 //open
 ISR(TIMER1_COMPB_vect){
-  PORTD &= ~dataD;
-  PORTB &= ~dataB;
   PORTC |=  dataC;
+}
+//close
+ISR(TIMER1_COMPA_vect){
+  PORTC &= ~dataC;
 }
 
 
