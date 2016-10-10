@@ -104,7 +104,7 @@ int main(void) {
   
   TCCR1A = _BV(WGM11);
   TCCR1B = 1 | _BV(WGM13) | _BV(WGM12);
-  ICR1 = 0x2000;
+  ICR1 = 0x500;
   
   TIMSK1 = _BV(TOIE1) | _BV(OCIE1A) | _BV(OCIE1B);
   TCNT1 = 0;
@@ -120,17 +120,17 @@ int main(void) {
     buff[11] = 0;
     buff[21] = 0;
     
-    buff[ 2] = 255;
-    buff[12] = 255;
-    buff[22] = 255;
+    buff[ 2] = 0;
+    buff[12] = 0;
+    buff[22] = 0;
     
-    buff[ 3] = 255;
-    buff[13] = 255;
-    buff[23] = 255;
+    buff[ 3] = 0;
+    buff[13] = 0;
+    buff[23] = 0;
     
-    buff[ 4] = 255;
-    buff[14] = 255;
-    buff[24] = 255;
+    buff[ 4] = 0;
+    buff[14] = 0;
+    buff[24] = 0;
     
     buff[ 5] = 0;
     buff[15] = 0;
@@ -212,11 +212,6 @@ int main(void) {
 }
 
 ISR(TIMER1_OVF_vect){
-  OCR1AH = 3;
-  OCR1AL = buff[index30+index10];
-  OCR1BH = 2;
-  OCR1BL = 0xFE;
-
   //off
   PORTD |=  _BV(2)|_BV(3)|_BV(4)|_BV(5)|_BV(6)|_BV(7);
   PORTB |=  _BV(0)|_BV(1)|_BV(2)|_BV(3);
@@ -235,6 +230,12 @@ ISR(TIMER1_OVF_vect){
       index10 = 0;
     }
   }
+  //Update of OCR1x at BOTTOM
+  OCR1AH = 3;
+  OCR1AL = buff[index30+index10];
+  OCR1BH = 2;
+  OCR1BL = 0xFE;
+
 }
 //open
 ISR(TIMER1_COMPB_vect){
