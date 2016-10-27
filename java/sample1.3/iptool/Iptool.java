@@ -1,6 +1,9 @@
 package iptool;
 
-import java.util.List;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Properties;
 
 import javax.mail.Authenticator;
@@ -19,20 +22,58 @@ public class Iptool {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// while (true) {
-		// try {
-		// Thread.sleep(60000);
-		// } catch (Throwable t) {
-		// }
-		// }
 
-		SimpleMailSender mail = new SimpleMailSender("abiaozsh@sina.cn", "920662zsh");
+		String oldip = "";
+		while (true) {
+			try {
+				// http://192.168.0.1/RST_status.htm
+				URL url = new URL("http://192.168.0.1/RST_status.htm");// "http://localhost:81/test"
+				HttpURLConnection urlcon = (HttpURLConnection) url.openConnection();
 
-		try {
-			mail.send("abiaozsh@sina.cn", "new", "newfewfdsfdsfsd");
-		} catch (Throwable t) {
-			t.printStackTrace();
+				String loginPassword = "admin:920662";// "aa" + ":" + "bb";
+				String encoded = new sun.misc.BASE64Encoder().encode(loginPassword.getBytes());
+
+				urlcon.setRequestProperty("Authorization", "Basic " + encoded);
+
+				InputStream is = urlcon.getInputStream();
+				InputStreamReader isr = new InputStreamReader(is, "utf-8");
+
+				StringBuilder sb = new StringBuilder();
+				while (true) {
+					int c = isr.read();
+					if (c == -1)
+						break;
+					sb.append((char) c);
+				}
+				String s1 = sb.toString();
+
+				String target = "<tr><td width=\"60%\"><b>IP地址</b></td><td>";
+				String t2 = "</td></tr>";
+
+				int index1 = s1.indexOf(target);
+				String s2 = s1.substring(index1 + target.length());
+				int index2 = s2.indexOf(t2);
+				String ip = s2.substring(0, index2);
+
+				System.out.println("curr IP：" + ip);
+				if (!oldip.equals(ip)) {
+					oldip = ip;
+					SimpleMailSender mail = new SimpleMailSender("abiaozsh@sina.cn", "920662zsh");
+
+					try {
+						mail.send("abiaozsh@sina.cn", "ip", ip);
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
+				}
+
+				Thread.sleep(60000);
+			} catch (Throwable t) {
+				t.printStackTrace();
+				break;
+			}
 		}
+
 	}
 }
 

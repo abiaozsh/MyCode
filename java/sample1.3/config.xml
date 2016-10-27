@@ -140,8 +140,8 @@
  </servlet>
  
  <servlet>
-  <url>/proxy</url>
-  <class>sample.ProxyAction</class>
+  <url>/test</url>
+  <class>sample.TestPage</class>
  </servlet>
  
  <servlet>
