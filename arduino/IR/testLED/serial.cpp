@@ -9342,7 +9342,7 @@ int main(void) {
     seed = TCNT1L;
     
     switch(val){
-      case 0x16:frameCountT = 10;break;
+      case 0x16:frameCountT = 100;break;
       case 0x0C:frameCountT = 1; break;
       case 0x18:frameCountT = 2; break;
       case 0x5E:frameCountT = 3; break;
@@ -9368,13 +9368,14 @@ ISR(TIMER1_OVF_vect){
   PORTD &= ~indexD[index10];
   PORTB &= ~indexB[index10];
   
-  if(buff[index30+index3]){
-    dataC = indexC[index3];
-  }
-  else
-  {
-    dataC = 0;
-  }
+  dataC = indexC[index3];
+//  if(buff[index30+index3]){
+//    dataC = indexC[index3];
+//  }
+//  else
+//  {
+//    dataC = 0;
+//  }
 
   index3++;
   if(index3==3){
