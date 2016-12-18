@@ -85,12 +85,11 @@ public class MainActivity extends Activity implements MySensorListener {
 					pwm1 += gravityy * 20;// + (gravityxAccum / 100)
 					pwm2 -= gravityy * 20;// + (gravityxAccum / 100)
 
-					
-					pwm4 += adjZConst;//+- ~30
+					pwm4 += adjZConst;// +- ~30
 					pwm3 += adjZConst;
 					pwm1 -= adjZConst;
 					pwm2 -= adjZConst;
-					
+
 				}
 
 				if (pwm1 > 255)
@@ -212,7 +211,9 @@ public class MainActivity extends Activity implements MySensorListener {
 		final int RFW = 22;
 		final int RBK = 23;
 		final int ROF = 24;
-		final int PUSHDATA = 25;
+		final int CON = 25;
+		final int COF = 26;
+		final int PUSHDATA = 27;
 
 		int AL = 0x04;
 		int AH = 0x08;
@@ -225,6 +226,7 @@ public class MainActivity extends Activity implements MySensorListener {
 
 		int A = 0;
 		int B = 0;
+		int C = 0;
 
 		@Override
 		public void handleMessage(Message msg) {
@@ -282,6 +284,12 @@ public class MainActivity extends Activity implements MySensorListener {
 			case ROF:
 				B = 0;
 				break;
+			case CON:
+				C = 1;
+				break;
+			case COF:
+				C = -1;
+				break;
 			case PUSHDATA:
 				int val = 0;
 				if (A == 1) {
@@ -295,6 +303,14 @@ public class MainActivity extends Activity implements MySensorListener {
 				}
 				if (B == -1) {
 					val |= CH | DL;
+				}
+				if (C == 1) {
+					val |= 0x04 + 0x08 + 0x10 + 0x20;
+					C = 0;
+				}
+				if (C == -1) {
+					val |= 0x80 + 0x40 + 0x01 + 0x02;
+					C = 0;
 				}
 				com.Send((byte) val);
 				break;

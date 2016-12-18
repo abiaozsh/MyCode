@@ -78,9 +78,9 @@
             this.button2.BackColor = System.Drawing.Color.Red;
             this.button2.Location = new System.Drawing.Point(387, 12);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.Size = new System.Drawing.Size(132, 23);
             this.button2.TabIndex = 2;
-            this.button2.Text = "reset";
+            this.button2.Text = "reset（四轴用）";
             this.button2.UseVisualStyleBackColor = false;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
@@ -106,8 +106,8 @@
             // 
             // textBox1
             // 
-            this.textBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)));
+            this.textBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
             this.textBox1.Location = new System.Drawing.Point(12, 332);
             this.textBox1.MaxLength = 0;
             this.textBox1.Multiline = true;
@@ -241,19 +241,21 @@
             // 
             this.textBox2.Location = new System.Drawing.Point(386, 130);
             this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(81, 21);
+            this.textBox2.ReadOnly = true;
+            this.textBox2.Size = new System.Drawing.Size(133, 21);
             this.textBox2.TabIndex = 22;
+            this.textBox2.TextChanged += new System.EventHandler(this.textBox2_TextChanged);
             this.textBox2.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox2_KeyDown);
             this.textBox2.KeyUp += new System.Windows.Forms.KeyEventHandler(this.textBox2_KeyUp);
             // 
             // button5
             // 
             this.button5.BackColor = System.Drawing.Color.Red;
-            this.button5.Location = new System.Drawing.Point(387, 41);
+            this.button5.Location = new System.Drawing.Point(386, 41);
             this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(75, 23);
+            this.button5.Size = new System.Drawing.Size(133, 23);
             this.button5.TabIndex = 23;
-            this.button5.Text = "reset8B";
+            this.button5.Text = "reset8B(小车用)";
             this.button5.UseVisualStyleBackColor = false;
             this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
