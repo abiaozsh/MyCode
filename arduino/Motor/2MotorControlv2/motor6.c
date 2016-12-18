@@ -4,6 +4,9 @@
 
 #define STAOn   DDRB |= _BV(3) ;/**/
 #define STAOff  DDRB &= ~_BV(3);/**/
+
+#define ROTOn   PORTB |= _BV(2) ;/**/
+#define ROTOff  PORTB &= ~_BV(2);/**/
 uint8_t i = 0;
 
 #define CUR_TIMING TIMING__8M_TCCR1B_1_115200
@@ -28,6 +31,7 @@ int main(void) {
   TimerInit();
   MCUCR |= _BV(PUD);
   PORTA = 0x95;//10010101 LHHLHLHL
+  DDRB |= _BV(2) ;
   loop();
 }
 
@@ -35,6 +39,15 @@ void loop() {
 	for(;;)
 	{
     uint8_t data = SerialRead();
+	
+	if(data == (0x04 + 0x08 + 0x10 + 0x20)){STAOn;ROTOn;continue;}
+	if(data == (0x80 + 0x40 + 0x01 + 0x02)){STAOff;ROTOff;continue;}
+
+	if((data & (0x04 + 0x08)) == (0x04 + 0x08))continue;
+	if((data & (0x10 + 0x20)) == (0x10 + 0x20))continue;
+	if((data & (0x80 + 0x40)) == (0x80 + 0x40))continue;
+	if((data & (0x01 + 0x02)) == (0x01 + 0x02))continue;
+
     DDRA = data;
     i=~i;
     if(i)
