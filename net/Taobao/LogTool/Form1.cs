@@ -177,6 +177,24 @@ namespace LogTool
 			}
 		}
 
+		private void load(List<Taobao.Mods.ItemList.Data.Auction> l, String filename)
+		{
+			l.Clear();
+			FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
+			DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(List<Taobao.Mods.ItemList.Data.Auction>));
+			List<Taobao.Mods.ItemList.Data.Auction> l2 = (List<Taobao.Mods.ItemList.Data.Auction>)ser.ReadObject(fs);
+			fs.Close();
+			l.AddRange(l2);
+		}
+
+		private void save(List<Taobao.Mods.ItemList.Data.Auction> l, String filename)
+		{
+			DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(List<Taobao.Mods.ItemList.Data.Auction>));
+			FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write);
+			ser.WriteObject(fs, l);
+			fs.Close();
+		}
+
 		private List<Taobao.Mods.ItemList.Data.Auction> filt(List<Taobao.Mods.ItemList.Data.Auction> l, List<Taobao.Mods.ItemList.Data.Auction> l1, List<Taobao.Mods.ItemList.Data.Auction> l2, List<Taobao.Mods.ItemList.Data.Auction> l3)
 		{
 			List<Taobao.Mods.ItemList.Data.Auction> ret = new List<Taobao.Mods.ItemList.Data.Auction>();
@@ -349,21 +367,6 @@ namespace LogTool
 			return obj;
 		}
 
-		private void button2_Click(object sender, EventArgs e)
-		{
-			var item = (Slot)listBox1.SelectedItem;
-			if (item != null)
-			{
-				proc(pages.Text, search.Text, priceHi.Text, priceLo.Text, item.List);
-				item.Title = pages.Text + "," + search.Text + "," + priceHi.Text + "," + priceLo.Text;
-				listBox1.Items.Clear();
-				listBox1.Items.Add(slots[0]);
-				listBox1.Items.Add(slots[1]);
-				listBox1.Items.Add(slots[2]);
-				listBox1.Items.Add(slots[3]);
-			}
-		}
-
 
 		[Serializable]
 		public class Item
@@ -377,57 +380,57 @@ namespace LogTool
 		}
 		private void button3_Click(object sender, EventArgs e)
 		{
-		/*
-			for (int i = 1; i <= 259; i++)
-			{
-				string _url;
-				if (i == 1)
+			/*
+				for (int i = 1; i <= 259; i++)
 				{
-					_url = "https://xintaiwei.taobao.com/i/asynSearch.htm?_ksTS=1451456560054_551&callback=jsonp552&mid=w-10831283312-0&wid=10831283312&path=/search.htm&search=y&spm=a1z10.3-c.w4002-10831283312.30.WEpail&viewType=list&orderType=price_asc";
-				}
-				else
-				{
-					_url = "https://xintaiwei.taobao.com/i/asynSearch.htm?_ksTS=1451456560054_551&callback=jsonp552&mid=w-10831283312-0&wid=10831283312&path=/search.htm&search=y&spm=a1z10.3-c.w4002-10831283312.30.WEpail&viewType=list&orderType=price_asc&pageNo=" + i;
-				}
-				System.Net.HttpWebRequest Myrq = (System.Net.HttpWebRequest)System.Net.HttpWebRequest.Create(_url);
-				System.Net.HttpWebResponse myrp = (System.Net.HttpWebResponse)Myrq.GetResponse();
-				System.IO.Stream st = myrp.GetResponseStream();
-				StreamReader sr = new StreamReader(st, Encoding.GetEncoding("gbk"));
-				string sss = sr.ReadToEnd();
-				sr.Close();
-				st.Close();
-				myrp.Close();
-				Myrq.Abort();
-				sss = sss.Replace("\\\"", "\"");
-				int pos1 = sss.IndexOf("<ul class=\"items\">");
-				sss = sss.Substring(pos1 + "<ul class=\"items\"".Length + 1);
-				pos1 = sss.IndexOf("</ul>");
-				sss = sss.Substring(0, pos1);
+					string _url;
+					if (i == 1)
+					{
+						_url = "https://xintaiwei.taobao.com/i/asynSearch.htm?_ksTS=1451456560054_551&callback=jsonp552&mid=w-10831283312-0&wid=10831283312&path=/search.htm&search=y&spm=a1z10.3-c.w4002-10831283312.30.WEpail&viewType=list&orderType=price_asc";
+					}
+					else
+					{
+						_url = "https://xintaiwei.taobao.com/i/asynSearch.htm?_ksTS=1451456560054_551&callback=jsonp552&mid=w-10831283312-0&wid=10831283312&path=/search.htm&search=y&spm=a1z10.3-c.w4002-10831283312.30.WEpail&viewType=list&orderType=price_asc&pageNo=" + i;
+					}
+					System.Net.HttpWebRequest Myrq = (System.Net.HttpWebRequest)System.Net.HttpWebRequest.Create(_url);
+					System.Net.HttpWebResponse myrp = (System.Net.HttpWebResponse)Myrq.GetResponse();
+					System.IO.Stream st = myrp.GetResponseStream();
+					StreamReader sr = new StreamReader(st, Encoding.GetEncoding("gbk"));
+					string sss = sr.ReadToEnd();
+					sr.Close();
+					st.Close();
+					myrp.Close();
+					Myrq.Abort();
+					sss = sss.Replace("\\\"", "\"");
+					int pos1 = sss.IndexOf("<ul class=\"items\">");
+					sss = sss.Substring(pos1 + "<ul class=\"items\"".Length + 1);
+					pos1 = sss.IndexOf("</ul>");
+					sss = sss.Substring(0, pos1);
 
-				List<string> items = new List<string>();
-				while (true)
-				{
-					pos1 = sss.IndexOf("</li>");
-					if (pos1 < 0) break;
-					string s1 = sss.Substring(0, pos1 + "</li>".Length);
-					sss = sss.Substring(pos1 + "</li>".Length);
-					items.Add(s1);
-				}
-				StringBuilder sb = new StringBuilder();
-				foreach (var item in items)
-				{
-					sb.Append(item);
-				}
-				{
-					FileStream fs = new FileStream("e:\\out\\"+i+".txt", FileMode.Create, FileAccess.Write);
-					StreamWriter sw = new StreamWriter(fs);
-					sw.Write(sb.ToString());
-					sw.Flush();
-					fs.Flush();
-					fs.Close();
-				}
-				this.Text = i.ToString();
-			}*/
+					List<string> items = new List<string>();
+					while (true)
+					{
+						pos1 = sss.IndexOf("</li>");
+						if (pos1 < 0) break;
+						string s1 = sss.Substring(0, pos1 + "</li>".Length);
+						sss = sss.Substring(pos1 + "</li>".Length);
+						items.Add(s1);
+					}
+					StringBuilder sb = new StringBuilder();
+					foreach (var item in items)
+					{
+						sb.Append(item);
+					}
+					{
+						FileStream fs = new FileStream("e:\\out\\"+i+".txt", FileMode.Create, FileAccess.Write);
+						StreamWriter sw = new StreamWriter(fs);
+						sw.Write(sb.ToString());
+						sw.Flush();
+						fs.Flush();
+						fs.Close();
+					}
+					this.Text = i.ToString();
+				}*/
 			/*
 			FileStream fs = new FileStream("e:\\proc\\a.txt", FileMode.Open, FileAccess.Read);
 			StreamReader sr = new StreamReader(fs);
@@ -480,7 +483,7 @@ namespace LogTool
 			}
 			*/
 
-			
+
 			FileStream fs = new FileStream("e:\\proc\\json.txt", FileMode.Open, FileAccess.Read);
 			StreamReader sr = new StreamReader(fs);
 			List<Taobao.Mods.ItemList.Data.Auction> items = new List<Taobao.Mods.ItemList.Data.Auction>();
@@ -492,7 +495,7 @@ namespace LogTool
 				item.raw_title = line;
 				item.pic_url = sr.ReadLine().Substring(5);
 				item.detail_url = sr.ReadLine().Substring(5);
-				item.nid = item.detail_url.Substring(item.detail_url.IndexOf("=")+1);
+				item.nid = item.detail_url.Substring(item.detail_url.IndexOf("=") + 1);
 				item.reserve_price = sr.ReadLine();
 				item.view_price = item.reserve_price;
 				item.shopcard = new Taobao.Mods.ItemList.Data.Auction.Shopcard();
@@ -535,7 +538,7 @@ namespace LogTool
 				return (a.reserve_price.CompareTo(b.reserve_price));
 			});
 			ShowPage(items);
-			
+
 		}
 
 		public List<Taobao.Mods.ItemList.Data.Auction> filter(List<Taobao.Mods.ItemList.Data.Auction> items, string filter)
@@ -560,6 +563,47 @@ namespace LogTool
 			s1 = s1.Substring(pos + start.Length);
 			pos = s1.IndexOf(end);
 			return s1.Substring(0, pos);
+		}
+
+		private void button2_Click(object sender, EventArgs e)
+		{
+			var item = (Slot)listBox1.SelectedItem;
+			if (item != null)
+			{
+				proc(pages.Text, search.Text, priceHi.Text, priceLo.Text, item.List);
+				item.Title = pages.Text + "," + search.Text + "," + priceHi.Text + "," + priceLo.Text;
+				listBox1.Items.Clear();
+				listBox1.Items.Add(slots[0]);
+				listBox1.Items.Add(slots[1]);
+				listBox1.Items.Add(slots[2]);
+				listBox1.Items.Add(slots[3]);
+			}
+		}
+
+		private void button4_Click(object sender, EventArgs e)
+		{
+			var item = (Slot)listBox1.SelectedItem;
+			if (item != null)
+			{
+				save(item.List, textBox1.Text);
+			}
+
+		}
+
+		private void button5_Click(object sender, EventArgs e)
+		{
+			var item = (Slot)listBox1.SelectedItem;
+			if (item != null)
+			{
+				load(item.List, textBox1.Text);
+				item.Title = textBox1.Text;
+				listBox1.Items.Clear();
+				listBox1.Items.Add(slots[0]);
+				listBox1.Items.Add(slots[1]);
+				listBox1.Items.Add(slots[2]);
+				listBox1.Items.Add(slots[3]);
+			}
+
 		}
 
 	}
