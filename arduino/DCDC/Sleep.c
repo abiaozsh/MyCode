@@ -10,7 +10,7 @@ void wait(unsigned int ticks)
 {
   TCCR1A = 0;
   TCNT1 = 0;
-  TCCR1B = 3;
+  TCCR1B = 2;
 	while(TCNT1<ticks)
 	{
 		//asm volatile("nop");
@@ -31,47 +31,29 @@ int main(void) {
 	//0 1 1 1 7 128
 	//1 0 0 0 8 256 
 	
-	GIMSK |= _BV(PCIE0);
-	PCMSK0 |= _BV(PCINT7);//CLK
-	PCMSK0 |= _BV(PCINT6);//CLK
-	sei();
-	 
+	
 	DDRA = 255;
 	PORTA = 0;
 	DDRB = 15;
 	PORTB = 0;
   
 	DDRA &= ~ _BV(7);//sleep button
- 	DDRA &= ~ _BV(6);//sleep button
- 
+  
 	//DDRA &= ~ _BV(5);
   
 	while(1){
-    wait(5000);
+    wait(1000);
     DDRB &= ~ _BV(3);
-    wait(5000);
+    wait(1000);
     DDRB |= _BV(3);
     
-    if(!(PINA & _BV(6))){
-		DDRB &= ~ _BV(3);
-
-		//PRR |= _BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSI) | _BV(PRADC);
-		MCUCR |= _BV(SM1);
-      MCUCR |= _BV(SE);//|_BV(SM1)   | _BV(SM0)
-	  asm volatile("sleep");
-    }
-    if(!(PINA & _BV(7))){
-		DDRB &= ~ _BV(3);
-
-		//PRR |= _BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSI) | _BV(PRADC);
-		
-		
-      MCUCR |= _BV(SE);// | _BV(SM1)
-	  asm volatile("sleep");
+    if(!(PINA |= _BV(7))){
+      MCUCR |= _BV(SE) | _BV(SM1);
+      PRR |= _BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSI) | _BV(PRADC);
     }
 	}
 }
 
 ISR(PCINT0_vect){
-  //PRR &= ~(_BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSI) | _BV(PRADC));
+  PRR &= ~(_BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSI) | _BV(PRADC));
 }
