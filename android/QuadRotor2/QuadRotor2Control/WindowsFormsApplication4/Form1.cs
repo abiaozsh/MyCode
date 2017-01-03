@@ -21,10 +21,10 @@ namespace WindowsFormsApplication4
         }
         Socket sSocket;
 
-        public string ComputerIP = "192.168.43.151";
-        public string PhoneIP = "192.168.43.1";
-        //public string ComputerIP = "192.168.0.10";
-        //public string PhoneIP = "192.168.0.7";
+        //public string ComputerIP = "192.168.43.151";
+        //public string PhoneIP = "192.168.43.1";
+        public string ComputerIP = "192.168.0.10";
+        public string PhoneIP = "192.168.0.6";
         //private Device applicationDevice = null;
 
         private void Form1_Load(object sender, EventArgs e)
