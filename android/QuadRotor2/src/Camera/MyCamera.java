@@ -12,14 +12,13 @@ import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
 
 public class MyCamera {
-	public static String ComputerIP = "192.168.43.46";
-	// public static String ComputerIP = "192.168.0.10";
+	public static String ComputerIP = null;
 
 	public Camera c = null;
 	public int facing = CameraInfo.CAMERA_FACING_BACK;
 	public int F = CameraInfo.CAMERA_FACING_FRONT;
 	public int B = CameraInfo.CAMERA_FACING_BACK;
-	
+
 	public SendData sendData = new SendData();
 
 	public class SendData {
@@ -60,7 +59,7 @@ public class MyCamera {
 				id = i;
 			}
 		}
-		
+
 		try {
 			c = Camera.open(id);
 			c.setPreviewCallback(new StreamIt(this)); // 设置回调的类
@@ -154,19 +153,21 @@ class MyThread extends Thread {
 
 	public void run() {
 		try {
-			// 将图像数据通过Socket发送出去
-			Socket tempSocket = new Socket(MyCamera.ComputerIP, 6000);
-			OutputStream outstream = tempSocket.getOutputStream();
-			byte[] len = new byte[2];
-			len[0] = (byte) (dataSend.length & 0xFF);
-			len[1] = (byte) ((dataSend.length >> 8) & 0xFF);
-			outstream.write(len);
-			outstream.write(dataSend);
-			image.compressToJpeg(new Rect(0, 0, size.width, size.height), 80, outstream);
+			if (MyCamera.ComputerIP != null) {
+				// 将图像数据通过Socket发送出去
+				Socket tempSocket = new Socket(MyCamera.ComputerIP, 6000);
+				OutputStream outstream = tempSocket.getOutputStream();
+				byte[] len = new byte[2];
+				len[0] = (byte) (dataSend.length & 0xFF);
+				len[1] = (byte) ((dataSend.length >> 8) & 0xFF);
+				outstream.write(len);
+				outstream.write(dataSend);
+				image.compressToJpeg(new Rect(0, 0, size.width, size.height), 80, outstream);
 
-			outstream.flush();
-			outstream.close();
-			tempSocket.close();
+				outstream.flush();
+				outstream.close();
+				tempSocket.close();
+			}
 		} catch (IOException e) {
 		} catch (Throwable e) {
 		} finally {

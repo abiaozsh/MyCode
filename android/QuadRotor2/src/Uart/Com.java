@@ -20,6 +20,7 @@ public class Com {
 		}
 	}
 
+	//四轴用
 	public void Init() {
 		int baudRate = 115200;
 		byte dataBit = 5;
@@ -39,6 +40,7 @@ public class Com {
 		}
 	}
 
+	//小车用
 	public void Init8() {
 		int baudRate = 115200;
 		byte dataBit = 8;

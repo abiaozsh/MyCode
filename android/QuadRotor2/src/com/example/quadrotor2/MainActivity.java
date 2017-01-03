@@ -53,9 +53,6 @@ public class MainActivity extends Activity implements MySensorListener {
 	public double gravityxAccum = 0;
 	public double gravityyAccum = 0;
 
-	// MyHandler myHandler;
-	MyHandlerCmd myHandlerCmd;
-
 	class Task extends TimerTask {
 		MainActivity act;
 
@@ -149,6 +146,9 @@ public class MainActivity extends Activity implements MySensorListener {
 		}
 	}
 
+	// MyHandler myHandler;
+	MyHandlerCmd myHandlerCmd;
+
 	class ThreadControl extends Thread {
 		@SuppressWarnings("resource")
 		public void run() {
@@ -228,6 +228,25 @@ public class MainActivity extends Activity implements MySensorListener {
 		int B = 0;
 		int C = 0;
 
+		class AotoOffTimer extends Thread {
+
+			public AotoOffTimer() {
+
+			}
+
+			public void run() {
+				while (true) {
+					try {
+						Thread.sleep(1000);
+						com.Send((byte) 0);
+					} catch (Exception ex) {
+					}
+				}
+			}
+		}
+
+		AotoOffTimer timer = new AotoOffTimer();
+
 		@Override
 		public void handleMessage(Message msg) {
 			Bundle b = msg.getData();
@@ -265,21 +284,22 @@ public class MainActivity extends Activity implements MySensorListener {
 				break;
 			case RST2:
 				com.Init8();
+				timer.start();
 				break;
 			case LFW:
-				A = 1;
+				A = 1;timer.interrupt();
 				break;
 			case LBK:
-				A = -1;
+				A = -1;timer.interrupt();
 				break;
 			case LOF:
 				A = 0;
 				break;
 			case RFW:
-				B = 1;
+				B = 1;timer.interrupt();
 				break;
 			case RBK:
-				B = -1;
+				B = -1;timer.interrupt();
 				break;
 			case ROF:
 				B = 0;
@@ -398,6 +418,7 @@ public class MainActivity extends Activity implements MySensorListener {
 			t = new Timer();
 			Task tsk = new Task(this);
 			t.scheduleAtFixedRate(tsk, 0, 20);
+
 			ThreadControl control = new ThreadControl();
 			control.start();
 
@@ -405,12 +426,33 @@ public class MainActivity extends Activity implements MySensorListener {
 			cam.Init();
 			et = (EditText) findViewById(R.id.editText1);
 			et.setText(MyCamera.ComputerIP);
-			Button b = (Button) findViewById(R.id.button1);
-			b.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					MyCamera.ComputerIP = (String) et.getText().toString();
-				}
-			});
+			{
+				Button b = (Button) findViewById(R.id.buttonok);
+				b.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						MyCamera.ComputerIP = (String) et.getText().toString();
+					}
+				});
+			}
+			{
+				Button b = (Button) findViewById(R.id.button_192_168_0_10);
+				b.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						et.setText("192.168.0.10");
+						MyCamera.ComputerIP = (String) et.getText().toString();
+					}
+				});
+			}
+			{
+				Button b = (Button) findViewById(R.id.button192_168_43_151);
+				b.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						et.setText("192.168.43.151");
+						MyCamera.ComputerIP = (String) et.getText().toString();
+					}
+				});
+
+			}
 
 		} catch (Throwable t) {
 
