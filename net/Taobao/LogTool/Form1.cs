@@ -318,7 +318,7 @@ namespace LogTool
 
 			string loc = "&loc=%E6%B1%9F%E8%8B%8F%2C%E6%B5%99%E6%B1%9F%2C%E4%B8%8A%E6%B5%B7";
 
-			if (false)//江浙沪
+			if (true)//江浙沪
 			{
 				loc = "";
 			}
