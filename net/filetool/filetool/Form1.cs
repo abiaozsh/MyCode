@@ -388,7 +388,7 @@ namespace filetool
 			foreach (TFolder file in tf.folderList)
 			{
 				DataGridViewRow row = new DataGridViewRow();
-				row.CreateCells(dataGridView1, file, file.filecount + "  ;  " + tostring(file.size), file.datetime.ToString("yyyy-MM-dd HH:mm:ss"), "");
+				row.CreateCells(dataGridView1, file, file.filecount + "  ;  " + tostring(file.size), file.getDatetime().ToString("yyyy-MM-dd HH:mm:ss"), "");
 				dataGridView1.Rows.Add(row);
 			}
 
@@ -396,7 +396,7 @@ namespace filetool
 			foreach (TFile file in tf.fileList)
 			{
 				DataGridViewRow row = new DataGridViewRow();
-				row.CreateCells(dataGridView1, file, tostring(file.size), file.datetime.ToString("yyyy-MM-dd HH:mm:ss"), file.md5);
+				row.CreateCells(dataGridView1, file, tostring(file.size), file.getDatetime().ToString("yyyy-MM-dd HH:mm:ss"), file.md5);
 				dataGridView1.Rows.Add(row);
 			}
 		}
@@ -519,7 +519,7 @@ namespace filetool
 			foreach (TFile file in dupfiles)
 			{
 				DataGridViewRow row = new DataGridViewRow();
-				row.CreateCells(dataGridView1, file.name, tostring(file.size), file.datetime.ToString("yyyy-MM-dd HH:mm:ss"), file.getFullPath());
+				row.CreateCells(dataGridView1, file.name, tostring(file.size), file.getDatetime().ToString("yyyy-MM-dd HH:mm:ss"), file.getFullPath());
 				dataGridView1.Rows.Add(row);
 			}
 

@@ -6,6 +6,8 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
 using System.Security.Cryptography;
+using System.Runtime.Serialization.Json;
+using System.Xml;
 
 namespace ClassLibrary1
 {
@@ -21,16 +23,32 @@ namespace ClassLibrary1
 	{
 		public string name;
 		public long size;
-		public DateTime datetime;
+		public string datetime;
 		public string md5;
 		public TFolder parent;
+
+		public DateTime getDatetime()
+		{
+			DateTime ret;
+			DateTime.TryParse(datetime, out ret);
+			return ret;
+		}
+		public void setDatetime(DateTime d)
+		{
+			datetime = d.ToString("yyyy-MM-dd HH:mm:ss fff");
+		}
+		public bool CompareDatetime(DateTime d)
+		{
+			return datetime == d.ToString("yyyy-MM-dd HH:mm:ss fff");
+		}
 
 		public override string ToString()
 		{
 			return name;
 		}
 
-		public string getFullPath(){
+		public string getFullPath()
+		{
 			string path = "";
 			TFolder f = this.parent;
 			while (f != null)
@@ -176,7 +194,7 @@ namespace ClassLibrary1
 					{
 						Console.WriteLine("\"" + (dir + "\\" + file.name).Replace("\"", "\"\"") + "\"," +
 							"\"" + file.size + "\"," +
-							"\"" + file.datetime.ToString("yyyy-MM-dd HH:mm:ss") + "\"," +
+							"\"" + file.getDatetime().ToString("yyyy-MM-dd HH:mm:ss") + "\"," +
 							"\"" + file.md5 + "\"");
 					}
 				}
@@ -233,7 +251,7 @@ namespace ClassLibrary1
 				{
 					sw.WriteLine("\"" + (dir + "\\" + file.name).Replace("\"", "\"\"") + "\"," +
 						"\"" + file.size + "\"," +
-						"\"" + file.datetime.ToString("yyyy-MM-dd HH:mm:ss") + "\"," +
+						"\"" + file.getDatetime().ToString("yyyy-MM-dd HH:mm:ss") + "\"," +
 						"\"" + file.md5 + "\"");
 				}
 				file.name = dir + "\\" + file.name;
@@ -281,44 +299,111 @@ namespace ClassLibrary1
 		public string root;
 
 
-		/*
-		public static void save(TRoot tf, string file)
-		{
-			IFormatter formatter = new BinaryFormatter();
-			Stream stream = new FileStream(file, FileMode.Create, FileAccess.Write, FileShare.None);
-			formatter.Serialize(stream, tf);
-			stream.Close();
-		}
-
-		public static TRoot load(string file)
-		{
-			IFormatter formatter = new BinaryFormatter();
-			Stream stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
-			TRoot tf = (TRoot)formatter.Deserialize(stream);
-			stream.Close();
-			return tf;
-		}
-		*/
+		//public void save(string file)
+		//{
+		//	Sort();
+		//	clearParent();
+		//	XmlSerializer mySerializer = new XmlSerializer(typeof(TRoot));
+		//	FileStream myFileStream = new FileStream(file, FileMode.Create, FileAccess.Write, FileShare.None);
+		//	StreamWriter myWriter = new StreamWriter(myFileStream, Encoding.UTF8);
+		//	mySerializer.Serialize(myWriter, this);
+		//	myWriter.Close();
+		//	myWriter.Dispose();
+		//
+		//}
+		//
+		//public static TRoot load(string file)
+		//{
+		//	XmlSerializer mySerializer = new XmlSerializer(typeof(TRoot));
+		//	FileStream myFileStream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
+		//	StreamReader sr = new StreamReader(myFileStream, Encoding.UTF8);
+		//	object myObject = mySerializer.Deserialize(sr);
+		//	myFileStream.Close();
+		//	myFileStream.Dispose();
+		//	TRoot tRoot = (TRoot)myObject;
+		//	tRoot.setParent();
+		//	return tRoot;
+		//
+		//}
 
 		public void save(string file)
 		{
 			Sort();
 			clearParent();
-			XmlSerializer mySerializer = new XmlSerializer(typeof(TRoot));
+			DataContractJsonSerializer mySerializer = new DataContractJsonSerializer(typeof(TRoot));
 			FileStream myFileStream = new FileStream(file, FileMode.Create, FileAccess.Write, FileShare.None);
-			StreamWriter myWriter = new StreamWriter(myFileStream, Encoding.UTF8);
-			mySerializer.Serialize(myWriter, this);
-			myWriter.Close();
-			myWriter.Dispose();
 
+
+			MemoryStream ms = new MemoryStream();
+			mySerializer.WriteObject(ms, this);
+			string jsonString = Encoding.UTF8.GetString(ms.ToArray());
+
+			jsonString = formatJson(jsonString);
+
+			byte[] buff = Encoding.UTF8.GetBytes(jsonString);
+			myFileStream.Write(buff, 0, buff.Length);
+
+			myFileStream.Close();
+			myFileStream.Dispose();
 		}
 
+		public static String formatJson(String jsonStr)
+		{
+			if (null == jsonStr || "".Equals(jsonStr))
+				return "";
+			StringBuilder sb = new StringBuilder();
+			char last = '\0';
+			char current = '\0';
+			int indent = 0;
+			for (int i = 0; i < jsonStr.Length; i++)
+			{
+				last = current;
+				current = jsonStr[i];
+				switch (current)
+				{
+					case '{':
+					case '[':
+						sb.Append(current);
+						sb.Append("\r\n");
+						indent++;
+						addIndentBlank(sb, indent);
+						break;
+					case '}':
+					case ']':
+						sb.Append("\r\n");
+						indent--;
+						addIndentBlank(sb, indent);
+						sb.Append(current);
+						break;
+					case ',':
+						sb.Append(current);
+						if (last != '\\')
+						{
+							sb.Append("\r\n");
+							addIndentBlank(sb, indent);
+						}
+						break;
+					default:
+						sb.Append(current);
+						break;
+				}
+			}
+
+			return sb.ToString();
+		}
+
+		private static void addIndentBlank(StringBuilder sb, int indent)
+		{
+			for (int i = 0; i < indent; i++)
+			{
+				sb.Append("\t");
+			}
+		}
 		public static TRoot load(string file)
 		{
-			XmlSerializer mySerializer = new XmlSerializer(typeof(TRoot));
+			DataContractJsonSerializer mySerializer = new DataContractJsonSerializer(typeof(TRoot));
 			FileStream myFileStream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
-			StreamReader sr = new StreamReader(myFileStream, Encoding.UTF8);
-			object myObject = mySerializer.Deserialize(sr);
+			object myObject = mySerializer.ReadObject(myFileStream);
 			myFileStream.Close();
 			myFileStream.Dispose();
 			TRoot tRoot = (TRoot)myObject;

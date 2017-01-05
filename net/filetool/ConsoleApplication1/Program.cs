@@ -13,18 +13,7 @@ namespace ConsoleApplication1
 
 		static void Main(string[] args)
 		{
-            Proc(new string[] { @"createfilelist", "cc.xml", "c:\\" });
-
-
-            //Proc(@"createfilelist DISK1A2A_toshibainner.xml u:\".Split(' '));
-            //Proc(@"createfilelist DISK1B3B_toshibaext.xml v:\".Split(' '));
-            //Proc(@"createfilelist DISK2B3A_wd2G.xml j:\".Split(' '));
-
-
-            //Proc(@"createfilelist DISK1A2Atoshibainner.xml u:\".Split(' '));
-            //Proc(@"createfilelist DISK1B3Btoshibaext.xml v:\".Split(' '));
-            //Proc(@"createfilelist i.xml i:\".Split(' '));
-            //Proc(@"createfilelist d.xml d:\".Split(' '));
+            Proc(@"createfilelist f.xml f:\".Split(' '));
                 //Proc("createfilelist t.xml t:\\".Split(' '));
             /*
 
@@ -271,7 +260,7 @@ namespace ConsoleApplication1
 			Console.WriteLine(di.FullName);
 			try
 			{
-				tf.datetime = di.LastWriteTime;
+				tf.setDatetime ( di.LastWriteTime);
 				tf.name = di.Name;
 				long size = 0;
 				int filecount = 0;
@@ -288,7 +277,7 @@ namespace ConsoleApplication1
 					TFile tfile = new TFile();
 					tfile.name = fi2.Name;
 					tfile.size = fi2.Length;
-					tfile.datetime = fi2.LastWriteTime;
+					tfile.setDatetime ( fi2.LastWriteTime);
 					tf.fileList.Add(tfile);
 					size += fi2.Length;
 					filecount++;
@@ -333,7 +322,7 @@ namespace ConsoleApplication1
 						tfsub.fileList = new List<TFile>();
 						tfsub.folderList = new List<TFolder>();
 						tfsub.name = di2.Name;
-						tfsub.datetime = di2.LastWriteTime;
+						tfsub.setDatetime ( di2.LastWriteTime);
 						Console.WriteLine(tfsub);
 						UpdateFolder(di2, tfsub);
 
@@ -349,7 +338,7 @@ namespace ConsoleApplication1
 					TFile tfile = tf.fileList.Find(temp => (temp.name == fi2.Name));
 					if (tfile != null)
 					{
-						if (tfile.datetime == fi2.LastWriteTime)
+						if (tfile.CompareDatetime(fi2.LastWriteTime))
 						{
 							size += fi2.Length;
 							filecount++;
@@ -359,7 +348,7 @@ namespace ConsoleApplication1
 							tfile.name = fi2.Name;
 							Console.WriteLine(tfile);
 							tfile.size = fi2.Length;
-							tfile.datetime = fi2.LastWriteTime;
+							tfile.setDatetime ( fi2.LastWriteTime);
 							size += fi2.Length;
 							filecount++;
 						}
@@ -370,7 +359,7 @@ namespace ConsoleApplication1
 						tfile.name = fi2.Name;
 						tfile.size = fi2.Length;
 						Console.WriteLine(tfile);
-						tfile.datetime = fi2.LastWriteTime;
+						tfile.setDatetime ( fi2.LastWriteTime);
 						tf.fileList.Add(tfile);
 						size += fi2.Length;
 						filecount++;
