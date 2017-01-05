@@ -29,6 +29,17 @@ namespace ClassLibrary1
 		{
 			return name;
 		}
+
+		public string getFullPath(){
+			string path = "";
+			TFolder f = this.parent;
+			while (f != null)
+			{
+				path = f.name + "\\" + path;
+				f = f.parent;
+			}
+			return path + this.name;
+		}
 	}
 
 	[Serializable]

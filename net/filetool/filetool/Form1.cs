@@ -55,6 +55,7 @@ namespace filetool
 			this.sizeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.dateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.cuntToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.reportDupoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -66,9 +67,9 @@ namespace filetool
 			// treeView1
 			// 
 			this.treeView1.AllowDrop = true;
-			this.treeView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			this.treeView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+			| System.Windows.Forms.AnchorStyles.Left)
+			| System.Windows.Forms.AnchorStyles.Right)));
 			this.treeView1.Location = new System.Drawing.Point(0, 4);
 			this.treeView1.Name = "treeView1";
 			this.treeView1.Size = new System.Drawing.Size(370, 397);
@@ -77,9 +78,9 @@ namespace filetool
 			// 
 			// splitContainer1
 			// 
-			this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+			| System.Windows.Forms.AnchorStyles.Left)
+			| System.Windows.Forms.AnchorStyles.Right)));
 			this.splitContainer1.Location = new System.Drawing.Point(2, 27);
 			this.splitContainer1.Name = "splitContainer1";
 			// 
@@ -97,9 +98,9 @@ namespace filetool
 			// dataGridView1
 			// 
 			this.dataGridView1.AllowDrop = true;
-			this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+			| System.Windows.Forms.AnchorStyles.Left)
+			| System.Windows.Forms.AnchorStyles.Right)));
 			this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.dataGridView1.Location = new System.Drawing.Point(3, 4);
 			this.dataGridView1.Name = "dataGridView1";
@@ -118,7 +119,8 @@ namespace filetool
             this.fdsaToolStripMenuItem,
             this.verifyToolStripMenuItem,
             this.compaireToolStripMenuItem,
-            this.sortToolStripMenuItem});
+            this.sortToolStripMenuItem,
+            this.reportDupoToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
 			this.menuStrip1.Size = new System.Drawing.Size(801, 24);
@@ -183,6 +185,13 @@ namespace filetool
 			this.cuntToolStripMenuItem.Text = "cunt";
 			this.cuntToolStripMenuItem.Click += new System.EventHandler(this.cuntToolStripMenuItem_Click);
 			// 
+			// reportDupoToolStripMenuItem
+			// 
+			this.reportDupoToolStripMenuItem.Name = "reportDupoToolStripMenuItem";
+			this.reportDupoToolStripMenuItem.Size = new System.Drawing.Size(83, 20);
+			this.reportDupoToolStripMenuItem.Text = "report dupo";
+			this.reportDupoToolStripMenuItem.Click += new System.EventHandler(this.reportDupoToolStripMenuItem_Click);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -220,6 +229,7 @@ namespace filetool
 		private ToolStripMenuItem sizeToolStripMenuItem;
 		private ToolStripMenuItem dateToolStripMenuItem;
 		private ToolStripMenuItem cuntToolStripMenuItem;
+		private ToolStripMenuItem reportDupoToolStripMenuItem;
 		private System.Windows.Forms.DataGridView dataGridView1;
 
 
@@ -296,6 +306,7 @@ namespace filetool
 			});
 
 		}
+		List<TRoot> roots = new List<TRoot>();
 
 		void Form1_DragDrop(object sender, DragEventArgs e)
 		{
@@ -310,7 +321,7 @@ namespace filetool
 			foreach (string file in files)
 			{
 				TRoot tf = TRoot.load(file);
-
+				roots.Add(tf);
 				sort(tf.folderList);
 
 				foreach (TFolder tf2 in tf.folderList)
@@ -402,6 +413,7 @@ namespace filetool
 		private void fdsaToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			this.treeView1.Nodes.Clear();
+			roots.Clear();
 		}
 
 		private void verifyToolStripMenuItem_Click(object sender, EventArgs e)
@@ -468,6 +480,58 @@ namespace filetool
 			sortbysize = false;
 			sortbydate = false;
 			sortbycunt = true;
+		}
+
+		private void reportDupoToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			List<TFile> files = new List<TFile>();
+
+			List<TFile> dupfiles = new List<TFile>();
+
+			foreach (var item in roots)
+			{
+				addList(item, files);
+			}
+
+			sortbyname = false;
+			sortbysize = true;
+			sortbydate = false;
+			sortbycunt = false;
+			sort(files);
+
+			TFile lastfile = files[0];
+			foreach (var item in files)
+			{
+				if (item.size > 1000000)
+				{
+					if (item.size == lastfile.size)
+					{
+						dupfiles.Add(lastfile);
+						dupfiles.Add(item);
+					}
+				}
+
+				lastfile = item;
+			}
+
+			dataGridView1.Rows.Clear();
+
+			foreach (TFile file in dupfiles)
+			{
+				DataGridViewRow row = new DataGridViewRow();
+				row.CreateCells(dataGridView1, file.name, tostring(file.size), file.datetime.ToString("yyyy-MM-dd HH:mm:ss"), file.getFullPath());
+				dataGridView1.Rows.Add(row);
+			}
+
+		}
+
+		private void addList(TFolder folder, List<TFile> files)
+		{
+			files.AddRange(folder.fileList);
+			foreach (var item in folder.folderList)
+			{
+				addList(item, files);
+			}
 		}
 	}
 

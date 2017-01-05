@@ -13,7 +13,18 @@ namespace ConsoleApplication1
 
 		static void Main(string[] args)
 		{
-            Proc(@"createfilelist d.xml d:\".Split(' '));
+            Proc(new string[] { @"createfilelist", "cc.xml", "c:\\" });
+
+
+            //Proc(@"createfilelist DISK1A2A_toshibainner.xml u:\".Split(' '));
+            //Proc(@"createfilelist DISK1B3B_toshibaext.xml v:\".Split(' '));
+            //Proc(@"createfilelist DISK2B3A_wd2G.xml j:\".Split(' '));
+
+
+            //Proc(@"createfilelist DISK1A2Atoshibainner.xml u:\".Split(' '));
+            //Proc(@"createfilelist DISK1B3Btoshibaext.xml v:\".Split(' '));
+            //Proc(@"createfilelist i.xml i:\".Split(' '));
+            //Proc(@"createfilelist d.xml d:\".Split(' '));
                 //Proc("createfilelist t.xml t:\\".Split(' '));
             /*
 
@@ -214,14 +225,7 @@ namespace ConsoleApplication1
 
 				foreach (var item in list)
 				{
-					string path = "";
-					TFolder f = item.parent;
-					while (f != null)
-					{
-						path = f.name + "\\" + path;
-						f = f.parent;
-					}
-					sw.WriteLine("del \"" + path + item.name + "\"");
+					sw.WriteLine("del \"" + item.getFullPath() + "\"");
 				}
 
 				sw.Flush();
