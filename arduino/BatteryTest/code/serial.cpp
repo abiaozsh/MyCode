@@ -133,17 +133,18 @@ PROGMEM prog_uint8_t Voltage[] = {
 215,255,//127,4.9609375V 
 };
 
-#define DDR_STR_ON   DDRA  |=  _BV(2)
-#define PORT_STR_ON  PORTA |=  _BV(2)
-#define PORT_STR_OFF PORTA &= ~_BV(2)
+#define DDR_STR_ON   DDRA  |=  _BV(6)
+#define PORT_STR_ON  PORTA |=  _BV(6)
+#define PORT_STR_OFF PORTA &= ~_BV(6)
 
-#define DDR_DAT_ON   DDRA  |=  _BV(3)
-#define PORT_DAT_ON  PORTA |=  _BV(3)
-#define PORT_DAT_OFF PORTA &= ~_BV(3)
+#define DDR_DAT_ON   DDRA  |=  _BV(7)
+#define PORT_DAT_ON  PORTA |=  _BV(7)
+#define PORT_DAT_OFF PORTA &= ~_BV(7)
 
-#define DDR_OE_ON    DDRA  |=  _BV(4)
-#define PORT_OE_ON   PORTA |=  _BV(4)
-#define PORT_OE_OFF  PORTA &= ~_BV(4)
+#define DDR_OE_ON    DDRB  |=  _BV(2)
+#define PORT_OE_ON   PORTB |=  _BV(2)
+#define PORT_OE_OFF  PORTB &= ~_BV(2)
+
 
 #define DDR_CLK_ON   DDRA  |=  _BV(5)
 #define PORT_CLK_ON  PORTA |=  _BV(5)
@@ -252,6 +253,22 @@ void SerialInit(){
 	TIMSK1 = 0;
 }
 
+void SerialSend(uint8_t val){
+	cli();
+	TCCR1B = TCCR1B_Value;
+	TCNT1 = 0;
+	uint16_t timing;
+	prog_uint16_t* pTiming = CUR_TIMING;
+	PORT_Send &= ~BIT_Send;timing = pgm_read_word_near(pTiming++);while(TCNT1<timing);//startbit
+	uint8_t chkbit = 0x01;
+	for(uint8_t i = 8 ; i > 0 ; i--)
+	{
+		if(val&chkbit){PORT_Send |= BIT_Send;}else{PORT_Send &= ~BIT_Send;}chkbit<<=1;timing = pgm_read_word_near(pTiming++);while(TCNT1<timing);
+	}
+	PORT_Send |= BIT_Send;timing = pgm_read_word_near(pTiming);while(TCNT1<timing);
+	sei();
+}
+
 PROGMEM prog_uint32_t num10s[] = {
 1000000000,
 100000000,
@@ -289,22 +306,6 @@ void SendInt(uint32_t val, uint8_t digits){
 	}
 }
 
-void SerialSend(uint8_t val){
-	cli();
-	TCCR1B = TCCR1B_Value;
-	TCNT1 = 0;
-	uint16_t timing;
-	prog_uint16_t* pTiming = CUR_TIMING;
-	PORT_Send &= ~BIT_Send;timing = pgm_read_word_near(pTiming++);while(TCNT1<timing);//startbit
-	uint8_t chkbit = 0x01;
-	for(uint8_t i = 8 ; i > 0 ; i--)
-	{
-		if(val&chkbit){PORT_Send |= BIT_Send;}else{PORT_Send &= ~BIT_Send;}chkbit<<=1;timing = pgm_read_word_near(pTiming++);while(TCNT1<timing);
-	}
-	PORT_Send |= BIT_Send;timing = pgm_read_word_near(pTiming);while(TCNT1<timing);
-	sei();
-}
-
 
 
 int main(void) {
@@ -326,13 +327,15 @@ int main(void) {
     uint16_t volt = 0;
 		for(;;)
 		{
-      setVoltage(volt);
-      volt++;
-      if(volt==128){
-        volt = 0;
-      }
+      //setVoltage(volt);
+      //volt++;
+      //if(volt==128){
+      //  volt = 0;
+      //}
+      
       uint16_t val;
       val = getInitVal();
+      setVoltage(val);
       SerialSend('i');SerialSend(':');SendInt(val,5);SerialSend('\t');
       val = getCurrent();
       SerialSend('c');SerialSend(':');SendInt(val,5);SerialSend('\t');
@@ -340,6 +343,11 @@ int main(void) {
       SerialSend('v');SerialSend(':');SendInt(val,5);SerialSend('\t');
       val = getVoltage10();
       SerialSend('1');SerialSend(':');SendInt(val,5);SerialSend('\t');
+      val = volt;
+      SerialSend('x');SerialSend(':');SendInt(val,5);SerialSend('\t');
+      
+      
+      
       
       SerialSend('\r');
       SerialSend('\n');
