@@ -504,7 +504,7 @@ int main(void) {
 	DDR_OE_ON ;
 	PORT_OE_OFF;
   DDR_Recv &= ~BIT_Recv;
-
+  sendData(0, 0);
   uint16_t cmax;
   uint16_t cmin;
   
@@ -513,17 +513,17 @@ int main(void) {
       uint16_t val;
       val = getInitVal();
       cmax = val;
-      SerialSend('i');SerialSend(':');SendInt(val,5);SerialSend('\r');SerialSend('\n');
+      SerialSend('i');SerialSend(':');SendInt(val>>1,5);SerialSend('\r');SerialSend('\n');
       wait(10000);
   }
   cmax = cmax>>1;//0~512
   cmin = cmax>>3;//
   cmin = cmax - cmin;
-  if(cmin>2)cmin--;
+  if(cmin>2)
   {
-      SerialSend('u');SerialSend(':');SendInt(cmax,5);SerialSend('\r');SerialSend('\n');
-      SerialSend('u');SerialSend(':');SendInt(cmin,5);SerialSend('\r');SerialSend('\n');
-  }  
+    cmin--;
+  }
+  
 	{
     uint16_t mosVolt = 0;//0~311  2v-5v
 		for(;;)
@@ -545,6 +545,9 @@ int main(void) {
       }
 
       SerialSend('m');SerialSend(':');SendInt(mosVolt,5);SerialSend('\t');
+      SerialSend('u');SerialSend(':');SendInt(cmax,5);SerialSend('\t');
+      SerialSend('d');SerialSend(':');SendInt(cmin,5);SerialSend('\t');
+
       SerialSend('\r');SerialSend('\n');
       
       setVoltage(mosVolt);
@@ -553,6 +556,7 @@ int main(void) {
       if(v<614){
         sendData(0, 0);
         SerialSend('S');SerialSend('T');SerialSend('O');SerialSend('P');SerialSend('\r');SerialSend('\n');
+        for(;;);
       }
       
       //val = getVoltage10();
