@@ -29,7 +29,7 @@ public class LoginServlet extends Servlet {
 
 			if (pass) {
 				session.set(LOGIN, "T");
-				res.sendRedirect("Control");
+				res.sendRedirect((String)session.get("Redirect"));
 				return;
 			} else {
 				return;

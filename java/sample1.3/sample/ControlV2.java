@@ -14,12 +14,12 @@ public class ControlV2 extends Servlet {
 	public void doReq(Request req, Response res, Server server) throws Exception {
 		Session session = req.getSession();
 
+		session.set("Redirect", "ControlV2");
+
 		if (!"T".equals(session.get(LoginServlet.LOGIN))) {
 			res.sendRedirect("Login");
 			return;
 		}
-
-		session.set("Redirect", "ControlV2");
 
 		PrintWriter out = res.getWriter();
 

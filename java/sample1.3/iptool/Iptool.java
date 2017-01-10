@@ -70,7 +70,6 @@ public class Iptool {
 				Thread.sleep(60000);
 			} catch (Throwable t) {
 				t.printStackTrace();
-				break;
 			}
 		}
 
