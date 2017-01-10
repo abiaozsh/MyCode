@@ -59,31 +59,59 @@ namespace WindowsFormsApplication1
 		*/
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < 1024; i++)
+			try
 			{
-				FileStream fs = new FileStream(@"D:\MyCode\arduino\DAC\新建文本文档.txt", FileMode.Open, FileAccess.Read);
+				FileStream fs = new FileStream(@"D:\work\MyCode\arduino\DAC\data2.txt", FileMode.Open, FileAccess.Read);
 				StreamReader sr = new StreamReader(fs);
+				Dictionary<int, String> datas = new Dictionary<int, String>();
 				while (true)
 				{
 					string line = sr.ReadLine();
 					if (line == null) break;
-					string[] s = line.Split('\t');
-
-					if (i == int.Parse(s[5]) && int.Parse(s[5]) == int.Parse(s[6]))
+					if (String.IsNullOrEmpty(line)) continue;
+					int v = parse(line.Split('\t')[2]);
+					if (!datas.ContainsKey(v))
 					{
-						sb.AppendLine(line);
-						break;
+						datas.Add(v, line);
 					}
-
 				}
 				sr.Close();
 				fs.Close();
+
+				int start = 0;
+				int end = 1024;
+				int step = 8;
+
+				StringBuilder sb = new StringBuilder();
+				int idx = 0;
+				for (int i = start; i < end; i += step)
+				{
+					var str = datas[i];
+
+					int a = parse(str.Split('\t')[0]);
+					int b = parse(str.Split('\t')[1]);
+					string elem = a + "," + b + ","+"//"+idx+","+((i+0.0)*5/1024)+"V \r\n";
+					sb.Append(elem);
+					idx++;
+				}
+
+				textBox1.Text = sb.ToString();
+				//aa();
 			}
-			textBox1.Text = sb.ToString();
-			//aa();
+			catch (Exception ex)
+			{
+				ex.ToString();
+			}
 		}
 
+		int parse(string str)
+		{
+			if (str.Substring(2).TrimStart('0') == "")
+			{
+				return 0;
+			}
+			return int.Parse(str.Substring(2).TrimStart('0'));
+		}
 
 		public void aa()
 		{
