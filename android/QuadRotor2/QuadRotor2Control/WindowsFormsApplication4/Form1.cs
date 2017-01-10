@@ -22,13 +22,13 @@ namespace WindowsFormsApplication4
 		}
 		Socket sSocket;
 
-		public string ComputerIP = "192.168.43.151";
-		public byte[] byteIP = { 192, 168, 43, 151 };
-		public string PhoneIP = "192.168.43.1";
+		//public string ComputerIP = "192.168.43.151";
+		//public byte[] byteIP = { 192, 168, 43, 151 };
+		//public string PhoneIP = "192.168.43.1";
 
-		//public string ComputerIP = "192.168.0.10";
-		//public byte[] byteIP = { 192, 168, 0, 1 };
-		//public string PhoneIP = "192.168.0.6";
+		public string ComputerIP = "192.168.0.10";
+		public byte[] byteIP = { 192, 168, 0, 10 };
+		public string PhoneIP = "192.168.0.6";
 
 		//private Device applicationDevice = null;
 
@@ -183,8 +183,8 @@ namespace WindowsFormsApplication4
 						gTempBitmap.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
 						gTempBitmap.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
 						gTempBitmap.Clear(Color.White);
-						//gTempBitmap.DrawImage(img, new Rectangle(0, 0, 640, 480), new Rectangle(0, 0, img.Width, img.Height), GraphicsUnit.Pixel);
-						gTempBitmap.DrawImage(img, new Rectangle(0, 0, 64, 48), new Rectangle(0, 0, img.Width, img.Height), GraphicsUnit.Pixel);
+						gTempBitmap.DrawImage(img, new Rectangle(0, 0, 640, 480), new Rectangle(0, 0, img.Width, img.Height), GraphicsUnit.Pixel);
+						//gTempBitmap.DrawImage(img, new Rectangle(0, 0, 64, 48), new Rectangle(0, 0, img.Width, img.Height), GraphicsUnit.Pixel);
 						gTempBitmap.Dispose();
 
 						if (FLIPH)
@@ -490,8 +490,15 @@ namespace WindowsFormsApplication4
 
 		private void button10_Click(object sender, EventArgs e)
 		{
-			timer2.Interval = (int)(1000 / int.Parse(textBox3.Text));
-			timer2.Start();
+            if (int.Parse(textBox3.Text) == 0)
+            {
+                timer2.Stop();
+            }
+            else
+            {
+                timer2.Interval = (int)(1000 / int.Parse(textBox3.Text));
+                timer2.Start();
+            }
 		}
 
 		private void timer2_Tick(object sender, EventArgs e)
