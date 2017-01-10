@@ -67,58 +67,61 @@ public class MySensor implements SensorEventListener {
 	}
 
 	public void onSensorChanged(SensorEvent e) {
+		try {
+			if (e.sensor == gyro) {
 
-		if (e.sensor == gyro) {
+				CurrGryox = e.values[0];
+				CurrGryoy = e.values[1];
+				CurrGryoz = e.values[2];
 
-			CurrGryox = e.values[0];
-			CurrGryoy = e.values[1];
-			CurrGryoz = e.values[2];
+			} else if (e.sensor == acce) {
+				CurrAccex = e.values[0];
+				CurrAccey = e.values[1];
+				CurrAccez = e.values[2];
 
-		} else if (e.sensor == acce) {
-			CurrAccex = e.values[0];
-			CurrAccey = e.values[1];
-			CurrAccez = e.values[2];
+				Accex[dataIdx] = CurrAccex;
+				Accey[dataIdx] = CurrAccey;
+				Accez[dataIdx] = CurrAccez;
 
-			Accex[dataIdx] = CurrAccex;
-			Accey[dataIdx] = CurrAccey;
-			Accez[dataIdx] = CurrAccez;
+				double x = 0;
+				double y = 0;
+				double z = 0;
+				double accu = 0;
+				double fact = 1;
+				int idx = dataIdx;
+				for (int i = 0; i < 64; i++) {
+					x += Accex[idx] * fact;
+					y += Accey[idx] * fact;
+					z += Accez[idx] * fact;
+					accu += fact;
+					fact = fact * 0.5;
+					idx--;
+					if (idx == -1) {
+						idx = 63;
+					}
+				}
 
-			double x = 0;
-			double y = 0;
-			double z = 0;
-      double accu = 0;
-      double fact = 1;
-      int idx = dataIdx;
-			for (int i = 0; i < 64; i++) {
-				x += Accex[idx]*fact;
-				y += Accey[idx]*fact;
-				z += Accez[idx]*fact;
-        accu+=fact;
-        fact = fact *0.5;
-        idx--;
-        if (idx == -1) {
-          idx = 63;
-        }
+				dataIdx++;
+				if (dataIdx == 64) {
+					dataIdx = 0;
+				}
+
+				x /= accu;
+				y /= accu;
+				z /= accu;
+
+				// 这边要反一下的
+				x -= CurrGryoy;
+				y += CurrGryox;
+				// z += CurrGryoz / 5;
+
+				x -= adjX;
+				y -= adjY;
+				z -= adjZ;
+				msl.onSensorChanged(CurrGryox, CurrGryoy, CurrGryoz, CurrAccex, CurrAccey, CurrAccez, x, y, z);
 			}
-      
-			dataIdx++;
-			if (dataIdx == 64) {
-				dataIdx = 0;
-			}
-      
-			x /= accu;
-			y /= accu;
-			z /= accu;
-
-			//这边要反一下的
-			x -= CurrGryoy;
-			y += CurrGryox;
-			//z += CurrGryoz / 5;
-
-			x -= adjX;
-			y -= adjY;
-			z -= adjZ;
-			msl.onSensorChanged(CurrGryox, CurrGryoy, CurrGryoz, CurrAccex, CurrAccey, CurrAccez, x, y, z);
+		} catch (Throwable t) {
+			t.printStackTrace();
 		}
 	}
 }

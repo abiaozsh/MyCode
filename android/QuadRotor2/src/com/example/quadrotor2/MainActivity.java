@@ -1,6 +1,8 @@
 package com.example.quadrotor2;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Timer;
@@ -55,9 +57,86 @@ public class MainActivity extends Activity implements MySensorListener {
 
 	class Task extends TimerTask {
 		MainActivity act;
+		NetThread[] threadPool = new NetThread[5];
 
 		public Task(MainActivity act) {
 			this.act = act;
+			for (int i = 0; i < 5; i++) {
+				threadPool[i] = new NetThread();
+				threadPool[i].start();
+			}
+		}
+
+		class NetThread extends Thread {
+			public boolean free = false;
+
+			public void run() {
+				while (true) {
+					free = false;
+					StringBuffer sb = new StringBuffer();
+
+					String fmt = "%0+11.6f";
+					String fmt2 = "%0+5.1f";
+
+					sb.append("currentPower:" + String.format(fmt, currentPower) + "\r\n");
+
+					sb.append("adjxConst:" + String.format(fmt, adjxConst) + "\t");
+					sb.append("adjyConst:" + String.format(fmt, adjyConst) + "\r\n");
+					sb.append(senseData + "\r\n");
+
+					sb.append("poweron:" + Integer.toString(poweron) + "\r\n");
+
+					// up 2
+					// left 4 right 3
+					// down 1
+					sb.append("\r\n");
+					sb.append("     pwm2:" + String.format(fmt2, pwm2) + "\r\n");
+					sb.append("pwm4:" + String.format(fmt2, pwm4) + "\t");
+					sb.append("pwm3:" + String.format(fmt2, pwm3) + "\r\n");
+					sb.append("     pwm1:" + String.format(fmt2, pwm1) + "\r\n");
+					sb.append("\r\n");
+					sb.append("minPower:" + String.format(fmt, minPower) + "\r\n");
+
+					sb.append("gravityx:" + String.format(fmt, gravityx) + "\t");
+					sb.append("gravityy:" + String.format(fmt, gravityy) + "\r\n");
+					sb.append("gravityxAccum:" + String.format(fmt, gravityxAccum) + "\t");
+					sb.append("gravityyAccum:" + String.format(fmt, gravityyAccum) + "\r\n");
+
+					sb.append("msg:" + Message.toString() + "\r\n");
+					byte[] dataSend = sb.toString().getBytes();
+
+					try {
+						// 将图像数据通过Socket发送出去
+						Socket tempSocket = new Socket(MyCamera.ComputerIP, 6000);
+						tempSocket.setSoTimeout(1000);
+						OutputStream outstream = tempSocket.getOutputStream();
+
+						{
+							byte[] len = new byte[2];
+							len[0] = (byte) (dataSend.length & 0xFF);
+							len[1] = (byte) ((dataSend.length >> 8) & 0xFF);
+							outstream.write(1);
+							outstream.write(len);
+							outstream.write(dataSend);
+						}
+
+						outstream.flush();
+						outstream.close();
+						tempSocket.close();
+
+					} catch (IOException e) {
+					} catch (Throwable e) {
+					} finally {
+						free = true;
+					}
+					try {
+						Thread.sleep(1000000);
+					} catch (Throwable ex) {
+
+					}
+				}
+			}
+
 		}
 
 		// 20ms运行一次
@@ -114,30 +193,28 @@ public class MainActivity extends Activity implements MySensorListener {
 				pwm3 = Math.round(pwm3);
 				pwm4 = Math.round(pwm4);
 
-				cam.sendData.currentPower = currentPower;
-				cam.sendData.poweron = poweron;
-
-				cam.sendData.adjxConst = adjxConst;
-				cam.sendData.adjyConst = adjyConst;
-				cam.sendData.senseData = senseData;
-
-				cam.sendData.pwm1 = pwm1;
-				cam.sendData.pwm2 = pwm2;
-				cam.sendData.pwm3 = pwm3;
-				cam.sendData.pwm4 = pwm4;
-				cam.sendData.minPower = minPower;
-
-				cam.sendData.gravityx = gravityx;
-				cam.sendData.gravityy = gravityy;
-				cam.sendData.gravityxAccum = gravityxAccum;
-				cam.sendData.gravityyAccum = gravityyAccum;
-
-				cam.sendData.Message = Message.toString();
 				if (poweron == 1) {
 					act.com.Send(CMD_SETPWRSIMP, (byte) pwm1, CMD_SETPWRSIMP, (byte) pwm2, CMD_SETPWRSIMP, (byte) pwm3, CMD_SETPWRSIMP, (byte) pwm4);
 				} else if (poweron == 2) {
 				} else if (poweron == 0) {
 					act.com.Send(CMD_SETPWRSIMP, Z, CMD_SETPWRSIMP, Z, CMD_SETPWRSIMP, Z, CMD_SETPWRSIMP, Z);
+				}
+
+				// 发送数据
+				if (MyCamera.ComputerIP != null) {
+					try {
+
+						try {
+							aa: for (int i = 0; i < 5; i++) {
+								if ((threadPool[i].free)) {
+									threadPool[i].interrupt();
+									break aa;
+								}
+							}
+						} catch (Throwable e) {
+						}
+					} catch (Exception ex) {
+					}
 				}
 
 			} catch (Throwable t) {
@@ -214,7 +291,13 @@ public class MainActivity extends Activity implements MySensorListener {
 		final int CON = 25;
 		final int COF = 26;
 		final int PUSHDATA = 27;
-
+		final int SETIP = 28;
+		final int CAMON = 29;
+		final int CAMOFF = 30;
+		final int TAKEPIC = 31;
+		final int SETQUALITY = 32;
+		final int SETLED = 33;
+		
 		int AL = 0x04;
 		int AH = 0x08;
 		int BL = 0x10;
@@ -255,6 +338,33 @@ public class MainActivity extends Activity implements MySensorListener {
 			double value = getDouble(data, 1);
 
 			switch (cmd) {
+			case SETIP:
+				int v0 = data[1] & 0x00FF;
+				int v1 = data[2] & 0x00FF;
+				int v2 = data[3] & 0x00FF;
+				int v3 = data[4] & 0x00FF;
+
+				String ip = v0 + "." + v1 + "." + v2 + "." + v3;
+				et.setText(ip);
+				cam.ClearPool();
+				MyCamera.ComputerIP = ip;
+				break;
+			case CAMON:
+				cam.prevOn();
+				break;
+			case CAMOFF:
+				cam.prevOff();
+				break;
+			case TAKEPIC:
+				cam.Takepic();
+				break;
+			case SETQUALITY:
+				MyCamera.Quality = (int) value;
+				break;
+			case SETLED:
+				cam.setLed((int) value);
+				break;
+
 			case ADJXC:
 				adjxConst = (float) value;
 				break;
@@ -287,19 +397,23 @@ public class MainActivity extends Activity implements MySensorListener {
 				timer.start();
 				break;
 			case LFW:
-				A = 1;timer.interrupt();
+				A = 1;
+				timer.interrupt();
 				break;
 			case LBK:
-				A = -1;timer.interrupt();
+				A = -1;
+				timer.interrupt();
 				break;
 			case LOF:
 				A = 0;
 				break;
 			case RFW:
-				B = 1;timer.interrupt();
+				B = 1;
+				timer.interrupt();
 				break;
 			case RBK:
-				B = -1;timer.interrupt();
+				B = -1;
+				timer.interrupt();
 				break;
 			case ROF:
 				B = 0;

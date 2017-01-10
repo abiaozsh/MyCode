@@ -13,35 +13,25 @@ import android.hardware.Camera.Size;
 
 public class MyCamera {
 	public static String ComputerIP = null;
+	public static int Quality = 50;
 
 	public Camera c = null;
 	public int facing = CameraInfo.CAMERA_FACING_BACK;
 	public int F = CameraInfo.CAMERA_FACING_FRONT;
 	public int B = CameraInfo.CAMERA_FACING_BACK;
 
-	public SendData sendData = new SendData();
+	MyThread[] threadPool = new MyThread[5];
 
-	public class SendData {
-		public double currentPower = 0;
-
-		public int poweron = 0;
-
-		public float adjxConst = 0;
-		public float adjyConst = 0;
-		public String senseData;
-
-		public double pwm1;// up +
-		public double pwm2;// down +
-		public double pwm3;// left -
-		public double pwm4;// right -
-		public double minPower = 10;
-
-		public double gravityx = 0;
-		public double gravityy = 0;
-		public double gravityxAccum = 0;
-		public double gravityyAccum = 0;
-
-		public String Message;
+	public void ClearPool() {
+		for (int i = 0; i < 5; i++) {
+			try {
+				if (threadPool[i] != null && !threadPool[i].free) {
+					threadPool[i].stop();
+					threadPool[i] = null;
+				}
+			} catch (Throwable e) {
+			}
+		}
 	}
 
 	public void Init() {
@@ -62,20 +52,43 @@ public class MyCamera {
 
 		try {
 			c = Camera.open(id);
-			c.setPreviewCallback(new StreamIt(this)); // 设置回调的类
-			c.startPreview(); // 开始预览
-			c.autoFocus(null); // 自动对焦
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+
+	public void prevOn() {
+		c.setPreviewCallback(new StreamIt(this));
+		c.startPreview();
+	}
+
+	public void prevOff() {
+		c.setPreviewCallback(null);
+		c.stopPreview();
+	}
+
+	public void Takepic() {
+		c.setOneShotPreviewCallback(new StreamIt(this));
+		c.startPreview();
+	}
+
+	public void setLed(int val) {
+		Parameters param = c.getParameters();
+		if(val==1){
+			param.setFlashMode(Parameters.FLASH_MODE_TORCH);
+		}else{
+			param.setFlashMode(Parameters.FLASH_MODE_OFF);
+		}
+		c.setParameters(param);
+	}
+	
+	
 }
 
 class StreamIt implements Camera.PreviewCallback {
 
 	MyCamera mc;
-
-	MyThread[] threadPool = new MyThread[5];
 
 	public StreamIt(MyCamera mc) {
 		this.mc = mc;
@@ -83,48 +96,21 @@ class StreamIt implements Camera.PreviewCallback {
 
 	@Override
 	public void onPreviewFrame(byte[] data, Camera camera) {
-		Parameters param = camera.getParameters();
-		Size size = param.getPreviewSize();
-		int format = param.getPreviewFormat();// ImageFormat.NV21
+		if (MyCamera.ComputerIP == null) {
+			return;
+		}
 		try {
-			YuvImage image = new YuvImage(data, format, size.width, size.height, null);
-			StringBuffer sb = new StringBuffer();
-
-			String fmt = "%0+11.6f";
-			String fmt2 = "%0+5.1f";
-
-			sb.append("currentPower:" + String.format(fmt, mc.sendData.currentPower) + "\r\n");
-
-			sb.append("adjxConst:" + String.format(fmt, mc.sendData.adjxConst) + "\t");
-			sb.append("adjyConst:" + String.format(fmt, mc.sendData.adjyConst) + "\r\n");
-			sb.append(mc.sendData.senseData + "\r\n");
-
-			sb.append("poweron:" + Integer.toString(mc.sendData.poweron) + "\r\n");
-
-			// up 2
-			// left 4 right 3
-			// down 1
-			sb.append("\r\n");
-			sb.append("     pwm2:" + String.format(fmt2, mc.sendData.pwm2) + "\r\n");
-			sb.append("pwm4:" + String.format(fmt2, mc.sendData.pwm4) + "\t");
-			sb.append("pwm3:" + String.format(fmt2, mc.sendData.pwm3) + "\r\n");
-			sb.append("     pwm1:" + String.format(fmt2, mc.sendData.pwm1) + "\r\n");
-			sb.append("\r\n");
-			sb.append("minPower:" + String.format(fmt, mc.sendData.minPower) + "\r\n");
-
-			sb.append("gravityx:" + String.format(fmt, mc.sendData.gravityx) + "\t");
-			sb.append("gravityy:" + String.format(fmt, mc.sendData.gravityy) + "\r\n");
-			sb.append("gravityxAccum:" + String.format(fmt, mc.sendData.gravityxAccum) + "\t");
-			sb.append("gravityyAccum:" + String.format(fmt, mc.sendData.gravityyAccum) + "\r\n");
-
-			sb.append("msg:" + mc.sendData.Message + "\r\n");
-
+			
 			try {
 				aa: for (int i = 0; i < 5; i++) {
-					if (threadPool[i] == null || threadPool[i].free) {
-						threadPool[i] = new MyThread();
-						threadPool[i].SetData(image, size, sb.toString().getBytes());
-						threadPool[i].start();
+					if (mc.threadPool[i] == null || (mc.threadPool[i].free)) {
+						mc.threadPool[i] = new MyThread();
+						Parameters param = camera.getParameters();
+						Size size = param.getPreviewSize();
+						int format = param.getPreviewFormat();// ImageFormat.NV21
+						YuvImage image = new YuvImage(data, format, size.width, size.height, null);
+						mc.threadPool[i].SetData(image, size);
+						mc.threadPool[i].start();
 						break aa;
 					}
 				}
@@ -138,36 +124,32 @@ class StreamIt implements Camera.PreviewCallback {
 
 class MyThread extends Thread {
 	public YuvImage image;
-	public byte[] dataSend;
 	public Size size;
 	public boolean free = false;
 
 	public MyThread() {
 	}
 
-	public void SetData(YuvImage image, Size size, byte[] dataSend) {
+	public void SetData(YuvImage image, Size size) {
 		this.image = image;
-		this.dataSend = dataSend;
 		this.size = size;
 	}
 
 	public void run() {
 		try {
-			if (MyCamera.ComputerIP != null) {
-				// 将图像数据通过Socket发送出去
-				Socket tempSocket = new Socket(MyCamera.ComputerIP, 6000);
-				OutputStream outstream = tempSocket.getOutputStream();
-				byte[] len = new byte[2];
-				len[0] = (byte) (dataSend.length & 0xFF);
-				len[1] = (byte) ((dataSend.length >> 8) & 0xFF);
-				outstream.write(len);
-				outstream.write(dataSend);
-				image.compressToJpeg(new Rect(0, 0, size.width, size.height), 80, outstream);
+			// 将图像数据通过Socket发送出去
+			Socket tempSocket = new Socket(MyCamera.ComputerIP, 6000);
+			tempSocket.setSoTimeout(1000);
+			
+			OutputStream outstream = tempSocket.getOutputStream();
+			
+			outstream.write(2);// type==2
+			image.compressToJpeg(new Rect(0, 0, size.width, size.height), MyCamera.Quality, outstream);
 
-				outstream.flush();
-				outstream.close();
-				tempSocket.close();
-			}
+			outstream.flush();
+			outstream.close();
+			tempSocket.close();
+
 		} catch (IOException e) {
 		} catch (Throwable e) {
 		} finally {
