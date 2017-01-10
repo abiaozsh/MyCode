@@ -16,8 +16,8 @@
 
         <ImageView
             android:id="@+id/ImageView"
-            android:layout_width="860px"
-            android:layout_height="645px"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:src="@drawable/ic_launcher" />
 
         <TextView
@@ -68,22 +68,22 @@
                 android:text="ClearAll" />
 
             <Button
-                android:id="@+id/button9"
+                android:id="@+id/QP"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="PL" />
+                android:text="QP" />
 
             <Button
-                android:id="@+id/button10"
+                android:id="@+id/NH"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="PL" />
+                android:text="NH" />
 
             <Button
-                android:id="@+id/button11"
+                android:id="@+id/HD"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="PL" />
+                android:text="HD" />
         </LinearLayout>
 
         <LinearLayout

@@ -20,6 +20,8 @@ import android.os.Message;
 
 public class NetThread extends Thread {
 
+	int POS;
+
 	static NumberFormat nf = NumberFormat.getInstance();
 
 	static NumberFormat nf4 = NumberFormat.getInstance();
@@ -36,11 +38,12 @@ public class NetThread extends Thread {
 	String cmd;
 	Activity act;
 
-	NetThread(String cmd, Handler h, ImgContainer imgContainer, Activity act) {
+	NetThread(String cmd, Handler h, ImgContainer imgContainer, Activity act, int POS) {
 		mhandler = h;
 		this.imgContainer = imgContainer;
 		this.cmd = cmd;
 		this.act = act;
+		this.POS = POS;
 		this.setPriority(Thread.MIN_PRIORITY);
 	}
 
@@ -170,7 +173,7 @@ public class NetThread extends Thread {
 		return null;
 	}
 
-	public static String getFilename(Calendar c) {
+	public String getFilename(Calendar c) {
 		String year = nf4.format(c.get(Calendar.YEAR));
 		String month = nf.format(c.get(Calendar.MONTH) + 1);
 		String day = nf.format(c.get(Calendar.DATE));
@@ -187,10 +190,17 @@ public class NetThread extends Thread {
 
 		String min = nf.format(minute);
 
-		return year + month + day + hour + min + ".PNG";
+		if (POS == 1) {
+			return "QP" + year + month + day + hour + min + ".PNG";
+		} else if (POS == 2) {
+			return "NH" + year + month + day + hour + min + ".PNG";
+		} else if (POS == 3) {
+			return "HD" + year + month + day + hour + min + ".PNG";
+		}
+		return "";
 	}
 
-	public static String getUrl(Calendar cal) {
+	public String getUrl(Calendar cal) {
 		Calendar c = Calendar.getInstance();
 		c.setTime(cal.getTime());
 		c.add(Calendar.HOUR, -8);
@@ -215,7 +225,13 @@ public class NetThread extends Thread {
 		String fm = nf.format(cal.get(Calendar.MONTH) + 1);
 		String fd = nf.format(cal.get(Calendar.DATE));
 
-		return "http://image.nmc.cn/product/" + fy + "/" + fm + "/" + fd + "/RDCP/medium/SEVP_AOC_RDCP_SLDAS_EBREF_AZ9002_L88_PI_" + y + m + d + hour + min + "00000.PNG";
+		if (POS == 1) {// QP
+			return "http://image.nmc.cn/product/" + fy + "/" + fm + "/" + fd + "/RDCP/medium/SEVP_AOC_RDCP_SLDAS_EBREF_AZ9002_L88_PI_" + y + m + d + hour + min + "00000.PNG";
+		} else if (POS == 2) {// NH
+			return "http://image.nmc.cn/product/" + fy + "/" + fm + "/" + fd + "/RDCP/medium/SEVP_AOC_RDCP_SLDAS_EBREF_AZ9210_L88_PI_" + y + m + d + hour + min + "00000.PNG";
+		} else if (POS == 3) {// HD
+			return "http://image.nmc.cn/product/" + fy + "/" + fm + "/" + fd + "/RDCP/medium/SEVP_AOC_RDCP_SLDAS_EBREF_AECN_L88_PI_" + y + m + d + hour + min + "00001.PNG";
+		}
+		return "";
 	}
-
 }

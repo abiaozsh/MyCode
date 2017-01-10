@@ -17,6 +17,8 @@ import android.widget.TextView;
 public class Radar extends Activity {
 	public ImgContainer imgContainer = new ImgContainer();
 
+	int POS = 1;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -36,6 +38,15 @@ public class Radar extends Activity {
 
 		Button LD2D = (Button) findViewById(R.id.LD2D);
 		LD2D.setOnClickListener(new LD2D());
+
+		Button QP = (Button) findViewById(R.id.QP);
+		QP.setOnClickListener(new QP());
+
+		Button NH = (Button) findViewById(R.id.NH);
+		NH.setOnClickListener(new NH());
+
+		Button HD = (Button) findViewById(R.id.HD);
+		HD.setOnClickListener(new HD());
 
 		Button ClearAll = (Button) findViewById(R.id.ClearAll);
 		ClearAll.setOnClickListener(new ClearAll());
@@ -63,7 +74,7 @@ public class Radar extends Activity {
 		textView1.setText(m);
 
 		handler = new MyHandler(this);
-		
+
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 
 	}
@@ -71,15 +82,45 @@ public class Radar extends Activity {
 	public class TestListener implements View.OnClickListener {
 		@Override
 		public void onClick(View v) {
-			NetThread netThread = new NetThread("test", handler, imgContainer, Radar.this);
+			NetThread netThread = new NetThread("test", handler, imgContainer, Radar.this, POS);
 			netThread.start();
+		}
+	}
+
+	public class QP implements View.OnClickListener {
+		@Override
+		public void onClick(View v) {
+			POS = 1;
+			TextView textView1 = (TextView) findViewById(R.id.textView1);
+			String m = "QP";
+			textView1.setText(m);
+		}
+	}
+
+	public class NH implements View.OnClickListener {
+		@Override
+		public void onClick(View v) {
+			POS = 2;
+			TextView textView1 = (TextView) findViewById(R.id.textView1);
+			String m = "NH";
+			textView1.setText(m);
+		}
+	}
+
+	public class HD implements View.OnClickListener {
+		@Override
+		public void onClick(View v) {
+			POS = 3;
+			TextView textView1 = (TextView) findViewById(R.id.textView1);
+			String m = "HD";
+			textView1.setText(m);
 		}
 	}
 
 	public class LD1H implements View.OnClickListener {
 		@Override
 		public void onClick(View v) {
-			NetThread netThread = new NetThread("ld1h", handler, imgContainer, Radar.this);
+			NetThread netThread = new NetThread("ld1h", handler, imgContainer, Radar.this, POS);
 			netThread.start();
 		}
 	}
@@ -87,7 +128,7 @@ public class Radar extends Activity {
 	public class LD2H implements View.OnClickListener {
 		@Override
 		public void onClick(View v) {
-			NetThread netThread = new NetThread("ld2h", handler, imgContainer, Radar.this);
+			NetThread netThread = new NetThread("ld2h", handler, imgContainer, Radar.this, POS);
 			netThread.start();
 		}
 	}
@@ -95,7 +136,7 @@ public class Radar extends Activity {
 	public class LD1D implements View.OnClickListener {
 		@Override
 		public void onClick(View v) {
-			NetThread netThread = new NetThread("ld1d", handler, imgContainer, Radar.this);
+			NetThread netThread = new NetThread("ld1d", handler, imgContainer, Radar.this, POS);
 			netThread.start();
 		}
 	}
@@ -103,7 +144,7 @@ public class Radar extends Activity {
 	public class LD2D implements View.OnClickListener {
 		@Override
 		public void onClick(View v) {
-			NetThread netThread = new NetThread("ld2d", handler, imgContainer, Radar.this);
+			NetThread netThread = new NetThread("ld2d", handler, imgContainer, Radar.this, POS);
 			netThread.start();
 		}
 	}
@@ -111,19 +152,20 @@ public class Radar extends Activity {
 	public class ClearAll implements View.OnClickListener {
 		@Override
 		public void onClick(View v) {
-			NetThread netThread = new NetThread("clearall", handler, imgContainer, Radar.this);
+			NetThread netThread = new NetThread("clearall", handler, imgContainer, Radar.this, POS);
 			netThread.start();
 		}
 	}
 
 	Handler handler;
-	
+
 	static class MyHandler extends Handler {
 		Radar a;
-		public MyHandler(Radar a){
+
+		public MyHandler(Radar a) {
 			this.a = a;
 		}
-		
+
 		@Override
 		public void handleMessage(Message msg) {
 
