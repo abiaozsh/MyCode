@@ -526,6 +526,7 @@ int main(void) {
   
 	{
     uint16_t mosVolt = 0;//0~311  2v-5v
+		uint8_t started = 0;
 		for(;;)
 		{
       uint16_t c = getCurrent();
@@ -538,6 +539,11 @@ int main(void) {
           mosVolt++;
         }
       }
+			else{
+				started = 1;
+			}
+	  
+	  
       if(c>cmax){
         if(mosVolt>0){
           mosVolt--;
@@ -561,7 +567,13 @@ int main(void) {
       
       //val = getVoltage10();
       //SerialSend('1');SerialSend(':');SendInt(val,5);SerialSend('\t');
-      wait(100000);
+			if(started){
+				wait(1000000);
+			}
+			else
+			{
+				wait(20000);
+			}
 		}
 	}
 }
