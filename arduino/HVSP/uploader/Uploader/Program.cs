@@ -4,6 +4,7 @@ using System.Text;
 using System.IO.Ports;
 using System.IO;
 using System.Globalization;
+using System.Threading;
 
 namespace Uploader
 {
@@ -57,6 +58,7 @@ namespace Uploader
                 //check signature
                 {
                     portWrite("st");//st Start
+                    Thread.Sleep(100);
                     checkOK();
                     portWrite("si");
                     string sig = readFromPort(6);
@@ -79,6 +81,7 @@ namespace Uploader
                     //programmed.
                     //5. End Page Programming by Loading Command “No Operation”.
                     portWrite("st");//st Start
+                    Thread.Sleep(100);
                     checkOK();
                     portWrite("er");//st Start
                     checkOK();
@@ -121,6 +124,7 @@ namespace Uploader
                     StringBuilder sbresult = new StringBuilder();
                     {
                         portWrite("st");//st Start
+                        Thread.Sleep(100);
                         checkOK();
                         portWrite("rf");//rf ReadFlash
                         checkOK();

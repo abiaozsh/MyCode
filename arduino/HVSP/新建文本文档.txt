@@ -1,0 +1,34 @@
+电容 1uf 或者st以后等一段时间
+
+大小写都兼容的
+
+检测 stsied   OK1E910BOK    start sign end
+strhrled   OKDF62OK
+stwh5Fed
+
+01011111  5F
+11011111  DF
+0启用 1禁用
+Table 19-4. Fuse High Byte
+Fuse High Byte Bit No Description Default Value
+RSTDISBL (1) 7 External Reset disable 1 (unprogrammed)
+DWEN (2) 6 DebugWIRE Enable 1 (unprogrammed)
+SPIEN (3) 5 Enable Serial Program and Data Downloading 0 (programmed, SPI prog. enabled)
+WDTON (4) 4 Watchdog Timer always on 1 (unprogrammed)
+EESAVE 3 EEPROM memory is preserved through the Chip Erase 1 (unprogrammed, EEPROM not preserved)
+BODLEVEL2 (5) 2 Brown-out Detector trigger level 1 (unprogrammed)
+BODLEVEL1 (5) 1 Brown-out Detector trigger level 1 (unprogrammed)
+BODLEVEL0 (5) 0 Brown-out Detector trigger level 1 (unprogrammed)
+
+
+0110 0010 62
+Table 19-5. Fuse Low Byte
+Fuse Low Byte Bit No Description Default Value
+CKDIV8 (1) 7 Divide clock by 8 0 (programmed)
+CKOUT (2) 6 Clock Output Enable 1 (unprogrammed)
+SUT1 (3) 5 Select start-up time 1 (unprogrammed)
+SUT0 (3) 4 Select start-up time 0 (programmed)
+CKSEL3 (4) 3 Select Clock source 0 (programmed)
+CKSEL2 (4) 2 Select Clock source 0 (programmed)
+CKSEL1 (4) 1 Select Clock source 1 (unprogrammed)
+CKSEL0 (4) 0 Select Clock source 0 (programmed)
