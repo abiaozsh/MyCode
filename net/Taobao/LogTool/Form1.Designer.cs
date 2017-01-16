@@ -35,20 +35,22 @@
 			this.priceHi = new System.Windows.Forms.TextBox();
 			this.listBox1 = new System.Windows.Forms.ListBox();
 			this.priceLo = new System.Windows.Forms.TextBox();
-			this.button3 = new System.Windows.Forms.Button();
 			this.label1 = new System.Windows.Forms.Label();
 			this.button4 = new System.Windows.Forms.Button();
 			this.button5 = new System.Windows.Forms.Button();
 			this.textBox1 = new System.Windows.Forms.TextBox();
+			this.button6 = new System.Windows.Forms.Button();
+			this.textBox2 = new System.Windows.Forms.TextBox();
+			this.textBox3 = new System.Windows.Forms.TextBox();
 			this.SuspendLayout();
 			// 
 			// button1
 			// 
-			this.button1.Location = new System.Drawing.Point(269, 216);
+			this.button1.Location = new System.Drawing.Point(285, 195);
 			this.button1.Name = "button1";
 			this.button1.Size = new System.Drawing.Size(75, 23);
 			this.button1.TabIndex = 38;
-			this.button1.Text = "button1";
+			this.button1.Text = "proc";
 			this.button1.UseVisualStyleBackColor = true;
 			this.button1.Click += new System.EventHandler(this.button1_Click_1);
 			// 
@@ -99,16 +101,6 @@
 			this.priceLo.Size = new System.Drawing.Size(102, 21);
 			this.priceLo.TabIndex = 53;
 			// 
-			// button3
-			// 
-			this.button3.Location = new System.Drawing.Point(386, 216);
-			this.button3.Name = "button3";
-			this.button3.Size = new System.Drawing.Size(75, 23);
-			this.button3.TabIndex = 54;
-			this.button3.Text = "button3";
-			this.button3.UseVisualStyleBackColor = true;
-			this.button3.Click += new System.EventHandler(this.button3_Click);
-			// 
 			// label1
 			// 
 			this.label1.AutoSize = true;
@@ -145,16 +137,44 @@
 			this.textBox1.Size = new System.Drawing.Size(275, 21);
 			this.textBox1.TabIndex = 58;
 			// 
+			// button6
+			// 
+			this.button6.Location = new System.Drawing.Point(38, 247);
+			this.button6.Name = "button6";
+			this.button6.Size = new System.Drawing.Size(75, 23);
+			this.button6.TabIndex = 59;
+			this.button6.Text = "shop";
+			this.button6.UseVisualStyleBackColor = true;
+			this.button6.Click += new System.EventHandler(this.button6_Click);
+			// 
+			// textBox2
+			// 
+			this.textBox2.Location = new System.Drawing.Point(119, 249);
+			this.textBox2.Name = "textBox2";
+			this.textBox2.Size = new System.Drawing.Size(101, 21);
+			this.textBox2.TabIndex = 60;
+			this.textBox2.Text = "1";
+			// 
+			// textBox3
+			// 
+			this.textBox3.Location = new System.Drawing.Point(227, 249);
+			this.textBox3.Name = "textBox3";
+			this.textBox3.Size = new System.Drawing.Size(100, 21);
+			this.textBox3.TabIndex = 61;
+			this.textBox3.Text = "336";
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(645, 282);
+			this.Controls.Add(this.textBox3);
+			this.Controls.Add(this.textBox2);
+			this.Controls.Add(this.button6);
 			this.Controls.Add(this.textBox1);
 			this.Controls.Add(this.button5);
 			this.Controls.Add(this.button4);
 			this.Controls.Add(this.label1);
-			this.Controls.Add(this.button3);
 			this.Controls.Add(this.priceLo);
 			this.Controls.Add(this.listBox1);
 			this.Controls.Add(this.priceHi);
@@ -179,11 +199,13 @@
 		private System.Windows.Forms.TextBox priceHi;
 		private System.Windows.Forms.ListBox listBox1;
 		private System.Windows.Forms.TextBox priceLo;
-		private System.Windows.Forms.Button button3;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.Button button4;
 		private System.Windows.Forms.Button button5;
 		private System.Windows.Forms.TextBox textBox1;
+		private System.Windows.Forms.Button button6;
+		private System.Windows.Forms.TextBox textBox2;
+		private System.Windows.Forms.TextBox textBox3;
 	}
 }
 

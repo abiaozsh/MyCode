@@ -368,179 +368,6 @@ namespace LogTool
 		}
 
 
-		[Serializable]
-		public class Item
-		{
-			public string name1;
-			public string name2;
-			public string url1;
-			public string url2;
-			public string img;
-			public decimal price;
-		}
-		private void button3_Click(object sender, EventArgs e)
-		{
-			/*
-				for (int i = 1; i <= 259; i++)
-				{
-					string _url;
-					if (i == 1)
-					{
-						_url = "https://xintaiwei.taobao.com/i/asynSearch.htm?_ksTS=1451456560054_551&callback=jsonp552&mid=w-10831283312-0&wid=10831283312&path=/search.htm&search=y&spm=a1z10.3-c.w4002-10831283312.30.WEpail&viewType=list&orderType=price_asc";
-					}
-					else
-					{
-						_url = "https://xintaiwei.taobao.com/i/asynSearch.htm?_ksTS=1451456560054_551&callback=jsonp552&mid=w-10831283312-0&wid=10831283312&path=/search.htm&search=y&spm=a1z10.3-c.w4002-10831283312.30.WEpail&viewType=list&orderType=price_asc&pageNo=" + i;
-					}
-					System.Net.HttpWebRequest Myrq = (System.Net.HttpWebRequest)System.Net.HttpWebRequest.Create(_url);
-					System.Net.HttpWebResponse myrp = (System.Net.HttpWebResponse)Myrq.GetResponse();
-					System.IO.Stream st = myrp.GetResponseStream();
-					StreamReader sr = new StreamReader(st, Encoding.GetEncoding("gbk"));
-					string sss = sr.ReadToEnd();
-					sr.Close();
-					st.Close();
-					myrp.Close();
-					Myrq.Abort();
-					sss = sss.Replace("\\\"", "\"");
-					int pos1 = sss.IndexOf("<ul class=\"items\">");
-					sss = sss.Substring(pos1 + "<ul class=\"items\"".Length + 1);
-					pos1 = sss.IndexOf("</ul>");
-					sss = sss.Substring(0, pos1);
-
-					List<string> items = new List<string>();
-					while (true)
-					{
-						pos1 = sss.IndexOf("</li>");
-						if (pos1 < 0) break;
-						string s1 = sss.Substring(0, pos1 + "</li>".Length);
-						sss = sss.Substring(pos1 + "</li>".Length);
-						items.Add(s1);
-					}
-					StringBuilder sb = new StringBuilder();
-					foreach (var item in items)
-					{
-						sb.Append(item);
-					}
-					{
-						FileStream fs = new FileStream("e:\\out\\"+i+".txt", FileMode.Create, FileAccess.Write);
-						StreamWriter sw = new StreamWriter(fs);
-						sw.Write(sb.ToString());
-						sw.Flush();
-						fs.Flush();
-						fs.Close();
-					}
-					this.Text = i.ToString();
-				}*/
-			/*
-			FileStream fs = new FileStream("e:\\proc\\a.txt", FileMode.Open, FileAccess.Read);
-			StreamReader sr = new StreamReader(fs);
-			string sss = sr.ReadToEnd();
-			List<Item> items = new List<Item>();
-			while (true)
-			{
-				int pos;
-				pos = sss.IndexOf("</li>");
-				if (pos < 0) break;
-				string s1 = sss.Substring(0, pos + "</li>".Length);
-				sss = sss.Substring(pos + "</li>".Length);
-
-				Item item = new Item();
-				item.url1 = "http:" + proc(ref s1, "<a href=\"", "\"").Trim();
-				item.name1 = proc(ref s1, "<img alt=\"", "\"").Trim();
-				item.img = "http:" + proc(ref s1, "src=\"", "\"").Trim();
-				item.url2 = "http:" + proc(ref s1, "<a href=\"", "\"").Trim();
-				item.name2 = proc(ref s1, "target=\"_blank\">", "<").Trim();
-				item.price = decimal.Parse(proc(ref s1, "<span class=\"value\">", "<").Trim());
-
-				if (item.url1 != item.url2)
-				{
-					throw new Exception();
-				}
-				if (item.name1 != item.name2)
-				{
-					throw new Exception();
-				}
-
-				items.Add(item);
-			}
-
-			{
-				{
-					FileStream fs2 = new FileStream("e:\\out\\json.txt", FileMode.Create, FileAccess.Write);
-					StreamWriter sw = new StreamWriter(fs2);
-					foreach(var item in items)
-					{
-						sw.WriteLine(item.name1);
-						sw.WriteLine(item.img);
-						sw.WriteLine(item.url1);
-						sw.WriteLine(item.price);
-					}
-					sw.Flush();
-					fs2.Flush();
-					fs2.Close();
-				}
-
-			}
-			*/
-
-
-			FileStream fs = new FileStream("e:\\proc\\json.txt", FileMode.Open, FileAccess.Read);
-			StreamReader sr = new StreamReader(fs);
-			List<Taobao.Mods.ItemList.Data.Auction> items = new List<Taobao.Mods.ItemList.Data.Auction>();
-			while (true)
-			{
-				string line = sr.ReadLine();
-				if (line == null || line == "") break;
-				Taobao.Mods.ItemList.Data.Auction item = new Taobao.Mods.ItemList.Data.Auction();
-				item.raw_title = line;
-				item.pic_url = sr.ReadLine().Substring(5);
-				item.detail_url = sr.ReadLine().Substring(5);
-				item.nid = item.detail_url.Substring(item.detail_url.IndexOf("=") + 1);
-				item.reserve_price = sr.ReadLine();
-				item.view_price = item.reserve_price;
-				item.shopcard = new Taobao.Mods.ItemList.Data.Auction.Shopcard();
-				items.Add(item);
-			}
-			items = filter(items, "叠层电感");
-			items = filter(items, "贴片电阻");
-			items = filter(items, "膜电阻");
-			items = filter(items, "贴片电容");
-			items = filter(items, "色环电感");
-
-			items = filter(items, "杜邦");
-			items = filter(items, "二极管");
-			items = filter(items, "三极管");
-			items = filter(items, "发光管");
-			items = filter(items, "微动开关");
-			items = filter(items, "电解电容");
-			items = filter(items, "稳压管");
-			items = filter(items, "晶振");
-			items = filter(items, "贴片绕线电感");
-			items = filter(items, "磁珠");
-			items = filter(items, "可调电阻");
-			items = filter(items, "工字电感");
-			items = filter(items, "功率电感");
-			items = filter(items, "保险丝");
-			items = filter(items, "钽电容");
-			items = filter(items, "2.54");
-			items = filter(items, "瓷片电容");
-			items = filter(items, "陶瓷电容");
-			items = filter(items, "CBB电容");
-			items = filter(items, "MQ-");
-			items = filter(items, "独石电容");
-			items = filter(items, "稳压电路");
-			items = filter(items, "74hc");
-			items = filter(items, "74HC");
-
-			items.Sort(delegate(Taobao.Mods.ItemList.Data.Auction a, Taobao.Mods.ItemList.Data.Auction b)
-			{
-				//return (a.raw_title.CompareTo(b.raw_title));
-				return (a.reserve_price.CompareTo(b.reserve_price));
-			});
-			ShowPage(items);
-
-		}
-
 		public List<Taobao.Mods.ItemList.Data.Auction> filter(List<Taobao.Mods.ItemList.Data.Auction> items, string filter)
 		{
 			List<Taobao.Mods.ItemList.Data.Auction> newItems = new List<Taobao.Mods.ItemList.Data.Auction>();
@@ -604,6 +431,140 @@ namespace LogTool
 				listBox1.Items.Add(slots[3]);
 			}
 
+		}
+
+		private void button6_Click(object sender, EventArgs e)
+		{
+			if(false){
+				List<Taobao.Mods.ItemList.Data.Auction> items = new List<Taobao.Mods.ItemList.Data.Auction>();
+
+				for (int i = int.Parse(textBox2.Text); i <= int.Parse(textBox3.Text); i++)
+				{
+					this.Text = i.ToString();
+					Application.DoEvents();
+					string _url;
+					_url = "https://shop107165188.taobao.com/i/asynSearch.htm?_ksTS=1484556775512_725&callback=jsonp726&mid=w-15701625131-0&wid=15701625131&path=/search.htm&search=y&pageNo=" + i;
+					System.Net.HttpWebRequest Myrq = (System.Net.HttpWebRequest)System.Net.HttpWebRequest.Create(_url);
+					System.Net.HttpWebResponse myrp = (System.Net.HttpWebResponse)Myrq.GetResponse();
+					System.IO.Stream st = myrp.GetResponseStream();
+					StreamReader sr = new StreamReader(st, Encoding.GetEncoding("gbk"));
+					string sss = sr.ReadToEnd();
+					sr.Close();
+					st.Close();
+					myrp.Close();
+					Myrq.Abort();
+					sss = sss.Replace("\\\"", "\"");
+
+					while (true)
+					{
+						string cont = "";
+						{
+							int pos1 = sss.IndexOf("<dl class=\"item ");//<dl class="item last" data-id="543579864005">
+							if (pos1 < 0) break;
+							sss = sss.Substring(pos1);
+							int pos2 = sss.IndexOf("</dl>");
+							cont = sss.Substring(0, pos2 + 5);
+							sss = sss.Substring(pos2 + 5);
+						}
+
+						string id = "";
+						{
+							int pos1 = cont.IndexOf("data-id=\"");
+							id = cont.Substring(pos1 + "data-id=\"".Length);
+							int pos2 = id.IndexOf("\"");
+							id = id.Substring(0, pos2);
+						}
+						//
+						string name = "";
+						string url = "";
+						{
+							int pos1 = cont.IndexOf("<a class=\"item-name ");
+							name = cont.Substring(pos1);
+							pos1 = name.IndexOf("href=\"");
+							url = name.Substring(pos1 + 6);
+							int pos2 = url.IndexOf("\"");
+							url = url.Substring(0, pos2);
+
+							pos2 = name.IndexOf("</a>");
+							name = name.Substring(0, pos2);
+							pos1 = name.IndexOf(">");
+							name = name.Substring(pos1 + 1);
+							name = name.Trim();
+						}
+
+						string img = "";
+						{
+							int pos1 = cont.IndexOf("src=\"");
+							img = cont.Substring(pos1 + 5);
+							int pos2 = img.IndexOf("\"");
+							img = img.Substring(0, pos2);
+						}
+						string price = "";
+						{
+							int pos1 = cont.IndexOf("<span class=\"c-price\">");
+							price = cont.Substring(pos1 + "<span class=\"c-price\">".Length);
+							int pos2 = price.IndexOf("<");
+							price = price.Substring(0, pos2);
+							price = price.Trim();
+						}
+
+
+						Taobao.Mods.ItemList.Data.Auction item = new Taobao.Mods.ItemList.Data.Auction();
+						item.raw_title = name;
+						item.pic_url = img;
+						item.detail_url = url;
+						item.nid = id;
+						item.reserve_price = price;
+						item.view_price = price;
+						item.shopcard = new Taobao.Mods.ItemList.Data.Auction.Shopcard();
+						items.Add(item);
+					}
+				}
+				save(items, "d:\\taobao.txt");
+			}
+			{
+				List<Taobao.Mods.ItemList.Data.Auction> items = new List<Taobao.Mods.ItemList.Data.Auction>();
+
+				load(items, "d:\\taobao.txt");
+				/*
+				items = filter(items, "叠层电感");
+				items = filter(items, "贴片电阻");
+				items = filter(items, "膜电阻");
+				items = filter(items, "贴片电容");
+				items = filter(items, "色环电感");
+
+				items = filter(items, "杜邦");
+				items = filter(items, "二极管");
+				items = filter(items, "三极管");
+				items = filter(items, "发光管");
+				items = filter(items, "微动开关");
+				items = filter(items, "电解电容");
+				items = filter(items, "稳压管");
+				items = filter(items, "晶振");
+				items = filter(items, "贴片绕线电感");
+				items = filter(items, "磁珠");
+				items = filter(items, "可调电阻");
+				items = filter(items, "工字电感");
+				items = filter(items, "功率电感");
+				items = filter(items, "保险丝");
+				items = filter(items, "钽电容");
+				items = filter(items, "2.54");
+				items = filter(items, "瓷片电容");
+				items = filter(items, "陶瓷电容");
+				items = filter(items, "CBB电容");
+				items = filter(items, "MQ-");
+				items = filter(items, "独石电容");
+				items = filter(items, "稳压电路");
+				items = filter(items, "74hc");
+				items = filter(items, "74HC");
+				*/
+				items.Sort(delegate(Taobao.Mods.ItemList.Data.Auction a, Taobao.Mods.ItemList.Data.Auction b)
+				{
+					return (a.raw_title.CompareTo(b.raw_title));
+					//return (a.reserve_price.CompareTo(b.reserve_price));
+				});
+				ShowPage(items);
+			}
 		}
 
 	}
