@@ -6,13 +6,13 @@
 #define  RST      9    // 7 Output to level shifter for !RESET from transistor to Pin 1
 #define  LED     13
 
-//VCC 					GND
-//B0 (SCI)				A0 (GND)
-//B1  					A1 (GND)
-//RST (12V)				A2 (GND)
-//B2  					A3
-//A7  					A4 (SDO)/SCL
-//A6 (SDI) MOSI			A5 (SII)/MISO 
+//VCC 					 GND
+//B0 (SCI)			 A0 (GND)
+//B1  					 A1 (GND)
+//RST (12V)			 A2 (GND)
+//B2  					 A3
+//A7  					 A4 (SDO)/SCL
+//A6 (SDI) MOSI	 A5 (SII)/MISO 
 
 
 //VCC B0(SCI) A6(SDI) A5(SII) A4(SDO)
@@ -38,7 +38,7 @@
 //A2 GND
 //2->A5(SII)
 //3->A4(SDO)
-//4->VCC 1k
+//4->VCC 1k  TODO 改成 101
 //5->A6(SDI)
 //6->B0(SCI)
 //7->NPN 1k
@@ -289,7 +289,7 @@ void Start(){
   digitalWrite(RST, HIGH); //LOW  //Turn on 12v
   delayMicroseconds(10);
   pinMode(DATAIN, INPUT);   //Release DATAIN
-  delayMicroseconds(300);
+  delayMicroseconds(300);//Wait at least 300 μs before giving any serial instructions on SDI/SII.
 }
 void End(){
   digitalWrite(CLKOUT, LOW);
