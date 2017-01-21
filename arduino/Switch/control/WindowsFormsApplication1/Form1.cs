@@ -21,6 +21,17 @@ namespace WindowsFormsApplication1
         private delegate void FlushClient(string s);
         public Form1()
         {
+            FileStream fs = new FileStream("d:\\comconf.txt", FileMode.Open, FileAccess.Read);
+            StreamReader sr = new StreamReader(fs);
+
+            string com = sr.ReadLine();
+            this.Text = com;
+
+            sr.Close();
+            fs.Close();
+
+
+
             InitializeComponent();
 
             this.FormClosed += new FormClosedEventHandler(Form1_FormClosed);
@@ -32,7 +43,7 @@ namespace WindowsFormsApplication1
                 try
                 {
                     //COM4为Arduino使用的串口号，需根据实际情况调整
-                    port = new SerialPort("COM15", 115200, Parity.None, 8, StopBits.One);
+                    port = new SerialPort(com, 115200, Parity.None, 8, StopBits.One);
                     port.Open();
                 }
                 catch
