@@ -80,13 +80,6 @@ namespace WindowsFormsApplication1
 
 				string[] values = line.Split('\t');
 
-
-				//SerialSend('c'); SerialSend(':'); SendInt(curr, 5); SerialSend('\t');
-				//SerialSend('v'); SerialSend(':'); SendInt(volt, 5); SerialSend('\t');
-				//SerialSend('m'); SerialSend(':'); SendInt(mosVolt, 5); SerialSend('\t');
-				//SerialSend('u'); SerialSend(':'); SendInt(cmax, 5); SerialSend('\t');
-				//SerialSend('d'); SerialSend(':'); SendInt(cmin, 5); SerialSend('\t');
-				//SerialSend('\n');
 				double c = getValue(values[0]);
 				double v = getValue(values[1]);
 				double m = getValue(values[2]);
