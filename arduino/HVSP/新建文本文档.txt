@@ -3,8 +3,8 @@
 大小写都兼容的
 
 检测 stsied   OK1E910BOK    start sign end
-strhrled   OKDF62OK
-stwh5Fed
+读取 strhrled   OKDF62OK
+重设 stwh5Fed
 
 01011111  5F
 11011111  DF
