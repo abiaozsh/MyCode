@@ -2,9 +2,10 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 	
-#define CUR_TIMING TIMING__8M_TCCR1B_1_115200
+#define CUR_TIMING TIMING__8M_TCCR1B_1___9600
 #define TCCR1B_Value 1
 PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1_115200[] = {   69,  138,  208,  277,  347,  416,  486,  555,  625,  694};
+PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1___9600[] = {  833, 1666, 2500, 3333, 4166, 5000, 5833, 6666, 7500, 8333};
 
 #define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
 
@@ -87,14 +88,8 @@ void loop() {
     flg = 0;
 /*    
 0.01Ω
-10A
-0.1v
-1W
-
-30A
-0.3V
-9w
-
+ 10A 0.1v 1W
+ 30A 0.3V 9w
 
 1=1.1/20 /1024 *100 = 0.00537109375A
 
@@ -174,7 +169,7 @@ void SendInt(uint32_t val, uint8_t digits){
 }
 
 void SerialSend(uint8_t val){
-	cli();
+	//cli();
 	TCCR1B = TCCR1B_Value;
 	TCNT1 = 0;
 	uint16_t timing;
@@ -186,5 +181,5 @@ void SerialSend(uint8_t val){
 		if(val&chkbit){PORT_Send |= BIT_Send;}else{PORT_Send &= ~BIT_Send;}chkbit<<=1;timing = pgm_read_word_near(pTiming++);while(TCNT1<timing);
 	}
 	PORT_Send |= BIT_Send;timing = pgm_read_word_near(pTiming);while(TCNT1<timing);
-	sei();
+	//sei();
 }
