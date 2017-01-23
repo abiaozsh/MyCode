@@ -89,6 +89,11 @@ void loop()
     End();
     Serial.print("OK");
   }
+  else if(cmd1=='b' && cmd2=='r')       //ed End
+  {
+    End();
+    Serial.print("\r\n");
+  }
   else if(cmd1=='e' && cmd2=='r')       //er Erase
   {
     Erase();

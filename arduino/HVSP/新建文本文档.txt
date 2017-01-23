@@ -2,9 +2,9 @@
 
 大小写都兼容的
 
-检测 stsied   OK1E910BOK    start sign end
-读取 strhrled   OKDF62OK
-重设 stwh5Fed
+检测 stsiedbr   OK1E910BOK    start sign end
+读取 strhrledbr   OKDF62OK
+重设 stwh5Fedbr
 
 01011111  5F
 11011111  DF
