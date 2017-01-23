@@ -6,9 +6,9 @@
 #define STAOff  DDRB &= ~_BV(3);/**/
 uint8_t i = 0;
 
-#define CUR_TIMING TIMING__8M_TCCR1B_1_115200
+#define CUR_TIMING TIMING__8M_TCCR1B_1___9600
 #define TCCR1B_Value 1
-PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1_115200[] = {   69,  138,  208,  277,  347,  416,  486,  555,  625,  694};
+PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1___9600[] = {  833, 1666, 2500, 3333, 4166, 5000, 5833, 6666, 7500, 8333};
 
 #define DDR_Send DDRB
 #define PORT_Send PORTB
@@ -37,15 +37,15 @@ void loop() {
     uint8_t data = SerialRead();
     if((data & 0xE0) == 0xA0)
     {
-    PORTA = data;
-    if(data&0x10)
-    {
-      STAOn;
-    }
-    else
-    {
-      STAOff;
-    }
+			PORTA = data;
+			if(data&0x10)
+			{
+				STAOn;
+			}
+			else
+			{
+				STAOff;
+			}
     }
 	}
 }
