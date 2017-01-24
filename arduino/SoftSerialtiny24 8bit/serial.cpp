@@ -2,12 +2,13 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 	
-#define CUR_TIMING TIMING__8M_TCCR0B_1_115200
+#define CUR_TIMING TIMING_7_78_TCCR1B_1__115200
 #define TCCR0B_Value 1
 
 PROGMEM prog_uint8_t TIMING__8M_TCCR0B_2___9600[] = {104,208, 56,160,  8,113,217, 65,169, 17};
 PROGMEM prog_uint8_t TIMING__8M_TCCR0B_2__14400[] = { 69,138,208, 21, 91,160,230, 43,113,182};
-PROGMEM prog_uint8_t TIMING__8M_TCCR0B_1_115200[] = { 69,138,208, 21, 91,160,230, 43,113,182};
+//PROGMEM prog_uint8_t TIMING__8M_TCCR0B_1_115200[] = { 69,138,208, 21, 91,160,230, 43,113,182};
+PROGMEM prog_uint8_t TIMING_7_78_TCCR1B_1__115200[] = {68,135,203,14,82,149,217,28,96,163,};
 
 //#define DDR_Send DDRA
 //#define PORT_Send PORTA
@@ -34,6 +35,9 @@ void SendInt(uint32_t val);
 //uint32_t ReadInt();
 
 int main(void) {
+	ClockInit();
+	SerialInit();
+	TimerInit();
 	loop();
 }
 
@@ -43,31 +47,10 @@ void ClockInit() {
 	CLKPR = 0;//1/1 //8MHz
 }
 
-uint8_t buff[8];
 void loop() {
 	for(;;)
 	{
-    
-    //28 耗时
-    //224clock
-      //初始化定时器 1/8
-    TCCR1B = 2;//  1/8	1MHz 1us
-    TIMSK1 |= _BV(OCIE1A);
-    volatile uint16_t val = 12000;
-    uint32_t temp = val;
-    uint8_t aread = 123;
-    TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
-    temp*=aread;
-    temp>>=8;
-    uint16_t time = TCNT1;//28 耗时
-    volatile uint16_t vvv = (uint16_t)temp;
-    
-    
-	ClockInit();
-	SerialInit();
-	TimerInit();
-
-    SendInt(time);
+    SendInt(123456);
     
 		SerialSend('\r');
 		SerialSend('\n');
