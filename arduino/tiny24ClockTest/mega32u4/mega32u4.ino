@@ -10,9 +10,10 @@ void setup() {
   LEDAOUT;
   LEDBOUT;
   Serial.begin(115200); 
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for Leonardo only
-  }
+  pinMode(10, OUTPUT);
+  //while (!Serial) {
+  //  ; // wait for serial port to connect. Needed for Leonardo only
+  //}
 }
 
 void loop() {
@@ -30,10 +31,12 @@ void loop() {
       a=0;
       LEDAON;
       LEDBOFF;
+      digitalWrite(10, HIGH);
     }else{
       a=1;
       LEDAOFF;
       LEDBON;
+      digitalWrite(10, LOW);
     }
   }
 }
