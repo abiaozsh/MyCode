@@ -1847,7 +1847,7 @@ void loop()
       filename[11] = '\0';
       Serial.println("read.");
       if (SD.openSimple(filename, 0)) {
-        for(uint16_t i=0;i<12;i++){
+        for(uint16_t i=0;i<10000;i++){
           int cc = SD.file.read();
           if(cc!=0 && cc!=-1){
             Serial.write(cc);
@@ -1880,11 +1880,10 @@ void loop()
       filename[11] = '\0';
       Serial.println("write.");
       if (SD.openSimple(filename, 0)) {
-        for(uint16_t i=0;i<12;i++){
+        for(uint16_t i=0;i<700;i++){
           char cc = pgm_read_byte_near(datas+i);
           Serial.write(cc);
           SD.file.write(cc);
-          SD.file.print(",");
         }
         SD.file.flush();
         SD.file.close();
