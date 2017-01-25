@@ -339,10 +339,6 @@ uint8_t  SdVolume_fatType_ = 0;             // volume type (12, 16, OR 32)
 uint16_t SdVolume_rootDirEntryCount_;  // number of entries in FAT16 root dir
 uint32_t SdVolume_rootDirStart_;       // root start block for FAT16, cluster for FAT32
 
-void SdVolume_cacheSetDirty(void) {
-  SdVolume_cacheDirty_ |= CACHE_FOR_WRITE;
-}
-
 //------------------------------------------------------------------------------
 // cache a zero block for blockNumber
 uint8_t SdVolume_cacheZeroBlock(uint32_t blockNumber) {
@@ -467,6 +463,10 @@ uint8_t SdVolume_fatGet(uint32_t cluster, uint32_t* value) {
     *value = SdVolume_cacheBuffer_.fat32[cluster & 0X7F] & FAT32MASK;
   }
   return true;
+}
+
+void SdVolume_cacheSetDirty(void) {
+  SdVolume_cacheDirty_ |= CACHE_FOR_WRITE;
 }
 
 //------------------------------------------------------------------------------
@@ -683,6 +683,33 @@ dir_t* Root_readDirCache(void) {
   // return pointer to entry
   return (SdVolume_cacheBuffer_.dir + i);
 }
+//------------------------------------------------------------------------------
+// add a cluster to a file
+uint8_t Root_addCluster() {
+  if (!SdVolume_allocContiguous(&Root_curCluster_)) return false;
+
+  // if first cluster of file link to directory entry
+  if (Root_firstCluster_ == 0) {
+    Root_firstCluster_ = Root_curCluster_;
+  }
+  return true;
+}
+
+//------------------------------------------------------------------------------
+// Add a cluster to a directory file and zero the cluster.
+// return with first block of cluster in the cache
+uint8_t Root_addDirCluster(void) {
+  if (!Root_addCluster()) return false;
+
+  // zero data in cluster insure first cluster is in cache
+  uint32_t block = SdVolume_clusterStartBlock(Root_curCluster_);
+  for (uint8_t i = SdVolume_blocksPerCluster_; i != 0; i--) {
+    if (!SdVolume_cacheZeroBlock(block + i - 1)) return false;
+  }
+  // Increase directory file size by cluster size
+  Root_fileSize_ += 512UL << SdVolume_clusterSizeShift_;
+  return true;
+}
 
 
 // private data
@@ -810,9 +837,14 @@ uint8_t File_open(const char* dname) {
     p = File_cacheDirEntry(CACHE_FOR_WRITE);
     if (!p){errCode = 106; return false;}
   } else {
-    //512/32=16 max 16file
-    errCode = 107;
-    return false;
+    if (Root_type_ == FAT_FILE_TYPE_ROOT16){errCode = 107;  return false;}
+
+    // add and zero cluster for root - first cluster is in cache for write
+    if (!Root_addDirCluster()){errCode = 108;  return false;}
+
+    // use first entry in cluster
+    File_dirIndex_ = 0;
+    p = SdVolume_cacheBuffer_.dir;
   }
   // initialize as empty file
   memset(p, 0, sizeof(dir_t));
@@ -935,7 +967,7 @@ size_t File_write(uint8_t* buf, uint16_t nbyte) {
       if (File_curCluster_ == 0) {
         if (File_firstCluster_ == 0) {
           // allocate first cluster of file
-          if (!File_addCluster())return 0;
+          if (!File_addCluster())   return 0;
         } else {
           File_curCluster_ = File_firstCluster_;
         }
@@ -944,7 +976,7 @@ size_t File_write(uint8_t* buf, uint16_t nbyte) {
         if (!SdVolume_fatGet(File_curCluster_, &next)) return false;
         if (SdVolume_isEOC(next)) {
           // add cluster if at end of chain
-          if (!File_addCluster())return 0;
+          if (!File_addCluster())   return 0;
         } else {
           File_curCluster_ = next;
         }

@@ -1,17 +1,15 @@
-#include <Arduino.h>
-#include <avr/pgmspace.h>
-#include <stdint.h>
 #include <avr/io.h>
-#include "struct.h"
+#include <avr/pgmspace.h>
+#include <avr/interrupt.h>
+
 
 uint8_t errCode = 0;
 
 inline void _dly()
 {
-  for(uint8_t i=0;i<15;i++)//5 is good
+  for(uint8_t i=0;i<10;i++)//5 is good
   {
-    volatile uint8_t t;
-    t=0;
+    asm volatile("nop");
   }
 }
 
@@ -33,6 +31,154 @@ void SPI_SCK_LOW(){DDRD |= _BV(3);_dly();}
 void SPI_CHIP_SELECT_INIT(){PORTD &= ~_BV(5);_dly();}
 void SPI_CHIP_SELECT_HIGH(){DDRD &= ~_BV(5);_dly();}
 void SPI_CHIP_SELECT_LOW(){DDRD |= _BV(5);_dly();}
+
+
+uint8_t const CMD0 = 0X00;
+uint8_t const CMD8 = 0X08;
+uint8_t const CMD9 = 0X09;
+uint8_t const CMD10 = 0X0A;
+uint8_t const CMD13 = 0X0D;
+uint8_t const CMD17 = 0X11;
+uint8_t const CMD24 = 0X18;
+uint8_t const CMD25 = 0X19;
+uint8_t const CMD32 = 0X20;
+uint8_t const CMD33 = 0X21;
+uint8_t const CMD38 = 0X26;
+uint8_t const CMD55 = 0X37;
+uint8_t const CMD58 = 0X3A;
+uint8_t const ACMD23 = 0X17;
+uint8_t const ACMD41 = 0X29;
+//------------------------------------------------------------------------------
+uint8_t const R1_READY_STATE = 0X00;
+uint8_t const R1_IDLE_STATE = 0X01;
+uint8_t const R1_ILLEGAL_COMMAND = 0X04;
+uint8_t const DATA_START_BLOCK = 0XFE;
+uint8_t const STOP_TRAN_TOKEN = 0XFD;
+uint8_t const WRITE_MULTIPLE_TOKEN = 0XFC;
+uint8_t const DATA_RES_MASK = 0X1F;
+uint8_t const DATA_RES_ACCEPTED = 0X05;
+//------------------------------------------------------------------------------
+uint16_t const SD_INIT_TIMEOUT = 1000;
+uint16_t const SD_READ_TIMEOUT = 300;
+uint16_t const SD_WRITE_TIMEOUT = 600;
+//------------------------------------------------------------------------------
+// card types
+uint8_t const SD_CARD_TYPE_SD1 = 1;
+uint8_t const SD_CARD_TYPE_SD2 = 2;
+uint8_t const SD_CARD_TYPE_SDHC = 3;
+
+
+
+
+
+//------------------------------------------------------------------------------
+// End Of Chain values for FAT entries
+uint16_t const FAT16EOC = 0XFFFF;
+uint16_t const FAT16EOC_MIN = 0XFFF8;
+uint32_t const FAT32EOC = 0X0FFFFFFF;
+uint32_t const FAT32EOC_MIN = 0X0FFFFFF8;
+uint32_t const FAT32MASK = 0X0FFFFFFF;
+
+uint8_t const DIR_NAME_DELETED = 0XE5;
+uint8_t const DIR_NAME_FREE = 0X00;
+uint8_t const DIR_ATT_READ_ONLY = 0X01;
+uint8_t const DIR_ATT_HIDDEN = 0X02;
+uint8_t const DIR_ATT_SYSTEM = 0X04;
+uint8_t const DIR_ATT_VOLUME_ID = 0X08;
+uint8_t const DIR_ATT_DIRECTORY = 0X10;
+uint8_t const DIR_ATT_ARCHIVE = 0X20;
+uint8_t const DIR_ATT_LONG_NAME_MASK = 0X3F;
+uint8_t const DIR_ATT_DEFINED_BITS = 0X3F;
+uint8_t const DIR_ATT_FILE_TYPE_MASK = (DIR_ATT_VOLUME_ID | DIR_ATT_DIRECTORY);
+
+uint8_t const FAT_FILE_TYPE_CLOSED = 0;
+uint8_t const FAT_FILE_TYPE_NORMAL = 1;
+uint8_t const FAT_FILE_TYPE_ROOT16 = 2;
+uint8_t const FAT_FILE_TYPE_ROOT32 = 3;
+uint8_t const FAT_FILE_TYPE_MIN_DIR = FAT_FILE_TYPE_ROOT16;
+
+uint8_t const CACHE_FOR_READ = 0;
+uint8_t const CACHE_FOR_WRITE = 1;
+
+struct part_t {//partitionTable
+  uint8_t  boot;
+  uint8_t  beginHead;
+  unsigned beginSector : 6;
+  unsigned beginCylinderHigh : 2;
+  uint8_t  beginCylinderLow;
+  uint8_t  type;
+  uint8_t  endHead;
+  unsigned endSector : 6;
+  unsigned endCylinderHigh : 2;
+  uint8_t  endCylinderLow;
+  uint32_t firstSector;
+  uint32_t totalSectors;
+};
+struct mbr_t {//masterBootRecord
+  uint8_t  codeArea[440];
+  uint32_t diskSignature;
+  uint16_t usuallyZero;
+  part_t   part[4];
+  uint8_t  mbrSig0;
+  uint8_t  mbrSig1;
+};
+struct bpb_t {//biosParmBlock
+  uint16_t bytesPerSector;
+  uint8_t  sectorsPerCluster;
+  uint16_t reservedSectorCount;
+  uint8_t  fatCount;
+  uint16_t rootDirEntryCount;
+  uint16_t totalSectors16;
+  uint8_t  mediaType;
+  uint16_t sectorsPerFat16;
+  uint16_t sectorsPerTrtack;
+  uint16_t headCount;
+  uint32_t hidddenSectors;
+  uint32_t totalSectors32;
+  uint32_t sectorsPerFat32;
+  uint16_t fat32Flags;
+  uint16_t fat32Version;
+  uint32_t fat32RootCluster;
+  uint16_t fat32FSInfo;
+  uint16_t fat32BackBootBlock;
+  uint8_t  fat32Reserved[12];
+};
+struct fbs_t {//fat32BootSector
+  uint8_t  jmpToBootCode[3];
+  char     oemName[8];
+  bpb_t    bpb;
+  uint8_t  driveNumber;
+  uint8_t  reserved1;
+  uint8_t  bootSignature;
+  uint32_t volumeSerialNumber;
+  char     volumeLabel[11];
+  char     fileSystemType[8];
+  uint8_t  bootCode[420];
+  uint8_t  bootSectorSig0;
+  uint8_t  bootSectorSig1;
+};
+struct dir_t {//directoryEntry
+  uint8_t  name[11];
+  uint8_t  attributes;
+  uint8_t  reservedNT;
+  uint8_t  creationTimeTenths;
+  uint16_t creationTime;
+  uint16_t creationDate;
+  uint16_t lastAccessDate;
+  uint16_t firstClusterHigh;
+  uint16_t lastWriteTime;
+  uint16_t lastWriteDate;
+  uint16_t firstClusterLow;
+  uint32_t fileSize;
+};
+union cache_t {
+  uint8_t  data[512];
+  uint16_t fat16[256];
+  uint32_t fat32[128];
+  dir_t    dir[16];
+  mbr_t    mbr;
+  fbs_t    fbs;
+};
 
 
 //------------------------------------------------------------------------------
@@ -97,11 +243,10 @@ void Sd2Card_readEnd(void) {
 //------------------------------------------------------------------------------
 // wait for card to go not busy
 uint8_t Sd2Card_waitNotBusy(uint16_t timeoutMillis) {
-  uint16_t t0 = millis();
-  do {
+  for(uint32_t i=0;i<timeoutMillis*1000;i++)
+  {
     if (spiRec() == 0XFF) return true;
   }
-  while (((uint16_t)millis() - t0) < timeoutMillis);
   return false;
 }
 
@@ -136,7 +281,6 @@ uint8_t Sd2Card_cardAcmd(uint8_t cmd, uint32_t arg) {
 uint8_t Sd2Card_cardinit() {
   Sd2Card_inBlock_ = Sd2Card_type_ = 0;
   // 16-bit init start time allows over a minute
-  uint16_t t0 = (uint16_t)millis();
   uint32_t arg;
 
   // set pin modes
@@ -153,12 +297,21 @@ uint8_t Sd2Card_cardinit() {
   SPI_CHIP_SELECT_LOW();
 
   // command to go idle in SPI mode
-  while ((Sd2Card_status_ = Sd2Card_cardCommand(CMD0, 0)) != R1_IDLE_STATE) {
-    if (((uint16_t)millis() - t0) > SD_INIT_TIMEOUT) {
-      errCode = 1;
-      goto fail;
+  uint8_t ok = 0;
+  for(uint32_t i=0;i<SD_INIT_TIMEOUT*1000;i++){
+    if((Sd2Card_status_ = Sd2Card_cardCommand(CMD0, 0)) != R1_IDLE_STATE) {
+    }
+    else
+    {
+      ok=1;
+      break;
     }
   }
+  if (!ok) {
+    errCode = 1;
+    goto fail;
+  }
+
   // check SD version
   if ((Sd2Card_cardCommand(CMD8, 0x1AA) & R1_ILLEGAL_COMMAND)) {
     Sd2Card_type_ = SD_CARD_TYPE_SD1;
@@ -174,13 +327,23 @@ uint8_t Sd2Card_cardinit() {
   // initialize card and send host supports SDHC if SD2
   arg = Sd2Card_type_ == SD_CARD_TYPE_SD2 ? 0X40000000 : 0;
 
-  while ((Sd2Card_status_ = Sd2Card_cardAcmd(ACMD41, arg)) != R1_READY_STATE) {
-    // check for timeout
-    if (((uint16_t)millis() - t0) > SD_INIT_TIMEOUT) {
-      errCode = 3;
-      goto fail;
+  ok=0;
+  for(uint32_t i=0;i<SD_INIT_TIMEOUT*1000;i++){
+    if((Sd2Card_status_ = Sd2Card_cardAcmd(ACMD41, arg)) != R1_READY_STATE) {
+    }
+    else
+    {
+      ok=1;
+      break;
     }
   }
+  if (!ok) {
+      errCode = 3;
+      goto fail;
+  }
+  
+  
+  
   // if SD2 read OCR register to check for SDHC card
   if (Sd2Card_type_ == SD_CARD_TYPE_SD2) {
     if (Sd2Card_cardCommand(CMD58, 0)) {
@@ -202,13 +365,21 @@ uint8_t Sd2Card_cardinit() {
 
 //------------------------------------------------------------------------------
 uint8_t Sd2Card_waitStartBlock(void) {
-  uint16_t t0 = millis();
-  while ((Sd2Card_status_ = spiRec()) == 0XFF) {
-    if (((uint16_t)millis() - t0) > SD_READ_TIMEOUT) {
-      errCode = 8;
-      goto fail;
+  uint8_t ok=0;
+  for(uint32_t i=0;i<SD_READ_TIMEOUT*1000;i++){
+    if((Sd2Card_status_ = spiRec()) == 0XFF) {
+    }
+    else
+    {
+      ok=1;
+      break;
     }
   }
+  if (!ok) {
+    errCode = 8;
+    goto fail;
+  }
+
   if (Sd2Card_status_ != DATA_START_BLOCK) {
     errCode = 9;
     goto fail;
@@ -263,20 +434,9 @@ uint8_t Sd2Card_readData(uint32_t block, uint16_t offset, uint16_t count, uint8_
 uint8_t Sd2Card_readBlock(uint32_t block, uint8_t* dst) {
   return Sd2Card_readData(block, 0, 512, dst);
 }
-
-//------------------------------------------------------------------------------
-uint8_t Sd2Card_writeData(const uint8_t* src) {
-  // wait for previous write to finish
-  if (!Sd2Card_waitNotBusy(SD_WRITE_TIMEOUT)) {
-    errCode = 13;
-    SPI_CHIP_SELECT_HIGH();
-    return false;
-  }
-  return Sd2Card_writeData(WRITE_MULTIPLE_TOKEN, src);
-}
 //------------------------------------------------------------------------------
 // send one block of data for write block or write multiple blocks
-uint8_t Sd2Card_writeData(uint8_t token, const uint8_t* src) {
+uint8_t Sd2Card_writeData2(uint8_t token, uint8_t* src) {
   spiSend(token);
   for (uint16_t i = 0; i < 512; i++) {
     spiSend(src[i]);
@@ -294,7 +454,18 @@ uint8_t Sd2Card_writeData(uint8_t token, const uint8_t* src) {
 }
 
 //------------------------------------------------------------------------------
-uint8_t Sd2Card_writeBlock(uint32_t blockNumber, const uint8_t* src) {
+uint8_t Sd2Card_writeData(uint8_t* src) {
+  // wait for previous write to finish
+  if (!Sd2Card_waitNotBusy(SD_WRITE_TIMEOUT)) {
+    errCode = 13;
+    SPI_CHIP_SELECT_HIGH();
+    return false;
+  }
+  return Sd2Card_writeData2(WRITE_MULTIPLE_TOKEN, src);
+}
+
+//------------------------------------------------------------------------------
+uint8_t Sd2Card_writeBlock(uint32_t blockNumber, uint8_t* src) {
 
   // use address if not SDHC card
   if (Sd2Card_type_ != SD_CARD_TYPE_SDHC) blockNumber <<= 9;
@@ -302,7 +473,7 @@ uint8_t Sd2Card_writeBlock(uint32_t blockNumber, const uint8_t* src) {
     errCode = 10;
     goto fail;
   }
-  if (!Sd2Card_writeData(DATA_START_BLOCK, src)) goto fail;
+  if (!Sd2Card_writeData2(DATA_START_BLOCK, src)) goto fail;
 
   // wait for flash programming to complete
   if (!Sd2Card_waitNotBusy(SD_WRITE_TIMEOUT)) {
@@ -339,6 +510,24 @@ uint8_t  SdVolume_fatType_ = 0;             // volume type (12, 16, OR 32)
 uint16_t SdVolume_rootDirEntryCount_;  // number of entries in FAT16 root dir
 uint32_t SdVolume_rootDirStart_;       // root start block for FAT16, cluster for FAT32
 
+//------------------------------------------------------------------------------
+uint8_t SdVolume_cacheFlush(void) {
+  if (SdVolume_cacheDirty_) {
+    if (!Sd2Card_writeBlock(SdVolume_cacheBlockNumber_, SdVolume_cacheBuffer_.data)) {
+      return false;
+    }
+    // mirror FAT tables
+    if (SdVolume_cacheMirrorBlock_) {
+      if (!Sd2Card_writeBlock(SdVolume_cacheMirrorBlock_, SdVolume_cacheBuffer_.data)) {
+        return false;
+      }
+      SdVolume_cacheMirrorBlock_ = 0;
+    }
+    SdVolume_cacheDirty_ = 0;
+  }
+  return true;
+}
+
 void SdVolume_cacheSetDirty(void) {
   SdVolume_cacheDirty_ |= CACHE_FOR_WRITE;
 }
@@ -357,24 +546,6 @@ uint8_t SdVolume_cacheZeroBlock(uint32_t blockNumber) {
   return true;
 }
 
-
-//------------------------------------------------------------------------------
-uint8_t SdVolume_cacheFlush(void) {
-  if (SdVolume_cacheDirty_) {
-    if (!Sd2Card_writeBlock(SdVolume_cacheBlockNumber_, SdVolume_cacheBuffer_.data)) {
-      return false;
-    }
-    // mirror FAT tables
-    if (SdVolume_cacheMirrorBlock_) {
-      if (!Sd2Card_writeBlock(SdVolume_cacheMirrorBlock_, SdVolume_cacheBuffer_.data)) {
-        return false;
-      }
-      SdVolume_cacheMirrorBlock_ = 0;
-    }
-    SdVolume_cacheDirty_ = 0;
-  }
-  return true;
-}
 
 //------------------------------------------------------------------------------
 uint8_t SdVolume_cacheRawBlock(uint32_t blockNumber, uint8_t action) {
@@ -675,7 +846,7 @@ dir_t* Root_readDirCache(void) {
   uint8_t i = (Root_curPosition_ >> 5) & 0XF;
 
   // use read to locate and cache block
-  if (Root_Load() < 0) return NULL;
+  if (Root_Load() < 0) return 0;
 
   // advance to next entry
   Root_curPosition_ += 32;
@@ -721,7 +892,7 @@ uint8_t File_openCachedEntry(uint8_t dirIndex) {
 }
 
 dir_t* File_cacheDirEntry(uint8_t action) {
-  if (!SdVolume_cacheRawBlock(File_dirBlock_, action)) return NULL;
+  if (!SdVolume_cacheRawBlock(File_dirBlock_, action)) return 0;
   return SdVolume_cacheBuffer_.dir + File_dirIndex_;
 }
 //------------------------------------------------------------------------------
@@ -764,18 +935,18 @@ uint8_t File_seekSet(uint32_t pos) {
   File_curPosition_ = pos;
   return true;
 }
-
-// 1 for append to end , 0 for read/write from start
-uint8_t File_open(const char *filepath, uint8_t toend) {
-  if (!File_open(filepath)) {
-    return 0;
+uint8_t memcmp(char* str1,uint8_t* str2,uint8_t len){
+  for(uint8_t i=0;i<len;i++){
+    if(*str1!=*str2){
+      return 1;
+    }
+    str1++;
+    str2++;
   }
-  if (toend) 
-    File_seekSet(File_fileSize_);
-  return 1;
+  return 0;
 }
 
-uint8_t File_open(const char* dname) {
+uint8_t File_open(char* dname) {
   dir_t* p;
 
   Root_rewind();
@@ -787,7 +958,7 @@ uint8_t File_open(const char* dname) {
   while (Root_curPosition_ < Root_fileSize_) {
     uint8_t index = 0XF & (Root_curPosition_ >> 5);
     p = Root_readDirCache();
-    if (p == NULL){errCode = 103;return false;}
+    if (p == 0){errCode = 103;return false;}
 
     if (p->name[0] == DIR_NAME_FREE || p->name[0] == DIR_NAME_DELETED) {
       // remember first empty slot
@@ -815,14 +986,29 @@ uint8_t File_open(const char* dname) {
     return false;
   }
   // initialize as empty file
-  memset(p, 0, sizeof(dir_t));
-  memcpy(p->name, dname, 11);
+  for(uint8_t i=0;i<sizeof(dir_t);i++){
+    *((uint8_t*)p+i) = 0;
+  }
+  
+  for(uint8_t i=0;i<11;i++){
+    *(p->name+i) = *(dname+i);
+  }
 
   // force write of entry to SD
   if (!SdVolume_cacheFlush()){errCode = 109;  return false;}
 
   // open entry in cache
   return File_openCachedEntry(File_dirIndex_);
+}
+
+// 1 for append to end , 0 for read/write from start
+uint8_t File_open(char *filepath, uint8_t toend) {
+  if (!File_open(filepath)) {
+    return 0;
+  }
+  if (toend) 
+    File_seekSet(File_fileSize_);
+  return 1;
 }
 
 uint8_t File_sync(void) {
@@ -1013,28 +1199,139 @@ uint8_t Sd2Card_begin() {
 
 
 
-PROGMEM prog_uint8_t datas[] = "\r\n#include <Arduino.h>\r\n#include <avr/pgmspace.h>\r\n#include <stdint.h>\r\n\r\n\r\n#include <avr/io.h>\r\n\r\nuint8_t errCode = 0;\r\n\r\ninline void _dly()\r\n{\r\n  for(uint8_t i=0;i<5;i++)//5 is good\r\n  {\r\n    volatile uint8_t t;\r\n    t=0;\r\n  }\r\n}\r\n\r\n//B4\r\nvoid SPI_MOSI_INIT(){PORTB &= ~_BV(4);_dly();}\r\nvoid SPI_MOSI_HIGH(){DDRB &= ~_BV(4);_dly();}\r\nvoid SPI_MOSI_LOW(){DDRB |= _BV(4);_dly();}\r\n\r\n//B2\r\nvoid SPI_MISO_INIT(){PORTB &= ~_BV(2);DDRB &= ~_BV(2);_dly();}\r\nuint8_t SPI_MISO_GET(){return (~PINB) & _BV(2);}\r\n\r\n//B3\r\nvoid SPI_SCK_INIT(){PORTB &= ~_BV(3);_dly();}\r\nvoid SPI_SCK_HIGH(){DDRB &= ~_BV(3);_dly();}\r\nvoid SPI_SCK_LOW(){DDRB |= _BV(3);_dly();}\r\n\r\n//C0\r\nvoid SPI_CHIP_SELECT_INIT(){PORTC &= ~_BV(0);_dly();}\r\nvoid SPI_CHIP_SELECT_HIGH()";
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#define CUR_TIMING TIMING_16M_TCCR1B_1_115200
+#define TCCR1B_Value 1
+PROGMEM prog_uint16_t TIMING_16M_TCCR1B_1_115200[] = {  138,  277,  416,  555,  694,  833,  972, 1111, 1250, 1388};
+
+#define DDR_Send DDRD
+#define PORT_Send PORTD
+#define BIT_Send _BV(1)
+#define DDR_Recv DDRD
+#define PIN_Recv PIND
+#define BIT_Recv _BV(0)
+
+void TimerInit() {
+	TCCR1A = 0;
+	TCCR1C = 0;
+	TIMSK1 = 0;
+}
+void SerialInit(){
+	UCSR0B = 0;//not forget turnoff usart0 on mega328p
+	DDR_Send |= BIT_Send;
+	DDR_Recv &= ~BIT_Recv;
+	PORT_Send |= BIT_Send;
+}
+
+void SerialSend(uint8_t val)
+{
+	cli();
+	TCCR1B = TCCR1B_Value;
+	TCNT1 = 0;
+	uint16_t timing;
+	PORT_Send &= ~BIT_Send;timing = pgm_read_word_near(CUR_TIMING);while(TCNT1<timing);//startbit
+	uint8_t chkbit = 0x01;
+	for(uint8_t i = 1;i<=8;i++)
+	{
+		if(val&chkbit){PORT_Send |= BIT_Send;}else{PORT_Send &= ~BIT_Send;}chkbit<<=1;timing = pgm_read_word_near(CUR_TIMING + i);while(TCNT1<timing);
+	}
+	PORT_Send |= BIT_Send;timing = pgm_read_word_near(CUR_TIMING + 9);while(TCNT1<timing);
+	sei();
+}
+
+//void SerialPrint(char* str){
+//  for(uint16_t i=0;i<strlen(str);i++){
+//    SerialSend(*str));
+//    str++;
+//  }
+//}
+
+uint8_t SerialRead()
+{
+	cli();
+	TCCR1B = TCCR1B_Value;
+	uint8_t val = 0;
+	while(PIN_Recv&BIT_Recv){}
+	TCNT1 = 0;
+	uint16_t timing;
+	timing = pgm_read_word_near(CUR_TIMING);while(TCNT1<timing);//startbit
+
+	for(uint8_t i = 1;i<=8;i++)
+	{
+		val>>=1;val |= (PIN_Recv&BIT_Recv?0x80:0);timing = pgm_read_word_near(CUR_TIMING + i);while(TCNT1<timing);
+	}
+	sei();
+	return val;
+}
+
+
+PROGMEM prog_uint32_t num10s[] = {
+1000000000,
+100000000,
+10000000,
+1000000,
+100000,
+10000,
+1000,
+100,
+10,
+1,
+};
+
+void SendInt(uint32_t val)
+{
+	uint32_t num = val;
+	for(uint8_t idx = 0; idx < 10 ; idx++)
+	{
+		uint8_t outNum = 0;
+		uint32_t CmpNum = pgm_read_dword_near(num10s + idx);
+		for(uint8_t i = 0; i < 10 ; i++)
+		{
+			if(num>=CmpNum)
+			{
+				num -= CmpNum;
+				outNum++;
+			}
+			else
+			{
+				break;
+			}
+		}
+		SerialSend('0' + outNum);
+	}
+}
+
 
 
 char filename[12];
 
-
-void setup(){
-  Serial.begin(115200);
+int main(void) {
+	SerialInit();
+	TimerInit();
   DDRD &= ~_BV(6);//pwrPIN;
-  
-  while (!Sd2Card_begin()) {
-    Serial.println("SD not ready.");
-    delay(1000);
-  }
-  Serial.println("SD ok.");
-}
 
-
-void loop()
-{
-    uint8_t inByte = Serial.read();
-    if(inByte=='r'){
+	for(;;)
+	{
+    uint8_t cmd = SerialRead();
+    
+    if(cmd=='i'){
+      if(!Sd2Card_begin()) {
+        SerialSend('N');
+        SerialSend('G');
+        SerialSend('\r');
+        SerialSend('\n');
+      }
+      else
+      {
+        SerialSend('O');
+        SerialSend('K');
+        SerialSend('\r');
+        SerialSend('\n');
+      }
+    }
+    if(cmd=='r'){
       filename[0] = 'R';
       filename[1] = 'E';
       filename[2] = 'A';
@@ -1047,12 +1344,12 @@ void loop()
       filename[9] = 'X';
       filename[10] = 'T';
       filename[11] = '\0';
-      Serial.println("read.");
+      SerialSend('R');
       if (File_open(filename, 0)) {
         for(uint16_t i=0;i<10000;i++){
           int cc = File_read();
           if(cc!=0 && cc!=-1){
-            Serial.write(cc);
+            SerialSend((uint8_t)cc);
           }else
           {
             break;
@@ -1060,18 +1357,16 @@ void loop()
           
         }
         File_close();
-        Serial.println("done.");
+        SerialSend('D');
       }
       else {
-        Serial.println("error.");
+        SerialSend('E');
       }
       
     }
-    if(inByte=='w'){
-      int16_t n;
-      while((n=Serial.read())==-1){
-      }
-      filename[0] = (uint8_t)n;
+    if(cmd=='w'){
+      uint8_t n = SerialRead();
+      filename[0] = n;
       filename[1] = 'R';
       filename[2] = 'I';
       filename[3] = 'T';
@@ -1083,32 +1378,19 @@ void loop()
       filename[9] = 'X';
       filename[10] = 'T';
       filename[11] = '\0';
-      Serial.println("write.");
+      SerialSend('W');
       if (File_open(filename, 0)) {
         for(uint16_t i=0;i<700;i++){
-          char cc = pgm_read_byte_near(datas+i);
-          Serial.write(cc);
+          char cc = 'a'+(i&31);
+          SerialSend(cc);
           File_write(cc);
         }
         File_close();
-        Serial.println("done.");
+        SerialSend('D');
       }
       else {
-        Serial.println("error.");
+        SerialSend('E');
       }
     }
-
+	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
