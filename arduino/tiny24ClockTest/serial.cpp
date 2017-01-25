@@ -46,10 +46,12 @@ void loop() {
 	{
     while(!(TIFR0&_BV(TOV0)));
     TIFR0 |= _BV(TOV0);
+		DDRB |= _BV(3);
     SerialSend(0x55);
     while(!(TIFR0&_BV(TOV0)));
     TIFR0 |= _BV(TOV0);
     SerialSend(0xAA);
+		DDRB &= ~_BV(3);
 	}
 }
 
