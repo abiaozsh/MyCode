@@ -338,7 +338,7 @@ namespace ClassLibrary1
 			mySerializer.WriteObject(ms, this);
 			string jsonString = Encoding.UTF8.GetString(ms.ToArray());
 
-			jsonString = formatJson(jsonString);
+			//jsonString = formatJson(jsonString);
 
 			byte[] buff = Encoding.UTF8.GetBytes(jsonString);
 			myFileStream.Write(buff, 0, buff.Length);
@@ -402,10 +402,18 @@ namespace ClassLibrary1
 		public static TRoot load(string file)
 		{
 			DataContractJsonSerializer mySerializer = new DataContractJsonSerializer(typeof(TRoot));
-			FileStream myFileStream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
-			object myObject = mySerializer.ReadObject(myFileStream);
-			myFileStream.Close();
-			myFileStream.Dispose();
+			FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
+            StreamReader sr = new StreamReader(fs);
+            string s = sr.ReadToEnd();
+            fs.Close();
+            fs.Dispose();
+            s = s.Replace("\r\n", "");
+            s = s.Replace("\t", "");
+            s = s.Replace("\0", "");
+
+            MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(s));
+
+			object myObject = mySerializer.ReadObject(ms);
 			TRoot tRoot = (TRoot)myObject;
 			tRoot.setParent();
 			return tRoot;
