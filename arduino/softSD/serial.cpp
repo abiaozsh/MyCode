@@ -799,10 +799,6 @@ uint8_t Root_openRoot() {
   return true;
 }
 
-void Root_rewind() {
-  Root_curPosition_ = Root_curCluster_ = 0;
-}
-
 int16_t Root_Load() {
 
   //Root_fileSize_:16384,Root_curPosition_:0
@@ -834,27 +830,6 @@ int16_t Root_Load() {
 
   return 1;
 }
-
-//------------------------------------------------------------------------------
-// Read next directory entry into the cache
-// Assumes file is correctly positioned
-dir_t* Root_readDirCache(void) {
-  // error if not directory
-  //if (!isDir()) return NULL;
-
-  // index of entry in cache
-  uint8_t i = (Root_curPosition_ >> 5) & 0XF;
-
-  // use read to locate and cache block
-  if (Root_Load() < 0) return 0;
-
-  // advance to next entry
-  Root_curPosition_ += 32;
-
-  // return pointer to entry
-  return (SdVolume_cacheBuffer_.dir + i);
-}
-
 
 // private data
 uint8_t   File_flags_;         // is F_FILE_DIR_DIRTY
@@ -946,10 +921,19 @@ uint8_t memcmp(char* str1,uint8_t* str2,uint8_t len){
   return 0;
 }
 
+//TODO 获取文件列表 最大16个文件
+获取文件列表l
+打开文件o
+关闭文件c
+读取文件r
+写入文件w
+
 uint8_t File_open(char* dname) {
   dir_t* p;
 
-  Root_rewind();
+  //Root_rewind();
+  Root_curCluster_ = 0;
+  Root_curPosition_ = 0;
 
   // bool for empty entry found
   uint8_t emptyFound = false;
@@ -957,7 +941,20 @@ uint8_t File_open(char* dname) {
   // search for file
   while (Root_curPosition_ < Root_fileSize_) {
     uint8_t index = 0XF & (Root_curPosition_ >> 5);
-    p = Root_readDirCache();
+    //p = Root_readDirCache();
+	{
+	  // index of entry in cache
+	  uint8_t i = (Root_curPosition_ >> 5) & 0XF;
+
+	  // use read to locate and cache block
+	  if (Root_Load() < 0) return 0;
+
+	  // advance to next entry
+	  Root_curPosition_ += 32;
+
+	  // return pointer to entry
+	  p = (SdVolume_cacheBuffer_.dir + i);
+	}
     if (p == 0){errCode = 103;return false;}
 
     if (p->name[0] == DIR_NAME_FREE || p->name[0] == DIR_NAME_DELETED) {
