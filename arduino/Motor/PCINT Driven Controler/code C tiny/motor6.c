@@ -1,10 +1,6 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
-	
-//#define CUR_TIMING TIMING__8M_TCCR0B_1_115200
-//#define TCCR0B_Value 1
-//PROGMEM prog_uint8_t TIMING__8M_TCCR0B_1_115200[] = { 69,138,208, 21, 91,160,230, 43,113,182};
 
 #define STAOn   DDRB |= _BV(3) ;/**/
 #define STAOff  DDRB &= ~_BV(3);/**/

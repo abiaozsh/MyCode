@@ -1,7 +1,7 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
-
+//–°≥µ”√
 #define STAOn   DDRB |= _BV(3) ;/**/
 #define STAOff  DDRB &= ~_BV(3);/**/
 
@@ -40,13 +40,13 @@ void loop() {
 	{
     uint8_t data = SerialRead();
 	
-	if(data == (0x04 + 0x08 + 0x10 + 0x20)){STAOn;ROTOn;continue;}
-	if(data == (0x80 + 0x40 + 0x01 + 0x02)){STAOff;ROTOff;continue;}
+		if(data == (0x04 + 0x08 + 0x10 + 0x20)){STAOn;ROTOn;continue;}
+		if(data == (0x80 + 0x40 + 0x01 + 0x02)){STAOff;ROTOff;continue;}
 
-	if((data & (0x04 + 0x08)) == (0x04 + 0x08))continue;
-	if((data & (0x10 + 0x20)) == (0x10 + 0x20))continue;
-	if((data & (0x80 + 0x40)) == (0x80 + 0x40))continue;
-	if((data & (0x01 + 0x02)) == (0x01 + 0x02))continue;
+		if((data & (0x04 + 0x08)) == (0x04 + 0x08))continue;
+		if((data & (0x10 + 0x20)) == (0x10 + 0x20))continue;
+		if((data & (0x80 + 0x40)) == (0x80 + 0x40))continue;
+		if((data & (0x01 + 0x02)) == (0x01 + 0x02))continue;
 
     DDRA = data;
     i=~i;
