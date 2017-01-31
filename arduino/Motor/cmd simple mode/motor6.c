@@ -150,16 +150,6 @@ void adj(){
 #define CMD_NOSTART       2  /*START off     */
 #define CMD_SETPWRSIMP    3  /*set power simple */
 #define CMD_PITCH         4  /*PITCH         */
-#define CMD_SENDDATA1Xa   5  /*0~255       1x */
-#define CMD_SENDDATA1Xb   6  /*256~511     1x */
-#define CMD_SENDDATA2X    7  /*512~1023    2x */
-#define CMD_SENDDATA4X    8  /*1024~2047   4x */
-#define CMD_SENDDATA8X    9  /*2048~4095   8x */
-#define CMD_SENDDATA16X   10  /*4096~8191  16x */
-#define CMD_SETMAXPWR     11  /*set max power  */
-#define CMD_SAVESET       12  /*savesetting    */
-#define CMD_REVERSE       13  /*REVERSE       */
-#define CMD_SETCPU        14  /*SETCPU        */
 
 ISR(PCINT0_vect){//œ»ÀÕ∏ﬂ£¨∫ÛÀÕµÕ
   if(TempDataCnt == 8)
