@@ -3,7 +3,14 @@
 #include <avr/interrupt.h>
 #include "../config.h"
 
-#define drP6 (PINA & _BV(6))
+
+//a6 start signal / restartup signal
+//a7 throttle
+
+#define POWER_IN 6
+
+#define PIN_startBTN (!(PINA & _BV(7)))
+#define PCINT_startBTN _BV(PCINT7)
 
 #define CPUFree ;/*DDRB |= _BV(3) */ //freeÁÁµÆ
 #define CPUBusy ;/*DDRB &= ~_BV(3)*/ //busy°µµÆ
@@ -15,9 +22,6 @@
 
 #define DBGOn   ;/*DDRB |= _BV(3) */
 #define DBGOff  ;/*DDRB &= ~_BV(3)*/
-
-//a6 start signal / restartup signal
-//a7 throttle
 
 #define StartRpm 8192
 
@@ -53,9 +57,10 @@ int main(void) {
   TIMSK1 |= _BV(OCIE1A);
   //³õÊ¼»¯ÊäÈë
   GIMSK |= _BV(PCIE0);
-  PCMSK0 |= _BV(PCINT6);//start button
+  PCMSK0 |= PCINT_startBTN;//start button
 
-  ADMUX = 7;//A7 power
+  ADMUX = POWER_IN;//A7 power
+  DIDR0 |= _BV(POWER_IN);
   ADCSRA = _BV(ADEN) | _BV(ADSC) | _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2) | _BV(ADIE) | _BV(ADATE);
   ADCSRB = _BV(ADLAR);
   
@@ -97,7 +102,7 @@ int main(void) {
       while(((PIN3I&drMask)==valbase) && noskip);
       CPUBusy;
     }
-    if(!drP6)
+    if(!PIN_startBTN)
     {
       uint16_t tmp = (rpm>>3)+(rpm>>2)+TCNT1;
       CPUFree;
@@ -139,17 +144,17 @@ void adj(){
   }
   else
   {
-    if(drP6)
+    if(PIN_startBTN)
     {
       NextPower = _MaxPower(rpm);
     }
-	}
+  }
 }
 
 ISR(PCINT0_vect){
   if(noskip)
   {
-    if(drP6)
+    if(PIN_startBTN)
     {
       noskip = 0;
     }
