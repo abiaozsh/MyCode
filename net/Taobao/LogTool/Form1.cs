@@ -442,87 +442,94 @@ namespace LogTool
 				{
 					this.Text = i.ToString();
 					Application.DoEvents();
-					string _url;
-					_url = "https://shop107165188.taobao.com/i/asynSearch.htm?_ksTS=1484556775512_725&callback=jsonp726&mid=w-15701625131-0&wid=15701625131&path=/search.htm&search=y&pageNo=" + i;
-					System.Net.HttpWebRequest Myrq = (System.Net.HttpWebRequest)System.Net.HttpWebRequest.Create(_url);
-					System.Net.HttpWebResponse myrp = (System.Net.HttpWebResponse)Myrq.GetResponse();
-					System.IO.Stream st = myrp.GetResponseStream();
-					StreamReader sr = new StreamReader(st, Encoding.GetEncoding("gbk"));
-					string sss = sr.ReadToEnd();
-					sr.Close();
-					st.Close();
-					myrp.Close();
-					Myrq.Abort();
-					sss = sss.Replace("\\\"", "\"");
+                    try
+                    {
+                        string _url;
+                        //_url = "https://shop107165188.taobao.com/i/asynSearch.htm?_ksTS=1484556775512_725&callback=jsonp726&mid=w-15701625131-0&wid=15701625131&path=/search.htm&search=y&pageNo=" + i;
+                        _url = "https://shop100841100.taobao.com/i/asynSearch.htm?_ksTS=1485952463610_678&callback=jsonp679&mid=w-12329213557-0&wid=12329213557&path=/search.htm&search=y&pageNo=" + i;
+                        System.Net.HttpWebRequest Myrq = (System.Net.HttpWebRequest)System.Net.HttpWebRequest.Create(_url);
+                        System.Net.HttpWebResponse myrp = (System.Net.HttpWebResponse)Myrq.GetResponse();
+                        System.IO.Stream st = myrp.GetResponseStream();
+                        StreamReader sr = new StreamReader(st, Encoding.GetEncoding("gbk"));
+                        string sss = sr.ReadToEnd();
+                        sr.Close();
+                        st.Close();
+                        myrp.Close();
+                        Myrq.Abort();
+                        sss = sss.Replace("\\\"", "\"");
 
-					while (true)
-					{
-						string cont = "";
-						{
-							int pos1 = sss.IndexOf("<dl class=\"item ");//<dl class="item last" data-id="543579864005">
-							if (pos1 < 0) break;
-							sss = sss.Substring(pos1);
-							int pos2 = sss.IndexOf("</dl>");
-							cont = sss.Substring(0, pos2 + 5);
-							sss = sss.Substring(pos2 + 5);
-						}
+                        while (true)
+                        {
+                            string cont = "";
+                            {
+                                int pos1 = sss.IndexOf("<dl class=\"item ");//<dl class="item last" data-id="543579864005">
+                                if (pos1 < 0) break;
+                                sss = sss.Substring(pos1);
+                                int pos2 = sss.IndexOf("</dl>");
+                                cont = sss.Substring(0, pos2 + 5);
+                                sss = sss.Substring(pos2 + 5);
+                            }
 
-						string id = "";
-						{
-							int pos1 = cont.IndexOf("data-id=\"");
-							id = cont.Substring(pos1 + "data-id=\"".Length);
-							int pos2 = id.IndexOf("\"");
-							id = id.Substring(0, pos2);
-						}
-						//
-						string name = "";
-						string url = "";
-						{
-							int pos1 = cont.IndexOf("<a class=\"item-name ");
-							name = cont.Substring(pos1);
-							pos1 = name.IndexOf("href=\"");
-							url = name.Substring(pos1 + 6);
-							int pos2 = url.IndexOf("\"");
-							url = url.Substring(0, pos2);
+                            string id = "";
+                            {
+                                int pos1 = cont.IndexOf("data-id=\"");
+                                id = cont.Substring(pos1 + "data-id=\"".Length);
+                                int pos2 = id.IndexOf("\"");
+                                id = id.Substring(0, pos2);
+                            }
+                            //
+                            string name = "";
+                            string url = "";
+                            {
+                                int pos1 = cont.IndexOf("<a class=\"item-name ");
+                                name = cont.Substring(pos1);
+                                pos1 = name.IndexOf("href=\"");
+                                url = name.Substring(pos1 + 6);
+                                int pos2 = url.IndexOf("\"");
+                                url = url.Substring(0, pos2);
 
-							pos2 = name.IndexOf("</a>");
-							name = name.Substring(0, pos2);
-							pos1 = name.IndexOf(">");
-							name = name.Substring(pos1 + 1);
-							name = name.Trim();
-						}
+                                pos2 = name.IndexOf("</a>");
+                                name = name.Substring(0, pos2);
+                                pos1 = name.IndexOf(">");
+                                name = name.Substring(pos1 + 1);
+                                name = name.Trim();
+                            }
 
-						string img = "";
-						{
-							int pos1 = cont.IndexOf("src=\"");
-							img = cont.Substring(pos1 + 5);
-							int pos2 = img.IndexOf("\"");
-							img = img.Substring(0, pos2);
-						}
-						string price = "";
-						{
-							int pos1 = cont.IndexOf("<span class=\"c-price\">");
-							price = cont.Substring(pos1 + "<span class=\"c-price\">".Length);
-							int pos2 = price.IndexOf("<");
-							price = price.Substring(0, pos2);
-							price = price.Trim();
-						}
+                            string img = "";
+                            {
+                                int pos1 = cont.IndexOf("src=\"");
+                                img = cont.Substring(pos1 + 5);
+                                int pos2 = img.IndexOf("\"");
+                                img = img.Substring(0, pos2);
+                            }
+                            string price = "";
+                            {
+                                int pos1 = cont.IndexOf("<span class=\"c-price\">");
+                                price = cont.Substring(pos1 + "<span class=\"c-price\">".Length);
+                                int pos2 = price.IndexOf("<");
+                                price = price.Substring(0, pos2);
+                                price = price.Trim();
+                            }
 
 
-						Taobao.Mods.ItemList.Data.Auction item = new Taobao.Mods.ItemList.Data.Auction();
-						item.raw_title = name;
-						item.pic_url = img;
-						item.detail_url = url;
-						item.nid = id;
-						item.reserve_price = price;
-						item.view_price = price;
-						item.shopcard = new Taobao.Mods.ItemList.Data.Auction.Shopcard();
-						items.Add(item);
-					}
+                            Taobao.Mods.ItemList.Data.Auction item = new Taobao.Mods.ItemList.Data.Auction();
+                            item.raw_title = name;
+                            item.pic_url = img;
+                            item.detail_url = url;
+                            item.nid = id;
+                            item.reserve_price = price;
+                            item.view_price = price;
+                            item.shopcard = new Taobao.Mods.ItemList.Data.Auction.Shopcard();
+                            items.Add(item);
+                        }
+                    }
+                    catch (Exception ex) {
+                        Console.Write(ex);
+                    }
 				}
 				save(items, "d:\\taobao.txt");
 			}
-			{
+			if(true){
 				List<Taobao.Mods.ItemList.Data.Auction> items = new List<Taobao.Mods.ItemList.Data.Auction>();
 
 				load(items, "d:\\taobao.txt");
