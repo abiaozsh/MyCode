@@ -3,6 +3,8 @@
 #include <avr/interrupt.h>
 #include "../config.h"
 
+//ËÄÖáÇý¶¯
+
 //drA3
 //gnd
 //vcc
@@ -21,16 +23,16 @@
 
 #define StartRpm 8192
 
-uint8_t NextStep[] = {
-  1,  2,  3,  4,  5,  0
-};
-//uint8_t NextStep[] = {
-//  5,  0,  1,  2,  3,  4
+//uint8_t NextStep[] = {     //for F
+//  1,  2,  3,  4,  5,  0
 //};
+uint8_t NextStep[] = {   //for R
+  5,  0,  1,  2,  3,  4
+};
 
 uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
-uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
-//uint8_t DigitReadBaseVal[] = {   0,  BP2A,     0,  BP3A,     0,  BP1A};
+//uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};   //for F
+uint8_t DigitReadBaseVal[] = {   0,  BP2A,     0,  BP3A,     0,  BP1A}; // for R
 
 volatile uint8_t Step = 0;
 volatile uint8_t FStart = 0;

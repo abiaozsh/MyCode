@@ -149,7 +149,7 @@ uint8_t PWR_OFF6O[] = {
 //#define STAOff  PORTB &= ~_BV(5);/**/
 
 //????
-#define StartRpm (8192*2)
+#define StartRpm (50000)
 
 uint8_t NextStep[] = {
   1,  2,  3,  4,  5,  0
