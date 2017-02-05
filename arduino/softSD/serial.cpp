@@ -34,6 +34,7 @@ void SPI_CHIP_SELECT_LOW(){DDRD |= _BV(5);_dly();}
 
 
 uint8_t const CMD0 = 0X00;
+uint8_t const CMD1 = 0X01;
 uint8_t const CMD8 = 0X08;
 uint8_t const CMD9 = 0X09;
 uint8_t const CMD10 = 0X0A;
@@ -232,14 +233,6 @@ uint16_t Sd2Card_offset_;
 uint8_t  Sd2Card_status_;
 uint8_t  Sd2Card_type_;
 
-void Sd2Card_readEnd(void) {
-  if (Sd2Card_inBlock_) {
-      // skip data and crc
-    while (Sd2Card_offset_++ < 514) spiRec();
-    SPI_CHIP_SELECT_HIGH();
-    Sd2Card_inBlock_ = 0;
-  }
-}
 //------------------------------------------------------------------------------
 // wait for card to go not busy
 uint8_t Sd2Card_waitNotBusy(uint16_t timeoutMillis) {
@@ -253,8 +246,6 @@ uint8_t Sd2Card_waitNotBusy(uint16_t timeoutMillis) {
 //------------------------------------------------------------------------------
 // send command and return error code.  Return zero for OK
 uint8_t Sd2Card_cardCommand(uint8_t cmd, uint32_t arg) {
-  // end read if in partialBlockRead mode
-  Sd2Card_readEnd();
   // select card
   SPI_CHIP_SELECT_LOW();
   // wait up to 300 ms if busy
@@ -271,11 +262,6 @@ uint8_t Sd2Card_cardCommand(uint8_t cmd, uint32_t arg) {
   // wait for response
   for (uint8_t i = 0; ((Sd2Card_status_ = spiRec()) & 0X80) && i != 0XFF; i++);
   return Sd2Card_status_;
-}
-
-uint8_t Sd2Card_cardAcmd(uint8_t cmd, uint32_t arg) {
-  Sd2Card_cardCommand(CMD55, 0);
-  return Sd2Card_cardCommand(cmd, arg);
 }
 
 uint8_t Sd2Card_cardinit() {
@@ -329,7 +315,8 @@ uint8_t Sd2Card_cardinit() {
 
   ok=0;
   for(uint32_t i=0;i<SD_INIT_TIMEOUT*1000;i++){
-    if((Sd2Card_status_ = Sd2Card_cardAcmd(ACMD41, arg)) != R1_READY_STATE) {
+    Sd2Card_cardCommand(CMD55, 0);
+    if((Sd2Card_status_ = Sd2Card_cardCommand(ACMD41, arg)) != R1_READY_STATE) {
     }
     else
     {
@@ -354,6 +341,61 @@ uint8_t Sd2Card_cardinit() {
     // discard rest of ocr - contains allowed voltage range
     for (uint8_t i = 0; i < 3; i++) spiRec();
   }
+  SPI_CHIP_SELECT_HIGH();
+
+  return true;
+
+ fail:
+  SPI_CHIP_SELECT_HIGH();
+  return false;
+}
+
+uint8_t MMCCard_cardinit() {
+  Sd2Card_type_ = 0;
+  // 16-bit init start time allows over a minute
+  uint32_t arg;
+
+  // set pin modes
+  SPI_CHIP_SELECT_INIT();
+  SPI_CHIP_SELECT_HIGH();
+  SPI_MISO_INIT();
+  SPI_MOSI_INIT();
+  SPI_SCK_INIT();
+
+
+  // must supply min of 74 clock cycles with CS high.
+  for (uint8_t i = 0; i < 10; i++) spiSend(0XFF);
+
+  SPI_CHIP_SELECT_LOW();
+
+  // command to go idle in SPI mode
+  uint8_t ok = 0;
+  for(uint32_t i=0;i<100;i++){//SD_INIT_TIMEOUT*1000
+    if((Sd2Card_status_ = Sd2Card_cardCommand(CMD0, 0)) != R1_IDLE_STATE) {
+    }
+    else
+    {
+      ok=1;
+      break;
+    }
+  }
+  if (!ok) {
+    errCode = 1;
+    goto fail;
+  }
+
+  ok=0;
+  for(uint32_t i=0;i<100;i++){//SD_INIT_TIMEOUT*1000
+    if(Sd2Card_cardCommand(CMD1, 0) == R1_READY_STATE) {
+      ok=1;
+      break;
+    }
+  }
+  if (!ok) {
+      errCode = 3;
+      goto fail;
+  }
+  
   SPI_CHIP_SELECT_HIGH();
 
   return true;
@@ -391,38 +433,30 @@ uint8_t Sd2Card_waitStartBlock(void) {
   return false;
 }
 
-uint8_t Sd2Card_readData(uint32_t block, uint16_t offset, uint16_t count, uint8_t* dst) {
-  if (count == 0) return true;
-  if ((count + offset) > 512) {
+uint8_t Sd2Card_readData(uint32_t block, uint8_t* dst) {
+
+  Sd2Card_block_ = block;
+  // use address if not SDHC card
+  if (Sd2Card_type_ != SD_CARD_TYPE_SDHC) block <<= 9;
+  if (Sd2Card_cardCommand(CMD17, block)) {
+    errCode = 6;
     goto fail;
   }
-  if (!Sd2Card_inBlock_ || block != Sd2Card_block_ || offset < Sd2Card_offset_) {
-    Sd2Card_block_ = block;
-    // use address if not SDHC card
-    if (Sd2Card_type_ != SD_CARD_TYPE_SDHC) block <<= 9;
-    if (Sd2Card_cardCommand(CMD17, block)) {
-      errCode = 6;
-      goto fail;
-    }
-    if (!Sd2Card_waitStartBlock()) {
-      goto fail;
-    }
-    Sd2Card_offset_ = 0;
-    Sd2Card_inBlock_ = 1;
+  if (!Sd2Card_waitStartBlock()) {
+    goto fail;
   }
+  Sd2Card_offset_ = 0;
 
-
-  // skip data before offset
-  for (;Sd2Card_offset_ < offset; Sd2Card_offset_++) {
-    spiRec();
-  }
   // transfer data
-  for (uint16_t i = 0; i < count; i++) {
+  for (uint16_t i = 0; i < 512; i++) {
     dst[i] = spiRec();
   }
 
-  Sd2Card_offset_ += count;
-  Sd2Card_readEnd();
+  spiRec();//CRC
+  spiRec();
+  
+  SPI_CHIP_SELECT_HIGH();
+  Sd2Card_inBlock_ = 0;
   return true;
 
  fail:
@@ -430,13 +464,9 @@ uint8_t Sd2Card_readData(uint32_t block, uint16_t offset, uint16_t count, uint8_
   return false;
 }
 
-
-uint8_t Sd2Card_readBlock(uint32_t block, uint8_t* dst) {
-  return Sd2Card_readData(block, 0, 512, dst);
-}
 //------------------------------------------------------------------------------
 // send one block of data for write block or write multiple blocks
-uint8_t Sd2Card_writeData2(uint8_t token, uint8_t* src) {
+uint8_t Sd2Card_writeData(uint8_t token, uint8_t* src) {
   spiSend(token);
   for (uint16_t i = 0; i < 512; i++) {
     spiSend(src[i]);
@@ -454,17 +484,6 @@ uint8_t Sd2Card_writeData2(uint8_t token, uint8_t* src) {
 }
 
 //------------------------------------------------------------------------------
-uint8_t Sd2Card_writeData(uint8_t* src) {
-  // wait for previous write to finish
-  if (!Sd2Card_waitNotBusy(SD_WRITE_TIMEOUT)) {
-    errCode = 13;
-    SPI_CHIP_SELECT_HIGH();
-    return false;
-  }
-  return Sd2Card_writeData2(WRITE_MULTIPLE_TOKEN, src);
-}
-
-//------------------------------------------------------------------------------
 uint8_t Sd2Card_writeBlock(uint32_t blockNumber, uint8_t* src) {
 
   // use address if not SDHC card
@@ -473,7 +492,7 @@ uint8_t Sd2Card_writeBlock(uint32_t blockNumber, uint8_t* src) {
     errCode = 10;
     goto fail;
   }
-  if (!Sd2Card_writeData2(DATA_START_BLOCK, src)) goto fail;
+  if (!Sd2Card_writeData(DATA_START_BLOCK, src)) goto fail;
 
   // wait for flash programming to complete
   if (!Sd2Card_waitNotBusy(SD_WRITE_TIMEOUT)) {
@@ -533,25 +552,10 @@ void SdVolume_cacheSetDirty(void) {
 }
 
 //------------------------------------------------------------------------------
-// cache a zero block for blockNumber
-uint8_t SdVolume_cacheZeroBlock(uint32_t blockNumber) {
-  if (!SdVolume_cacheFlush()) return false;
-
-  // loop take less flash than memset(SdVolume_cacheBuffer_.data, 0, 512);
-  for (uint16_t i = 0; i < 512; i++) {
-    SdVolume_cacheBuffer_.data[i] = 0;
-  }
-  SdVolume_cacheBlockNumber_ = blockNumber;
-  SdVolume_cacheSetDirty();
-  return true;
-}
-
-
-//------------------------------------------------------------------------------
 uint8_t SdVolume_cacheRawBlock(uint32_t blockNumber, uint8_t action) {
   if (SdVolume_cacheBlockNumber_ != blockNumber) {
     if (!SdVolume_cacheFlush()) return false;
-    if (!Sd2Card_readBlock(blockNumber, SdVolume_cacheBuffer_.data)) return false;
+    if (!Sd2Card_readData(blockNumber, SdVolume_cacheBuffer_.data)) return false;
     SdVolume_cacheBlockNumber_ = blockNumber;
   }
   SdVolume_cacheDirty_ |= action;
@@ -626,7 +630,7 @@ uint8_t SdVolume_volumeinit(uint8_t part) {
 //------------------------------------------------------------------------------
 // Fetch a FAT entry
 uint8_t SdVolume_fatGet(uint32_t cluster, uint32_t* value) {
-  if (cluster > (SdVolume_clusterCount_ + 1)) return false;
+  if (cluster >= SdVolume_clusterCount_) return false;
   uint32_t lba = SdVolume_fatStartBlock_;
   lba += SdVolume_fatType_ == 16 ? cluster >> 8 : cluster >> 7;
   if (lba != SdVolume_cacheBlockNumber_) {
@@ -667,10 +671,6 @@ uint8_t SdVolume_fatPut(uint32_t cluster, uint32_t value) {
   // mirror second FAT
   if (SdVolume_fatCount_ > 1) SdVolume_cacheMirrorBlock_ = lba + SdVolume_blocksPerFat_;
   return true;
-}
-
-uint8_t SdVolume_fatPutEOC(uint32_t cluster) {
-  return SdVolume_fatPut(cluster, 0x0FFFFFFF);
 }
 
 // find a contiguous group of clusters
@@ -722,7 +722,7 @@ uint8_t SdVolume_allocContiguous(uint32_t* curCluster) {
     }
   }
   // mark end of chain
-  if (!SdVolume_fatPutEOC(endCluster)) return false;
+  if (!SdVolume_fatPut(endCluster, 0x0FFFFFFF)) return false;
 
   // link clusters
   while (endCluster > bgnCluster) {
@@ -742,87 +742,28 @@ uint8_t SdVolume_allocContiguous(uint32_t* curCluster) {
   return true;
 }
 
-uint8_t  SdVolume_isEOC(uint32_t cluster)  {return  cluster >= (SdVolume_fatType_ == 16 ? FAT16EOC_MIN : FAT32EOC_MIN);}
+uint8_t  SdVolume_isEOC(uint32_t cluster)  {
+  return  cluster >= (SdVolume_fatType_ == 16 ? FAT16EOC_MIN : FAT32EOC_MIN);
+}
 
-//------------------------------------------------------------------------------
-// return the size in bytes of a cluster chain
-uint8_t SdVolume_chainSize(uint32_t cluster, uint32_t* size) {
-  uint32_t s = 0;
-  do {
-    if (!SdVolume_fatGet(cluster, &cluster)) return false;
-    s += 512UL << SdVolume_clusterSizeShift_;
-  } while (!SdVolume_isEOC(cluster));
-  *size = s;
-  return true;
+uint8_t SdVolume_blockOfCluster(uint32_t position) {
+  return (position >> 9) & (SdVolume_blocksPerCluster_ - 1);
+}
+uint32_t SdVolume_clusterStartBlock(uint32_t cluster)  {
+  return SdVolume_dataStartBlock_ + ((cluster - 2) << SdVolume_clusterSizeShift_);
 }
 
 
-uint8_t  SdVolume_blockOfCluster(uint32_t position)  {return (position >> 9) & (SdVolume_blocksPerCluster_ - 1);}
-uint32_t SdVolume_clusterStartBlock(uint32_t cluster)  {return SdVolume_dataStartBlock_ + ((cluster - 2) << SdVolume_clusterSizeShift_);}
 
-
-
-
-
-uint8_t   Root_type_;
-uint32_t  Root_firstCluster_;
-uint32_t  Root_fileSize_;
-uint32_t  Root_curCluster_;
-uint32_t  Root_curPosition_;
-uint32_t  Root_dirBlock_;
-uint8_t   Root_dirIndex_;
-
-uint8_t Root_openRoot() {
-  // error if file is already open
-  //if (isOpen()) return false;
-
-  if (SdVolume_fatType_ == 16) {
-    Root_type_ = FAT_FILE_TYPE_ROOT16;
-    Root_firstCluster_ = 0;
-    Root_fileSize_ = 32 * SdVolume_rootDirEntryCount_;
-  } else if (SdVolume_fatType_ == 32) {
-    Root_type_ = FAT_FILE_TYPE_ROOT32;
-    Root_firstCluster_ = SdVolume_rootDirStart_;
-    if (!SdVolume_chainSize(Root_firstCluster_, &Root_fileSize_)) return false;
-  } else {
-    // volume is not initialized or FAT12
-    return false;
-  }
-
-  // set to start of file
-  Root_curCluster_ = 0;
-  Root_curPosition_ = 0;
-
-  // root has no directory entry
-  Root_dirBlock_ = 0;
-  Root_dirIndex_ = 0;
-  return true;
-}
 
 int16_t Root_Load() {
-
-  //Root_fileSize_:16384,Root_curPosition_:0
-  // max bytes left in file
-  if (0 == (Root_fileSize_ - Root_curPosition_)) return 0;
-
-  // amount left to read
   uint32_t block;  // raw device block number
-  uint16_t offset = Root_curPosition_ & 0X1FF;  // offset in block
-  if (Root_type_ == FAT_FILE_TYPE_ROOT16) {
-    block = SdVolume_rootDirStart_ + (Root_curPosition_ >> 9);
+  if (SdVolume_fatType_ == 16) {
+    block = SdVolume_rootDirStart_;// + (Root_curPosition_ >> 9);
+  } else if (SdVolume_fatType_ == 32) {
+    block = SdVolume_clusterStartBlock(SdVolume_rootDirStart_);// + blockOfCluster;//Root_curCluster_
   } else {
-    uint8_t blockOfCluster = SdVolume_blockOfCluster(Root_curPosition_);
-    if (offset == 0 && blockOfCluster == 0) {
-      // start of new cluster
-      if (Root_curPosition_ == 0) {
-        // use first cluster in file
-        Root_curCluster_ = Root_firstCluster_;
-      } else {
-        // get next cluster from FAT
-        if (!SdVolume_fatGet(Root_curCluster_, &Root_curCluster_)) return -1;
-      }
-    }
-    block = SdVolume_clusterStartBlock(Root_curCluster_) + blockOfCluster;
+    return false;
   }
 
   // read block to cache and copy data to caller
@@ -870,15 +811,7 @@ dir_t* File_cacheDirEntry(uint8_t action) {
   if (!SdVolume_cacheRawBlock(File_dirBlock_, action)) return 0;
   return SdVolume_cacheBuffer_.dir + File_dirIndex_;
 }
-//------------------------------------------------------------------------------
-/**
- * Sets a file's position.
- *
- * \param[in] pos The new position in bytes from the beginning of the file.
- *
- * \return The value one, true, is returned for success and
- * the value zero, false, is returned for failure.
- */
+
 uint8_t File_seekSet(uint32_t pos) {
   // error if file not open or seek past end of file
   if (pos > File_fileSize_){errCode = 80;  return false;}//!isOpen() || 
@@ -910,102 +843,25 @@ uint8_t File_seekSet(uint32_t pos) {
   File_curPosition_ = pos;
   return true;
 }
-uint8_t memcmp(char* str1,uint8_t* str2,uint8_t len){
-  for(uint8_t i=0;i<len;i++){
-    if(*str1!=*str2){
-      return 1;
-    }
-    str1++;
-    str2++;
-  }
-  return 0;
+
+//max 16 file
+dir_t* File_list() {
+	if (Root_Load() < 0) return 0;
+
+  // return pointer to entry
+  return SdVolume_cacheBuffer_.dir;
 }
 
-//TODO 获取文件列表 最大16个文件
-获取文件列表l
-打开文件o
-关闭文件c
-读取文件r
-写入文件w
+uint8_t File_open(uint8_t idx) {
+	if (Root_Load() < 0) return 0;
 
-uint8_t File_open(char* dname) {
-  dir_t* p;
-
-  //Root_rewind();
-  Root_curCluster_ = 0;
-  Root_curPosition_ = 0;
-
-  // bool for empty entry found
-  uint8_t emptyFound = false;
-
-  // search for file
-  while (Root_curPosition_ < Root_fileSize_) {
-    uint8_t index = 0XF & (Root_curPosition_ >> 5);
-    //p = Root_readDirCache();
-	{
-	  // index of entry in cache
-	  uint8_t i = (Root_curPosition_ >> 5) & 0XF;
-
-	  // use read to locate and cache block
-	  if (Root_Load() < 0) return 0;
-
-	  // advance to next entry
-	  Root_curPosition_ += 32;
-
-	  // return pointer to entry
-	  p = (SdVolume_cacheBuffer_.dir + i);
-	}
-    if (p == 0){errCode = 103;return false;}
-
-    if (p->name[0] == DIR_NAME_FREE || p->name[0] == DIR_NAME_DELETED) {
-      // remember first empty slot
-      if (!emptyFound) {
-        emptyFound = true;
-        File_dirIndex_ = index;
-        File_dirBlock_ = SdVolume_cacheBlockNumber_;
-      }
-      // done if no entries follow
-      if (p->name[0] == DIR_NAME_FREE) break;
-    } else if (!memcmp(dname, p->name, 11)) {
-
-      // open found file
-      return File_openCachedEntry(0XF & index);
-    }
-  }
-
-  // cache found slot or add cluster if end of file
-  if (emptyFound) {
-    p = File_cacheDirEntry(CACHE_FOR_WRITE);
-    if (!p){errCode = 106; return false;}
-  } else {
-    //512/32=16 max 16file
-    errCode = 107;
-    return false;
-  }
-  // initialize as empty file
-  for(uint8_t i=0;i<sizeof(dir_t);i++){
-    *((uint8_t*)p+i) = 0;
-  }
+  dir_t* p = &SdVolume_cacheBuffer_.dir[idx];
   
-  for(uint8_t i=0;i<11;i++){
-    *(p->name+i) = *(dname+i);
-  }
-
-  // force write of entry to SD
-  if (!SdVolume_cacheFlush()){errCode = 109;  return false;}
-
-  // open entry in cache
-  return File_openCachedEntry(File_dirIndex_);
-}
-
-// 1 for append to end , 0 for read/write from start
-uint8_t File_open(char *filepath, uint8_t toend) {
-  if (!File_open(filepath)) {
+  if (p->name[0] == DIR_NAME_FREE || p->name[0] == DIR_NAME_DELETED) {
     return 0;
   }
-  if (toend) 
-    File_seekSet(File_fileSize_);
-  return 1;
+
+  return File_openCachedEntry(idx);
 }
 
 uint8_t File_sync(void) {
@@ -1035,8 +891,6 @@ uint8_t File_close(void) {
   return true;
 }
 
-//------------------------------------------------------------------------------
-// add a cluster to a file
 uint8_t File_addCluster() {
   if (!SdVolume_allocContiguous(&File_curCluster_)) return false;
 
@@ -1048,150 +902,94 @@ uint8_t File_addCluster() {
   return true;
 }
 
+uint8_t File_read() {
 
-int16_t File_read(uint8_t* buf, uint16_t nbyte) {
-  uint8_t* dst = buf;
+  uint32_t block;  // raw device block number
+  uint16_t offset = File_curPosition_ & 0X1FF;  // offset in block
 
-  // max bytes left in file
-  if (nbyte > (File_fileSize_ - File_curPosition_)) nbyte = File_fileSize_ - File_curPosition_;
-
-  // amount left to read
-  uint16_t toRead = nbyte;
-  while (toRead > 0) {
-    uint32_t block;  // raw device block number
-    uint16_t offset = File_curPosition_ & 0X1FF;  // offset in block
-    if (File_type_ == FAT_FILE_TYPE_ROOT16) {
-      block = SdVolume_rootDirStart_ + (File_curPosition_ >> 9);
+  uint8_t blockOfCluster = SdVolume_blockOfCluster(File_curPosition_);
+  if (offset == 0 && blockOfCluster == 0) {
+    // start of new cluster
+    if (File_curPosition_ == 0) {
+      // use first cluster in file
+      File_curCluster_ = File_firstCluster_;
     } else {
-      uint8_t blockOfCluster = SdVolume_blockOfCluster(File_curPosition_);
-      if (offset == 0 && blockOfCluster == 0) {
-        // start of new cluster
-        if (File_curPosition_ == 0) {
-          // use first cluster in file
-          File_curCluster_ = File_firstCluster_;
-        } else {
-          // get next cluster from FAT
-          if (!SdVolume_fatGet(File_curCluster_, &File_curCluster_)) return -1;
-        }
-      }
-      block = SdVolume_clusterStartBlock(File_curCluster_) + blockOfCluster;
+      // get next cluster from FAT
+      if (!SdVolume_fatGet(File_curCluster_, &File_curCluster_)) return -1;
     }
-    uint16_t n = toRead;
-
-    // amount to be read from current block
-    if (n > (512 - offset)) n = 512 - offset;
-
-    // no buffering needed if n == 512 or user requests no buffering
-    if ((n == 512) && block != SdVolume_cacheBlockNumber_) {
-      if (!Sd2Card_readData(block, offset, n, dst)) return -1;
-      dst += n;
-    } else {
-      // read block to cache and copy data to caller
-      if (!SdVolume_cacheRawBlock(block, CACHE_FOR_READ)) return -1;
-      uint8_t* src = SdVolume_cacheBuffer_.data + offset;
-      uint8_t* end = src + n;
-      while (src != end) *dst++ = *src++;
-    }
-    File_curPosition_ += n;
-    toRead -= n;
   }
-  return nbyte;
+  block = SdVolume_clusterStartBlock(File_curCluster_) + blockOfCluster;
+
+  // read block to cache and copy data to caller
+  if (!SdVolume_cacheRawBlock(block, CACHE_FOR_READ)) return -1;
+  uint8_t val = SdVolume_cacheBuffer_.data[offset];
+  File_curPosition_++;
+  return val;
 }
 
-int16_t File_read() {
-  uint8_t b;
-  return File_read(&b, 1) == 1 ? b : -1;
-}
-
-size_t File_write(uint8_t* buf, uint16_t nbyte) {
-  // convert void* to uint8_t*  -  must be before goto statements
-  uint8_t* src = buf;
-
-  // number of bytes left to write  -  must be before goto statements
-  uint16_t nToWrite = nbyte;
-
-  while (nToWrite > 0) {
-    uint8_t blockOfCluster = SdVolume_blockOfCluster(File_curPosition_);
-    uint16_t blockOffset = File_curPosition_ & 0X1FF;
-    if (blockOfCluster == 0 && blockOffset == 0) {
-      // start of new cluster
-      if (File_curCluster_ == 0) {
-        if (File_firstCluster_ == 0) {
-          // allocate first cluster of file
-          if (!File_addCluster())return 0;
-        } else {
-          File_curCluster_ = File_firstCluster_;
-        }
+void File_write(uint8_t b) {
+  uint8_t blockOfCluster = SdVolume_blockOfCluster(File_curPosition_);
+  uint16_t blockOffset = File_curPosition_ & 0X1FF;
+  if (blockOfCluster == 0 && blockOffset == 0) {
+    // start of new cluster
+    if (File_curCluster_ == 0) {
+      if (File_firstCluster_ == 0) {
+        // allocate first cluster of file
+        if (!File_addCluster())return;
       } else {
-        uint32_t next;
-        if (!SdVolume_fatGet(File_curCluster_, &next)) return false;
-        if (SdVolume_isEOC(next)) {
-          // add cluster if at end of chain
-          if (!File_addCluster())return 0;
-        } else {
-          File_curCluster_ = next;
-        }
+        File_curCluster_ = File_firstCluster_;
       }
-    }
-    // max space in block
-    uint16_t n = 512 - blockOffset;
-
-    // lesser of space and amount to write
-    if (n > nToWrite) n = nToWrite;
-
-    // block for data write
-    uint32_t block = SdVolume_clusterStartBlock(File_curCluster_) + blockOfCluster;
-    if (n == 512) {
-      // full block - don't need to use cache
-      // invalidate cache if block is in cache
-      if (SdVolume_cacheBlockNumber_ == block) {
-        SdVolume_cacheBlockNumber_ = 0XFFFFFFFF;
-      }
-      if (!Sd2Card_writeBlock(block, src)) return 0;
-      src += 512;
     } else {
-      if (blockOffset == 0 && File_curPosition_ >= File_fileSize_) {
-        // start of new block don't need to read into cache
-        if (!SdVolume_cacheFlush()) return 0;
-        SdVolume_cacheBlockNumber_ = block;
-        SdVolume_cacheSetDirty();
+      uint32_t next;
+      if (!SdVolume_fatGet(File_curCluster_, &next)) return;
+      if (SdVolume_isEOC(next)) {
+        // add cluster if at end of chain
+        if (!File_addCluster())return;
       } else {
-        // rewrite part of block
-        if (!SdVolume_cacheRawBlock(block, CACHE_FOR_WRITE)) {
-          return 0;
-        }
+        File_curCluster_ = next;
       }
-      uint8_t* dst = SdVolume_cacheBuffer_.data + blockOffset;
-      uint8_t* end = dst + n;
-      while (dst != end) *dst++ = *src++;
     }
-    nToWrite -= n;
-    File_curPosition_ += n;
   }
+  // block for data write
+  uint32_t block = SdVolume_clusterStartBlock(File_curCluster_) + blockOfCluster;
+  if (blockOffset == 0 && File_curPosition_ >= File_fileSize_) {
+    // start of new block don't need to read into cache
+    if (!SdVolume_cacheFlush()) return;
+    SdVolume_cacheBlockNumber_ = block;
+    SdVolume_cacheSetDirty();
+  } else {
+    // rewrite part of block
+    if (!SdVolume_cacheRawBlock(block, CACHE_FOR_WRITE)) {
+      return;
+    }
+  }
+  
+  SdVolume_cacheBuffer_.data[blockOffset] = b;
+
+  File_curPosition_++;
+
   if (File_curPosition_ > File_fileSize_) {
     File_fileSize_ = File_curPosition_;
     File_flags_ = 1;
   }
-
-  return nbyte;
-
 }
 
-size_t File_write(uint8_t b) {
-  return File_write(&b, 1);
-}
-
-
-uint8_t Sd2Card_begin() {
-  if(!Sd2Card_cardinit())return false;
+//1:SD 2:MMC
+uint8_t Sd2Card_begin(uint8_t type) {
+  if(type==1){
+    if(!Sd2Card_cardinit())return 0;
+  }
+  else if(type==2){
+    if(!MMCCard_cardinit())return 0;
+  }
   if(!SdVolume_volumeinit(1))
   {
       if(!SdVolume_volumeinit(0))
       {
-        return false;
+        return 0;
       }
   }
-  return Root_openRoot();
+  return 1;
 }
 
 
@@ -1263,6 +1061,67 @@ uint8_t SerialRead()
 	return val;
 }
 
+uint8_t ConvBCD(uint8_t val){
+  if(val>='0'&&val<='9')
+  {
+    return val - '0';
+  }
+  else if(val>='a'&&val<='f')
+  {
+    return val - 'a' + 10;
+  }
+  else if(val>='A'&&val<='F')
+  {
+    return val - 'A' + 10;
+  }
+  return 0;
+}
+
+uint8_t GetByte(){
+  uint8_t vh = ConvBCD(SerialRead());
+  uint8_t vl = ConvBCD(SerialRead());
+  uint8_t val = (( vh << 4 ) & 0xF0) | 
+                (  vl        & 0x0F);
+  return val;
+}
+uint16_t GetWord(){
+  uint16_t v3 = ConvBCD(SerialRead());
+  uint16_t v2 = ConvBCD(SerialRead());
+  uint16_t v1 = ConvBCD(SerialRead());
+  uint16_t v0 = ConvBCD(SerialRead());
+  uint16_t val =(( v3 << 12) & 0xF000) | 
+                (( v2 << 8 ) & 0x0F00) | 
+                (( v1 << 4 ) & 0x00F0) | 
+                (  v0        & 0x000F);
+  return val;
+}
+uint32_t GetDWord(){
+  uint32_t v7 = ConvBCD(SerialRead());
+  uint32_t v6 = ConvBCD(SerialRead());
+  uint32_t v5 = ConvBCD(SerialRead());
+  uint32_t v4 = ConvBCD(SerialRead());
+  uint32_t v3 = ConvBCD(SerialRead());
+  uint32_t v2 = ConvBCD(SerialRead());
+  uint32_t v1 = ConvBCD(SerialRead());
+  uint32_t v0 = ConvBCD(SerialRead());
+  uint32_t val =(( v7 << 28) & 0xF0000000) | 
+                (( v6 << 24) & 0x0F000000) | 
+                (( v5 << 20) & 0x00F00000) | 
+                (( v4 << 16) & 0x000F0000) | 
+                (( v3 << 12) & 0x0000F000) | 
+                (( v2 << 8 ) & 0x00000F00) | 
+                (( v1 << 4 ) & 0x000000F0) | 
+                (  v0        & 0x0000000F);
+  return val;
+}
+
+PROGMEM prog_uint8_t convt[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+
+void printHex(uint8_t val){//"hl"
+  SerialSend(pgm_read_byte_near(convt+((val & 0xF0) >> 4)));
+  SerialSend(pgm_read_byte_near(convt+((val & 0x0F))));
+}
+
 
 PROGMEM prog_uint32_t num10s[] = {
 1000000000,
@@ -1300,93 +1159,165 @@ void SendInt(uint32_t val)
 	}
 }
 
-
-
-char filename[12];
+uint8_t ReadChar(){
+  while(1){
+    uint8_t val = SerialRead();
+    if(val==0 || val=='\r' || val=='\n'){
+    } else {
+      return val;
+    }
+  }
+}
 
 int main(void) {
 	SerialInit();
 	TimerInit();
   DDRD &= ~_BV(6);//pwrPIN;
-
+  uint8_t writebuff[16];
 	for(;;)
 	{
-    uint8_t cmd = SerialRead();
-    
-    if(cmd=='i'){
-      if(!Sd2Card_begin()) {
-        SerialSend('N');
-        SerialSend('G');
-        SerialSend('\r');
-        SerialSend('\n');
+    uint8_t cmd1 = ReadChar();
+    uint8_t cmd2 = ReadChar();
+
+    //is  init sd card
+    if(cmd1=='i' && cmd2=='s'){
+      if(Sd2Card_begin(1)) {
+        SerialSend('O');SerialSend('\r');SerialSend('\n');
       }
       else
       {
-        SerialSend('O');
-        SerialSend('K');
+        SendInt(errCode);
+        SerialSend('N');SerialSend('\r');SerialSend('\n');
+      }
+    }
+    
+    //im  init mmc card
+    if(cmd1=='i' && cmd2=='m'){
+      if(Sd2Card_begin(2)) {
+        SerialSend('O');SerialSend('\r');SerialSend('\n');
+      }
+      else
+      {
+        SendInt(errCode);
+        SerialSend('N');SerialSend('\r');SerialSend('\n');
+      }
+    }
+    
+    //ls  list
+    if(cmd1=='l' && cmd2=='s'){
+      dir_t* dir = File_list();
+      for(uint8_t i = 0; i<16; i++){
+        printHex(i);
+        SerialSend(' ');
+        if (dir[i].name[0] == DIR_NAME_FREE || dir[i].name[0] == DIR_NAME_DELETED) {
+          SerialSend('E');
+        } else {
+          for(uint8_t j = 0;j<11;j++){
+            SerialSend(dir[i].name[j]);
+          }
+          SerialSend(' ');
+          SendInt(dir[i].fileSize);
+          SerialSend(' ');
+          printHex(dir[i].attributes);
+        }
         SerialSend('\r');
         SerialSend('\n');
       }
     }
-    if(cmd=='r'){
-      filename[0] = 'R';
-      filename[1] = 'E';
-      filename[2] = 'A';
-      filename[3] = 'D';
-      filename[4] = 'F';
-      filename[5] = 'I';
-      filename[6] = 'L';
-      filename[7] = 'E';
-      filename[8] = 'T';
-      filename[9] = 'X';
-      filename[10] = 'T';
-      filename[11] = '\0';
-      SerialSend('R');
-      if (File_open(filename, 0)) {
-        for(uint16_t i=0;i<10000;i++){
-          int cc = File_read();
-          if(cc!=0 && cc!=-1){
-            SerialSend((uint8_t)cc);
-          }else
-          {
-            break;
-          }
-          
-        }
-        File_close();
-        SerialSend('D');
+    
+    //op  open file
+    if(cmd1=='o' && cmd2=='p'){
+      uint8_t idx = GetByte();
+      if (File_open(idx)) {
+        SerialSend('[');
+        SendInt(File_fileSize_);
+        SerialSend(']');
       }
-      else {
-        SerialSend('E');
-      }
-      
     }
-    if(cmd=='w'){
-      uint8_t n = SerialRead();
-      filename[0] = n;
-      filename[1] = 'R';
-      filename[2] = 'I';
-      filename[3] = 'T';
-      filename[4] = 'E';
-      filename[5] = 'F';
-      filename[6] = 'I';
-      filename[7] = 'L';
-      filename[8] = 'T';
-      filename[9] = 'X';
-      filename[10] = 'T';
-      filename[11] = '\0';
-      SerialSend('W');
-      if (File_open(filename, 0)) {
-        for(uint16_t i=0;i<700;i++){
-          char cc = 'a'+(i&31);
-          SerialSend(cc);
-          File_write(cc);
-        }
-        File_close();
-        SerialSend('D');
+    
+    //sk  seek XXXXXXXX
+    if(cmd1=='s' && cmd2=='k'){
+      uint32_t pos = GetDWord();
+      File_seekSet(pos);
+      SerialSend(cmd1);SerialSend(cmd2);SerialSend('\r');SerialSend('\n');
+    }
+    
+    //se  seek to end
+    if(cmd1=='s' && cmd2=='e'){
+      File_seekSet(File_fileSize_);
+      SerialSend(cmd1);SerialSend(cmd2);SerialSend('\r');SerialSend('\n');
+    }
+    
+    //cl  close
+    if(cmd1=='c' && cmd2=='l'){
+      File_close();
+      SerialSend(cmd1);SerialSend(cmd2);SerialSend('\r');SerialSend('\n');
+    }
+    
+    //rc  read 1 char
+    if(cmd1=='r' && cmd2=='c'){
+      uint8_t v = File_read();
+      SerialSend(v);
+    }
+    //rb  read 1 byte
+    if(cmd1=='r' && cmd2=='b'){
+      uint8_t v = File_read();
+      printHex(v);
+    }
+
+    //rd xxxx  read chars
+    if(cmd1=='r' && cmd2=='d'){
+      uint32_t len = GetWord();
+      for(uint32_t i=0;i<len;i++){
+        uint8_t val = File_read();
+        SerialSend(val);
       }
-      else {
-        SerialSend('E');
+    }
+    //rx xxxx  read bytes
+    if(cmd1=='r' && cmd2=='x'){
+      uint32_t len = GetWord();
+      for(uint32_t i=0;i<len;i++){
+        uint8_t val = File_read();
+        printHex(val);
+      }
+    }
+
+    //w1 xx write bytes
+    if(cmd1=='w' && cmd2=='1'){
+      uint8_t data = GetByte();
+      File_write(data);
+      printHex(data);
+    }
+    
+    //wx xx write bytes max16byte
+    if(cmd1=='w' && cmd2=='x'){
+      uint8_t len = GetByte();
+      if(len>16)len=16;
+      for(uint8_t i=0;i<len;i++){
+        writebuff[i] = GetByte();
+      }
+      for(uint8_t i=0;i<len;i++){
+        uint8_t data = writebuff[i];
+        File_write(data);
+        printHex(data);
+      }
+    }
+    //wl write line end with \n
+    if(cmd1=='w' && cmd2=='l'){
+      for(uint8_t i=0;i<16;i++){
+        uint8_t c = SerialRead();
+        writebuff[i] = c;
+        if(c == '\n'){
+          break;
+        }
+      }
+      for(uint8_t i=0;i<16;i++){
+        uint8_t c = writebuff[i];
+        File_write(c);
+        SerialSend(c);
+        if(c == '\n'){
+          break;
+        }
       }
     }
 	}
