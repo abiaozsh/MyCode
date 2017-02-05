@@ -105,7 +105,7 @@ void RadioSend(uint8_t val)
 {
 	cli();
   uint8_t chkbit = 0x01;
-	TCCR0B = 3;//2 //1
+	TCCR0B = 4;//2 //1
   //CS02 CS01 CS00 Description
   //0 0 0 No clock source (Timer/Counter stopped)
   //0 0 1 clkI/O/(No prescaling)    8000000 / 160 = 50000 hz
@@ -118,7 +118,7 @@ void RadioSend(uint8_t val)
   while(TCNT0<80);
   SendRadioHi;
   while(TCNT0<160);//80 高
-	for(uint8_t i = 8 ; i > 0 ; i--)
+	for(uint8_t i = 0 ; i < 8 ; i++)
 	{
     TCNT0 = 0;
     SendRadioLo;
@@ -131,13 +131,15 @@ void RadioSend(uint8_t val)
     while(TCNT0<240);
 		chkbit<<=1;
 	}
+	SendRadioLo;
 	sei();
 }
 
 uint8_t RadioRead()
 {
 	cli();
-	TCCR0B = 3;//2 //1
+	
+	TCCR0B = 4;//2 //1
   uint8_t keyu = 0;
   uint8_t keyd = 0;
   uint8_t keyu2 = 0;
@@ -151,40 +153,46 @@ uint8_t RadioRead()
   //1 0 1 clkI/O/1024 (From prescaler)
   uint8_t val;
   error:
+	PORTA |= _BV(0) | _BV(1) | _BV(2) | _BV(3);
+
   val = 0;
   while(!Data_RecvRadio);//等待高电平
   TCNT0 = 0;//开始计时
 	TIFR0 |= _BV(TOV0);
   while(Data_RecvRadio);//等待低电平
-  keyu = currTick;
-	SendInt(keyu);
-	SerialSend('\r');
-	SerialSend('\n');
-	return 0;
+  keyu = TCNT0;
   TCNT0 = 0; //开始计时
+	
+	PORTA &= ~_BV(0);
+	
   if(keyu>90 || keyu<70){//+- 10周期
     goto error;
   }
+
+	PORTA &= ~_BV(1);
+
   keyu2 = keyu << 1;
-  keyu += 3;
-  keyd = keyu - 6;
-  keyu2 += 3;
-  keyd2 = keyu2 -6;
+  keyu += 5;
+  keyd = keyu - 10;
+  keyu2 += 5;
+  keyd2 = keyu2 - 10;
   
-  for(uint8_t i = 8 ; i > 0 ; i--)
+  for(uint8_t i = 0 ; i < 8 ; i++)
   {
     while(!Data_RecvRadio);//等待高电平
     uint8_t time = TCNT0;
-    if(time<keyu && time > keyd){
+    if(time > keyd && time < keyu){
       val>>=1;val |= 0x80;//短 1
-    }else if(time<keyu2 && time > keyd2){
+    }else if(time > keyd2 && time < keyu2){
       val>>=1;val |= 0x00;//长 0
     }else{
       goto error;
     }
+		PORTA &= ~_BV(2);
     while(Data_RecvRadio);//等待低电平
     TCNT0 = 0;
   }
+	PORTA &= ~_BV(3);
 	sei();
 	return val;
 }
@@ -249,11 +257,11 @@ uint32_t ReadInt()
 void loop() {
 	for(;;)
 	{
-    //uint8_t val = SerialRead();
-    //RadioSend(val);
+    uint8_t val = SerialRead();
+    RadioSend(val);
     
-    uint8_t val = RadioRead();
-		SerialSend(val);
+    //uint8_t val = RadioRead();
+		//SerialSend(val);
 	}
 }
 
@@ -262,6 +270,12 @@ int main(void) {
 	ClockInit();
 	SerialInit();
 	TimerInit();
+	
+	DDRA |= _BV(0);
+	DDRA |= _BV(1);
+	DDRA |= _BV(2);
+	DDRA |= _BV(3);
+	
 	loop();
 }
 
