@@ -17,10 +17,30 @@ PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1___9600[] = {  833, 1666, 2500, 3333, 4
 #define PIN_Recv PINB
 #define BIT_Recv _BV(0)
 
+#define CMD_ON1 1
+#define CMD_ON2 2
+#define CMD_ON3 3
+#define CMD_ON4 4
+#define CMD_OFF1 5
+#define CMD_OFF2 6
+#define CMD_OFF3 7
+#define CMD_OFF4 8
+#define CMD_TIM1_1S 9
+#define CMD_TIM1_10S 10
+#define CMD_TIM1_1M 11
+#define CMD_TIM1_1H 12
+#define CMD_TIM1_2H 13
+#define CMD_TIM1_3H 14
+#define CMD_TIM1_4H 15
+#define CMD_TIM1_5H 16
+
+    
 void loop();
 void TimerInit();
 void SerialInit();
 uint8_t SerialRead();
+
+volatile uint32_t timer;
 
 int main(void) {
 	CLKPR = 128;CLKPR = 0;
@@ -28,6 +48,8 @@ int main(void) {
   TimerInit();
   MCUCR |= _BV(PUD);
   DDRA = 0x0F;
+  timer = 0;
+	sei();
   loop();
 }
 
@@ -35,17 +57,55 @@ void loop() {
 	for(;;)
 	{
     uint8_t data = SerialRead();
-    if((data & 0xE0) == 0xA0)
-    {
-			PORTA = data;
-			if(data&0x10)
-			{
-				STAOn;
-			}
-			else
-			{
-				STAOff;
-			}
+    switch(data){
+      case CMD_ON1:
+        PORTA |= _BV(0);STAOn;
+        break;
+      case CMD_ON2:
+        PORTA |= _BV(1);STAOn;
+        break;
+      case CMD_ON3:
+        PORTA |= _BV(2);STAOn;
+        break;
+      case CMD_ON4:
+        PORTA |= _BV(3);STAOn;
+        break;
+      case CMD_OFF1:
+        PORTA &= ~_BV(0);STAOff;
+        break;
+      case CMD_OFF2:
+        PORTA &= ~_BV(1);STAOff;
+        break;
+      case CMD_OFF3:
+        PORTA &= ~_BV(2);STAOff;
+        break;
+      case CMD_OFF4:
+        PORTA &= ~_BV(3);STAOff;
+        break;
+      case CMD_TIM1_1S:
+        PORTA |= _BV(0);STAOn;timer = 30;
+        break;
+      case CMD_TIM1_10S:
+        PORTA |= _BV(0);STAOn;timer = 305;
+        break;
+      case CMD_TIM1_1M:
+        PORTA |= _BV(0);STAOn;timer = 1831;
+        break;
+      case CMD_TIM1_1H:
+        PORTA |= _BV(0);STAOn;timer = 109863;
+        break;
+      case CMD_TIM1_2H:
+        PORTA |= _BV(0);STAOn;timer = 219726;
+        break;
+      case CMD_TIM1_3H:
+        PORTA |= _BV(0);STAOn;timer = 329589;
+        break;
+      case CMD_TIM1_4H:
+        PORTA |= _BV(0);STAOn;timer = 439453;
+        break;
+      case CMD_TIM1_5H:
+        PORTA |= _BV(0);STAOn;timer = 549316;
+        break;
     }
 	}
 }
@@ -54,8 +114,20 @@ void TimerInit() {
 	TCCR1A = 0;
 	TCCR1C = 0;
 	TIMSK1 = 0;
+  
+  TCCR0A = 0;
+  TCCR0B = 5;//1 0 1 clkI/O/1024 (From prescaler)  8000000/1024 7812.5/256 =  30.517578125/s
+  TIMSK0 = _BV(TOIE0);
 }
 
+ISR(TIM0_OVF_vect){
+  if(timer!=0){
+    timer--;
+    if(timer==0){
+      PORTA &= ~_BV(0);STAOff;
+    }
+  }
+}
 void SerialInit(){
 	//UCSR0B = 0;//not forget turnoff usart0 on mega328p
 	DDR_Send |= BIT_Send;
@@ -79,3 +151,4 @@ uint8_t SerialRead()
 	}
 	return val;
 }
+
