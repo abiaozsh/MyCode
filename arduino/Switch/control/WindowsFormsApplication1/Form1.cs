@@ -21,20 +21,25 @@ namespace WindowsFormsApplication1
         private delegate void FlushClient(string s);
         public Form1()
         {
+
+
+            InitializeComponent();
+
+            this.FormClosed += new FormClosedEventHandler(Form1_FormClosed);
+
+
             FileStream fs = new FileStream("d:\\comconf.txt", FileMode.Open, FileAccess.Read);
             StreamReader sr = new StreamReader(fs);
 
             string com = sr.ReadLine();
             this.Text = com;
 
+            string remark = sr.ReadLine();
+            textBox1.Text += remark;
+
             sr.Close();
             fs.Close();
 
-
-
-            InitializeComponent();
-
-            this.FormClosed += new FormClosedEventHandler(Form1_FormClosed);
 
             //fs = new FileStream("d:\\data22.txt", FileMode.Create, FileAccess.Write);
             //sw = new StreamWriter(fs);

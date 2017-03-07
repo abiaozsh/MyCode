@@ -126,7 +126,7 @@
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(148, 186);
             this.textBox1.TabIndex = 16;
-            this.textBox1.Text = "31\r\n24\r\nxx\r\n\r\n14x\r\n32x\r\n\r\nxx\r\n42\r\n13\r\n\r\nx23\r\nx41\r\n3:2T     4:1.5T";
+            this.textBox1.Text = "31\r\n24\r\nxx\r\n\r\n14x\r\n32x\r\n\r\nxx\r\n42\r\n13\r\n\r\nx23\r\nx41\r\n";
             // 
             // Form1
             // 
