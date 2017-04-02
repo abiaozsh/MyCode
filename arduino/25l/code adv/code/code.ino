@@ -54,19 +54,19 @@ rt
 ofonrd11000040ofrt
 */
 
-#define hold _BV(2)
-#define wp _BV(7)
+//#define hold _BV(2)
+//#define wp _BV(7)
 
 
-#define cs _BV(5)
-#define cs1 _BV(5)
-#define cs2 _BV(5)
-#define cs3 _BV(5)
+#define cs _BV(6)
+//#define cs1 _BV(5)
+//#define cs2 _BV(5)
+//#define cs3 _BV(5)
 
 
-#define sclk _BV(3)
-#define si _BV(4)
-#define so _BV(6)
+#define so _BV(2)//readin
+#define sclk _BV(4)
+#define si _BV(3)//data out
 
 void setup()
 {
@@ -230,6 +230,9 @@ uint8_t shiftIn2(){
     inBits <<=1;
     if(PIND & so)
     {
+	}
+	else
+	{
       inBits |= 1;
     }
   }
@@ -262,7 +265,7 @@ uint8_t shiftIn2(){
 //  in = (in << 1);  /* shift 1 place to the left or shift in 0 */
 //  temp = PIND & so;  /* save input */
 //  DDRD &= ~sclk;//rise
-//  if (temp)  /* check to see if bit is high */
+//  if (!temp)  /* check to see if bit is high */
 //   in |= 0x01; /* if high, make bit high */
 //  DDRD |= sclk;//fall
 // } 

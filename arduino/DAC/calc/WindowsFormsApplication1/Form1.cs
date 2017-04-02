@@ -78,9 +78,9 @@ namespace WindowsFormsApplication1
 				sr.Close();
 				fs.Close();
 
-				int start = 400;//2v
+				int start = 600;//2v
 				int end = 1024;//5v
-				int step = 2;
+				int step = 1;
 
 				StringBuilder sb = new StringBuilder();
 				int idx = 0;

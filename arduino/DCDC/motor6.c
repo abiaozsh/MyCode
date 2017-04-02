@@ -8,12 +8,10 @@ void adj();
 
 void wait(unsigned int ticks)
 {
-  TCCR1A = 0;
-  TCNT1 = 0;
-  TCCR1B = 3;
-	while(TCNT1<ticks)
+	unsigned int i;
+	for(i=0;i<ticks;i++)
 	{
-		//asm volatile("nop");
+		asm volatile("nop");
 	}
 }
 
@@ -30,48 +28,84 @@ int main(void) {
 	//0 1 1 0 6 64
 	//0 1 1 1 7 128
 	//1 0 0 0 8 256 
-	
-	GIMSK |= _BV(PCIE0);
-	PCMSK0 |= _BV(PCINT7);//CLK
-	PCMSK0 |= _BV(PCINT6);//CLK
 	sei();
-	 
+	
+	
 	DDRA = 255;
 	PORTA = 0;
 	DDRB = 15;
 	PORTB = 0;
-  
-	DDRA &= ~ _BV(7);//sleep button
- 	DDRA &= ~ _BV(6);//sleep button
- 
-	//DDRA &= ~ _BV(5);
-  
+	PORTB |= _BV(3);
+	//DDRA &= ~ _BV(7);
+	DDRA &= ~ _BV(5);
+	
+	DDRA &= ~ _BV(4);
+	DIDR0 &= ~ _BV(4);
+	ADMUX = 4;
+	ADCSRB |= _BV(ADLAR);
+
+	ADCSRA = 7;
+	ADCSRA |= _BV(ADIE);
+	ADCSRA |= _BV(ADATE);
+	ADCSRA |= _BV(ADEN);
+	ADCSRA |= _BV(ADSC);
+	
+	//上OC0A B2 1.3/5*256 = 67
+	//下OC0B A7 3.7/5*256 = 189
+	
+	OCR0A = 128;
+	OCR0B = 128;
+	TCCR0A = _BV(COM0A1) | _BV(COM0A0) | _BV(COM0B1) | _BV(WGM00);
+	TCCR0B = 1;
+	// _BV(WGM13) | _BV(WGM12) | _BV(WGM11) | _BV(WGM10)
+	// WGM0  210
+    //       001 PWM, Phase Correct 0xFF TOP BOTTOM	
+	
+//CS02 CS01 CS00 Description
+//0 0 0 No clock source (Timer/Counter stopped)
+//1 0 0 1 clkI/O/(No prescaling)
+//2 0 1 0 clkI/O/8 (From prescaler)
+//3 0 1 1 clkI/O/64 (From prescaler)
+//4 1 0 0 clkI/O/256 (From prescaler)
+//5 1 0 1 clkI/O/1024 (From prescaler)
+ 	//DDRB &= ~ _BV(2);
+	//DDRA &= ~ _BV(7);
+
 	while(1){
-    wait(5000);
-    DDRB &= ~ _BV(3);
-    wait(5000);
-    DDRB |= _BV(3);
-    
-    if(!(PINA & _BV(6))){
-		DDRB &= ~ _BV(3);
+	
+//	//TCCR0A |= (_BV(COM0A1) | _BV(COM0A0) | _BV(COM0B1));
+// 	DDRB &= ~ _BV(2);
+//	DDRA &= ~ _BV(7);
+//	
+//	while(PINA & _BV(5)){}
+//  
+//	//TCCR0A &= ~(_BV(COM0A1) | _BV(COM0A0) | _BV(COM0B1));
+// 	DDRB |= _BV(2);
+//	DDRA |= _BV(7);
+//
+//	while(!(PINA & _BV(5))){}
+  }
+  
+  
+//  //初始化输入
+//  GIMSK |= _BV(PCIE0);
+//  PCMSK0 |= _BV(PCINT6);//CLK
+//  sei();
 
-		//PRR |= _BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSI) | _BV(PRADC);
-		MCUCR |= _BV(SM1);
-      MCUCR |= _BV(SE);//|_BV(SM1)   | _BV(SM0)
-	  asm volatile("sleep");
-    }
-    if(!(PINA & _BV(7))){
-		DDRB &= ~ _BV(3);
-
-		//PRR |= _BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSI) | _BV(PRADC);
-		
-		
-      MCUCR |= _BV(SE);// | _BV(SM1)
-	  asm volatile("sleep");
-    }
-	}
+  //主循环
+  for(;;) 
+  {
+	
+  }
+}
+ISR(ADC_vect){
+	uint8_t val = ADCH;
+	OCR0A = val;
+	OCR0B = val;
+}
+ISR(TIM1_COMPA_vect){
+ // PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
 }
 
-ISR(PCINT0_vect){
-  //PRR &= ~(_BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSI) | _BV(PRADC));
+ISR(PCINT0_vect){//先送高，后送低
 }

@@ -274,28 +274,30 @@ namespace WindowsFormsApplication1
 
 		private void button5_Click(object sender, EventArgs e)
 		{
-			portWrite("of");
-			portWrite("on");
-			portWrite("sd06");//we
-			portWrite("of");
+			//portWrite("of");
+			//portWrite("on");
+			//portWrite("sd06");//we
+			//portWrite("of");
+            //
+			//portWrite("of");
+			//portWrite("on");
+			//portWrite("sd20");//be
+			//portWrite("sd00");//ad
+			//portWrite("sd00");//ad
+			//portWrite("sd00");//ad
+			//portWrite("of");
 
 			portWrite("of");
 			portWrite("on");
-			portWrite("sd20");//be
-			portWrite("sd00");//ad
-			portWrite("sd00");//ad
-			portWrite("sd00");//ad
-			portWrite("of");
-
-			portWrite("of");
-			portWrite("on");
-			portWrite("sd05");//se
+			portWrite("sd9f");//se
 			portWrite("gt");//ad
 			string read = readFromPort(2);
 			portWrite("gt");//ad
 			string read2 = readFromPort(2);
-			portWrite("of");
-			textBox3.Text = read + read2;
+            portWrite("gt");//ad
+            string read3 = readFromPort(2);
+            portWrite("of");
+            textBox3.Text = read + read2 + read3;
 		}
 
 		private void button6_Click(object sender, EventArgs e)
@@ -339,9 +341,9 @@ namespace WindowsFormsApplication1
 
 			portWrite("of");
 			portWrite("on");
-			portWrite("sd01");//be
-			portWrite("sd00");//ad
+			portWrite("sd60");//be
 			portWrite("of");
+            WaitUntilReady();
 
 		}
 	}

@@ -143,7 +143,7 @@ namespace WindowsFormsApplication4
                 string filename;
                 byte[] data = SendBin(13, (byte)i, out filename);
 
-                FileStream fs = new FileStream(@"f:\data\" + filename, FileMode.Create, FileAccess.Write);
+                FileStream fs = new FileStream(@"d:\data\temp\" + filename, FileMode.Create, FileAccess.Write);
                 fs.Write(data, 0, data.Length);
                 fs.Flush();
                 fs.Close();

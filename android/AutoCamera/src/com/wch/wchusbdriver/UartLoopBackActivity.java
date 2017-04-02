@@ -45,7 +45,7 @@ public class UartLoopBackActivity extends Activity {
 		@SuppressWarnings("resource")
 		public void run() {
 
-			// android.hardware.camera2
+			android.hardware.camera2.CaptureResult
 			// android.h
 
 			ServerSocket ss = null;

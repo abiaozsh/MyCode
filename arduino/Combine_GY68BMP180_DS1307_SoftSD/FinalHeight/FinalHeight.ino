@@ -15,12 +15,6 @@ void dly()
     v++;
   }
 }
-#define DDR_SCL  DDRD
-#define PORT_SCL PORTD
-
-#define DDR_SDA  DDRD
-#define PORT_SDA PORTD
-#define PIN_SDA  PIND
 
 #ifndef sbi
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
@@ -43,8 +37,16 @@ void dly()
 
 
 
-uint8_t BIT_SCL = 0;
-uint8_t BIT_SDA = 0;
+uint8_t BIT_SCL = _BV(0);
+uint8_t BIT_SDA = _BV(1);
+
+#define DDR_SCL  DDRC
+#define PORT_SCL PORTC
+
+#define DDR_SDA  DDRC
+#define PORT_SDA PORTC
+#define PIN_SDA  PINC
+
 
 //
 void i2c_SoftI2CMaster()
@@ -388,8 +390,8 @@ float calcAltitude(float pressure){
 
 void getBMP180()
 {
-  BIT_SCL = _BV(7);//BMP180
-  BIT_SDA = _BV(6);//BMP180
+  //BIT_SCL = _BV(7);//BMP180
+  //BIT_SDA = _BV(6);//BMP180
   temperature = bmp085GetTemperature(bmp085ReadUT()); //MUST be called first
   pressure = bmp085GetPressure(bmp085ReadUP());
   altitude = calcAltitude(pressure); //Uncompensated caculation - in Meters 
@@ -758,8 +760,8 @@ void setup(){
   Serial.begin(115200);
   DDRD |= _BV(3);
   DDRB |= _BV(5);
-  BIT_SCL = _BV(7);//BMP180
-  BIT_SDA = _BV(6);//BMP180
+  //BIT_SCL = _BV(7);//BMP180
+  //BIT_SDA = _BV(6);//BMP180
   i2c_SoftI2CMaster();
 
   _InitLCD();
@@ -777,8 +779,8 @@ void loop()
   uint32_t t0;
   
   {
-    BIT_SCL = _BV(7);//BMP180
-    BIT_SDA = _BV(6);//BMP180
+    //BIT_SCL = _BV(7);//BMP180
+    //BIT_SDA = _BV(6);//BMP180
     bmp085Calibration();
   }
     TotalT = 0;
@@ -795,76 +797,10 @@ void loop()
     t0 = millis();
     while(millis() - t0<100);
   }
-  
-  {
-    line[0] = ' ';
-    line[1] = ' ';
-    line[2] = ' ';
-    line[3] = ' ';
-    line[4] = ' ';
-    line[5] = ' ';
-    
-    line[9] = '0'+(TotalT%10);    TotalT=TotalT/10;
-    line[8] = '0'+(TotalT%10);    TotalT=TotalT/10;
-    line[7] = '0'+(TotalT%10);    TotalT=TotalT/10;
-    line[6] = '0'+(TotalT%10);    TotalT=TotalT/10;
-    
-    line[10] = '\0';
-    drawLine(line,0);
-  }
-
-  {
-    line[9] = '0'+(TotalP%10);    TotalP=TotalP/10;
-    line[8] = '0'+(TotalP%10);    TotalP=TotalP/10;
-    line[7] = '0'+(TotalP%10);    TotalP=TotalP/10;
-    line[6] = '0'+(TotalP%10);    TotalP=TotalP/10;
-    line[5] = '0'+(TotalP%10);    TotalP=TotalP/10;
-    line[4] = '0'+(TotalP%10);    TotalP=TotalP/10;
-    line[3] = '0'+(TotalP%10);    TotalP=TotalP/10;
-    line[2] = '0'+(TotalP%10);    TotalP=TotalP/10;
-    line[1] = '0'+(TotalP%10);    TotalP=TotalP/10;
-    line[0] = '0'+(TotalP%10);    TotalP=TotalP/10;
-    line[10] = '\0';
-    drawLine(line,1);
-  }
-
-  {
-    long temp = (long)(TotalA-baseA);
-    if(temp<0){
-    temp=-temp;
-    line[9] = '0'+(temp%10);    temp=temp/10;
-    line[8] = '0'+(temp%10);    temp=temp/10;
-    line[7] = '0'+(temp%10);    temp=temp/10;
-    line[6] = '0'+(temp%10);    temp=temp/10;
-    line[5] = '0'+(temp%10);    temp=temp/10;
-    line[4] = '0'+(temp%10);    temp=temp/10;
-    line[3] = '0'+(temp%10);    temp=temp/10;
-    line[2] = '0'+(temp%10);    temp=temp/10;
-    line[1] = '0'+(temp%10);    temp=temp/10;
-    line[0] = '-';
-    }
-    else
-    {
-    line[9] = '0'+(temp%10);    temp=temp/10;
-    line[8] = '0'+(temp%10);    temp=temp/10;
-    line[7] = '0'+(temp%10);    temp=temp/10;
-    line[6] = '0'+(temp%10);    temp=temp/10;
-    line[5] = '0'+(temp%10);    temp=temp/10;
-    line[4] = '0'+(temp%10);    temp=temp/10;
-    line[3] = '0'+(temp%10);    temp=temp/10;
-    line[2] = '0'+(temp%10);    temp=temp/10;
-    line[1] = '0'+(temp%10);    temp=temp/10;
-    line[0] = '+';
-    }
-    //
-    line[10] = '\0';
-    drawLine(line,2);
-  }
-  
-  if(digitalRead(2)==LOW)
-  {
-    baseA = TotalA;
-  }
+  Serial.println(TotalT);
+  Serial.println(TotalP);
+  Serial.println(TotalA);
+  Serial.println(",");
 }
 
 

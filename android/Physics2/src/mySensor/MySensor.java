@@ -11,29 +11,26 @@ import android.hardware.SensorManager;
 
 public class MySensor implements SensorEventListener {
 	protected SensorManager sensorManager;
-	Sensor gyro;
+	// Sensor gyro;
 	Sensor acce;
-	Sensor gyro2;
+	// Sensor gyro2;
 
 	// float g = 9.8f;
 
 	MySensorListener msl;
 
 	public MySensor(MySensorListener msl, Activity activity) {
-		sensorManager = (SensorManager) activity
-				.getSystemService(Context.SENSOR_SERVICE);
+		sensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
 
 		List<Sensor> list = sensorManager.getSensorList(Sensor.TYPE_ALL);
 
 		for (Sensor item : list) {
-			if (item.getType() == Sensor.TYPE_GYROSCOPE
-					&& !item.getVendor().startsWith("Google")) {
-				gyro = item;
-			}
-			if (item.getType() == Sensor.TYPE_GYROSCOPE
-					&& item.getVendor().startsWith("Google")) {
-				gyro2 = item;
-			}
+			// if (item.getType() == Sensor.TYPE_GYROSCOPE && !item.getVendor().startsWith("Google")) {
+			// gyro = item;
+			// }
+			// if (item.getType() == Sensor.TYPE_GYROSCOPE && item.getVendor().startsWith("Google")) {
+			// gyro2 = item;
+			// }
 
 			if (item.getType() == Sensor.TYPE_ACCELEROMETER) {
 				acce = item;
@@ -48,16 +45,16 @@ public class MySensor implements SensorEventListener {
 		this.msl = msl;
 
 		int delay = SensorManager.SENSOR_DELAY_FASTEST;
-		//sensorManager.registerListener(this, gyro, delay);
+		// sensorManager.registerListener(this, gyro, delay);
 		sensorManager.registerListener(this, acce, delay);
 		// sensorManager.registerListener(this, gyro2, delay);
 
 	}
- 
+
 	public float chgX;
 	public float chgY;
 	public float chgZ;
-	
+
 	int Cali_cnt_Gyro = 0;
 	int Cali_cnt_Acce = 0;
 	float zero_x = 0;
@@ -167,38 +164,18 @@ public class MySensor implements SensorEventListener {
 	}
 
 	public void onSensorChanged(SensorEvent e) {
-		if (e.sensor == gyro) {
-			if (Cali_cnt_Gyro > 0) {
-				CalibrateGyro(e);
-				return;
-			}
-			float x = e.values[0];
-			float y = e.values[1];
-			float z = e.values[2];
-			
-			chgX = x;
-			chgY = y;
-			chgZ = z;
-
-			x -= zero_x;
-			y -= zero_y;
-			z -= zero_z;
-
-			if (Cali_cnt_Gyrox > 0) {
-				cali_x += x;
-				return;
-			}
-			if (Cali_cnt_Gyroy > 0) {
-				cali_y += y;
-				return;
-			}
-			if (Cali_cnt_Gyroz > 0) {
-				cali_z += z;
-				return;
-			}
-
-			msl.onSensorChanged();
-		} else if (e.sensor == acce) {
+		/*
+		 * if (e.sensor == gyro) { if (Cali_cnt_Gyro > 0) { CalibrateGyro(e); return; } float x = e.values[0]; float y = e.values[1]; float z = e.values[2];
+		 * 
+		 * chgX = x; chgY = y; chgZ = z;
+		 * 
+		 * x -= zero_x; y -= zero_y; z -= zero_z;
+		 * 
+		 * if (Cali_cnt_Gyrox > 0) { cali_x += x; return; } if (Cali_cnt_Gyroy > 0) { cali_y += y; return; } if (Cali_cnt_Gyroz > 0) { cali_z += z; return; }
+		 * 
+		 * msl.onSensorChanged(); } else
+		 */
+		if (e.sensor == acce) {
 			if (Cali_cnt_Acce > 0) {
 				CalibrateAcce(e);
 				return;

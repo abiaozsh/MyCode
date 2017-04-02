@@ -17,6 +17,7 @@
 #define PORT_OE_OFF PORTB &= ~_BV(0)
 
 #define DDR_PNP1_ON   DDRC  |=  _BV(3)
+#define DDR_PNP1_OFF  DDRC  &= ~_BV(3)
 #define PORT_PNP1_ON  PORTC |=  _BV(3)
 #define PORT_PNP1_OFF PORTC &= ~_BV(3)
 
@@ -90,7 +91,8 @@ int main(void) {
   DDR_595_6 = 0xFC;//B11111100;
   DDR_CLK_ON;
   DDR_OE_ON;
-  PORT_PNP2_OFF;//DDR_PNP1_ON;
+  PORT_PNP1_ON;//DDR_PNP1_ON;
+  PORT_PNP2_OFF;
 
   //刷新定时器初始化
   //2 0 1 0 CTC OCRA Immediate MAX
@@ -98,7 +100,7 @@ int main(void) {
   TCCR0B = 3;
   TCNT0 = 0;
   OCR0A = 128;//60周期 30us
-  OCR0B = 130;//60周期 30us
+  OCR0B = 180;//60周期 30us
   TIMSK0 = _BV(OCIE0B) | _BV(OCIE0A) | _BV(TOIE0);
 
   TCCR1A = 0;
@@ -111,7 +113,6 @@ int main(void) {
   UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);
   UBRR0 = 7;//250000
   
-  DDR_PNP2_ON;//PORT_PNP1_ON;
   PORT_OE_ON;
   
   AltBuff = buff0;
@@ -124,16 +125,39 @@ int main(void) {
 
 ISR(USART_RX_vect){
   uint8_t val = UDR0;
-  currBuff[pgm_read_byte_near(AddressTable+buffidx)] = val;
-  buffidx++;
-  if(buffidx==49)
+  if(buffidx==48)
+  {
+    buffidx++;
+    OCR0B = val;
+  }
+  else if(buffidx==49)
   {
     buffidx = 0;
+    if(val == 1){
+      DDR_PNP1_ON;
+      PORT_PNP1_ON;
+      DDR_PNP2_OFF;
+    }
+    else if(val == 2){
+      DDR_PNP1_OFF;
+      PORT_PNP1_OFF;
+      DDR_PNP2_ON;
+    }
+    else
+    {
+      DDR_PNP1_OFF;
+      PORT_PNP1_OFF;
+      DDR_PNP2_OFF;
+    }
     volatile uint8_t* tempBuff;
     tempBuff = currBuff;
     currBuff = AltBuff;
     AltBuff = tempBuff;
-    OCR0B = val;
+  }
+  else
+  {
+    currBuff[pgm_read_byte_near(AddressTable+buffidx)] = val;
+    buffidx++;
   }
 }
 
@@ -198,12 +222,12 @@ ISR(TIMER0_OVF_vect){
 ISR(TIMER0_COMPA_vect){
   //亮
   PORT_OE_OFF;//(on)
-  DDR_PNP2_ON;//PORT_PNP1_ON;
+  //DDR_PNP2_ON;//PORT_PNP1_ON;
 }
 
 //TIMER0_OVF_vect
 ISR(TIMER0_COMPB_vect){
   //暗
-  DDR_PNP2_OFF;//PORT_PNP1_OFF;
+  //DDR_PNP2_OFF;//PORT_PNP1_OFF;
   PORT_OE_ON;//(off)
 }
