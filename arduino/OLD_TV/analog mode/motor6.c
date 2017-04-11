@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
+volatile uint8_t data[32];
 
 int main(void) {
   //³õÊ¼»¯Ê±ÖÓ£º1MHz -> 8MHz
@@ -62,7 +63,6 @@ data[30] = 1;data[31] = 129;
 volatile uint8_t rowCount = 0;
 volatile uint8_t colCount = 0;
 uint8_t bitExt[] = {1,2,4,8,16,32,64,128};
-uint8_t data[32];
 volatile uint8_t value = 0;
 
 ISR(TIM0_OVF_vect){

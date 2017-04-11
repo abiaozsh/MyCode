@@ -83,7 +83,7 @@ int main(void) {
     OCR1A = Power;
     //转速调整
     adj();
-	FLIPSIGN;    //等待过零
+	//FLIPSIGN;    //等待过零
     {
       uint8_t valbase = DigitReadBaseVal[tempStep];
       uint8_t drMask = DigitRead[tempStep];
@@ -140,7 +140,7 @@ void adj(){
   }
 }
 
-ISR(PCINT0_vect){
+ISR(PCINT1_vect){
   if(noskip)
   {
     if(PIN_startBTN)
