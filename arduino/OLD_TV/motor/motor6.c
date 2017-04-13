@@ -9,10 +9,12 @@
 
 #define POWER_IN 6
 
-#define PIN_startBTN (!(PINB & _BV(3))) //低有效 接上拉电阻
-#define PCINT_startBTN _BV(PCINT11)
+#define PIN_startBTN (!(PINA & _BV(7))) //低有效 接上拉电阻
+#define PCINT_startBTN _BV(PCINT7)
 
-#define FLIPSIGN   PORTA ^= _BV(7)
+#define FLIPSIGN   DDRB ^= _BV(3);
+#define PWROn   DDRB |= _BV(3);/* */
+#define PWROff  DDRB &= ~_BV(3);/**/
 
 #define StartRpm 8192
 
@@ -48,8 +50,8 @@ int main(void) {
   TCCR1B = 2;//  1/8	1MHz 1us
   TIMSK1 |= _BV(OCIE1A);
   //初始化输入
-  GIMSK |= _BV(PCIE1);
-  PCMSK1 |= PCINT_startBTN;//start button
+  GIMSK |= _BV(PCIE0);
+  PCMSK0 |= PCINT_startBTN;//start button
 
   ADMUX = POWER_IN;//A7 power
   DIDR0 |= _BV(POWER_IN);
@@ -62,7 +64,7 @@ int main(void) {
   //初始化输出端口
   PORT6O = BP1D | BP2D | BP3D;
   
-  DDRA |= _BV(7);
+  PORTB &= ~_BV(3);
   
   sei();
   //主循环
@@ -74,11 +76,11 @@ int main(void) {
     uint8_t tempStep = Step;
     if(Power)
     {
-      PORT6O = PWR_ON[tempStep];
+      PORT6O = PWR_ON[tempStep];PWROn;
     }
     else
     {
-      PORT6O = PWR_OFF[tempStep];
+      PORT6O = PWR_OFF[tempStep];PWROff;
     }
     OCR1A = Power;
     //转速调整
@@ -140,7 +142,7 @@ void adj(){
   }
 }
 
-ISR(PCINT1_vect){
+ISR(PCINT0_vect){
   if(noskip)
   {
     if(PIN_startBTN)
