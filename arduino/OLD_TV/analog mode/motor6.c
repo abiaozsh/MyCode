@@ -1,7 +1,42 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
-volatile uint8_t data[32];
+
+PROGMEM prog_uint8_t data[] = {
+224,7,
+16,8,
+12,48,
+4,32,
+2,64,
+1,64,
+1,128,
+1,128,
+1,128,
+1,128,
+1,64,
+2,64,
+4,32,
+12,48,
+48,12,
+192,3,
+
+1,129,
+2,66,
+4,36,
+8,24,
+16,24,
+32,36,
+64,66,
+129,129,
+130,1,
+68,2,
+40,4,
+16,8,
+40,16,
+68,32,
+130,64,
+1,129,
+};
 
 int main(void) {
   //初始化时钟：1MHz -> 8MHz
@@ -19,47 +54,13 @@ int main(void) {
   DDRA |= _BV(0);
   
   
-data[0] = 224;data[1] = 7;
-data[2] = 16;data[3] = 8;
-data[4] = 12;data[5] = 48;
-data[6] = 4;data[7] = 32;
-data[8] = 2;data[9] = 64;
-data[10] = 1;data[11] = 64;
-data[12] = 1;data[13] = 128;
-data[14] = 1;data[15] = 128;
-data[16] = 1;data[17] = 128;
-data[18] = 1;data[19] = 128;
-data[20] = 1;data[21] = 64;
-data[22] = 2;data[23] = 64;
-data[24] = 4;data[25] = 32;
-data[26] = 12;data[27] = 48;
-data[28] = 48;data[29] = 12;
-data[30] = 192;data[31] = 3;
- /*
-data[0] = 1;data[1] = 129;
-data[2] = 2;data[3] = 66;
-data[4] = 4;data[5] = 36;
-data[6] = 8;data[7] = 24;
-data[8] = 16;data[9] = 24;
-data[10] = 32;data[11] = 36;
-data[12] = 64;data[13] = 66;
-data[14] = 129;data[15] = 129;
-data[16] = 130;data[17] = 1;
-data[18] = 68;data[19] = 2;
-data[20] = 40;data[21] = 4;
-data[22] = 16;data[23] = 8;
-data[24] = 40;data[25] = 16;
-data[26] = 68;data[27] = 32;
-data[28] = 130;data[29] = 64;
-data[30] = 1;data[31] = 129;
-  */
   sei();
   //主循环
   for(;;) 
   {
   }
 }
-
+volatile uint16_t totalidx = 0;
 volatile uint8_t rowCount = 0;
 volatile uint8_t colCount = 0;
 uint8_t bitExt[] = {1,2,4,8,16,32,64,128};
@@ -75,10 +76,15 @@ ISR(TIM0_OVF_vect){
     if(colCount==32)
     {
       colCount = 0;
+	  totalidx+=32;
+	  if(totalidx==64)
+	  {
+	  totalidx=0;
+	  }
     }
   }
   
-  uint8_t v = data[colCount];
+  uint8_t v = pgm_read_byte_near(data+totalidx+colCount);
   v = v & bitExt[rowCount];
   if(v){
     value = _BV(0);
