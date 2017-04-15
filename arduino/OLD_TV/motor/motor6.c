@@ -76,16 +76,18 @@ int main(void) {
     uint8_t tempStep = Step;
     if(Power)
     {
-      PORT6O = PWR_ON[tempStep];PWROn;
+      PORT6O = PWR_ON[tempStep];//PWROn;
     }
     else
     {
-      PORT6O = PWR_OFF[tempStep];PWROff;
+      PORT6O = PWR_OFF[tempStep];//PWROff;
     }
     OCR1A = Power;
+    //??? if(TCNT1>OCR1A)PORT6O = PWR_OFF[tempStep];
     //转速调整
     adj();
-	//FLIPSIGN;    //等待过零
+    FLIPSIGN;
+    //等待过零
     {
       uint8_t valbase = DigitReadBaseVal[tempStep];
       uint8_t drMask = DigitRead[tempStep];
