@@ -29,6 +29,23 @@ PROGMEM prog_uint8_t data[] = {
 
 //2000000 / n / 256 = 
 
+//时钟信号输入： 10(B2)
+//10 PB2
+//	SS (SPI Bus Master Slave select)
+//	OC1B (Timer/Counter1 Output Compare Match B Output)
+//	PCINT2 (Pin Change Interrupt 2)
+
+//同步按钮 2(D2)
+//2  PD2
+//	INT0 (External Interrupt 0 Input)
+//	PCINT18 (Pin Change Interrupt 18)
+
+//同步模拟输入 A0
+//A0 PC0
+//	ADC0 (ADC Input Channel 0)
+//	PCINT8 (Pin Change Interrupt 8)
+
+//输出 D7
 
 int main(void) {
   //初始化定时器 1/8
@@ -38,14 +55,18 @@ int main(void) {
   OCR1A = 2083;
   TIMSK1 |= _BV(OCIE1A);//TOIE1
   
-  //打开输出端口
-  DDRB |= _BV(0);
-  DDRB |= _BV(1);
+  ADMUX = _BV(ADLAR)|0;
+  ADCSRA = _BV(ADEN)|_BV(ADSC)|_BV(ADIE)|_BV(ADPS2)|_BV(ADPS1)|_BV(ADPS0);
   
-  DDRD = 0;
+  //打开输出端口
+  DDRD |= _BV(7);
+
+  DDRB = 0;
+  PCICR |= _BV(PCIE0);
   PCICR |= _BV(PCIE2);
-  PCMSK2 |= _BV(PCINT23);
-  PORTD |= _BV(7);//PD7 上拉
+  PCMSK0 |= _BV(PCINT2);
+  PCMSK2 |= _BV(PCINT18);
+  PORTB |= _BV(7);//PD7 上拉
   
   sei();
   //主循环
@@ -60,10 +81,10 @@ volatile uint8_t rowCount = 0;
 volatile uint8_t colCount = 0;
 uint8_t bitExt[] = {1,2,4,8,16,32,64,128};
 volatile uint8_t value1 = 0;
-volatile uint8_t value2 = 0;
 //TIMER1_OVF_vect  TIMER1_COMPA_vect
 ISR(TIMER1_COMPA_vect){
-  PORTB = value1|value2;
+  PORTD &= ~_BV(7);
+  PORTD |= value1;
   
   rowCount++;
   if(rowCount==8){
@@ -85,7 +106,7 @@ ISR(TIMER1_COMPA_vect){
   uint8_t v = pgm_read_byte_near(data+totalidx+colCount);
   v = v & bitExt[rowCount];
   if(v){
-    value1 = _BV(0);
+    value1 = _BV(7);
   }
   else
   {
@@ -93,11 +114,11 @@ ISR(TIMER1_COMPA_vect){
   }
 }
 
-uint8_t rpmCount = 0;
-ISR(PCINT2_vect){
+volatile uint8_t rpmCount = 0;
+//时钟输入
+ISR(PCINT0_vect){
   rpmCount++;
   if(rpmCount==36){
-    value2 ^= 2;
     rpmCount = 0;
     totalidx=0;
     //if(totalidx==2)
@@ -107,3 +128,15 @@ ISR(PCINT2_vect){
     
   }
 }
+
+//按钮输入
+ISR(PCINT2_vect){
+  if(PIND & _BV(2)){
+    rpmCount--;
+  }
+}
+
+ISR(ADC_vect){
+  totalidx = ADCH>>7;
+}
+  
