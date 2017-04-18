@@ -3,6 +3,7 @@
 #include <avr/interrupt.h>
 
 PROGMEM prog_uint8_t data[] = {
+224,7,16,8,12,48,4,32,2,64,1,64,1,128,1,128,1,128,1,128,1,64,2,64,4,32,12,48,48,12,192,3,
 0,128,0,128,0,128,0,128,0,128,0,0,0,128,0,128,0,128,0,128,0,128,0,128,0,128,0,128,0,128,0,128,
 0,224,0,224,0,224,0,224,0,192,0,192,0,192,0,224,0,224,0,224,0,224,0,224,0,224,0,224,0,192,0,192,
 0,240,0,240,0,240,0,240,0,240,0,240,0,240,0,240,0,240,0,240,0,240,0,240,0,240,0,224,0,224,0,192,
@@ -854,12 +855,14 @@ int main(void) {
   OCR1A = 2083;
   TIMSK1 |= _BV(OCIE1A);//TOIE1
   
-  ADMUX = _BV(ADLAR)|0;
+  ADMUX = _BV(REFS0) | 0 | _BV(ADLAR);
   ADCSRA = _BV(ADEN)|_BV(ADATE)|_BV(ADSC)|_BV(ADIE)|_BV(ADPS2)|_BV(ADPS1)|_BV(ADPS0);
+  ADCSRB = 0;
   
   //打开输出端口
   DDRD |= _BV(7);
-
+  DDRD |= _BV(3);
+   
   DDRB = 0;
   PCICR |= _BV(PCIE0);
   PCICR |= _BV(PCIE2);
@@ -916,10 +919,14 @@ ISR(PCINT0_vect){
     colCount = 0;
 
     totalidx+=32;
-    if(totalidx>=32*800)
+    if(totalidx>=32*801)
     {
       totalidx=0;
     }
+	
+	  if(!(PIND & _BV(2))){
+		totalidx = 0;
+	  }
     
   }
 }
@@ -931,13 +938,15 @@ ISR(PCINT2_vect){
   }
 }
 
-uint8_t adcOldval = 0;
+volatile uint8_t adcOldval = 0;
 ISR(ADC_vect){
   uint8_t tmp = ADCH>>2;
   if(tmp>adcOldval){
+    PORTD &= ~_BV(3);
     rpmCount--;
   }
   if(tmp<adcOldval){
+    PORTD |= _BV(3);
     rpmCount++;
   }
   adcOldval = tmp;

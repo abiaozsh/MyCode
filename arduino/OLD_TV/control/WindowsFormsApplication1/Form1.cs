@@ -44,14 +44,14 @@ namespace WindowsFormsApplication1
 				try
 				{
 					//COM4为Arduino使用的串口号，需根据实际情况调整
-					port = new SerialPort("com4", 250000, Parity.None, 8, StopBits.One);
+					port = new SerialPort("COM4", 250000, Parity.None, 8, StopBits.One);
 					port.Open();
 				}
 				catch
 				{ }
 			}
 
-			files = System.IO.Directory.GetFiles("e:\\img\\");
+			files = System.IO.Directory.GetFiles("D:\\img2\\");
 
 		}
 

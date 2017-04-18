@@ -57,7 +57,7 @@ int main(void) {
   OCR1A = 2083;
   TIMSK1 |= _BV(OCIE1A);//TOIE1
   
-  ADMUX = _BV(ADLAR)|0;
+  ADMUX = _BV(REFS0) | 0 | _BV(ADLAR);
   ADCSRA = _BV(ADEN)|_BV(ADATE)|_BV(ADSC)|_BV(ADIE)|_BV(ADPS2)|_BV(ADPS1)|_BV(ADPS0);
   
   //打开输出端口
