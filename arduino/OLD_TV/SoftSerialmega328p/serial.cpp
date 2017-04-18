@@ -56,7 +56,7 @@ int main(void) {
   TIMSK1 |= _BV(OCIE1A);//TOIE1
   
   ADMUX = _BV(ADLAR)|0;
-  ADCSRA = _BV(ADEN)|_BV(ADSC)|_BV(ADIE)|_BV(ADPS2)|_BV(ADPS1)|_BV(ADPS0);
+  ADCSRA = _BV(ADEN)|_BV(ADATE)|_BV(ADSC)|_BV(ADIE)|_BV(ADPS2)|_BV(ADPS1)|_BV(ADPS0);
   
   //打开输出端口
   DDRD |= _BV(7);
