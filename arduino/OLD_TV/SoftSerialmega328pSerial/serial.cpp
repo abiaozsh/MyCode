@@ -100,9 +100,11 @@ ISR(TIMER1_COMPA_vect){
   if(rowCount==8){
     rowCount = 0;
     colCount++;
-    if(colCount==32)
+    if(colCount>=32)
     {
+			colCount--;
       value1 = 0;
+			return;
     }
   }
   
