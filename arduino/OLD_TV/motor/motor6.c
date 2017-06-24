@@ -115,11 +115,12 @@ ISR(TIM1_COMPA_vect){
 
 uint16_t _MaxPower(uint16_t val){
   uint32_t temp = val;
-  //28 ºÄÊ±
-  //224clock
-  temp*=aread;
-  temp>>=8;
-  return (uint16_t)temp;
+  uint32_t temp2 = 512+128+aread;//256+(0-1024)   256+512  512+128
+  if(temp>temp2){
+    return temp-temp2;
+  }else{
+    return 0;
+  }
 }
 
 void adj(){
