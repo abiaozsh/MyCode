@@ -7,7 +7,7 @@ namespace BigMathLib
 {
 	public class BigMath
 	{
-	//b=n*ln(4294967296)/ln(1000000000)
+		//b=n*ln(4294967296)/ln(1000000000)
 		public int Precision;
 		public int Exponent; // 10000^Exponent
 		public UInt64[] Num_Array;
@@ -261,11 +261,16 @@ namespace BigMathLib
 			}
 		}
 
+		public string toString()
+		{
+			return toString(-1);
+		}
 		public String toString(int limit)
 		{
 			if (limit == 0)
 			{
-				limit = Precision * 2;
+				double v = Math.Log(4294967296) / Math.Log(1000000000);
+				limit = (int)(v * Precision);// * 2;
 			}
 			else if (limit == -1)
 			{
@@ -380,6 +385,11 @@ namespace BigMathLib
 				}
 				ret = result1.ToString();
 				ret = ret.Substring(0, ret.Length - 9).TrimEnd('0');
+				if (ret.EndsWith("9") && ret.IndexOf('.') >= 0)
+				{
+					ret = ret.TrimEnd('9');
+					ret = ret.Substring(0, ret.Length - 1) + (char)(ret[ret.Length - 1] + 1);
+				}
 			}
 			else
 			{
@@ -413,6 +423,34 @@ namespace BigMathLib
 			Sign = (int)PSE[1];
 			Exponent = (int)PSE[2];
 		}
+
+		[DllImport("BigMathDll.dll")]
+		private static extern Int64 N_Comp(Int64[] PSE, UInt64[] Num_Array, Int64[] num_PSE, UInt64[] num_Num_Array);
+		public int Cmp(BigMath num)
+		{
+
+			Int64[] PSE = new Int64[3];
+			Int64[] num_PSE = new Int64[3];
+
+			PSE[0] = Precision;
+			PSE[1] = Sign;
+			PSE[2] = Exponent;
+			num_PSE[0] = num.Precision;
+			num_PSE[1] = num.Sign;
+			num_PSE[2] = num.Exponent;
+
+			if (Precision == num.Precision && this != num)
+			{
+				return (int)N_Comp(PSE, Num_Array, num_PSE, num.Num_Array);
+			}
+			else
+			{
+				throw new Exception();
+			}
+		}
+
+
+
 		[DllImport("BigMathDll.dll")]
 		private static extern void N_Mul(Int64[] PSE, UInt64[] Num_Array, Int64[] num_PSE, UInt64[] num_Num_Array);
 		public void Mul(BigMath num)
@@ -531,6 +569,128 @@ namespace BigMathLib
 			Sign = (int)PSE[1];
 			Exponent = (int)PSE[2];
 		}
+
+		[DllImport("BigMathDll.dll")]
+		private static extern void N_Exp(Int64[] PSE, UInt64[] Num_Array);
+		void Exp()
+		{
+			Int64[] PSE = new Int64[3];
+
+			PSE[0] = Precision;
+			PSE[1] = Sign;
+			PSE[2] = Exponent;
+
+			N_Exp(PSE, Num_Array);
+
+			Sign = (int)PSE[1];
+			Exponent = (int)PSE[2];
+		}
+		public void Exp(BigMath e)
+		{
+			//x = this
+			BigMath adj = new BigMath(Precision, 1);
+			BigMath one = new BigMath(Precision, 1);
+			BigMath dive = null;
+			BigMath minusone = new BigMath(Precision, 1);
+			minusone.Sign = -1;
+			e.Sign = -1;
+			//while (x < -e)
+			while (Cmp(e) < 0)
+			{
+				//x += one;
+				Add(one);
+				if (dive == null)
+				{
+					dive = new BigMath(Precision, 1);
+					dive.Div(e);
+				}
+				//adj /= e;
+				e.Sign = 1;
+				adj.Mul(dive);
+				e.Sign = -1;
+			}
+			e.Sign = 1;
+			//while (x > e)
+			while (Cmp(e) > 0)
+			{
+				//x += minusone;
+				Add(minusone);
+				//adj *= e;
+				adj.Mul(e);
+			}
+
+			Exp();
+
+			//return ret * adj;
+			Mul(adj);
+		}
+
+		public static BigMath E(int precision)
+		{
+			BigMath ret = new BigMath(precision, 1);
+			ret.Exp();
+			return ret;
+		}
+
+		[DllImport("BigMathDll.dll")]
+		private static extern void N_Ln(Int64[] PSE, UInt64[] Num_Array);
+		void Ln()
+		{
+			Int64[] PSE = new Int64[3];
+
+			PSE[0] = Precision;
+			PSE[1] = Sign;
+			PSE[2] = Exponent;
+
+			N_Ln(PSE, Num_Array);
+
+			Sign = (int)PSE[1];
+			Exponent = (int)PSE[2];
+		}
+		public void Ln(BigMath e)
+		{
+			//x = this
+			BigMath adj = new BigMath(Precision, 1);
+			if (Sign < 0) return;
+			BigMath one = new BigMath(Precision, 1);
+			BigMath minusone = new BigMath(Precision, 1);
+			minusone.Sign = -1;
+			BigMath dive = null;
+
+			BigMath op5 = new BigMath(Precision, "0.5");
+			BigMath lp5 = new BigMath(Precision, "1.5");
+
+			//while (x < 0.5)
+			while (Cmp(op5) < 0)
+			{
+				//x *= e;
+				Mul(e);
+				//adj--;
+				adj.Add(minusone);
+			}
+			//while (x > 1.5)
+			while (Cmp(lp5) > 0)
+			{
+				//x /= e;
+				if (dive == null)
+				{
+					dive = new BigMath(Precision, 1);
+					dive.Div(e);
+				}
+				Mul(dive);
+				adj.Add(one);
+			}
+
+			Add(minusone);
+			Ln();
+			Add(minusone);
+
+			Add(adj);
+
+		}
+
+
+
 		public void Sin(int threads)
 		{
 			Int64[] PSE = new Int64[3];

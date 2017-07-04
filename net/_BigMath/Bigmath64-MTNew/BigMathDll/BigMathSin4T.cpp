@@ -291,9 +291,9 @@ void sin4T(int Precision, unsigned int* Num_Array, int* pSign, int* pExponent)
 	DeleteCriticalSection(&(argList9->cs));
 
 	add(Precision, Num_Array, pSign, pExponent, argList3->Num_Array, -argList3->Sign, argList3->Exponent); //¸º°ë
-	add(Precision, Num_Array, pSign, pExponent, argList5->Num_Array, argList5->Sign, argList5->Exponent);
+	add(Precision, Num_Array, pSign, pExponent, argList5->Num_Array,  argList5->Sign, argList5->Exponent);
 	add(Precision, Num_Array, pSign, pExponent, argList7->Num_Array, -argList7->Sign, argList7->Exponent); //¸º°ë
-	add(Precision, Num_Array, pSign, pExponent, argList9->Num_Array, argList9->Sign, argList9->Exponent);
+	add(Precision, Num_Array, pSign, pExponent, argList9->Num_Array,  argList9->Sign, argList9->Exponent);
 
 	delete argList3->Num_Array;
 	delete argList3->r_value;

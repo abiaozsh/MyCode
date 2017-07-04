@@ -1,6 +1,12 @@
 ;The terms “less” and “greater” are used for comparisons of signed integers
 ;the terms “above” and “below” are used for unsigned integers.
 
+;Intel386函数传参是通过ebp寄存器和栈实现的，而AMD64稍有不同。函数参数是通过寄存器传递的，
+;从第一个参数开始依次为rdi, rsi, rdx, rcx, r8, r9。可以理解为这六个寄存器归被调函数所有。
+;rbp, rbx, r12, r13, r14, r15属于调用函数，如果被调函数要用这六个寄存器，要在栈中进行push/pop操作。
+;如果明白了这一点，再看汇编程序，大部分操作都是在准备rdi, rsi, rdx, rcx, r8, r9这六个寄存器，
+;也就是函数参数。
+
 ;c d 8 9 入参
 ; RBX、RBP、RDI、RSI、R12、R13、R14 和 R15 需要保护
 ; RAX、RCX、RDX、R8、R9、R10 和 R11 不需保护

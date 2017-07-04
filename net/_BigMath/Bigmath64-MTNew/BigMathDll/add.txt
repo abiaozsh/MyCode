@@ -1,10 +1,17 @@
-Microsoft (R) Macro Assembler (x64) Version 10.00.40219.01  07/30/14 21:17:20
+Microsoft (R) Macro Assembler (x64) Version 10.00.40219.01  07/04/17 17:33:57
 add.asm							     Page 1 - 1
 
 
 				;The terms “less” and “greater” are used for comparisons of signed integers 
 				;the terms “above” and “below” are used for unsigned integers.
 				;c d 8 9 / RBX、RBP、RDI、RSI、R12、R13、R14 和 R15 / RAX、RCX、RDX、R8、R9、R10 和 R11
+
+				;Intel386函数传参是通过ebp寄存器和栈实现的，而AMD64稍有不同。函数参数是通过寄存器传递的，
+				;从第一个参数开始依次为rdi, rsi, rdx, rcx, r8, r9。可以理解为这六个寄存器归被调函数所有。
+				;rbp, rbx, r12, r13, r14, r15属于调用函数，如果被调函数要用这六个寄存器，要在栈中进行push/pop操作。
+				;如果明白了这一点，再看汇编程序，大部分操作都是在准备rdi, rsi, rdx, rcx, r8, r9这六个寄存器，
+				;也就是函数参数。
+
 
 				EXTRN	__security_check_cookie:PROC
 				PUBLIC	addA
@@ -17,426 +24,371 @@ add.asm							     Page 1 - 1
  00000001  56				push rsi
 					
 					;叠合部分加法
- 00000002  49/ 83 F8 00			cmp r8,0											;if (cnt>0)
- 00000006  7E 2C			jle jp1
-						;被加数
- 00000008  4C/ 8B D1				mov r10,rcx					;r10 : Num_Array
- 0000000B  4B/ 8D 7C CA				lea rdi,[r10+r9*8-8]							;mov edi, &Num_Array[disExp - 1];
+					;被加数
+ 00000002  4C/ 8B D1			mov r10,rcx					;r10 : Num_Array
+ 00000005  4B/ 8D 7C CA			lea rdi,[r10+r9*8-8]							;mov edi, &Num_Array[disExp - 1];
 	   F8
 
-						;加数
- 00000010  48/ 8D 72 F8				lea rsi,[rdx-8]									;mov esi, &num_Num_Array[-1];
+					;加数
+ 0000000A  48/ 8D 72 F8			lea rsi,[rdx-8]									;mov esi, &num_Num_Array[-1];
 
-						;位数
- 00000014  49/ 8B C8				mov rcx,r8					;r8 : cnt			;mov ecx,cnt
- 00000017  F8					clc
- 00000018					lpa:
-							;载入被加数
- 00000018  48/ 8B 04 CF					mov rax,[rdi+rcx*8]
-							;被加数+加数+进位标志
- 0000001C  48/ 13 04 CE					adc rax,[rsi+rcx*8]
-							;保存结果
- 00000020  48/ 89 04 CF					mov [rdi+rcx*8],rax
- 00000024  48/ FF C9				dec rcx
- 00000027  75 EF				jnz lpa
- 00000029  48/ C7 C2				mov rdx,0
+					;位数
+ 0000000E  49/ 8B C8			mov rcx,r8					;r8 : cnt			;mov ecx,cnt
+ 00000011  F8				clc
+ 00000012				lpa:
+ 00000012  48/ 8B 04 CF				mov rax,[rdi+rcx*8];载入被加数
+ 00000016  48/ 13 04 CE				adc rax,[rsi+rcx*8];被加数+加数+进位标志
+ 0000001A  48/ 89 04 CF				mov [rdi+rcx*8],rax;保存结果
+ 0000001E  48/ FF C9			dec rcx
+ 00000021  75 EF			jnz lpa
+ 00000023  48/ C7 C2			mov rdx,0;传出进位标志
 	   00000000
- 00000030  48/ 83 D2 00				adc rdx,0
-						;传出进位标志
-						;mov carry,edx
- 00000034				jp1:
+ 0000002A  48/ 83 D2 00			adc rdx,0;mov carry,edx
+
 
 					;继续向上进位
 					;if (disExp>0)
- 00000034  49/ 83 F9 00			cmp r9,0
- 00000038  7E 25			jle jp2
+ 0000002E  49/ 83 F9 00			cmp r9,0
+ 00000032  7E 28			jle jp2
 					
- 0000003A  49/ 8D 7A F8				lea rdi,[r10-8]									;mov edi,&Num_Array[-1];
- 0000003E  49/ 8B C9				mov rcx,r9										;mov ecx,disExp
+ 00000034  49/ 8D 7A F8				lea rdi,[r10-8]									;mov edi,&Num_Array[-1];
+ 00000038  49/ 8B C9				mov rcx,r9										;mov ecx,disExp
 						
 						;载入进位标志
-						;mov edx,carry
- 00000041  F8					clc
- 00000042					lpb:
+ 0000003B  48/ D1 DA				rcr rdx,1
+ 0000003E					lpb:
 							;载入被加数
- 00000042  48/ 8B 04 CF					mov rax,[rdi+rcx*8]
+ 0000003E  48/ 8B 04 CF					mov rax,[rdi+rcx*8]
 							;加进位标志
- 00000046  48/ 13 C2					adc rax,rdx
+ 00000042  48/ 83 D0 00					adc rax,0
 							;保存结果
- 00000049  48/ 89 04 CF					mov [rdi+rcx*8],rax
- 0000004D  73 05					jnc ext
- 0000004F  48/ FF C9				dec rcx
- 00000052  75 EE				jnz lpb
- 00000054					ext:
- 00000054  48/ C7 C2				mov rdx,0
+ 00000046  48/ 89 04 CF					mov [rdi+rcx*8],rax
+ 0000004A  73 05					jnc ext
+ 0000004C  48/ FF C9				dec rcx
+ 0000004F  75 ED				jnz lpb
+ 00000051					ext:
+ 00000051  48/ C7 C2				mov rdx,0
 	   00000000
- 0000005B  48/ 83 D2 00				adc rdx,0
+ 00000058  48/ 83 D2 00				adc rdx,0
 						;mov carry,edx
- 0000005F				jp2:
- 0000005F  5E				pop rsi
- 00000060  5F				pop rdi
+ 0000005C				jp2:
+ 0000005C  5E				pop rsi
+ 0000005D  5F				pop rdi
 
 					;return carry;
- 00000061  48/ 8B C2			mov rax,rdx
- 00000064  C3				ret
- 00000065			addA	ENDP
- 00000065			_TEXT	ENDS
+ 0000005E  48/ 8B C2			mov rax,rdx
+ 00000061  C3				ret
+ 00000062			addA	ENDP
+ 00000062			_TEXT	ENDS
 
 
 
 				PUBLIC	addB
- 00000065			_TEXT	SEGMENT
+ 00000062			_TEXT	SEGMENT
 				;rcx* Num_Array, rdx* num_Num_Array, r8 cnt, r9 disExp
 				;PSE$ = 8
- 00000065			addB	PROC
- 00000065  53				push rbx
- 00000066  57				push rdi
- 00000067  56				push rsi
-					
+ 00000062			addB	PROC
+ 00000062  53				push rbx
+ 00000063  57				push rdi
+ 00000064  56				push rsi
+
 					;被加数高部
 					;&Num_Array[-1];
- 00000068  48/ 8D 79 F8			lea rdi,[rcx-8]
+ 00000065  48/ 8D 79 F8			lea rdi,[rcx-8]
 
 					;叠合部分加法
-					;if (cnt>0)
- 0000006C  49/ 83 F8 00			cmp r8,0
- 00000070  7E 2D			jle jp1
- 00000072  4C/ 8B D2				mov r10,rdx   ;r10 : num_Num_Array
+ 00000069  4C/ 8B D2			mov r10,rdx   ;r10 : num_Num_Array
 
-						;加数
-						;&num_Num_Array[disExp - 1];
- 00000075  4B/ 8D 74 CA				lea rsi,[r10+r9*8-8]
+					;加数
+					;&num_Num_Array[disExp - 1];
+ 0000006C  4B/ 8D 74 CA			lea rsi,[r10+r9*8-8]
 	   F8
 						
-						;被加数低部，原数据被废弃
-						;&Num_Array[disExp - 1];
- 0000007A  4A/ 8D 5C C9				lea rbx,[rcx+r9*8-8]
+					;被加数低部，原数据被废弃
+					;&Num_Array[disExp - 1];
+ 00000071  4A/ 8D 5C C9			lea rbx,[rcx+r9*8-8]
 	   F8
 								
-						;mov ecx,cnt
- 0000007F  49/ 8B C8				mov rcx,r8
+					;mov ecx,cnt
+ 00000076  49/ 8B C8			mov rcx,r8
 
-						;清除进位标志
- 00000082  F8					clc
- 00000083					lpa:
-							;载入被加数高部
- 00000083  48/ 8B 04 CF					mov rax,[rdi+rcx*8]
-							;被加数+加数+进位标志
- 00000087  48/ 13 04 CE					adc rax,[rsi+rcx*8]
-							;保存到被加数低部
- 0000008B  48/ 89 04 CB					mov [rbx+rcx*8],rax
- 0000008F  48/ FF C9				dec rcx
- 00000092  75 EF				jnz lpa
-						;传出进位标志
- 00000094  48/ C7 C2				mov rdx,0
+					;清除进位标志
+ 00000079  F8				clc
+ 0000007A				lpa:
+						;载入被加数高部
+ 0000007A  48/ 8B 04 CF				mov rax,[rdi+rcx*8]
+						;被加数+加数+进位标志
+ 0000007E  48/ 13 04 CE				adc rax,[rsi+rcx*8]
+						;保存到被加数低部
+ 00000082  48/ 89 04 CB				mov [rbx+rcx*8],rax
+ 00000086  48/ FF C9			dec rcx
+ 00000089  75 EF			jnz lpa
+					;传出进位标志
+ 0000008B  48/ C7 C2			mov rdx,0
 	   00000000
- 0000009B  48/ 83 D2 00				adc rdx,0
-						;mov carry,edx
- 0000009F				jp1:
+ 00000092  48/ 83 D2 00			adc rdx,0
+					;mov carry,edx
 					
 					;继续向上进位
-					;if (disExp>0)
- 0000009F  49/ 83 F9 00			cmp r9,0
- 000000A3  7E 30			jle jp2
- 000000A5  49/ C7 C3				mov r11,0
-	   00000000
- 000000AC  49/ F7 D3				not r11  ;0xFFFFFFFFFFFFFFFF
 						
-						;mov edi, &Num_Array[-1]; not touched
+					;mov edi, &Num_Array[-1]; not touched
 
-						;mov esi, &num_Num_Array[-1];
- 000000AF  49/ 8D 72 F8				lea rsi,[r10-8]
+					;mov esi, &num_Num_Array[-1];
+ 00000096  49/ 8D 72 F8			lea rsi,[r10-8]
 
-						;mov ecx,disExp
- 000000B3  49/ 8B C9				mov rcx,r9
+					;mov ecx,disExp
+ 0000009A  49/ 8B C9			mov rcx,r9
 						
-						;mov edx,carry
- 000000B6  49/ 03 D3				add rdx,r11
- 000000B9					lpb:
- 000000B9  48/ 8B 04 CE					mov rax,[rsi+rcx*8]
- 000000BD  48/ 83 D0 00					adc rax,0
- 000000C1  48/ 89 04 CF					mov [rdi+rcx*8],rax
- 000000C5  48/ FF C9				dec rcx
- 000000C8  75 EF				jnz lpb
- 000000CA  48/ C7 C2				mov rdx,0
+ 0000009D  48/ D1 DA			rcr rdx,1;载入进位标志
+ 000000A0				lpb:
+ 000000A0  48/ 8B 04 CE				mov rax,[rsi+rcx*8]
+ 000000A4  48/ 83 D0 00				adc rax,0
+ 000000A8  48/ 89 04 CF				mov [rdi+rcx*8],rax
+ 000000AC  48/ FF C9			dec rcx
+ 000000AF  75 EF			jnz lpb
+ 000000B1  48/ C7 C2			mov rdx,0
 	   00000000
- 000000D1  48/ 83 D2 00				adc rdx,0
-						;mov carry,edx
- 000000D5				jp2:
+ 000000B8  48/ 83 D2 00			adc rdx,0
 
- 000000D5  5E				pop rsi
- 000000D6  5F				pop rdi
- 000000D7  5B				pop rbx
+ 000000BC  5E				pop rsi
+ 000000BD  5F				pop rdi
+ 000000BE  5B				pop rbx
 					;return carry;
- 000000D8  48/ 8B C2			mov rax,rdx
- 000000DB  C3				ret
- 000000DC			addB	ENDP
- 000000DC			_TEXT	ENDS
+ 000000BF  48/ 8B C2			mov rax,rdx
+ 000000C2  C3				ret
+ 000000C3			addB	ENDP
+ 000000C3			_TEXT	ENDS
 
 
 
 
 
-
+				;高幂减低幂 100 - 10
 				PUBLIC	subA
- 000000DC			_TEXT	SEGMENT
+ 000000C3			_TEXT	SEGMENT
 				;rcx* Num_Array, rdx* num_Num_Array, r8 cnt, r9 disExp
 				;PSE$ = 8
- 000000DC			subA	PROC
-					;push rbx
- 000000DC  57				push rdi
- 000000DD  56				push rsi
-						
- 000000DE  4C/ 8B D9			mov r11,rcx
+ 000000C3			subA	PROC
+ 000000C3  57				push rdi
+ 000000C4  56				push rsi
+
+ 000000C5  4C/ 8B D1			mov r10,rcx
 					;mov edi,  &Num_Array[disExp - 1];
- 000000E1  4B/ 8D 7C CB			lea rdi,[r11+r9*8-8]
+ 000000C8  4B/ 8D 7C CA			lea rdi,[r10+r9*8-8]
 	   F8
 					
-					;if (cnt>0)
- 000000E6  49/ 83 F8 00			cmp r8,0
- 000000EA  7E 24			jle jp1
-						
-						;mov esi, &num_Num_Array[-1];
- 000000EC  48/ 8D 72 F8				lea rsi,[rdx-8]
+					;mov esi, &num_Num_Array[-1];
+ 000000CD  48/ 8D 72 F8			lea rsi,[rdx-8]
 
-						;mov ecx,cnt
- 000000F0  49/ 8B C8				mov rcx,r8
+					;mov ecx,cnt
+ 000000D1  49/ 8B C8			mov rcx,r8
 						
- 000000F3  F8					clc
- 000000F4					lpa:
- 000000F4  48/ 8B 04 CF					mov rax,[rdi+rcx*8]
- 000000F8  48/ 1B 04 CE					sbb rax,[rsi+rcx*8]
- 000000FC  48/ 89 04 CF					mov [rdi+rcx*8],rax
- 00000100  48/ FF C9				dec rcx
- 00000103  75 EF				jnz lpa
- 00000105  48/ C7 C2				mov rdx,0
+ 000000D4  F8				clc
+ 000000D5				lpa:
+ 000000D5  48/ 8B 04 CF				mov rax,[rdi+rcx*8]
+ 000000D9  48/ 1B 04 CE				sbb rax,[rsi+rcx*8]
+ 000000DD  48/ 89 04 CF				mov [rdi+rcx*8],rax
+ 000000E1  48/ FF C9			dec rcx
+ 000000E4  75 EF			jnz lpa
+ 000000E6  48/ C7 C2			mov rdx,0
 	   00000000
- 0000010C  48/ 83 D2 00				adc rdx,0
-						;mov carry,edx
- 00000110				jp1:
-
-					;if (disExp>0 && carry == 1)
- 00000110  49/ 83 F9 00			cmp r9,0
- 00000114  7E 18			jle jp2
- 00000116  48/ 83 FA 01			cmp rdx,1
- 0000011A  75 12			jnz jp2
-						;mov edi, &Num_Array[disExp - 1];
- 0000011C  49/ 8D 7B F8				lea rdi,[r11-8]
-
-						;mov ecx,disExp
- 00000120  49/ 8B C9				mov rcx,r9
-						
- 00000123					lpb:
-							;mov rax,[rdi+rcx*]
- 00000123  48/ 83 E8 01					sub rax,1
-							;mov [rdi+rcx*],rax
- 00000127  73 05					jnc ext
- 00000129  48/ FF C9				dec rcx
- 0000012C  75 F5				jnz lpb
- 0000012E					ext:
- 0000012E				jp2:
- 0000012E  5E				pop rsi
- 0000012F  5F				pop rdi
-					;pop rbx
- 00000130  C3				ret
- 00000131			subA	ENDP
- 00000131			_TEXT	ENDS
-
-
-
-
-				PUBLIC	subB
- 00000131			_TEXT	SEGMENT
-				;rcx* Num_Array, rdx* num_Num_Array, r8 cnt, r9 disExp
-				;PSE$ = 8
- 00000131			subB	PROC
- 00000131  53				push rbx
- 00000132  57				push rdi
- 00000133  56				push rsi
+ 000000ED  48/ 83 D2 00			adc rdx,0;mov carry,edx
 
 					;mov edi, &Num_Array[-1];
- 00000134  48/ 8B 79 F8			mov rdi,[rcx-8]
+ 000000F1  49/ 8D 7A F8			lea rdi,[r10-8]
 
-					;if (cnt>0)
- 00000138  49/ 83 F8 00			cmp r8,0
- 0000013C  7E 2D			jle jp1
+ 000000F5  49/ 8B C9			mov rcx,r9 ;mov ecx,disExp
+
+ 000000F8  48/ D1 DA			rcr rdx,1;载入进位标志
+ 000000FB				lpb:
+ 000000FB  48/ 8B 04 CF				mov rax,[rdi+rcx*8]
+ 000000FF  48/ 83 D8 00				sbb rax,0
+ 00000103  48/ 89 04 CF				mov [rdi+rcx*8],rax
+ 00000107  73 05				jnc ext
+ 00000109  48/ FF C9			dec rcx
+ 0000010C  75 ED			jnz lpb
+ 0000010E				ext:
+
+ 0000010E  5E				pop rsi
+ 0000010F  5F				pop rdi
+ 00000110  C3				ret
+ 00000111			subA	ENDP
+ 00000111			_TEXT	ENDS
+
+
+
+				;低幂减高幂 10 - 100
+				; rdi           .rbx            .
+				;-               rsi            .
+				PUBLIC	subB
+ 00000111			_TEXT	SEGMENT
+				;rcx* Num_Array, rdx* num_Num_Array, r8 cnt, r9 disExp
+				;PSE$ = 8
+ 00000111			subB	PROC
+ 00000111  53				push rbx
+ 00000112  57				push rdi
+ 00000113  56				push rsi
+
+					;mov edi, &Num_Array[-1];
+ 00000114  48/ 8D 79 F8			lea rdi,[rcx-8]
 						
-						;&num_Num_Array[disExp - 1];
- 0000013E  4A/ 8D 74 CA				lea rsi,[rdx+r9*8-8]
+					;&num_Num_Array[disExp - 1];
+ 00000118  4A/ 8D 74 CA			lea rsi,[rdx+r9*8-8]
 	   F8
 						
-						;&Num_Array[disExp - 1];
- 00000143  4A/ 8D 5C C9				lea rbx,[rcx+r9*8-8]
+					;&Num_Array[disExp - 1];
+ 0000011D  4A/ 8D 5C C9			lea rbx,[rcx+r9*8-8]
 	   F8
 
- 00000148  4C/ 8B D2				mov r10,rdx  ;num_Num_Array
+ 00000122  4C/ 8B D2			mov r10,rdx  ;num_Num_Array
 
-						;mov ecx,cnt
- 0000014B  49/ 8B C8				mov rcx,r8
- 0000014E  F8					clc
- 0000014F					lpa:
- 0000014F  48/ 8B 04 CE					mov rax,[rsi+rcx*8]
- 00000153  48/ 1B 04 CF					sbb rax,[rdi+rcx*8]
- 00000157  48/ 89 04 CB					mov [rbx+rcx*8],rax
- 0000015B  48/ FF C9				dec rcx
- 0000015E  75 EF				jnz lpa
-						;last one
- 00000160  48/ C7 C2				mov rdx,0
+					;mov ecx,cnt
+ 00000125  49/ 8B C8			mov rcx,r8
+ 00000128  F8				clc
+ 00000129				lpa:
+ 00000129  48/ 8B 04 CE				mov rax,[rsi+rcx*8]
+ 0000012D  48/ 1B 04 CF				sbb rax,[rdi+rcx*8]
+ 00000131  48/ 89 04 CB				mov [rbx+rcx*8],rax
+ 00000135  48/ FF C9			dec rcx
+ 00000138  75 EF			jnz lpa
+ 0000013A  48/ C7 C2			mov rdx,0
 	   00000000
- 00000167  48/ 83 D2 00				adc rdx,0
-						;mov carry,edx
- 0000016B				jp1:
+ 00000141  48/ 83 D2 00			adc rdx,0
 
-					;if (disExp>0)
- 0000016B  49/ 83 F9 00			cmp r9,0
- 0000016F  7E 25			jle jp2
-					
- 00000171  49/ C7 C3				mov r11,0
-	   00000000
- 00000178  49/ F7 D3				not r11  ;0xFFFFFFFFFFFFFFFF
 
-						;mov edi, &Num_Array[-1];
+					;mov edi, &Num_Array[-1];
+					;lea rdi,[rcx-8] ;// 已经赋过值了，rcx已被破坏
+
+					;mov esi, &num_Num_Array[-1];
+ 00000145  49/ 8D 72 F8			lea rsi,[r10-8] ;//前面有 mov r10,rdx  ;num_Num_Array  rdx被用作进位
 						
-						;mov esi, &num_Num_Array[-1];
- 0000017B  49/ 8D 72 F8				lea rsi,[r10-8]
-						
- 0000017F  49/ 8B C9				mov rcx,r9 ;disExp
- 00000182  49/ 03 D3				add rdx,r11 ;load carry
-						
- 00000185					lpb:
- 00000185  48/ 8B 04 CE					mov rax,[rsi+rcx*8]
- 00000189  48/ 83 D8 00					sbb rax,0
- 0000018D  48/ 89 04 CF					mov [rdi+rcx*8],rax
- 00000191  48/ FF C9				dec rcx
- 00000194  75 EF				jnz lpb
- 00000196				jp2:
- 00000196  5E				pop rsi 
- 00000197  5F				pop rdi
- 00000198  5B				pop rbx
- 00000199  C3				ret
- 0000019A			subB	ENDP
- 0000019A			_TEXT	ENDS
+ 00000149  49/ 8B C9			mov rcx,r9 ;disExp
+
+ 0000014C  48/ D1 DA			rcr rdx,1;载入进位标志
+ 0000014F				lpb:
+ 0000014F  48/ 8B 04 CE				mov rax,[rsi+rcx*8]
+ 00000153  48/ 83 D8 00				sbb rax,0
+ 00000157  48/ 89 04 CF				mov [rdi+rcx*8],rax
+ 0000015B  48/ FF C9			dec rcx
+ 0000015E  75 EF			jnz lpb
+
+ 00000160  5E				pop rsi 
+ 00000161  5F				pop rdi
+ 00000162  5B				pop rbx
+ 00000163  C3				ret
+ 00000164			subB	ENDP
+ 00000164			_TEXT	ENDS
 
 
 
 				PUBLIC	subC
- 0000019A			_TEXT	SEGMENT
+ 00000164			_TEXT	SEGMENT
 				;rcx* Num_Array, rdx* num_Num_Array, r8 cnt
 				;PSE$ = 8
- 0000019A			subC	PROC
-					;push rbx
- 0000019A  57				push rdi
- 0000019B  56				push rsi
- 0000019C  48/ 8B F9			mov rdi,rcx ;Num_Array;
- 0000019F  48/ 8B F2			mov rsi,rdx ;num_Num_Array;
- 000001A2  49/ 8B C8			mov rcx,r8
- 000001A5  F8				clc
- 000001A6				lp:
- 000001A6  48/ 8B 04 CF				mov rax,[rdi+rcx*8]
- 000001AA  48/ 1B 04 CE				sbb rax,[rsi+rcx*8]
- 000001AE  48/ 89 04 CF				mov [rdi+rcx*8],rax
- 000001B2  48/ FF C9			dec rcx
- 000001B5  75 EF			jnz lp
- 000001B7  48/ 8B 07			mov rax,[rdi]
- 000001BA  48/ 1B 06			sbb rax,[rsi]
- 000001BD  48/ 89 07			mov [rdi],rax
- 000001C0  5E				pop rsi
- 000001C1  5F				pop rdi
-					;pop rbx
- 000001C2  C3				ret
- 000001C3			subC	ENDP
- 000001C3			_TEXT	ENDS
+ 00000164			subC	PROC
+ 00000164  57				push rdi
+ 00000165  56				push rsi
+ 00000166  48/ 8D 79 F8			lea rdi,[rcx-8] ;Num_Array;
+ 0000016A  48/ 8D 72 F8			lea rsi,[rdx-8] ;num_Num_Array;
+ 0000016E  49/ 8B C8			mov rcx,r8
+ 00000171  F8				clc
+ 00000172				lp:
+ 00000172  48/ 8B 04 CF				mov rax,[rdi+rcx*8]
+ 00000176  48/ 1B 04 CE				sbb rax,[rsi+rcx*8]
+ 0000017A  48/ 89 04 CF				mov [rdi+rcx*8],rax
+ 0000017E  48/ FF C9			dec rcx
+ 00000181  75 EF			jnz lp
+ 00000183  5E				pop rsi
+ 00000184  5F				pop rdi
+ 00000185  C3				ret
+ 00000186			subC	ENDP
+ 00000186			_TEXT	ENDS
 
 
 
 
 				PUBLIC	subD
- 000001C3			_TEXT	SEGMENT
+ 00000186			_TEXT	SEGMENT
 				;rcx* Num_Array, rdx* num_Num_Array, r8 cnt
 				;PSE$ = 8
- 000001C3			subD	PROC
-					;push rbx
- 000001C3  57				push rdi
- 000001C4  56				push rsi
- 000001C5  48/ 8B F9			mov rdi,rcx  ;Num_Array;
- 000001C8  48/ 8B F2			mov rsi,rdx  ;num_Num_Array;
- 000001CB  49/ 8B C8			mov rcx,r8
- 000001CE  F8				clc
- 000001CF				lp:
- 000001CF  48/ 8B 04 CE				mov rax,[rsi+rcx*8]
- 000001D3  48/ 1B 04 CF				sbb rax,[rdi+rcx*8]
- 000001D7  48/ 89 04 CF				mov [rdi+rcx*8],rax
- 000001DB  48/ FF C9			dec rcx
- 000001DE  75 EF			jnz lp
- 000001E0  48/ 8B 06			mov rax,[rsi]
- 000001E3  48/ 1B 07			sbb rax,[rdi]
- 000001E6  48/ 89 07			mov [rdi],rax
- 000001E9  5E				pop rsi
- 000001EA  5F				pop rdi
-					;pop rbx
- 000001EB  C3				ret
- 000001EC			subD	ENDP
- 000001EC			_TEXT	ENDS
+ 00000186			subD	PROC
+ 00000186  57				push rdi
+ 00000187  56				push rsi
+ 00000188  48/ 8D 79 F8			lea rdi,[rcx-8]  ;Num_Array;
+ 0000018C  48/ 8D 72 F8			lea rsi,[rdx-8]  ;num_Num_Array;
+ 00000190  49/ 8B C8			mov rcx,r8
+ 00000193  F8				clc
+ 00000194				lp:
+ 00000194  48/ 8B 04 CE				mov rax,[rsi+rcx*8]
+ 00000198  48/ 1B 04 CF				sbb rax,[rdi+rcx*8]
+ 0000019C  48/ 89 04 CF				mov [rdi+rcx*8],rax
+ 000001A0  48/ FF C9			dec rcx
+ 000001A3  75 EF			jnz lp
+ 000001A5  5E				pop rsi
+ 000001A6  5F				pop rdi
+ 000001A7  C3				ret
+ 000001A8			subD	ENDP
+ 000001A8			_TEXT	ENDS
 
 
 
 
 				PUBLIC	incr
- 000001EC			_TEXT	SEGMENT
+ 000001A8			_TEXT	SEGMENT
 				;rcx Num_Array,rdx pExponent
 				;PSE$ = 8
- 000001EC			incr	PROC
- 000001EC  53				push rbx
- 000001ED  57				push rdi
- 000001EE  56				push rsi
- 000001EF  4C/ 8B D1			mov r10,rcx	;Num_Array
- 000001F2  48/ 8B DA			mov rbx,rdx	;pExponent
- 000001F5  48/ 8B 0B			mov rcx,[rbx]
- 000001F8  48/ 83 F9 00			cmp rcx,0  ;if (cnt>0)
- 000001FC  7E 26			jle jp1
- 000001FE  49/ 8B FA				mov rdi,r10  ;&Num_Array[-1];
- 00000201  48/ 83 EF 08				sub rdi,8
- 00000205  F9					stc
- 00000206					lpa:
- 00000206  48/ 8B 04 CF					mov rax,[rdi+rcx*8]
- 0000020A  48/ 83 D0 00					adc rax,0
- 0000020E  48/ 89 04 CF					mov [rdi+rcx*8],rax
- 00000212  73 05					jnc ext
- 00000214  48/ FF C9				dec rcx
- 00000217  75 ED				jnz lpa
- 00000219					ext:
- 00000219  48/ C7 C2				mov rdx,0
+ 000001A8			incr	PROC
+ 000001A8  53				push rbx
+ 000001A9  57				push rdi
+ 000001AA  56				push rsi
+ 000001AB  4C/ 8B D1			mov r10,rcx	;Num_Array
+ 000001AE  48/ 8B DA			mov rbx,rdx	;pExponent
+ 000001B1  48/ 8B 0B			mov rcx,[rbx]
+ 000001B4  48/ 83 F9 00			cmp rcx,0  ;if (cnt>0)
+ 000001B8  7E 26			jle jp1
+ 000001BA  49/ 8B FA				mov rdi,r10  ;&Num_Array[-1];
+ 000001BD  48/ 83 EF 08				sub rdi,8
+ 000001C1  F9					stc
+ 000001C2					lpa:
+ 000001C2  48/ 8B 04 CF					mov rax,[rdi+rcx*8]
+ 000001C6  48/ 83 D0 00					adc rax,0
+ 000001CA  48/ 89 04 CF					mov [rdi+rcx*8],rax
+ 000001CE  73 05					jnc ext
+ 000001D0  48/ FF C9				dec rcx
+ 000001D3  75 ED				jnz lpa
+ 000001D5					ext:
+ 000001D5  48/ C7 C2				mov rdx,0
 	   00000000
- 00000220  48/ 83 D2 00				adc rdx,0
+ 000001DC  48/ 83 D2 00				adc rdx,0
 						;mov carry,edx
- 00000224				jp1:
- 00000224  48/ 83 FA 01			cmp rdx,1 ;if (carry == 1)
- 00000228  75 24			jne jp2
- 0000022A  48/ FF 03				inc QWORD PTR [rbx]   ;*pExponent++;
- 0000022D  48/ 8B 0B				mov rcx,[rbx]
- 00000230  48/ FF C9				dec rcx
+ 000001E0				jp1:
+ 000001E0  48/ 83 FA 01			cmp rdx,1 ;if (carry == 1)
+ 000001E4  75 24			jne jp2
+ 000001E6  48/ FF 03				inc QWORD PTR [rbx]   ;*pExponent++;
+ 000001E9  48/ 8B 0B				mov rcx,[rbx]
+ 000001EC  48/ FF C9				dec rcx
 						;mov edi,Num_Array
- 00000233  48/ 8B F7				mov rsi,rdi
- 00000236  48/ 83 C7 08				add rdi,8  ;Num_Array[i] = Num_Array[i - 1];
- 0000023A					lpb:
- 0000023A  48/ 8B 04 CE					mov rax,[rsi+rcx*8]
- 0000023E  48/ 89 04 CF					mov [rdi+rcx*8],rax
- 00000242  48/ FF C9				dec rcx
- 00000245  75 F3				jnz lpb
+ 000001EF  48/ 8B F7				mov rsi,rdi
+ 000001F2  48/ 83 C7 08				add rdi,8  ;Num_Array[i] = Num_Array[i - 1];
+ 000001F6					lpb:
+ 000001F6  48/ 8B 04 CE					mov rax,[rsi+rcx*8]
+ 000001FA  48/ 89 04 CF					mov [rdi+rcx*8],rax
+ 000001FE  48/ FF C9				dec rcx
+ 00000201  75 F3				jnz lpb
 						;Num_Array[0] = 1;
- 00000247  48/ C7 07				mov QWORD PTR [rdi],1
+ 00000203  48/ C7 07				mov QWORD PTR [rdi],1
 	   00000001
- 0000024E				jp2:
- 0000024E  5E				pop rsi
- 0000024F  5F				pop rdi
- 00000250  5B				pop rbx
- 00000251  C3				ret	0
- 00000252			incr	ENDP
- 00000252			_TEXT	ENDS
+ 0000020A				jp2:
+ 0000020A  5E				pop rsi
+ 0000020B  5F				pop rdi
+ 0000020C  5B				pop rbx
+ 0000020D  C3				ret	0
+ 0000020E			incr	ENDP
+ 0000020E			_TEXT	ENDS
 
 
 				END
-Microsoft (R) Macro Assembler (x64) Version 10.00.40219.01  07/30/14 21:17:20
+Microsoft (R) Macro Assembler (x64) Version 10.00.40219.01  07/04/17 17:33:57
 add.asm							     Symbols 2 - 1
 
 
@@ -446,38 +398,31 @@ Procedures, parameters, and locals:
 
                 N a m e                 Type     Value    Attr
 
-addA . . . . . . . . . . . . . .	P 	 00000000 _TEXT	Length= 00000065 Public
-  lpa  . . . . . . . . . . . . .	L 	 00000018 _TEXT	
-  jp1  . . . . . . . . . . . . .	L 	 00000034 _TEXT	
-  lpb  . . . . . . . . . . . . .	L 	 00000042 _TEXT	
-  ext  . . . . . . . . . . . . .	L 	 00000054 _TEXT	
-  jp2  . . . . . . . . . . . . .	L 	 0000005F _TEXT	
-addB . . . . . . . . . . . . . .	P 	 00000065 _TEXT	Length= 00000077 Public
-  lpa  . . . . . . . . . . . . .	L 	 00000083 _TEXT	
-  jp1  . . . . . . . . . . . . .	L 	 0000009F _TEXT	
-  lpb  . . . . . . . . . . . . .	L 	 000000B9 _TEXT	
-  jp2  . . . . . . . . . . . . .	L 	 000000D5 _TEXT	
-incr . . . . . . . . . . . . . .	P 	 000001EC _TEXT	Length= 00000066 Public
-  lpa  . . . . . . . . . . . . .	L 	 00000206 _TEXT	
-  ext  . . . . . . . . . . . . .	L 	 00000219 _TEXT	
-  jp1  . . . . . . . . . . . . .	L 	 00000224 _TEXT	
-  lpb  . . . . . . . . . . . . .	L 	 0000023A _TEXT	
-  jp2  . . . . . . . . . . . . .	L 	 0000024E _TEXT	
-subA . . . . . . . . . . . . . .	P 	 000000DC _TEXT	Length= 00000055 Public
-  lpa  . . . . . . . . . . . . .	L 	 000000F4 _TEXT	
-  jp1  . . . . . . . . . . . . .	L 	 00000110 _TEXT	
-  lpb  . . . . . . . . . . . . .	L 	 00000123 _TEXT	
-  ext  . . . . . . . . . . . . .	L 	 0000012E _TEXT	
-  jp2  . . . . . . . . . . . . .	L 	 0000012E _TEXT	
-subB . . . . . . . . . . . . . .	P 	 00000131 _TEXT	Length= 00000069 Public
-  lpa  . . . . . . . . . . . . .	L 	 0000014F _TEXT	
-  jp1  . . . . . . . . . . . . .	L 	 0000016B _TEXT	
-  lpb  . . . . . . . . . . . . .	L 	 00000185 _TEXT	
-  jp2  . . . . . . . . . . . . .	L 	 00000196 _TEXT	
-subC . . . . . . . . . . . . . .	P 	 0000019A _TEXT	Length= 00000029 Public
-  lp . . . . . . . . . . . . . .	L 	 000001A6 _TEXT	
-subD . . . . . . . . . . . . . .	P 	 000001C3 _TEXT	Length= 00000029 Public
-  lp . . . . . . . . . . . . . .	L 	 000001CF _TEXT	
+addA . . . . . . . . . . . . . .	P 	 00000000 _TEXT	Length= 00000062 Public
+  lpa  . . . . . . . . . . . . .	L 	 00000012 _TEXT	
+  lpb  . . . . . . . . . . . . .	L 	 0000003E _TEXT	
+  ext  . . . . . . . . . . . . .	L 	 00000051 _TEXT	
+  jp2  . . . . . . . . . . . . .	L 	 0000005C _TEXT	
+addB . . . . . . . . . . . . . .	P 	 00000062 _TEXT	Length= 00000061 Public
+  lpa  . . . . . . . . . . . . .	L 	 0000007A _TEXT	
+  lpb  . . . . . . . . . . . . .	L 	 000000A0 _TEXT	
+incr . . . . . . . . . . . . . .	P 	 000001A8 _TEXT	Length= 00000066 Public
+  lpa  . . . . . . . . . . . . .	L 	 000001C2 _TEXT	
+  ext  . . . . . . . . . . . . .	L 	 000001D5 _TEXT	
+  jp1  . . . . . . . . . . . . .	L 	 000001E0 _TEXT	
+  lpb  . . . . . . . . . . . . .	L 	 000001F6 _TEXT	
+  jp2  . . . . . . . . . . . . .	L 	 0000020A _TEXT	
+subA . . . . . . . . . . . . . .	P 	 000000C3 _TEXT	Length= 0000004E Public
+  lpa  . . . . . . . . . . . . .	L 	 000000D5 _TEXT	
+  lpb  . . . . . . . . . . . . .	L 	 000000FB _TEXT	
+  ext  . . . . . . . . . . . . .	L 	 0000010E _TEXT	
+subB . . . . . . . . . . . . . .	P 	 00000111 _TEXT	Length= 00000053 Public
+  lpa  . . . . . . . . . . . . .	L 	 00000129 _TEXT	
+  lpb  . . . . . . . . . . . . .	L 	 0000014F _TEXT	
+subC . . . . . . . . . . . . . .	P 	 00000164 _TEXT	Length= 00000022 Public
+  lp . . . . . . . . . . . . . .	L 	 00000172 _TEXT	
+subD . . . . . . . . . . . . . .	P 	 00000186 _TEXT	Length= 00000022 Public
+  lp . . . . . . . . . . . . . .	L 	 00000194 _TEXT	
 
 
 Symbols:

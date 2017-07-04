@@ -198,6 +198,8 @@
     <ClCompile Include="BigMathAdd.cpp" />
     <ClCompile Include="BigMathDiv.cpp" />
     <ClCompile Include="BigMathDll.cpp" />
+    <ClCompile Include="BigMathExp1T.cpp" />
+    <ClCompile Include="BigMathLn1T.cpp" />
     <ClCompile Include="BigMathMul.cpp" />
     <ClCompile Include="BigMathSin1T.cpp" />
     <ClCompile Include="BigMathSin2T.cpp" />

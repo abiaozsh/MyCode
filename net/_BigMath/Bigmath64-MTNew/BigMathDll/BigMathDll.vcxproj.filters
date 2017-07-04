@@ -47,5 +47,11 @@
     <ClCompile Include="BigMathSin1T.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="BigMathLn1T.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BigMathExp1T.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
