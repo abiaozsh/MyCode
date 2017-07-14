@@ -88,6 +88,7 @@ extern "C" void add(int Precision, unsigned int* Num_Array, int* pSign, int* pEx
 	{
 		if ((*pExponent) > num_Exponent)
 		{
+			//本数大
 			int disExp = (*pExponent) - num_Exponent;
 
 			if (disExp < Precision)
@@ -118,9 +119,11 @@ extern "C" void add(int Precision, unsigned int* Num_Array, int* pSign, int* pEx
 					}
 				}
 			}
+			//符号不变
 		}
 		else if (num_Exponent > (*pExponent))
 		{
+			//本数小
 			int disExp = num_Exponent - (*pExponent);
 
 			if (disExp < Precision)
@@ -155,6 +158,15 @@ extern "C" void add(int Precision, unsigned int* Num_Array, int* pSign, int* pEx
 					(*pExponent) = num_Exponent;
 				}
 			}
+			else // 减法无意义，两数阶差太大，将减数赋给被减数
+			{
+				for (int i = 0; i < Precision; i++)
+				{
+					Num_Array[i] = num_Num_Array[i];
+				}
+				(*pExponent) = num_Exponent;
+			}
+			//符号相反
 			(*pSign) = -(*pSign);
 		}
 		else// (Exponent == num_Exponent)

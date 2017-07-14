@@ -340,20 +340,28 @@ namespace BigMathLib
 			if (Precision - Exponent > 0)
 			{
 				result1.Append(".");
-				if (Precision - Exponent > limit) throw new Exception("OverFlow");
-				UInt64[] LDArray = new UInt64[Precision - Exponent];
+				int _decimal = Precision - Exponent;
+				if (limit != int.MaxValue)
+				{
+					if (_decimal > limit * 100 / 1900 + 1)
+					{
+						_decimal = limit * 100 / 1900 + 1;
+					};
+				}
+
+				UInt64[] LDArray = new UInt64[_decimal];
 				if (Exponent > 0)
 				{
-					for (int i = 0; i < Precision - Exponent; i++)
+					for (int i = 0; i < _decimal; i++)
 					{
 						LDArray[i] = Num_Array[i + Exponent];
 					}
 				}
 				else
 				{
-					for (int i = 0; i < Precision; i++)
+					for (int i = 0; i < _decimal + Exponent; i++)
 					{
-						LDArray[i - Exponent] = Num_Array[i];
+						LDArray[i + _decimal - Precision] = Num_Array[i];
 					}
 				}
 

@@ -69,7 +69,7 @@ void Exp(int Precision, unsigned int* Num_Array, int* pSign, int* pExponent)
 			num_b[idx] = num_mx[idx];
 		}
 		Snum_b = Snum_mx;
-		Enum_b = Enum_x;
+		Enum_b = Enum_mx;
 
 		//b /= mi;
 		divi(limit, num_b, &Snum_b, &Enum_b, num_mi, Snum_mi, Enum_mi, r_value, b);

@@ -327,6 +327,7 @@ incr	PROC
 	push rsi
 	mov r10,rcx	;Num_Array
 	mov rbx,rdx	;pExponent
+	mov rdx,0
 	mov rcx,[rbx]
 	cmp rcx,0  ;if (cnt>0)
 	jle jp1

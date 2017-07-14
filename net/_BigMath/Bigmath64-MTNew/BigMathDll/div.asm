@@ -61,6 +61,7 @@ divcore	PROC
 		adc r10,0
 	dec rcx
 	jnz lp1
+
 	sub [rdi],r10
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
