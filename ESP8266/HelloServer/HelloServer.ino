@@ -102,14 +102,19 @@ ESP8266WebServer server(80);
 const int led = LED_BUILTIN;
 
 void handleRoot() {
-  server.send(200, "text/html", "\
+  server.sendContent("HTTP/1.1 200 OK\r\n");
+  server.sendContent("Content-Type: text/html\r\n");
+server.sendContent("Connection: close\r\n");
+server.sendContent("Access-Control-Allow-Origin: *\r\n");
+server.sendContent("\r\n");
+server.sendContent("\
   <html>\
-  <input id=\"btnaaa\" type=\"button\" value=\"val1\">\
+  <input id=\"bbbbbbbbbbb\" type=\"button\" value=\"val113421423\">\
   <input id=\"btnbbb\" type=\"button\" value=\"val0\">\
   <input id=\"btnccc\" type=\"button\" value=\"out\">\
   <script src=\"base.js\" ></script>\
-  <script>\
-  document.getElementById(\"btnaaa\").onclick=function(){\
+  <script>");
+server.sendContent("document.getElementById(\"btnaaa\").onclick=function(){\
     _ajaxGet(\"/digitalWrite\",\"pin=D2&val=1\",function(data){alert(data)});\
   };\
   document.getElementById(\"btnbbb\").onclick=function(){\
