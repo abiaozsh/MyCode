@@ -22,10 +22,10 @@ void handlePage() {
 	String ret = "";
   ret+="<html>";
   ret+="return:<input id=\"J_read\" type=\"text\" style=\"width:250px\" value=\"\"><br/>";
-  ret+="<input id=\"J_P\" type=\"button\" value=\"_____PowerButton_____\"><br/><br/><br/>";
-  ret+="<input id=\"J_LP\" type=\"button\" value=\"_____LongPowerButton_____\"><br/><br/><br/>";
-  ret+="<input id=\"J_R\" type=\"button\" value=\"_____Reset_____\"><br/><br/><br/>";
-  ret+="<input id=\"J_S\" type=\"button\" value=\"_____Status_______\"><br/><br/><br/>";
+  ret+="<input id=\"J_P\" type=\"button\" style=\"height:70px\" value=\"_____PowerButton_____\"><br/><br/><br/>";
+  ret+="<input id=\"J_S\" type=\"button\" style=\"height:100px\" value=\"_____Status_______\"><br/><br/><br/><br/><br/><br/>";
+  ret+="<input id=\"J_LP\" type=\"button\" style=\"height:30px\" value=\"LPB\"><br/><br/><br/>";
+  ret+="<input id=\"J_R\" type=\"button\" style=\"height:30px\" value=\"RST\"><br/><br/><br/>";
   ret+="<script src=\"base.js\" ></script>";
   ret+="<script>";
   ret+="JQ(\"J_P\").onclick=function(){";
@@ -112,14 +112,15 @@ void _reset() {
 }
 
 void _status() {
-
   int v = digitalRead(volt5D);
-  String ret = "ok volt5D:";
-  ret += v;//0 pwr on         1 pwr off
-  ret += "ok V1:";
-  ret += _V1; // hdd on
-  ret += "ok V2:";
-  ret += _V2;//hdd off
+  String ret = "ok ";
+  ret += v == 0 ? "PWR on " : "PWR off ";//0 pwr on         1 pwr off
+  float vv1 = _V1;
+  float vv2 = _V2;
+  vv1 = (vv1*100/(vv1+vv2));
+  ret += "HDD :";
+  ret += vv1;//  _V1; // hdd on     _V2;//hdd off
+
   server.send(200, t_p, ret);
 }
 
@@ -186,7 +187,7 @@ void loop(void) {
   }
   
   if(isonP){
-    if(mills - currentMillisP > 500){
+    if(mills - currentMillisP > 200){
       digitalWrite(powerD, 0);
       isonP = 0;
     }
@@ -200,7 +201,7 @@ void loop(void) {
   }
 
   if(isonR){
-    if(mills - currentMillisR > 500){
+    if(mills - currentMillisR > 200){
       digitalWrite(resetD, 0);
       isonR = 0;
     }
