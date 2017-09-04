@@ -428,14 +428,14 @@ extern "C" __declspec(dllexport) void N_Sin(int* PSE,unsigned int* Num_Array)
 	int Sign = PSE[1];
 	int Exponent = PSE[2];
 
-	if(Precision>20)
-	{
-		sinMT(Num_Array, Precision, &Sign, &Exponent);
-	}
-	else
-	{
+	//if(Precision>20)
+	//{
+	//	sinMT(Num_Array, Precision, &Sign, &Exponent);
+	//}
+	//else
+	//{
 		sin(Num_Array, Precision, &Sign, &Exponent);
-	}
+	//}
 
 	PSE[1] = Sign;
 	PSE[2] = Exponent;

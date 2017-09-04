@@ -26,7 +26,7 @@ namespace BigMathSample
 			//2.4GHz DT ,0,0,0,0,0,0,16,157,1125,7875
 			//         ,63,0,0,0,0,0,32,171,1141,7891
 			BigMath b = new BigMath(2, "3.14159265358979");
-			for (int i = 0; i < 10; i++)
+			for (int i = 0; i < 8; i++)
 			{
 				BigMath t = new BigMath(b.Precision * 2, 0);
 				b.CopyTo(t);
@@ -171,74 +171,74 @@ namespace BigMathSample
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			int p = 200;
-			//addA case1
-			{
-				//                          1.000000000000000000000000000000000000000001
-				BigMath a = new BigMath(p, "1.500000000000000000000000000000000000000002");
-				BigMath b = new BigMath(p, "0.499999999999999999999999999999999999999999");
-				a.Add(b);
-				textBox1.Text += "1 2 " + a.toString() + "\r\n";
-			}
-			//addA case2
-			{
-				BigMath a = new BigMath(p, "0.500000000000000000000000000000000000000002");
-				BigMath b = new BigMath(p, "0.499999999999999999999999999999999999999999");
-				a.Add(b);
-				textBox1.Text += "1 1 " + a.toString() + "\r\n";
-			}
-			//addB case1
-			{
-				BigMath a = new BigMath(p, "0.500000000000000000000000000000000000000002");
-				BigMath b = new BigMath(p, "1.499999999999999999999999999999999999999999");
-				a.Add(b);
-				textBox1.Text += "2 2 " + a.toString() + "\r\n";
-			}
-			//subA case1
-			{
-				BigMath a = new BigMath(p, " 1.500000000000000000000000000000000000000000");
-				BigMath b = new BigMath(p, "-0.499999999999999999999999999999999999999999");
-				a.Add(b);
-				textBox1.Text += "3 1 " + a.toString() + "\r\n";
-			}
-			//subB case1
-			{
-				BigMath a = new BigMath(p, "-0.499999999999999999999999999999999999999999");
-				BigMath b = new BigMath(p, " 1.500000000000000000000000000000000000000000");
-				a.Add(b);
-				textBox1.Text += "4 1 " + a.toString() + "\r\n";
-			}
-			//subC case1
-			{
-				BigMath a = new BigMath(p, " 2.500000000000000000000000000000000000000000");
-				BigMath b = new BigMath(p, "-1.499999999999999999999999999999999999999999");
-				a.Add(b);
-				textBox1.Text += "5 1 " + a.toString() + "\r\n";
-			}
-			//subD case1
-			{
-				BigMath a = new BigMath(p, "-2.499999999999999999999999999999999999999999");
-				BigMath b = new BigMath(p, " 3.500000000000000000000000000000000000000000");
-				a.Add(b);
-				textBox1.Text += "6 1 " + a.toString() + "\r\n";
-			}
-			//subA case1
-			{
-				BigMath r = new BigMath(p, " 1.000000000000000000000000000000000000000000");
-				BigMath a = new BigMath(p, " 1.000000000000000000000000000000000000000000");
-				BigMath b = new BigMath(p, "-0.999999999999999999999999999999999999999999");
-				r.Sign = 1;
-				a.Add(b);
-				textBox1.Text += "3 0 " + a.toString() + "\r\n";
-			}
-			//subB case1
-			{
-				BigMath r = new BigMath(p, "-0.999999999999999999999999999999999999999999");
-				BigMath a = new BigMath(p, "-0.999999999999999999999999999999999999999999");
-				BigMath b = new BigMath(p, " 1.000000000000000000000000000000000000000000");
-				a.Add(b);
-				textBox1.Text += "4 0 " + a.toString() + "\r\n";
-			}
+//			int p = 200;
+//			//addA case1
+//			{
+//				//                          1.000000000000000000000000000000000000000001
+//				BigMath a = new BigMath(p, "1.500000000000000000000000000000000000000002");
+//				BigMath b = new BigMath(p, "0.499999999999999999999999999999999999999999");
+//				a.Add(b);
+//				textBox1.Text += "1 2 " + a.toString() + "\r\n";
+//			}
+//			//addA case2
+//			{
+//				BigMath a = new BigMath(p, "0.500000000000000000000000000000000000000002");
+//				BigMath b = new BigMath(p, "0.499999999999999999999999999999999999999999");
+//				a.Add(b);
+//				textBox1.Text += "1 1 " + a.toString() + "\r\n";
+//			}
+//			//addB case1
+//			{
+//				BigMath a = new BigMath(p, "0.500000000000000000000000000000000000000002");
+//				BigMath b = new BigMath(p, "1.499999999999999999999999999999999999999999");
+//				a.Add(b);
+//				textBox1.Text += "2 2 " + a.toString() + "\r\n";
+//			}
+//			//subA case1
+//			{
+//				BigMath a = new BigMath(p, " 1.500000000000000000000000000000000000000000");
+//				BigMath b = new BigMath(p, "-0.499999999999999999999999999999999999999999");
+//				a.Add(b);
+//				textBox1.Text += "3 1 " + a.toString() + "\r\n";
+//			}
+//			//subB case1
+//			{
+//				BigMath a = new BigMath(p, "-0.499999999999999999999999999999999999999999");
+//				BigMath b = new BigMath(p, " 1.500000000000000000000000000000000000000000");
+//				a.Add(b);
+//				textBox1.Text += "4 1 " + a.toString() + "\r\n";
+//			}
+//			//subC case1
+//			{
+//				BigMath a = new BigMath(p, " 2.500000000000000000000000000000000000000000");
+//				BigMath b = new BigMath(p, "-1.499999999999999999999999999999999999999999");
+//				a.Add(b);
+//				textBox1.Text += "5 1 " + a.toString() + "\r\n";
+//			}
+//			//subD case1
+//			{
+//				BigMath a = new BigMath(p, "-2.499999999999999999999999999999999999999999");
+//				BigMath b = new BigMath(p, " 3.500000000000000000000000000000000000000000");
+//				a.Add(b);
+//				textBox1.Text += "6 1 " + a.toString() + "\r\n";
+//			}
+//			//subA case1
+//			{
+//				BigMath r = new BigMath(p, " 1.000000000000000000000000000000000000000000");
+//				BigMath a = new BigMath(p, " 1.000000000000000000000000000000000000000000");
+//				BigMath b = new BigMath(p, "-0.999999999999999999999999999999999999999999");
+//				r.Sign = 1;
+//				a.Add(b);
+//				textBox1.Text += "3 0 " + a.toString() + "\r\n";
+//			}
+//			//subB case1
+//			{
+//				BigMath r = new BigMath(p, "-0.999999999999999999999999999999999999999999");
+//				BigMath a = new BigMath(p, "-0.999999999999999999999999999999999999999999");
+//				BigMath b = new BigMath(p, " 1.000000000000000000000000000000000000000000");
+//				a.Add(b);
+//				textBox1.Text += "4 0 " + a.toString() + "\r\n";
+//			}
 
 		}
 	}
