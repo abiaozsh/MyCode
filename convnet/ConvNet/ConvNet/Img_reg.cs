@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Drawing;
+using System.IO;
+using ConvNet;
 
-namespace ConvNet
+namespace ImgReg
 {
 	class Img_reg
 	{
@@ -13,45 +15,67 @@ namespace ConvNet
 
 			List<Def> layer_defs = new List<Def>();
 			layer_defs.Add(new Def { type = "input", out_sx = 1, out_sy = 1, out_depth = 2 }); // 2 inputs= x, y \n\
-			layer_defs.Add(new Def { type = "fc", num_neurons = 30, bias_pref = 0.1f });// relus like a bit of positive bias to get gradients early
+			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });// relus like a bit of positive bias to get gradients early
 			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "fc", num_neurons = 30, bias_pref = 0.1f });// otherwise it's technically possible that a relu unit will never turn on (by chance)
+			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });// otherwise it's technically possible that a relu unit will never turn on (by chance)
 			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "fc", num_neurons = 30, bias_pref = 0.1f });// and will never get any gradient and never contribute any computation. Dead relu.
+			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });// and will never get any gradient and never contribute any computation. Dead relu.
 			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "fc", num_neurons = 30, bias_pref = 0.1f });
+			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });
 			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "fc", num_neurons = 30, bias_pref = 0.1f });
+			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });
 			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "fc", num_neurons = 30, bias_pref = 0.1f });
+			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });
 			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "fc", num_neurons = 30, bias_pref = 0.1f });
+			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });
 			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "fc", num_neurons = 30, bias_pref = 0.1f });
-			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "fc", num_neurons = 30, bias_pref = 0.1f });
-			layer_defs.Add(new Def { type = "relu" });
+
+			layer_defs.Add(new Def { type = "fc", num_neurons = 3 });
 			layer_defs.Add(new Def { type = "regression", num_neurons = 3 }); // 3 outputs= r,g,b \n\
 
 			Net net = new Net();
 			net.makeLayers(layer_defs);
 
+			//{
+			//	FileStream fs = new FileStream("d:\\out.txt", FileMode.Open, FileAccess.Read);
+			//	BinaryReader sr = new BinaryReader(fs);
+			//	net.load(sr);
+			//	fs.Close();
+			//
+			//	Bitmap bout;
+			//	Bitmap b2 = new Bitmap("d:\\cat.jpg");
+			//	draw(net, b2, out bout);
+			//	bout.Save("d:\\out2.jpg");
+			//
+			//	return;
+			//}
+
 			Trainer trainer = new Trainer(net, new Trainer.Option() { learning_rate = 0.01f, momentum = 0.9f, batch_size = 5, l2_decay = 0.0f });
 
-			Bitmap b = new Bitmap("d:\\cat.jpg");
+			Bitmap b2 = new Bitmap("d:\\cat.jpg");
+			//Bitmap b2 = new Bitmap("d:\\pencils.png");
 
-			for (int learn = 0; learn < 20; learn++)
+			for (int learn = 0; learn < 5; learn++)
 			{
 				for (int i = 0; i < 100; i++)
 				{
-					update(b, trainer);
+					//update(b, trainer);
+					update(b2, trainer);
 					counter++;
+					//Console.WriteLine(MyFloat.idx);
 				}
 				Bitmap bout;
-				draw(net, b, out bout);
+				draw(net, b2, out bout);
 				bout.Save("d:\\out.jpg");
 			}
-
+			//{
+			//	FileStream fs = new FileStream("d:\\out.txt", FileMode.Create, FileAccess.Write);
+			//	StreamWriter sw = new StreamWriter(fs);
+			//	net.save(sw);
+			//	sw.Flush();
+			//	fs.Flush();
+			//	fs.Close();
+			//}
 		}
 
 
@@ -64,7 +88,6 @@ namespace ConvNet
 			int W = b.Width;
 			int H = b.Height;
 
-			Vol v = new Vol(1, 1, 2, null);
 			float loss = 0;
 			int lossi = 0;
 
@@ -101,6 +124,7 @@ namespace ConvNet
 			Console.WriteLine(t);
 		}
 
+		static Vol v = new Vol(1, 1, 2, null);
 		public static void draw(Net net, Bitmap b, out Bitmap bout)
 		{
 			bout = new Bitmap(b.Width, b.Height);
@@ -109,7 +133,6 @@ namespace ConvNet
 			int W = b.Width;
 			int H = b.Height;
 
-			Vol v = new Vol(1, 1, 2, null);
 			for (int x = 0; x < W; x++)
 			{
 				v.w[0] = (x - W / 2.0f) / W;

@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace ConvNet
 {
-	public abstract class Layer
+
+	public abstract class Layer : Persistence
 	{
 		public int out_sx;
 		public int out_sy;
@@ -21,16 +23,25 @@ namespace ConvNet
 		public abstract Vol forward(Vol V, bool is_training);
 		public abstract float backward(DataSet y);
 		public abstract List<ParamsAndGrads> getParamsAndGrads();
-		public abstract void save(Stream s);
+		public abstract void getRange(Range r);
+		public abstract void save(BinaryWriter s);
 		public abstract void save(StreamWriter s);
-		public abstract void load(Stream s);
+		public abstract void load(BinaryReader s);
 		public abstract void load(StreamReader s);
 	}
 
+
+
 	class FullyConnLayer : Layer
 	{
-		public List<Vol> filters;
-		public Vol biases;
+		Vol[] filters;
+		MyFloat[] filters_gsum; //[]?
+		MyFloat[] filters_xsum; //[]?
+
+		Vol bias;
+		MyFloat bias_gsum; //[]?
+		MyFloat bias_xsum; //[]?
+
 		public int num_inputs;
 
 		public FullyConnLayer(Def def)
@@ -50,53 +61,91 @@ namespace ConvNet
 			this.num_inputs = opt.in_sx * opt.in_sy * opt.in_depth;
 			this.out_sx = 1;
 			this.out_sy = 1;
-			//this.layer_type = "fc";
 
 			// initializations
-			float bias = opt.bias_pref;
-			this.filters = new List<Vol>();
+			filters = new Vol[out_depth];
+			filters_gsum = new MyFloat[out_depth];
+			filters_xsum = new MyFloat[out_depth];
 			for (int i = 0; i < this.out_depth; i++)
 			{
-				this.filters.Add(new Vol(1, 1, this.num_inputs, null));
+				filters[i] = new Vol(1, 1, this.num_inputs, null);
+				filters_gsum[i] = MyFloat.getArray(num_inputs);
+				filters_xsum[i] = MyFloat.getArray(num_inputs);
+				for (int j = 0; j < num_inputs; j++)
+				{
+					filters_gsum[i][j] = 0.0f;
+					filters_xsum[i][j] = 0.0f;
+				}
 			}
-			this.biases = new Vol(1, 1, this.out_depth, bias);
+
+			this.bias = new Vol(1, 1, this.out_depth, opt.bias_pref);
+			this.bias_gsum = MyFloat.getArray(out_depth); // last iteration gradients (used for momentum calculations)
+			this.bias_xsum = MyFloat.getArray(out_depth); // used in adadelta
+
+			for (int j = 0; j < num_inputs; j++)
+			{
+				bias_gsum[j] = 0.0f;
+				bias_xsum[j] = 0.0f;
+			}
+
+			this.out_act = new Vol(1, 1, this.out_depth, 0.0f);
 		}
 
+		//[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		//private static extern void fwd(int out_depth, int num_inputs, float[] A_w, float[] V_w, float[] filters_w, float[] biases_w);
+		//public override Vol forward(Vol V, bool is_training)
+		//{
+		//	this.in_act = V;
+		//	Vol A = new Vol(1, 1, this.out_depth, 0.0f);
+		//
+		//	fwd(this.out_depth, this.num_inputs, A.w, V.w, this.filters_w, this.biases_w);
+		//
+		//	this.out_act = A;
+		//	return this.out_act;
+		//}
 		public override Vol forward(Vol V, bool is_training)
 		{
 			this.in_act = V;
-			Vol A = new Vol(1, 1, this.out_depth, 0.0f);
-			float[] Vw = V.w;
+
 			for (int i = 0; i < this.out_depth; i++)
 			{
 				float a = 0.0f;
-				float[] wi = this.filters[i].w;
+				MyFloat wi = this.filters[i].w;
+				//int iw = i * this.num_inputs;
 				for (int d = 0; d < this.num_inputs; d++)
 				{
-					a += Vw[d] * wi[d]; // for efficiency use Vols directly for now
+					a += V.w[d] * wi[d]; // for efficiency use Vols directly for now
 				}
-				a += this.biases.w[i];
-				A.w[i] = a;
+				//a += this.biases.w[i];
+				a += this.bias.w[i];
+				this.out_act.w[i] = a;
 			}
-			this.out_act = A;
+
 			return this.out_act;
 		}
 		public override float backward(DataSet y)
 		{
 			Vol V = this.in_act;
-			V.dw = Util.zeros(V.w.Length); // zero out the gradient in input Vol
+			//V.dw = Util.zeros(V.w.Length); // zero out the gradient in input Vol
+			for (int d = 0; d < V.w.size; d++)
+			{
+				V.dw[d] = 0;
+			}
 
 			// compute gradient wrt weights and data
 			for (int i = 0; i < this.out_depth; i++)
 			{
-				Vol tfi = this.filters[i];
+				//Vol tfi = this.filters[i];
+				//int iw = i * this.num_inputs;
+				MyFloat wi = this.filters[i].w;
+				MyFloat dwi = this.filters[i].dw;
 				float chain_grad = this.out_act.dw[i];
 				for (int d = 0; d < this.num_inputs; d++)
 				{
-					V.dw[d] += tfi.w[d] * chain_grad; // grad wrt input data
-					tfi.dw[d] += V.w[d] * chain_grad; // grad wrt params
+					V.dw[d] += wi[d] * chain_grad; // grad wrt input data
+					dwi[d] += V.w[d] * chain_grad; // grad wrt params
 				}
-				this.biases.dw[i] += chain_grad;
+				this.bias.dw[i] += chain_grad;
 			}
 			return 0;
 		}
@@ -105,77 +154,92 @@ namespace ConvNet
 			List<ParamsAndGrads> response = new List<ParamsAndGrads>();
 			for (int i = 0; i < this.out_depth; i++)
 			{
-				response.Add(new ParamsAndGrads() { Params = this.filters[i].w, grads = this.filters[i].dw, l1_decay_mul = this.l1_decay_mul, l2_decay_mul = this.l2_decay_mul });
+				//int iw = i * this.num_inputs;
+				//response.Add(new ParamsAndGrads() { Params = this.filters[i].w, grads = this.filters[i].dw, l1_decay_mul = this.l1_decay_mul, l2_decay_mul = this.l2_decay_mul });
+				response.Add(new ParamsAndGrads()
+				{
+					params_ = this.filters[i].w,
+					grads_ = this.filters[i].dw,
+					params_size = this.num_inputs,
+					gsum = filters_gsum[i],
+					xsum = filters_xsum[i],
+					l1_decay_mul = this.l1_decay_mul,
+					l2_decay_mul = this.l2_decay_mul
+				});
 			}
-			response.Add(new ParamsAndGrads() { Params = this.biases.w, grads = this.biases.dw, l1_decay_mul = 0.0f, l2_decay_mul = 0.0f });
+			//response.Add(new ParamsAndGrads() { Params = this.biases.w, grads = this.biases.dw, l1_decay_mul = 0.0f, l2_decay_mul = 0.0f });
+			response.Add(new ParamsAndGrads()
+			{
+				params_ = this.bias.w,
+				grads_ = this.bias.dw,
+				params_size = this.out_depth,
+				gsum = bias_gsum,
+				xsum = bias_xsum,
+				l1_decay_mul = 0.0f,
+				l2_decay_mul = 0.0f
+			});
 			return response;
 		}
 
-		public void save(Stream s)
+		public override void getRange(Range r)
 		{
-			for (int i = 0; i < layers.Count; i++)
-			{
-				layers[i].save(s);
-			}
+			//biases.getRange(r);
+			//for (int i = 0; i < filters.Count; i++)
+			//{
+			//	filters[i].getRange(r);
+			//}
 		}
-		public void save(StreamWriter s)
+		public override void save(BinaryWriter s)
 		{
-			for (int i = 0; i < layers.Count; i++)
-			{
-				layers[i].save(s);
-			}
+			//biases.save(s);
+			//for (int i = 0; i < filters.Count; i++)
+			//{
+			//	filters[i].save(s);
+			//}
 		}
-		public void load(Stream s)
+		public override void save(StreamWriter s)
 		{
-			for (int i = 0; i < layers.Count; i++)
-			{
-				layers[i].load(s);
-			}
+			//biases.save(s);
+			//for (int i = 0; i < filters.Count; i++)
+			//{
+			//	filters[i].save(s);
+			//}
 		}
-		public void load(StreamReader s)
+		public override void load(BinaryReader s)
 		{
-			for (int i = 0; i < layers.Count; i++)
-			{
-				layers[i].load(s);
-			}
+			//biases.load(s);
+			//for (int i = 0; i < filters.Count; i++)
+			//{
+			//	filters[i].load(s);
+			//}
 		}
-
-		//toJSON: function() {
-		//  json.out_depth = this.out_depth;
-		//  json.out_sx = this.out_sx;
-		//  json.out_sy = this.out_sy;
-		//  json.layer_type = this.layer_type;
-		//  json.num_inputs = this.num_inputs;
-		//  json.l1_decay_mul = this.l1_decay_mul;
-		//  json.l2_decay_mul = this.l2_decay_mul;
-		//  json.filters = [];
-		//  for(i=0;i<this.filters.length;i++) {
-		//    json.filters.push(this.filters[i].toJSON());
-		//  }
-		//  json.biases = this.biases.toJSON();
-		//  return json;
-		//},
-		//fromJSON: function(json) {
-		//  this.out_depth = json.out_depth;
-		//  this.out_sx = json.out_sx;
-		//  this.out_sy = json.out_sy;
-		//  this.layer_type = json.layer_type;
-		//  this.num_inputs = json.num_inputs;
-		//  this.l1_decay_mul = typeof json.l1_decay_mul !== 'undefined' ? json.l1_decay_mul : 1.0;
-		//  this.l2_decay_mul = typeof json.l2_decay_mul !== 'undefined' ? json.l2_decay_mul : 1.0;
-		//  this.filters = [];
-		//  for(i=0;i<json.filters.length;i++) {
-		//    v = new Vol(0,0,0,0);
-		//    v.fromJSON(json.filters[i]);
-		//    this.filters.push(v);
-		//  }
-		//  this.biases = new Vol(0,0,0,0);
-		//  this.biases.fromJSON(json.biases);
-		//}
+		public override void load(StreamReader s)
+		{
+			//biases.load(s);
+			//for (int i = 0; i < filters.Count; i++)
+			//{
+			//	filters[i].load(s);
+			//}
+		}
 	}
-
+	/*
 	class TanhLayer : Layer
 	{
+		public override void getRange(Range r)
+		{
+		}
+		public override void save(BinaryWriter s)
+		{
+		}
+		public override void save(StreamWriter s)
+		{
+		}
+		public override void load(BinaryReader s)
+		{
+		}
+		public override void load(StreamReader s)
+		{
+		}
 		// Implements Tanh nnonlinearity elementwise
 		// x -> tanh(x) 
 		// so the output is between -1 and 1.
@@ -238,9 +302,24 @@ namespace ConvNet
 		//  this.out_sy = json.out_sy;
 		//  this.layer_type = json.layer_type; 
 		//}
-	}
+	}*/
 	class ReluLayer : Layer
 	{
+		public override void getRange(Range r)
+		{
+		}
+		public override void save(BinaryWriter s)
+		{
+		}
+		public override void save(StreamWriter s)
+		{
+		}
+		public override void load(BinaryReader s)
+		{
+		}
+		public override void load(StreamReader s)
+		{
+		}
 		// Implements ReLU nonlinearity elementwise
 		// x -> max(0, x)
 		// the output is in [0, inf)
@@ -254,29 +333,41 @@ namespace ConvNet
 			this.out_sy = opt.in_sy;
 			this.out_depth = opt.in_depth;
 			//this.layer_type = "relu";
+
+			this.out_act = new Vol(out_sx, out_sy, out_depth, null);
 		}
 
 		public override Vol forward(Vol V, bool is_training)
 		{
 			this.in_act = V;
-			Vol V2 = V.clone();
-			int N = V.w.Length;
-			float[] V2w = V2.w;
+
+			//Vol V2 = V.clone();
+
+			int N = V.w.size;
+			//float[] V2w = V2.w;
 			for (int i = 0; i < N; i++)
 			{
-				if (V2w[i] < 0) V2w[i] = 0; // threshold at 0
+				if (V.w[i] < 0)
+				{
+					this.out_act.w[i] = 0; // threshold at 0
+				}
+				else
+				{
+					this.out_act.w[i] = V.w[i];
+				}
 			}
-			this.out_act = V2;
+			//this.out_act = V2;
 			return this.out_act;
 		}
 		public override float backward(DataSet y)
 		{
 			Vol V = this.in_act; // we need to set dw of this
 			Vol V2 = this.out_act;
-			int N = V.w.Length;
-			V.dw = Util.zeros(N); // zero out gradient wrt data
+			int N = V.w.size;
+			//V.dw = Util.zeros(N); // zero out gradient wrt data
 			for (int i = 0; i < N; i++)
 			{
+				V.dw[i] = 0;
 				if (V2.w[i] <= 0) V.dw[i] = 0; // threshold
 				else V.dw[i] = V2.dw[i];
 			}
@@ -300,8 +391,24 @@ namespace ConvNet
 		//  this.layer_type = json.layer_type; 
 		//}
 	}
+	/*
 	class SigmoidLayer : Layer
 	{
+		public override void getRange(Range r)
+		{
+		}
+		public override void save(BinaryWriter s)
+		{
+		}
+		public override void save(StreamWriter s)
+		{
+		}
+		public override void load(BinaryReader s)
+		{
+		}
+		public override void load(StreamReader s)
+		{
+		}
 		// Implements Sigmoid nnonlinearity elementwise
 		// x -> 1/(1+e^(-x))
 		// so the output is between 0 and 1.
@@ -360,9 +467,25 @@ namespace ConvNet
 		//  this.out_sy = json.out_sy;
 		//  this.layer_type = json.layer_type; 
 		//}
-	}
+	}*/
+	/*
 	class SVMLayer : Layer
 	{
+		public override void getRange(Range r)
+		{
+		}
+		public override void save(BinaryWriter s)
+		{
+		}
+		public override void save(StreamWriter s)
+		{
+		}
+		public override void load(BinaryReader s)
+		{
+		}
+		public override void load(StreamReader s)
+		{
+		}
 		public int num_inputs;
 
 		public SVMLayer(Def def)
@@ -430,9 +553,25 @@ namespace ConvNet
 		//  this.layer_type = json.layer_type;
 		//  this.num_inputs = json.num_inputs;
 		//}
-	}
+	}*/
+
 	class PoolLayer : Layer
 	{
+		public override void getRange(Range r)
+		{
+		}
+		public override void save(BinaryWriter s)
+		{
+		}
+		public override void save(StreamWriter s)
+		{
+		}
+		public override void load(BinaryReader s)
+		{
+		}
+		public override void load(StreamReader s)
+		{
+		}
 		public int sx;
 		public int sy;
 		public int in_depth;
@@ -467,13 +606,15 @@ namespace ConvNet
 			// store switches for x,y coordinates for where the max comes from, for each output neuron
 			this.switchx = new int[this.out_sx * this.out_sy * this.out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
 			this.switchy = new int[this.out_sx * this.out_sy * this.out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
+
+			this.out_act = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
 		}
 
 		public override Vol forward(Vol V, bool is_training)
 		{
 			this.in_act = V;
 
-			Vol A = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
+			Vol A = this.out_act;//new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
 
 			int n = 0; // a counter for switches
 			for (int d = 0; d < this.out_depth; d++)
@@ -518,7 +659,7 @@ namespace ConvNet
 					}
 				}
 			}
-			this.out_act = A;
+			//this.out_act = A;
 			return this.out_act;
 		}
 		public override float backward(DataSet del)
@@ -526,7 +667,12 @@ namespace ConvNet
 			// pooling layers have no parameters, so simply compute 
 			// gradient wrt data here
 			Vol V = this.in_act;
-			V.dw = Util.zeros(V.w.Length); // zero out gradient wrt data
+			//????????TODO 未初始化可能影响后续????????????????V.dw = Util.zeros(V.w.Length); // zero out gradient wrt data
+			for (int i = 0; i < V.dw.size; i++)
+			{
+				V.dw[i] = 0;
+			}
+
 			Vol A = this.out_act; // computed in forward pass 
 
 			int n = 0;
@@ -579,8 +725,24 @@ namespace ConvNet
 		//  this.switchy = global.zeros(this.out_sx*this.out_sy*this.out_depth);
 		//}
 	}
+
 	class SoftmaxLayer : Layer
 	{
+		public override void getRange(Range r)
+		{
+		}
+		public override void save(BinaryWriter s)
+		{
+		}
+		public override void save(StreamWriter s)
+		{
+		}
+		public override void load(BinaryReader s)
+		{
+		}
+		public override void load(StreamReader s)
+		{
+		}
 		// Layers that implement a loss. Currently these are the layers that 
 		// can initiate a backward() pass. In future we probably want a more 
 		// flexible system that can accomodate multiple losses to do multi-task
@@ -591,7 +753,7 @@ namespace ConvNet
 		// it gets a stream of N incoming numbers and computes the softmax
 		// function (exponentiate and normalize to sum to 1 as probabilities should)
 		public int num_inputs;
-		public float[] es;
+		public MyFloat es;
 		public SoftmaxLayer(Def def)
 			: base(def)
 		{
@@ -603,16 +765,19 @@ namespace ConvNet
 			this.out_sx = 1;
 			this.out_sy = 1;
 			//this.layer_type = "softmax";
+			es = MyFloat.getArray(this.out_depth);
+
+			this.out_act = new Vol(1, 1, this.out_depth, 0.0f);
 		}
 
 		public override Vol forward(Vol V, bool is_training)
 		{
 			this.in_act = V;
 
-			Vol A = new Vol(1, 1, this.out_depth, 0.0f);
+			Vol A = this.out_act; //new Vol(1, 1, this.out_depth, 0.0f);
 
 			// compute max activation
-			float[] As = V.w;
+			MyFloat As = V.w;
 			float amax = V.w[0];
 			for (int i = 1; i < this.out_depth; i++)
 			{
@@ -620,7 +785,7 @@ namespace ConvNet
 			}
 
 			// compute exponentials (carefully to not blow up)
-			float[] es = Util.zeros(this.out_depth);
+
 			float esum = 0.0f;
 			for (int i = 0; i < this.out_depth; i++)
 			{
@@ -636,8 +801,8 @@ namespace ConvNet
 				A.w[i] = es[i];
 			}
 
-			this.es = es; // save these for backprop
-			this.out_act = A;
+			//this.es = es; // save these for backprop
+			//this.out_act = A;
 			return this.out_act;
 		}
 		public override float backward(DataSet y)
@@ -645,7 +810,11 @@ namespace ConvNet
 
 			// compute and accumulate gradient wrt weights and bias of this layer
 			Vol x = this.in_act;
-			x.dw = Util.zeros(x.w.Length); // zero out the gradient of input Vol
+			//????????TODO 未初始化可能影响后续????????????????x.dw = Util.zeros(x.w.Length); // zero out the gradient of input Vol
+			for (int i = 0; i < x.dw.size; i++)
+			{
+				x.dw[i] = 0;
+			}
 
 			for (int i = 0; i < this.out_depth; i++)
 			{
@@ -677,8 +846,24 @@ namespace ConvNet
 		//  this.num_inputs = json.num_inputs;
 		//}
 	}
+	/*
 	class MaxoutLayer : Layer
 	{
+		public override void getRange(Range r)
+		{
+		}
+		public override void save(BinaryWriter s)
+		{
+		}
+		public override void save(StreamWriter s)
+		{
+		}
+		public override void load(BinaryReader s)
+		{
+		}
+		public override void load(StreamReader s)
+		{
+		}
 		// Implements Maxout nnonlinearity that computes
 		// x -> max(x)
 		// where x is a vector of size group_size. Ideally of course,
@@ -818,9 +1003,25 @@ namespace ConvNet
 		//  this.group_size = json.group_size;
 		//  this.switches = global.zeros(this.group_size);
 		//}
-	}
+	}*/
+
 	class RegressionLayer : Layer
 	{
+		public override void getRange(Range r)
+		{
+		}
+		public override void save(BinaryWriter s)
+		{
+		}
+		public override void save(StreamWriter s)
+		{
+		}
+		public override void load(BinaryReader s)
+		{
+		}
+		public override void load(StreamReader s)
+		{
+		}
 		// implements an L2 regression cost layer,
 		// so penalizes \sum_i(||x_i - y_i||^2), where x is its input
 		// and y is the user-provided array of "correct" values.
@@ -850,7 +1051,7 @@ namespace ConvNet
 
 			// compute and accumulate gradient wrt weights and bias of this layer
 			Vol x = this.in_act;
-			x.dw = Util.zeros(x.w.Length); // zero out the gradient of input Vol
+			//x.dw = Util.zeros(x.w.Length); // zero out the gradient of input Vol
 			float loss = 0.0f;
 			//if (y != null)
 			//{
@@ -893,8 +1094,24 @@ namespace ConvNet
 		//  this.num_inputs = json.num_inputs;
 		//}
 	}
+
 	class ConvLayer : Layer
 	{
+		public override void getRange(Range r)
+		{
+		}
+		public override void save(BinaryWriter s)
+		{
+		}
+		public override void save(StreamWriter s)
+		{
+		}
+		public override void load(BinaryReader s)
+		{
+		}
+		public override void load(StreamReader s)
+		{
+		}
 		// This file contains all layers that do dot products with input,
 		// but usually in a different connectivity pattern and weight sharing
 		// schemes: 
@@ -908,8 +1125,12 @@ namespace ConvNet
 		int in_sy;
 		int stride;
 		int pad;
-		List<Vol> filters;
+		Vol[] filters;
+		MyFloat[] filters_gsum; //[]?
+		MyFloat[] filters_xsum; //[]?
 		Vol biases;
+		MyFloat bias_gsum; //[]?
+		MyFloat bias_xsum; //[]?
 		public ConvLayer(Def def)
 			: base(def)
 		{
@@ -940,12 +1161,25 @@ namespace ConvNet
 
 			// initializations
 			float bias = opt.bias_pref;
-			this.filters = new List<Vol>();
+			this.filters = new Vol[out_depth];
+			filters_gsum = new MyFloat[out_depth];
+			filters_xsum = new MyFloat[out_depth];
 			for (int i = 0; i < this.out_depth; i++)
 			{
-				this.filters.Add(new Vol(this.sx, this.sy, this.in_depth, null));
+				this.filters[i] = new Vol(this.sx, this.sy, this.in_depth, null);
+				filters_gsum[i] = MyFloat.getArray(sx * sy * in_depth);
+				filters_xsum[i] = MyFloat.getArray(sx * sy * in_depth);
+				for (int j = 0; j < sx * sy * in_depth; j++)
+				{
+					filters_gsum[i][j] = 0.0f;
+					filters_xsum[i][j] = 0.0f;
+				}
 			}
 			this.biases = new Vol(1, 1, this.out_depth, bias);
+			this.bias_gsum = MyFloat.getArray(out_depth); // last iteration gradients (used for momentum calculations)
+			this.bias_xsum = MyFloat.getArray(out_depth); // used in adadelta
+
+			this.out_act = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
 		}
 
 		public override Vol forward(Vol V, bool is_training)
@@ -953,7 +1187,7 @@ namespace ConvNet
 			// optimized code by @mdda that achieves 2x speedup over previous version
 
 			this.in_act = V;
-			Vol A = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
+			Vol A = this.out_act;//new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
 
 			int V_sx = V.sx;
 			int V_sy = V.sy;
@@ -993,14 +1227,17 @@ namespace ConvNet
 					}
 				}
 			}
-			this.out_act = A;
+			//this.out_act = A;
 			return this.out_act;
 		}
 		public override float backward(DataSet del)
 		{
 			Vol V = this.in_act;
-			V.dw = Util.zeros(V.w.Length); // zero out gradient wrt bottom data, we're about to fill it
-
+			//????????TODO 未初始化可能影响后续????????????????V.dw = Util.zeros(V.w.Length); // zero out gradient wrt bottom data, we're about to fill it
+			for (int i = 0; i < V.dw.size; i++)
+			{
+				V.dw[i] = 0;
+			}
 			int V_sx = V.sx;
 			int V_sy = V.sy;
 			int xy_stride = this.stride;
@@ -1048,54 +1285,50 @@ namespace ConvNet
 			List<ParamsAndGrads> response = new List<ParamsAndGrads>();
 			for (int i = 0; i < this.out_depth; i++)
 			{
-				response.Add(new ParamsAndGrads() { Params = this.filters[i].w, grads = this.filters[i].dw, l2_decay_mul = this.l2_decay_mul, l1_decay_mul = this.l1_decay_mul });
+				response.Add(new ParamsAndGrads()
+				{
+					params_ = this.filters[i].w,
+					grads_ = this.filters[i].dw,
+					params_size = sx * sy * in_depth,
+					gsum = filters_gsum[i],
+					xsum = filters_xsum[i],
+					l2_decay_mul = this.l2_decay_mul,
+					l1_decay_mul = this.l1_decay_mul
+				});
 			}
-			response.Add(new ParamsAndGrads() { Params = this.biases.w, grads = this.biases.dw, l1_decay_mul = 0.0f, l2_decay_mul = 0.0f });
+			response.Add(new ParamsAndGrads()
+			{
+				params_ = this.biases.w,
+				grads_ = this.biases.dw,
+				params_size = this.out_depth,
+				gsum = bias_gsum,
+				xsum = bias_xsum,
+				l1_decay_mul = 0.0f,
+				l2_decay_mul = 0.0f
+			});
 			return response;
 		}
-		//toJSON: function() {
-		//  json.sx = this.sx; // filter size in x, y dims
-		//  json.sy = this.sy;
-		//  json.stride = this.stride;
-		//  json.in_depth = this.in_depth;
-		//  json.out_depth = this.out_depth;
-		//  json.out_sx = this.out_sx;
-		//  json.out_sy = this.out_sy;
-		//  json.layer_type = this.layer_type;
-		//  json.l1_decay_mul = this.l1_decay_mul;
-		//  json.l2_decay_mul = this.l2_decay_mul;
-		//  json.pad = this.pad;
-		//  json.filters = [];
-		//  for(i=0;i<this.filters.length;i++) {
-		//    json.filters.push(this.filters[i].toJSON());
-		//  }
-		//  json.biases = this.biases.toJSON();
-		//  return json;
-		//},
-		//fromJSON: function(json) {
-		//  this.out_depth = json.out_depth;
-		//  this.out_sx = json.out_sx;
-		//  this.out_sy = json.out_sy;
-		//  this.layer_type = json.layer_type;
-		//  this.sx = json.sx; // filter size in x, y dims
-		//  this.sy = json.sy;
-		//  this.stride = json.stride;
-		//  this.in_depth = json.in_depth; // depth of input volume
-		//  this.filters = [];
-		//  this.l1_decay_mul = typeof json.l1_decay_mul !== 'undefined' ? json.l1_decay_mul : 1.0;
-		//  this.l2_decay_mul = typeof json.l2_decay_mul !== 'undefined' ? json.l2_decay_mul : 1.0;
-		//  this.pad = typeof json.pad !== 'undefined' ? json.pad : 0;
-		//  for(i=0;i<json.filters.length;i++) {
-		//    Vol v = new Vol(0,0,0,0);
-		//    v.fromJSON(json.filters[i]);
-		//    this.filters.push(v);
-		//  }
-		//  this.biases = new Vol(0,0,0,0);
-		//  this.biases.fromJSON(json.biases);
-		//}
 	}
+
+
+
 	class InputLayer : Layer
 	{
+		public override void getRange(Range r)
+		{
+		}
+		public override void save(BinaryWriter s)
+		{
+		}
+		public override void save(StreamWriter s)
+		{
+		}
+		public override void load(BinaryReader s)
+		{
+		}
+		public override void load(StreamReader s)
+		{
+		}
 		public InputLayer(Def def)
 			: base(def)
 		{
@@ -1122,22 +1355,25 @@ namespace ConvNet
 		{
 			return new List<ParamsAndGrads>();
 		}
-		//toJSON: function() {
-		//  json.out_depth = this.out_depth;
-		//  json.out_sx = this.out_sx;
-		//  json.out_sy = this.out_sy;
-		//  json.layer_type = this.layer_type;
-		//  return json;
-		//},
-		//fromJSON: function(json) {
-		//  this.out_depth = json.out_depth;
-		//  this.out_sx = json.out_sx;
-		//  this.out_sy = json.out_sy;
-		//  this.layer_type = json.layer_type; 
-		//}
 	}
+	/*
 	class DropoutLayer : Layer
 	{
+		public override void getRange(Range r)
+		{
+		}
+		public override void save(BinaryWriter s)
+		{
+		}
+		public override void save(StreamWriter s)
+		{
+		}
+		public override void load(BinaryReader s)
+		{
+		}
+		public override void load(StreamReader s)
+		{
+		}
 		// An inefficient dropout layer
 		// Note this is not most efficient implementation since the layer before
 		// computed all these activations and now we're just going to drop them :(
@@ -1220,9 +1456,25 @@ namespace ConvNet
 		//  this.layer_type = json.layer_type; 
 		//  this.drop_prob = json.drop_prob;
 		//}
-	}
+	}*/
+	/*
 	class LocalResponseNormalizationLayer : Layer
 	{
+		public override void getRange(Range r)
+		{
+		}
+		public override void save(BinaryWriter s)
+		{
+		}
+		public override void save(StreamWriter s)
+		{
+		}
+		public override void load(BinaryReader s)
+		{
+		}
+		public override void load(StreamReader s)
+		{
+		}
 		// a bit experimental layer for now. I think it works but I'm not 100%
 		// the gradient check is a bit funky. I'll look into this a bit later.
 		// Local Response Normalization in window, along depths of volumes
@@ -1355,5 +1607,5 @@ namespace ConvNet
 		//  this.layer_type = json.layer_type;
 		//}
 	}
-
+	*/
 }

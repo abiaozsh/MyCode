@@ -8,28 +8,76 @@ namespace ConvNet
 {
 	public class Util
 	{
-		public static float[] zeros(int n)
-		{
-			if (n == 0) { return new float[0]; }
-			//if(typeof ArrayBuffer === 'undefined') {
-			// lacking browser support
-			float[] arr = new float[n];
-			for (int i = 0; i < n; i++) { arr[i] = 0; }
-			return arr;
-			//} else {
-			//  return new Float64Array(n);
-			//}
-		}
 
 	}
+	public class Range
+	{
+		public float max;
+		public float min;
+	}
+	public interface Persistence
+	{
+		void getRange(Range r);
+		void save(BinaryWriter s);
+		void save(StreamWriter s);
+		void load(BinaryReader s);
+		void load(StreamReader s);
+	}
 
-	public class Vol
+	public class Vol : Persistence
 	{
 		public int sx;
 		public int sy;
 		public int depth;
-		public float[] w;
-		public float[] dw;
+		public MyFloat w;
+		public MyFloat dw;
+
+		public void getRange(Range r)
+		{
+			//for (int i = 0; i < w.Length; i++)
+			//{
+			//	if (w[i] > r.max)
+			//	{
+			//		r.max = w[i];
+			//	}
+			//	if (w[i] < r.min)
+			//	{
+			//		r.min = w[i];
+			//	}
+			//}
+		}
+
+		public void save(BinaryWriter s)
+		{
+			//for (int i = 0; i < w.Length; i++)
+			//{
+			//	s.Write(w[i]);
+			//}
+		}
+		public void load(BinaryReader s)
+		{
+			//for (int i = 0; i < w.Length; i++)
+			//{
+			//	w[i] = s.ReadSingle();
+			//}
+		}
+		public void save(StreamWriter s)
+		{
+		    //BitConverter.GetBytes(float v);
+
+			//for (int i = 0; i < w.Length; i++)
+			//{
+			//	s.WriteLine(w[i]);
+			//}
+		}
+		public void load(StreamReader s)
+		{
+			//for (int i = 0; i < w.Length; i++)
+			//{
+			//	string v = s.ReadLine();
+			//	w[i] = float.Parse(v);
+			//}
+		}
 
 		public Vol(float[] list)
 		{
@@ -37,8 +85,8 @@ namespace ConvNet
 			this.sy = 1;
 			this.depth = list.Length;
 
-			w = new float[this.depth];
-			dw = new float[this.depth];
+			w = MyFloat.getArray(this.depth);//new float[this.depth];
+			dw = MyFloat.getArray(this.depth); //new float[this.depth];
 
 			for (int i = 0; i < this.depth; i++)
 			{
@@ -49,7 +97,7 @@ namespace ConvNet
 		static bool return_v = false;
 		static float v_val = 0.0f;
 		static Random _rnd = new Random();
-		static float gaussRandom()
+		public static float gaussRandom()
 		{
 			if (return_v)
 			{
@@ -76,8 +124,8 @@ namespace ConvNet
 			this.sy = sy;
 			this.depth = depth;
 			int n = sx * sy * depth;
-			this.w = Util.zeros(n);
-			this.dw = Util.zeros(n);
+			this.w = MyFloat.getArray(n);//Util.zeros(n);
+			this.dw = MyFloat.getArray(n);//Util.zeros(n);
 			if (c == null)
 			{
 				// weight normalization is done to equalize the output
@@ -102,7 +150,7 @@ namespace ConvNet
 		public Vol clone()
 		{
 			Vol V = new Vol(this.sx, this.sy, this.depth, 0.0f);
-			int n = this.w.Length;
+			int n = this.w.size;
 			for (int i = 0; i < n; i++) { V.w[i] = this.w[i]; }
 			return V;
 		}
@@ -147,8 +195,12 @@ namespace ConvNet
 	}
 	public class ParamsAndGrads
 	{
-		public float[] Params;
-		public float[] grads;
+		public int params_size;
+		public MyFloat params_;
+		public MyFloat grads_;
+		//public int iw;
+		public MyFloat gsum; //[]?
+		public MyFloat xsum; //[]?
 		public float l1_decay_mul = 1.0f;
 		public float l2_decay_mul = 1.0f;
 	}
@@ -189,7 +241,7 @@ namespace ConvNet
 	{
 		public List<Layer> layers;
 
-		public void save(Stream s)
+		public void save(BinaryWriter s)
 		{
 			for (int i = 0; i < layers.Count; i++)
 			{
@@ -203,7 +255,7 @@ namespace ConvNet
 				layers[i].save(s);
 			}
 		}
-		public void load(Stream s)
+		public void load(BinaryReader s)
 		{
 			for (int i = 0; i < layers.Count; i++)
 			{
@@ -231,21 +283,21 @@ namespace ConvNet
 			for (int i = 0; i < defs.Count; i++)
 			{
 				Def def = defs[i];
-
-				if (def.type == "softmax" || def.type == "svm")
-				{
-					// add an fc layer here, there is no reason the user should
-					// have to worry about this and we almost always want to
-					new_defs.Add(new Def() { type = "fc", num_neurons = def.num_classes });
-				}
-
-				if (def.type == "regression")
-				{
-					// add an fc layer here, there is no reason the user should
-					// have to worry about this and we almost always want to
-					new_defs.Add(new Def() { type = "fc", num_neurons = def.num_neurons });
-				}
-
+		
+				//if (def.type == "softmax" || def.type == "svm")
+				//{
+				//	// add an fc layer here, there is no reason the user should
+				//	// have to worry about this and we almost always want to
+				//	new_defs.Add(new Def() { type = "fc", num_neurons = def.num_classes });
+				//}
+		
+				//if (def.type == "regression")
+				//{
+				//	// add an fc layer here, there is no reason the user should
+				//	// have to worry about this and we almost always want to
+				//	new_defs.Add(new Def() { type = "fc", num_neurons = def.num_neurons });
+				//}
+		
 				//if ((def.type == "fc" || def.type == "conv") && def.bias_pref == 0.0)
 				//{
 				//	//def.bias_pref = 0.0;
@@ -256,7 +308,7 @@ namespace ConvNet
 				//		// and will never get any gradient and never contribute any computation. Dead relu.
 				//	}
 				//}
-
+		
 				// if(def.tensor != null) {
 				// apply quadratic transform so that the upcoming multiply will include
 				// quadratic terms, equivalent to doing a tensor product
@@ -265,9 +317,9 @@ namespace ConvNet
 					new_defs.Add(new Def() { type = "quadtransform" });
 				}
 				//}
-
+		
 				new_defs.Add(def);
-
+		
 				//if (def.activation != null)
 				//{
 				//	if (def.activation == "relu") { new_defs.Add(new Def() { type = "relu" }); }
@@ -289,7 +341,7 @@ namespace ConvNet
 				{
 					new_defs.Add(new Def() { type = "dropout", drop_prob = def.drop_prob });
 				}
-
+		
 			}
 			return new_defs;
 		}
@@ -297,16 +349,16 @@ namespace ConvNet
 
 		public void makeLayers(List<Def> defs)
 		{
-
+		
 			// few checks for now
 			//if(defs.length<2) {console.log('ERROR! For now at least have input and softmax layers.');}
 			//if(defs[0].type !== 'input') {console.log('ERROR! For now first layer should be input.');}
-
-			defs = desugar(defs);
-
+		
+			//defs = desugar(defs);
+		
 			// create the layers
 			this.layers = new List<Layer>();
-
+		
 			for (int i = 0; i < defs.Count; i++)
 			{
 				Def def = defs[i];
@@ -317,23 +369,23 @@ namespace ConvNet
 					def.in_sy = prev.out_sy;
 					def.in_depth = prev.out_depth;
 				}
-
+		
 				switch (def.type)
 				{
 					case "fc": this.layers.Add(new FullyConnLayer(def)); break;
-					case "lrn": this.layers.Add(new LocalResponseNormalizationLayer(def)); break;
-					case "dropout": this.layers.Add(new DropoutLayer(def)); break;
+					//case "lrn": this.layers.Add(new LocalResponseNormalizationLayer(def)); break;
+					//case "dropout": this.layers.Add(new DropoutLayer(def)); break;
 					case "input": this.layers.Add(new InputLayer(def)); break;
 					case "softmax": this.layers.Add(new SoftmaxLayer(def)); break;
 					case "regression": this.layers.Add(new RegressionLayer(def)); break;
 					case "conv": this.layers.Add(new ConvLayer(def)); break;
 					case "pool": this.layers.Add(new PoolLayer(def)); break;
 					case "relu": this.layers.Add(new ReluLayer(def)); break;
-					case "sigmoid": this.layers.Add(new SigmoidLayer(def)); break;
-					case "tanh": this.layers.Add(new TanhLayer(def)); break;
-					case "maxout": this.layers.Add(new MaxoutLayer(def)); break;
+					//case "sigmoid": this.layers.Add(new SigmoidLayer(def)); break;
+					//case "tanh": this.layers.Add(new TanhLayer(def)); break;
+					//case "maxout": this.layers.Add(new MaxoutLayer(def)); break;
 					//case "quadtransform": this.layers.Add(new QuadTransformLayer(def)); break;
-					case "svm": this.layers.Add(new SVMLayer(def)); break;
+					//case "svm": this.layers.Add(new SVMLayer(def)); break;
 					default: //console.log('ERROR: UNRECOGNIZED LAYER TYPE!');
 						throw new Exception();
 				}
