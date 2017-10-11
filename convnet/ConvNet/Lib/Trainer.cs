@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace ConvNet
 {
@@ -147,7 +148,7 @@ namespace ConvNet
 
 					//3
 					// perform an update for all sets of weights
-					for (int i = 0; i < pglist.Count; i++)
+					Parallel.For(0, pglist.Count, (i) =>//for (int i = 0; i < pglist.Count; i++)
 					{
 						ParamsAndGrads pg = pglist[i]; // param, gradient, other options in future (custom learning rate etc)
 
@@ -173,48 +174,41 @@ namespace ConvNet
 
 							pg.grads_[j] = 0.0f; // zero out gradient so that we can begin accumulating anew
 						}
-					}
+					});
 				}
 				else
 				{
 					// assume SGD
 					if (this.momentum > 0.0)
 					{
-						bool useFast = false;
-						if (useFast)
+						//4
+						// perform an update for all sets of weights
+						Parallel.For(0, pglist.Count, (i) =>//for (int i = 0; i < pglist.Count; i++)
 						{
-						}
-						else
-						{
-							//4
-							// perform an update for all sets of weights
-							for (int i = 0; i < pglist.Count; i++)
+							ParamsAndGrads pg = pglist[i]; // param, gradient, other options in future (custom learning rate etc)
+
+							// learning rate for some parameters.
+							float l2_decay_mul = pg.l2_decay_mul;//typeof pg.l2_decay_mul != "undefined" ? pg.l2_decay_mul : 1.0;
+							float l1_decay_mul = pg.l1_decay_mul;//typeof pg.l1_decay_mul != "undefined" ? pg.l1_decay_mul : 1.0;
+							float l2_decay = this.l2_decay * l2_decay_mul;
+							float l1_decay = this.l1_decay * l1_decay_mul;
+							for (int j = 0; j < pg.params_size; j++)
 							{
-								ParamsAndGrads pg = pglist[i]; // param, gradient, other options in future (custom learning rate etc)
+								//l2_decay_loss += l2_decay * pg.params_[j + pg.params_idx] * pg.params_[j + pg.params_idx] / 2; // accumulate weight decay loss
+								//l1_decay_loss += l1_decay * Math.Abs(pg.params_[j + pg.params_idx]);
+								float l1grad = l1_decay * (pg.params_[j] > 0 ? 1 : -1);
+								float l2grad = l2_decay * (pg.params_[j]);
 
-								// learning rate for some parameters.
-								float l2_decay_mul = pg.l2_decay_mul;//typeof pg.l2_decay_mul != "undefined" ? pg.l2_decay_mul : 1.0;
-								float l1_decay_mul = pg.l1_decay_mul;//typeof pg.l1_decay_mul != "undefined" ? pg.l1_decay_mul : 1.0;
-								float l2_decay = this.l2_decay * l2_decay_mul;
-								float l1_decay = this.l1_decay * l1_decay_mul;
-								for (int j = 0; j < pg.params_size; j++)
-								{
-									//l2_decay_loss += l2_decay * pg.params_[j + pg.params_idx] * pg.params_[j + pg.params_idx] / 2; // accumulate weight decay loss
-									//l1_decay_loss += l1_decay * Math.Abs(pg.params_[j + pg.params_idx]);
-									float l1grad = l1_decay * (pg.params_[j] > 0 ? 1 : -1);
-									float l2grad = l2_decay * (pg.params_[j]);
+								float gij = (l2grad + l1grad + pg.grads_[j]) * one_batch_size; // raw batch gradient
 
-									float gij = (l2grad + l1grad + pg.grads_[j]) * one_batch_size; // raw batch gradient
+								// momentum update
+								float dx = this.momentum * pg.gsum[j] - this.learning_rate * gij; // step
+								pg.gsum[j] = dx; // back this up for next iteration of momentum
+								pg.params_[j] += dx; // apply corrected gradient
 
-									// momentum update
-									float dx = this.momentum * pg.gsum[j] - this.learning_rate * gij; // step
-									pg.gsum[j] = dx; // back this up for next iteration of momentum
-									pg.params_[j] += dx; // apply corrected gradient
-
-									pg.grads_[j] = 0.0f; // zero out gradient so that we can begin accumulating anew
-								}
+								pg.grads_[j] = 0.0f; // zero out gradient so that we can begin accumulating anew
 							}
-						}
+						});
 					}
 					else
 					{

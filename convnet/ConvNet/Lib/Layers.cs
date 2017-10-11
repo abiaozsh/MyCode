@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace ConvNet
 {
@@ -107,7 +108,7 @@ namespace ConvNet
 		{
 			this.in_act = V;
 
-			for (int i = 0; i < this.out_depth; i++)
+			Parallel.For(0, out_depth, (i) =>//for (int i = 0; i < this.out_depth; i++)
 			{
 				float a = 0.0f;
 				MyFloat wi = this.filters[i].w;
@@ -119,7 +120,7 @@ namespace ConvNet
 				//a += this.biases.w[i];
 				a += this.bias.w[i];
 				this.out_act.w[i] = a;
-			}
+			});
 
 			return this.out_act;
 		}
@@ -133,7 +134,7 @@ namespace ConvNet
 			}
 
 			// compute gradient wrt weights and data
-			for (int i = 0; i < this.out_depth; i++)
+			Parallel.For(0, out_depth, (i) =>//for (int i = 0; i < this.out_depth; i++)
 			{
 				//Vol tfi = this.filters[i];
 				//int iw = i * this.num_inputs;
@@ -146,7 +147,7 @@ namespace ConvNet
 					dwi[d] += V.w[d] * chain_grad; // grad wrt params
 				}
 				this.bias.dw[i] += chain_grad;
-			}
+			});
 			return 0;
 		}
 		public override List<ParamsAndGrads> getParamsAndGrads()
@@ -614,10 +615,10 @@ namespace ConvNet
 		{
 			this.in_act = V;
 
-			Vol A = this.out_act;//new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
+			//Vol A = this.out_act;//new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
 
 			int n = 0; // a counter for switches
-			for (int d = 0; d < this.out_depth; d++)
+			Parallel.For(0, this.out_depth, (d) =>//for (int d = 0; d < this.out_depth; d++)
 			{
 				int x = -this.pad;
 				int y = -this.pad;
@@ -655,10 +656,10 @@ namespace ConvNet
 						this.switchx[n] = winx;
 						this.switchy[n] = winy;
 						n++;
-						A.set(ax, ay, d, a);
+						out_act.set(ax, ay, d, a);
 					}
 				}
-			}
+			});
 			//this.out_act = A;
 			return this.out_act;
 		}
@@ -666,17 +667,17 @@ namespace ConvNet
 		{
 			// pooling layers have no parameters, so simply compute 
 			// gradient wrt data here
-			Vol V = this.in_act;
+			//Vol V = this.in_act;
 			//????????TODO 未初始化可能影响后续????????????????V.dw = Util.zeros(V.w.Length); // zero out gradient wrt data
-			for (int i = 0; i < V.dw.size; i++)
+			for (int i = 0; i < in_act.dw.size; i++)
 			{
-				V.dw[i] = 0;
+				in_act.dw[i] = 0;
 			}
 
-			Vol A = this.out_act; // computed in forward pass 
+			//Vol A = this.out_act; // computed in forward pass 
 
 			int n = 0;
-			for (int d = 0; d < this.out_depth; d++)
+			Parallel.For(0, this.out_depth, (d) =>//for (int d = 0; d < this.out_depth; d++)
 			{
 				int x = -this.pad;
 				int y = -this.pad;
@@ -687,12 +688,12 @@ namespace ConvNet
 					{
 
 						float chain_grad = this.out_act.get_grad(ax, ay, d);
-						V.add_grad(this.switchx[n], this.switchy[n], d, chain_grad);
+						in_act.add_grad(this.switchx[n], this.switchy[n], d, chain_grad);
 						n++;
 
 					}
 				}
-			}
+			});
 			return 0;
 		}
 		public override List<ParamsAndGrads> getParamsAndGrads()
@@ -774,14 +775,13 @@ namespace ConvNet
 		{
 			this.in_act = V;
 
-			Vol A = this.out_act; //new Vol(1, 1, this.out_depth, 0.0f);
+			//Vol A = this.out_act; //new Vol(1, 1, this.out_depth, 0.0f);
 
 			// compute max activation
-			MyFloat As = V.w;
 			float amax = V.w[0];
 			for (int i = 1; i < this.out_depth; i++)
 			{
-				if (As[i] > amax) amax = As[i];
+				if (V.w[i] > amax) amax = V.w[i];
 			}
 
 			// compute exponentials (carefully to not blow up)
@@ -789,7 +789,7 @@ namespace ConvNet
 			float esum = 0.0f;
 			for (int i = 0; i < this.out_depth; i++)
 			{
-				float e = (float)Math.Exp(As[i] - amax);
+				float e = (float)Math.Exp(V.w[i] - amax);
 				esum += e;
 				es[i] = e;
 			}
@@ -798,7 +798,7 @@ namespace ConvNet
 			for (int i = 0; i < this.out_depth; i++)
 			{
 				es[i] /= esum;
-				A.w[i] = es[i];
+				out_act.w[i] = es[i];
 			}
 
 			//this.es = es; // save these for backprop
@@ -830,21 +830,6 @@ namespace ConvNet
 		{
 			return new List<ParamsAndGrads>();
 		}
-		//toJSON: function() {
-		//  json.out_depth = this.out_depth;
-		//  json.out_sx = this.out_sx;
-		//  json.out_sy = this.out_sy;
-		//  json.layer_type = this.layer_type;
-		//  json.num_inputs = this.num_inputs;
-		//  return json;
-		//},
-		//fromJSON: function(json) {
-		//  this.out_depth = json.out_depth;
-		//  this.out_sx = json.out_sx;
-		//  this.out_sy = json.out_sy;
-		//  this.layer_type = json.layer_type;
-		//  this.num_inputs = json.num_inputs;
-		//}
 	}
 	/*
 	class MaxoutLayer : Layer
@@ -1160,7 +1145,6 @@ namespace ConvNet
 			//this.layer_type = "conv";
 
 			// initializations
-			float bias = opt.bias_pref;
 			this.filters = new Vol[out_depth];
 			filters_gsum = new MyFloat[out_depth];
 			filters_xsum = new MyFloat[out_depth];
@@ -1175,7 +1159,7 @@ namespace ConvNet
 					filters_xsum[i][j] = 0.0f;
 				}
 			}
-			this.biases = new Vol(1, 1, this.out_depth, bias);
+			this.biases = new Vol(1, 1, this.out_depth, opt.bias_pref);
 			this.bias_gsum = MyFloat.getArray(out_depth); // last iteration gradients (used for momentum calculations)
 			this.bias_xsum = MyFloat.getArray(out_depth); // used in adadelta
 
@@ -1187,23 +1171,20 @@ namespace ConvNet
 			// optimized code by @mdda that achieves 2x speedup over previous version
 
 			this.in_act = V;
-			Vol A = this.out_act;//new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
 
 			int V_sx = V.sx;
 			int V_sy = V.sy;
 			int xy_stride = this.stride;
 
-			for (int d = 0; d < this.out_depth; d++)
+			Parallel.For(0, this.out_depth, (d) =>//for (int d = 0; d < this.out_depth; d++)
 			{
 				Vol f = this.filters[d];
-				int x = -this.pad;
 				int y = -this.pad;
 				for (int ay = 0; ay < this.out_sy; y += xy_stride, ay++)
 				{  // xy_stride
-					x = -this.pad | 0;
+					int x = -this.pad;
 					for (int ax = 0; ax < this.out_sx; x += xy_stride, ax++)
 					{  // xy_stride
-
 						// convolve centered at this particular location
 						float a = 0.0f;
 						for (int fy = 0; fy < f.sy; fy++)
@@ -1214,19 +1195,21 @@ namespace ConvNet
 								int ox = x + fx;
 								if (oy >= 0 && oy < V_sy && ox >= 0 && ox < V_sx)
 								{
+									int fidx = ((f.sx * fy) + fx) * f.depth;
+									int Vidx = ((V_sx * oy) + ox) * V.depth;
 									for (int fd = 0; fd < f.depth; fd++)
 									{
 										// avoid function call overhead (x2) for efficiency, compromise modularity :(
-										a += f.w[((f.sx * fy) + fx) * f.depth + fd] * V.w[((V_sx * oy) + ox) * V.depth + fd];
+										a += f.w[fidx + fd] * V.w[Vidx + fd];
 									}
 								}
 							}
 						}
 						a += this.biases.w[d];
-						A.set(ax, ay, d, a);
+						out_act.set(ax, ay, d, a);
 					}
 				}
-			}
+			});
 			//this.out_act = A;
 			return this.out_act;
 		}
@@ -1242,14 +1225,13 @@ namespace ConvNet
 			int V_sy = V.sy;
 			int xy_stride = this.stride;
 
-			for (int d = 0; d < this.out_depth; d++)
+			Parallel.For(0, this.out_depth, (d) =>//for (int d = 0; d < this.out_depth; d++)
 			{
 				Vol f = this.filters[d];
-				int x = -this.pad;
 				int y = -this.pad;
 				for (int ay = 0; ay < this.out_sy; y += xy_stride, ay++)
 				{  // xy_stride
-					x = -this.pad;
+					int x = -this.pad;
 					for (int ax = 0; ax < this.out_sx; x += xy_stride, ax++)
 					{  // xy_stride
 
@@ -1263,13 +1245,13 @@ namespace ConvNet
 								int ox = x + fx;
 								if (oy >= 0 && oy < V_sy && ox >= 0 && ox < V_sx)
 								{
+									int fidx = ((f.sx * fy) + fx) * f.depth;
+									int Vidx = ((V_sx * oy) + ox) * V.depth;
 									for (int fd = 0; fd < f.depth; fd++)
 									{
 										// avoid function call overhead (x2) for efficiency, compromise modularity :(
-										int ix1 = ((V_sx * oy) + ox) * V.depth + fd;
-										int ix2 = ((f.sx * fy) + fx) * f.depth + fd;
-										f.dw[ix2] += V.w[ix1] * chain_grad;
-										V.dw[ix1] += f.w[ix2] * chain_grad;
+										f.dw[fidx + fd] += V.w[Vidx + fd] * chain_grad;
+										V.dw[Vidx + fd] += f.w[fidx + fd] * chain_grad;
 									}
 								}
 							}
@@ -1277,7 +1259,7 @@ namespace ConvNet
 						this.biases.dw[d] += chain_grad;
 					}
 				}
-			}
+			});
 			return 0;
 		}
 		public override List<ParamsAndGrads> getParamsAndGrads()
