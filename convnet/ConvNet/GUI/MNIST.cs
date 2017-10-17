@@ -71,7 +71,7 @@ namespace GUI
 			net = new Net();
 			net.makeLayers(layer_defs);
 
-			trainer = new Trainer(net, new Trainer.Option() { method = "adadelta", batch_size = 20, l2_decay = 0.001f });
+			trainer = new Trainer(net, new Trainer.Option() { method = "adadelta", batch_size = 20, l2_decay = 0.0f });//0.001f
 
 
 		}

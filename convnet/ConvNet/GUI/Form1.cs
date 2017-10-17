@@ -143,12 +143,25 @@ namespace GUI
 				Text = i.ToString();
 				Application.DoEvents();
 			}
-
+			{
+				FileStream fs = new FileStream("mnistnet.txt", FileMode.Create, FileAccess.Write);
+				StreamWriter sw = new StreamWriter(fs);
+				mnist.net.save(sw);
+				sw.Flush();
+				fs.Flush();
+				fs.Close();
+			}
 		}
 
 		private void button2_Click(object sender, EventArgs e)
 		{
-			mnist.proc();
+			//mnist.proc();
+
+			FileStream fs = new FileStream("mnistnet.txt", FileMode.Open, FileAccess.Read);
+			StreamReader sr = new StreamReader(fs);
+			mnist.net.load(sr);
+			fs.Close();
+
 		}
 	}
 }

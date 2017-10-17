@@ -17,11 +17,8 @@ namespace ConvNet
 	}
 	public interface Persistence
 	{
-		void getRange(Range r);
-		void save(BinaryWriter s);
-		void save(StreamWriter s);
-		void load(BinaryReader s);
-		void load(StreamReader s);
+		void save(TextWriter s);
+		void load(TextReader s);
 	}
 
 	public class Vol : Persistence
@@ -32,51 +29,13 @@ namespace ConvNet
 		public MyFloat w;
 		public MyFloat dw;
 
-		public void getRange(Range r)
+		public void save(TextWriter s)
 		{
-			//for (int i = 0; i < w.Length; i++)
-			//{
-			//	if (w[i] > r.max)
-			//	{
-			//		r.max = w[i];
-			//	}
-			//	if (w[i] < r.min)
-			//	{
-			//		r.min = w[i];
-			//	}
-			//}
+			w.save(s);
 		}
-
-		public void save(BinaryWriter s)
+		public void load(TextReader s)
 		{
-			//for (int i = 0; i < w.Length; i++)
-			//{
-			//	s.Write(w[i]);
-			//}
-		}
-		public void load(BinaryReader s)
-		{
-			//for (int i = 0; i < w.Length; i++)
-			//{
-			//	w[i] = s.ReadSingle();
-			//}
-		}
-		public void save(StreamWriter s)
-		{
-		    //BitConverter.GetBytes(float v);
-
-			//for (int i = 0; i < w.Length; i++)
-			//{
-			//	s.WriteLine(w[i]);
-			//}
-		}
-		public void load(StreamReader s)
-		{
-			//for (int i = 0; i < w.Length; i++)
-			//{
-			//	string v = s.ReadLine();
-			//	w[i] = float.Parse(v);
-			//}
+			w.load(s);
 		}
 
 		public Vol(float[] list)
@@ -241,28 +200,14 @@ namespace ConvNet
 	{
 		public List<Layer> layers;
 
-		public void save(BinaryWriter s)
+		public void save(TextWriter s)
 		{
 			for (int i = 0; i < layers.Count; i++)
 			{
 				layers[i].save(s);
 			}
 		}
-		public void save(StreamWriter s)
-		{
-			for (int i = 0; i < layers.Count; i++)
-			{
-				layers[i].save(s);
-			}
-		}
-		public void load(BinaryReader s)
-		{
-			for (int i = 0; i < layers.Count; i++)
-			{
-				layers[i].load(s);
-			}
-		}
-		public void load(StreamReader s)
+		public void load(TextReader s)
 		{
 			for (int i = 0; i < layers.Count; i++)
 			{
@@ -429,11 +374,7 @@ namespace ConvNet
 			List<ParamsAndGrads> response = new List<ParamsAndGrads>();
 			for (int i = 0; i < this.layers.Count; i++)
 			{
-				List<ParamsAndGrads> layer_reponse = this.layers[i].getParamsAndGrads();
-				for (int j = 0; j < layer_reponse.Count; j++)
-				{
-					response.Add(layer_reponse[j]);
-				}
+				this.layers[i].getParamsAndGrads(response);
 			}
 			return response;
 		}

@@ -30,37 +30,37 @@ namespace ConvNet
 			return sb.ToString();
 		}
 
-		void openclTest() {
-			string fda = test();
-
-
-			MyFloat f;
-			f = MyFloat.getArray(4096);
-			f[0] = 1.1f;
-			f[1] = 2.2f;
-
-			var kernel = MyFloat.getKernel("ConvNet.cl", "test1");
-			int[] param = new int[1];
-			param[0] = 3;
-			for (int i = 0; i < 10000; i++)
-			{
-				MyFloat.runKernel(kernel, 5, 1, param);
-			}
-
-			Console.WriteLine(f[0]);
-			Console.WriteLine(f[1]);
-			Console.WriteLine(f[2]);
-			Console.WriteLine(f[3]);
-			Console.WriteLine(f[4]);
-			Console.WriteLine(f[5]);
-			Console.WriteLine(f[6]);
-			Console.WriteLine(f[7]);
-			Console.WriteLine(f[8]);
-			Console.WriteLine(f[9]);
-			Console.WriteLine(f[10]);
-			Console.WriteLine(f[11]);
-			Console.WriteLine(f[12]);
-		}
+		//		void openclTest() {
+		//			string fda = test();
+		//
+		//
+		//			MyFloat f;
+		//			f = MyFloat.getArray(4096);
+		//			f[0] = 1.1f;
+		//			f[1] = 2.2f;
+		//
+		//			var kernel = MyFloat.getKernel("ConvNet.cl", "test1");
+		//			int[] param = new int[1];
+		//			param[0] = 3;
+		//			for (int i = 0; i < 10000; i++)
+		//			{
+		//				MyFloat.runKernel(kernel, 5, 1, param);
+		//			}
+		//
+		//			Console.WriteLine(f[0]);
+		//			Console.WriteLine(f[1]);
+		//			Console.WriteLine(f[2]);
+		//			Console.WriteLine(f[3]);
+		//			Console.WriteLine(f[4]);
+		//			Console.WriteLine(f[5]);
+		//			Console.WriteLine(f[6]);
+		//			Console.WriteLine(f[7]);
+		//			Console.WriteLine(f[8]);
+		//			Console.WriteLine(f[9]);
+		//			Console.WriteLine(f[10]);
+		//			Console.WriteLine(f[11]);
+		//			Console.WriteLine(f[12]);
+		//		}
 
 		static void Main(string[] args)
 		{
@@ -75,9 +75,17 @@ namespace ConvNet
 			MyFloat.Init();
 
 
-			Img_reg.Proc();
+			//Img_reg.Proc();
 
+			MyRnn r = new MyRnn();
 
+			r.reinit();
+			for (int i = 0; ; i++)
+			{
+				r.tick();
+			}
+
+			Console.ReadLine();
 		}
 	}
 }
