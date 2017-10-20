@@ -21,9 +21,11 @@ namespace Lib
 		public int d;
 		public MyFloat w;
 		public MyFloat dw;
+		public Object parent;
 
-		public Mat(int n, int d)
+		public Mat(int n, int d, Object parent)
 		{
+		this.parent = parent;
 			this.n = n;
 			this.d = d;
 			this.w = MyFloat.getArray(n * d);
@@ -35,8 +37,8 @@ namespace Lib
 	public class Graph
 	{
 
-		bool needs_backprop;
-		List<Backward> backprop = new List<Backward>();//??
+		public bool needs_backprop;
+		public List<Backward> backprop = new List<Backward>();//??
 
 		public Graph(bool needs_backprop)
 		{
@@ -62,8 +64,8 @@ namespace Lib
 			public Mat _out;
 			public void backward()
 			{
-				Parallel.For(0, m1.n, (i) =>
-				//for (var i = 0; i < m1.n; i++)
+				//Parallel.For(0, m1.n, (i) =>
+				for (var i = 0; i < m1.n; i++)
 				{
 					int m2_d_i = m2.d * i;
 					int m1_d_i = m1.d * i;
@@ -78,7 +80,7 @@ namespace Lib
 						}
 					}
 				}
-				);
+				//);
 			}
 		}
 
@@ -87,9 +89,9 @@ namespace Lib
 			// multiply matrices m1 * m2
 			//assert(m1.d === m2.n, 'matmul dimensions misaligned');
 
-			var _out = new Mat(m1.n, m2.d);
-			Parallel.For(0, m1.n, (i) =>
-			//for (var i = 0; i < m1.n; i++)
+			var _out = new Mat(m1.n, m2.d,"temp mul");
+			//Parallel.For(0, m1.n, (i) =>
+			for (var i = 0; i < m1.n; i++)
 			{
 				int m1_d_i = m1.d * i;
 				int m2_d_i = m2.d * i;
@@ -104,7 +106,7 @@ namespace Lib
 					_out.w[m2_d_i + j] = dot;
 				}
 			}
-			);
+			//);
 
 			if (this.needs_backprop)
 			{
@@ -124,21 +126,18 @@ namespace Lib
 			public Mat _out;
 			public void backward()
 			{
-
 				for (int i = 0; i < m1.w.size; i++)
 				{
 					m1.dw[i] += _out.dw[i];
 					m2.dw[i] += _out.dw[i];
 				}
-
 			}
 		}
 
 		public Mat add(Mat m1, Mat m2)
 		{
 			//assert(m1.w.length === m2.w.length);
-
-			var _out = new Mat(m1.n, m1.d);
+			var _out = new Mat(m1.n, m1.d, "temp add");
 			for (int i = 0; i < m1.w.size; i++)
 			{
 				_out.w[i] = m1.w[i] + m2.w[i];
@@ -154,7 +153,6 @@ namespace Lib
 			return _out;
 		}
 
-
 		class SigBackward : Backward
 		{
 			public Mat m;
@@ -162,30 +160,25 @@ namespace Lib
 			public int n;
 			public void backward()
 			{
-
 				for (var i = 0; i < n; i++)
 				{
 					// grad for z = tanh(x) is (1 - z^2)
 					var mwi = _out.w[i];
 					m.dw[i] += mwi * (1.0f - mwi) * _out.dw[i];
 				}
-
 			}
 		}
 
-		public float sig(float x)
-		{
-			// helper function for computing sigmoid
-			return 1.0f / (1.0f + (float)Math.Exp(-x));
-		}
 		public Mat sigmoid(Mat m)
 		{
 			// sigmoid nonlinearity
-			var _out = new Mat(m.n, m.d);
+			var _out = new Mat(m.n, m.d, "temp sig");
 			var n = m.w.size;
 			for (var i = 0; i < n; i++)
 			{
-				_out.w[i] = sig(m.w[i]);
+				// helper function for computing sigmoid
+				//return 1.0f / (1.0f + (float)Math.Exp(-x));
+				_out.w[i] = 1.0f / (1.0f + (float)Math.Exp(-m.w[i]));//sig(m.w[i]);
 			}
 
 			if (this.needs_backprop)
@@ -199,8 +192,6 @@ namespace Lib
 			return _out;
 		}
 
-
-
 		class EltmulBackward : Backward
 		{
 			public Mat m1;
@@ -208,21 +199,18 @@ namespace Lib
 			public Mat _out;
 			public void backward()
 			{
-
 				for (int i = 0, n = m1.w.size; i < n; i++)
 				{
 					m1.dw[i] += m2.w[i] * _out.dw[i];
 					m2.dw[i] += m1.w[i] * _out.dw[i];
 				}
-
 			}
 		}
 
 		public Mat eltmul(Mat m1, Mat m2)
 		{
 			//assert(m1.w.length === m2.w.length);
-
-			var _out = new Mat(m1.n, m1.d);
+			var _out = new Mat(m1.n, m1.d, "temp eltmul");
 			for (int i = 0, n = m1.w.size; i < n; i++)
 			{
 				_out.w[i] = m1.w[i] * m2.w[i];
@@ -238,7 +226,6 @@ namespace Lib
 			return _out;
 		}
 
-
 		class TanhBackward : Backward
 		{
 			public Mat m;
@@ -246,21 +233,19 @@ namespace Lib
 			public int n;
 			public void backward()
 			{
-
 				for (var i = 0; i < n; i++)
 				{
 					// grad for z = tanh(x) is (1 - z^2)
 					var mwi = _out.w[i];
 					m.dw[i] += (1.0f - mwi * mwi) * _out.dw[i];
 				}
-
 			}
 		}
 
 		public Mat tanh(Mat m)
 		{
 			// tanh nonlinearity
-			var _out = new Mat(m.n, m.d);
+			var _out = new Mat(m.n, m.d, "temp tanh");
 			var n = m.w.size;
 			for (var i = 0; i < n; i++)
 			{
@@ -296,7 +281,7 @@ namespace Lib
 
 		public Mat relu(Mat m)
 		{
-			var _out = new Mat(m.n, m.d);
+			var _out = new Mat(m.n, m.d, "temp relu");
 			var n = m.w.size;
 			for (var i = 0; i < n; i++)
 			{
@@ -332,7 +317,7 @@ namespace Lib
 			// pluck a row of m with index ix and return it as col vector
 			//assert(ix >= 0 && ix < m.n);
 			var d = m.d;
-			var _out = new Mat(d, 1);
+			var _out = new Mat(d, 1, "temp rowPluck");
 			for (int i = 0, n = d; i < n; i++) { _out.w[i] = m.w[d * ix + i]; } // copy over the data
 
 			if (this.needs_backprop)
@@ -375,7 +360,7 @@ namespace Lib
 				var m = k.Value;//model[k]; // mat ref
 				if (!(this.step_cache.ContainsKey(k.Key)))
 				{
-					this.step_cache[k.Key] = new Mat(m.n, m.d);
+					this.step_cache[k.Key] = new Mat(m.n, m.d, this.step_cache);
 				}
 				var s = this.step_cache[k.Key];
 				for (int i = 0, n = m.w.size; i < n; i++)
@@ -432,9 +417,9 @@ namespace Lib
 			}
 		}
 
-		public static Mat RandMat(int n, int d, int mu, float std)
+		public static Mat RandMat(int n, int d, int mu, float std,Object parent)
 		{
-			var m = new Mat(n, d);
+			var m = new Mat(n, d, parent);
 			fillRand(m, -std, std); // kind of :P
 			return m;
 		}
@@ -450,23 +435,23 @@ namespace Lib
 				hidden_size = hidden_sizes[d];
 
 				// gates parameters
-				model["Wix" + d] = RandMat(hidden_size, prev_size, 0, 0.08f);
-				model["Wih" + d] = RandMat(hidden_size, hidden_size, 0, 0.08f);
-				model["bi" + d] = new Mat(hidden_size, 1);
-				model["Wfx" + d] = RandMat(hidden_size, prev_size, 0, 0.08f);
-				model["Wfh" + d] = RandMat(hidden_size, hidden_size, 0, 0.08f);
-				model["bf" + d] = new Mat(hidden_size, 1);
-				model["Wox" + d] = RandMat(hidden_size, prev_size, 0, 0.08f);
-				model["Woh" + d] = RandMat(hidden_size, hidden_size, 0, 0.08f);
-				model["bo" + d] = new Mat(hidden_size, 1);
+				model["Wix" + d] = RandMat(hidden_size, prev_size, 0, 0.08f, "Wix" + d);
+				model["Wih" + d] = RandMat(hidden_size, hidden_size, 0, 0.08f,"Wih" + d);
+				model["bi" + d] = new Mat(hidden_size, 1,"bi" + d);
+				model["Wfx" + d] = RandMat(hidden_size, prev_size, 0, 0.08f, "Wfx" + d);
+				model["Wfh" + d] = RandMat(hidden_size, hidden_size, 0, 0.08f, "Wfh" + d);
+				model["bf" + d] = new Mat(hidden_size, 1, "bf" + d);
+				model["Wox" + d] = RandMat(hidden_size, prev_size, 0, 0.08f, "Wox" + d);
+				model["Woh" + d] = RandMat(hidden_size, hidden_size, 0, 0.08f, "Woh" + d);
+				model["bo" + d] = new Mat(hidden_size, 1, "bo" + d);
 				// cell write params
-				model["Wcx" + d] = RandMat(hidden_size, prev_size, 0, 0.08f);
-				model["Wch" + d] = RandMat(hidden_size, hidden_size, 0, 0.08f);
-				model["bc" + d] = new Mat(hidden_size, 1);
+				model["Wcx" + d] = RandMat(hidden_size, prev_size, 0, 0.08f, "Wcx" + d);
+				model["Wch" + d] = RandMat(hidden_size, hidden_size, 0, 0.08f, "Wch" + d);
+				model["bc" + d] = new Mat(hidden_size, 1, "bc" + d);
 			}
 			// decoder params
-			model["Whd"] = RandMat(output_size, hidden_size, 0, 0.08f);
-			model["bd"] = new Mat(output_size, 1);
+			model["Whd"] = RandMat(output_size, hidden_size, 0, 0.08f, "Whd");
+			model["bd"] = new Mat(output_size, 1, "bd");
 			return model;
 		}
 
@@ -493,8 +478,8 @@ namespace Lib
 				cell_prevs = new List<Mat>();
 				for (var d = 0; d < hidden_sizes.Length; d++)
 				{
-					hidden_prevs.Add(new Mat(hidden_sizes[d], 1));
-					cell_prevs.Add(new Mat(hidden_sizes[d], 1));
+					hidden_prevs.Add(new Mat(hidden_sizes[d], 1, hidden_prevs));
+					cell_prevs.Add(new Mat(hidden_sizes[d], 1, cell_prevs));
 				}
 			}
 			else
@@ -512,28 +497,64 @@ namespace Lib
 				var hidden_prev = hidden_prevs[d];
 				var cell_prev = cell_prevs[d];
 
-				// input gate
-				var h0 = G.mul(model["Wix" + d], input_vector);
-				var h1 = G.mul(model["Wih" + d], hidden_prev);
-				var input_gate = G.sigmoid(G.add(G.add(h0, h1), model["bi" + d]));
+				Graph GC = new Graph(true);
+				Graph GO = new Graph(true);
+				Graph GF = new Graph(true);
+				Graph GI = new Graph(true);
+				Graph G3 = new Graph(true);
+				Mat cell_write = null;
+				Mat output_gate = null;
+				Mat retain_cell = null;
+				Mat input_gate = null;
+				Parallel.For(0, 4, (i) =>
+				{
+					if (i == 0)
+					{
+						// input gate
+						var h0 = GI.mul(model["Wix" + d], input_vector);
+						var h1 = GI.mul(model["Wih" + d], hidden_prev);
+						var h01 = GI.add(h0, h1);
+						var tmp = GI.add(h01, model["bi" + d]);
+						input_gate = GI.sigmoid(tmp);
+					}
+					if (i == 1)
+					{
+						// forget gate
+						var h0 = GF.mul(model["Wfx" + d], input_vector);
+						var h1 = GF.mul(model["Wfh" + d], hidden_prev);
+						var h01 = GF.add(h0, h1);
+						var tmp = GF.add(h01, model["bf" + d]);
+						var forget_gate = GF.sigmoid(tmp);
+						retain_cell = G3.eltmul(forget_gate, cell_prev); // what do we keep from cell
+					}
+					if (i == 2)
+					{
+						// output gate
+						var h0 = GO.mul(model["Wox" + d], input_vector);
+						var h1 = GO.mul(model["Woh" + d], hidden_prev);
+						var h01 = GO.add(h0, h1);
+						var tmp = GO.add(h01, model["bo" + d]);
+						output_gate = GO.sigmoid(tmp);
+					}
+					if (i == 3)
+					{
+						// write operation on cells
+						var h0 = GC.mul(model["Wcx" + d], input_vector);
+						var h1 = GC.mul(model["Wch" + d], hidden_prev);
+						var h01 = GC.add(h0, h1);
+						var tmp = GC.add(h01, model["bc" + d]);
+						cell_write = GC.tanh(tmp);
+					}
+				});
 
-				// forget gate
-				var h2 = G.mul(model["Wfx" + d], input_vector);
-				var h3 = G.mul(model["Wfh" + d], hidden_prev);
-				var forget_gate = G.sigmoid(G.add(G.add(h2, h3), model["bf" + d]));
+				G.backprop.AddRange(GI.backprop);
+				G.backprop.AddRange(GF.backprop);
+				G.backprop.AddRange(GO.backprop);
+				G.backprop.AddRange(GC.backprop);
 
-				// output gate
-				var h4 = G.mul(model["Wox" + d], input_vector);
-				var h5 = G.mul(model["Woh" + d], hidden_prev);
-				var output_gate = G.sigmoid(G.add(G.add(h4, h5), model["bo" + d]));
-
-				// write operation on cells
-				var h6 = G.mul(model["Wcx" + d], input_vector);
-				var h7 = G.mul(model["Wch" + d], hidden_prev);
-				var cell_write = G.tanh(G.add(G.add(h6, h7), model["bc" + d]));
-
+				G.backprop.AddRange(G3.backprop);
+				
 				// compute new cell activation
-				var retain_cell = G.eltmul(forget_gate, cell_prev); // what do we keep from cell
 				var write_cell = G.eltmul(input_gate, cell_write); // what do we write to cell
 				var cell_d = G.add(retain_cell, write_cell); // new cell contents
 
@@ -551,76 +572,76 @@ namespace Lib
 			return new HCO() { h = hidden, c = cell, o = output };
 		}
 
-		public static Model initRNN(int input_size, int[] hidden_sizes, int output_size)
-		{
-			// hidden size should be a list
-			int hidden_size = 0;
-			Model model = new Model();
-			for (var d = 0; d < hidden_sizes.Length; d++)
-			{ // loop over depths
-				var prev_size = d == 0 ? input_size : hidden_sizes[d - 1];
-				hidden_size = hidden_sizes[d];
-				model["Wxh" + d] = RandMat(hidden_size, prev_size, 0, 0.08f);
-				model["Whh" + d] = RandMat(hidden_size, hidden_size, 0, 0.08f);
-				model["bhh" + d] = new Mat(hidden_size, 1);
-			}
-			// decoder params
-			model["Whd"] = RandMat(output_size, hidden_size, 0, 0.08f);
-			model["bd"] = new Mat(output_size, 1);
-			return model;
-		}
+		//public static Model initRNN(int input_size, int[] hidden_sizes, int output_size)
+		//{
+		//	// hidden size should be a list
+		//	int hidden_size = 0;
+		//	Model model = new Model();
+		//	for (var d = 0; d < hidden_sizes.Length; d++)
+		//	{ // loop over depths
+		//		var prev_size = d == 0 ? input_size : hidden_sizes[d - 1];
+		//		hidden_size = hidden_sizes[d];
+		//		model["Wxh" + d] = RandMat(hidden_size, prev_size, 0, 0.08f);
+		//		model["Whh" + d] = RandMat(hidden_size, hidden_size, 0, 0.08f);
+		//		model["bhh" + d] = new Mat(hidden_size, 1);
+		//	}
+		//	// decoder params
+		//	model["Whd"] = RandMat(output_size, hidden_size, 0, 0.08f);
+		//	model["bd"] = new Mat(output_size, 1);
+		//	return model;
+		//}
 
-		public static HCO forwardRNN(Graph G, Model model, int[] hidden_sizes, Mat x, HCO prev)
-		{
-			// forward prop for a single tick of RNN
-			// G is graph to append ops to
-			// model contains RNN parameters
-			// x is 1D column vector with observation
-			// prev is a struct containing hidden activations from last step
-
-			List<Mat> hidden_prevs;
-
-			if (prev == null)
-			{
-				hidden_prevs = new List<Mat>();
-				for (var d = 0; d < hidden_sizes.Length; d++)
-				{
-					hidden_prevs.Add(new Mat(hidden_sizes[d], 1));
-				}
-			}
-			else
-			{
-				hidden_prevs = prev.h;
-			}
-
-			List<Mat> hidden = new List<Mat>();
-			for (var d = 0; d < hidden_sizes.Length; d++)
-			{
-
-				var input_vector = d == 0 ? x : hidden[d - 1];
-				var hidden_prev = hidden_prevs[d];
-
-				var h0 = G.mul(model["Wxh" + d], input_vector);
-				var h1 = G.mul(model["Whh" + d], hidden_prev);
-				var h01 = G.add(h0, h1);
-				var tmp = G.add(h01, model["bhh" + d]);
-				var hidden_d = G.relu(tmp);
-
-				hidden.Add(hidden_d);
-			}
-
-			// one decoder to outputs at end
-			var tmp2 = G.mul(model["Whd"], hidden[hidden.Count - 1]);
-			var output = G.add(tmp2, model["bd"]);
-
-			// return cell memory, hidden representation and output
-			return new HCO() { h = hidden, o = output };
-		}
+		//public static HCO forwardRNN(Graph G, Model model, int[] hidden_sizes, Mat x, HCO prev)
+		//{
+		//	// forward prop for a single tick of RNN
+		//	// G is graph to append ops to
+		//	// model contains RNN parameters
+		//	// x is 1D column vector with observation
+		//	// prev is a struct containing hidden activations from last step
+		//
+		//	List<Mat> hidden_prevs;
+		//
+		//	if (prev == null)
+		//	{
+		//		hidden_prevs = new List<Mat>();
+		//		for (var d = 0; d < hidden_sizes.Length; d++)
+		//		{
+		//			hidden_prevs.Add(new Mat(hidden_sizes[d], 1));
+		//		}
+		//	}
+		//	else
+		//	{
+		//		hidden_prevs = prev.h;
+		//	}
+		//
+		//	List<Mat> hidden = new List<Mat>();
+		//	for (var d = 0; d < hidden_sizes.Length; d++)
+		//	{
+		//
+		//		var input_vector = d == 0 ? x : hidden[d - 1];
+		//		var hidden_prev = hidden_prevs[d];
+		//
+		//		var h0 = G.mul(model["Wxh" + d], input_vector);
+		//		var h1 = G.mul(model["Whh" + d], hidden_prev);
+		//		var h01 = G.add(h0, h1);
+		//		var tmp = G.add(h01, model["bhh" + d]);
+		//		var hidden_d = G.relu(tmp);
+		//
+		//		hidden.Add(hidden_d);
+		//	}
+		//
+		//	// one decoder to outputs at end
+		//	var tmp2 = G.mul(model["Whd"], hidden[hidden.Count - 1]);
+		//	var output = G.add(tmp2, model["bd"]);
+		//
+		//	// return cell memory, hidden representation and output
+		//	return new HCO() { h = hidden, o = output };
+		//}
 
 
 		public static Mat softmax(Mat m)
 		{
-			var _out = new Mat(m.n, m.d); // probability volume
+			var _out = new Mat(m.n, m.d, "temp softmax"); // probability volume
 			var maxval = -999999.0f;
 			for (int i = 0, n = m.w.size; i < n; i++) { if (m.w[i] > maxval) maxval = m.w[i]; }
 

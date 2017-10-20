@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -93,7 +94,7 @@ namespace ConvNet
 		{
 			// letter embedding vectors
 			Model model = new Model();
-			model["Wil"] = RNN.RandMat(input_size, letter_size, 0, 0.08f);
+			model["Wil"] = RNN.RandMat(input_size, letter_size, 0, 0.08f, "Wil");
 
 			//if(generator === 'rnn') {
 			//Model rnn = RNN.initRNN(letter_size, hidden_sizes, output_size);
@@ -208,7 +209,7 @@ namespace ConvNet
 		}
 
 		int idx = 0;
-
+		Stopwatch stopwatch = new Stopwatch();
 		public void tick()
 		{
 
@@ -236,6 +237,8 @@ namespace ConvNet
 			// evaluate now and then
 			if (idx % 50 == 0)
 			{
+				stopwatch.Stop();
+				Console.WriteLine("time:" + stopwatch.Elapsed + "   epoch: " + (idx) + "   cost:" + cost);
 				string samples = "";
 				// draw samples
 				for (var q = 0; q < 5; q++)
@@ -244,7 +247,6 @@ namespace ConvNet
 					//var pred_div = '<div class="apred">'+pred+'</div>'
 					samples += pred;
 				}
-				Console.WriteLine("epoch: " + (idx));
 				Console.WriteLine(samples);
 
 				samples = "epoch: " + (idx) + samples + "\r\n";
@@ -253,6 +255,9 @@ namespace ConvNet
 				fs.Write(byteArray, 0, byteArray.Length);
 				fs.Flush();
 				fs.Close();
+
+				stopwatch.Reset();
+				stopwatch.Start();
 			}
 			//if (idx % 10 == 0)
 			//{

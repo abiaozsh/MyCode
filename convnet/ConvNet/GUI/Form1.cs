@@ -26,8 +26,6 @@ namespace GUI
 		private void Form1_Load(object sender, EventArgs e)
 		{
 
-
-			this.MouseWheel += Form1_MouseWheel;
 			try
 			{
 				mnist.Init();
@@ -107,27 +105,17 @@ namespace GUI
 		{
 			try
 			{
+				if (e.Button == System.Windows.Forms.MouseButtons.Left) { 
 				pictureBox1.Image = _getBmp(e.X, e.Y);
-				var v1 = mnist.net.forward(_getImg(e.X, e.Y), false);
+				var v1 = mnist.net.forward(_getImg(e.X, e.Y));
 				String s = mnist.report(v1);
 				textBox1.Text = (s);
+				}
 			}
 			catch (Exception ex)
 			{
 				ex.ToString();
 			}
-		}
-
-		int idx = 10000;
-		void Form1_MouseWheel(object sender, MouseEventArgs e)
-		{
-			if (e.Delta > 0) idx++; else idx--;
-			pictureBox1.Image = mnist.getBmp(idx);
-			int val = mnist.getLbl(idx);
-			var v1 = mnist.net.forward(mnist.getImg(idx), false);
-			String s = mnist.report(v1);
-			textBox1.Text = (val + "\r\n" + s);
-
 		}
 
 		private void pictureBox1_Click(object sender, EventArgs e)

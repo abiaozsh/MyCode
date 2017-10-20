@@ -12,29 +12,30 @@ namespace ImgReg
 	{
 		public static void Proc()
 		{
+		Net net = null;
 
-			List<Def> layer_defs = new List<Def>();
-			layer_defs.Add(new Def { type = "input", out_sx = 1, out_sy = 1, out_depth = 2 }); // 2 inputs= x, y \n\
-			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });// relus like a bit of positive bias to get gradients early
-			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });// otherwise it's technically possible that a relu unit will never turn on (by chance)
-			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });// and will never get any gradient and never contribute any computation. Dead relu.
-			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });
-			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });
-			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });
-			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });
-			layer_defs.Add(new Def { type = "relu" });
-
-			layer_defs.Add(new Def { type = "fc", num_neurons = 3 });
-			layer_defs.Add(new Def { type = "regression", num_neurons = 3 }); // 3 outputs= r,g,b \n\
-
-			Net net = new Net();
-			net.makeLayers(layer_defs);
+//			List<Def> layer_defs = new List<Def>();
+//			layer_defs.Add(new Def { type = "input", out_sx = 1, out_sy = 1, out_depth = 2 }); // 2 inputs= x, y \n\
+//			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });// relus like a bit of positive bias to get gradients early
+//			layer_defs.Add(new Def { type = "relu" });
+//			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });// otherwise it's technically possible that a relu unit will never turn on (by chance)
+//			layer_defs.Add(new Def { type = "relu" });
+//			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });// and will never get any gradient and never contribute any computation. Dead relu.
+//			layer_defs.Add(new Def { type = "relu" });
+//			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });
+//			layer_defs.Add(new Def { type = "relu" });
+//			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });
+//			layer_defs.Add(new Def { type = "relu" });
+//			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });
+//			layer_defs.Add(new Def { type = "relu" });
+//			layer_defs.Add(new Def { type = "fc", num_neurons = 20, bias_pref = 0.1f });
+//			layer_defs.Add(new Def { type = "relu" });
+//
+//			layer_defs.Add(new Def { type = "fc", num_neurons = 3 });
+//			layer_defs.Add(new Def { type = "regression", num_neurons = 3 }); // 3 outputs= r,g,b \n\
+//
+//			Net net = new Net();
+//			net.makeLayers(layer_defs);
 
 			//{
 			//	FileStream fs = new FileStream("d:\\out.txt", FileMode.Open, FileAccess.Read);
@@ -140,7 +141,7 @@ namespace ImgReg
 				{
 					v.w[1] = (y - H / 2.0f) / H;
 
-					Vol r = net.forward(v, false);
+					Vol r = net.forward(v);
 					int R = (int)(255 * r.w[0]);
 					int G = (int)(255 * r.w[1]);
 					int B = (int)(255 * r.w[2]);

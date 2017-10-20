@@ -11,6 +11,9 @@ namespace ConvNet
 
 	public abstract class Layer : Persistence
 	{
+		public Layer in_layer;
+		public Layer out_layer;
+
 		public int out_sx;
 		public int out_sy;
 		public int out_depth;
@@ -18,14 +21,23 @@ namespace ConvNet
 		public Vol out_act;
 		public float l1_decay_mul;
 		public float l2_decay_mul;
-		public abstract Vol forward(Vol V, bool is_training);
-		public abstract float backward(DataSet y);
+		public abstract void init();
+		public abstract Vol forward(Vol V);
+		public abstract void backward();
+		//public float backwardData(DataSet y){return 0;}
 		public abstract void getParamsAndGrads(List<ParamsAndGrads> pg);
 		public abstract void save(TextWriter s);
 		public abstract void load(TextReader s);
 	}
 
-	class FullyConnLayer : Layer
+	public abstract class LastLayer : Layer
+	{
+		public abstract void setData(DataSet y);
+
+		public abstract float getLoss();
+	}
+
+	public class FullyConnLayer : Layer
 	{
 		public override void save(TextWriter s)
 		{
@@ -53,20 +65,23 @@ namespace ConvNet
 
 		public int num_inputs;
 
-		public FullyConnLayer(Def def)
+		float bias_pref;
+		public FullyConnLayer(int num_neurons = 0, float bias_pref = 0.0f)
 		{
-			Def opt = def;
 
 			// required
 			// ok fine we will allow 'filters' as the word as well
-			this.out_depth = opt.num_neurons != 0 ? opt.num_neurons : opt.filters;
+			this.out_depth = num_neurons;
 
 			// optional 
-			this.l1_decay_mul = opt.l1_decay_mul;
-			this.l2_decay_mul = opt.l2_decay_mul;
+			//this.l1_decay_mul = opt.l1_decay_mul;
+			//this.l2_decay_mul = opt.l2_decay_mul;
 
-			// computed
-			this.num_inputs = opt.in_sx * opt.in_sy * opt.in_depth;
+			this.bias_pref = bias_pref;
+		}
+		public override void init()
+		{
+			this.num_inputs = in_layer.out_sx * in_layer.out_sy * in_layer.out_depth;
 			this.out_sx = 1;
 			this.out_sy = 1;
 
@@ -86,11 +101,11 @@ namespace ConvNet
 				}
 			}
 
-			this.bias = new Vol(1, 1, this.out_depth, opt.bias_pref);
+			this.bias = new Vol(1, 1, this.out_depth, bias_pref);
 			this.bias_gsum = MyFloat.getArray(out_depth); // last iteration gradients (used for momentum calculations)
 			this.bias_xsum = MyFloat.getArray(out_depth); // used in adadelta
 
-			for (int j = 0; j < num_inputs; j++)
+			for (int j = 0; j < out_depth; j++)
 			{
 				bias_gsum[j] = 0.0f;
 				bias_xsum[j] = 0.0f;
@@ -99,51 +114,57 @@ namespace ConvNet
 			this.out_act = new Vol(1, 1, this.out_depth, 0.0f);
 		}
 
-		public override Vol forward(Vol V, bool is_training)
+		public override Vol forward(Vol V)
 		{
 			this.in_act = V;
 
-			Parallel.For(0, out_depth, (i) =>//for (int i = 0; i < this.out_depth; i++)
+			for (int i = 0; i < out_act.w.size; i++)
 			{
-				float a = 0.0f;
-				MyFloat wi = this.filters[i].w;
+				out_act.w[i] = 0;
+			}
+
+			//for (int i = 0; i < this.out_depth; i++)
+			Parallel.For(0, out_depth, (i) =>
+			{
+				//float a = 0.0f;
 				//int iw = i * this.num_inputs;
 				for (int d = 0; d < this.num_inputs; d++)
 				{
-					a += V.w[d] * wi[d]; // for efficiency use Vols directly for now
+					out_act.w[i] += this.filters[i].w[d] * in_act.w[d]; // for efficiency use Vols directly for now
 				}
 				//a += this.biases.w[i];
-				a += this.bias.w[i];
-				this.out_act.w[i] = a;
+				out_act.w[i] += this.bias.w[i];
+				//this.out_act.w[i] = a;
 			});
 
 			return this.out_act;
 		}
-		public override float backward(DataSet y)
+		public override void backward()
 		{
-			Vol V = this.in_act;
+			//Vol V = this.in_act;
 			//V.dw = Util.zeros(V.w.Length); // zero out the gradient in input Vol
-			for (int d = 0; d < V.w.size; d++)
+			for (int d = 0; d < in_act.w.size; d++)
 			{
-				V.dw[d] = 0;
+				in_act.dw[d] = 0;
 			}
 
 			// compute gradient wrt weights and data
-			Parallel.For(0, out_depth, (i) =>//for (int i = 0; i < this.out_depth; i++)
+			//for (int i = 0; i < this.out_depth; i++)
+			Parallel.For(0, out_depth, (i) =>
 			{
 				//Vol tfi = this.filters[i];
 				//int iw = i * this.num_inputs;
-				MyFloat wi = this.filters[i].w;
-				MyFloat dwi = this.filters[i].dw;
-				float chain_grad = this.out_act.dw[i];
+				//MyFloat wi = this.filters[i].w;
+				//MyFloat dwi = this.filters[i].dw;
+				//float chain_grad = this.out_act.dw[i];
 				for (int d = 0; d < this.num_inputs; d++)
 				{
-					V.dw[d] += wi[d] * chain_grad; // grad wrt input data
-					dwi[d] += V.w[d] * chain_grad; // grad wrt params
+					in_act         .dw[d] += this.filters[i].w[d] * this.out_act.dw[i]; // grad wrt input data
+
+					this.filters[i].dw[d] += in_act         .w[d] * this.out_act.dw[i]; // grad wrt params
 				}
-				this.bias.dw[i] += chain_grad;
+				this.bias.dw[i] += this.out_act.dw[i];
 			});
-			return 0;
 		}
 		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
 		{
@@ -175,7 +196,7 @@ namespace ConvNet
 			});
 		}
 	}
-	class ReluLayer : Layer
+	public class ReluLayer : Layer
 	{
 		public override void save(TextWriter s)
 		{
@@ -186,20 +207,21 @@ namespace ConvNet
 		// Implements ReLU nonlinearity elementwise
 		// x -> max(0, x)
 		// the output is in [0, inf)
-		public ReluLayer(Def def)
+		public ReluLayer()
 		{
-			Def opt = def;
-
+		}
+		public override void init()
+		{
 			// computed
-			this.out_sx = opt.in_sx;
-			this.out_sy = opt.in_sy;
-			this.out_depth = opt.in_depth;
+			this.out_sx = in_layer.out_sx;
+			this.out_sy = in_layer.out_sy;
+			this.out_depth = in_layer.out_depth;
 			//this.layer_type = "relu";
 
 			this.out_act = new Vol(out_sx, out_sy, out_depth, null);
 		}
 
-		public override Vol forward(Vol V, bool is_training)
+		public override Vol forward(Vol V)
 		{
 			this.in_act = V;
 
@@ -221,7 +243,7 @@ namespace ConvNet
 			//this.out_act = V2;
 			return this.out_act;
 		}
-		public override float backward(DataSet y)
+		public override void backward()
 		{
 			Vol V = this.in_act; // we need to set dw of this
 			Vol V2 = this.out_act;
@@ -233,13 +255,12 @@ namespace ConvNet
 				if (V2.w[i] <= 0) V.dw[i] = 0; // threshold
 				else V.dw[i] = V2.dw[i];
 			}
-			return 0;
 		}
 		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
 		{
 		}
 	}
-	class PoolLayer : Layer
+	public class PoolLayer : Layer
 	{
 		public override void save(TextWriter s)
 		{
@@ -247,36 +268,37 @@ namespace ConvNet
 		public override void load(TextReader s)
 		{
 		}
-		public int sx;
-		public int sy;
+		//public int sx;
+		//public int sy;
 		public int in_depth;
 		public int in_sx;
 		public int in_sy;
 		public int stride;
-		public int pad;
+		//public int pad;
 		public int[] switchx;
 		public int[] switchy;
 
-		public PoolLayer(Def def)
+		public PoolLayer(int stride = 2)
 		{
-			Def opt = def;
-
-			// required
-			this.sx = opt.sx; // filter size
-			this.in_depth = opt.in_depth;
-			this.in_sx = opt.in_sx;
-			this.in_sy = opt.in_sy;
-
 			// optional
-			this.sy = opt.sy != 0 ? opt.sy : this.sx;
-			this.stride = opt.stride != 0 ? opt.stride : 2;
-			this.pad = opt.pad != 0 ? opt.pad : 0; // amount of 0 padding to add around borders of input volume
+			//this.sy = opt.sy != 0 ? opt.sy : this.sx;
+			this.stride = stride;//opt.stride != 0 ? opt.stride : 2;
+			//this.pad = opt.pad != 0 ? opt.pad : 0; // amount of 0 padding to add around borders of input volume
+
+		}
+		public override void init()
+		{
+			// required
+			//this.sx = opt.sx; // filter size
+			this.in_depth = in_layer.out_depth;
+			this.in_sx = in_layer.out_sx;
+			this.in_sy = in_layer.out_sy;
 
 			// computed
 			this.out_depth = this.in_depth;
-			this.out_sx = (int)Math.Floor((float)((this.in_sx + this.pad * 2 - this.sx) / this.stride + 1));
-			this.out_sy = (int)Math.Floor((float)((this.in_sy + this.pad * 2 - this.sy) / this.stride + 1));
-			//this.layer_type = "pool";
+			this.out_sx = in_sx / this.stride;
+			this.out_sy = in_sy / this.stride;
+
 			// store switches for x,y coordinates for where the max comes from, for each output neuron
 			this.switchx = new int[this.out_sx * this.out_sy * this.out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
 			this.switchy = new int[this.out_sx * this.out_sy * this.out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
@@ -284,27 +306,26 @@ namespace ConvNet
 			this.out_act = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
 		}
 
-		public override Vol forward(Vol V, bool is_training)
+		public override Vol forward(Vol V)
 		{
 			this.in_act = V;
 			int n = 0; // a counter for switches
 			Parallel.For(0, this.out_depth, (d) =>//for (int d = 0; d < this.out_depth; d++)
 			{
-				int x = -this.pad;
-				int y = -this.pad;
-				for (int ax = 0; ax < this.out_sx; x += this.stride, ax++)
+				int x = 0;
+				int y = 0;
+				for (int ax = 0; ax < this.out_sx; x += stride, ax++)
 				{
-					y = -this.pad;
-					for (int ay = 0; ay < this.out_sy; y += this.stride, ay++)
+					y = 0;
+					for (int ay = 0; ay < this.out_sy; y += stride, ay++)
 					{
-
 						// convolve centered at this particular location
 						float a = -99999; // hopefully small enough ;\
 						int winx = -1;
 						int winy = -1;
-						for (int fx = 0; fx < this.sx; fx++)
+						for (int fx = 0; fx < stride; fx++)
 						{
-							for (int fy = 0; fy < this.sy; fy++)
+							for (int fy = 0; fy < stride; fy++)
 							{
 								int oy = y + fy;
 								int ox = x + fx;
@@ -332,7 +353,7 @@ namespace ConvNet
 			});
 			return this.out_act;
 		}
-		public override float backward(DataSet del)
+		public override void backward()
 		{
 			// pooling layers have no parameters, so simply compute 
 			// gradient wrt data here
@@ -344,29 +365,173 @@ namespace ConvNet
 			int n = 0;
 			Parallel.For(0, this.out_depth, (d) =>//for (int d = 0; d < this.out_depth; d++)
 			{
-				int x = -this.pad;
-				int y = -this.pad;
+				int x = 0;
+				int y = 0;
 				for (int ax = 0; ax < this.out_sx; x += this.stride, ax++)
 				{
-					y = -this.pad;
+					y = 0;
 					for (int ay = 0; ay < this.out_sy; y += this.stride, ay++)
 					{
-
 						float chain_grad = this.out_act.get_grad(ax, ay, d);
 						in_act.add_grad(this.switchx[n], this.switchy[n], d, chain_grad);
 						n++;
-
 					}
 				}
 			});
-			return 0;
 		}
 		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
 		{
 		}
 	}
-	class SoftmaxLayer : Layer
+	class UnPoolLayer : Layer
 	{
+/*
+1
+2 (3) -> a
+3  <-(a)
+
+
+
+  c<-    a
+1 (1)->  b
+         c
+ * */
+
+		public override void save(TextWriter s)
+		{
+		}
+		public override void load(TextReader s)
+		{
+		}
+		public int sx;
+		public int sy;
+		public int in_depth;
+		public int in_sx;
+		public int in_sy;
+		public int stride;
+		public int pad;
+
+//		public UnPoolLayer(Def def)
+//		{
+//			Def opt = def;
+//
+//			// required
+//			this.sx = opt.sx; // filter size
+//			this.in_depth = opt.in_depth;
+//			this.in_sx = opt.in_sx;
+//			this.in_sy = opt.in_sy;
+//
+//			// optional
+//			this.sy = opt.sy != 0 ? opt.sy : this.sx;
+//			this.stride = opt.stride != 0 ? opt.stride : 2;
+//			this.pad = opt.pad != 0 ? opt.pad : 0; // amount of 0 padding to add around borders of input volume
+//
+//			// computed
+//			this.out_depth = this.in_depth;
+//			this.out_sx = (int)Math.Floor((float)((this.in_sx - this.pad * 2 - this.sx) * this.stride + 1));
+//			this.out_sy = (int)Math.Floor((float)((this.in_sy - this.pad * 2 - this.sy) * this.stride + 1));
+//			//this.layer_type = "pool";
+//			// store switches for x,y coordinates for where the max comes from, for each output neuron
+//
+//			this.out_act = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
+//		}
+		public override void init()
+		{
+		}
+
+		public override Vol forward(Vol V)
+		{
+			//			this.in_act = V;
+			//			int n = 0; // a counter for switches
+			//			Parallel.For(0, this.out_depth, (d) =>//for (int d = 0; d < this.out_depth; d++)
+			//			{
+			//				int x = -this.pad;
+			//				int y = -this.pad;
+			//				for (int ax = 0; ax < this.out_sx; x += this.stride, ax++)
+			//				{
+			//					y = -this.pad;
+			//					for (int ay = 0; ay < this.out_sy; y += this.stride, ay++)
+			//					{
+			//
+			//						// convolve centered at this particular location
+			//						float a = -99999; // hopefully small enough ;\
+			//						int winx = -1;
+			//						int winy = -1;
+			//						for (int fx = 0; fx < this.sx; fx++)
+			//						{
+			//							for (int fy = 0; fy < this.sy; fy++)
+			//							{
+			//								int oy = y + fy;
+			//								int ox = x + fx;
+			//								if (oy >= 0 && oy < V.sy && ox >= 0 && ox < V.sx)
+			//								{
+			//									float v = V.get(ox, oy, d);
+			//									// perform max pooling and store pointers to where
+			//									// the max came from. This will speed up backprop 
+			//									// and can help make nice visualizations in future
+			//									if (v > a)
+			//									{
+			//										a = v;
+			//										winx = ox;
+			//										winy = oy;
+			//									}
+			//								}
+			//							}
+			//						}
+			//						this.switchx[n] = winx;
+			//						this.switchy[n] = winy;
+			//						n++;
+			//						out_act.set(ax, ay, d, a);
+			//					}
+			//				}
+			//			});
+			return this.out_act;
+		}
+		public override void backward()
+		{
+			//			// pooling layers have no parameters, so simply compute 
+			//			// gradient wrt data here
+			//			for (int i = 0; i < in_act.dw.size; i++)
+			//			{
+			//				in_act.dw[i] = 0;
+			//			}
+			//
+			//			int n = 0;
+			//			Parallel.For(0, this.out_depth, (d) =>//for (int d = 0; d < this.out_depth; d++)
+			//			{
+			//				int x = -this.pad;
+			//				int y = -this.pad;
+			//				for (int ax = 0; ax < this.out_sx; x += this.stride, ax++)
+			//				{
+			//					y = -this.pad;
+			//					for (int ay = 0; ay < this.out_sy; y += this.stride, ay++)
+			//					{
+			//
+			//						float chain_grad = this.out_act.get_grad(ax, ay, d);
+			//						in_act.add_grad(this.switchx[n], this.switchy[n], d, chain_grad);
+			//						n++;
+			//
+			//					}
+			//				}
+			//			});
+		}
+		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
+		{
+		}
+	}
+	public class SoftmaxLayer : LastLayer
+	{
+		DataSet y;
+		float loss;
+		public override void setData(DataSet y)
+		{
+			this.y = y;
+		}
+
+		public override float getLoss()
+		{
+			return loss;
+		}
 		public override void save(TextWriter s)
 		{
 		}
@@ -383,27 +548,21 @@ namespace ConvNet
 		// it gets a stream of N incoming numbers and computes the softmax
 		// function (exponentiate and normalize to sum to 1 as probabilities should)
 		public int num_inputs;
-		public MyFloat es;
-		public SoftmaxLayer(Def def)
+		//public MyFloat es;
+		public override void init()
 		{
-			Def opt = def;
-
-			// computed
-			this.num_inputs = opt.in_sx * opt.in_sy * opt.in_depth;
+			this.num_inputs = in_layer.out_sx * in_layer.out_sy * in_layer.out_depth;
 			this.out_depth = this.num_inputs;
 			this.out_sx = 1;
 			this.out_sy = 1;
-			//this.layer_type = "softmax";
-			es = MyFloat.getArray(this.out_depth);
 
+			//es = MyFloat.getArray(this.out_depth);
 			this.out_act = new Vol(1, 1, this.out_depth, 0.0f);
 		}
 
-		public override Vol forward(Vol V, bool is_training)
+		public override Vol forward(Vol V)
 		{
 			this.in_act = V;
-
-			//Vol A = this.out_act; //new Vol(1, 1, this.out_depth, 0.0f);
 
 			// compute max activation
 			float amax = V.w[0];
@@ -419,23 +578,22 @@ namespace ConvNet
 			{
 				float e = (float)Math.Exp(V.w[i] - amax);
 				esum += e;
-				es[i] = e;
+				out_act.w[i] = e;
 			}
 
 			// normalize and output to sum to one
 			for (int i = 0; i < this.out_depth; i++)
 			{
-				es[i] /= esum;
-				out_act.w[i] = es[i];
+				out_act.w[i] /= esum;
+				//out_act.w[i] = es[i];
 			}
 
 			//this.es = es; // save these for backprop
 			//this.out_act = A;
 			return this.out_act;
 		}
-		public override float backward(DataSet y)
+		public override void backward()
 		{
-
 			// compute and accumulate gradient wrt weights and bias of this layer
 			Vol x = this.in_act;
 			//????????TODO 未初始化可能影响后续????????????????x.dw = Util.zeros(x.w.Length); // zero out the gradient of input Vol
@@ -447,19 +605,31 @@ namespace ConvNet
 			for (int i = 0; i < this.out_depth; i++)
 			{
 				float indicator = (i == y.predict) ? 1.0f : 0.0f;
-				float mul = -(indicator - this.es[i]);
+				float mul = -(indicator - out_act.w[i]);
 				x.dw[i] = mul;
 			}
 
 			// loss is the class negative log likelihood
-			return -(float)Math.Log(this.es[y.predict]);
+			this.loss = -(float)Math.Log(out_act.w[y.predict]);
 		}
 		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
 		{
 		}
 	}
-	class RegressionLayer : Layer
+	class RegressionLayer : LastLayer
 	{
+		DataSet y;
+		float loss;
+		public override void setData(DataSet y)
+		{
+			this.y = y;
+		}
+
+		public override float getLoss()
+		{
+			return loss;
+		}
+
 		public override void save(TextWriter s)
 		{
 		}
@@ -470,58 +640,50 @@ namespace ConvNet
 		// so penalizes \sum_i(||x_i - y_i||^2), where x is its input
 		// and y is the user-provided array of "correct" values.
 		int num_inputs;
-		public RegressionLayer(Def def)
+//		public RegressionLayer(Def def)
+//		{
+//			Def opt = def;
+//
+//			// computed
+//			this.num_inputs = opt.in_sx * opt.in_sy * opt.in_depth;
+//			this.out_depth = this.num_inputs;
+//			this.out_sx = 1;
+//			this.out_sy = 1;
+//			//this.layer_type = "regression";
+//		}
+		public override void init()
 		{
-			Def opt = def;
-
-			// computed
-			this.num_inputs = opt.in_sx * opt.in_sy * opt.in_depth;
-			this.out_depth = this.num_inputs;
-			this.out_sx = 1;
-			this.out_sy = 1;
-			//this.layer_type = "regression";
 		}
 
-		public override Vol forward(Vol V, bool is_training)
+		public override Vol forward(Vol V)
 		{
 			this.in_act = V;
 			this.out_act = V;
 			return V; // identity function
 		}
 		// y is a list here of size num_inputs
-		public override float backward(DataSet y)
+		public override void backward()
 		{
-
 			// compute and accumulate gradient wrt weights and bias of this layer
 			Vol x = this.in_act;
-			//x.dw = Util.zeros(x.w.Length); // zero out the gradient of input Vol
 			float loss = 0.0f;
-			//if (y != null)
-			//{
 			for (int i = 0; i < this.out_depth; i++)
 			{
 				float dy = x.w[i] - y.data[i];
 				x.dw[i] = dy;
 				loss += 2 * dy * dy;
 			}
-			//}
-			//else
-			//{
-			//	// assume it is a struct with entries .dim and .val
-			//	// and we pass gradient only along dimension dim to be equal to val
-			//	int i = y.dim;
-			//	v_ar yi = y.val;
-			//	v_ar dy = x.w[i] - yi;
-			//	x.dw[i] = dy;
-			//	loss += 2 * dy * dy;
-			//}
-			return loss;
+			this.loss = loss;
+		}
+		public float backwardData(DataSet y)
+		{
+			throw new Exception("not done");
 		}
 		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
 		{
 		}
 	}
-	class ConvLayer : Layer
+	public class ConvLayer : Layer
 	{
 		public override void save(TextWriter s)
 		{
@@ -558,34 +720,41 @@ namespace ConvNet
 		Vol bias;
 		MyFloat bias_gsum; //[]?
 		MyFloat bias_xsum; //[]?
-		public ConvLayer(Def def)
+		float bias_pref;
+		public ConvLayer(int sx = 0, int sy = 0, int filters = 0, int stride = 1, int pad = 0, float bias_pref = 0.0f)
 		{
-
-			Def opt = def;
-
 			// required
-			this.out_depth = opt.filters;
-			this.sx = opt.sx; // filter size. Should be odd if possible, it's cleaner.
-			this.sy = opt.sy != 0 ? opt.sy : this.sx;
-			this.in_depth = opt.in_depth;
-			this.in_sx = opt.in_sx;
-			this.in_sy = opt.in_sy;
+			this.out_depth = filters;
+			this.sx = sx; // filter size. Should be odd if possible, it's cleaner.
+			this.sy = sy;
+
+			this.bias_pref = bias_pref;
 
 			// optional
-			this.stride = opt.stride != 0 ? opt.stride : 1; // stride at which we apply filters to input volume
-			this.pad = opt.pad; // amount of 0 padding to add around borders of input volume
-			this.l1_decay_mul = opt.l1_decay_mul;
-			this.l2_decay_mul = opt.l2_decay_mul;
+			this.stride = stride; // stride at which we apply filters to input volume
+			this.pad = pad; // amount of 0 padding to add around borders of input volume
+			//this.l1_decay_mul = opt.l1_decay_mul;
+			//this.l2_decay_mul = opt.l2_decay_mul;
 
 			// computed
 			// note we are doing floor, so if the strided convolution of the filter doesnt fit into the input
 			// volume exactly, the output volume will be trimmed and not contain the (incomplete) computed
 			// final application.
-			this.out_sx = (int)(Math.Floor((float)((this.in_sx + this.pad * 2 - this.sx) / this.stride + 1)));
-			this.out_sy = (int)(Math.Floor((float)((this.in_sy + this.pad * 2 - this.sy) / this.stride + 1)));
-			//this.layer_type = "conv";
 
 			// initializations
+
+
+		}
+		public override void init()
+		{
+			this.in_depth = in_layer.out_depth;
+			this.in_sx = in_layer.out_sx;
+			this.in_sy = in_layer.out_sy;
+
+			this.out_sx = (int)(Math.Floor((float)((this.in_sx + this.pad * 2 - this.sx) / this.stride + 1)));
+			this.out_sy = (int)(Math.Floor((float)((this.in_sy + this.pad * 2 - this.sy) / this.stride + 1)));
+
+
 			this.filters = new Vol[out_depth];
 			filters_gsum = new MyFloat[out_depth];
 			filters_xsum = new MyFloat[out_depth];
@@ -600,14 +769,18 @@ namespace ConvNet
 					filters_xsum[i][j] = 0.0f;
 				}
 			}
-			this.bias = new Vol(1, 1, this.out_depth, opt.bias_pref);
+			this.bias = new Vol(1, 1, this.out_depth, bias_pref);
 			this.bias_gsum = MyFloat.getArray(out_depth); // last iteration gradients (used for momentum calculations)
 			this.bias_xsum = MyFloat.getArray(out_depth); // used in adadelta
-
+			for (int j = 0; j < out_depth; j++)
+			{
+				bias_gsum[j] = 0.0f;
+				bias_xsum[j] = 0.0f;
+			}
 			this.out_act = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
 		}
 
-		public override Vol forward(Vol V, bool is_training)
+		public override Vol forward(Vol V)
 		{
 			// optimized code by @mdda that achieves 2x speedup over previous version
 
@@ -654,7 +827,7 @@ namespace ConvNet
 			//this.out_act = A;
 			return this.out_act;
 		}
-		public override float backward(DataSet del)
+		public override void backward()
 		{
 			Vol V = this.in_act;
 			//????????TODO 未初始化可能影响后续????????????????V.dw = Util.zeros(V.w.Length); // zero out gradient wrt bottom data, we're about to fill it
@@ -701,7 +874,6 @@ namespace ConvNet
 					}
 				}
 			});
-			return 0;
 		}
 		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
 		{
@@ -730,7 +902,7 @@ namespace ConvNet
 			});
 		}
 	}
-	class InputLayer : Layer
+	public class InputLayer : Layer
 	{
 		public override void save(TextWriter s)
 		{
@@ -738,26 +910,35 @@ namespace ConvNet
 		public override void load(TextReader s)
 		{
 		}
-		public InputLayer(Def def)
+		//public InputLayer(Def def)
+		//{
+		//	Def opt = def;
+		//
+		//	// this is a bit silly but lets allow people to specify either ins or outs
+		//	this.out_sx = opt.out_sx != 0 ? opt.out_sx : opt.in_sx;
+		//	this.out_sy = opt.out_sy != 0 ? opt.out_sy : opt.in_sy;
+		//	this.out_depth = opt.out_depth != 0 ? opt.out_depth : opt.in_depth;
+		//	//this.layer_type = "input";
+		//}
+		public InputLayer(int out_sx = 0, int out_sy = 0, int out_depth = 0)
 		{
-			Def opt = def;
-
-			// this is a bit silly but lets allow people to specify either ins or outs
-			this.out_sx = opt.out_sx != 0 ? opt.out_sx : opt.in_sx;
-			this.out_sy = opt.out_sy != 0 ? opt.out_sy : opt.in_sy;
-			this.out_depth = opt.out_depth != 0 ? opt.out_depth : opt.in_depth;
-			//this.layer_type = "input";
+			this.out_sx = out_sx;
+			this.out_sy = out_sy;
+			this.out_depth = out_depth;
 		}
-		public override Vol forward(Vol V, bool is_training)
+
+		public override void init()
 		{
-			this.in_act = V;
+		}
+
+		public override Vol forward(Vol V)
+		{
 			this.out_act = V;
 			return this.out_act; // dummy identity function for now
 		}
 
-		public override float backward(DataSet y)
+		public override void backward()
 		{
-			return 0;
 		}
 		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
 		{

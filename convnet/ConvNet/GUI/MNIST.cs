@@ -52,28 +52,37 @@ namespace GUI
 
 		public void Init()
 		{
+			/*
+	layer_defs = [];
+	layer_defs.push({type:'input', out_sx:28, out_sy:28, out_depth:1});
+	layer_defs.push({type:'fc', num_neurons:50, activation:'tanh'});
+	layer_defs.push({type:'fc', num_neurons:50, activation:'tanh'});
+	layer_defs.push({type:'fc', num_neurons:2});
+	layer_defs.push({type:'fc', num_neurons:50, activation:'tanh'});
+	layer_defs.push({type:'fc', num_neurons:50, activation:'tanh'});
+	layer_defs.push({type:'regression', num_neurons:28*28});
 
-			List<Def> layer_defs = new List<Def>();
-			layer_defs.Add(new Def { type = "input", out_sx = 24, out_sy = 24, out_depth = 1 }); // 2 inputs= x, y \n\
-			layer_defs.Add(new Def { type = "conv", sx = 5, filters = 8, stride = 1, pad = 2, bias_pref = 0.1f });// relus like a bit of positive bias to get gradients early
-			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "pool", sx = 2, stride = 2 });// otherwise it's technically possible that a relu unit will never turn on (by chance)
+	net = new convnetjs.Net();
+	net.makeLayers(layer_defs);
 
-			layer_defs.Add(new Def { type = "conv", sx = 5, filters = 16, stride = 1, pad = 2, bias_pref = 0.1f });// relus like a bit of positive bias to get gradients early
-			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def { type = "pool", sx = 3, stride = 3 });// otherwise it's technically possible that a relu unit will never turn on (by chance)
-
-			layer_defs.Add(new Def() { type = "fc", num_neurons = 10, bias_pref = 0.1f });
-			layer_defs.Add(new Def { type = "relu" });
-			layer_defs.Add(new Def() { type = "fc", num_neurons = 10 });
-			layer_defs.Add(new Def() { type = "softmax", num_classes = 10 });
+	trainer = new convnetjs.SGDTrainer(net, {learning_rate:1, method:'adadelta', batch_size:50, l2_decay:0.001, l1_decay:0.001});
+			 */
 
 			net = new Net();
-			net.makeLayers(layer_defs);
+			net.Add(new InputLayer(out_sx: 28, out_sy: 28, out_depth: 1));
+			net.Add(new ConvLayer(sx: 5, sy: 5, filters: 8, stride: 1, pad: 2, bias_pref: 0.1f));
+			net.Add(new ReluLayer());
+			net.Add(new PoolLayer(stride: 2));
+
+			net.Add(new ConvLayer(sx: 5, sy: 5, filters: 16, stride: 1, pad: 2, bias_pref: 0.1f));
+			net.Add(new ReluLayer());
+			net.Add(new PoolLayer(stride: 3));
+			//net.Add(new FullyConnLayer(num_neurons: 10, bias_pref: 0.1f));
+			//net.Add(new ReluLayer());
+			net.Add(new FullyConnLayer(num_neurons: 10, bias_pref: 0.0f));//link and buffer
+			net.Add(new SoftmaxLayer());
 
 			trainer = new Trainer(net, new Trainer.Option() { method = "adadelta", batch_size = 20, l2_decay = 0.0f });//0.001f
-
-
 		}
 
 		public void train(int index)
