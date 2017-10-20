@@ -77,12 +77,16 @@ namespace GUI
 			net.Add(new ConvLayer(sx: 5, sy: 5, filters: 16, stride: 1, pad: 2, bias_pref: 0.1f));
 			net.Add(new ReluLayer());
 			net.Add(new PoolLayer(stride: 3));
-			//net.Add(new FullyConnLayer(num_neurons: 10, bias_pref: 0.1f));
-			//net.Add(new ReluLayer());
+
+            //net.Add(new FullyConnLayer(num_neurons: 10, bias_pref: 0.0f));//link and buffer
+            //net.Add(new TanhLayer());
+            //net.Add(new FullyConnLayer(num_neurons: 2, bias_pref: 0.0f));//link and buffer
+            //net.Add(new TanhLayer());
+
 			net.Add(new FullyConnLayer(num_neurons: 10, bias_pref: 0.0f));//link and buffer
 			net.Add(new SoftmaxLayer());
 
-			trainer = new Trainer(net, new Trainer.Option() { method = "adadelta", batch_size = 20, l2_decay = 0.0f });//0.001f
+			trainer = new Trainer(net, new Trainer.Option() { learning_rate = 0.01f,method = "adadelta", batch_size = 20, l2_decay = 0.0f });//0.001f
 		}
 
 		public void train(int index)
