@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace ConvNet
 {
@@ -39,11 +40,22 @@ namespace ConvNet
 				{
 					for (int j = 0; j < sy; j++)
 					{
-
-						float val = w[i];
-						//b.SetPixel()
+						float v = get(i, j, d);
+						Color c;
+						if (v > 0)
+						{
+							if (v > 1) v = 1;
+							c = Color.FromArgb((int)(v * 255), 0, 0);
+						}
+						else
+						{
+							if (v < -1) v = -1;
+							c = Color.FromArgb(0, (int)(-v * 255), 0);
+						}
+						b.SetPixel(i, j, c);
 					}
 				}
+				b.Save(path + d + ".png", ImageFormat.Png);
 			}
 		}
 
@@ -112,32 +124,32 @@ namespace ConvNet
 			int ix = ((this.sx * y) + x) * this.depth + d;
 			return this.w[ix];
 		}
-		public void set(int x, int y, int d, float v)
+		public void set(int x, int y, int d, float val)
 		{
 			int ix = ((this.sx * y) + x) * this.depth + d;
-			this.w[ix] = v;
+			this.w[ix] = val;
 		}
-		public void add_grad(int x, int y, int d, float v)
+		public void add_grad(int x, int y, int d, float val)
 		{
 			int ix = ((this.sx * y) + x) * this.depth + d;
-			this.dw[ix] += v;
+			this.dw[ix] += val;
 		}
 		public float get_grad(int x, int y, int d)
 		{
 			int ix = ((this.sx * y) + x) * this.depth + d;
 			return this.dw[ix];
 		}
-		public void set_grad(int x, int y, int d, float v)
+		public void set_grad(int x, int y, int d, float val)
 		{
 			int ix = ((this.sx * y) + x) * this.depth + d;
-			this.dw[ix] = v;
+			this.dw[ix] = val;
 		}
 
 	}
 	public class DataSet
 	{
 		//Classification (SVM/Softmax) and Regression (L2) cost functions
-		public float[] data;
+		public Vol data;
 
 		//Classification (SVM/Softmax)
 		public int predict;

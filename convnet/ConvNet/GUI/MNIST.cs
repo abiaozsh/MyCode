@@ -49,6 +49,7 @@ namespace GUI
 				b.Save(@"E:\MNIST\imgs\" + l + "\\" + i + ".bmp", System.Drawing.Imaging.ImageFormat.Bmp);
 			}
 		}
+		FullyConnLayer fc2;
 
 		public void Init()
 		{
@@ -67,38 +68,112 @@ namespace GUI
 
 	trainer = new convnetjs.SGDTrainer(net, {learning_rate:1, method:'adadelta', batch_size:50, l2_decay:0.001, l1_decay:0.001});
 			 */
+			bool selftrain = true;
 
-			net = new Net();
-			net.Add(new InputLayer(out_sx: 28, out_sy: 28, out_depth: 1));
-			net.Add(new ConvLayer(sx: 5, sy: 5, filters: 8, stride: 1, pad: 2, bias_pref: 0.1f));
-			net.Add(new ReluLayer());
-			net.Add(new PoolLayer(stride: 2));
+			if (selftrain)
+			{
+				net = new Net();
+				net.Add(new InputLayer(out_sx: 28, out_sy: 28, out_depth: 1));
+				net.Add(new ConvLayer(sx: 4, sy: 4, filters: 4, stride: 2, pad: 2, bias_pref: 0.1f));
+				net.Add(new ReluLayer());
 
-			net.Add(new ConvLayer(sx: 5, sy: 5, filters: 16, stride: 1, pad: 2, bias_pref: 0.1f));
-			net.Add(new ReluLayer());
-			net.Add(new PoolLayer(stride: 3));
+				net.Add(new ConvLayer(sx: 4, sy: 4, filters: 8, stride: 2, pad: 2, bias_pref: 0.1f));
+				net.Add(new ReluLayer());
 
-            //net.Add(new FullyConnLayer(num_neurons: 10, bias_pref: 0.0f));//link and buffer
-            //net.Add(new TanhLayer());
-            //net.Add(new FullyConnLayer(num_neurons: 2, bias_pref: 0.0f));//link and buffer
-            //net.Add(new TanhLayer());
+				fc2 = new FullyConnLayer(num_neurons: 2, bias_pref: 0.0f);
+				net.Add(fc2);//link and buffer
+				net.Add(new TanhLayer());
 
-			net.Add(new FullyConnLayer(num_neurons: 10, bias_pref: 0.0f));//link and buffer
-			net.Add(new SoftmaxLayer());
+				net.Add(new FullyConnLayer(num_neurons: 7 * 7 * 8, bias_pref: 0.0f));//link and buffer
+				net.Add(new TanhLayer());
+				net.Add(new ReshapeLayer(out_sx: 7, out_sy: 7, out_depth: 8));
 
-			trainer = new Trainer(net, new Trainer.Option() { learning_rate = 0.01f,method = "adadelta", batch_size = 20, l2_decay = 0.0f });//0.001f
+				net.Add(new ConvLayer(sx: 4, sy: 4, filters: 4, unstride: 2, pad: 2, bias_pref: 0.1f));
+				net.Add(new ReluLayer());
+
+				net.Add(new ConvLayer(sx: 4, sy: 4, filters: 1, unstride: 2, pad: 2, bias_pref: 0.1f));
+				net.Add(new ReluLayer());
+
+				net.Add(new RegressionLayer());
+				trainer = new Trainer(net, new Trainer.Option() { learning_rate = 1, method = "adadelta", batch_size = 50, l2_decay = 0.001f });//0.001f
+			}
+			else
+			{
+				net = new Net();
+				net.Add(new InputLayer(out_sx: 28, out_sy: 28, out_depth: 1));
+				net.Add(new ConvLayer(sx: 5, sy: 5, filters: 4, stride: 2, pad: 2, bias_pref: 0.1f));
+				net.Add(new ReluLayer());
+				//net.Add(new PoolLayer(stride: 2));
+
+				net.Add(new ConvLayer(sx: 5, sy: 5, filters: 8, stride: 3, pad: 2, bias_pref: 0.1f));
+				net.Add(new ReluLayer());
+				//net.Add(new PoolLayer(stride: 3));
+
+
+				//net.Add(new FullyConnLayer(num_neurons: 10, bias_pref: 0.1f));
+				//net.Add(new ReluLayer());
+				net.Add(new FullyConnLayer(num_neurons: 10, bias_pref: 0.0f));//link and buffer
+				net.Add(new SoftmaxLayer());
+				trainer = new Trainer(net, new Trainer.Option() { method = "adadelta", batch_size = 20, l2_decay = 0.0f });//0.001f
+			}
+
 		}
 
 		public void train(int index)
 		{
-
 			var v = getImg(index);
-
 			DataSet ds = new DataSet();
 			ds.predict = getLbl(index);
 			trainer.train(v, ds);
-
 		}
+
+
+		public void selftrain(int index)
+		{
+			var v = getImg(index);
+			DataSet ds = new DataSet();
+			ds.data = v;
+			trainer.train(v, ds);
+		}
+
+		public Color[] cDict = new Color[]{
+				Color.Red, //0
+				Color.Blue,//1
+				Color.Green,//2
+				Color.Black,//3
+				Color.Magenta,//4
+				Color.Cyan,//5
+				Color.Purple,//6
+				Color.Orange,//7
+				Color.Olive,//8
+				Color.Lime,//9
+				Color.Navy//10
+			};
+		public Bitmap display()
+		{
+			//"red", "blue", "green", "black", "magenta", "cyan", "purple", "aqua", "olive", "lime", "navy"
+			Random rnd = new Random();
+			Bitmap b = new Bitmap(100,100);
+			
+			for (int i = 0; i < 50000; i++)
+			{
+				int index = (int)(rnd.NextDouble() * 70000);
+				var v = getImg(index);
+				int lbl = getLbl(index);
+				net.forward(v);
+				int x = (int)(fc2.out_act.w[0] * 25 + 50);
+				int y = (int)(fc2.out_act.w[1] * 25 + 50);
+				if (x >= 100) x = 99;
+				if (x < 0) x = 0;
+				if (y >= 100) y = 99;
+				if (y < 0) y = 0;
+				Color color = cDict[lbl];
+				b.SetPixel(x, y, color);
+			}
+
+			return b;
+		}
+
 
 		Vol v = new Vol(28, 28, 1, 0.0f);
 		public Vol getImg(int idx)

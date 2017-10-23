@@ -26,6 +26,16 @@ namespace GUI
 		private void Form1_Load(object sender, EventArgs e)
 		{
 
+			label1.ForeColor = mnist.cDict[0];
+			label2.ForeColor = mnist.cDict[1];
+			label3.ForeColor = mnist.cDict[2];
+			label4.ForeColor = mnist.cDict[3];
+			label5.ForeColor = mnist.cDict[4];
+			label6.ForeColor = mnist.cDict[5];
+			label7.ForeColor = mnist.cDict[6];
+			label8.ForeColor = mnist.cDict[7];
+			label9.ForeColor = mnist.cDict[8];
+			label10.ForeColor = mnist.cDict[9];
 			try
 			{
 				mnist.Init();
@@ -105,11 +115,12 @@ namespace GUI
 		{
 			try
 			{
-				if (e.Button == System.Windows.Forms.MouseButtons.Left) { 
-				pictureBox1.Image = _getBmp(e.X, e.Y);
-				var v1 = mnist.net.forward(_getImg(e.X, e.Y));
-				String s = mnist.report(v1);
-				textBox1.Text = (s);
+				if (e.Button == System.Windows.Forms.MouseButtons.Left)
+				{
+					pictureBox1.Image = _getBmp(e.X, e.Y);
+					var v1 = mnist.net.forward(_getImg(e.X, e.Y));
+					String s = mnist.report(v1);
+					textBox1.Text = (s);
 				}
 			}
 			catch (Exception ex)
@@ -125,10 +136,16 @@ namespace GUI
 
 		private void button1_Click(object sender, EventArgs e)
 		{
-			for (int i = 0; i < 10000; i++)
+			for (int i = 1; i < 70000; i++)
 			{
-				mnist.train(i);
+				//mnist.train(i);
+				mnist.selftrain(i);
 				Text = i.ToString();
+				//if (i % 100 == 0)
+				//{
+				//	pictureBox3.Image = mnist.display();
+				//}
+
 				Application.DoEvents();
 			}
 			{
@@ -150,6 +167,20 @@ namespace GUI
 			mnist.net.load(sr);
 			fs.Close();
 
+		}
+
+		private void button3_Click(object sender, EventArgs e)
+		{
+
+			pictureBox3.Image = mnist.display();
+			//int x = 96;
+			//int y = 15;
+			//
+			//pictureBox1.Image = _getBmp(x, y);
+			//var img = _getImg(x, y);
+			//var v1 = mnist.net.forward(img);
+			//String s = mnist.report(v1);
+			//textBox1.Text = (s);
 		}
 	}
 }

@@ -85,44 +85,44 @@ namespace ImgReg
 
 		public static void update(Bitmap b, Trainer trainer)
 		{
-			// forward prop the data
-			int W = b.Width;
-			int H = b.Height;
-
-			float loss = 0;
-			int lossi = 0;
-
-			DataSet r = new DataSet();
-			r.data = new float[3];
-			Random rnd = new Random();
-			int aax = (int)(rnd.NextDouble() * 10);
-			int aay = (int)(rnd.NextDouble() * 10);
-
-			for (int x = aax; x < W; x += 10)
-			{
-				for (int y = aay; y < H; y += 10)
-				{
-					//var r = [p[ix]/255.0, p[ix+1]/255.0, p[ix+2]/255.0]; // r g b
-					Color c = b.GetPixel(x, y);
-					r.data[0] = c.R / 255.0f;
-					r.data[1] = c.G / 255.0f;
-					r.data[2] = c.B / 255.0f;
-					v.w[0] = (x - W / 2.0f) / W;
-					v.w[1] = (y - H / 2.0f) / H;
-					Trainer.Report stats = trainer.train(v, r);
-					loss += stats.loss;
-					lossi += 1;
-				}
-			}
-			loss /= lossi;
-
-			if (counter == 0) smooth_loss = loss;
-			else smooth_loss = 0.99f * smooth_loss + 0.01f * loss;
-
-			string t = "";
-			t += "loss: " + smooth_loss;
-			t += "iteration: " + counter;
-			Console.WriteLine(t);
+//			// forward prop the data
+//			int W = b.Width;
+//			int H = b.Height;
+//
+//			float loss = 0;
+//			int lossi = 0;
+//
+//			DataSet r = new DataSet();
+//			r.data = new float[3];
+//			Random rnd = new Random();
+//			int aax = (int)(rnd.NextDouble() * 10);
+//			int aay = (int)(rnd.NextDouble() * 10);
+//
+//			for (int x = aax; x < W; x += 10)
+//			{
+//				for (int y = aay; y < H; y += 10)
+//				{
+//					//var r = [p[ix]/255.0, p[ix+1]/255.0, p[ix+2]/255.0]; // r g b
+//					Color c = b.GetPixel(x, y);
+//					r.data[0] = c.R / 255.0f;
+//					r.data[1] = c.G / 255.0f;
+//					r.data[2] = c.B / 255.0f;
+//					v.w[0] = (x - W / 2.0f) / W;
+//					v.w[1] = (y - H / 2.0f) / H;
+//					Trainer.Report stats = trainer.train(v, r);
+//					loss += stats.loss;
+//					lossi += 1;
+//				}
+//			}
+//			loss /= lossi;
+//
+//			if (counter == 0) smooth_loss = loss;
+//			else smooth_loss = 0.99f * smooth_loss + 0.01f * loss;
+//
+//			string t = "";
+//			t += "loss: " + smooth_loss;
+//			t += "iteration: " + counter;
+//			Console.WriteLine(t);
 		}
 
 		static Vol v = new Vol(1, 1, 2, null);
