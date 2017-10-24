@@ -35,28 +35,33 @@ namespace ConvNet
 		{
 			for (int d = 0; d < depth; d++)
 			{
-				Bitmap b = new Bitmap(sx, sy);
-				for (int i = 0; i < sx; i++)
-				{
-					for (int j = 0; j < sy; j++)
-					{
-						float v = get(i, j, d);
-						Color c;
-						if (v > 0)
-						{
-							if (v > 1) v = 1;
-							c = Color.FromArgb((int)(v * 255), 0, 0);
-						}
-						else
-						{
-							if (v < -1) v = -1;
-							c = Color.FromArgb(0, (int)(-v * 255), 0);
-						}
-						b.SetPixel(i, j, c);
-					}
-				}
+				Bitmap b = vis(d);
 				b.Save(path + d + ".png", ImageFormat.Png);
 			}
+		}
+		public Bitmap vis(int d)
+		{
+			Bitmap b = new Bitmap(sx, sy);
+			for (int i = 0; i < sx; i++)
+			{
+				for (int j = 0; j < sy; j++)
+				{
+					float v = get(i, j, d);
+					Color c;
+					if (v > 0)
+					{
+						if (v > 1) v = 1;
+						c = Color.FromArgb((int)(v * 255), 0, 0);
+					}
+					else
+					{
+						if (v < -1) v = -1;
+						c = Color.FromArgb(0, (int)(-v * 255), 0);
+					}
+					b.SetPixel(i, j, c);
+				}
+			}
+			return b;
 		}
 
 		public void save(TextWriter s)
@@ -71,24 +76,28 @@ namespace ConvNet
 		static bool return_v = false;
 		static float v_val = 0.0f;
 		static Random _rnd = new Random();
+		static object objLock = new object();
 		public static float gaussRandom()
 		{
-			if (return_v)
+			lock (objLock)
 			{
-				return_v = false;
-				return v_val;
+				if (return_v)
+				{
+					return_v = false;
+					return v_val;
+				}
+				float u = 2.0f * (float)_rnd.NextDouble() - 1.0f;
+				float v = 2.0f * (float)_rnd.NextDouble() - 1.0f;
+				float r = u * u + v * v;
+				if (r == 0 || r > 1)
+				{
+					return gaussRandom();
+				}
+				float c = (float)Math.Sqrt(-2.0f * (float)Math.Log(r) / r);
+				v_val = v * c; // cache this
+				return_v = true;
+				return u * c;
 			}
-			float u = 2.0f * (float)_rnd.NextDouble() - 1.0f;
-			float v = 2.0f * (float)_rnd.NextDouble() - 1.0f;
-			float r = u * u + v * v;
-			if (r == 0 || r > 1)
-			{
-				return gaussRandom();
-			}
-			float c = (float)Math.Sqrt(-2.0f * (float)Math.Log(r) / r);
-			v_val = v * c; // cache this
-			return_v = true;
-			return u * c;
 		}
 
 		public Vol(int sx, int sy, int depth, float? c)
@@ -159,7 +168,8 @@ namespace ConvNet
 		public int params_size;
 		public MyFloat params_;
 		public MyFloat grads_;
-		//public int iw;
+		public int params_idx=0;
+		public int grads_idx=0;
 		public MyFloat gsum; //[]?
 		public MyFloat xsum; //[]?
 		public float l1_decay_mul = 1.0f;
@@ -200,7 +210,10 @@ namespace ConvNet
 			}
 			layers.Add(layer);
 			layer.in_layer = out_layer;
-			layer.init();
+			if (!layer.inited())
+			{
+				layer.init();
+			}
 			if (out_layer != null)
 			{
 				out_layer.out_layer = layer;

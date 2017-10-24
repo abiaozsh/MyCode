@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -52,6 +54,7 @@ namespace GUI
 			pictureBox2.Height = bmp.Height;
 
 			pictureBox2.MouseMove += pictureBox2_MouseMove;
+			pictureBox3.MouseMove += pictureBox3_MouseMove;
 
 			bigImg = new byte[bmp.Width * bmp.Height];
 			bigImgW = bmp.Width;
@@ -118,7 +121,7 @@ namespace GUI
 				if (e.Button == System.Windows.Forms.MouseButtons.Left)
 				{
 					pictureBox1.Image = _getBmp(e.X, e.Y);
-					var v1 = mnist.net.forward(_getImg(e.X, e.Y));
+					var v1 = mnist.net4.forward(_getImg(e.X, e.Y));
 					String s = mnist.report(v1);
 					textBox1.Text = (s);
 				}
@@ -129,24 +132,44 @@ namespace GUI
 			}
 		}
 
-		private void pictureBox1_Click(object sender, EventArgs e)
-		{
 
+		Vol regen = new Vol(1, 1, 2, 0);
+		void pictureBox3_MouseMove(object sender, MouseEventArgs e)
+		{
+			float x = (e.X - 50f) / mnist.visScale;
+			float y = (e.Y - 50f) / mnist.visScale;
+			regen.w[0] = x;
+			regen.w[1] = y;
+
+			var _out = mnist.net2.forward(regen);
+
+			pictureBox4.Image = _out.vis(0);
 		}
+
 
 		private void button1_Click(object sender, EventArgs e)
 		{
-			for (int i = 1; i < 70000; i++)
+			for (int k = 0; k < 200; k++)
 			{
-				//mnist.train(i);
-				mnist.selftrain(i);
-				Text = i.ToString();
-				//if (i % 100 == 0)
-				//{
-				//	pictureBox3.Image = mnist.display();
-				//}
-
-				Application.DoEvents();
+				for (int j = 0; j < 500; j++)
+				{
+					for (int i = 0; i < mnist.trainer.batch_size; i++)
+					{
+						mnist.selftrain();
+					}
+					for (int i = 0; i < mnist.trainer2.batch_size; i++)
+					{
+						mnist.train2();
+					}
+					Text = j.ToString();
+					Application.DoEvents();
+				}
+				FileStream fs = new FileStream("mnistnet" + textBox2.Text + k + ".txt", FileMode.Create, FileAccess.Write);
+				StreamWriter sw = new StreamWriter(fs);
+				mnist.net.save(sw);
+				sw.Flush();
+				fs.Flush();
+				fs.Close();
 			}
 			{
 				FileStream fs = new FileStream("mnistnet.txt", FileMode.Create, FileAccess.Write);
@@ -162,7 +185,7 @@ namespace GUI
 		{
 			//mnist.proc();
 
-			FileStream fs = new FileStream("mnistnet.txt", FileMode.Open, FileAccess.Read);
+			FileStream fs = new FileStream(textBox2.Text + ".txt", FileMode.Open, FileAccess.Read);
 			StreamReader sr = new StreamReader(fs);
 			mnist.net.load(sr);
 			fs.Close();
@@ -171,8 +194,26 @@ namespace GUI
 
 		private void button3_Click(object sender, EventArgs e)
 		{
-
 			pictureBox3.Image = mnist.display();
+
+			//{
+			//	string[] files = Directory.GetFiles(@"D:\work\MyCode\convnet\ConvNet\Release");
+			//	 Parallel.ForEach(files,(file) =>
+			//	{
+			//		var mnist = new MNIST();
+			//		mnist.Init();
+			//		if (file.EndsWith(".txt"))
+			//		{
+			//			FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read);
+			//			StreamReader sr = new StreamReader(fs);
+			//			mnist.net.load(sr);
+			//			fs.Close();
+			//			var b = mnist.display();
+			//			b.Save(file + ".png", ImageFormat.Png);
+			//		}
+			//	});
+			//}
+
 			//int x = 96;
 			//int y = 15;
 			//
@@ -182,5 +223,21 @@ namespace GUI
 			//String s = mnist.report(v1);
 			//textBox1.Text = (s);
 		}
+
+		private void button4_Click(object sender, EventArgs e)
+		{
+			for (int i = 0; i < 10; i++)
+			{
+				Stopwatch sw = new Stopwatch();
+				sw.Start();
+				mnist.selftrain();
+				sw.Stop();
+				textBox1.Text += sw.ElapsedTicks + "\r\n";
+
+			}
+
+
+		}
+
 	}
 }

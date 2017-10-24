@@ -14,6 +14,7 @@ namespace ConvNet
 		public Layer in_layer;
 		public Layer out_layer;
 
+		protected bool _inited = false;
 		public int out_sx;
 		public int out_sy;
 		public int out_depth;
@@ -21,6 +22,7 @@ namespace ConvNet
 		public Vol out_act;
 		public float l1_decay_mul;
 		public float l2_decay_mul;
+		public abstract bool inited();
 		public abstract void init();
 		public abstract Vol forward(Vol V);
 		public abstract void backward();
@@ -42,20 +44,15 @@ namespace ConvNet
 		public override void save(TextWriter s)
 		{
 			bias.save(s);
-			for (int i = 0; i < filters.Length; i++)
-			{
-				filters[i].save(s);
-			}
+			filters.save(s);
 		}
 		public override void load(TextReader s)
 		{
 			bias.load(s);
-			for (int i = 0; i < filters.Length; i++)
-			{
-				filters[i].load(s);
-			}
+			filters.load(s);
 		}
-		Vol[] filters;
+		//Vol[] filters;
+		Vol filters;
 		MyFloat[] filters_gsum; //[]?
 		MyFloat[] filters_xsum; //[]?
 
@@ -79,6 +76,11 @@ namespace ConvNet
 
 			this.bias_pref = bias_pref;
 		}
+
+		public override bool inited()
+		{
+			return _inited;
+		}
 		public override void init()
 		{
 			this.num_inputs = in_layer.out_sx * in_layer.out_sy * in_layer.out_depth;
@@ -86,12 +88,10 @@ namespace ConvNet
 			this.out_sy = 1;
 
 			// initializations
-			filters = new Vol[out_depth];
 			filters_gsum = new MyFloat[out_depth];
 			filters_xsum = new MyFloat[out_depth];
 			for (int i = 0; i < this.out_depth; i++)
 			{
-				filters[i] = new Vol(1, 1, this.num_inputs, null);
 				filters_gsum[i] = MyFloat.getArray(num_inputs);
 				filters_xsum[i] = MyFloat.getArray(num_inputs);
 				for (int j = 0; j < num_inputs; j++)
@@ -100,6 +100,10 @@ namespace ConvNet
 					filters_xsum[i][j] = 0.0f;
 				}
 			}
+			//filters = new Vol[out_depth];
+			//filters[i] = new Vol(1, 1, this.num_inputs, null);
+			filters = new Vol(1, 1, this.num_inputs * out_depth, null);
+
 
 			this.bias = new Vol(1, 1, this.out_depth, bias_pref);
 			this.bias_gsum = MyFloat.getArray(out_depth); // last iteration gradients (used for momentum calculations)
@@ -112,54 +116,58 @@ namespace ConvNet
 			}
 
 			this.out_act = new Vol(1, 1, this.out_depth, 0.0f);
+			_inited = true;
 		}
+
+		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern void FCFWD(int out_depth, int num_inputs, int i_in_act_w, int i_filters_w, int i_bias_w, int i_out_act_w);
 
 		public override Vol forward(Vol V)
 		{
 			this.in_act = V;
 
+			FCFWD(out_depth, num_inputs, in_act.w.pos, filters.w.pos, bias.w.pos, out_act.w.pos);
+
 			//for (int i = 0; i < this.out_depth; i++)
-			Parallel.For(0, out_depth, (i) =>
-			{
-				float a = 0.0f;
-				MyFloat wi = this.filters[i].w;
-				//int iw = i * this.num_inputs;
-				for (int d = 0; d < this.num_inputs; d++)
-				{
-					a += V.w[d] * wi[d]; // for efficiency use Vols directly for now
-				}
-				//a += this.biases.w[i];
-				a += this.bias.w[i];
-				this.out_act.w[i] = a;
-			});
+			//{
+			//	float a = 0.0f;
+			//	//int iw = i * this.num_inputs;
+			//	for (int d = 0; d < this.num_inputs; d++)
+			//	{
+			//		a += in_act.w[d] * this.filters.w[i * num_inputs + d]; // for efficiency use Vols directly for now
+			//	}
+			//	//a += this.biases.w[i];
+			//	a += this.bias.w[i];
+			//	this.out_act.w[i] = a;
+			//}
 
 			return this.out_act;
 		}
+
+		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern void FCBWD(int out_depth, int num_inputs, int i_in_act_w, int i_filters_w, int i_in_act_dw, int i_out_act_dw, int i_filters_dw, int i_bias_dw);
+
 		public override void backward()
 		{
-			Vol V = this.in_act;
-			//V.dw = Util.zeros(V.w.Length); // zero out the gradient in input Vol
-			for (int d = 0; d < V.w.size; d++)
-			{
-				V.dw[d] = 0;
-			}
+			FCBWD(out_depth, num_inputs, in_act.w.pos, filters.w.pos, in_act.dw.pos, out_act.dw.pos, filters.dw.pos, bias.dw.pos);
 
-			// compute gradient wrt weights and data
+			//for (int d = 0; d < num_inputs; d++)
+			//{
+			//	in_act.dw[d] = 0;
+			//}
+			//// compute gradient wrt weights and data
 			//for (int i = 0; i < this.out_depth; i++)
-			Parallel.For(0, out_depth, (i) =>
-			{
-				//Vol tfi = this.filters[i];
-				//int iw = i * this.num_inputs;
-				MyFloat wi = this.filters[i].w;
-				MyFloat dwi = this.filters[i].dw;
-				float chain_grad = this.out_act.dw[i];
-				for (int d = 0; d < this.num_inputs; d++)
-				{
-					V.dw[d] += wi[d] * chain_grad; // grad wrt input data
-					dwi[d] += V.w[d] * chain_grad; // grad wrt params
-				}
-				this.bias.dw[i] += chain_grad;
-			});
+			//{
+			//	//Vol tfi = this.filters[i];
+			//	//int iw = i * this.num_inputs;
+			//	float chain_grad = this.out_act.dw[i];
+			//	for (int d = 0; d < this.num_inputs; d++)
+			//	{
+			//		in_act.dw[d] += this.filters.w[i * num_inputs + d] * chain_grad; // grad wrt input data
+			//		this.filters.dw[i * num_inputs + d] += in_act.w[d] * chain_grad; // grad wrt params
+			//	}
+			//	this.bias.dw[i] += chain_grad;
+			//}
 		}
 		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
 		{
@@ -169,9 +177,11 @@ namespace ConvNet
 				//response.Add(new ParamsAndGrads() { Params = this.filters[i].w, grads = this.filters[i].dw, l1_decay_mul = this.l1_decay_mul, l2_decay_mul = this.l2_decay_mul });
 				pg.Add(new ParamsAndGrads()
 				{
-					params_ = this.filters[i].w,
-					grads_ = this.filters[i].dw,
-					params_size = this.num_inputs,
+					params_ = this.filters.w,
+					grads_ = this.filters.dw,
+					params_idx = i * num_inputs,
+					grads_idx = i * num_inputs,
+					params_size = num_inputs,
 					gsum = filters_gsum[i],
 					xsum = filters_xsum[i],
 					l1_decay_mul = this.l1_decay_mul,
@@ -183,7 +193,7 @@ namespace ConvNet
 			{
 				params_ = this.bias.w,
 				grads_ = this.bias.dw,
-				params_size = this.out_depth,
+				params_size = out_depth,
 				gsum = bias_gsum,
 				xsum = bias_xsum,
 				l1_decay_mul = 0.0f,
@@ -205,6 +215,10 @@ namespace ConvNet
 		public ReluLayer()
 		{
 		}
+		public override bool inited()
+		{
+			return _inited;
+		}
 		public override void init()
 		{
 			// computed
@@ -214,6 +228,7 @@ namespace ConvNet
 			//this.layer_type = "relu";
 
 			this.out_act = new Vol(out_sx, out_sy, out_depth, null);
+			_inited = true;
 		}
 
 		public override Vol forward(Vol V)
@@ -240,15 +255,21 @@ namespace ConvNet
 		}
 		public override void backward()
 		{
-			Vol V = this.in_act; // we need to set dw of this
-			Vol V2 = this.out_act;
-			int N = V.w.size;
+			//Vol V = this.in_act; // we need to set dw of this
+			//Vol V2 = this.out_act;
+			int N = in_act.w.size;
 			//V.dw = Util.zeros(N); // zero out gradient wrt data
 			for (int i = 0; i < N; i++)
 			{
-				V.dw[i] = 0;
-				if (V2.w[i] <= 0) V.dw[i] = 0; // threshold
-				else V.dw[i] = V2.dw[i];
+				//in_act.dw[i] = 0;
+				if (out_act.w[i] <= 0)
+				{
+					in_act.dw[i] = 0; // threshold
+				}
+				else
+				{
+					in_act.dw[i] = out_act.dw[i];
+				}
 			}
 		}
 		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
@@ -257,12 +278,8 @@ namespace ConvNet
 	}
 	public class PoolLayer : Layer
 	{
-		public override void save(TextWriter s)
-		{
-		}
-		public override void load(TextReader s)
-		{
-		}
+		public override void save(TextWriter s) { }
+		public override void load(TextReader s) { }
 		//public int sx;
 		//public int sy;
 		public int in_depth;
@@ -280,6 +297,10 @@ namespace ConvNet
 			this.stride = stride;//opt.stride != 0 ? opt.stride : 2;
 			//this.pad = opt.pad != 0 ? opt.pad : 0; // amount of 0 padding to add around borders of input volume
 
+		}
+		public override bool inited()
+		{
+			return _inited;
 		}
 		public override void init()
 		{
@@ -299,6 +320,7 @@ namespace ConvNet
 			this.switchy = new int[this.out_sx * this.out_sy * this.out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
 
 			this.out_act = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
+			_inited = true;
 		}
 
 		public override Vol forward(Vol V)
@@ -385,19 +407,15 @@ namespace ConvNet
 		2 (3) -> a
 		3  <-(a)
 
-
+		??不实现了
 
 		  c<-    a
 		1 (1)->  b
 				 c
 		 * */
 
-		public override void save(TextWriter s)
-		{
-		}
-		public override void load(TextReader s)
-		{
-		}
+		public override void save(TextWriter s) { }
+		public override void load(TextReader s) { }
 		public int sx;
 		public int sy;
 		public int in_depth;
@@ -430,6 +448,10 @@ namespace ConvNet
 		//
 		//			this.out_act = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
 		//		}
+		public override bool inited()
+		{
+			return _inited;
+		}
 		public override void init()
 		{
 		}
@@ -544,6 +566,10 @@ namespace ConvNet
 		// function (exponentiate and normalize to sum to 1 as probabilities should)
 		public int num_inputs;
 		//public MyFloat es;
+		public override bool inited()
+		{
+			return _inited;
+		}
 		public override void init()
 		{
 			this.num_inputs = in_layer.out_sx * in_layer.out_sy * in_layer.out_depth;
@@ -553,6 +579,7 @@ namespace ConvNet
 
 			//es = MyFloat.getArray(this.out_depth);
 			this.out_act = new Vol(1, 1, this.out_depth, 0.0f);
+			_inited = true;
 		}
 
 		public override Vol forward(Vol V)
@@ -646,12 +673,17 @@ namespace ConvNet
 		//			this.out_sy = 1;
 		//			//this.layer_type = "regression";
 		//		}
+		public override bool inited()
+		{
+			return _inited;
+		}
 		public override void init()
 		{
 			this.num_inputs = in_layer.out_sx * in_layer.out_sy * in_layer.out_depth;
 			this.out_depth = this.num_inputs;
 			this.out_sx = 1;
 			this.out_sy = 1;
+			_inited = true;
 		}
 
 		public override Vol forward(Vol V)
@@ -683,18 +715,12 @@ namespace ConvNet
 		public override void save(TextWriter s)
 		{
 			bias.save(s);
-			for (int i = 0; i < filters.Length; i++)
-			{
-				filters[i].save(s);
-			}
+			filters.save(s);
 		}
 		public override void load(TextReader s)
 		{
 			bias.load(s);
-			for (int i = 0; i < filters.Length; i++)
-			{
-				filters[i].load(s);
-			}
+			filters.load(s);
 		}
 		// This file contains all layers that do dot products with input,
 		// but usually in a different connectivity pattern and weight sharing
@@ -710,7 +736,7 @@ namespace ConvNet
 		int stride;
 		int unstride;
 		int pad;
-		Vol[] filters;
+		Vol filters;
 		MyFloat[] filters_gsum; //[]?
 		MyFloat[] filters_xsum; //[]?
 		Vol bias;
@@ -732,15 +758,10 @@ namespace ConvNet
 			this.pad = pad; // amount of 0 padding to add around borders of input volume
 			//this.l1_decay_mul = opt.l1_decay_mul;
 			//this.l2_decay_mul = opt.l2_decay_mul;
-
-			// computed
-			// note we are doing floor, so if the strided convolution of the filter doesnt fit into the input
-			// volume exactly, the output volume will be trimmed and not contain the (incomplete) computed
-			// final application.
-
-			// initializations
-
-
+		}
+		public override bool inited()
+		{
+			return _inited;
 		}
 		public override void init()
 		{
@@ -759,12 +780,10 @@ namespace ConvNet
 				this.out_sy = (this.in_sy + this.pad * 2 - this.sy) / this.stride;
 			}
 
-			this.filters = new Vol[out_depth];
 			filters_gsum = new MyFloat[out_depth];
 			filters_xsum = new MyFloat[out_depth];
 			for (int i = 0; i < this.out_depth; i++)
 			{
-				this.filters[i] = new Vol(this.sx, this.sy, this.in_depth, null);
 				filters_gsum[i] = MyFloat.getArray(sx * sy * in_depth);
 				filters_xsum[i] = MyFloat.getArray(sx * sy * in_depth);
 				for (int j = 0; j < sx * sy * in_depth; j++)
@@ -773,6 +792,10 @@ namespace ConvNet
 					filters_xsum[i][j] = 0.0f;
 				}
 			}
+			//this.filters = new Vol[out_depth];
+			//this.filters[i] = new Vol(this.sx, this.sy, this.in_depth, null);
+			this.filters = new Vol(this.sx, this.sy, this.in_depth * out_depth, null);
+
 			this.bias = new Vol(1, 1, this.out_depth, bias_pref);
 			this.bias_gsum = MyFloat.getArray(out_depth); // last iteration gradients (used for momentum calculations)
 			this.bias_xsum = MyFloat.getArray(out_depth); // used in adadelta
@@ -782,189 +805,301 @@ namespace ConvNet
 				bias_xsum[j] = 0.0f;
 			}
 			this.out_act = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
+			_inited = true;
 		}
+
+		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern void CVFWD(
+			int stride,
+			int unstride,
+			int pad,
+			int sx,
+			int sy,
+			int in_depth,
+			int out_sx,
+			int out_sy,
+			int out_depth,
+			int filterSize,
+			int out_act_sx,
+			int in_act_sx,
+			int in_act_sy,
+			int i_filters_w,
+			int i_in_act_w,
+			int i_bias_w,
+			int i_out_act_w
+		);
 
 		public override Vol forward(Vol V)
 		{
 			// optimized code by @mdda that achieves 2x speedup over previous version
 
 			this.in_act = V;
+			int filterSize = sx * sy * in_depth;
 
-			int V_sx = V.sx;
-			int V_sy = V.sy;
+			CVFWD(
+				stride,
+				unstride,
+				pad,
+				sx,
+				sy,
+				in_depth,
+				out_sx,
+				out_sy,
+				out_depth,
+				filterSize,
+				out_act.sx,
+				in_act.sx,
+				in_act.sy,
+				filters.w.pos,
+				in_act.w.pos,
+				bias.w.pos,
+				out_act.w.pos
+			);
 
-			if (unstride > 0)
-			{
-				for (int out_x = 0; out_x < this.out_sx; out_x++)
-				{
-					for (int out_y = 0; out_y < this.out_sy; out_y++)
-					{
-						int frame_x = out_x / unstride - this.pad;
-						int frame_y = out_y / unstride - this.pad;
-						// convolve centered at this particular location
-						for (int d = 0; d < this.out_depth; d++)
-						{
-							Vol f = this.filters[d];
-							float a = 0.0f;
-							for (int fx = 0; fx < f.sx; fx++)
-							{
-								for (int fy = 0; fy < f.sy; fy++)
-								{
-									int ox = frame_x + fx;
-									int oy = frame_y + fy; // coordinates in the original input array coordinates
-									if (oy >= 0 && oy < V_sy && ox >= 0 && ox < V_sx)
-									{
-										int fidx = ((f.sx * fy) + fx) * f.depth;
-										int Vidx = ((V_sx * oy) + ox) * V.depth;
-										for (int fd = 0; fd < f.depth; fd++)
-										{
-											// avoid function call overhead (x2) for efficiency, compromise modularity :(
-											a += f.w[fidx + fd] * V.w[Vidx + fd];
-										}
-									}
-								}
-							}
-							a += this.bias.w[d];
-							out_act.set(out_x, out_y, d, a);
-						}
-					}
-				}
-			}
-			else
-			{
-				for (int out_x = 0; out_x < this.out_sx; out_x++)
-				{
-					for (int out_y = 0; out_y < this.out_sy; out_y++)
-					{
-						int frame_x = out_x * stride - this.pad;
-						int frame_y = out_y * stride - this.pad;
-						// convolve centered at this particular location
-						for (int d = 0; d < this.out_depth; d++)
-						{
-							Vol f = this.filters[d];
-							float a = 0.0f;
-							for (int fx = 0; fx < f.sx; fx++)
-							{
-								for (int fy = 0; fy < f.sy; fy++)
-								{
-									int oy = frame_y + fy; // coordinates in the original input array coordinates
-									int ox = frame_x + fx;
-									if (oy >= 0 && oy < V_sy && ox >= 0 && ox < V_sx)
-									{
-										int fidx = ((f.sx * fy) + fx) * f.depth;
-										int Vidx = ((V_sx * oy) + ox) * V.depth;
-										for (int fd = 0; fd < f.depth; fd++)
-										{
-											// avoid function call overhead (x2) for efficiency, compromise modularity :(
-											a += f.w[fidx + fd] * V.w[Vidx + fd];
-										}
-									}
-								}
-							}
-							a += this.bias.w[d];
-							out_act.set(out_x, out_y, d, a);
-						}
-					}
-				}
-			}
+			//if (unstride > 0)
+			//{
+			//	for (int out_x = 0; out_x < out_sx; out_x++)
+			//	{
+			//		int frame_x = out_x / unstride - pad;
+			//		for (int out_y = 0; out_y < out_sy; out_y++)
+			//		{
+			//			int frame_y = out_y / unstride - pad;
+			//			int out_act_sx_out_y = out_act.sx * out_y;
+			//			// convolve centered at this particular location
+			//			for (int d = 0; d < out_depth; d++)
+			//			{
+			//				//Vol f = this.filters[d];
+			//				int filterIdx = d * filterSize;
+			//				float a = 0.0f;
+			//				for (int fy = 0; fy < sy; fy++)
+			//				{
+			//					int oy = frame_y + fy; // coordinates in the original input array coordinates
+			//					int oy2 = (in_act.sx * oy);
+			//					int fy2 = (fy * sx);
+			//					for (int fx = 0; fx < sx; fx++)
+			//					{
+			//						int ox = frame_x + fx;
+			//						if (oy >= 0 && oy < in_act.sy && ox >= 0 && ox < in_act.sx)
+			//						{
+			//							int fidx = (fy2 + fx) * in_depth + filterIdx;
+			//							int Vidx = (oy2 + ox) * in_depth;
+			//							for (int fd = 0; fd < in_depth; fd++)
+			//							{
+			//								// avoid function call overhead (x2) for efficiency, compromise modularity :(
+			//								a += filters.w[fidx + fd] * in_act.w[Vidx + fd];
+			//							}
+			//						}
+			//					}
+			//				}
+			//				a += bias.w[d];
+			//				//out_act.set(out_x, out_y, d, a);
+			//				out_act.w[(out_act_sx_out_y + out_x) * out_depth + d] = a;
+			//			}
+			//		}
+			//	}
+			//}
+			//else
+			//{
+			//	for (int out_x = 0; out_x < out_sx; out_x++)
+			//	{
+			//		int frame_x = out_x * stride - pad;
+			//		for (int out_y = 0; out_y < out_sy; out_y++)
+			//		{
+			//			int frame_y = out_y * stride - pad;
+			//			int out_act_sx_out_y = out_act.sx * out_y;
+			//			// convolve centered at this particular location
+			//			for (int d = 0; d < out_depth; d++)
+			//			{
+			//				//Vol f = this.filters[d];
+			//				int filterIdx = d * filterSize;
+			//				float a = 0.0f;
+			//				for (int fy = 0; fy < sy; fy++)
+			//				{
+			//					int oy = frame_y + fy; // coordinates in the original input array coordinates
+			//					int oy2 = (in_act.sx * oy);
+			//					int fy2 = (fy * sx);
+			//					for (int fx = 0; fx < sx; fx++)
+			//					{
+			//						int ox = frame_x + fx;
+			//						if (oy >= 0 && oy < in_act.sy && ox >= 0 && ox < in_act.sx)
+			//						{
+			//							int fidx = (fy2 + fx) * in_depth + filterIdx;
+			//							int Vidx = (oy2 + ox) * in_depth;
+			//							for (int fd = 0; fd < in_depth; fd++)
+			//							{
+			//								// avoid function call overhead (x2) for efficiency, compromise modularity :(
+			//								a += filters.w[fidx + fd] * in_act.w[Vidx + fd];
+			//							}
+			//						}
+			//					}
+			//				}
+			//				a += bias.w[d];
+			//				//out_act.set(out_x, out_y, d, a);
+			//				out_act.w[(out_act_sx_out_y + out_x) * out_depth + d] = a;
+			//			}
+			//		}
+			//	}
+			//}
 			//this.out_act = A;
 			return this.out_act;
 		}
+
+
+		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern void CVBWD(
+			int stride,
+			int unstride,
+			int pad,
+			int sx,
+			int sy,
+			int in_size,
+			int in_depth,
+			int out_sx,
+			int out_sy,
+			int out_depth,
+			int filterSize,
+			int out_act_sx,
+			int in_act_sx,
+			int in_act_sy,
+			int i_filters_w,
+			int i_in_act_w,
+			int i_in_act_dw,
+			int i_out_act_dw,
+			int i_bias_dw,
+			int i_filters_dw
+		);
+
 		public override void backward()
 		{
-			Vol V = this.in_act;
 			//????????TODO 未初始化可能影响后续????????????????V.dw = Util.zeros(V.w.Length); // zero out gradient wrt bottom data, we're about to fill it
-			for (int i = 0; i < V.dw.size; i++)
-			{
-				V.dw[i] = 0;
-			}
-			int V_sx = V.sx;
-			int V_sy = V.sy;
+			int in_size = in_sx * in_sy * in_depth;
+			int filterSize = sx * sy * in_depth;
 
-			if (unstride > 0)
-			{
-				for (int out_x = 0; out_x < this.out_sx; out_x++)
-				{
-					for (int out_y = 0; out_y < this.out_sy; out_y++)
-					{
-						int x = out_x / unstride - this.pad;
-						int y = out_y / unstride - this.pad;
-						for (int d = 0; d < this.out_depth; d++)
-						{
-							Vol f = this.filters[d];
-							// convolve centered at this particular location
-							float chain_grad = this.out_act.get_grad(out_x, out_y, d); // gradient from above, from chain rule
-							for (int fy = 0; fy < f.sy; fy++)
-							{
-								for (int fx = 0; fx < f.sx; fx++)
-								{
-									int ox = x + fx;
-									int oy = y + fy; // coordinates in the original input array coordinates
-									if (oy >= 0 && oy < V_sy && ox >= 0 && ox < V_sx)
-									{
-										int fidx = ((f.sx * fy) + fx) * f.depth;
-										int Vidx = ((V_sx * oy) + ox) * V.depth;
-										for (int fd = 0; fd < f.depth; fd++)
-										{
-											// avoid function call overhead (x2) for efficiency, compromise modularity :(
-											f.dw[fidx + fd] += V.w[Vidx + fd] * chain_grad;
-											V.dw[Vidx + fd] += f.w[fidx + fd] * chain_grad;
-										}
-									}
-								}
-							}
-							this.bias.dw[d] += chain_grad;
-						}
-					}
-				}
-			}
-			else
-			{
-				for (int out_x = 0; out_x < this.out_sx; out_x++)
-				{
-					for (int out_y = 0; out_y < this.out_sy; out_y++)
-					{
-						int x = out_x * stride - this.pad;
-						int y = out_y * stride - this.pad;
-						for (int d = 0; d < this.out_depth; d++)
-						{
-							Vol f = this.filters[d];
-							// convolve centered at this particular location
-							float chain_grad = this.out_act.get_grad(out_x, out_y, d); // gradient from above, from chain rule
-							for (int fy = 0; fy < f.sy; fy++)
-							{
-								for (int fx = 0; fx < f.sx; fx++)
-								{
-									int ox = x + fx;
-									int oy = y + fy; // coordinates in the original input array coordinates
-									if (oy >= 0 && oy < V_sy && ox >= 0 && ox < V_sx)
-									{
-										int fidx = ((f.sx * fy) + fx) * f.depth;
-										int Vidx = ((V_sx * oy) + ox) * V.depth;
-										for (int fd = 0; fd < f.depth; fd++)
-										{
-											// avoid function call overhead (x2) for efficiency, compromise modularity :(
-											f.dw[fidx + fd] += V.w[Vidx + fd] * chain_grad;
-											V.dw[Vidx + fd] += f.w[fidx + fd] * chain_grad;
-										}
-									}
-								}
-							}
-							this.bias.dw[d] += chain_grad;
-						}
-					}
-				}
-			}
+			CVBWD(
+				stride,
+				unstride,
+				pad,
+				sx,
+				sy,
+				in_size,
+				in_depth,
+				out_sx,
+				out_sy,
+				out_depth,
+				filterSize,
+				out_act.sx,
+				in_act.sx,
+				in_act.sy,
+				filters.w.pos,
+				in_act.w.pos,
+				in_act.dw.pos,
+				out_act.dw.pos,
+				bias.dw.pos,
+				filters.dw.pos
+			);
+
+
+			//for (int i = 0; i < in_size; i++)
+			//{
+			//	in_act.dw[i] = 0;
+			//}
+			//
+			//if (unstride > 0)
+			//{
+			//	for (int out_x = 0; out_x < out_sx; out_x++)
+			//	{
+			//		int x = out_x / unstride - pad;
+			//		for (int out_y = 0; out_y < out_sy; out_y++)
+			//		{
+			//			int y = out_y / unstride - pad;
+			//			for (int d = 0; d < out_depth; d++)
+			//			{
+			//				//Vol f = this.filters[d];
+			//				int filterIdx = d * filterSize;
+			//				// convolve centered at this particular location
+			//				//float chain_grad = out_act.get_grad(out_x, out_y, d); // gradient from above, from chain rule
+			//				float chain_grad = out_act.dw[((out_act.sx * out_y) + out_x) * out_depth + d];
+			//
+			//				for (int fy = 0; fy < sy; fy++)
+			//				{
+			//					int oy = y + fy; // coordinates in the original input array coordinates
+			//					int oy2 = (in_act.sx * oy);
+			//					int fy2 = (sx * fy);
+			//					for (int fx = 0; fx < sx; fx++)
+			//					{
+			//						int ox = x + fx;
+			//						if (oy >= 0 && oy < in_act.sy && ox >= 0 && ox < in_act.sx)
+			//						{
+			//							int fidx = (fy2 + fx) * in_depth + filterIdx;
+			//							int Vidx = (oy2 + ox) * in_depth;
+			//							for (int fd = 0; fd < in_depth; fd++)
+			//							{
+			//								// avoid function call overhead (x2) for efficiency, compromise modularity :(
+			//								filters.dw[fidx + fd] += in_act.w[Vidx + fd] * chain_grad;
+			//								in_act.dw[Vidx + fd] += filters.w[fidx + fd] * chain_grad;
+			//							}
+			//						}
+			//					}
+			//				}
+			//				bias.dw[d] += chain_grad;
+			//			}
+			//		}
+			//	}
+			//}
+			//else
+			//{
+			//	for (int out_x = 0; out_x < out_sx; out_x++)
+			//	{
+			//		int x = out_x * stride - pad;
+			//		for (int out_y = 0; out_y < out_sy; out_y++)
+			//		{
+			//			int y = out_y * stride - pad;
+			//			for (int d = 0; d < out_depth; d++)
+			//			{
+			//				//Vol f = this.filters[d];
+			//				int filterIdx = d * filterSize;
+			//				// convolve centered at this particular location
+			//				//float chain_grad = this.out_act.get_grad(out_x, out_y, d); // gradient from above, from chain rule
+			//				float chain_grad = out_act.dw[((out_act.sx * out_y) + out_x) * out_depth + d];
+			//				for (int fy = 0; fy < sy; fy++)
+			//				{
+			//					int oy = y + fy; // coordinates in the original input array coordinates
+			//					int oy2 = (in_act.sx * oy);
+			//					int fy2 = (sx * fy);
+			//					for (int fx = 0; fx < sx; fx++)
+			//					{
+			//						int ox = x + fx;
+			//						if (oy >= 0 && oy < in_act.sy && ox >= 0 && ox < in_act.sx)
+			//						{
+			//							int fidx = (fy2 + fx) * in_depth + filterIdx;
+			//							int Vidx = (oy2 + ox) * in_depth;
+			//							for (int fd = 0; fd < in_depth; fd++)
+			//							{
+			//								// avoid function call overhead (x2) for efficiency, compromise modularity :(
+			//								filters.dw[fidx + fd] += in_act.w[Vidx + fd] * chain_grad;
+			//								in_act.dw[Vidx + fd] += filters.w[fidx + fd] * chain_grad;
+			//							}
+			//						}
+			//					}
+			//				}
+			//				bias.dw[d] += chain_grad;
+			//			}
+			//		}
+			//	}
+			//}
 		}
 		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
 		{
 			for (int i = 0; i < this.out_depth; i++)
 			{
+				int filterSize = sx * sy * in_depth;
 				pg.Add(new ParamsAndGrads()
 				{
-					params_ = this.filters[i].w,
-					grads_ = this.filters[i].dw,
-					params_size = sx * sy * in_depth,
+					params_ = this.filters.w,
+					grads_ = this.filters.dw,
+					params_idx = i * filterSize,
+					grads_idx = i * filterSize,
+					params_size = filterSize,
 					gsum = filters_gsum[i],
 					xsum = filters_xsum[i],
 					l2_decay_mul = this.l2_decay_mul,
@@ -1008,6 +1143,10 @@ namespace ConvNet
 			this.out_depth = out_depth;
 		}
 
+		public override bool inited()
+		{
+			return true;
+		}
 		public override void init()
 		{
 		}
@@ -1037,6 +1176,10 @@ namespace ConvNet
 		{
 		}
 
+		public override bool inited()
+		{
+			return _inited;
+		}
 		public override void init()
 		{
 			this.out_sx = in_layer.out_sx;
@@ -1047,6 +1190,7 @@ namespace ConvNet
 			this.out_act = new Vol(out_sx, out_sy, out_depth, null);
 			//float y = (float)Math.Exp(2 * x);
 			//return (y - 1) / (y + 1);
+			_inited = true;
 		}
 		public override Vol forward(Vol V)
 		{
@@ -1073,7 +1217,6 @@ namespace ConvNet
 		{
 		}
 	}
-
 	public class ReshapeLayer : Layer
 	{
 		public override void save(TextWriter s)
@@ -1089,9 +1232,14 @@ namespace ConvNet
 			this.out_depth = out_depth;
 		}
 
+		public override bool inited()
+		{
+			return _inited;
+		}
 		public override void init()
 		{
 			this.out_act = new Vol(out_sx, out_sy, out_depth, null);
+			_inited = true;
 		}
 		public override Vol forward(Vol V)
 		{
@@ -1534,88 +1682,6 @@ namespace ConvNet
 		//  this.layer_type = json.layer_type; 
 		//  this.group_size = json.group_size;
 		//  this.switches = global.zeros(this.group_size);
-		//}
-	}*/
-	//TanhLayer
-	/*
-	class TanhLayer : Layer
-	{
-		public override void getRange(Range r)
-		{
-		}
-		public override void save(BinaryWriter s)
-		{
-		}
-		public override void save(StreamWriter s)
-		{
-		}
-		public override void load(BinaryReader s)
-		{
-		}
-		public override void load(StreamReader s)
-		{
-		}
-		// Implements Tanh nnonlinearity elementwise
-		// x -> tanh(x) 
-		// so the output is between -1 and 1.
-		public TanhLayer(Def def)
-			: base(def)
-		{
-			Def opt = def;
-			// computed
-			this.out_sx = opt.in_sx;
-			this.out_sy = opt.in_sy;
-			this.out_depth = opt.in_depth;
-			//this.layer_type = "tanh";
-		}
-
-		public float tanh(float x)
-		{
-			float y = (float)Math.Exp(2 * x);
-			return (y - 1) / (y + 1);
-		}
-		public override Vol forward(Vol V, bool is_training)
-		{
-			this.in_act = V;
-			Vol V2 = V.cloneAndZero();
-			int N = V.w.Length;
-			for (int i = 0; i < N; i++)
-			{
-				V2.w[i] = tanh(V.w[i]);
-			}
-			this.out_act = V2;
-			return this.out_act;
-		}
-		public override float backward(DataSet y)
-		{
-			Vol V = this.in_act; // we need to set dw of this
-			Vol V2 = this.out_act;
-			int N = V.w.Length;
-			V.dw = Util.zeros(N); // zero out gradient wrt data
-			for (int i = 0; i < N; i++)
-			{
-				float v2wi = V2.w[i];
-				V.dw[i] = (1.0f - v2wi * v2wi) * V2.dw[i];
-			}
-
-			return 0;
-		}
-		public override List<ParamsAndGrads> getParamsAndGrads()
-		{
-			return new List<ParamsAndGrads>();
-		}
-		//toJSON: function() {
-		//  json.out_depth = this.out_depth;
-		//  json.out_sx = this.out_sx;
-		//  json.out_sy = this.out_sy;
-		//  json.layer_type = this.layer_type;
-		//  return json;
-		//}
-		//fromJSON: function(json) {
-		//  this.out_depth = json.out_depth;
-		//  this.out_sx = json.out_sx;
-		//  this.out_sy = json.out_sy;
-		//  this.layer_type = json.layer_type; 
 		//}
 	}*/
 	//SigmoidLayer
