@@ -169,8 +169,10 @@ namespace ConvNet
 			//	this.bias.dw[i] += chain_grad;
 			//}
 		}
+		public bool noUpdate = false;
 		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
 		{
+			if (noUpdate) return;
 			for (int i = 0; i < this.out_depth; i++)
 			{
 				//int iw = i * this.num_inputs;
@@ -736,6 +738,7 @@ namespace ConvNet
 		int stride;
 		int unstride;
 		int pad;
+		//最外层是深度，然后是列，然后是行 ，行相邻元素在一起
 		Vol filters;
 		MyFloat[] filters_gsum; //[]?
 		MyFloat[] filters_xsum; //[]?
@@ -1088,8 +1091,10 @@ namespace ConvNet
 			//	}
 			//}
 		}
+		public bool noUpdate = false;
 		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
 		{
+			if(noUpdate)return;
 			for (int i = 0; i < this.out_depth; i++)
 			{
 				int filterSize = sx * sy * in_depth;

@@ -121,8 +121,15 @@ namespace GUI
 				if (e.Button == System.Windows.Forms.MouseButtons.Left)
 				{
 					pictureBox1.Image = _getBmp(e.X, e.Y);
-					var v1 = mnist.net4.forward(_getImg(e.X, e.Y));
-					String s = mnist.report(v1);
+
+					var img = _getImg(e.X, e.Y);
+
+					var v1 = mnist.coTrainNet.forward(img);
+
+					var v2 = mnist.mainNet.forward(img);
+					pictureBox4.Image = v2.vis(0);
+
+					String s = MNIST.report(v1);
 					textBox1.Text = (s);
 				}
 			}
@@ -133,48 +140,31 @@ namespace GUI
 		}
 
 
-		Vol regen = new Vol(1, 1, 2, 0);
 		void pictureBox3_MouseMove(object sender, MouseEventArgs e)
 		{
-			float x = (e.X - 50f) / mnist.visScale;
-			float y = (e.Y - 50f) / mnist.visScale;
-			regen.w[0] = x;
-			regen.w[1] = y;
 
-			var _out = mnist.net2.forward(regen);
+			pictureBox4.Image = mnist.xy2ImgNet.proc(e.X, e.Y);
 
-			pictureBox4.Image = _out.vis(0);
+			textBox1.Text = mnist.coTrainTestNet.proc(e.X, e.Y);
 		}
 
 
 		private void button1_Click(object sender, EventArgs e)
 		{
+
 			for (int k = 0; k < 200; k++)
 			{
 				for (int j = 0; j < 500; j++)
 				{
-					for (int i = 0; i < mnist.trainer.batch_size; i++)
-					{
-						mnist.selftrain();
-					}
-					for (int i = 0; i < mnist.trainer2.batch_size; i++)
-					{
-						mnist.train2();
-					}
+					mnist.mainNet.train();
+					//mnist.coTrainNet.train();
 					Text = j.ToString();
 					Application.DoEvents();
 				}
 				FileStream fs = new FileStream("mnistnet" + textBox2.Text + k + ".txt", FileMode.Create, FileAccess.Write);
 				StreamWriter sw = new StreamWriter(fs);
-				mnist.net.save(sw);
-				sw.Flush();
-				fs.Flush();
-				fs.Close();
-			}
-			{
-				FileStream fs = new FileStream("mnistnet.txt", FileMode.Create, FileAccess.Write);
-				StreamWriter sw = new StreamWriter(fs);
-				mnist.net.save(sw);
+				mnist.mainNet.save(sw);
+				mnist.coTrainNet.save(sw);
 				sw.Flush();
 				fs.Flush();
 				fs.Close();
@@ -183,12 +173,52 @@ namespace GUI
 
 		private void button2_Click(object sender, EventArgs e)
 		{
-			//mnist.proc();
+			{
+				FileStream fs = new FileStream("z_coTrainNet.txt", FileMode.Open, FileAccess.Read);
+				StreamReader sr = new StreamReader(fs);
+				mnist.coTrainNet.load(sr);
+				fs.Close();
+			}
+			{
+				FileStream fs = new FileStream("z_mainNet.txt", FileMode.Open, FileAccess.Read);
+				StreamReader sr = new StreamReader(fs);
+				mnist.mainNet.load(sr);
+				fs.Close();
+			}
 
-			FileStream fs = new FileStream(textBox2.Text + ".txt", FileMode.Open, FileAccess.Read);
-			StreamReader sr = new StreamReader(fs);
-			mnist.net.load(sr);
-			fs.Close();
+			//{
+			//	FileStream fs = new FileStream("z_Begin.txt", FileMode.Open, FileAccess.Read);
+			//	StreamReader sr = new StreamReader(fs);
+			//	mnist.mainNet.load(sr);
+			//	mnist.coTrainNet.load(sr);
+			//	fs.Close();
+			//}
+			//{
+			//	FileStream fs = new FileStream("z_coTrainNet.txt", FileMode.Create, FileAccess.Write);
+			//	StreamWriter sw = new StreamWriter(fs);
+			//	mnist.coTrainNet.save(sw);
+			//	sw.Flush();
+			//	fs.Flush();
+			//	fs.Close();
+			//}
+			//
+			//{
+			//	FileStream fs = new FileStream("z_final.txt", FileMode.Open, FileAccess.Read);
+			//	StreamReader sr = new StreamReader(fs);
+			//	mnist.mainNet.load(sr);
+			//	mnist.coTrainNet.load(sr);
+			//	fs.Close();
+			//}
+			//{
+			//	FileStream fs = new FileStream("z_mainNet.txt", FileMode.Create, FileAccess.Write);
+			//	StreamWriter sw = new StreamWriter(fs);
+			//	mnist.mainNet.save(sw);
+			//	sw.Flush();
+			//	fs.Flush();
+			//	fs.Close();
+			//}
+
+
 
 		}
 
@@ -230,7 +260,7 @@ namespace GUI
 			{
 				Stopwatch sw = new Stopwatch();
 				sw.Start();
-				mnist.selftrain();
+				mnist.mainNet.train();
 				sw.Stop();
 				textBox1.Text += sw.ElapsedTicks + "\r\n";
 

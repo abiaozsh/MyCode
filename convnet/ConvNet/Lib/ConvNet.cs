@@ -175,24 +175,24 @@ namespace ConvNet
 		public float l1_decay_mul = 1.0f;
 		public float l2_decay_mul = 1.0f;
 	}
-	public class Net
+	public abstract class Net
 	{
 		public List<Layer> layers;
 
-		public void save(TextWriter s)
-		{
-			for (int i = 0; i < layers.Count; i++)
-			{
-				layers[i].save(s);
-			}
-		}
-		public void load(TextReader s)
-		{
-			for (int i = 0; i < layers.Count; i++)
-			{
-				layers[i].load(s);
-			}
-		}
+		//public void save(TextWriter s)
+		//{
+		//	for (int i = 0; i < layers.Count; i++)
+		//	{
+		//		layers[i].save(s);
+		//	}
+		//}
+		//public void load(TextReader s)
+		//{
+		//	for (int i = 0; i < layers.Count; i++)
+		//	{
+		//		layers[i].load(s);
+		//	}
+		//}
 
 		public Net()
 		{
@@ -238,7 +238,7 @@ namespace ConvNet
 		{
 			int N = this.layers.Count;
 			for (int i = N - 1; i >= 0; i--)
-			{ // first layer assumed input
+			{
 				this.layers[i].backward();
 			}
 		}
