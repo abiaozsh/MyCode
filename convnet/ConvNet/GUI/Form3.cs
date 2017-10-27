@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,10 +20,10 @@ namespace GUI
 		}
 
 		int idx = 10;
-		Cifar c = new Cifar();
+		Cifar cifar = new Cifar();
 		private void Form3_Load(object sender, EventArgs e)
 		{
-
+			cifar.init();
 			this.MouseWheel += Form3_MouseWheel;
 		}
 		string[] classify = new string[]{
@@ -46,8 +48,42 @@ namespace GUI
 			{
 				idx--;
 			}
-			this.Text = classify[c.getLbl(idx)];
-			this.BackgroundImage = c.getBmp(idx);
+			this.Text = classify[cifar.getLbl(idx)];
+			this.BackgroundImage = cifar.getBmp(idx);
+		}
+
+		private void button1_Click(object sender, EventArgs e)
+		{
+			for (int k = 0; k < 2000; k++)
+			{
+				for (int j = 0; j < 100; j++)
+				{
+					cifar.mainNet.train();
+					Text = j.ToString();
+					Application.DoEvents();
+				}
+				FileStream fs = new FileStream("cifar" + textBox1.Text + k + ".txt", FileMode.Create, FileAccess.Write);
+				StreamWriter sw = new StreamWriter(fs);
+				cifar.mainNet.save(sw);
+				sw.Flush();
+				fs.Flush();
+				fs.Close();
+			}
+
+		}
+
+		private void button2_Click(object sender, EventArgs e)
+		{
+			{
+				FileStream fs = new FileStream(textBox1.Text + ".txt", FileMode.Open, FileAccess.Read);
+				StreamReader sr = new StreamReader(fs);
+				cifar.mainNet.load(sr);
+				fs.Close();
+			}
+
+			Bitmap b = cifar.display(this, 200);
+
+			b.Save(@"e:\out.jpg", ImageFormat.Jpeg);
 		}
 	}
 }

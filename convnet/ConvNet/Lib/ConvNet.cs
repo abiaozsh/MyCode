@@ -10,6 +10,25 @@ namespace ConvNet
 {
 	public class Util
 	{
+		public delegate void DoSave(StreamWriter sw);
+		public static void save(string filename, DoSave sv)
+		{
+			FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write);
+			StreamWriter sw = new StreamWriter(fs);
+			sv(sw);
+			sw.Flush();
+			fs.Flush();
+			fs.Close();
+		}
+
+		public delegate void DoLoad(StreamReader sr);
+		public static void load(string filename, DoLoad ld)
+		{
+			FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
+			StreamReader sr = new StreamReader(fs);
+			ld(sr);
+			fs.Close();
+		}
 
 	}
 	public class Range
@@ -168,8 +187,8 @@ namespace ConvNet
 		public int params_size;
 		public MyFloat params_;
 		public MyFloat grads_;
-		public int params_idx=0;
-		public int grads_idx=0;
+		public int params_idx = 0;
+		public int grads_idx = 0;
 		public MyFloat gsum; //[]?
 		public MyFloat xsum; //[]?
 		public float l1_decay_mul = 1.0f;

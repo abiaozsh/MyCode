@@ -38,6 +38,9 @@ namespace ConvNet
 
 		public abstract float getLoss();
 	}
+	public abstract class ActivationLayer : Layer
+	{
+	}
 
 	public class FullyConnLayer : Layer
 	{
@@ -63,7 +66,10 @@ namespace ConvNet
 		public int num_inputs;
 
 		float bias_pref;
-		public FullyConnLayer(int num_neurons = 0, float bias_pref = 0.0f)
+
+		public ActivationLayer act;
+
+		public FullyConnLayer(int num_neurons = 0, float bias_pref = 0.0f, ActivationLayer act = null)
 		{
 
 			// required
@@ -75,6 +81,8 @@ namespace ConvNet
 			//this.l2_decay_mul = opt.l2_decay_mul;
 
 			this.bias_pref = bias_pref;
+
+			this.act = act;
 		}
 
 		public override bool inited()
@@ -117,6 +125,11 @@ namespace ConvNet
 
 			this.out_act = new Vol(1, 1, this.out_depth, 0.0f);
 			_inited = true;
+			if (act != null)
+			{
+				act.in_layer = this;
+				act.init();
+			}
 		}
 
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
@@ -140,8 +153,14 @@ namespace ConvNet
 			//	a += this.bias.w[i];
 			//	this.out_act.w[i] = a;
 			//}
-
-			return this.out_act;
+			if (act != null)
+			{
+				return act.forward(this.out_act);
+			}
+			else
+			{
+				return this.out_act;
+			}
 		}
 
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
@@ -149,6 +168,10 @@ namespace ConvNet
 
 		public override void backward()
 		{
+			if (act != null)
+			{
+				act.backward();
+			}
 			FCBWD(out_depth, num_inputs, in_act.w.pos, filters.w.pos, in_act.dw.pos, out_act.dw.pos, filters.dw.pos, bias.dw.pos);
 
 			//for (int d = 0; d < num_inputs; d++)
@@ -203,7 +226,7 @@ namespace ConvNet
 			});
 		}
 	}
-	public class ReluLayer : Layer
+	public class ReluLayer : ActivationLayer
 	{
 		public override void save(TextWriter s)
 		{
@@ -620,7 +643,7 @@ namespace ConvNet
 		{
 			// compute and accumulate gradient wrt weights and bias of this layer
 			Vol x = this.in_act;
-			//????????TODO 未初始化可能影响后续????????????????x.dw = Util.zeros(x.w.Length); // zero out the gradient of input Vol
+
 			for (int i = 0; i < x.dw.size; i++)
 			{
 				x.dw[i] = 0;
@@ -739,14 +762,16 @@ namespace ConvNet
 		int unstride;
 		int pad;
 		//最外层是深度，然后是列，然后是行 ，行相邻元素在一起
-		Vol filters;
+		public Vol filters;
 		MyFloat[] filters_gsum; //[]?
 		MyFloat[] filters_xsum; //[]?
 		Vol bias;
 		MyFloat bias_gsum; //[]?
 		MyFloat bias_xsum; //[]?
 		float bias_pref;
-		public ConvLayer(int sx = 0, int sy = 0, int filters = 0, int stride = 1, int unstride = 0, int pad = 0, float bias_pref = 0.0f)//if pad = sx(sy) / 2  the size is same   bigger pad bigger out
+
+		ActivationLayer act;
+		public ConvLayer(int sx = 0, int sy = 0, int filters = 0, int stride = 1, int unstride = 0, int pad = 0, float bias_pref = 0.0f, ActivationLayer act = null)//if pad = sx(sy) / 2  the size is same   bigger pad bigger out
 		{
 			// required
 			this.out_depth = filters;
@@ -761,6 +786,7 @@ namespace ConvNet
 			this.pad = pad; // amount of 0 padding to add around borders of input volume
 			//this.l1_decay_mul = opt.l1_decay_mul;
 			//this.l2_decay_mul = opt.l2_decay_mul;
+			this.act = act;
 		}
 		public override bool inited()
 		{
@@ -809,6 +835,12 @@ namespace ConvNet
 			}
 			this.out_act = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
 			_inited = true;
+
+			if (act != null)
+			{
+				act.in_layer = this;
+				act.init();
+			}
 		}
 
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
@@ -944,7 +976,14 @@ namespace ConvNet
 			//	}
 			//}
 			//this.out_act = A;
-			return this.out_act;
+			if (act != null)
+			{
+				return act.forward(this.out_act);
+			}
+			else
+			{
+				return this.out_act;
+			}
 		}
 
 
@@ -977,6 +1016,11 @@ namespace ConvNet
 			//????????TODO 未初始化可能影响后续????????????????V.dw = Util.zeros(V.w.Length); // zero out gradient wrt bottom data, we're about to fill it
 			int in_size = in_sx * in_sy * in_depth;
 			int filterSize = sx * sy * in_depth;
+
+			if (act != null)
+			{
+				act.backward();
+			}
 
 			CVBWD(
 				stride,
@@ -1094,7 +1138,7 @@ namespace ConvNet
 		public bool noUpdate = false;
 		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
 		{
-			if(noUpdate)return;
+			if (noUpdate) return;
 			for (int i = 0; i < this.out_depth; i++)
 			{
 				int filterSize = sx * sy * in_depth;
@@ -1169,7 +1213,7 @@ namespace ConvNet
 		{
 		}
 	}
-	public class TanhLayer : Layer
+	public class TanhLayer : ActivationLayer
 	{
 		public override void save(TextWriter s)
 		{

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,40 +18,44 @@ namespace GUI
 		{
 			InitializeComponent();
 		}
-		Net net;
-		Trainer trainer;
+		MainNet net;
 		List<Data> data = new List<Data>();
 
+		public class MainNet : Net//net
+		{
+			public FullyConnLayer fc1;
+			public FullyConnLayer fc2;
+
+			public Trainer trainer;
+
+			public void init()
+			{
+				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f,act: new ReluLayer());
+				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f, act: new ReluLayer());
+				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f, act: new ReluLayer());
+				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f, act: new ReluLayer());
+				fc1 = new FullyConnLayer(num_neurons: 2, bias_pref: 0.1f, act: new TanhLayer());
+				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f, act: new ReluLayer());
+				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f, act: new ReluLayer());
+				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f, act: new ReluLayer());
+				fc1 = new FullyConnLayer(num_neurons: 6, bias_pref: 0.1f, act: new ReluLayer());
+				fc2 = new FullyConnLayer(num_neurons: 2, bias_pref: 0.1f);
+
+				Add(new InputLayer(out_sx: 1, out_sy: 1, out_depth: 2));
+
+				Add(fc1);
+				Add(fc2);
+
+				Add(new SoftmaxLayer());
+
+				//trainer = new Trainer(this, new Trainer.Option() { learning_rate = 0.01f, momentum = 0.1f, batch_size = 10, l2_decay = 0.001f });//0.001f
+				trainer = new Trainer(this, new Trainer.Option() { method = "adadelta", batch_size = 5, l2_decay = 0.0f });//0.001f
+			}
+		}
 		private void Form2_Load(object sender, EventArgs e)
 		{
-
-			//layer_defs = [];
-			//layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth:2});
-			//layer_defs.push({type:'fc', num_neurons:4
-			//, activation: 'relu'});
-			//layer_defs.push({type:'fc', num_neurons:2, activation: 'relu'});
-			//layer_defs.push({type:'softmax', num_classes:2});
-			//
-			//net = new convnetjs.Net();
-			//net.makeLayers(layer_defs);
-			//
-			//trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.1, batch_size:10, l2_decay:0.001});
-
-//			List<Def> layer_defs = new List<Def>();
-//			layer_defs.Add(new Def { type = "input", out_sx = 1, out_sy = 1, out_depth = 2 }); // 2 inputs= x, y \n\
-//			layer_defs.Add(new Def { type = "fc", num_neurons = 6, bias_pref = 0.1f });// relus like a bit of positive bias to get gradients early
-//			layer_defs.Add(new Def { type = "relu" });
-//
-//			layer_defs.Add(new Def { type = "fc", num_neurons = 2, bias_pref = 0.1f });// relus like a bit of positive bias to get gradients early
-//			layer_defs.Add(new Def { type = "relu" });
-//
-//			layer_defs.Add(new Def() { type = "softmax", num_classes = 2 });
-//
-//			net = new Net();
-//			net.makeLayers(layer_defs);
-
-			trainer = new Trainer(net, new Trainer.Option() { learning_rate = 0.01f, momentum = 0.1f, batch_size = 10, l2_decay = 0.001f });//0.001f
-
+			net = new MainNet();
+			net.init();
 			circle_data();
 		}
 
@@ -118,12 +123,16 @@ namespace GUI
 
 		private void button1_Click(object sender, EventArgs e)
 		{
-			for (int i = 0; i < 1000; i++)
+			for (int j = 0; j < 10000; j++)
 			{
-				int idx = (int)RNN.randf(0, 100);
-				trainer.train(data[idx].val, data[idx].label);
+				for (int i = 0; i < net.trainer.batch_size; i++)
+				{
+					int idx = (int)RNN.randf(0, 100);
+					net.trainer.train(data[idx].val, data[idx].label);
+				}
+				draw();
+				Application.DoEvents();
 			}
-			draw();
 		}
 
 	}

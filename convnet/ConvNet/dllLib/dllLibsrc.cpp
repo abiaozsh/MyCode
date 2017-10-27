@@ -22,7 +22,7 @@ public:
 	cl_command_queue queue;
 };
 
-cl_int arraySize = 1024 * 1024 * 64;
+cl_int arraySize = 1024 * 1024 * 256;
 extern "C" __declspec(dllexport) int getArraySize()//int size
 {
 	return arraySize;
