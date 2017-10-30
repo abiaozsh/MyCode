@@ -32,7 +32,7 @@ namespace GUI
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            MNIST.proc();
             label1.ForeColor = MNIST.cDict[0];
             label2.ForeColor = MNIST.cDict[1];
             label3.ForeColor = MNIST.cDict[2];

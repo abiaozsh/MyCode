@@ -22,7 +22,7 @@ namespace GUI
 		{
 			first3CVNet = new MNIST.First3CVNet();
 			first3CVNet.init();
-			MNIST.loadBlackList();
+			//MNIST.loadBlackList();
 		}
 
 		private void button1_Click(object sender, EventArgs e)
@@ -153,7 +153,7 @@ namespace GUI
 			{
 				ret += "<td>" + list[i].val + ":" + list[i].predict + "</td>";
 			}
-			ret += "<td><img src='E:\\MNIST\\imgs\\" + correctVal + "\\" + MNIST.blackList[index] + ".bmp'></td>";
+			//ret += "<td><img src='E:\\MNIST\\imgs\\" + correctVal + "\\" + MNIST.blackList[index] + ".bmp'></td>";
 			return ret;
 		}
 
@@ -168,14 +168,14 @@ namespace GUI
 			string[] list = todel.Split(' ');
 			foreach (string v in list)
 			{
-				MNIST.removeData(int.Parse(v));
+				//MNIST.removeData(int.Parse(v));
 			}
 
 		}
 
 		private void button6_Click(object sender, EventArgs e)
 		{
-			MNIST.saveBlackList();
+			//MNIST.saveBlackList();
 		}
 	}
 }
