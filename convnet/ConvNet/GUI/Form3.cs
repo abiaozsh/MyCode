@@ -23,6 +23,7 @@ namespace GUI
 		Cifar cifar = new Cifar();
 		private void Form3_Load(object sender, EventArgs e)
 		{
+			//cifar
 			cifar.init();
 			this.MouseWheel += Form3_MouseWheel;
 		}
@@ -62,6 +63,9 @@ namespace GUI
 					Text = j.ToString();
 					Application.DoEvents();
 				}
+				cifar.mainNet.test();
+
+
 				FileStream fs = new FileStream("cifar" + textBox1.Text + k + ".txt", FileMode.Create, FileAccess.Write);
 				StreamWriter sw = new StreamWriter(fs);
 				cifar.mainNet.save(sw);
@@ -74,16 +78,6 @@ namespace GUI
 
 		private void button2_Click(object sender, EventArgs e)
 		{
-			{
-				FileStream fs = new FileStream(textBox1.Text + ".txt", FileMode.Open, FileAccess.Read);
-				StreamReader sr = new StreamReader(fs);
-				cifar.mainNet.load(sr);
-				fs.Close();
-			}
-
-			Bitmap b = cifar.display(this, 200);
-
-			b.Save(@"e:\out.jpg", ImageFormat.Jpeg);
 		}
 	}
 }

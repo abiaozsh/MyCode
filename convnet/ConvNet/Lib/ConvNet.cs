@@ -29,6 +29,15 @@ namespace ConvNet
 			ld(sr);
 			fs.Close();
 		}
+		public static void log(string txt)
+		{
+			FileStream fs = new FileStream("log.txt", FileMode.Append, FileAccess.Write);
+			StreamWriter sw = new StreamWriter(fs);
+			sw.WriteLine(txt);
+			sw.Flush();
+			fs.Flush();
+			fs.Close();
+		}
 
 	}
 	public class Range

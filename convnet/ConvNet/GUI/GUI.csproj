@@ -63,28 +63,9 @@
     <Compile Include="Form3.Designer.cs">
       <DependentUpon>Form3.cs</DependentUpon>
     </Compile>
-    <Compile Include="Form4.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Form4.Designer.cs">
-      <DependentUpon>Form4.cs</DependentUpon>
-    </Compile>
-    <Compile Include="MakeBlackList.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="MakeBlackList.Designer.cs">
-      <DependentUpon>MakeBlackList.cs</DependentUpon>
-    </Compile>
-    <Compile Include="MNIST3D.cs" />
     <Compile Include="MNIST.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TrainClassifier2D.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="TrainClassifier2D.Designer.cs">
-      <DependentUpon>TrainClassifier2D.cs</DependentUpon>
-    </Compile>
     <Compile Include="TrainFirst3Layer.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -100,12 +81,6 @@
     <EmbeddedResource Include="Form3.resx">
       <DependentUpon>Form3.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Form4.resx">
-      <DependentUpon>Form4.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="MakeBlackList.resx">
-      <DependentUpon>MakeBlackList.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -115,9 +90,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="TrainClassifier2D.resx">
-      <DependentUpon>TrainClassifier2D.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="TrainFirst3Layer.resx">
       <DependentUpon>TrainFirst3Layer.cs</DependentUpon>
     </EmbeddedResource>

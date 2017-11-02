@@ -18,11 +18,11 @@ namespace GUI
 			InitializeComponent();
 		}
 
-		MNIST.First3CVNet first3CVNet;
+		MNIST.MainNet mainNet;
 		private void TrainFirst3Layer_Load(object sender, EventArgs e)
 		{
-			first3CVNet = new MNIST.First3CVNet();
-			first3CVNet.init();
+			mainNet = new MNIST.MainNet();
+			mainNet.init();
 		}
 
 		MNIST mnist = new MNIST();
@@ -35,20 +35,20 @@ namespace GUI
 			{
 				for (int i = 0; i < 50; i++)
 				{
-					first3CVNet.train();
+					mainNet.train();
 					Text = k + "," + i + "," + accu;
 					Application.DoEvents();
 				}
-				accu = first3CVNet.test();
+				accu = mainNet.test();
 				Text = k + ",0," + accu;
 
 
 				Util.save("net.txt", (s) =>
 				{
-					first3CVNet.cv1.save(s);
-					first3CVNet.cv2.save(s);
-					first3CVNet.cv3.save(s);
-					first3CVNet.fc144.save(s);
+					mainNet.cv1.save(s);
+					mainNet.cv2.save(s);
+					mainNet.cv3.save(s);
+					mainNet.fc144.save(s);
 				});
 
 			}

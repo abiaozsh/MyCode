@@ -5,6 +5,7 @@ using System.Text;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Drawing;
 
 namespace ConvNet
 {
@@ -714,19 +715,17 @@ namespace ConvNet
 		public override Vol forward(Vol V)
 		{
 			this.in_act = V;
-			this.out_act = V;
 			return V; // identity function
 		}
 		// y is a list here of size num_inputs
 		public override void backward()
 		{
 			// compute and accumulate gradient wrt weights and bias of this layer
-			Vol x = this.in_act;
 			float loss = 0.0f;
 			for (int i = 0; i < this.out_depth; i++)
 			{
-				float dy = x.w[i] - y.data.w[i];
-				x.dw[i] = dy;
+				float dy = in_act.w[i] - y.data.w[i];
+				in_act.dw[i] = dy;
 				loss += 2 * dy * dy;
 			}
 			this.loss = loss;
@@ -756,12 +755,13 @@ namespace ConvNet
 		int sx;
 		int sy;
 		int in_depth;
+		public int filterSize;
 		int in_sx;
 		int in_sy;
 		int stride;
 		int unstride;
 		int pad;
-		//最外层是深度，然后是列，然后是行 ，行相邻元素在一起
+		//最外层是filter，然后是行单元，然后是行元素 然后是输入层深度，行相邻元素在一起
 		public Vol filters;
 		MyFloat[] filters_gsum; //[]?
 		MyFloat[] filters_xsum; //[]?
@@ -798,6 +798,7 @@ namespace ConvNet
 			this.in_sx = in_layer.out_sx;
 			this.in_sy = in_layer.out_sy;
 
+			filterSize = sx * sy * in_depth;
 			if (unstride > 0)
 			{
 				this.out_sx = (this.in_sx + this.pad * 2 - this.sx) * this.unstride;
@@ -1166,6 +1167,32 @@ namespace ConvNet
 				l2_decay_mul = 0.0f
 			});
 		}
+
+		public Bitmap vis(int idx, int d, float scale)
+		{
+			Bitmap b = new Bitmap(sx, sy);
+			for (int i = 0; i < sx; i++)
+			{
+				for (int j = 0; j < sy; j++)
+				{
+					float v = filters.w[idx * filterSize + ((this.sx * j) + i) + d];
+					Color c;
+					if (v > 0)
+					{
+						if (v > 1) v = 1;
+						c = Color.FromArgb((int)(v * scale), 0, 0);
+					}
+					else
+					{
+						if (v < -1) v = -1;
+						c = Color.FromArgb(0, (int)(-v * scale), 0);
+					}
+					b.SetPixel(i, j, c);
+				}
+			}
+			return b;
+		}
+
 	}
 	public class InputLayer : Layer
 	{
