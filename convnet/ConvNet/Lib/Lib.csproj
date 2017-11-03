@@ -47,8 +47,8 @@
     <Compile Include="ConvNet.cs" />
     <Compile Include="Layers.cs" />
     <Compile Include="MyFloat.cs" />
+    <Compile Include="OpenCL.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RNN.cs" />
     <Compile Include="Trainer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

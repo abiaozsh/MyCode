@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -9,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using ConvNet;
 
 namespace GUI
 {
@@ -21,10 +21,11 @@ namespace GUI
 
 		int idx = 10;
 		Cifar cifar = new Cifar();
+		Cifar.RegNet regNet = new Cifar.RegNet();
 		private void Form3_Load(object sender, EventArgs e)
 		{
-			//cifar
 			cifar.init();
+			regNet.init();
 			this.MouseWheel += Form3_MouseWheel;
 		}
 		string[] classify = new string[]{
@@ -50,34 +51,83 @@ namespace GUI
 				idx--;
 			}
 			this.Text = classify[cifar.getLbl(idx)];
-			this.BackgroundImage = cifar.getBmp(idx);
+			this.BackgroundImage = Cifar.getBmp(idx);
 		}
 
+		bool stop = false;
 		private void button1_Click(object sender, EventArgs e)
 		{
-			for (int k = 0; k < 2000; k++)
+			for (int k = 0; k < 5000; k++)
 			{
-				for (int j = 0; j < 100; j++)
+				for (int i = 0; i < 1; i++)
 				{
-					cifar.mainNet.train();
-					Text = j.ToString();
+					regNet.train(2);
+					Text = k + "," + i;
 					Application.DoEvents();
 				}
-				cifar.mainNet.test();
+				regNet.forward(Cifar.getImg(0));
+				pictureBox1.Image = regNet.in_layer.out_act.visRGB();
+				pictureBox4.Image = regNet.ucv2.out_act.visRGB();
 
 
-				FileStream fs = new FileStream("cifar" + textBox1.Text + k + ".txt", FileMode.Create, FileAccess.Write);
-				StreamWriter sw = new StreamWriter(fs);
-				cifar.mainNet.save(sw);
-				sw.Flush();
-				fs.Flush();
-				fs.Close();
+				regNet.forward(Cifar.getImg(1));
+				pictureBox2.Image = regNet.in_layer.out_act.visRGB();
+				pictureBox3.Image = regNet.ucv2.out_act.visRGB();
+
+				if (stop) { stop = false; break; }
 			}
 
 		}
 
 		private void button2_Click(object sender, EventArgs e)
 		{
+			stop = true;
+			//	{
+			//		FileStream fs = new FileStream(textBox1.Text + ".txt", FileMode.Open, FileAccess.Read);
+			//		StreamReader sr = new StreamReader(fs);
+			//		cifar.mainNet.load(sr);
+			//		fs.Close();
+			//	}
+			//
+			//	Bitmap b = cifar.display(this, 200);
+			//
+			//	b.Save(@"e:\out.jpg", ImageFormat.Jpeg);
+		}
+
+		private void button3_Click(object sender, EventArgs e)
+		{
+			for (int k = 0; k < 5000; k++)
+			{
+				for (int i = 0; i < 1; i++)
+				{
+					regNet.train(3);
+					Text = k + "," + i;
+					Application.DoEvents();
+				}
+				regNet.forward(Cifar.getImg(0));
+				pictureBox1.Image = regNet.in_layer.out_act.visRGB();
+				pictureBox4.Image = regNet.ucv2.out_act.visRGB();
+
+
+				regNet.forward(Cifar.getImg(1));
+				pictureBox2.Image = regNet.in_layer.out_act.visRGB();
+				pictureBox3.Image = regNet.ucv2.out_act.visRGB();
+
+				regNet.forward(Cifar.getImg(2));
+				pictureBox5.Image = regNet.in_layer.out_act.visRGB();
+				pictureBox6.Image = regNet.ucv2.out_act.visRGB();
+
+				//Util.save("net.txt", (s) =>
+				//{
+				//	mainNet.cv1.save(s);
+				//	mainNet.cv2.save(s);
+				//	mainNet.cv3.save(s);
+				//	mainNet.fc144.save(s);
+				//});
+				if (stop) { stop = false; break; }
+
+			}
+
 		}
 	}
 }

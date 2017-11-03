@@ -39,6 +39,17 @@ namespace ConvNet
 			fs.Close();
 		}
 
+		static Random rnd = new Random();
+		public static float randf(float a, float b)
+		{
+			return (float)rnd.NextDouble() * (b - a) + a;
+
+		}
+		public static int randi(float a, float b)
+		{
+			return (int)Math.Floor(rnd.NextDouble() * (b - a) + a);
+		}
+
 	}
 	public class Range
 	{
@@ -91,6 +102,32 @@ namespace ConvNet
 			}
 			return b;
 		}
+		public Bitmap visRGB()
+		{
+			if (depth != 3) return null;
+			Bitmap bmp = new Bitmap(sx, sy);
+			for (int i = 0; i < sx; i++)
+			{
+				for (int j = 0; j < sy; j++)
+				{
+					float r = get(j, i, 0);
+					float g = get(j, i, 1);
+					float b = get(j, i, 2);
+					if (r < 0) r = 0;
+					if (r > 1) r = 1;
+
+					if (g < 0) g = 0;
+					if (g > 1) g = 1;
+
+					if (b < 0) b = 0;
+					if (b > 1) b = 1;
+					Color c;
+					c = Color.FromArgb((int)(r * 255), (int)(g * 255), (int)(b * 255));
+					bmp.SetPixel(i, j, c);
+				}
+			}
+			return bmp;
+		}
 
 		public void save(TextWriter s)
 		{
@@ -135,8 +172,8 @@ namespace ConvNet
 			this.sy = sy;
 			this.depth = depth;
 			int n = sx * sy * depth;
-			this.w = MyFloat.getArray(n);//Util.zeros(n);
-			this.dw = MyFloat.getArray(n);//Util.zeros(n);
+			this.w = new MyFloat(n);//Util.zeros(n);
+			this.dw = new MyFloat(n);//Util.zeros(n);
 			if (c == null)
 			{
 				// weight normalization is done to equalize the output
@@ -191,36 +228,11 @@ namespace ConvNet
 		//Classification (SVM/Softmax)
 		public int predict;
 	}
-	public class ParamsAndGrads
-	{
-		public int params_size;
-		public MyFloat params_;
-		public MyFloat grads_;
-		public int params_idx = 0;
-		public int grads_idx = 0;
-		public MyFloat gsum; //[]?
-		public MyFloat xsum; //[]?
-		public float l1_decay_mul = 1.0f;
-		public float l2_decay_mul = 1.0f;
-	}
 	public abstract class Net
 	{
 		public List<Layer> layers;
 
-		//public void save(TextWriter s)
-		//{
-		//	for (int i = 0; i < layers.Count; i++)
-		//	{
-		//		layers[i].save(s);
-		//	}
-		//}
-		//public void load(TextReader s)
-		//{
-		//	for (int i = 0; i < layers.Count; i++)
-		//	{
-		//		layers[i].load(s);
-		//	}
-		//}
+		public Trainer trainer;
 
 		public Net()
 		{
@@ -272,15 +284,48 @@ namespace ConvNet
 		}
 
 
-		public List<ParamsAndGrads> getParamsAndGrads()
+		public float train(Vol x, DataSet y)//Report
 		{
-			// accumulate parameters and gradients for the entire network
-			List<ParamsAndGrads> response = new List<ParamsAndGrads>();
-			for (int i = 0; i < this.layers.Count; i++)
+			//Stopwatch sw = new Stopwatch();
+			//sw.Start();
+			forward(x); // also set the flag that lets the net know we're just training
+			//long t1 = sw.ElapsedTicks;
+			//var lastLayer = ((LastLayer)this.net.layers[this.net.layers.Count - 1]);
+			var lastLayer = (LastLayer)out_layer;
+			lastLayer.setData(y);
+			backward();
+			float cost_loss = lastLayer.getLoss();
+			//long t2 = sw.ElapsedTicks;
+			//float l2_decay_loss = 0.0f;
+			//float l1_decay_loss = 0.0f;
+
+			trainer.count++;
+			if (trainer.count == trainer.batchSize )
 			{
-				this.layers[i].getParamsAndGrads(response);
+				for (int i = 0; i < this.layers.Count; i++)
+				{
+					if (layers[i] is TrainableLayer)
+					{
+						((TrainableLayer)layers[i]).train(trainer);
+					}
+				}
+				trainer.count = 0;
 			}
-			return response;
+
+			// appending softmax_loss for backwards compatibility, but from now on we will always use cost_loss
+			// in future, TODO: have to completely redo the way loss is done around the network as currently 
+			// loss is a bit of a hack. Ideally, user should specify arbitrary number of loss functions on any layer
+			// and it should all be computed correctly and automatically. 
+
+			//return new Report()
+			//{
+			//	l2_decay_loss = l2_decay_loss,
+			//	l1_decay_loss = l1_decay_loss,
+			//	cost_loss = cost_loss,
+			//	softmax_loss = cost_loss,
+			//	loss = cost_loss + l1_decay_loss + l2_decay_loss
+			//};
+			return cost_loss;
 		}
 
 	}

@@ -19,10 +19,15 @@
 // problem reports or change requests be submitted to it directly
 
 
-__kernel void test1(__global float * theArray, const uint param1)
+__kernel void test1(__global float* theArray1,__global float* theArray2, const uint param1, const float param2)
 {
 	int idx = get_global_id(0);
 
-	float f = (float)idx;
-	theArray[param1 + idx] = theArray[0] + theArray[1] + f + 0.1f;
+	int offset = idx*10;
+
+	float bias = (float)param1;
+
+	for(int i=0;i<10;i++){ 
+		theArray1[offset+i] = theArray1[offset+i] + theArray2[offset+i] + bias+ param2;
+	}
 }

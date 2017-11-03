@@ -291,9 +291,6 @@ namespace GUI
 	{
 
 
-
-
-
 		public class MainNet : Net
 		{
 			public ConvLayer cv1;
@@ -301,8 +298,6 @@ namespace GUI
 			public ConvLayer cv3;
 			public FullyConnLayer fc144;
 			public FullyConnLayer fc10;
-
-			public Trainer trainer;
 
 			public void save(TextWriter s)
 			{
@@ -389,12 +384,13 @@ namespace GUI
 				0,1,1,1,
 				0,1,0,0,
 				0,1,0,0,
-
 			";
-
 
 			public void init()
 			{
+				//this, new Trainer.Option() 
+				trainer = new AdaDeltaTrainer(66) { l2_decay = 0.001f };//0.001f
+
 				cv1 = new ConvLayer(sx: 4, sy: 4, filters: 16, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
 				cv2 = new ConvLayer(sx: 4, sy: 4, filters: 16, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
 				cv3 = new ConvLayer(sx: 4, sy: 4, filters: 32, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
@@ -416,7 +412,6 @@ namespace GUI
 				}
 				//cv1.noUpdate = true;
 
-				trainer = new Trainer(this, new Trainer.Option() { method = "adadelta", batch_size = 66, l2_decay = 0.001f });//0.001f
 			}
 
 
@@ -426,7 +421,7 @@ namespace GUI
 			{
 				DataSet ds = new DataSet();
 				//train
-				for (int i = 0; i < trainer.batch_size; i++)
+				for (int i = 0; i < trainer.batchSize; i++)
 				{
 					int trainIndex = (int)(MNISTData.rnd.NextDouble() * 70000);
 					if ((i + 1) % 10 == 0)
@@ -452,7 +447,7 @@ namespace GUI
 					}
 					MNISTData.getImgV(data, v);
 
-					trainer.train(v, ds);
+					train(v, ds);
 				}
 
 			}
@@ -480,6 +475,70 @@ namespace GUI
 				}
 				return accu / 1000.0f;
 			}
+		}
+
+
+		public class RegNet : Net
+		{
+			public ConvLayer cv1;
+			public ConvLayer cv2;
+			public ConvLayer cv3;
+			public FullyConnLayer fc144;
+			public ConvLayer ucv0;
+			public ConvLayer ucv1;
+			public ConvLayer ucv2;
+
+			public void save(TextWriter s)
+			{
+			}
+			public void load(TextReader s)
+			{
+			}
+
+			public void init()
+			{
+				trainer = new AdaDeltaTrainer(5) { ro = 0.5f, l2_decay = 0.001f };//0.001f learning_rate = 0.1f, 
+				//trainer = new SGDTrainer(5) { learning_rate = 0.0002f, l2_decay = 0.001f };//0.001f
+
+				cv1 = new ConvLayer(sx: 4, sy: 4, filters: 16, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
+				cv2 = new ConvLayer(sx: 4, sy: 4, filters: 16, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
+				cv3 = new ConvLayer(sx: 4, sy: 4, filters: 32, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
+				fc144 = new FullyConnLayer(num_neurons: 288, bias_pref: 0.1f, act: new ReluLayer());
+				ucv0 = new ConvLayer(sx: 4, sy: 4, filters: 16, unstride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
+				ucv1 = new ConvLayer(sx: 4, sy: 4, filters: 8, unstride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
+				ucv2 = new ConvLayer(sx: 4, sy: 4, filters: 1, unstride: 2, pad: 1, bias_pref: 0.1f);
+
+				Add(new InputLayer(out_sx: 28, out_sy: 28, out_depth: 1));
+				Add(cv1);
+				Add(cv2);
+				Add(cv3);
+				Add(fc144);
+				Add(new ReshapeLayer(out_sx: 4, out_sy: 4, out_depth: 32));
+				Add(ucv0);
+				Add(ucv1);
+				Add(ucv2);
+				Add(new RegressionLayer());
+
+			}
+
+
+			public Vol train()
+			{
+				DataSet ds = new DataSet();
+				//train
+				for (int i = 0; i < trainer.batchSize; i++)
+				{
+					int trainIndex = i%3;//(int)(MNISTData.rnd.NextDouble() * 70000);
+
+
+					var v = MNISTData.getImg(trainIndex);
+					ds.data = v;
+
+					train(v, ds);
+				}
+				return ucv2.out_act;
+			}
+
 		}
 
 		public void Init()

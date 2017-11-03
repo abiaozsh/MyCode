@@ -54,6 +54,14 @@ public:
     }
 };
 
+struct OpenCLBasic
+{
+public:
+	cl_platform_id platform;
+	cl_device_id device;
+	cl_context context;
+	cl_command_queue queue;
+};
 
 
 // Allocates piece of aligned memory

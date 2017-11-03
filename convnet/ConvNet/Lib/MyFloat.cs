@@ -4,185 +4,82 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using Lib;
 
-namespace ConvNetx
-{
-	public class MyFloat : ConvNet.Persistence
-	{
-
-		float[] p;
-
-		public int size;
-
-		public static void Init()
-		{
-		}
-		public void save(TextWriter s)
-		{
-			for (int i = 0; i < size; i++)
-			{
-				s.WriteLine(this[i]);
-			}
-		}
-		public void load(TextReader s)
-		{
-			for (int i = 0; i < size; i++)
-			{
-				string v = s.ReadLine();
-				this[i] = float.Parse(v);
-			}
-		}
-
-		public override string ToString()
-		{
-			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < size; i++)
-			{
-				sb.Append("[" + i + ":" + this[i] + "]\r\n");
-			}
-			return sb.ToString();
-		}
-		public static MyFloat getArray(int size)
-		{
-			MyFloat ret = new MyFloat();
-			ret.size = size;
-			ret.p = new float[size];
-			for (int i = 0; i < size; i++)
-			{
-				ret.p[i] = 0.0f;
-			}
-			return ret;
-		}
-
-		public float this[int idx]
-		{
-			get
-			{
-				float v;
-				if (idx >= size)
-				{
-					throw new Exception();
-				}
-				v = p[idx];
-				return v;
-			}
-			set
-			{
-				if (value > 1E10)
-				{
-					int i = 1; i++;
-				}
-				if (value < -1E10)
-				{
-					int i = 1; i++;
-				}
-				if (float.IsInfinity(value))
-				{
-					int i = 1; i++;
-				}
-				if (float.IsNaN(value))
-				{
-					int i = 1; i++;
-				}
-				if (idx >= size)
-				{
-					throw new Exception();
-				}
-				p[idx] = value;
-			}
-		}
-	}
-}
 namespace ConvNet
 {
 
 	public class MyFloat : Persistence
 	{
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern IntPtr allocfloat();//int param
+		static extern IntPtr allocfloat(int size);
 
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr allocfloat2();//int param
+		static extern void freefloat(IntPtr point);
 
-
+		//extern "C" __declspec(dllexport) cl_mem allocCLMEM(OpenCLBasic* oclobjects, cl_float* point, int size){
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern int getArraySize();
+		static extern IntPtr allocCLMEM(IntPtr oclobjects, IntPtr point, int size);
 
+
+
+		//extern "C" __declspec(dllexport) void freeCLMEM(OpenCLBasic* oclobjects, cl_float* point, cl_mem p_cl_mem)
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern IntPtr init(int platform, int device);
+		static extern void freeCLMEM(IntPtr oclobjects, IntPtr point, IntPtr p_cl_mem);
 
-
+		//extern "C" __declspec(dllexport) void copyToCLMEM(OpenCLBasic* oclobjects, const cl_float* point, cl_mem p_cl_mem, int size)
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		private static extern IntPtr _getPlatforms();
-		public static string getPlatforms()
+		static extern void copyToCLMEM(IntPtr oclobjects, IntPtr point, IntPtr p_cl_mem, int size);
+
+		//extern "C" __declspec(dllexport) void copyFromCLMEM(OpenCLBasic* oclobjects, cl_float* point, cl_mem p_cl_mem, int size)
+		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern void copyFromCLMEM(IntPtr oclobjects, IntPtr point, IntPtr p_cl_mem, int size);
+
+		public void copyToCLMEM()
 		{
-			IntPtr ip = _getPlatforms();
-			StringBuilder sb = new StringBuilder();
-			unsafe
+			if (OpenCL.oclobjects != IntPtr.Zero && p_cl_mem != IntPtr.Zero)
 			{
-				byte* p;
-				p = (byte*)ip.ToPointer();
-
-				for (int i = 0; i < 4096; i++)
-				{
-					if (p[i] == 0) break;
-					sb.Append((char)p[i]);
-				}
+				copyToCLMEM(OpenCL.oclobjects, ori_p, p_cl_mem, size);
 			}
-			return sb.ToString();
 		}
-
-		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		private static extern IntPtr _getDevices(int platform);
-		public static string getDevices(int platform)
+		public void copyFromCLMEM()
 		{
-			IntPtr ip = _getDevices(platform);
-			StringBuilder sb = new StringBuilder();
-			unsafe
+			if (OpenCL.oclobjects != IntPtr.Zero && p_cl_mem != IntPtr.Zero)
 			{
-				byte* p;
-				p = (byte*)ip.ToPointer();
-
-				for (int i = 0; i < 4096; i++)
-				{
-					if (p[i] == 0) break;
-					sb.Append((char)p[i]);
-				}
+				copyFromCLMEM(OpenCL.oclobjects, ori_p, p_cl_mem, size);
 			}
-			return sb.ToString();
 		}
 
-
-		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr getKernel(byte[] filename, byte[] skernel);
-
-		public static IntPtr getKernel(string filename, string kernel)
-		{
-			return getKernel(Encoding.Unicode.GetBytes(filename), Encoding.ASCII.GetBytes(kernel));
-		}
-
-		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		public static extern void runKernel(IntPtr kernel, int threads, int _params, int[] param);
-
-
-		//static int totalsize = 1024 * 1024;
-		static unsafe float* p;
-		public static int idx = 0;
-
-		public int pos;
+		public IntPtr ori_p;
+		unsafe float* p;
 		public int size;
+		public IntPtr p_cl_mem = IntPtr.Zero;
 
-		public static void Init()
+		public MyFloat(int len)
 		{
-			IntPtr f = allocfloat();//totalsize
+			ori_p = allocfloat(len);//totalsize
 			unsafe
 			{
-				p = (float*)f.ToPointer();
+				p = (float*)ori_p.ToPointer();
 			}
+			size = len;
 
-			//init(0, 1);
-			//init(1, 0);
+			if (OpenCL.oclobjects != IntPtr.Zero)
+			{
+				p_cl_mem = allocCLMEM(OpenCL.oclobjects, ori_p, size);
+			}
 		}
+
+		~MyFloat()
+		{
+			freefloat(ori_p);
+			if (OpenCL.oclobjects != IntPtr.Zero && p_cl_mem != IntPtr.Zero)
+			{
+				freeCLMEM(OpenCL.oclobjects, ori_p, p_cl_mem);
+			}
+		}
+
+
 		public void save(TextWriter s)
 		{
 			for (int i = 0; i < size; i++)
@@ -209,18 +106,6 @@ namespace ConvNet
 			}
 			return sb.ToString();
 		}
-		public static MyFloat getArray(int size)
-		{
-			if (idx + size > getArraySize())
-			{
-				throw new Exception();
-			}
-			MyFloat ret = new MyFloat();
-			ret.size = size;
-			ret.pos = idx;
-			idx += size;
-			return ret;
-		}
 
 		public float this[int idx]
 		{
@@ -229,7 +114,7 @@ namespace ConvNet
 				float v;
 				unsafe
 				{
-					v = p[pos + idx];
+					v = p[idx];
 				}
 				return v;
 			}
@@ -237,9 +122,11 @@ namespace ConvNet
 			{
 				unsafe
 				{
-					p[pos + idx] = value;
+					p[idx] = value;
 				}
 			}
 		}
+
+
 	}
 }

@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using ConvNet;
-using Lib;
 
 namespace GUI
 {
@@ -26,10 +25,11 @@ namespace GUI
 			public FullyConnLayer fc1;
 			public FullyConnLayer fc2;
 
-			public Trainer trainer;
-
 			public void init()
 			{
+				//trainer = new Trainer(this, new Trainer.Option() { learning_rate = 0.01f, momentum = 0.1f, batch_size = 10, l2_decay = 0.001f });//0.001f
+				trainer = new AdaDeltaTrainer(5){  l2_decay = 0.0f };//0.001f method = "adadelta",
+
 				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f,act: new ReluLayer());
 				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f, act: new ReluLayer());
 				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f, act: new ReluLayer());
@@ -48,8 +48,6 @@ namespace GUI
 
 				Add(new SoftmaxLayer());
 
-				//trainer = new Trainer(this, new Trainer.Option() { learning_rate = 0.01f, momentum = 0.1f, batch_size = 10, l2_decay = 0.001f });//0.001f
-				trainer = new Trainer(this, new Trainer.Option() { method = "adadelta", batch_size = 5, l2_decay = 0.0f });//0.001f
 			}
 		}
 		private void Form2_Load(object sender, EventArgs e)
@@ -96,8 +94,8 @@ namespace GUI
 		{
 			for (var i = 0; i < 50; i++)
 			{
-				var r = RNN.randf(0.0f, 2.0f);
-				var t = RNN.randf(0.0f, 2 * (float)Math.PI);
+				var r = Util.randf(0.0f, 2.0f);
+				var t = Util.randf(0.0f, 2 * (float)Math.PI);
 				Data d = new Data();
 				d.val = new Vol(1, 1, 2, 0);
 				d.val.w[0] = r * (float)Math.Sin(t);
@@ -108,7 +106,7 @@ namespace GUI
 			}
 			for (var i = 0; i < 50; i++)
 			{
-				var r = RNN.randf(3.0f, 5.0f);
+				var r = Util.randf(3.0f, 5.0f);
 				//var t = convnetjs.randf(0.0, 2*Math.PI);
 				var t = 2 * (float)Math.PI * i / 50.0f;
 				Data d = new Data();
@@ -125,10 +123,10 @@ namespace GUI
 		{
 			for (int j = 0; j < 10000; j++)
 			{
-				for (int i = 0; i < net.trainer.batch_size; i++)
+				for (int i = 0; i < net.trainer.batchSize; i++)
 				{
-					int idx = (int)RNN.randf(0, 100);
-					net.trainer.train(data[idx].val, data[idx].label);
+					int idx = (int)Util.randf(0, 100);
+					net.train(data[idx].val, data[idx].label);
 				}
 				draw();
 				Application.DoEvents();

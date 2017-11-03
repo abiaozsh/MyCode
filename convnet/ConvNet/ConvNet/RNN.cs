@@ -28,8 +28,8 @@ namespace Lib
 		this.parent = parent;
 			this.n = n;
 			this.d = d;
-			this.w = MyFloat.getArray(n * d);
-			this.dw = MyFloat.getArray(n * d);
+			this.w = new MyFloat(n * d);
+			this.dw = new MyFloat(n * d);
 		}
 	}
 
@@ -399,21 +399,11 @@ namespace Lib
 
 	public class RNN
 	{
-		static Random rnd = new Random();
-		public static float randf(float a, float b)
-		{
-			return (float)rnd.NextDouble() * (b - a) + a;
-
-		}
-		public static int randi(float a, float b)
-		{
-			return (int)Math.Floor(rnd.NextDouble() * (b - a) + a);
-		}
 		public static void fillRand(Mat m, float lo, float hi)
 		{
 			for (int i = 0; i < m.w.size; i++)
 			{
-				m.w[i] = randf(lo, hi);
+				m.w[i] = Util.randf(lo, hi);
 			}
 		}
 
@@ -680,7 +670,7 @@ namespace Lib
 		{
 			// sample argmax from w, assuming w are 
 			// probabilities that sum to one
-			var r = randf(0, 1);
+			var r = Util.randf(0, 1);
 			var x = 0.0;
 			var i = 0;
 			while (true)

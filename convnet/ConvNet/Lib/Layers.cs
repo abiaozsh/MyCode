@@ -28,7 +28,7 @@ namespace ConvNet
 		public abstract Vol forward(Vol V);
 		public abstract void backward();
 		//public float backwardData(DataSet y){return 0;}
-		public abstract void getParamsAndGrads(List<ParamsAndGrads> pg);
+		//public abstract void getParamsAndGrads(List<ParamsAndGrads> pg);
 		public abstract void save(TextWriter s);
 		public abstract void load(TextReader s);
 	}
@@ -42,8 +42,13 @@ namespace ConvNet
 	public abstract class ActivationLayer : Layer
 	{
 	}
+	public abstract class TrainableLayer : Layer
+	{
+		public abstract void train(Trainer trainer);
+	}
 
-	public class FullyConnLayer : Layer
+
+	public class FullyConnLayer : TrainableLayer
 	{
 		public override void save(TextWriter s)
 		{
@@ -101,8 +106,8 @@ namespace ConvNet
 			filters_xsum = new MyFloat[out_depth];
 			for (int i = 0; i < this.out_depth; i++)
 			{
-				filters_gsum[i] = MyFloat.getArray(num_inputs);
-				filters_xsum[i] = MyFloat.getArray(num_inputs);
+				filters_gsum[i] = new MyFloat(num_inputs);
+				filters_xsum[i] = new MyFloat(num_inputs);
 				for (int j = 0; j < num_inputs; j++)
 				{
 					filters_gsum[i][j] = 0.0f;
@@ -115,8 +120,8 @@ namespace ConvNet
 
 
 			this.bias = new Vol(1, 1, this.out_depth, bias_pref);
-			this.bias_gsum = MyFloat.getArray(out_depth); // last iteration gradients (used for momentum calculations)
-			this.bias_xsum = MyFloat.getArray(out_depth); // used in adadelta
+			this.bias_gsum = new MyFloat(out_depth); // last iteration gradients (used for momentum calculations)
+			this.bias_xsum = new MyFloat(out_depth); // used in adadelta
 
 			for (int j = 0; j < out_depth; j++)
 			{
@@ -134,13 +139,20 @@ namespace ConvNet
 		}
 
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern void FCFWD(int out_depth, int num_inputs, int i_in_act_w, int i_filters_w, int i_bias_w, int i_out_act_w);
+		static extern void FCFWD(
+			int out_depth,
+			int num_inputs,
+			IntPtr p_in_act_w,
+			IntPtr p_filters_w,
+			IntPtr p_bias_w,
+			IntPtr p_out_act_w
+		);
 
 		public override Vol forward(Vol V)
 		{
 			this.in_act = V;
 
-			FCFWD(out_depth, num_inputs, in_act.w.pos, filters.w.pos, bias.w.pos, out_act.w.pos);
+			FCFWD(out_depth, num_inputs, in_act.w.ori_p, filters.w.ori_p, bias.w.ori_p, out_act.w.ori_p);
 
 			//for (int i = 0; i < this.out_depth; i++)
 			//{
@@ -165,7 +177,16 @@ namespace ConvNet
 		}
 
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern void FCBWD(int out_depth, int num_inputs, int i_in_act_w, int i_filters_w, int i_in_act_dw, int i_out_act_dw, int i_filters_dw, int i_bias_dw);
+		static extern void FCBWD(
+			int out_depth, 
+			int num_inputs,
+			IntPtr p_in_act_w,
+			IntPtr p_filters_w,
+			IntPtr p_in_act_dw,
+			IntPtr p_out_act_dw,
+			IntPtr p_filters_dw,
+			IntPtr p_bias_dw
+		);
 
 		public override void backward()
 		{
@@ -173,7 +194,7 @@ namespace ConvNet
 			{
 				act.backward();
 			}
-			FCBWD(out_depth, num_inputs, in_act.w.pos, filters.w.pos, in_act.dw.pos, out_act.dw.pos, filters.dw.pos, bias.dw.pos);
+			FCBWD(out_depth, num_inputs, in_act.w.ori_p, filters.w.ori_p, in_act.dw.ori_p, out_act.dw.ori_p, filters.dw.ori_p, bias.dw.ori_p);
 
 			//for (int d = 0; d < num_inputs; d++)
 			//{
@@ -194,37 +215,37 @@ namespace ConvNet
 			//}
 		}
 		public bool noUpdate = false;
-		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
+		public override void train(Trainer trainer)
 		{
 			if (noUpdate) return;
 			for (int i = 0; i < this.out_depth; i++)
 			{
 				//int iw = i * this.num_inputs;
 				//response.Add(new ParamsAndGrads() { Params = this.filters[i].w, grads = this.filters[i].dw, l1_decay_mul = this.l1_decay_mul, l2_decay_mul = this.l2_decay_mul });
-				pg.Add(new ParamsAndGrads()
-				{
-					params_ = this.filters.w,
-					grads_ = this.filters.dw,
-					params_idx = i * num_inputs,
-					grads_idx = i * num_inputs,
-					params_size = num_inputs,
-					gsum = filters_gsum[i],
-					xsum = filters_xsum[i],
-					l1_decay_mul = this.l1_decay_mul,
-					l2_decay_mul = this.l2_decay_mul
-				});
+				trainer.train(
+					num_inputs,//params_size = 
+					this.filters.w,//params_ = 
+					this.filters.dw,//grads_ = 
+					i * num_inputs,//params_idx = 
+					i * num_inputs,//grads_idx = 
+					filters_gsum[i],//gsum = 
+					filters_xsum[i],//xsum = 
+					this.l1_decay_mul,//l1_decay_mul = 
+					this.l2_decay_mul//l2_decay_mul = 
+				);
 			}
 			//response.Add(new ParamsAndGrads() { Params = this.biases.w, grads = this.biases.dw, l1_decay_mul = 0.0f, l2_decay_mul = 0.0f });
-			pg.Add(new ParamsAndGrads()
-			{
-				params_ = this.bias.w,
-				grads_ = this.bias.dw,
-				params_size = out_depth,
-				gsum = bias_gsum,
-				xsum = bias_xsum,
-				l1_decay_mul = 0.0f,
-				l2_decay_mul = 0.0f
-			});
+			trainer.train(
+				out_depth,//params_size = 
+				this.bias.w,//params_ = 
+				this.bias.dw,//grads_ = 
+				0,//params_idx = 
+				0,//grads_idx = 
+				bias_gsum,//gsum = 
+				bias_xsum,//xsum = 
+				0.0f,//l1_decay_mul = 
+				0.0f//l2_decay_mul = 
+			);
 		}
 	}
 	public class ReluLayer : ActivationLayer
@@ -297,9 +318,6 @@ namespace ConvNet
 					in_act.dw[i] = out_act.dw[i];
 				}
 			}
-		}
-		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
-		{
 		}
 	}
 	public class PoolLayer : Layer
@@ -421,9 +439,6 @@ namespace ConvNet
 					}
 				}
 			});
-		}
-		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
-		{
 		}
 	}
 	class UnPoolLayer : Layer
@@ -558,9 +573,6 @@ namespace ConvNet
 			//				}
 			//			});
 		}
-		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
-		{
-		}
 	}
 	public class SoftmaxLayer : LastLayer
 	{
@@ -660,9 +672,6 @@ namespace ConvNet
 			// loss is the class negative log likelihood
 			this.loss = -(float)Math.Log(out_act.w[y.predict]);
 		}
-		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
-		{
-		}
 	}
 	public class RegressionLayer : LastLayer
 	{
@@ -730,11 +739,8 @@ namespace ConvNet
 			}
 			this.loss = loss;
 		}
-		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
-		{
-		}
 	}
-	public class ConvLayer : Layer
+	public class ConvLayer : TrainableLayer
 	{
 		public override void save(TextWriter s)
 		{
@@ -814,8 +820,8 @@ namespace ConvNet
 			filters_xsum = new MyFloat[out_depth];
 			for (int i = 0; i < this.out_depth; i++)
 			{
-				filters_gsum[i] = MyFloat.getArray(sx * sy * in_depth);
-				filters_xsum[i] = MyFloat.getArray(sx * sy * in_depth);
+				filters_gsum[i] = new MyFloat(sx * sy * in_depth);
+				filters_xsum[i] = new MyFloat(sx * sy * in_depth);
 				for (int j = 0; j < sx * sy * in_depth; j++)
 				{
 					filters_gsum[i][j] = 0.0f;
@@ -827,8 +833,8 @@ namespace ConvNet
 			this.filters = new Vol(this.sx, this.sy, this.in_depth * out_depth, null);
 
 			this.bias = new Vol(1, 1, this.out_depth, bias_pref);
-			this.bias_gsum = MyFloat.getArray(out_depth); // last iteration gradients (used for momentum calculations)
-			this.bias_xsum = MyFloat.getArray(out_depth); // used in adadelta
+			this.bias_gsum = new MyFloat(out_depth); // last iteration gradients (used for momentum calculations)
+			this.bias_xsum = new MyFloat(out_depth); // used in adadelta
 			for (int j = 0; j < out_depth; j++)
 			{
 				bias_gsum[j] = 0.0f;
@@ -859,10 +865,10 @@ namespace ConvNet
 			int out_act_sx,
 			int in_act_sx,
 			int in_act_sy,
-			int i_filters_w,
-			int i_in_act_w,
-			int i_bias_w,
-			int i_out_act_w
+			IntPtr p_filters_w,
+			IntPtr p_in_act_w,
+			IntPtr p_bias_w,
+			IntPtr p_out_act_w
 		);
 
 		public override Vol forward(Vol V)
@@ -886,10 +892,10 @@ namespace ConvNet
 				out_act.sx,
 				in_act.sx,
 				in_act.sy,
-				filters.w.pos,
-				in_act.w.pos,
-				bias.w.pos,
-				out_act.w.pos
+				filters.w.ori_p,
+				in_act.w.ori_p,
+				bias.w.ori_p,
+				out_act.w.ori_p
 			);
 
 			//if (unstride > 0)
@@ -1004,12 +1010,12 @@ namespace ConvNet
 			int out_act_sx,
 			int in_act_sx,
 			int in_act_sy,
-			int i_filters_w,
-			int i_in_act_w,
-			int i_in_act_dw,
-			int i_out_act_dw,
-			int i_bias_dw,
-			int i_filters_dw
+			IntPtr p_filters_w,
+			IntPtr p_in_act_w,
+			IntPtr p_in_act_dw,
+			IntPtr p_out_act_dw,
+			IntPtr p_bias_dw,
+			IntPtr p_filters_dw
 		);
 
 		public override void backward()
@@ -1038,12 +1044,12 @@ namespace ConvNet
 				out_act.sx,
 				in_act.sx,
 				in_act.sy,
-				filters.w.pos,
-				in_act.w.pos,
-				in_act.dw.pos,
-				out_act.dw.pos,
-				bias.dw.pos,
-				filters.dw.pos
+				filters.w.ori_p,
+				in_act.w.ori_p,
+				in_act.dw.ori_p,
+				out_act.dw.ori_p,
+				bias.dw.ori_p,
+				filters.dw.ori_p
 			);
 
 
@@ -1137,35 +1143,35 @@ namespace ConvNet
 			//}
 		}
 		public bool noUpdate = false;
-		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
+		public override void train(Trainer trainer)
 		{
 			if (noUpdate) return;
 			for (int i = 0; i < this.out_depth; i++)
 			{
 				int filterSize = sx * sy * in_depth;
-				pg.Add(new ParamsAndGrads()
-				{
-					params_ = this.filters.w,
-					grads_ = this.filters.dw,
-					params_idx = i * filterSize,
-					grads_idx = i * filterSize,
-					params_size = filterSize,
-					gsum = filters_gsum[i],
-					xsum = filters_xsum[i],
-					l2_decay_mul = this.l2_decay_mul,
-					l1_decay_mul = this.l1_decay_mul
-				});
+				trainer.train(
+					filterSize,//params_size = 
+					this.filters.w,//params_ = 
+					this.filters.dw,//grads_ = 
+					i * filterSize,//params_idx = 
+					i * filterSize,//grads_idx = 
+					filters_gsum[i],//gsum = 
+					filters_xsum[i],//xsum = 
+					this.l2_decay_mul,//l2_decay_mul = 
+					this.l1_decay_mul//l1_decay_mul = 
+				);
 			}
-			pg.Add(new ParamsAndGrads()
-			{
-				params_ = this.bias.w,
-				grads_ = this.bias.dw,
-				params_size = this.out_depth,
-				gsum = bias_gsum,
-				xsum = bias_xsum,
-				l1_decay_mul = 0.0f,
+			trainer.train(
+				this.out_depth,//params_size = 
+				this.bias.w,//params_ = 
+				this.bias.dw,//grads_ = 
+				0,//params_idx = 
+				0,//grads_idx = 
+				bias_gsum,//gsum = 
+				bias_xsum,//xsum = 
+				0.0f,//l1_decay_mul = 
 				l2_decay_mul = 0.0f
-			});
+			);
 		}
 
 		public Bitmap vis(int idx, int d, float scale)
@@ -1236,9 +1242,6 @@ namespace ConvNet
 		public override void backward()
 		{
 		}
-		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
-		{
-		}
 	}
 	public class TanhLayer : ActivationLayer
 	{
@@ -1289,9 +1292,6 @@ namespace ConvNet
 				V.dw[i] = (1.0f - v2wi * v2wi) * out_act.dw[i];
 			}
 		}
-		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
-		{
-		}
 	}
 	public class ReshapeLayer : Layer
 	{
@@ -1335,9 +1335,6 @@ namespace ConvNet
 			{
 				in_act.dw[i] = out_act.dw[i];
 			}
-		}
-		public override void getParamsAndGrads(List<ParamsAndGrads> pg)
-		{
 		}
 	}
 

@@ -98,6 +98,8 @@
     <ClCompile Include="dllLibsrc.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Float.cpp" />
+    <ClCompile Include="OpenCL.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ConvNet.cl" />

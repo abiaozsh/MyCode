@@ -21,6 +21,12 @@
     <ClCompile Include="basic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Float.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenCL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ConvNet.cl" />
