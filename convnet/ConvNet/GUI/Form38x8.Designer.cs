@@ -1,6 +1,6 @@
 ﻿namespace GUI
 {
-	partial class Form3
+	partial class Form38x8
 	{
 		/// <summary>
 		/// Required designer variable.
@@ -132,7 +132,6 @@
 			this.button3.TabIndex = 9;
 			this.button3.Text = "train3";
 			this.button3.UseVisualStyleBackColor = true;
-			this.button3.Click += new System.EventHandler(this.button3_Click);
 			// 
 			// pictureBox7
 			// 
@@ -150,6 +149,7 @@
 			this.button4.TabIndex = 11;
 			this.button4.Text = "train2";
 			this.button4.UseVisualStyleBackColor = true;
+			this.button4.Click += new System.EventHandler(this.button4_Click);
 			// 
 			// Form3
 			// 

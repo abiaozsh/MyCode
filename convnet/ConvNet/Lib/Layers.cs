@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Drawing;
+using Lib;
 
 namespace ConvNet
 {
@@ -50,6 +51,7 @@ namespace ConvNet
 
 	public class FullyConnLayer : TrainableLayer
 	{
+		public string name;
 		public override void save(TextWriter s)
 		{
 			bias.save(s);
@@ -147,13 +149,73 @@ namespace ConvNet
 			IntPtr p_bias_w,
 			IntPtr p_out_act_w
 		);
+		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		private static extern IntPtr GK_FCFWD(IntPtr oclobjects);
+		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern int RK_FCFWD(
+			IntPtr oclobjects,
+			IntPtr kernel,
 
+			int out_depth,
+			int num_inputs,
+			IntPtr p_in_act_w,
+			IntPtr p_filters_w,
+			IntPtr p_bias_w,
+			IntPtr p_out_act_w
+		);
+		static IntPtr kernel_FCFWD;
+		static FullyConnLayer()
+		{
+			if (OpenCL.oclobjects != IntPtr.Zero)
+			{
+				kernel_FCFWD = GK_FCFWD(OpenCL.oclobjects);
+			}
+		}
+
+		private bool check(MyFloat f)
+		{
+			for (int i = 0; i < f.size; i++)
+			{
+				if (float.IsNaN(f[0]))
+				{
+					throw new Exception();
+				}
+			}
+			return false;
+		}
 		public override Vol forward(Vol V)
 		{
 			this.in_act = V;
 
-			FCFWD(out_depth, num_inputs, in_act.w.ori_p, filters.w.ori_p, bias.w.ori_p, out_act.w.ori_p);
+			if (OpenCL.oclobjects != IntPtr.Zero)
+			{
+				check(in_act.w);
+				check(filters.w);
+				check(bias.w);
+				check(out_act.w);
 
+				in_act.w.copyToCLMEM();
+				filters.w.copyToCLMEM();
+				bias.w.copyToCLMEM();
+				out_act.w.copyToCLMEM();
+
+				int err = RK_FCFWD(OpenCL.oclobjects, kernel_FCFWD, out_depth, num_inputs, in_act.w.p_cl_mem, filters.w.p_cl_mem, bias.w.p_cl_mem, out_act.w.p_cl_mem);
+
+				in_act.w.copyFromCLMEM();
+				filters.w.copyFromCLMEM();
+				bias.w.copyFromCLMEM();
+				out_act.w.copyFromCLMEM();
+
+				check(in_act.w);
+				check(filters.w);
+				check(bias.w);
+				check(out_act.w);
+				Console.WriteLine(err);
+			}
+			else
+			{
+				FCFWD(out_depth, num_inputs, in_act.w.ori_p, filters.w.ori_p, bias.w.ori_p, out_act.w.ori_p);
+			}
 			//for (int i = 0; i < this.out_depth; i++)
 			//{
 			//	float a = 0.0f;
@@ -178,7 +240,7 @@ namespace ConvNet
 
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
 		static extern void FCBWD(
-			int out_depth, 
+			int out_depth,
 			int num_inputs,
 			IntPtr p_in_act_w,
 			IntPtr p_filters_w,
@@ -742,6 +804,7 @@ namespace ConvNet
 	}
 	public class ConvLayer : TrainableLayer
 	{
+		public string name;
 		public override void save(TextWriter s)
 		{
 			bias.save(s);
@@ -775,9 +838,9 @@ namespace ConvNet
 		MyFloat bias_gsum; //[]?
 		MyFloat bias_xsum; //[]?
 		float bias_pref;
-
+		int adj  = 0;
 		ActivationLayer act;
-		public ConvLayer(int sx = 0, int sy = 0, int filters = 0, int stride = 1, int unstride = 0, int pad = 0, float bias_pref = 0.0f, ActivationLayer act = null)//if pad = sx(sy) / 2  the size is same   bigger pad bigger out
+		public ConvLayer(int sx = 0, int sy = 0, int filters = 0, int stride = 1,int adj=0, int unstride = 0, int pad = 0, float bias_pref = 0.0f, ActivationLayer act = null)//if pad = sx(sy) / 2  the size is same   bigger pad bigger out
 		{
 			// required
 			this.out_depth = filters;
@@ -790,6 +853,7 @@ namespace ConvNet
 			this.stride = stride; // stride at which we apply filters to input volume
 			this.unstride = unstride;
 			this.pad = pad; // amount of 0 padding to add around borders of input volume
+			this.adj = adj;
 			//this.l1_decay_mul = opt.l1_decay_mul;
 			//this.l2_decay_mul = opt.l2_decay_mul;
 			this.act = act;
@@ -807,13 +871,21 @@ namespace ConvNet
 			filterSize = sx * sy * in_depth;
 			if (unstride > 0)
 			{
-				this.out_sx = (this.in_sx + this.pad * 2 - this.sx) * this.unstride;
-				this.out_sy = (this.in_sy + this.pad * 2 - this.sy) * this.unstride;
+				this.out_sx = (this.in_sx + 1) * this.unstride + adj;//TODO
+				this.out_sy = (this.in_sy + 1) * this.unstride + adj;//TODO
 			}
 			else
 			{
-				this.out_sx = (this.in_sx + this.pad * 2 - this.sx) / this.stride;
-				this.out_sy = (this.in_sy + this.pad * 2 - this.sy) / this.stride;
+				if (in_sx / stride * stride == in_sx)
+				{
+					this.out_sx = this.in_sx / this.stride - 1;//TODO
+					this.out_sy = this.in_sy / this.stride - 1;//TODO
+				}
+				else
+				{
+					this.out_sx = this.in_sx / this.stride;//TODO
+					this.out_sy = this.in_sy / this.stride;//TODO
+				}
 			}
 
 			filters_gsum = new MyFloat[out_depth];
@@ -862,7 +934,6 @@ namespace ConvNet
 			int out_sy,
 			int out_depth,
 			int filterSize,
-			int out_act_sx,
 			int in_act_sx,
 			int in_act_sy,
 			IntPtr p_filters_w,
@@ -878,111 +949,118 @@ namespace ConvNet
 			this.in_act = V;
 			int filterSize = sx * sy * in_depth;
 
-			CVFWD(
-				stride,
-				unstride,
-				pad,
-				sx,
-				sy,
-				in_depth,
-				out_sx,
-				out_sy,
-				out_depth,
-				filterSize,
-				out_act.sx,
-				in_act.sx,
-				in_act.sy,
-				filters.w.ori_p,
-				in_act.w.ori_p,
-				bias.w.ori_p,
-				out_act.w.ori_p
-			);
+			//CVFWD(
+			//	stride,
+			//	unstride,
+			//	pad,
+			//	sx,
+			//	sy,
+			//	in_depth,
+			//	out_sx,
+			//	out_sy,
+			//	out_depth,
+			//	filterSize,
+			//	in_act.sx,
+			//	in_act.sy,
+			//	filters.w.ori_p,
+			//	in_act.w.ori_p,
+			//	bias.w.ori_p,
+			//	out_act.w.ori_p
+			//);
 
-			//if (unstride > 0)
-			//{
-			//	for (int out_x = 0; out_x < out_sx; out_x++)
-			//	{
-			//		int frame_x = out_x / unstride - pad;
-			//		for (int out_y = 0; out_y < out_sy; out_y++)
-			//		{
-			//			int frame_y = out_y / unstride - pad;
-			//			int out_act_sx_out_y = out_act.sx * out_y;
-			//			// convolve centered at this particular location
-			//			for (int d = 0; d < out_depth; d++)
-			//			{
-			//				//Vol f = this.filters[d];
-			//				int filterIdx = d * filterSize;
-			//				float a = 0.0f;
-			//				for (int fy = 0; fy < sy; fy++)
-			//				{
-			//					int oy = frame_y + fy; // coordinates in the original input array coordinates
-			//					int oy2 = (in_act.sx * oy);
-			//					int fy2 = (fy * sx);
-			//					for (int fx = 0; fx < sx; fx++)
-			//					{
-			//						int ox = frame_x + fx;
-			//						if (oy >= 0 && oy < in_act.sy && ox >= 0 && ox < in_act.sx)
-			//						{
-			//							int fidx = (fy2 + fx) * in_depth + filterIdx;
-			//							int Vidx = (oy2 + ox) * in_depth;
-			//							for (int fd = 0; fd < in_depth; fd++)
-			//							{
-			//								// avoid function call overhead (x2) for efficiency, compromise modularity :(
-			//								a += filters.w[fidx + fd] * in_act.w[Vidx + fd];
-			//							}
-			//						}
-			//					}
-			//				}
-			//				a += bias.w[d];
-			//				//out_act.set(out_x, out_y, d, a);
-			//				out_act.w[(out_act_sx_out_y + out_x) * out_depth + d] = a;
-			//			}
-			//		}
-			//	}
-			//}
-			//else
-			//{
-			//	for (int out_x = 0; out_x < out_sx; out_x++)
-			//	{
-			//		int frame_x = out_x * stride - pad;
-			//		for (int out_y = 0; out_y < out_sy; out_y++)
-			//		{
-			//			int frame_y = out_y * stride - pad;
-			//			int out_act_sx_out_y = out_act.sx * out_y;
-			//			// convolve centered at this particular location
-			//			for (int d = 0; d < out_depth; d++)
-			//			{
-			//				//Vol f = this.filters[d];
-			//				int filterIdx = d * filterSize;
-			//				float a = 0.0f;
-			//				for (int fy = 0; fy < sy; fy++)
-			//				{
-			//					int oy = frame_y + fy; // coordinates in the original input array coordinates
-			//					int oy2 = (in_act.sx * oy);
-			//					int fy2 = (fy * sx);
-			//					for (int fx = 0; fx < sx; fx++)
-			//					{
-			//						int ox = frame_x + fx;
-			//						if (oy >= 0 && oy < in_act.sy && ox >= 0 && ox < in_act.sx)
-			//						{
-			//							int fidx = (fy2 + fx) * in_depth + filterIdx;
-			//							int Vidx = (oy2 + ox) * in_depth;
-			//							for (int fd = 0; fd < in_depth; fd++)
-			//							{
-			//								// avoid function call overhead (x2) for efficiency, compromise modularity :(
-			//								a += filters.w[fidx + fd] * in_act.w[Vidx + fd];
-			//							}
-			//						}
-			//					}
-			//				}
-			//				a += bias.w[d];
-			//				//out_act.set(out_x, out_y, d, a);
-			//				out_act.w[(out_act_sx_out_y + out_x) * out_depth + d] = a;
-			//			}
-			//		}
-			//	}
-			//}
-			//this.out_act = A;
+			if (unstride > 0)
+			{
+				for (int out_y = 0; out_y < out_sy; out_y++)
+				{
+					//int frame_y = out_y / unstride - pad;
+					int frame_y = (out_y - pad) / unstride;
+					int out_act_sx_out_y = out_sx * out_y;
+					for (int out_x = 0; out_x < out_sx; out_x++)
+					{
+						int frame_x = (out_x - pad) / unstride;
+						// convolve centered at this particular location
+						for (int d = 0; d < out_depth; d++)
+						{
+							int filterIdx = d * filterSize;
+							float a = 0.0f;
+							for (int fy = 0; fy < sy; fy++)
+							{
+								//oy 是整数
+								if ((out_y - pad + fy) / unstride * unstride == (out_y - pad + fy))
+								{
+									int oy = frame_y + fy; // coordinates in the original input array coordinates
+									if (oy >= 0 && oy < in_sy)
+									{
+										int oy2 = (in_sx * oy);
+										int fy2 = (fy * sx);
+										for (int fx = 0; fx < sx; fx++)
+										{
+											if ((out_x - pad + fx) / unstride * unstride == (out_x - pad + fx))
+											{
+												int ox = frame_x + fx;
+												if (ox >= 0 && ox < in_sx)
+												{
+													int fidx = (fy2 + fx) * in_depth + filterIdx;
+													int Vidx = (oy2 + ox) * in_depth;
+													for (int fd = 0; fd < in_depth; fd++)
+													{
+														a += filters.w[fidx + fd] * in_act.w[Vidx + fd];
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+							a += bias.w[d];
+							out_act.w[(out_act_sx_out_y + out_x) * out_depth + d] = a;
+						}
+					}
+				}
+			}
+			else
+			{
+				for (int out_y = 0; out_y < out_sy; out_y++)
+				{
+					int frame_y = out_y * stride - pad;
+					int out_act_sx_out_y = out_sx * out_y;
+					for (int out_x = 0; out_x < out_sx; out_x++)
+					{
+						int frame_x = out_x * stride - pad;
+						// convolve centered at this particular location
+						for (int d = 0; d < out_depth; d++)
+						{
+							//Vol f = this.filters[d];
+							int filterIdx = d * filterSize;
+							float a = 0.0f;
+							for (int fy = 0; fy < sy; fy++)
+							{
+								int oy = frame_y + fy; // coordinates in the original input array coordinates
+								int oy2 = (in_sx * oy);
+								int fy2 = (fy * sx);
+								for (int fx = 0; fx < sx; fx++)
+								{
+									int ox = frame_x + fx;
+									if (oy >= 0 && oy < in_sy && ox >= 0 && ox < in_sx)
+									{
+										int fidx = (fy2 + fx) * in_depth + filterIdx;
+										int Vidx = (oy2 + ox) * in_depth;
+										for (int fd = 0; fd < in_depth; fd++)
+										{
+											// avoid function call overhead (x2) for efficiency, compromise modularity :(
+											a += filters.w[fidx + fd] * in_act.w[Vidx + fd];
+										}
+									}
+								}
+							}
+							a += bias.w[d];
+							out_act.w[(out_act_sx_out_y + out_x) * out_depth + d] = a;
+						}
+					}
+				}
+			}
+
+
 			if (act != null)
 			{
 				return act.forward(this.out_act);
@@ -1007,7 +1085,6 @@ namespace ConvNet
 			int out_sy,
 			int out_depth,
 			int filterSize,
-			int out_act_sx,
 			int in_act_sx,
 			int in_act_sy,
 			IntPtr p_filters_w,
@@ -1041,7 +1118,6 @@ namespace ConvNet
 				out_sy,
 				out_depth,
 				filterSize,
-				out_act.sx,
 				in_act.sx,
 				in_act.sy,
 				filters.w.ori_p,
@@ -1053,94 +1129,6 @@ namespace ConvNet
 			);
 
 
-			//for (int i = 0; i < in_size; i++)
-			//{
-			//	in_act.dw[i] = 0;
-			//}
-			//
-			//if (unstride > 0)
-			//{
-			//	for (int out_x = 0; out_x < out_sx; out_x++)
-			//	{
-			//		int x = out_x / unstride - pad;
-			//		for (int out_y = 0; out_y < out_sy; out_y++)
-			//		{
-			//			int y = out_y / unstride - pad;
-			//			for (int d = 0; d < out_depth; d++)
-			//			{
-			//				//Vol f = this.filters[d];
-			//				int filterIdx = d * filterSize;
-			//				// convolve centered at this particular location
-			//				//float chain_grad = out_act.get_grad(out_x, out_y, d); // gradient from above, from chain rule
-			//				float chain_grad = out_act.dw[((out_act.sx * out_y) + out_x) * out_depth + d];
-			//
-			//				for (int fy = 0; fy < sy; fy++)
-			//				{
-			//					int oy = y + fy; // coordinates in the original input array coordinates
-			//					int oy2 = (in_act.sx * oy);
-			//					int fy2 = (sx * fy);
-			//					for (int fx = 0; fx < sx; fx++)
-			//					{
-			//						int ox = x + fx;
-			//						if (oy >= 0 && oy < in_act.sy && ox >= 0 && ox < in_act.sx)
-			//						{
-			//							int fidx = (fy2 + fx) * in_depth + filterIdx;
-			//							int Vidx = (oy2 + ox) * in_depth;
-			//							for (int fd = 0; fd < in_depth; fd++)
-			//							{
-			//								// avoid function call overhead (x2) for efficiency, compromise modularity :(
-			//								filters.dw[fidx + fd] += in_act.w[Vidx + fd] * chain_grad;
-			//								in_act.dw[Vidx + fd] += filters.w[fidx + fd] * chain_grad;
-			//							}
-			//						}
-			//					}
-			//				}
-			//				bias.dw[d] += chain_grad;
-			//			}
-			//		}
-			//	}
-			//}
-			//else
-			//{
-			//	for (int out_x = 0; out_x < out_sx; out_x++)
-			//	{
-			//		int x = out_x * stride - pad;
-			//		for (int out_y = 0; out_y < out_sy; out_y++)
-			//		{
-			//			int y = out_y * stride - pad;
-			//			for (int d = 0; d < out_depth; d++)
-			//			{
-			//				//Vol f = this.filters[d];
-			//				int filterIdx = d * filterSize;
-			//				// convolve centered at this particular location
-			//				//float chain_grad = this.out_act.get_grad(out_x, out_y, d); // gradient from above, from chain rule
-			//				float chain_grad = out_act.dw[((out_act.sx * out_y) + out_x) * out_depth + d];
-			//				for (int fy = 0; fy < sy; fy++)
-			//				{
-			//					int oy = y + fy; // coordinates in the original input array coordinates
-			//					int oy2 = (in_act.sx * oy);
-			//					int fy2 = (sx * fy);
-			//					for (int fx = 0; fx < sx; fx++)
-			//					{
-			//						int ox = x + fx;
-			//						if (oy >= 0 && oy < in_act.sy && ox >= 0 && ox < in_act.sx)
-			//						{
-			//							int fidx = (fy2 + fx) * in_depth + filterIdx;
-			//							int Vidx = (oy2 + ox) * in_depth;
-			//							for (int fd = 0; fd < in_depth; fd++)
-			//							{
-			//								// avoid function call overhead (x2) for efficiency, compromise modularity :(
-			//								filters.dw[fidx + fd] += in_act.w[Vidx + fd] * chain_grad;
-			//								in_act.dw[Vidx + fd] += filters.w[fidx + fd] * chain_grad;
-			//							}
-			//						}
-			//					}
-			//				}
-			//				bias.dw[d] += chain_grad;
-			//			}
-			//		}
-			//	}
-			//}
 		}
 		public bool noUpdate = false;
 		public override void train(Trainer trainer)

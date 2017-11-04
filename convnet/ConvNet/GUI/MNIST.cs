@@ -500,13 +500,13 @@ namespace GUI
 				trainer = new AdaDeltaTrainer(5) { ro = 0.5f, l2_decay = 0.001f };//0.001f learning_rate = 0.1f, 
 				//trainer = new SGDTrainer(5) { learning_rate = 0.0002f, l2_decay = 0.001f };//0.001f
 
-				cv1 = new ConvLayer(sx: 4, sy: 4, filters: 16, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				cv2 = new ConvLayer(sx: 4, sy: 4, filters: 16, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				cv3 = new ConvLayer(sx: 4, sy: 4, filters: 32, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
+				cv1 = new ConvLayer(sx: 4, sy: 4, filters: 8, stride: 2, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
+				cv2 = new ConvLayer(sx: 4, sy: 4, filters: 16, stride: 2, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
+				cv3 = new ConvLayer(sx: 4, sy: 4, filters: 32, stride: 1, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
 				fc144 = new FullyConnLayer(num_neurons: 288, bias_pref: 0.1f, act: new ReluLayer());
-				ucv0 = new ConvLayer(sx: 4, sy: 4, filters: 16, unstride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				ucv1 = new ConvLayer(sx: 4, sy: 4, filters: 8, unstride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				ucv2 = new ConvLayer(sx: 4, sy: 4, filters: 1, unstride: 2, pad: 1, bias_pref: 0.1f);
+				ucv0 = new ConvLayer(sx: 4, sy: 4, filters: 16, unstride: 1, pad: 3, bias_pref: 0.1f, act: new ReluLayer());
+				ucv1 = new ConvLayer(sx: 4, sy: 4, filters: 8, unstride: 2, pad: 3, adj: 1, bias_pref: 0.1f, act: new ReluLayer());
+				ucv2 = new ConvLayer(sx: 4, sy: 4, filters: 1, unstride: 2, pad: 3,  bias_pref: 0.1f);
 
 				Add(new InputLayer(out_sx: 28, out_sy: 28, out_depth: 1));
 				Add(cv1);
@@ -522,13 +522,13 @@ namespace GUI
 			}
 
 
-			public Vol train()
+			public Vol train(int n)
 			{
 				DataSet ds = new DataSet();
 				//train
 				for (int i = 0; i < trainer.batchSize; i++)
 				{
-					int trainIndex = i%3;//(int)(MNISTData.rnd.NextDouble() * 70000);
+					int trainIndex = i % 3+n;//(int)(MNISTData.rnd.NextDouble() * 70000);
 
 
 					var v = MNISTData.getImg(trainIndex);

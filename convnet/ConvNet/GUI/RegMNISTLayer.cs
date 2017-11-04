@@ -34,20 +34,20 @@ namespace GUI
 			{
 				for (int i = 0; i < 1; i++)
 				{
-					regNet.train();
+					regNet.train(3);
 					Text = k + "," + i;
 					Application.DoEvents();
 				}
-				regNet.forward(MNISTData.getImg(0));
+				regNet.forward(MNISTData.getImg(3));
 				pictureBox1.Image = regNet.in_layer.out_act.vis(0);
 				pictureBox4.Image = regNet.ucv2.out_act.vis(0);
 
 
-				regNet.forward(MNISTData.getImg(1));
+				regNet.forward(MNISTData.getImg(4));
 				pictureBox2.Image = regNet.in_layer.out_act.vis(0);
 				pictureBox3.Image = regNet.ucv2.out_act.vis(0);
 
-				regNet.forward(MNISTData.getImg(2));
+				regNet.forward(MNISTData.getImg(5));
 				pictureBox5.Image = regNet.in_layer.out_act.vis(0);
 				pictureBox6.Image = regNet.ucv2.out_act.vis(0);
 

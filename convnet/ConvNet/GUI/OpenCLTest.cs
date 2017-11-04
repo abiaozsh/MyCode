@@ -44,8 +44,8 @@ namespace GUI
 			textBox1.Text += OpenCL.getPlatforms() + "\r\n";
 			textBox1.Text += OpenCL.getDevices(0) + "\r\n";
 
-			IntPtr openclp = OpenCL.init(0, 1);
-			OpenCL.oclobjects = openclp;
+			//IntPtr openclp = OpenCL.init(0, 1);
+			//OpenCL.oclobjects = openclp;
 
 			MyFloat f1 = new MyFloat(64);
 			MyFloat f2 = new MyFloat(64);
@@ -57,18 +57,30 @@ namespace GUI
 			f2[1] = 4.2f;
 			f2.copyToCLMEM();
 
+			string code = @"
+__kernel void test1(__global float* theArray1,__global float* theArray2, const uint param1, const float param2)
+{
+	int idx = get_global_id(0);
 
-			var kernel = OpenCL.getKernel(OpenCL.oclobjects, "ConvNet.cl", "test1");
+	int offset = idx*10;
+
+	float bias = (float)param1;
+
+	for(int i=0;i<10;i++){ 
+		theArray1[offset+i] = theArray1[offset+i] + theArray2[offset+i] + bias+ param2;
+	}
+}			";
+			var kernel = OpenCL.getKernel(OpenCL.oclobjects, code, "test1");
 			int[] param = new int[1];
 			param[0] = 3;
 			int ret = 0;
 			Stopwatch sw = new Stopwatch();
 
 			sw.Start();
-			for (int i = 0; i < 1000; i++)
+			for (int i = 0; i < 1; i++)
 			{
 				//public static extern void runKernel(IntPtr oclobjects, IntPtr kernel, int threads, IntPtr p_cl_mem1, IntPtr p_cl_mem2, int param1, float param2);
-				 ret = OpenCL.runKernel(OpenCL.oclobjects, kernel, 5, f1.p_cl_mem, f2.p_cl_mem, 1, 1.1f);
+				ret = OpenCL.runKernel(OpenCL.oclobjects, kernel, 5, f1.p_cl_mem, f2.p_cl_mem, 1, 1.1f);
 			}
 			sw.Stop();
 

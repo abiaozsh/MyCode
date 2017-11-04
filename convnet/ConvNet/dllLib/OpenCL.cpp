@@ -276,7 +276,7 @@ extern "C" __declspec(dllexport) void Final(OpenCLBasic* oclobjects)
 
 
 cl_program _createAndBuildProgram(
-	const std::vector<char>& program_text_prepared,
+	const char* raw_text,//const std::vector<char>& program_text_prepared,
 	cl_context context,
 	size_t num_of_devices,
 	const cl_device_id* devices,
@@ -284,7 +284,7 @@ cl_program _createAndBuildProgram(
 	)
 {
 	// Create OpenCL program and build it
-	const char* raw_text = &program_text_prepared[0];
+	//const char* raw_text = &program_text_prepared[0];
 	cl_int err;
 	// TODO Using prepared length and not terminating by 0 is better way?
 	cl_program program = clCreateProgramWithSource(context, 1, &raw_text, 0, &err);
@@ -332,132 +332,14 @@ cl_program _createAndBuildProgram(
 	return program;
 }
 
-
-void readFile(const std::wstring& file_name, vector<char>& data)
-{
-	using namespace std;
-
-	// Read program from a file
-
-	// First, determine where file exists; look at two places:
-	//   - current/default directory; also suitable for full paths
-	//   - directory where executable is placed
-#ifdef __linux__
-	//Store current locale and set default locale
-	CTYPELocaleHelper locale_helper;
-
-	ifstream file(
-		wstringToString(file_name).c_str(),
-		ios_base::ate | ios_base::binary
-		);
-#else
-	ifstream file(
-		file_name.c_str(),
-		ios_base::ate | ios_base::binary
-		);
-#endif
-
-	if (!file)
-	{
-		// There are no file at current/default directory or absolute
-		// path. Try to open it relatively from the directory where
-		// executable binary is placed.
-
-
-		cerr
-			<< "[ WARNING ] Unable to load OpenCL source code file "
-			<< inquotes(wstringToString(file_name)) << " at "
-			<< "the default location.\nTrying to open the file "
-			<< "from the directory with executable...";
-
-		file.clear();
-
-#ifdef __linux__
-		std::string dir = exe_dir();
-		file.open(
-			(dir + wstringToString(file_name)).c_str(),
-			ios_base::ate | ios_base::binary
-			);
-
-		if (!file)
-		{
-			cerr << " FAILED\n";
-			throw Error(
-				"Cannot open file " + inquotes(dir + wstringToString(file_name))
-				);
-		}
-		else
-		{
-			cerr << " OK\n";
-		}
-		cerr << "Full file path is " << inquotes(dir + wstringToString(file_name)) << "\n";
-#else
-		std::wstring dir = exe_dir_w();
-		file.open(
-			(dir + file_name).c_str(),
-			ios_base::ate | ios_base::binary
-			);
-
-		if (!file)
-		{
-			cerr << " FAILED\n";
-			throw Error(
-				"Cannot open file " + wstringToString(dir + file_name)
-				);
-		}
-		else
-		{
-			cerr << " OK\n";
-		}
-		cerr << "Full file path is " << wstringToString(inquotes_w(dir + file_name)) << "\n";
-#endif
-
-	}
-
-	// Second, determine the file length
-	std::streamoff file_length = file.tellg();
-
-	if (file_length == -1)
-	{
-		throw Error(
-			"Cannot determine the length of file " +
-			wstringToString(inquotes_w(file_name))
-			);
-	}
-
-	file.seekg(0, ios_base::beg);   // go to the file beginning
-	data.resize(static_cast<size_t>(file_length));
-	file.read(&data[0], file_length);
-}
-
-void readProgramFile(const std::wstring& program_file_name, vector<char>& program_text_prepared)
-{
-	readFile(program_file_name, program_text_prepared);
-	program_text_prepared.push_back(0); // terminatig zero
-
-}
-
-cl_program getProgram(OpenCLBasic* oclobjects, const std::wstring& program_file_name)
+cl_program getProgram(OpenCLBasic* oclobjects, const char* raw_text)
 {
 	cl_program program;
 
-	const string& program_text = "";
 	const string& build_options = "";
 
 	// use vector for automatic memory management
-	vector<char> program_text_prepared;
-
-	if (!program_file_name.empty())
-	{
-		readProgramFile(program_file_name, program_text_prepared);
-	}
-	else
-	{
-		program_text_prepared.resize(program_text.length() + 1);  // +1 for terminating zero
-		copy(program_text.begin(), program_text.end(), program_text_prepared.begin());
-	}
-
-	program = _createAndBuildProgram(program_text_prepared, oclobjects->context, 1, &(oclobjects->device), build_options);
+	program = _createAndBuildProgram(raw_text, oclobjects->context, 1, &(oclobjects->device), build_options);
 	return program;
 }
 
@@ -472,38 +354,25 @@ cl_kernel _CreateKernel(cl_program program, const string& kernel_name)
 }
 
 
-extern "C" __declspec(dllexport) cl_kernel getKernel(OpenCLBasic* oclobjects, const wchar_t* filename, const char* skernel)
+extern "C" __declspec(dllexport) cl_kernel getKernel(OpenCLBasic* oclobjects, const char* raw_text, const char* skernel)
 {
-	//kernel = clCreateKernel(program, kernel_name.c_str(), &err);
+	cl_program program = getProgram(oclobjects, raw_text);
 
-	//OpenCLProgramOneKernel executable(temp, L"ConvNet.cl", "", "test1");
-	cl_program program = getProgram(oclobjects, filename);//L"ConvNet.cl"
-
-	cl_kernel kernel = _CreateKernel(program, skernel);//, "", "test1"
+	cl_kernel kernel = _CreateKernel(program, skernel);
 
 	return kernel;
 }
 
 extern "C" __declspec(dllexport) int runKernel(OpenCLBasic* oclobjects, cl_kernel kernel, int threads, cl_mem p_cl_mem1, cl_mem p_cl_mem2,int param1,float param2)
 {
-	//int arraySize = 64;
 
 	cl_int err = CL_SUCCESS;
-	//cl_mem cl_input_buffer =
-	//	clCreateBuffer
-	//	(
-	//	oclobjects->context,
-	//	CL_MEM_USE_HOST_PTR,
-	//	zeroCopySizeAlignment(sizeof(cl_int)* arraySize, oclobjects->device),
-	//	p_input,
-	//	&err
-	//	);
 
 	clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&p_cl_mem1);
 	clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&p_cl_mem2);
 
 	clSetKernelArg(kernel, 2, sizeof(cl_uint), (void *)&param1);
-	clSetKernelArg(kernel, 3, sizeof(cl_float), (void *)&param2);
+	clSetKernelArg(kernel, 3, sizeof(cl_uint), (void *)&param2);
 
 	size_t global_work_size[1] = { threads };
 
@@ -522,50 +391,6 @@ extern "C" __declspec(dllexport) int runKernel(OpenCLBasic* oclobjects, cl_kerne
 	clFinish(oclobjects->queue);
 
 	return err;
-
-
-//	clEnqueueMapBuffer(cl_command_queue /* command_queue */,
-//		cl_mem           /* buffer */,
-//		cl_bool          /* blocking_map */,
-//		cl_map_flags     /* map_flags */,
-//		size_t           /* offset */,
-//		size_t           /* size */,
-//		cl_uint          /* num_events_in_wait_list */,
-//		const cl_event * /* event_wait_list */,
-//		cl_event *       /* event */,
-//		cl_int *         /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
-
-
-
-	//void* tmp_ptr = NULL;
-	//tmp_ptr = clEnqueueMapBuffer(
-	//	oclobjects->queue, 
-	//	p_cl_mem,
-	//	true, 
-	//	CL_MAP_READ, 
-	//	0, //offset
-	//	sizeof(cl_int)* arraySize, //size
-	//	0, 
-	//	NULL, 
-	//	NULL, 
-	//	&err);
-	//SAMPLE_CHECK_ERRORS(err);
-	//if (tmp_ptr != p_input)
-	//{
-	//	throw Error("clEnqueueMapBuffer failed to return original pointer\n");
-	//}
-	//
-	//err = clFinish(oclobjects->queue);
-	//SAMPLE_CHECK_ERRORS(err);
-	//
-	//err = clEnqueueUnmapMemObject(oclobjects->queue, cl_input_buffer, tmp_ptr, 0, NULL, NULL);
-	//SAMPLE_CHECK_ERRORS(err);
-	//
-	//err = clReleaseMemObject(cl_input_buffer);
-	//SAMPLE_CHECK_ERRORS(err);
-
-
-	//clReleaseKernel(kernel);
 }
 
 

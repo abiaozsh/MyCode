@@ -57,14 +57,10 @@ namespace Lib
 		public static extern IntPtr init(int platform, int device);
 
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		private static extern IntPtr getKernel(IntPtr oclobjects, byte[] filename, byte[] skernel);
-
-		//[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		//private static extern IntPtr getKernel(IntPtr oclobjects, byte[] code, byte[] skernel);
-
-		public static IntPtr getKernel(IntPtr oclobjects, string filename, string kernel)
+		private static extern IntPtr getKernel(IntPtr oclobjects, byte[] code, byte[] skernel);
+		public static IntPtr getKernel(IntPtr oclobjects, string code, string kernel)
 		{
-			return getKernel(oclobjects, Encoding.Unicode.GetBytes(filename), Encoding.ASCII.GetBytes(kernel));
+			return getKernel(oclobjects, Encoding.ASCII.GetBytes(code), Encoding.ASCII.GetBytes(kernel));
 		}
 
 		//extern "C" __declspec(dllexport) void runKernel(OpenCLBasic* oclobjects, cl_kernel kernel, int threads, cl_mem p_cl_mem1, cl_mem p_cl_mem2,int param1,float param2)

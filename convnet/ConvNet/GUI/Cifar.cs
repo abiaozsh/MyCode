@@ -18,34 +18,118 @@ namespace GUI
 
 		static Cifar()
 		{
-			int idx = 0;
+			//int idx = 0;
 
-			idx = load(@"E:\MNIST\cifar-10-batches-bin\data_batch_1.bin", idx);
-			idx = load(@"E:\MNIST\cifar-10-batches-bin\data_batch_2.bin", idx);
-			idx = load(@"E:\MNIST\cifar-10-batches-bin\data_batch_3.bin", idx);
-			idx = load(@"E:\MNIST\cifar-10-batches-bin\data_batch_4.bin", idx);
-			idx = load(@"E:\MNIST\cifar-10-batches-bin\data_batch_5.bin", idx);
-			idx = load(@"E:\MNIST\cifar-10-batches-bin\test_batch.bin", idx);
+			//idx = load(@"E:\MNIST\cifar-10-batches-bin\data_batch_1.bin", idx);
+			//idx = load(@"E:\MNIST\cifar-10-batches-bin\data_batch_2.bin", idx);
+			//idx = load(@"E:\MNIST\cifar-10-batches-bin\data_batch_3.bin", idx);
+			//idx = load(@"E:\MNIST\cifar-10-batches-bin\data_batch_4.bin", idx);
+			//idx = load(@"E:\MNIST\cifar-10-batches-bin\data_batch_5.bin", idx);
+			//idx = load(@"E:\MNIST\cifar-10-batches-bin\test_batch.bin", idx);
+			load(@"E:\MNIST\cifar-10-batches-bin\32x32.bin");
+
 		}
-		static int load(string filename, int idx)
+
+		//public static Bitmap get4x4(int n, int x, int y)
+		//{
+		//	byte[] img = imgData[n];
+		//	Bitmap bmp = new Bitmap(4, 4);
+		//	for (int j = 0; j < 4; j++)
+		//	{
+		//		int linepos = (j + y) * 32;
+		//		for (int i = 0; i < 4; i++)
+		//		{
+		//			int r = img[linepos + i + x];
+		//			int g = img[linepos + i + x + 1024];
+		//			int b = img[linepos + i + x + 2048];
+		//			bmp.SetPixel(i, j, Color.FromArgb(r, g, b));
+		//		}
+		//	}
+		//	return bmp;
+		//}
+		static Vol v4 = new Vol(4, 4, 3, 0.0f);
+		public static Vol get4x4(int n, int x, int y)
+		{
+			byte[] img = imgData[n];
+			for (int j = 0; j < 4; j++)
+			{
+				int linepos = (j + y) * 32;
+				for (int i = 0; i < 4; i++)
+				{
+					int r = img[linepos + i + x];
+					int g = img[linepos + i + x + 1024];
+					int b = img[linepos + i + x + 2048];
+					v4.set(j, i, 0, r / 255.0f);
+					v4.set(j, i, 1, g / 255.0f);
+					v4.set(j, i, 2, b / 255.0f);
+				}
+			}
+			return v4;
+		}
+		static Vol v8 = new Vol(8, 8, 3, 0.0f);
+		public static Vol get8x8(int n, int x, int y)
+		{
+			byte[] img = imgData[n];
+			for (int j = 0; j < 8; j++)
+			{
+				int linepos = (j + y) * 32;
+				for (int i = 0; i < 8; i++)
+				{
+					int r = img[linepos + i + x];
+					int g = img[linepos + i + x + 1024];
+					int b = img[linepos + i + x + 2048];
+					v8.set(j, i, 0, r / 255.0f);
+					v8.set(j, i, 1, g / 255.0f);
+					v8.set(j, i, 2, b / 255.0f);
+				}
+			}
+			return v8;
+		}
+
+		//static void save() {
+		//
+		//	FileStream fsimg1 = new FileStream(@"E:\MNIST\cifar-10-batches-bin\32x32.bin", FileMode.Create, FileAccess.Write);
+		//
+		//	for (int i = 0; i < 60000; i++)
+		//	{
+		//		fsimg1.Write(imgData[i], 0, 3072);
+		//	}
+		//
+		//	fsimg1.Flush();
+		//	fsimg1.Close();
+		//}
+		//static int load(string filename, int idx)
+		//{
+		//	FileStream fsimg1 = new FileStream(filename, FileMode.Open, FileAccess.Read);
+		//
+		//	for(int i=0;i<10000;i++){
+		//		fsimg1.Read(lblData, idx, 1);
+		//		byte[] img = new byte[3072];
+		//		fsimg1.Read(img, 0, 3072);
+		//		imgData[idx] = img;
+		//		idx++;
+		//	}
+		//	fsimg1.Close();
+		//	return idx;
+		//}
+		static void load(string filename)
 		{
 			FileStream fsimg1 = new FileStream(filename, FileMode.Open, FileAccess.Read);
 
-			for(int i=0;i<10000;i++){
-				fsimg1.Read(lblData, idx, 1);
+			for (int i = 0; i < 60000; i++)
+			{
 				byte[] img = new byte[3072];
 				fsimg1.Read(img, 0, 3072);
-				imgData[idx] = img;
-				idx++;
+				imgData[i] = img;
 			}
+
 			fsimg1.Close();
-			return idx;
 		}
 
 		static Vol v = new Vol(32, 32, 3, 0.0f);
 		public static Vol getImg(int idx)
 		{
-		idx+=4;
+			idx += 4;
 			for (int i = 0; i < 32; i++)
 			{
 				int linepos = i * 32;
@@ -193,7 +277,7 @@ namespace GUI
 				cv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
 				cv2 = new ConvLayer(sx: 4, sy: 4, filters: l2Filter, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
 				cv3 = new ConvLayer(sx: 4, sy: 4, filters: l3Filter, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				fc4096A = new FullyConnLayer(num_neurons: 1024, bias_pref: 0.1f, act: new ReluLayer());
+				fc4096A = new FullyConnLayer(num_neurons: 512, bias_pref: 0.1f, act: new ReluLayer());
 				ucv0 = new ConvLayer(sx: 4, sy: 4, filters: l2Filter, unstride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
 				ucv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, unstride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
 				ucv2 = new ConvLayer(sx: 4, sy: 4, filters: 3, unstride: 2, pad: 2, bias_pref: 0.1f);
@@ -235,7 +319,99 @@ namespace GUI
 			}
 		}
 
+		public class Reg1LNet : Net//net
+		{
+			//主网络，多层卷积 +全连接 收窄到2维神经元 全连接 再多层反卷积 输出图像
 
+			public ConvLayer cv1;
+			public FullyConnLayer fc;
+			public ConvLayer ucv2;
+
+			public static int l1Filter = 16;
+			public void init()
+			{
+				trainer = new AdaDeltaTrainer(10) { ro = 0.5f, l2_decay = 0.001f };//0.001f learning_rate = 0.1f, 
+				//trainer = new SGDTrainer(5) { learning_rate = 0.0002f, l2_decay = 0.001f };//0.001f
+
+				cv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, stride: 1, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
+				fc = new FullyConnLayer(num_neurons: l1Filter, bias_pref: 0.1f, act: new ReluLayer());
+				ucv2 = new ConvLayer(sx: 4, sy: 4, filters: 3, unstride: 1, pad: 3, bias_pref: 0.1f);
+
+				Add(new InputLayer(out_sx: 4, out_sy: 4, out_depth: 3));
+				Add(cv1);
+				//Add(new ReshapeLayer(out_sx: 1, out_sy: 1, out_depth: l1Filter));
+				Add(ucv2);
+				Add(new RegressionLayer());
+
+			}
+			public void save(TextWriter s)
+			{
+			}
+			public void load(TextReader s)
+			{
+			}
+
+			public Vol train(int n,int x,int y)
+			{
+				DataSet ds = new DataSet();
+				//train
+				for (int i = 0; i < trainer.batchSize; i++)
+				{
+					var v = get4x4(n,x,y);
+					ds.data = v;
+
+					train(v, ds);
+				}
+				return ucv2.out_act;
+			}
+		}
+
+		public class Reg1LBNet : Net//net
+		{
+			//主网络，多层卷积 +全连接 收窄到2维神经元 全连接 再多层反卷积 输出图像
+
+			public ConvLayer cv1;
+			public FullyConnLayer fc;
+			public ConvLayer ucv2;
+
+			public static int l1Filter = 8;
+			public void init()
+			{
+				trainer = new AdaDeltaTrainer(10) { ro = 0.5f, l2_decay = 0.001f };//0.001f learning_rate = 0.1f, 
+				//trainer = new SGDTrainer(5) { learning_rate = 0.0002f, l2_decay = 0.001f };//0.001f
+
+				cv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, stride: 2, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
+				fc = new FullyConnLayer(num_neurons: l1Filter, bias_pref: 0.1f, act: new ReluLayer());
+				ucv2 = new ConvLayer(sx: 4, sy: 4, filters: 3, unstride: 2, pad: 4 - 1, bias_pref: 0.1f);
+
+				Add(new InputLayer(out_sx: 8, out_sy: 8, out_depth: 3));
+				Add(cv1);
+				Add(new ReshapeLayer(out_sx: 3, out_sy: 3, out_depth: l1Filter));
+				Add(ucv2);
+				Add(new RegressionLayer());
+
+			}
+			public void save(TextWriter s)
+			{
+			}
+			public void load(TextReader s)
+			{
+			}
+
+			public Vol train(int n, int x, int y)
+			{
+				DataSet ds = new DataSet();
+				//train
+				for (int i = 0; i < trainer.batchSize; i++)
+				{
+					var v = get8x8(n, x, y);
+					ds.data = v;
+
+					train(v, ds);
+				}
+				return ucv2.out_act;
+			}
+		}
 
 		public void init()
 		{
