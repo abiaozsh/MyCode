@@ -132,6 +132,7 @@
 			this.button3.TabIndex = 9;
 			this.button3.Text = "train3";
 			this.button3.UseVisualStyleBackColor = true;
+			this.button3.Click += new System.EventHandler(this.button3_Click);
 			// 
 			// pictureBox7
 			// 
@@ -151,7 +152,7 @@
 			this.button4.UseVisualStyleBackColor = true;
 			this.button4.Click += new System.EventHandler(this.button4_Click);
 			// 
-			// Form3
+			// Form38x8
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -168,7 +169,7 @@
 			this.Controls.Add(this.textBox1);
 			this.Controls.Add(this.button2);
 			this.Controls.Add(this.button1);
-			this.Name = "Form3";
+			this.Name = "Form38x8";
 			this.Text = "Form3";
 			this.Load += new System.EventHandler(this.Form3_Load);
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();

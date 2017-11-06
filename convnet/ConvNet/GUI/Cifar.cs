@@ -129,7 +129,6 @@ namespace GUI
 		static Vol v = new Vol(32, 32, 3, 0.0f);
 		public static Vol getImg(int idx)
 		{
-			idx += 4;
 			for (int i = 0; i < 32; i++)
 			{
 				int linepos = i * 32;
@@ -274,25 +273,29 @@ namespace GUI
 				trainer = new AdaDeltaTrainer(10) { ro = 0.5f, l2_decay = 0.001f };//0.001f learning_rate = 0.1f, 
 				//trainer = new SGDTrainer(5) { learning_rate = 0.0002f, l2_decay = 0.001f };//0.001f
 
-				cv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				cv2 = new ConvLayer(sx: 4, sy: 4, filters: l2Filter, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				cv3 = new ConvLayer(sx: 4, sy: 4, filters: l3Filter, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
+				cv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, stride: 2, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
+				cv2 = new ConvLayer(sx: 4, sy: 4, filters: l2Filter, stride: 2, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
+				cv3 = new ConvLayer(sx: 4, sy: 4, filters: l3Filter, stride: 2, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
 				fc4096A = new FullyConnLayer(num_neurons: 512, bias_pref: 0.1f, act: new ReluLayer());
-				ucv0 = new ConvLayer(sx: 4, sy: 4, filters: l2Filter, unstride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				ucv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, unstride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				ucv2 = new ConvLayer(sx: 4, sy: 4, filters: 3, unstride: 2, pad: 2, bias_pref: 0.1f);
+				//ucv0 = new ConvLayer(sx: 4, sy: 4, filters: l2Filter, unstride: 2, pad: 3,adj:-1, bias_pref: 0.1f, act: new ReluLayer());
+				//ucv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, unstride: 2, pad: 3, adj: -1, bias_pref: 0.1f, act: new ReluLayer());
+				//ucv2 = new ConvLayer(sx: 4, sy: 4, filters: 3, unstride: 2, pad: 3, bias_pref: 0.1f);
 
 				Add(new InputLayer(out_sx: 32, out_sy: 32, out_depth: 3));
 				Add(cv1);
 				Add(cv2);
 				Add(cv3);
 				Add(fc4096A);
-				Add(new ReshapeLayer(out_sx: 4, out_sy: 4, out_depth: l3Filter));
+				Add(new ReshapeLayer(out_sx: 3, out_sy: 3, out_depth: l3Filter));
 				Add(ucv0);
 				Add(ucv1);
 				Add(ucv2);
 				Add(new RegressionLayer());
 
+				Util.load(@"..\lv1_4_4v0_Filter16.txt",(s)=>{
+					//cv1.load(s);
+				});
+				cv1.noUpdate=true;
 			}
 			public void save(TextWriter s)
 			{
@@ -305,12 +308,12 @@ namespace GUI
 			{
 				DataSet ds = new DataSet();
 				//train
-				for (int i = 0; i < trainer.batchSize; i++)
+				//for (int i = 0; i < trainer.batchSize; i++)
 				{
-					int trainIndex = i % n;//(int)(MNISTData.rnd.NextDouble() * 70000);
+					//int trainIndex = n;//(int)(MNISTData.rnd.NextDouble() * 70000);
 
 
-					var v = getImg(trainIndex);
+					var v = getImg(n);
 					ds.data = v;
 
 					train(v, ds);
@@ -330,15 +333,16 @@ namespace GUI
 			public static int l1Filter = 16;
 			public void init()
 			{
-				trainer = new AdaDeltaTrainer(10) { ro = 0.5f, l2_decay = 0.001f };//0.001f learning_rate = 0.1f, 
+				trainer = new AdaDeltaTrainer(17) { ro = 0.5f, l2_decay = 0.001f };//0.001f learning_rate = 0.1f, 
 				//trainer = new SGDTrainer(5) { learning_rate = 0.0002f, l2_decay = 0.001f };//0.001f
 
 				cv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, stride: 1, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
 				fc = new FullyConnLayer(num_neurons: l1Filter, bias_pref: 0.1f, act: new ReluLayer());
-				ucv2 = new ConvLayer(sx: 4, sy: 4, filters: 3, unstride: 1, pad: 3, bias_pref: 0.1f);
+				//ucv2 = new ConvLayer(sx: 4, sy: 4, filters: 3, unstride: 1, pad: 3, adj: 2, bias_pref: 0.1f);
 
 				Add(new InputLayer(out_sx: 4, out_sy: 4, out_depth: 3));
 				Add(cv1);
+				Add(fc);
 				//Add(new ReshapeLayer(out_sx: 1, out_sy: 1, out_depth: l1Filter));
 				Add(ucv2);
 				Add(new RegressionLayer());
@@ -351,18 +355,14 @@ namespace GUI
 			{
 			}
 
-			public Vol train(int n,int x,int y)
+			public void train(int n, int x, int y)
 			{
 				DataSet ds = new DataSet();
 				//train
-				for (int i = 0; i < trainer.batchSize; i++)
-				{
-					var v = get4x4(n,x,y);
-					ds.data = v;
+				var v = get4x4(n, x, y);
+				ds.data = v;
 
-					train(v, ds);
-				}
-				return ucv2.out_act;
+				train(v, ds);
 			}
 		}
 
@@ -372,24 +372,29 @@ namespace GUI
 
 			public ConvLayer cv1;
 			public FullyConnLayer fc;
+			public FullyConnLayer fc2;
 			public ConvLayer ucv2;
 
-			public static int l1Filter = 8;
+			public static int l1Filter = 16;
 			public void init()
 			{
 				trainer = new AdaDeltaTrainer(10) { ro = 0.5f, l2_decay = 0.001f };//0.001f learning_rate = 0.1f, 
 				//trainer = new SGDTrainer(5) { learning_rate = 0.0002f, l2_decay = 0.001f };//0.001f
 
-				cv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, stride: 2, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
-				fc = new FullyConnLayer(num_neurons: l1Filter, bias_pref: 0.1f, act: new ReluLayer());
-				ucv2 = new ConvLayer(sx: 4, sy: 4, filters: 3, unstride: 2, pad: 4 - 1, bias_pref: 0.1f);
+				fc = new FullyConnLayer(num_neurons: 64, bias_pref: 0.1f, act: new ReluLayer());
+				fc2 = new FullyConnLayer(num_neurons: 32*32*3, bias_pref: 0.1f);
 
-				Add(new InputLayer(out_sx: 8, out_sy: 8, out_depth: 3));
-				Add(cv1);
-				Add(new ReshapeLayer(out_sx: 3, out_sy: 3, out_depth: l1Filter));
-				Add(ucv2);
+				Add(new InputLayer(out_sx: 32, out_sy: 32, out_depth: 3));
+				Add(fc);
+				Add(fc2);
+				Add(new ReshapeLayer(out_sx: 32, out_sy: 32, out_depth: 3));
 				Add(new RegressionLayer());
 
+				//Util.load(@"..\lv1_4_4v2_Filter16.txt", (s) =>
+				//{
+				//	cv1.load(s);
+				//});
+				//cv1.noUpdate = true;
 			}
 			public void save(TextWriter s)
 			{
@@ -398,18 +403,17 @@ namespace GUI
 			{
 			}
 
-			public Vol train(int n, int x, int y)
+			public void train(int n, int x, int y)
 			{
 				DataSet ds = new DataSet();
 				//train
-				for (int i = 0; i < trainer.batchSize; i++)
+				//for (int i = 0; i < trainer.batchSize; i++)
 				{
-					var v = get8x8(n, x, y);
+					var v = getImg(n);// get8x8(n, x, y);
 					ds.data = v;
 
 					train(v, ds);
 				}
-				return ucv2.out_act;
 			}
 		}
 

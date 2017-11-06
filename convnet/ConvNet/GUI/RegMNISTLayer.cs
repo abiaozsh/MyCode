@@ -23,45 +23,68 @@ namespace GUI
 		{
 			regNet = new MNIST.RegNet();
 			regNet.init();
+
+			Util.load("net.txt", (s) =>
+			{
+				regNet.cv1.load(s); regNet.cv1.noUpdate = true;
+				regNet.cv2.load(s); regNet.cv2.noUpdate = true;
+				regNet.cv3.load(s); regNet.cv3.noUpdate = true;
+				regNet.fc144.load(s); regNet.fc144.noUpdate = true;
+			});
 		}
 
 		MNIST mnist = new MNIST();
 
-
+		int max = 30;
+		int index = 0;
 		private void button1_Click(object sender, EventArgs e)
 		{
+			int ll = 0;
 			for (int k = 0; k < 5000; k++)
 			{
-				for (int i = 0; i < 1; i++)
+				for (int m = 0; m < 20; m++)
 				{
-					regNet.train(3);
-					Text = k + "," + i;
-					Application.DoEvents();
+					index++;
+					if (index >= max) index = 0;
+					{
+						regNet.train(index);
+					}
 				}
-				regNet.forward(MNISTData.getImg(3));
+				Text = k + ","+max;
+				Application.DoEvents();
+
+				ll++;
+				if (ll >= max) ll = 0;
+				regNet.forward(MNISTData.getImg(ll));
 				pictureBox1.Image = regNet.in_layer.out_act.vis(0);
-				pictureBox4.Image = regNet.ucv2.out_act.vis(0);
+				pictureBox4.Image = regNet.out_layer.in_act.vis(0);
 
-
-				regNet.forward(MNISTData.getImg(4));
+				ll++;
+				if (ll >= max) ll = 0;
+				regNet.forward(MNISTData.getImg(ll));
 				pictureBox2.Image = regNet.in_layer.out_act.vis(0);
-				pictureBox3.Image = regNet.ucv2.out_act.vis(0);
+				pictureBox3.Image = regNet.out_layer.in_act.vis(0);
 
-				regNet.forward(MNISTData.getImg(5));
+				regNet.forward(MNISTData.getImg(max));
 				pictureBox5.Image = regNet.in_layer.out_act.vis(0);
-				pictureBox6.Image = regNet.ucv2.out_act.vis(0);
+				pictureBox6.Image = regNet.out_layer.in_act.vis(0);
 
 				//Util.save("net.txt", (s) =>
 				//{
-				//	mainNet.cv1.save(s);
-				//	mainNet.cv2.save(s);
-				//	mainNet.cv3.save(s);
-				//	mainNet.fc144.save(s);
+				//	regNet.cv1.save(s);
+				//	regNet.cv2.save(s);
+				//	regNet.cv3.save(s);
+				//	regNet.fc144.save(s);
 				//});
 
 			}
 
 
+		}
+
+		private void button2_Click(object sender, EventArgs e)
+		{
+			max++;
 		}
 	}
 }

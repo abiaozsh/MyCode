@@ -22,6 +22,9 @@ namespace GUI
 		}
 		MNIST mnist = new MNIST();
 		MNIST.MainNet mainet;
+		MNIST.Lv1TrainNet train1net;
+		MNIST.Lv2TrainNet train2net;
+		MNIST.Lv3TrainNet train3net;
 
 		Bitmap baseimg;
 
@@ -31,7 +34,6 @@ namespace GUI
 		private void Form1_Load(object sender, EventArgs e)
 		{
 			MNISTData.proc();
-
 
 			Bitmap bmp = (Bitmap)Bitmap.FromFile(@"E:\MNIST\无标题.png");
 
@@ -60,6 +62,18 @@ namespace GUI
 
 			mainet = new MNIST.MainNet();
 			mainet.init();
+
+
+			train1net = new MNIST.Lv1TrainNet();
+			train1net.init();
+
+			train2net = new MNIST.Lv2TrainNet();
+			train2net.init();
+
+			train3net = new MNIST.Lv3TrainNet();
+			train3net.init();
+
+			
 		}
 
 		void pictureBox2_MouseMove(object sender, MouseEventArgs e)
@@ -125,7 +139,6 @@ namespace GUI
 					Application.DoEvents();
 				}
 				vis();
-				save();
 				float accu = mainet.test();
 				this.textBox2.Text = i + "," + accu;
 			}
@@ -162,35 +175,181 @@ namespace GUI
 			mainet.cv1.vis(15, 0, scale).Save(dir + "15.bmp");
 		}
 
-		private void button4_Click(object sender, EventArgs e)
-		{
-
-			Util.load(@"..\main.txt", (s) =>
-			{
-				mainet.cv1.load(s);
-				mainet.cv2.load(s);
-				mainet.cv3.load(s);
-				mainet.fc144.load(s);
-				mainet.fc10.load(s);
-			});
-		}
+		bool stop;
 
 		private void button3_Click(object sender, EventArgs e)
 		{
-			save();
-
+			stop = true;
 		}
 
-		public void save()
+
+		private void button5_Click(object sender, EventArgs e)
 		{
-			Util.save(@"main.txt", (s) =>
+			float loss = 0;
+
+			//for (int k = 0; k < 5; k++)
 			{
-				mainet.cv1.save(s);
-				mainet.cv2.save(s);
-				mainet.cv3.save(s);
-				mainet.fc144.save(s);
-				mainet.fc10.save(s);
-			});
+				for (int n = 0; n < MNISTData.Count; n++)
+				{
+					loss = train1net.train(n);
+
+					Text = n + "," + loss;
+					Application.DoEvents();
+					if (n % 10 == 0)
+						test4();
+					if (stop) { stop = false; break; }
+				}
+
+
+				Util.save("cv1.txt", (s) =>
+				{
+					train1net.cv1.save(s);
+				});
+				Util.save("cv1_ufc.txt", (s) =>
+				{
+					train1net.ufc.save(s);
+				});
+			}
+
+		}
+		public void test4()
+		{
+			Vol v4 = new Vol(4, 4, 1, 0);
+
+			Bitmap b = new Bitmap(300, 300);
+			Graphics g = Graphics.FromImage(b);
+			Random r = new Random();
+			for (int i = 0; i < 10; i++)
+			{
+				int n = (int)(r.NextDouble() * 60000);
+				int x = (int)(r.NextDouble() * 28);
+				int y = (int)(r.NextDouble() * 28);
+
+				Vol v = MNISTData.getImg(n);
+
+				MNIST.Lv1TrainNet.get4x4(v, v4, x, y);
+				g.DrawImage(v4.vis(0), 40 + i * 10, 30);
+
+				Vol ret = train1net.forward(v4);
+				g.DrawImage(ret.vis(0), 40 + i * 10, 40);
+			}
+			g.Flush();
+			g.Dispose();
+
+			pictureBox2.Image = b;
+		}
+
+		private void button6_Click(object sender, EventArgs e)
+		{
+			float loss = 0;
+
+			//for (int k = 0; k < 5; k++)
+			{
+				Random r = new Random();
+				for (int n = 0; n < 100000; n++)
+				{
+					loss = train2net.train((int)(r.NextDouble() * MNISTData.Count));
+
+					Text = n + "," + loss;
+					Application.DoEvents();
+					Util.log(loss + "");
+					if (n % 10 == 0)
+						test8();
+					if (stop) { stop = false; break; }
+				}
+
+
+				Util.save("cv2.txt", (s) =>
+				{
+					train2net.cv2.save(s);
+				});
+				Util.save("cv2_ufc.txt", (s) =>
+				{
+					train2net.ufc.save(s);
+				});
+			}
+		}
+
+		Vol v8 = new Vol(8, 8, 1, 0);
+		public void test8()
+		{
+
+			Bitmap b = new Bitmap(300, 300);
+			Graphics g = Graphics.FromImage(b);
+			Random r = new Random();
+			for (int i = 0; i < 10; i++)
+			{
+				int n = (int)(r.NextDouble() * 60000);
+				int x = (int)(r.NextDouble() * 28);
+				int y = (int)(r.NextDouble() * 28);
+
+				Vol v = MNISTData.getImg(n);
+
+				MNIST.Lv2TrainNet.get8x8(v, v8, x, y);
+				g.DrawImage(v8.vis(0), 40 + i * 10, 30);
+
+				Vol ret = train2net.forward(v8);
+				g.DrawImage(ret.vis(0), 40 + i * 10, 40);
+			}
+			g.Flush();
+			g.Dispose();
+
+			pictureBox2.Image = b;
+		}
+		private void button4_Click(object sender, EventArgs e)
+		{
+			float loss = 0;
+
+			//for (int k = 0; k < 5; k++)
+			{
+				Random r = new Random();
+				for (int n = 0; n < 100000; n++)
+				{
+					loss = train3net.train((int)(r.NextDouble() * MNISTData.Count));
+
+					Text = n + "," + loss;
+					Application.DoEvents();
+					Util.log(loss + "");
+					test16();
+					if (stop) { stop = false; break; }
+				}
+
+
+				Util.save("cv3.txt", (s) =>
+				{
+					train3net.cv3.save(s);
+				});
+				Util.save("cv3_ufc.txt", (s) =>
+				{
+					train3net.ufc.save(s);
+				});
+			}
+		}
+		Vol v16 = new Vol(16, 16, 1, 0);
+		public void test16()
+		{
+
+			Bitmap b = new Bitmap(300, 300);
+			Graphics g = Graphics.FromImage(b);
+			Random r = new Random();
+			for (int i = 0; i < 10; i++)
+			{
+				int n = (int)(r.NextDouble() * 60000);
+				int x = (int)(r.NextDouble() * 28);
+				int y = (int)(r.NextDouble() * 28);
+
+				Vol v = MNISTData.getImg(n);
+
+				MNIST.Lv3TrainNet.get16x16(v, v16, x, y);
+				g.DrawImage(v16.vis(0), 40 + i * 20, 30);
+
+				Vol ret = train3net.forward(v16);
+				g.DrawImage(ret.vis(0), 40 + i * 20, 50);
+			}
+			g.Flush();
+			g.Dispose();
+
+			pictureBox2.Image = b;
 		}
 
 	}
