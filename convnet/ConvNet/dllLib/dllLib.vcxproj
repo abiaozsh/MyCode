@@ -69,7 +69,8 @@
       <AdditionalLibraryDirectories>$(INTELOCLSDKROOT)\lib\x86;</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command></Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -85,7 +86,8 @@
       <AdditionalLibraryDirectories>$(INTELOCLSDKROOT)\lib\x86;</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command></Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -103,6 +105,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="basic.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="sse.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -73,7 +73,7 @@ namespace GUI
 			train3net = new MNIST.Lv3TrainNet();
 			train3net.init();
 
-			
+
 		}
 
 		void pictureBox2_MouseMove(object sender, MouseEventArgs e)
@@ -130,17 +130,35 @@ namespace GUI
 
 		private void button1_Click(object sender, EventArgs e)
 		{
+			float accu = 0;
 			for (int i = 0; i < 1000; i++)
 			{
-				for (int k = 0; k < 100; k++)
+				for (int k = 0; k < MNISTData.Count; k++)
 				{
-					mainet.train();
-					this.Text = k + "";
+					mainet.train(k);
+					this.Text = k + "," + accu;
 					Application.DoEvents();
+					if (k % 100 == 0)
+					{
+						accu = mainet.test();
+						if (stop) { stop = false; break; }
+					}
 				}
-				vis();
-				float accu = mainet.test();
-				this.textBox2.Text = i + "," + accu;
+				//vis();
+
+				//Util.save("mainet_fc144.txt", (s) =>
+				//{
+				//	mainet.fc144.save(s);
+				//});
+				//Util.save("mainet_fc10.txt", (s) =>
+				//{
+				//	mainet.fc10.save(s);
+				//});
+
+				//this.textBox2.Text = i + "," + accu;
+
+
+
 			}
 
 
@@ -300,18 +318,21 @@ namespace GUI
 		{
 			float loss = 0;
 
-			//for (int k = 0; k < 5; k++)
+			//for (int k = 0; k < 50; k++)
 			{
 				Random r = new Random();
 				for (int n = 0; n < 100000; n++)
 				{
-					loss = train3net.train((int)(r.NextDouble() * MNISTData.Count));
+					loss = train3net.train((int)(r.NextDouble() * MNISTData.Count), r);
 
-					Text = n + "," + loss;
-					Application.DoEvents();
-					Util.log(loss + "");
-					test16();
-					if (stop) { stop = false; break; }
+					//Util.log(loss + "");
+					if (n % 100 == 0)
+					{
+						test16();
+						Text = n + "," + loss;
+						Application.DoEvents();
+						if (stop) { stop = false; break; }
+					}
 				}
 
 
@@ -335,8 +356,19 @@ namespace GUI
 			for (int i = 0; i < 10; i++)
 			{
 				int n = (int)(r.NextDouble() * 60000);
-				int x = (int)(r.NextDouble() * 28);
-				int y = (int)(r.NextDouble() * 28);
+
+				int Selectx1;
+				int Selectx2;
+				int Selecty1;
+				int Selecty2;
+				MNISTData.getBoundary(n, out Selectx1, out Selecty1, out Selectx2, out Selecty2);
+
+				//get4x4();
+				int y = (int)(Selecty1 - 8 + r.NextDouble() * (Selecty2 - Selecty1 + 8));
+				int x = (int)(Selectx1 - 8 + r.NextDouble() * (Selectx2 - Selectx1 + 8));
+
+				//int x = (int)(r.NextDouble() * 28);
+				//int y = (int)(r.NextDouble() * 28);
 
 				Vol v = MNISTData.getImg(n);
 

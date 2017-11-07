@@ -89,7 +89,7 @@ namespace GUI
 
 		private void button4_Click(object sender, EventArgs e)
 		{
-			pictureBox1.Image = Cifar.get4x4(1, 0, 0).visRGB();
+			pictureBox1.Image = Cifar.Lv1TrainNet.get4x4(1, 0, 0).visRGB();
 			pictureBox2.Image = Cifar.getBmp(1);
 		}
 

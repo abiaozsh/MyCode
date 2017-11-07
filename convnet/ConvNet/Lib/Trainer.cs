@@ -69,16 +69,19 @@ namespace ConvNet
 			// learning rate for some parameters.
 			//float l2_decay_mul = pg.l2_decay_mul;//typeof pg.l2_decay_mul != "undefined" ? pg.l2_decay_mul : 1.0;
 			//float l1_decay_mul = pg.l1_decay_mul;//typeof pg.l1_decay_mul != "undefined" ? pg.l1_decay_mul : 1.0;
-			float l2_decay = this.l2_decay * l2_decay_mul;
-			float l1_decay = this.l1_decay * l1_decay_mul;
+
+			//float l2_decay = this.l2_decay * l2_decay_mul;
+			//float l1_decay = this.l1_decay * l1_decay_mul;
 			for (int j = 0; j < params_size; j++)
 			{
 				//l2_decay_loss += l2_decay * pg.params_[j + pg.params_idx] * pg.params_[j + pg.params_idx] / 2; // accumulate weight decay loss
 				//l1_decay_loss += l1_decay * Math.Abs(pg.params_[j + pg.params_idx]);
-				float l1grad = l1_decay * (params_[j + params_idx] > 0 ? 1 : -1);
-				float l2grad = l2_decay * (params_[j + params_idx]);
+				
+				//float l1grad = l1_decay * (params_[j + params_idx] > 0 ? 1 : -1);
+				//float l2grad = l2_decay * (params_[j + params_idx]);
 
-				float gij = (l2grad + l1grad + grads_[j + grads_idx]) * oneBatchSize; // raw batch gradient
+				//l2grad + l1grad + 
+				float gij = (grads_[j + grads_idx]) * oneBatchSize; // raw batch gradient
 
 				// assume adadelta if not sgd or adagrad
 				gsum[j] = this.ro * gsum[j] + (1 - this.ro) * gij * gij;

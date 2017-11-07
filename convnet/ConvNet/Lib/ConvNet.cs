@@ -193,6 +193,30 @@ namespace ConvNet
 				}
 			}
 		}
+		public static void init(MyFloat f,int sx, int sy, int depth, float? c)
+		{
+			// we were given dimensions of the vol
+			int n = sx * sy * depth;
+			if (c == null)
+			{
+				// weight normalization is done to equalize the output
+				// variance of every neuron, otherwise neurons with a lot
+				// of incoming connections have outputs of larger variance
+				float scale = (float)Math.Sqrt(1.0f / (sx * sy * depth));
+				for (int i = 0; i < n; i++)
+				{
+					f[i] = gaussRandom() * scale;
+				}
+			}
+			else
+			{
+				for (int i = 0; i < n; i++)
+				{
+					f[i] = c.Value;
+				}
+			}
+		}
+
 		public float get(int x, int y, int d)
 		{
 			int ix = ((this.sx * y) + x) * this.depth + d;

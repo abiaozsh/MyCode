@@ -19,44 +19,58 @@ namespace GUI
 			InitializeComponent();
 		}
 
-		int idx = 10;
 		Cifar cifar = new Cifar();
-		Cifar.Reg1LNet regNet = new Cifar.Reg1LNet();
+		Cifar.Lv1TrainNet regl1Net = new Cifar.Lv1TrainNet();
 		private void Form3_Load(object sender, EventArgs e)
 		{
 			cifar.init();
-			regNet.init();
+			regl1Net.init();
 		}
 		bool stop = false;
 		private void button1_Click(object sender, EventArgs e)
 		{
-			for (int k = 0; k < 5; k++)
+			float loss = 0;
+			//for (int k = 0; k < 5; k++)
 			{
-				for (int n = 0; n < 60000; n++)
+				Random r = new Random();
+				for (int n = 0; n < 10000; n++)
 				{
-					for (int i = 0; i < 28; i++)
-					{
-						for (int j = 0; j < 28; j++)
-						{
-							regNet.train(n, i, j);
-						}
-					}
-					Text = "" + n;
+					loss = regl1Net.train((int)(r.NextDouble() * Cifar.imgCount));
+
+					Text = n + "," + loss;
 					Application.DoEvents();
-					if (n % 5 == 0)
+					if (n % 10 == 0)
+					{
 						test();
+						vis();
+					}
 					if (stop) { stop = false; break; }
 				}
-
-				Util.save("lv1_4_" + k + ".txt", (s) =>
+				Util.save("CifarCV1.txt", (s) =>
 				{
-					regNet.cv1.save(s);
+					regl1Net.cv1.save(s);
 				});
+				Util.save("CifarUFC.txt", (s) =>
+				{
+					regl1Net.ufc.save(s);
+				});
+				//vis();
 			}
 
 		}
+		public void vis()
+		{
+			float scale;
+			float.TryParse(textBox1.Text, out scale);
+			string dir = @"vis\";
+			for (int i = 0; i < 32; i++)
+			{
+				regl1Net.cv1.visRGB(i, scale).Save(dir + i + ".bmp");
+			}
+		}
 
-		public void test() {
+		public void test()
+		{
 			Bitmap b = new Bitmap(300, 300);
 			Graphics g = Graphics.FromImage(b);
 			Random r = new Random();
@@ -66,9 +80,9 @@ namespace GUI
 				int x = (int)(r.NextDouble() * 28);
 				int y = (int)(r.NextDouble() * 28);
 
-				Vol v = Cifar.get4x4(n, x, y);
+				Vol v = Cifar.Lv1TrainNet.get4x4(n, x, y);
 				g.DrawImage(v.visRGB(), 10 + i * 10, 10);
-				Vol ret = regNet.forward(v);
+				Vol ret = regl1Net.forward(v);
 				g.DrawImage(ret.visRGB(), 10 + i * 10, 20);
 			}
 			g.Flush();

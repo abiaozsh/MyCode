@@ -11,8 +11,18 @@ using System.Diagnostics;
 
 namespace ConvNet
 {
+	//in_depth % 8 == 0)  有问题
 
-	public abstract class Layer : Persistence
+	//w 和 dw 分离
+	//instance 化
+	//并行训练
+	//合并后调参
+
+	//输入参数归一化
+
+
+
+	public abstract class Layer
 	{
 		public Layer in_layer;
 		public Layer out_layer;
@@ -31,8 +41,6 @@ namespace ConvNet
 		public abstract void backward();
 		//public float backwardData(DataSet y){return 0;}
 		//public abstract void getParamsAndGrads(List<ParamsAndGrads> pg);
-		public abstract void save(TextWriter s);
-		public abstract void load(TextReader s);
 	}
 
 	public abstract class LastLayer : Layer
@@ -44,8 +52,11 @@ namespace ConvNet
 	public abstract class ActivationLayer : Layer
 	{
 	}
-	public abstract class TrainableLayer : Layer
+	public abstract class TrainableLayer : Layer, Persistence
 	{
+		public abstract void save(TextWriter s);
+		public abstract void load(TextReader s);
+
 		public abstract void train(Trainer trainer);
 	}
 
@@ -55,20 +66,26 @@ namespace ConvNet
 		public string name;
 		public override void save(TextWriter s)
 		{
-			bias.save(s);
-			filters.save(s);
+			filters_w.save(s);
+			bias_w.save(s);
 		}
 		public override void load(TextReader s)
 		{
-			bias.load(s);
-			filters.load(s);
+			filters_w.load(s);
+			bias_w.load(s);
 		}
 		//Vol[] filters;
-		Vol filters;
+		MyFloat filters_w;
+
+		MyFloat filters_dw;
+
 		MyFloat[] filters_gsum; //[]?
 		MyFloat[] filters_xsum; //[]?
 
-		Vol bias;
+		MyFloat bias_w;
+
+		MyFloat bias_dw;
+
 		MyFloat bias_gsum; //[]?
 		MyFloat bias_xsum; //[]?
 
@@ -119,10 +136,22 @@ namespace ConvNet
 			}
 			//filters = new Vol[out_depth];
 			//filters[i] = new Vol(1, 1, this.num_inputs, null);
-			filters = new Vol(1, 1, this.num_inputs * out_depth, null);
+			filters_w = new MyFloat(num_inputs * out_depth);
+			Vol.init(filters_w, 1, 1, num_inputs * out_depth, null);
+
+			filters_dw = new MyFloat(num_inputs * out_depth);
 
 
-			this.bias = new Vol(1, 1, this.out_depth, bias_pref);
+			bias_w = new MyFloat(out_depth);
+			Vol.init(bias_w, 1, 1, out_depth, null);
+			bias_dw = new MyFloat(out_depth);
+
+			for (int j = 0; j < out_depth; j++)
+			{
+				bias_w[j] = bias_pref;
+				bias_dw[j] = 0.0f;
+			}
+
 			this.bias_gsum = new MyFloat(out_depth); // last iteration gradients (used for momentum calculations)
 			this.bias_xsum = new MyFloat(out_depth); // used in adadelta
 
@@ -218,19 +247,19 @@ namespace ConvNet
 				Stopwatch sw = new Stopwatch();
 				sw.Start();
 				in_act.w.copyToCLMEM();
-				filters.w.copyToCLMEM();
-				bias.w.copyToCLMEM();
+				filters_w.copyToCLMEM();
+				bias_w.copyToCLMEM();
 				out_act.w.copyToCLMEM();
 				sw.Stop();
 				t1 = sw.ElapsedTicks;
 				sw.Start();
-				int err = RK_FCFWD(OpenCL.oclobjects, kernel_FCFWD, out_depth, num_inputs, in_act.w.p_cl_mem, filters.w.p_cl_mem, bias.w.p_cl_mem, out_act.w.p_cl_mem);
+				int err = RK_FCFWD(OpenCL.oclobjects, kernel_FCFWD, out_depth, num_inputs, in_act.w.p_cl_mem, filters_w.p_cl_mem, bias_w.p_cl_mem, out_act.w.p_cl_mem);
 				sw.Stop();
 				t2 = sw.ElapsedTicks;
 				sw.Start();
 				in_act.w.copyFromCLMEM();
-				filters.w.copyFromCLMEM();
-				bias.w.copyFromCLMEM();
+				filters_w.copyFromCLMEM();
+				bias_w.copyFromCLMEM();
 				out_act.w.copyFromCLMEM();
 				sw.Stop();
 				t3 = sw.ElapsedTicks;
@@ -245,17 +274,17 @@ namespace ConvNet
 			}
 			else
 			{
-				long aa = Stopwatch.Frequency;
-				long t1 = 0, t2 = 0, t3 = 0;
-				Stopwatch sw = new Stopwatch();
-				sw.Start();
-				FCFWD(out_depth, num_inputs, in_act.w.ori_p, filters.w.ori_p, bias.w.ori_p, out_act.w.ori_p);
-				sw.Stop();
-				t3 = sw.ElapsedTicks;
-				if (t3 > 10000)
-				{
-					throw new Exception("slow");
-				}
+				//long aa = Stopwatch.Frequency;
+				//long t1 = 0, t2 = 0, t3 = 0;
+				//Stopwatch sw = new Stopwatch();
+				//sw.Start();
+				FCFWD(out_depth, num_inputs, in_act.w.ori_p, filters_w.ori_p, bias_w.ori_p, out_act.w.ori_p);
+				//sw.Stop();
+				//t3 = sw.ElapsedTicks;
+				//if (t3 < -10000)
+				//{
+				//	throw new Exception("slow");
+				//}
 			}
 
 			if (act != null)
@@ -282,6 +311,8 @@ namespace ConvNet
 
 		public override void backward()
 		{
+			if (noUpdate) return;
+
 			if (act != null)
 			{
 				act.backward();
@@ -303,26 +334,26 @@ namespace ConvNet
 				sw.Start();
 
 				in_act.w.copyToCLMEM();
-				filters.w.copyToCLMEM();
+				filters_w.copyToCLMEM();
 				in_act.dw.copyToCLMEM();
 				out_act.dw.copyToCLMEM();
-				filters.dw.copyToCLMEM();
-				bias.dw.copyToCLMEM();
+				filters_dw.copyToCLMEM();
+				bias_dw.copyToCLMEM();
 
 				sw.Stop();
 				t1 = sw.ElapsedTicks;
 				sw.Start();
-				int err = RK_FCBWD(OpenCL.oclobjects, kernel_FCBWD, out_depth, num_inputs, in_act.w.p_cl_mem, filters.w.p_cl_mem, in_act.dw.p_cl_mem, out_act.dw.p_cl_mem, filters.dw.p_cl_mem, bias.dw.p_cl_mem);
+				int err = RK_FCBWD(OpenCL.oclobjects, kernel_FCBWD, out_depth, num_inputs, in_act.w.p_cl_mem, filters_w.p_cl_mem, in_act.dw.p_cl_mem, out_act.dw.p_cl_mem, filters_dw.p_cl_mem, bias_dw.p_cl_mem);
 				sw.Stop();
 				t2 = sw.ElapsedTicks;
 				sw.Start();
 
 				in_act.w.copyFromCLMEM();
-				filters.w.copyToCLMEM();
+				filters_w.copyToCLMEM();
 				in_act.dw.copyToCLMEM();
 				out_act.dw.copyToCLMEM();
-				filters.dw.copyToCLMEM();
-				bias.dw.copyToCLMEM();
+				filters_dw.copyToCLMEM();
+				bias_dw.copyToCLMEM();
 
 				sw.Stop();
 				t3 = sw.ElapsedTicks;
@@ -337,7 +368,17 @@ namespace ConvNet
 			}
 			else
 			{
-				FCBWD(out_depth, num_inputs, in_act.w.ori_p, filters.w.ori_p, in_act.dw.ori_p, out_act.dw.ori_p, filters.dw.ori_p, bias.dw.ori_p);
+				//long aa = Stopwatch.Frequency;
+				//long t1 = 0, t2 = 0, t3 = 0;
+				//Stopwatch sw = new Stopwatch();
+				//sw.Start();
+				FCBWD(out_depth, num_inputs, in_act.w.ori_p, filters_w.ori_p, in_act.dw.ori_p, out_act.dw.ori_p, filters_dw.ori_p, bias_dw.ori_p);
+				//sw.Stop();
+				//t3 = sw.ElapsedTicks;
+				//if (t3 < -10000)
+				//{
+				//	throw new Exception("slow");
+				//}
 			}
 		}
 		public bool noUpdate = false;
@@ -350,8 +391,8 @@ namespace ConvNet
 				//response.Add(new ParamsAndGrads() { Params = this.filters[i].w, grads = this.filters[i].dw, l1_decay_mul = this.l1_decay_mul, l2_decay_mul = this.l2_decay_mul });
 				trainer.train(
 					num_inputs,//params_size = 
-					this.filters.w,//params_ = 
-					this.filters.dw,//grads_ = 
+					this.filters_w,//params_ = 
+					this.filters_dw,//grads_ = 
 					i * num_inputs,//params_idx = 
 					i * num_inputs,//grads_idx = 
 					filters_gsum[i],//gsum = 
@@ -363,8 +404,8 @@ namespace ConvNet
 			//response.Add(new ParamsAndGrads() { Params = this.biases.w, grads = this.biases.dw, l1_decay_mul = 0.0f, l2_decay_mul = 0.0f });
 			trainer.train(
 				out_depth,//params_size = 
-				this.bias.w,//params_ = 
-				this.bias.dw,//grads_ = 
+				this.bias_w,//params_ = 
+				this.bias_dw,//grads_ = 
 				0,//params_idx = 
 				0,//grads_idx = 
 				bias_gsum,//gsum = 
@@ -379,13 +420,13 @@ namespace ConvNet
 		public string name;
 		public override void save(TextWriter s)
 		{
-			bias.save(s);
-			filters.save(s);
+			bias_w.save(s);
+			filters_w.save(s);
 		}
 		public override void load(TextReader s)
 		{
-			bias.load(s);
-			filters.load(s);
+			bias_w.load(s);
+			filters_w.load(s);
 		}
 		// This file contains all layers that do dot products with input,
 		// but usually in a different connectivity pattern and weight sharing
@@ -402,10 +443,18 @@ namespace ConvNet
 		int stride;
 		int pad;
 		//最外层是filter，然后是行单元，然后是行元素 然后是输入层深度，行相邻元素在一起
-		public Vol filters;
+		public MyFloat filters_w;
+		public MyFloat filters_dw;
+
+
 		MyFloat[] filters_gsum; //[]?
 		MyFloat[] filters_xsum; //[]?
-		Vol bias;
+
+
+		MyFloat bias_w;
+		MyFloat bias_dw;
+
+
 		MyFloat bias_gsum; //[]?
 		MyFloat bias_xsum; //[]?
 		float bias_pref;
@@ -466,9 +515,16 @@ namespace ConvNet
 			}
 			//this.filters = new Vol[out_depth];
 			//this.filters[i] = new Vol(this.sx, this.sy, this.in_depth, null);
-			this.filters = new Vol(this.sx, this.sy, this.in_depth * out_depth, null);
+			//this.filters = new Vol(this.sx, this.sy, this.in_depth * out_depth, null);
+			this.filters_w = new MyFloat(this.sx * this.sy * this.in_depth * out_depth);
+			Vol.init(this.filters_w, this.sx, this.sy, this.in_depth * out_depth, null);
+			this.filters_dw = new MyFloat(this.sx * this.sy * this.in_depth * out_depth);
+			//this.bias = new Vol(1, 1, this.out_depth, bias_pref);
+			this.bias_w = new MyFloat(out_depth);
+			Vol.init(this.bias_w, 1, 1, out_depth, null);
+			this.bias_dw = new MyFloat(out_depth);
 
-			this.bias = new Vol(1, 1, this.out_depth, bias_pref);
+
 			this.bias_gsum = new MyFloat(out_depth); // last iteration gradients (used for momentum calculations)
 			this.bias_xsum = new MyFloat(out_depth); // used in adadelta
 			for (int j = 0; j < out_depth; j++)
@@ -512,6 +568,10 @@ namespace ConvNet
 			this.in_act = V;
 			int filterSize = sx * sy * in_depth;
 
+			long aa = Stopwatch.Frequency;
+			long t1 = 0, t2 = 0, t3 = 0;
+			Stopwatch sw = new Stopwatch();
+			sw.Start();
 			CVFWD(
 				stride,
 				pad,
@@ -524,11 +584,19 @@ namespace ConvNet
 				filterSize,
 				in_act.sx,
 				in_act.sy,
-				filters.w.ori_p,
+				filters_w.ori_p,
 				in_act.w.ori_p,
-				bias.w.ori_p,
+				bias_w.ori_p,
 				out_act.w.ori_p
 			);
+			sw.Stop();
+			t3 = sw.ElapsedTicks;
+			int count = out_sy * out_sx * out_depth * sy * sx * in_depth;
+			double t4 = t3 / (double)(3117998.0 / 1000000);
+			if (t4 < -1 && count < -1)
+			{
+				throw new Exception("slow");
+			}
 
 			if (act != null)
 			{
@@ -565,6 +633,8 @@ namespace ConvNet
 
 		public override void backward()
 		{
+			if (noUpdate) return;
+
 			//????????TODO 未初始化可能影响后续????????????????V.dw = Util.zeros(V.w.Length); // zero out gradient wrt bottom data, we're about to fill it
 			int in_size = in_sx * in_sy * in_depth;
 			int filterSize = sx * sy * in_depth;
@@ -587,12 +657,12 @@ namespace ConvNet
 				filterSize,
 				in_act.sx,
 				in_act.sy,
-				filters.w.ori_p,
+				filters_w.ori_p,
 				in_act.w.ori_p,
 				in_act.dw.ori_p,
 				out_act.dw.ori_p,
-				bias.dw.ori_p,
-				filters.dw.ori_p
+				bias_dw.ori_p,
+				filters_dw.ori_p
 			);
 
 
@@ -606,8 +676,8 @@ namespace ConvNet
 				int filterSize = sx * sy * in_depth;
 				trainer.train(
 					filterSize,//params_size = 
-					this.filters.w,//params_ = 
-					this.filters.dw,//grads_ = 
+					this.filters_w,//params_ = 
+					this.filters_dw,//grads_ = 
 					i * filterSize,//params_idx = 
 					i * filterSize,//grads_idx = 
 					filters_gsum[i],//gsum = 
@@ -618,8 +688,8 @@ namespace ConvNet
 			}
 			trainer.train(
 				this.out_depth,//params_size = 
-				this.bias.w,//params_ = 
-				this.bias.dw,//grads_ = 
+				this.bias_w,//params_ = 
+				this.bias_dw,//grads_ = 
 				0,//params_idx = 
 				0,//grads_idx = 
 				bias_gsum,//gsum = 
@@ -636,7 +706,7 @@ namespace ConvNet
 			{
 				for (int j = 0; j < sy; j++)
 				{
-					float v = filters.w[idx * filterSize + ((this.sx * j) + i) + d];
+					float v = filters_w[idx * filterSize + ((this.sx * j) + i) + d];
 					Color c;
 					if (v > 0)
 					{
@@ -653,17 +723,35 @@ namespace ConvNet
 			}
 			return b;
 		}
+		public Bitmap visRGB(int idx, float scale)
+		{
+			//最外层是filter，然后是行单元，然后是行元素 然后是输入层深度，行相邻元素在一起
+			Bitmap bmp = new Bitmap(sx, sy);
+			for (int i = 0; i < sx; i++)
+			{
+				for (int j = 0; j < sy; j++)
+				{
+					int r = (int)(filters_w[idx * filterSize + (((this.sx * j) + i)) * 3 + 0] * scale) + 127;
+					int g = (int)(filters_w[idx * filterSize + (((this.sx * j) + i)) * 3 + 1] * scale) + 127;
+					int b = (int)(filters_w[idx * filterSize + (((this.sx * j) + i)) * 3 + 2] * scale) + 127;
+					Color c;
+					if (r < 0) r = 0;
+					if (g < 0) g = 0;
+					if (b < 0) b = 0;
+					if (r > 255) r = 255;
+					if (g > 255) g = 255;
+					if (b > 255) b = 255;
+					c = Color.FromArgb(r, g, b);
+					bmp.SetPixel(i, j, c);
+				}
+			}
+			return bmp;
+		}
 
 	}
 
 	public class ReluLayer : ActivationLayer
 	{
-		public override void save(TextWriter s)
-		{
-		}
-		public override void load(TextReader s)
-		{
-		}
 		// Implements ReLU nonlinearity elementwise
 		// x -> max(0, x)
 		// the output is in [0, inf)
@@ -730,12 +818,6 @@ namespace ConvNet
 	}
 	public class TanhLayer : ActivationLayer
 	{
-		public override void save(TextWriter s)
-		{
-		}
-		public override void load(TextReader s)
-		{
-		}
 		public TanhLayer()
 		{
 		}
@@ -781,8 +863,6 @@ namespace ConvNet
 
 	public class PoolLayer : Layer
 	{
-		public override void save(TextWriter s) { }
-		public override void load(TextReader s) { }
 		//public int sx;
 		//public int sy;
 		public int in_depth;
@@ -830,7 +910,7 @@ namespace ConvNet
 		{
 			this.in_act = V;
 			int n = 0; // a counter for switches
-			Parallel.For(0, this.out_depth, (d) =>//for (int d = 0; d < this.out_depth; d++)
+			for (int d = 0; d < this.out_depth; d++)
 			{
 				int x = 0;
 				int y = 0;
@@ -840,9 +920,9 @@ namespace ConvNet
 					for (int ay = 0; ay < this.out_sy; y += stride, ay++)
 					{
 						// convolve centered at this particular location
-						float a = -99999; // hopefully small enough ;\
-						int winx = -1;
-						int winy = -1;
+						float a = V.get(x, y, d); // hopefully small enough ;\
+						int winx = 0;
+						int winy = 0;
 						for (int fx = 0; fx < stride; fx++)
 						{
 							for (int fy = 0; fy < stride; fy++)
@@ -870,7 +950,7 @@ namespace ConvNet
 						out_act.set(ax, ay, d, a);
 					}
 				}
-			});
+			};
 			return this.out_act;
 		}
 		public override void backward()
@@ -883,7 +963,7 @@ namespace ConvNet
 			}
 
 			int n = 0;
-			Parallel.For(0, this.out_depth, (d) =>//for (int d = 0; d < this.out_depth; d++)
+			for (int d = 0; d < this.out_depth; d++)
 			{
 				int x = 0;
 				int y = 0;
@@ -897,7 +977,7 @@ namespace ConvNet
 						n++;
 					}
 				}
-			});
+			};
 		}
 	}
 	public class SoftmaxLayer : LastLayer
@@ -912,12 +992,6 @@ namespace ConvNet
 		public override float getLoss()
 		{
 			return loss;
-		}
-		public override void save(TextWriter s)
-		{
-		}
-		public override void load(TextReader s)
-		{
 		}
 		// Layers that implement a loss. Currently these are the layers that 
 		// can initiate a backward() pass. In future we probably want a more 
@@ -1012,13 +1086,6 @@ namespace ConvNet
 		{
 			return loss;
 		}
-
-		public override void save(TextWriter s)
-		{
-		}
-		public override void load(TextReader s)
-		{
-		}
 		// implements an L2 regression cost layer,
 		// so penalizes \sum_i(||x_i - y_i||^2), where x is its input
 		// and y is the user-provided array of "correct" values.
@@ -1068,12 +1135,6 @@ namespace ConvNet
 	}
 	public class InputLayer : Layer
 	{
-		public override void save(TextWriter s)
-		{
-		}
-		public override void load(TextReader s)
-		{
-		}
 		//public InputLayer(Def def)
 		//{
 		//	Def opt = def;
@@ -1111,12 +1172,6 @@ namespace ConvNet
 	}
 	public class ReshapeLayer : Layer
 	{
-		public override void save(TextWriter s)
-		{
-		}
-		public override void load(TextReader s)
-		{
-		}
 		public ReshapeLayer(int out_sx = 0, int out_sy = 0, int out_depth = 0)
 		{
 			this.out_sx = out_sx;
@@ -1154,213 +1209,99 @@ namespace ConvNet
 		}
 	}
 
-
-
-
-	//DropoutLayer
-	/*
-	class DropoutLayer : Layer
-	{
-		public override void getRange(Range r)
-		{
-		}
-		public override void save(BinaryWriter s)
-		{
-		}
-		public override void save(StreamWriter s)
-		{
-		}
-		public override void load(BinaryReader s)
-		{
-		}
-		public override void load(StreamReader s)
-		{
-		}
-		// An inefficient dropout layer
-		// Note this is not most efficient implementation since the layer before
-		// computed all these activations and now we're just going to drop them :(
-		// same goes for backward pass. Also, if we wanted to be efficient at test time
-		// we could equivalently be clever and upscale during train and copy pointers during test
-		// todo: make more efficient.
-		public float drop_prob;
-		public bool[] dropped;
-		public DropoutLayer(Def def)
-			: base(def)
-		{
-
-			Def opt = def;
-
-			// computed
-			this.out_sx = opt.in_sx;
-			this.out_sy = opt.in_sy;
-			this.out_depth = opt.in_depth;
-			//this.layer_type = "dropout";
-			this.drop_prob = opt.drop_prob.Value;
-			this.dropped = new bool[this.out_sx * this.out_sy * this.out_depth];//Util.zeros(this.out_sx*this.out_sy*this.out_depth);
-		}
-
-		static Random r = new Random();
-
-		public override Vol forward(Vol V, bool is_training)
-		{
-			this.in_act = V;
-			//if(typeof(is_training)==='undefined') { is_training = false; } // default is prediction mode
-			Vol V2 = V.clone();
-			int N = V.w.Length;
-			if (is_training)
-			{
-				// do dropout
-				for (int i = 0; i < N; i++)
-				{
-					if (r.NextDouble() < this.drop_prob) { V2.w[i] = 0; this.dropped[i] = true; } // drop!
-					else { this.dropped[i] = false; }
-				}
-			}
-			else
-			{
-				// scale the activations during prediction
-				for (int i = 0; i < N; i++) { V2.w[i] *= this.drop_prob; }
-			}
-			this.out_act = V2;
-			return this.out_act; // dummy identity function for now
-		}
-		public override float backward(DataSet y)
-		{
-			Vol V = this.in_act; // we need to set dw of this
-			Vol chain_grad = this.out_act;
-			int N = V.w.Length;
-			V.dw = Util.zeros(N); // zero out gradient wrt data
-			for (int i = 0; i < N; i++)
-			{
-				if (!(this.dropped[i]))
-				{
-					V.dw[i] = chain_grad.dw[i]; // copy over the gradient
-				}
-			}
-			return 0;
-		}
-		public override List<ParamsAndGrads> getParamsAndGrads()
-		{
-			return new List<ParamsAndGrads>();
-		}
-		//toJSON: function() {
-		//  json.out_depth = this.out_depth;
-		//  json.out_sx = this.out_sx;
-		//  json.out_sy = this.out_sy;
-		//  json.layer_type = this.layer_type;
-		//  json.drop_prob = this.drop_prob;
-		//  return json;
-		//},
-		//fromJSON: function(json) {
-		//  this.out_depth = json.out_depth;
-		//  this.out_sx = json.out_sx;
-		//  this.out_sy = json.out_sy;
-		//  this.layer_type = json.layer_type; 
-		//  this.drop_prob = json.drop_prob;
-		//}
-	}*/
 	//LocalResponseNormalizationLayer
-	/*
-	class LocalResponseNormalizationLayer : Layer
+	public class LRNLayer : Layer
 	{
-		public override void getRange(Range r)
-		{
-		}
-		public override void save(BinaryWriter s)
-		{
-		}
-		public override void save(StreamWriter s)
-		{
-		}
-		public override void load(BinaryReader s)
-		{
-		}
-		public override void load(StreamReader s)
-		{
-		}
 		// a bit experimental layer for now. I think it works but I'm not 100%
 		// the gradient check is a bit funky. I'll look into this a bit later.
 		// Local Response Normalization in window, along depths of volumes
 		public float k;
-		public float n;
+		public int n;
 		public float alpha;
 		public float beta;
 
 		public Vol S_cache_;
 
-		public LocalResponseNormalizationLayer(Def def)
-			: base(def)
+		public LRNLayer(float k, int n, float alpha, float beta)
 		{
-			Def opt = def;
 
 			// required
-			this.k = opt.k;
-			this.n = opt.n;
-			this.alpha = opt.alpha;
-			this.beta = opt.beta;
+			this.k = k;
+			this.n = n;
+			this.alpha = alpha;
+			this.beta = beta;
 
 			// computed
-			this.out_sx = opt.in_sx;
-			this.out_sy = opt.in_sy;
-			this.out_depth = opt.in_depth;
 			//this.layer_type = "lrn";
 
 			// checks
-			if (this.n % 2 == 0)
-			{
-				//console.log('WARNING n should be odd for LRN layer');
-				throw new Exception();
-			}
+			//if (this.n % 2 == 0)
+			//{
+			//	//console.log('WARNING n should be odd for LRN layer');
+			//	throw new Exception();
+			//}
+		}
+		public override bool inited()
+		{
+			return _inited;
+		}
+		public override void init()
+		{
+			this.out_sx = in_layer.out_sx;
+			this.out_sy = in_layer.out_sy;
+			this.out_depth = in_layer.out_depth;
+			this.out_act = new Vol(out_sx, out_sy, out_depth, 0);
+			this.S_cache_ = new Vol(out_sx, out_sy, out_depth, 0);
+			_inited = true;
 		}
 
-		public override Vol forward(Vol V, bool is_training)
+		public override Vol forward(Vol V)
 		{
 			this.in_act = V;
 
-			Vol A = V.cloneAndZero();
-			this.S_cache_ = V.cloneAndZero();
-			int n2 = (int)Math.Floor(this.n / 2);
-			for (int x = 0; x < V.sx; x++)
+			int n2 = this.n / 2;
+			for (int x = 0; x < in_act.sx; x++)
 			{
-				for (int y = 0; y < V.sy; y++)
+				for (int y = 0; y < in_act.sy; y++)
 				{
-					for (int i = 0; i < V.depth; i++)
+					for (int i = 0; i < in_act.depth; i++)
 					{
 
-						float ai = V.get(x, y, i);
+						float ai = in_act.get(x, y, i);
 
 						// normalize in a window of size n
 						float den = 0.0f;
-						for (int j = Math.Max(0, i - n2); j <= Math.Min(i + n2, V.depth - 1); j++)
+						for (int j = Math.Max(0, i - n2); j <= Math.Min(i + n2, in_act.depth - 1); j++)
 						{
-							float aa = V.get(x, y, j);
+							float aa = in_act.get(x, y, j);
 							den += aa * aa;
 						}
 						den *= this.alpha / this.n;
 						den += this.k;
 						this.S_cache_.set(x, y, i, den); // will be useful for backprop
 						den = (float)Math.Pow(den, this.beta);
-						A.set(x, y, i, ai / den);
+						out_act.set(x, y, i, ai / den);
 					}
 				}
 			}
 
-			this.out_act = A;
+			//this.out_act = A;
 			return this.out_act; // dummy identity function for now
 		}
-		public override float backward(DataSet del_y)
+		public override void backward()
 		{
 			// evaluate gradient wrt data
-			Vol V = this.in_act; // we need to set dw of this
-			V.dw = Util.zeros(V.w.Length); // zero out gradient wrt data
-			Vol A = this.out_act; // computed in forward pass 
-
-			int n2 = (int)Math.Floor(this.n / 2);
-			for (int x = 0; x < V.sx; x++)
+			for (int i = 0; i < in_act.dw.size; i++)
 			{
-				for (int y = 0; y < V.sy; y++)
+				in_act.dw[i] = 0;
+			}
+
+			int n2 = this.n / 2;
+			for (int x = 0; x < in_act.sx; x++)
+			{
+				for (int y = 0; y < in_act.sy; y++)
 				{
-					for (int i = 0; i < V.depth; i++)
+					for (int i = 0; i < in_act.depth; i++)
 					{
 
 						float chain_grad = this.out_act.get_grad(x, y, i);
@@ -1369,371 +1310,23 @@ namespace ConvNet
 						float SB2 = SB * SB;
 
 						// normalize in a window of size n
-						for (int j = Math.Max((int)0, i - n2); j <= Math.Min(i + n2, V.depth - 1); j++)
+						for (int j = Math.Max((int)0, i - n2); j <= Math.Min(i + n2, in_act.depth - 1); j++)
 						{
-							float aj = V.get(x, y, j);
+							float aj = in_act.get(x, y, j);
 							float g = -aj * this.beta * (float)Math.Pow(S, this.beta - 1) * this.alpha / this.n * 2 * aj;
 							if (j == i) g += SB;
 							g /= SB2;
 							g *= chain_grad;
-							V.add_grad(x, y, j, g);
+							in_act.add_grad(x, y, j, g);
 						}
 
 					}
 				}
 			}
-			return 0;
 		}
-		public override List<ParamsAndGrads> getParamsAndGrads()
-		{
-			return new List<ParamsAndGrads>();
-		}
-		//toJSON: function() {
-		//  json.k = this.k;
-		//  json.n = this.n;
-		//  json.alpha = this.alpha; // normalize by size
-		//  json.beta = this.beta;
-		//  json.out_sx = this.out_sx; 
-		//  json.out_sy = this.out_sy;
-		//  json.out_depth = this.out_depth;
-		//  json.layer_type = this.layer_type;
-		//  return json;
-		//},
-		//fromJSON: function(json) {
-		//  this.k = json.k;
-		//  this.n = json.n;
-		//  this.alpha = json.alpha; // normalize by size
-		//  this.beta = json.beta;
-		//  this.out_sx = json.out_sx; 
-		//  this.out_sy = json.out_sy;
-		//  this.out_depth = json.out_depth;
-		//  this.layer_type = json.layer_type;
-		//}
 	}
-	*/
-	//MaxoutLayer
-	/*
-	class MaxoutLayer : Layer
-	{
-		public override void getRange(Range r)
-		{
-		}
-		public override void save(BinaryWriter s)
-		{
-		}
-		public override void save(StreamWriter s)
-		{
-		}
-		public override void load(BinaryReader s)
-		{
-		}
-		public override void load(StreamReader s)
-		{
-		}
-		// Implements Maxout nnonlinearity that computes
-		// x -> max(x)
-		// where x is a vector of size group_size. Ideally of course,
-		// the input size should be exactly divisible by group_size
-		int group_size;
-		int[] switches;
 
-		public MaxoutLayer(Def def)
-			: base(def)
-		{
-			Def opt = def;
 
-			// required
-			this.group_size = opt.group_size != 0 ? opt.group_size : 2;
 
-			// computed
-			this.out_sx = opt.in_sx;
-			this.out_sy = opt.in_sy;
-			this.out_depth = (int)Math.Floor((float)opt.in_depth / this.group_size);
-			//this.layer_type = "maxout";
-
-			this.switches = new int[this.out_sx * this.out_sy * this.out_depth];//Util.zeros(this.out_sx*this.out_sy*this.out_depth); // useful for backprop
-		}
-		public override Vol forward(Vol V, bool is_training)
-		{
-			this.in_act = V;
-			int N = this.out_depth;
-			Vol V2 = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0f);
-
-			// optimization branch. If we're operating on 1D arrays we dont have
-			// to worry about keeping track of x,y,d coordinates inside
-			// input volumes. In convnets we do :(
-			if (this.out_sx == 1 && this.out_sy == 1)
-			{
-				for (int i = 0; i < N; i++)
-				{
-					int ix = i * this.group_size; // base index offset
-					float a = V.w[ix];
-					int ai = 0;
-					for (int j = 1; j < this.group_size; j++)
-					{
-						float a2 = V.w[ix + j];
-						if (a2 > a)
-						{
-							a = a2;
-							ai = j;
-						}
-					}
-					V2.w[i] = a;
-					this.switches[i] = ix + ai;
-				}
-			}
-			else
-			{
-				int n = 0; // counter for switches
-				for (int x = 0; x < V.sx; x++)
-				{
-					for (int y = 0; y < V.sy; y++)
-					{
-						for (int i = 0; i < N; i++)
-						{
-							int ix = i * this.group_size;
-							float a = V.get(x, y, ix);
-							int ai = 0;
-							for (int j = 1; j < this.group_size; j++)
-							{
-								float a2 = V.get(x, y, ix + j);
-								if (a2 > a)
-								{
-									a = a2;
-									ai = j;
-								}
-							}
-							V2.set(x, y, i, a);
-							this.switches[n] = ix + ai;
-							n++;
-						}
-					}
-				}
-
-			}
-			this.out_act = V2;
-			return this.out_act;
-		}
-		public override float backward(DataSet del)
-		{
-			Vol V = this.in_act; // we need to set dw of this
-			Vol V2 = this.out_act;
-			int N = this.out_depth;
-			V.dw = Util.zeros(V.w.Length); // zero out gradient wrt data
-
-			// pass the gradient through the appropriate switch
-			if (this.out_sx == 1 && this.out_sy == 1)
-			{
-				for (int i = 0; i < N; i++)
-				{
-					float chain_grad = V2.dw[i];
-					V.dw[this.switches[i]] = chain_grad;
-				}
-			}
-			else
-			{
-				// bleh okay, lets do this the hard way
-				int n = 0; // counter for switches
-				for (int x = 0; x < V2.sx; x++)
-				{
-					for (int y = 0; y < V2.sy; y++)
-					{
-						for (int i = 0; i < N; i++)
-						{
-							float chain_grad = V2.get_grad(x, y, i);
-							V.set_grad(x, y, this.switches[n], chain_grad);
-							n++;
-						}
-					}
-				}
-			}
-			return 0;
-		}
-		public override List<ParamsAndGrads> getParamsAndGrads()
-		{
-			return new List<ParamsAndGrads>();
-		}
-		//toJSON: function() {
-		//  json.out_depth = this.out_depth;
-		//  json.out_sx = this.out_sx;
-		//  json.out_sy = this.out_sy;
-		//  json.layer_type = this.layer_type;
-		//  json.group_size = this.group_size;
-		//  return json;
-		//},
-		//fromJSON: function(json) {
-		//  this.out_depth = json.out_depth;
-		//  this.out_sx = json.out_sx;
-		//  this.out_sy = json.out_sy;
-		//  this.layer_type = json.layer_type; 
-		//  this.group_size = json.group_size;
-		//  this.switches = global.zeros(this.group_size);
-		//}
-	}*/
-	//SigmoidLayer
-	/*
-	class SigmoidLayer : Layer
-	{
-		public override void getRange(Range r)
-		{
-		}
-		public override void save(BinaryWriter s)
-		{
-		}
-		public override void save(StreamWriter s)
-		{
-		}
-		public override void load(BinaryReader s)
-		{
-		}
-		public override void load(StreamReader s)
-		{
-		}
-		// Implements Sigmoid nnonlinearity elementwise
-		// x -> 1/(1+e^(-x))
-		// so the output is between 0 and 1.
-		public SigmoidLayer(Def def)
-			: base(def)
-		{
-			Def opt = def;
-
-			// computed
-			this.out_sx = opt.in_sx;
-			this.out_sy = opt.in_sy;
-			this.out_depth = opt.in_depth;
-			//this.layer_type = "sigmoid";
-		}
-		public override Vol forward(Vol V, bool is_training)
-		{
-			this.in_act = V;
-			Vol V2 = V.cloneAndZero();
-			int N = V.w.Length;
-			float[] V2w = V2.w;
-			float[] Vw = V.w;
-			for (int i = 0; i < N; i++)
-			{
-				V2w[i] = 1.0f / (1.0f + (float)Math.Exp(-Vw[i]));
-			}
-			this.out_act = V2;
-			return this.out_act;
-		}
-		public override float backward(DataSet y)
-		{
-			Vol V = this.in_act; // we need to set dw of this
-			Vol V2 = this.out_act;
-			int N = V.w.Length;
-			V.dw = Util.zeros(N); // zero out gradient wrt data
-			for (int i = 0; i < N; i++)
-			{
-				float v2wi = V2.w[i];
-				V.dw[i] = v2wi * (1.0f - v2wi) * V2.dw[i];
-			}
-			return 0;
-		}
-		public override List<ParamsAndGrads> getParamsAndGrads()
-		{
-			return new List<ParamsAndGrads>();
-		}
-		//toJSON: function() {
-		//  json.out_depth = this.out_depth;
-		//  json.out_sx = this.out_sx;
-		//  json.out_sy = this.out_sy;
-		//  json.layer_type = this.layer_type;
-		//  return json;
-		//},
-		//fromJSON: function(json) {
-		//  this.out_depth = json.out_depth;
-		//  this.out_sx = json.out_sx;
-		//  this.out_sy = json.out_sy;
-		//  this.layer_type = json.layer_type; 
-		//}
-	}*/
-	//SVMLayer
-	/*
-	class SVMLayer : Layer
-	{
-		public override void getRange(Range r)
-		{
-		}
-		public override void save(BinaryWriter s)
-		{
-		}
-		public override void save(StreamWriter s)
-		{
-		}
-		public override void load(BinaryReader s)
-		{
-		}
-		public override void load(StreamReader s)
-		{
-		}
-		public int num_inputs;
-
-		public SVMLayer(Def def)
-			: base(def)
-		{
-			Def opt = def;
-
-			// computed
-			this.num_inputs = opt.in_sx * opt.in_sy * opt.in_depth;
-			this.out_depth = this.num_inputs;
-			this.out_sx = 1;
-			this.out_sy = 1;
-			//this.layer_type = "svm";
-		}
-
-		public override Vol forward(Vol V, bool is_training)
-		{
-			this.in_act = V;
-			this.out_act = V; // nothing to do, output raw scores
-			return V;
-		}
-		public override float backward(DataSet y)
-		{
-
-			// compute and accumulate gradient wrt weights and bias of this layer
-			Vol x = this.in_act;
-			x.dw = Util.zeros(x.w.Length); // zero out the gradient of input Vol
-
-			float yscore = x.w[y.predict]; // score of ground truth
-			float margin = 1.0f;
-			float loss = 0.0f;
-			for (int i = 0; i < this.out_depth; i++)
-			{
-				if (-yscore + x.w[i] + margin > 0)
-				{
-					// violating example, apply loss
-					// I love hinge loss, by the way. Truly.
-					// Seriously, compare this SVM code with Softmax forward AND backprop code above
-					// it's clear which one is superior, not only in code, simplicity
-					// and beauty, but also in practice.
-					x.dw[i] += 1;
-					x.dw[y.predict] -= 1;
-					loss += -yscore + x.w[i] + margin;
-				}
-			}
-
-			return loss;
-		}
-		public override List<ParamsAndGrads> getParamsAndGrads()
-		{
-			return new List<ParamsAndGrads>();
-		}
-		//toJSON: function() {
-		//  json.out_depth = this.out_depth;
-		//  json.out_sx = this.out_sx;
-		//  json.out_sy = this.out_sy;
-		//  json.layer_type = this.layer_type;
-		//  json.num_inputs = this.num_inputs;
-		//  return json;
-		//},
-		//fromJSON: function(json) {
-		//  this.out_depth = json.out_depth;
-		//  this.out_sx = json.out_sx;
-		//  this.out_sy = json.out_sy;
-		//  this.layer_type = json.layer_type;
-		//  this.num_inputs = json.num_inputs;
-		//}
-	}*/
 
 }

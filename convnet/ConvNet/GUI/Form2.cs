@@ -30,15 +30,7 @@ namespace GUI
 				//trainer = new Trainer(this, new Trainer.Option() { learning_rate = 0.01f, momentum = 0.1f, batch_size = 10, l2_decay = 0.001f });//0.001f
 				trainer = new AdaDeltaTrainer(5){  l2_decay = 0.0f };//0.001f method = "adadelta",
 
-				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f,act: new ReluLayer());
-				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f, act: new ReluLayer());
-				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f, act: new ReluLayer());
-				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f, act: new ReluLayer());
-				fc1 = new FullyConnLayer(num_neurons: 2, bias_pref: 0.1f, act: new TanhLayer());
-				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f, act: new ReluLayer());
-				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f, act: new ReluLayer());
-				fc1 = new FullyConnLayer(num_neurons: 60, bias_pref: 0.1f, act: new ReluLayer());
-				fc1 = new FullyConnLayer(num_neurons: 6, bias_pref: 0.1f, act: new ReluLayer());
+				fc1 = new FullyConnLayer(num_neurons: 6, bias_pref: 0.1f,act: new ReluLayer());
 				fc2 = new FullyConnLayer(num_neurons: 2, bias_pref: 0.1f);
 
 				Add(new InputLayer(out_sx: 1, out_sy: 1, out_depth: 2));

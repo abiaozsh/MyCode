@@ -435,7 +435,6 @@ namespace GUI
 				}
 			}
 		}
-
 		public class Lv3TrainNet : Net
 		{
 			public ConvLayer cv1;
@@ -471,15 +470,24 @@ namespace GUI
 				{
 					cv1.load(s); cv1.noUpdate = true;
 				});
-
+				
 				Util.load(@"..\cv2.txt", (s) =>
 				{
 					cv2.load(s); cv2.noUpdate = true;
 				});
+				
+				Util.load(@"..\cv3.txt", (s) =>
+				{
+					cv3.load(s);// cv2.noUpdate = true;
+				});
+				Util.load(@"..\cv3_ufc.txt", (s) =>
+				{
+					ufc.load(s);// cv2.noUpdate = true;
+				});
 			}
 
 			static Vol v16 = new Vol(16, 16, 1, 0.0f);
-			public float train(int n)
+			public float train(int n, Random r)
 			{
 				var v = MNISTData.getImg(n);
 				float loss = 0;
@@ -490,17 +498,15 @@ namespace GUI
 				MNISTData.getBoundary(n, out Selectx1, out Selecty1, out Selectx2, out Selecty2);
 
 				//get4x4();
-				for (int y = Selecty1 - 8; y < Selecty2 + 1; y++)
-				{
-					for (int x = Selectx1 - 8; x < Selecty2 + 1; x++)
-					{
-						get16x16(v, v16, x, y);
+				int y = (int)(Selecty1 - 8 + r.NextDouble() * (Selecty2 - Selecty1 + 8));
+				int x = (int)(Selectx1 - 8 + r.NextDouble() * (Selectx2 - Selectx1 + 8));
 
-						DataSet ds = new DataSet();
-						ds.data = v16;
-						loss += train(v16, ds);
-					}
-				}
+				get16x16(v, v16, x, y);
+
+				DataSet ds = new DataSet();
+				ds.data = v16;
+				loss += train(v16, ds);
+
 				return loss;
 			}
 
@@ -534,68 +540,60 @@ namespace GUI
 			public FullyConnLayer fc144;
 			public FullyConnLayer fc10;
 
-			//public void save(TextWriter s)
-			//{
-			//	cv1.save(s);
-			//	cv2.save(s);
-			//	cv3.save(s);
-			//	fc144.save(s);
-			//	fc10.save(s);
-			//}
-			//public void load(TextReader s)
-			//{
-			//	cv1.load(s);
-			//	cv2.load(s);
-			//	cv3.load(s);
-			//	fc144.load(s);
-			//	fc10.load(s);
-			//}
-
 			public void init()
 			{
 				//this, new Trainer.Option() 
-				trainer = new AdaDeltaTrainer(66) { l2_decay = 0.001f };//0.001f
+				trainer = new AdaDeltaTrainer(10) { l2_decay = 0.001f };//0.001f
 
-				cv1 = new ConvLayer(sx: 4, sy: 4, filters: 8, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				cv2 = new ConvLayer(sx: 4, sy: 4, filters: 16, stride: 2, pad: 2, adj: -1, bias_pref: 0.1f, act: new ReluLayer());
-				cv3 = new ConvLayer(sx: 4, sy: 4, filters: 32, stride: 2, pad: 1, bias_pref: 0.1f, act: new ReluLayer());
-				fc144 = new FullyConnLayer(num_neurons: 288, bias_pref: 0.1f, act: new ReluLayer());
+				cv1 = new ConvLayer(sx: 4, sy: 4, filters: 16, stride: 1, pad: 2, adj: -1, bias_pref: 0.1f, act: new ReluLayer());
+				cv2 = new ConvLayer(sx: 4, sy: 4, filters: 32, stride: 1, pad: 2, adj: -1, bias_pref: 0.1f, act: new ReluLayer());
+				cv3 = new ConvLayer(sx: 4, sy: 4, filters: 64, stride: 1, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
+				fc144 = new FullyConnLayer(num_neurons: 256, bias_pref: 0.1f, act: new ReluLayer());
 				fc10 = new FullyConnLayer(num_neurons: 11, bias_pref: 0.1f);
 
 				Add(new InputLayer(out_sx: 28, out_sy: 28, out_depth: 1));
 				Add(cv1);
+				Add(new PoolLayer(stride: 2));
 				Add(cv2);
+				Add(new PoolLayer(stride: 2));
 				Add(cv3);
+				Add(new PoolLayer(stride: 2));
 				Add(fc144);
 				Add(fc10);
 				Add(new SoftmaxLayer());
 
+				//Util.load(@"..\cv1.txt", (s) =>
+				//{
+				//	cv1.load(s); //cv1.noUpdate = true;
+				//});
+				//
+				//Util.load(@"..\cv2.txt", (s) =>
+				//{
+				//	cv2.load(s); //cv2.noUpdate = true;
+				//});
+				//
+				//Util.load(@"..\cv3.txt", (s) =>
+				//{
+				//	cv3.load(s); //cv3.noUpdate = true;
+				//});
 
 			}
 
 
 			Vol v = new Vol(28, 28, 1, 0.0f);
 			int[] data = new int[28 * 28];
-			public void train()
+			public void train(int i)
 			{
 				DataSet ds = new DataSet();
 				//train
-				for (int i = 0; i < trainer.batchSize; i++)
+				//for (int i = 0; i < 1000; i++)
 				{
-					int trainIndex = (int)(MNISTData.rnd.NextDouble() * 70000);
-					if ((i + 1) % 10 == 0)
+					int trainIndex = i;
+					if (i + 1 % 100 == 0)
 					{
 						for (int n = 0; n < 28 * 28; n++)
 						{
 							data[n] = 0;
-						}
-						ds.predict = 10;
-					}
-					else if ((i + 2) % 10 == 0)
-					{
-						for (int n = 0; n < 28 * 28; n++)
-						{
-							data[n] = (int)(MNISTData.rnd.NextDouble() * 255);
 						}
 						ds.predict = 10;
 					}
@@ -616,9 +614,9 @@ namespace GUI
 				float accu = 0;
 				DataSet ds = new DataSet();
 
-				for (int j = 0; j < 1000; j++)//test
+				for (int j = 0; j < 100; j++)//test
 				{
-					int trainIndex = (int)(MNISTData.rnd.NextDouble() * 70000);
+					int trainIndex = (int)(MNISTData.rnd.NextDouble() * 69999);
 
 					MNISTData.rotate(trainIndex, data);
 					ds.predict = MNISTData.getLbl(trainIndex);
@@ -632,7 +630,7 @@ namespace GUI
 						accu += 1.0f;
 					}
 				}
-				return accu / 1000.0f;
+				return accu / 100.0f;
 			}
 		}
 
