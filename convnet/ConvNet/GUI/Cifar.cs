@@ -138,18 +138,19 @@ namespace GUI
 			public ConvLayer cv1;
 			public FullyConnLayer ufc;
 
+			public int lv1Filters = 32;
+
 			public void init()
 			{
 				//this, new Trainer.Option() 
-				trainer = new AdaDeltaTrainer(10) { l2_decay = 0.001f };//0.001f
+				trainer = new AdaDeltaTrainer() { l2_decay = 0.001f };//0.001f
 
-				cv1 = new ConvLayer(sx: 4, sy: 4, filters: 32, stride: 1, pad: 0, bias_pref: 0.01f, act: new ReluLayer());
+				cv1 = new ConvLayer(sx: 4, sy: 4, filters: lv1Filters, stride: 1, pad: 0, bias_pref: 0.01f, act: new ReluLayer());
 
 				ufc = new FullyConnLayer(num_neurons: 4 * 4 * 3, bias_pref: 0.01f);
 
 				Add(new InputLayer(out_sx: 4, out_sy: 4, out_depth: 3));
 				Add(cv1);
-				//Add(new LRNLayer(0.01f, 32, 1, 1));
 				Add(ufc);
 				Add(new ReshapeLayer(out_sx: 4, out_sy: 4, out_depth: 3));
 				Add(new RegressionLayer());
@@ -165,7 +166,7 @@ namespace GUI
 
 			}
 
-			public float train(int n)
+			public float train(Net.Instance ins,int n)
 			{
 				//var v = MNISTData.getImg(n);
 				float loss = 0;
@@ -175,18 +176,17 @@ namespace GUI
 				{
 					for (int x = 0; x < 32 - 4; x++)
 					{
-						var v4 = get4x4(n, x, y);
+						get4x4(ins.inact,n, x, y);
 
 						DataSet ds = new DataSet();
-						ds.data = v4;
-						loss += train(v4, ds);
+						ds.data = ins.inact;
+						loss += train(ins,ins.inact, ds);
 					}
 				}
 				return loss;
 			}
 
-			static Vol v4 = new Vol(4, 4, 3, 0.0f);
-			public static Vol get4x4(int n, int x, int y)
+			public static void get4x4(Vol v4,int n, int x, int y)
 			{
 				byte[] img = imgData[n];
 				for (int j = 0; j < 4; j++)
@@ -202,214 +202,213 @@ namespace GUI
 						v4.set(j, i, 2, b / 255.0f);
 					}
 				}
-				return v4;
 			}
 		}
 
 
-		public class MainNet : Net//net
-		{
-			//主网络，多层卷积 +全连接 收窄到2维神经元 全连接 再多层反卷积 输出图像
+		//public class MainNet : Net//net
+		//{
+		//	//主网络，多层卷积 +全连接 收窄到2维神经元 全连接 再多层反卷积 输出图像
+		//
+		//	public ConvLayer cv1;
+		//	public ConvLayer cv2;
+		//	public ConvLayer cv3;
+		//	public FullyConnLayer fc4096;
+		//	public FullyConnLayer fc10;
+		//
+		//	public static int l1Filter = 16;
+		//	public static int l2Filter = 32;
+		//	public static int l3Filter = 64;
+		//	public void init()
+		//	{
+		//		trainer = new AdaDeltaTrainer() { l2_decay = 0.001f };//0.001f method = "adadelta",learning_rate = 0.01f, 
+		//		//trainer = new SGDTrainer(50) {learning_rate = 0.01f,  l2_decay = 0.001f };//0.001f method = "adadelta",
+		//
+		//		cv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
+		//		cv2 = new ConvLayer(sx: 4, sy: 4, filters: l2Filter, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
+		//		cv3 = new ConvLayer(sx: 4, sy: 4, filters: l3Filter, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
+		//		fc4096 = new FullyConnLayer(num_neurons: 4096, bias_pref: 0.1f, act: new ReluLayer());
+		//		fc10 = new FullyConnLayer(num_neurons: 10, bias_pref: 0.0f);
+		//
+		//		Add(new InputLayer(out_sx: 32, out_sy: 32, out_depth: 3));
+		//		Add(cv1);
+		//		Add(cv2);
+		//		Add(cv3);
+		//		Add(fc4096);
+		//		Add(fc10);
+		//		Add(new SoftmaxLayer());
+		//
+		//	}
+		//	public void save(TextWriter s)
+		//	{
+		//		//cv1.save(s);
+		//		//cv2.save(s);
+		//		//cv3.save(s);
+		//	}
+		//	public void load(TextReader s)
+		//	{
+		//		//cv1.load(s);
+		//		//cv2.load(s);
+		//		//cv3.load(s);
+		//	}
+		//
+		//	static Random r = new Random();
+		//	int trainIndex = (int)(r.NextDouble() * (imgCount - 1));
+		//	public void train()
+		//	{
+		//		for (int i = 0; i < trainer.batchSize; i++)
+		//		{
+		//			var v = getImg(trainIndex);
+		//			DataSet ds = new DataSet();
+		//			ds.data = v;
+		//			train(v, ds);
+		//
+		//			trainIndex++;
+		//			if (trainIndex >= imgCount)
+		//			{
+		//				trainIndex = 0;
+		//			}
+		//		}
+		//	}
+		//	public void test()
+		//	{
+		//		//for (int i = 0; i < trainer.batch_size; i++)
+		//		//{
+		//		//	var v = getImg(trainIndex);
+		//		//	DataSet ds = new DataSet();
+		//		//	ds.data = v;
+		//		//	trainer.train(v, ds);
+		//		//
+		//		//	trainIndex++;
+		//		//	if (trainIndex >= imgCount)
+		//		//	{
+		//		//		trainIndex = 0;
+		//		//	}
+		//		//}
+		//	}
+		//}
 
-			public ConvLayer cv1;
-			public ConvLayer cv2;
-			public ConvLayer cv3;
-			public FullyConnLayer fc4096;
-			public FullyConnLayer fc10;
+		//public class RegNet : Net//net
+		//{
+		//	//主网络，多层卷积 +全连接 收窄到2维神经元 全连接 再多层反卷积 输出图像
+		//
+		//	public ConvLayer cv1;
+		//	public ConvLayer cv2;
+		//	public ConvLayer cv3;
+		//	public FullyConnLayer fc4096A;
+		//	//public FullyConnLayer fc4096B;
+		//	public ConvLayer ucv0;
+		//	public ConvLayer ucv1;
+		//	public ConvLayer ucv2;
+		//
+		//	public static int l1Filter = 16;
+		//	public static int l2Filter = 32;
+		//	public static int l3Filter = 64;
+		//	public void init()
+		//	{
+		//		trainer = new AdaDeltaTrainer(10) { ro = 0.5f, l2_decay = 0.001f };//0.001f learning_rate = 0.1f, 
+		//		//trainer = new SGDTrainer(5) { learning_rate = 0.0002f, l2_decay = 0.001f };//0.001f
+		//
+		//		cv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, stride: 2, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
+		//		cv2 = new ConvLayer(sx: 4, sy: 4, filters: l2Filter, stride: 2, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
+		//		cv3 = new ConvLayer(sx: 4, sy: 4, filters: l3Filter, stride: 2, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
+		//		fc4096A = new FullyConnLayer(num_neurons: 512, bias_pref: 0.1f, act: new ReluLayer());
+		//		//ucv0 = new ConvLayer(sx: 4, sy: 4, filters: l2Filter, unstride: 2, pad: 3,adj:-1, bias_pref: 0.1f, act: new ReluLayer());
+		//		//ucv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, unstride: 2, pad: 3, adj: -1, bias_pref: 0.1f, act: new ReluLayer());
+		//		//ucv2 = new ConvLayer(sx: 4, sy: 4, filters: 3, unstride: 2, pad: 3, bias_pref: 0.1f);
+		//
+		//		Add(new InputLayer(out_sx: 32, out_sy: 32, out_depth: 3));
+		//		Add(cv1);
+		//		Add(cv2);
+		//		Add(cv3);
+		//		Add(fc4096A);
+		//		Add(new ReshapeLayer(out_sx: 3, out_sy: 3, out_depth: l3Filter));
+		//		Add(ucv0);
+		//		Add(ucv1);
+		//		Add(ucv2);
+		//		Add(new RegressionLayer());
+		//
+		//		Util.load(@"..\lv1_4_4v0_Filter16.txt", (s) =>
+		//		{
+		//			//cv1.load(s);
+		//		});
+		//		cv1.noUpdate = true;
+		//	}
+		//	public void save(TextWriter s)
+		//	{
+		//	}
+		//	public void load(TextReader s)
+		//	{
+		//	}
+		//
+		//	public Vol train(int n)
+		//	{
+		//		DataSet ds = new DataSet();
+		//		//train
+		//		//for (int i = 0; i < trainer.batchSize; i++)
+		//		{
+		//			//int trainIndex = n;//(int)(MNISTData.rnd.NextDouble() * 70000);
+		//
+		//
+		//			var v = getImg(n);
+		//			ds.data = v;
+		//
+		//			train(v, ds);
+		//		}
+		//		return ucv2.out_act;
+		//	}
+		//}
 
-			public static int l1Filter = 16;
-			public static int l2Filter = 32;
-			public static int l3Filter = 64;
-			public void init()
-			{
-				trainer = new AdaDeltaTrainer(50) { l2_decay = 0.001f };//0.001f method = "adadelta",learning_rate = 0.01f, 
-				//trainer = new SGDTrainer(50) {learning_rate = 0.01f,  l2_decay = 0.001f };//0.001f method = "adadelta",
-
-				cv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				cv2 = new ConvLayer(sx: 4, sy: 4, filters: l2Filter, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				cv3 = new ConvLayer(sx: 4, sy: 4, filters: l3Filter, stride: 2, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				fc4096 = new FullyConnLayer(num_neurons: 4096, bias_pref: 0.1f, act: new ReluLayer());
-				fc10 = new FullyConnLayer(num_neurons: 10, bias_pref: 0.0f);
-
-				Add(new InputLayer(out_sx: 32, out_sy: 32, out_depth: 3));
-				Add(cv1);
-				Add(cv2);
-				Add(cv3);
-				Add(fc4096);
-				Add(fc10);
-				Add(new SoftmaxLayer());
-
-			}
-			public void save(TextWriter s)
-			{
-				//cv1.save(s);
-				//cv2.save(s);
-				//cv3.save(s);
-			}
-			public void load(TextReader s)
-			{
-				//cv1.load(s);
-				//cv2.load(s);
-				//cv3.load(s);
-			}
-
-			static Random r = new Random();
-			int trainIndex = (int)(r.NextDouble() * (imgCount - 1));
-			public void train()
-			{
-				for (int i = 0; i < trainer.batchSize; i++)
-				{
-					var v = getImg(trainIndex);
-					DataSet ds = new DataSet();
-					ds.data = v;
-					train(v, ds);
-
-					trainIndex++;
-					if (trainIndex >= imgCount)
-					{
-						trainIndex = 0;
-					}
-				}
-			}
-			public void test()
-			{
-				//for (int i = 0; i < trainer.batch_size; i++)
-				//{
-				//	var v = getImg(trainIndex);
-				//	DataSet ds = new DataSet();
-				//	ds.data = v;
-				//	trainer.train(v, ds);
-				//
-				//	trainIndex++;
-				//	if (trainIndex >= imgCount)
-				//	{
-				//		trainIndex = 0;
-				//	}
-				//}
-			}
-		}
-
-		public class RegNet : Net//net
-		{
-			//主网络，多层卷积 +全连接 收窄到2维神经元 全连接 再多层反卷积 输出图像
-
-			public ConvLayer cv1;
-			public ConvLayer cv2;
-			public ConvLayer cv3;
-			public FullyConnLayer fc4096A;
-			//public FullyConnLayer fc4096B;
-			public ConvLayer ucv0;
-			public ConvLayer ucv1;
-			public ConvLayer ucv2;
-
-			public static int l1Filter = 16;
-			public static int l2Filter = 32;
-			public static int l3Filter = 64;
-			public void init()
-			{
-				trainer = new AdaDeltaTrainer(10) { ro = 0.5f, l2_decay = 0.001f };//0.001f learning_rate = 0.1f, 
-				//trainer = new SGDTrainer(5) { learning_rate = 0.0002f, l2_decay = 0.001f };//0.001f
-
-				cv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, stride: 2, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
-				cv2 = new ConvLayer(sx: 4, sy: 4, filters: l2Filter, stride: 2, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
-				cv3 = new ConvLayer(sx: 4, sy: 4, filters: l3Filter, stride: 2, pad: 0, bias_pref: 0.1f, act: new ReluLayer());
-				fc4096A = new FullyConnLayer(num_neurons: 512, bias_pref: 0.1f, act: new ReluLayer());
-				//ucv0 = new ConvLayer(sx: 4, sy: 4, filters: l2Filter, unstride: 2, pad: 3,adj:-1, bias_pref: 0.1f, act: new ReluLayer());
-				//ucv1 = new ConvLayer(sx: 4, sy: 4, filters: l1Filter, unstride: 2, pad: 3, adj: -1, bias_pref: 0.1f, act: new ReluLayer());
-				//ucv2 = new ConvLayer(sx: 4, sy: 4, filters: 3, unstride: 2, pad: 3, bias_pref: 0.1f);
-
-				Add(new InputLayer(out_sx: 32, out_sy: 32, out_depth: 3));
-				Add(cv1);
-				Add(cv2);
-				Add(cv3);
-				Add(fc4096A);
-				Add(new ReshapeLayer(out_sx: 3, out_sy: 3, out_depth: l3Filter));
-				Add(ucv0);
-				Add(ucv1);
-				Add(ucv2);
-				Add(new RegressionLayer());
-
-				Util.load(@"..\lv1_4_4v0_Filter16.txt", (s) =>
-				{
-					//cv1.load(s);
-				});
-				cv1.noUpdate = true;
-			}
-			public void save(TextWriter s)
-			{
-			}
-			public void load(TextReader s)
-			{
-			}
-
-			public Vol train(int n)
-			{
-				DataSet ds = new DataSet();
-				//train
-				//for (int i = 0; i < trainer.batchSize; i++)
-				{
-					//int trainIndex = n;//(int)(MNISTData.rnd.NextDouble() * 70000);
-
-
-					var v = getImg(n);
-					ds.data = v;
-
-					train(v, ds);
-				}
-				return ucv2.out_act;
-			}
-		}
-
-		public class Reg1LBNet : Net//net
-		{
-			//主网络，多层卷积 +全连接 收窄到2维神经元 全连接 再多层反卷积 输出图像
-
-			public ConvLayer cv1;
-			public FullyConnLayer fc;
-			public FullyConnLayer fc2;
-			public ConvLayer ucv2;
-
-			public static int l1Filter = 16;
-			public void init()
-			{
-				trainer = new AdaDeltaTrainer(10) { ro = 0.5f, l2_decay = 0.001f };//0.001f learning_rate = 0.1f, 
-				//trainer = new SGDTrainer(5) { learning_rate = 0.0002f, l2_decay = 0.001f };//0.001f
-
-				fc = new FullyConnLayer(num_neurons: 64, bias_pref: 0.1f, act: new ReluLayer());
-				fc2 = new FullyConnLayer(num_neurons: 32 * 32 * 3, bias_pref: 0.1f);
-
-				Add(new InputLayer(out_sx: 32, out_sy: 32, out_depth: 3));
-				Add(fc);
-				Add(fc2);
-				Add(new ReshapeLayer(out_sx: 32, out_sy: 32, out_depth: 3));
-				Add(new RegressionLayer());
-
-				//Util.load(@"..\lv1_4_4v2_Filter16.txt", (s) =>
-				//{
-				//	cv1.load(s);
-				//});
-				//cv1.noUpdate = true;
-			}
-			public void save(TextWriter s)
-			{
-			}
-			public void load(TextReader s)
-			{
-			}
-
-			public void train(int n, int x, int y)
-			{
-				DataSet ds = new DataSet();
-				//train
-				//for (int i = 0; i < trainer.batchSize; i++)
-				{
-					var v = getImg(n);// get8x8(n, x, y);
-					ds.data = v;
-
-					train(v, ds);
-				}
-			}
-		}
+		//public class Reg1LBNet : Net//net
+		//{
+		//	//主网络，多层卷积 +全连接 收窄到2维神经元 全连接 再多层反卷积 输出图像
+		//
+		//	public ConvLayer cv1;
+		//	public FullyConnLayer fc;
+		//	public FullyConnLayer fc2;
+		//	public ConvLayer ucv2;
+		//
+		//	public static int l1Filter = 16;
+		//	public void init()
+		//	{
+		//		trainer = new AdaDeltaTrainer(10) { ro = 0.5f, l2_decay = 0.001f };//0.001f learning_rate = 0.1f, 
+		//		//trainer = new SGDTrainer(5) { learning_rate = 0.0002f, l2_decay = 0.001f };//0.001f
+		//
+		//		fc = new FullyConnLayer(num_neurons: 64, bias_pref: 0.1f, act: new ReluLayer());
+		//		fc2 = new FullyConnLayer(num_neurons: 32 * 32 * 3, bias_pref: 0.1f);
+		//
+		//		Add(new InputLayer(out_sx: 32, out_sy: 32, out_depth: 3));
+		//		Add(fc);
+		//		Add(fc2);
+		//		Add(new ReshapeLayer(out_sx: 32, out_sy: 32, out_depth: 3));
+		//		Add(new RegressionLayer());
+		//
+		//		//Util.load(@"..\lv1_4_4v2_Filter16.txt", (s) =>
+		//		//{
+		//		//	cv1.load(s);
+		//		//});
+		//		//cv1.noUpdate = true;
+		//	}
+		//	public void save(TextWriter s)
+		//	{
+		//	}
+		//	public void load(TextReader s)
+		//	{
+		//	}
+		//
+		//	public void train(int n, int x, int y)
+		//	{
+		//		DataSet ds = new DataSet();
+		//		//train
+		//		//for (int i = 0; i < trainer.batchSize; i++)
+		//		{
+		//			var v = getImg(n);// get8x8(n, x, y);
+		//			ds.data = v;
+		//
+		//			train(v, ds);
+		//		}
+		//	}
+		//}
 
 		public void init()
 		{

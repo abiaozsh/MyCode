@@ -45,6 +45,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConvNet.cs" />
+    <Compile Include="ConvLayer.cs" />
+    <Compile Include="FullyConnLayer.cs" />
     <Compile Include="Layers.cs" />
     <Compile Include="MyFloat.cs" />
     <Compile Include="OpenCL.cs" />

@@ -9,14 +9,14 @@ namespace ConvNet
 {
 	public abstract class Trainer
 	{
-		public int count = 0;
-		public int batchSize;
-		protected float oneBatchSize;
+		//public int count = 0;
+		//public int batchSize;
+		//protected float oneBatchSize;
 
-		public Trainer(int batchSize)
+		public Trainer()//int batchSize
 		{
-			this.batchSize = batchSize;
-			oneBatchSize = 1.0f / batchSize;
+			//this.batchSize = batchSize;
+			//oneBatchSize = 1.0f / batchSize;
 
 			//this.net = net;
 			//
@@ -33,7 +33,7 @@ namespace ConvNet
 			//this.k = 0; // iteration counter
 		}
 
-		public abstract void train(int params_size, MyFloat params_, MyFloat grads_, int params_idx, int grads_idx, MyFloat gsum, MyFloat xsum, float l1_decay_mul, float l2_decay_mul);
+		public abstract void train(int params_size, MyFloat params_, MyFloat grads_, int params_idx, int grads_idx, MyFloat gsum, MyFloat xsum, float l1_decay_mul, float l2_decay_mul, float oneBatchSize);
 	}
 
 	//public abstract class TrainData { 
@@ -57,13 +57,12 @@ namespace ConvNet
 		public float eps = 1e-6f;
 
 		//FullyConnLayer(int num_neurons = 0, float bias_pref = 0.0f, ActivationLayer act = null)
-		public AdaDeltaTrainer(int batchSize)
-			: base(batchSize)
+		public AdaDeltaTrainer()
 		{
 		}
 
 		//public float l1_decay_mul = 1.0f;public float l2_decay_mul = 1.0f;
-		public override void train(int params_size, MyFloat params_, MyFloat grads_, int params_idx, int grads_idx, MyFloat gsum, MyFloat xsum, float l1_decay_mul, float l2_decay_mul)
+		public override void train(int params_size, MyFloat params_, MyFloat grads_, int params_idx, int grads_idx, MyFloat gsum, MyFloat xsum, float l1_decay_mul, float l2_decay_mul, float oneBatchSize)
 		{
 			//ParamsAndGrads pg = pglist[i]; // param, gradient, other options in future (custom learning rate etc)
 			// learning rate for some parameters.
@@ -85,7 +84,8 @@ namespace ConvNet
 
 				// assume adadelta if not sgd or adagrad
 				gsum[j] = this.ro * gsum[j] + (1 - this.ro) * gij * gij;
-				float dx = -(float)Math.Sqrt((xsum[j] + this.eps) / (gsum[j] + this.eps)) * gij;
+				float f1 = (xsum[j] + this.eps) / (gsum[j] + this.eps);
+				float dx = -(float)Math.Sqrt(f1) * gij;
 				xsum[j] = this.ro * xsum[j] + (1 - this.ro) * dx * dx; // yes, xsum lags behind gsum by 1.
 				params_[j + params_idx] += dx;
 
@@ -95,45 +95,45 @@ namespace ConvNet
 		}
 	}
 
-	public class SGDTrainer : Trainer
-	{
-		public float l1_decay = 0.0f;
-		public float l2_decay = 0.0f;
-		public float learning_rate = 0.01f;
-		public float momentum = 0.9f;
-
-		public SGDTrainer(int batchSize)
-			: base(batchSize)
-		{
-		}
-
-		//public float l1_decay_mul = 1.0f;public float l2_decay_mul = 1.0f;
-		public override void train(int params_size, MyFloat params_, MyFloat grads_, int params_idx, int grads_idx, MyFloat gsum, MyFloat xsum, float l1_decay_mul, float l2_decay_mul)
-		{
-			// learning rate for some parameters.
-			float l2_decay = this.l2_decay * l2_decay_mul;
-			float l1_decay = this.l1_decay * l1_decay_mul;
-			for (int j = 0; j < params_size; j++)
-			{
-				//l2_decay_loss += l2_decay * pg.params_[j + pg.params_idx] * pg.params_[j + pg.params_idx] / 2; // accumulate weight decay loss
-				//l1_decay_loss += l1_decay * Math.Abs(pg.params_[j + pg.params_idx]);
-				float l1grad = l1_decay * (params_[j + params_idx] > 0 ? 1 : -1);
-				float l2grad = l2_decay * (params_[j + params_idx]);
-
-				float gij = (l2grad + l1grad + grads_[j + grads_idx]) * oneBatchSize; // raw batch gradient
-
-				// momentum update
-				float dx = this.momentum * gsum[j] - this.learning_rate * gij; // step
-				if (dx > 100) { 
-				throw new Exception();
-				}
-				gsum[j] = dx; // back this up for next iteration of momentum
-				params_[j + params_idx] += dx; // apply corrected gradient
-
-				grads_[j + grads_idx] = 0.0f; // zero out gradient so that we can begin accumulating anew
-			}
-		}
-	}
+//	public class SGDTrainer : Trainer
+//	{
+//		public float l1_decay = 0.0f;
+//		public float l2_decay = 0.0f;
+//		public float learning_rate = 0.01f;
+//		public float momentum = 0.9f;
+//
+//		public SGDTrainer(int batchSize)
+//			: base(batchSize)
+//		{
+//		}
+//
+//		//public float l1_decay_mul = 1.0f;public float l2_decay_mul = 1.0f;
+//		public override void train(int params_size, MyFloat params_, MyFloat grads_, int params_idx, int grads_idx, MyFloat gsum, MyFloat xsum, float l1_decay_mul, float l2_decay_mul)
+//		{
+//			// learning rate for some parameters.
+//			float l2_decay = this.l2_decay * l2_decay_mul;
+//			float l1_decay = this.l1_decay * l1_decay_mul;
+//			for (int j = 0; j < params_size; j++)
+//			{
+//				//l2_decay_loss += l2_decay * pg.params_[j + pg.params_idx] * pg.params_[j + pg.params_idx] / 2; // accumulate weight decay loss
+//				//l1_decay_loss += l1_decay * Math.Abs(pg.params_[j + pg.params_idx]);
+//				float l1grad = l1_decay * (params_[j + params_idx] > 0 ? 1 : -1);
+//				float l2grad = l2_decay * (params_[j + params_idx]);
+//
+//				float gij = (l2grad + l1grad + grads_[j + grads_idx]) * oneBatchSize; // raw batch gradient
+//
+//				// momentum update
+//				float dx = this.momentum * gsum[j] - this.learning_rate * gij; // step
+//				if (dx > 100) { 
+//				throw new Exception();
+//				}
+//				gsum[j] = dx; // back this up for next iteration of momentum
+//				params_[j + params_idx] += dx; // apply corrected gradient
+//
+//				grads_[j + grads_idx] = 0.0f; // zero out gradient so that we can begin accumulating anew
+//			}
+//		}
+//	}
 
 					
 

@@ -193,16 +193,16 @@ namespace ConvNet
 				}
 			}
 		}
-		public static void init(MyFloat f,int sx, int sy, int depth, float? c)
+		public static void init(MyFloat f, int length, float? c)
 		{
 			// we were given dimensions of the vol
-			int n = sx * sy * depth;
+			int n = length;
 			if (c == null)
 			{
 				// weight normalization is done to equalize the output
 				// variance of every neuron, otherwise neurons with a lot
 				// of incoming connections have outputs of larger variance
-				float scale = (float)Math.Sqrt(1.0f / (sx * sy * depth));
+				float scale = (float)Math.Sqrt(1.0f / (length));
 				for (int i = 0; i < n; i++)
 				{
 					f[i] = gaussRandom() * scale;
@@ -252,6 +252,7 @@ namespace ConvNet
 		//Classification (SVM/Softmax)
 		public int predict;
 	}
+
 	public abstract class Net
 	{
 		public List<Layer> layers;
@@ -286,55 +287,62 @@ namespace ConvNet
 		}
 
 		// forward prop the network. A trainer will pass in is_training = true
-		public Vol forward(Vol V)
+		public Vol forward(Instance ins, Vol V)
 		{
 			//if(typeof(is_training)==='undefined') is_training = false;
 			Vol act = V;
 			for (int i = 0; i < this.layers.Count; i++)
 			{
-				act = this.layers[i].forward(act);
+				act = this.layers[i].forward(ins.list[i], act);
 			}
 			return act;
 		}
 
 		// backprop: compute gradients wrt all parameters
-		public void backward()
+		public void backward(Instance ins)
 		{
 			int N = this.layers.Count;
 			for (int i = N - 1; i >= 0; i--)
 			{
-				this.layers[i].backward();
+				this.layers[i].backward(ins.list[i]);
 			}
 		}
 
+		public class Instance
+		{
+			public Vol inact;
+			public Layer.Instance[] list;
+		}
 
-		public float train(Vol x, DataSet y)//Report
+		public Instance getInstance()
+		{
+			Instance instance = new Instance();
+			instance.list = new Layer.Instance[layers.Count];
+
+			for (int i = 0; i < this.layers.Count; i++)
+			{
+				instance.list[i] = this.layers[i].getInstance();
+			}
+			return instance;
+		}
+
+		public float train(Instance instance, Vol x, DataSet y)//Report
 		{
 			//Stopwatch sw = new Stopwatch();
 			//sw.Start();
-			forward(x); // also set the flag that lets the net know we're just training
+			forward(instance, x); // also set the flag that lets the net know we're just training
 			//long t1 = sw.ElapsedTicks;
 			//var lastLayer = ((LastLayer)this.net.layers[this.net.layers.Count - 1]);
 			var lastLayer = (LastLayer)out_layer;
-			lastLayer.setData(y);
-			backward();
-			float cost_loss = lastLayer.getLoss();
+			var lastIns = ((LastLayer.LastInstance)instance.list[instance.list.Length - 1]);
+			lastIns.y = y;
+			//lastLayer.setData(y);
+			backward(instance);
+			float cost_loss = lastIns.loss;
 			//long t2 = sw.ElapsedTicks;
 			//float l2_decay_loss = 0.0f;
 			//float l1_decay_loss = 0.0f;
 
-			trainer.count++;
-			if (trainer.count == trainer.batchSize )
-			{
-				for (int i = 0; i < this.layers.Count; i++)
-				{
-					if (layers[i] is TrainableLayer)
-					{
-						((TrainableLayer)layers[i]).train(trainer);
-					}
-				}
-				trainer.count = 0;
-			}
 
 			// appending softmax_loss for backwards compatibility, but from now on we will always use cost_loss
 			// in future, TODO: have to completely redo the way loss is done around the network as currently 
@@ -352,6 +360,39 @@ namespace ConvNet
 			return cost_loss;
 		}
 
+
+		public void endofBatch(Instance[] instance, int batchSize)
+		{
+			for (int i = 0; i < this.layers.Count; i++)
+			{
+				if (layers[i] is TrainableLayer)
+				{
+					TrainableLayer.TrainableInstance instance0 = (TrainableLayer.TrainableInstance)instance[0].list[i];
+					MyFloat bias_dw_0 = instance0.bias_dw;
+					MyFloat filters_dw_0 = instance0.filters_dw;
+					for (int j = 1; j < instance.Length; j++)
+					{
+
+						MyFloat bias_dw_j = ((TrainableLayer.TrainableInstance)instance[j].list[i]).bias_dw;
+						for (int k = 0; k < bias_dw_0.size; k++)
+						{
+							bias_dw_0[k] += bias_dw_j[k];
+							bias_dw_j[k] = 0;
+						}
+
+						MyFloat filters_dw_j = ((TrainableLayer.TrainableInstance)instance[j].list[i]).filters_dw;
+						for (int k = 0; k < filters_dw_0.size; k++)
+						{
+							filters_dw_0[k] += filters_dw_j[k];
+							filters_dw_j[k] = 0;
+						}
+					}
+
+					((TrainableLayer)layers[i]).train(instance0, trainer, 1.0f / batchSize);
+				}
+			}
+
+		}
 	}
 
 

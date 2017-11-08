@@ -40,6 +40,7 @@
 			this.button3 = new System.Windows.Forms.Button();
 			this.pictureBox7 = new System.Windows.Forms.PictureBox();
 			this.button4 = new System.Windows.Forms.Button();
+			this.textBox2 = new System.Windows.Forms.TextBox();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
@@ -132,6 +133,7 @@
 			this.button3.TabIndex = 9;
 			this.button3.Text = "train3";
 			this.button3.UseVisualStyleBackColor = true;
+			this.button3.Click += new System.EventHandler(this.button3_Click);
 			// 
 			// pictureBox7
 			// 
@@ -150,11 +152,19 @@
 			this.button4.Text = "train2";
 			this.button4.UseVisualStyleBackColor = true;
 			// 
-			// Form3
+			// textBox2
+			// 
+			this.textBox2.Location = new System.Drawing.Point(201, 43);
+			this.textBox2.Name = "textBox2";
+			this.textBox2.Size = new System.Drawing.Size(100, 21);
+			this.textBox2.TabIndex = 12;
+			// 
+			// Form34x4
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(961, 440);
+			this.Controls.Add(this.textBox2);
 			this.Controls.Add(this.button4);
 			this.Controls.Add(this.pictureBox7);
 			this.Controls.Add(this.button3);
@@ -167,7 +177,7 @@
 			this.Controls.Add(this.textBox1);
 			this.Controls.Add(this.button2);
 			this.Controls.Add(this.button1);
-			this.Name = "Form3";
+			this.Name = "Form34x4";
 			this.Text = "Form3";
 			this.Load += new System.EventHandler(this.Form3_Load);
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
@@ -196,5 +206,6 @@
 		private System.Windows.Forms.Button button3;
 		private System.Windows.Forms.PictureBox pictureBox7;
 		private System.Windows.Forms.Button button4;
+		private System.Windows.Forms.TextBox textBox2;
 	}
 }

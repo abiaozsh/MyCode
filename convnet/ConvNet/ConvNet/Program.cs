@@ -10,36 +10,27 @@ namespace ConvNet
 	class Program
 	{
 
-		//static double tanh(double val)
-		//{
-		//	if (val > 0)
-		//	{
-		//		double n = Math.Exp(-val - val);
-		//		return (1 - n) / 1 + n;
-		//	}
-		//	else
-		//	{
-		//		double n = Math.Exp(val + val);
-		//		return -(1 - n) / 1 + n;
-		//	}
-		//}
-
 		static void Main(string[] args)
 		{
-			//Stopwatch s = new Stopwatch();
-			//s.Start();
-			//double t = 0;
-			//for (double i = 0; i < 100000000; i++)
-			//{
-			//	//t += Math.Exp(-i);
-			//	//t += tanh(i);
-			//	t += Math.Tanh(i);
-			//}
-			//s.Stop();
-			//Console.WriteLine(t);
-			//Console.WriteLine(s.Elapsed);
-			//Console.ReadLine();
+			Stopwatch s = new Stopwatch();
+			s.Start();
+			double t = 0;
+			MyFloat mf = new MyFloat(100000000);
+			for (int i = 0; i < 100000000; i++)
+			{
+				mf[i] = 1E30f;
+			}
 
+			for (int i = 0; i < 100000000; i++)
+			{
+				t += Math.Sqrt(mf[i]);
+			}
+			s.Stop();
+			Console.WriteLine(t);
+			Console.WriteLine(s.Elapsed);
+			Console.ReadLine();
+
+			return;
 			//string p = MyFloat.getPlatforms();
 			//string d0 = MyFloat.getDevices(0);
 			//string d1 = MyFloat.getDevices(1);

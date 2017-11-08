@@ -120,12 +120,12 @@ namespace ConvNet
 			}
 			set
 			{
-				if (float.IsNaN(value)) {
-					unsafe
-					{
-						p[idx] = value;
-					}
-				}
+				//if (float.IsNaN(value)) {
+				//	unsafe
+				//	{
+				//		p[idx] = value;
+				//	}
+				//}
 				unsafe
 				{
 					p[idx] = value;

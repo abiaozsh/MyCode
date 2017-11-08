@@ -97,7 +97,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="basic.cpp" />
-    <ClCompile Include="dllLibsrc.cpp">
+    <ClCompile Include="L_Conv.cpp" />
+    <ClCompile Include="L_FullC.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Float.cpp" />
