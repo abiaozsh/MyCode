@@ -9,6 +9,7 @@ extern "C" __declspec(dllexport) cl_float* allocfloat(int size)
 	//cl_float* p_input = NULL;
 
 	cl_uint dev_alignment = 4096;// zeroCopyPtrAlignment(oclobjects.device);
+	//cl_uint dev_alignment = 256;// zeroCopyPtrAlignment(oclobjects.device);
 	size_t aligned_size = zeroCopySizeAlignment(sizeof(cl_float)* size);
 
 	cl_float* p_input = (cl_float*)aligned_malloc(aligned_size, dev_alignment);

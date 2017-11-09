@@ -50,6 +50,22 @@ namespace ConvNet
 			}
 		}
 
+		//public static void test()
+		//{
+		//	IntPtr[] ps = new IntPtr[100000];
+		//
+		//	for (int i = 0; i < 100000; i++)
+		//	{
+		//		int len = 4096;
+		//		ps[i] = allocfloat(len);
+		//	}
+		//
+		//	for (int i = 0; i < 100000; i++)
+		//	{
+		//		freefloat(ps[i]);
+		//	}
+		//}
+
 		public IntPtr ori_p;
 		unsafe float* p;
 		public int size;
@@ -72,10 +88,17 @@ namespace ConvNet
 
 		~MyFloat()
 		{
-			freefloat(ori_p);
-			if (OpenCL.oclobjects != IntPtr.Zero && p_cl_mem != IntPtr.Zero)
+			try
 			{
-				freeCLMEM(OpenCL.oclobjects, ori_p, p_cl_mem);
+				if (OpenCL.oclobjects != IntPtr.Zero && p_cl_mem != IntPtr.Zero)
+				{
+					freeCLMEM(OpenCL.oclobjects, ori_p, p_cl_mem);
+				}
+				freefloat(ori_p);
+			}
+			catch
+			{
+				Util.log("err");
 			}
 		}
 
@@ -120,12 +143,10 @@ namespace ConvNet
 			}
 			set
 			{
-				//if (float.IsNaN(value)) {
-				//	unsafe
-				//	{
-				//		p[idx] = value;
-				//	}
-				//}
+				if (idx >= size || idx < 0)
+				{
+					throw new Exception();
+				}
 				unsafe
 				{
 					p[idx] = value;

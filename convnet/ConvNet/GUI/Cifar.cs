@@ -138,7 +138,7 @@ namespace GUI
 			public ConvLayer cv1;
 			public FullyConnLayer ufc;
 
-			public int lv1Filters = 32;
+			public int lv1Filters = 32;//24
 
 			public void init()
 			{

@@ -74,28 +74,28 @@ namespace ConvNet
 		{
 			for (int d = 0; d < depth; d++)
 			{
-				Bitmap b = vis(d);
+				Bitmap b = vis(d, 255);
 				b.Save(path + d + ".png", ImageFormat.Png);
 			}
 		}
-		public Bitmap vis(int d)
+		public Bitmap vis(int d, float scale)
 		{
 			Bitmap b = new Bitmap(sx, sy);
 			for (int i = 0; i < sx; i++)
 			{
 				for (int j = 0; j < sy; j++)
 				{
-					float v = get(i, j, d);
+					float v = get(i, j, d) * scale;
 					Color c;
 					if (v > 0)
 					{
-						if (v > 1) v = 1;
-						c = Color.FromArgb((int)(v * 255), 0, 0);
+						if (v > 255) v = 255;
+						c = Color.FromArgb((int)(v), 0, 0);
 					}
 					else
 					{
-						if (v < -1) v = -1;
-						c = Color.FromArgb(0, (int)(-v * 255), 0);
+						if (v < -255) v = -255;
+						c = Color.FromArgb(0, (int)(-v), 0);
 					}
 					b.SetPixel(i, j, c);
 				}

@@ -544,20 +544,22 @@ namespace ConvNet
 		{
 			instance.in_act = V;
 			int N = V.w.size;
-			for (int i = 0; i < N; i++)
-			{
-				instance.out_act.w[i] = instance.in_act.w[i];
-			}
+			//for (int i = 0; i < N; i++)
+			//{
+			//	instance.out_act.w[i] = instance.in_act.w[i];
+			//}
+			instance.out_act.w = instance.in_act.w;
 			return instance.out_act;
 		}
 		public override void backward(Instance instance)
 		{
 			Vol V = instance.in_act; // we need to set dw of this
 			int N = V.w.size;
-			for (int i = 0; i < N; i++)
-			{
-				instance.in_act.dw[i] = instance.out_act.dw[i];
-			}
+			//for (int i = 0; i < N; i++)
+			//{
+			//	instance.in_act.dw[i] = instance.out_act.dw[i];
+			//}
+			instance.in_act.dw = instance.out_act.dw;
 		}
 	}
 

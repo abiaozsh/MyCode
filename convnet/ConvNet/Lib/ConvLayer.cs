@@ -244,7 +244,7 @@ namespace ConvNet
 
 			TrainableInstance trainableInstance = ((TrainableInstance)instance);
 
-			//????????TODO 未初始化可能影响后续????????????????V.dw = Util.zeros(V.w.Length); // zero out gradient wrt bottom data, we're about to fill it
+			//zero out gradient wrt bottom data, we're about to fill it
 			int in_size = in_sx * in_sy * in_depth;
 			int filterSize = sx * sy * in_depth;
 
@@ -273,9 +273,44 @@ namespace ConvNet
 				trainableInstance.bias_dw.ori_p,
 				trainableInstance.filters_dw.ori_p
 			);
-
-
 		}
+
+		//public void backward2(Instance instance)
+		//{
+		//	TrainableInstance trainableInstance = ((TrainableInstance)instance);
+		//
+		//	//????????TODO 未初始化可能影响后续????????????????V.dw = Util.zeros(V.w.Length); // zero out gradient wrt bottom data, we're about to fill it
+		//	int in_size = in_sx * in_sy * in_depth;
+		//	int filterSize = sx * sy * in_depth;
+		//
+		//	if (act != null)
+		//	{
+		//		act.backward(trainableInstance.actIns);
+		//	}
+		//
+		//	CVBWD(
+		//		stride,
+		//		pad,
+		//		sx,
+		//		sy,
+		//		in_size,
+		//		in_depth,
+		//		out_sx,
+		//		out_sy,
+		//		out_depth,
+		//		filterSize,
+		//		in_sx,
+		//		in_sy,
+		//		filters_w.ori_p,
+		//		instance.in_act.w.ori_p,
+		//		instance.in_act.dw.ori_p,
+		//		instance.out_act.dw.ori_p,
+		//		trainableInstance.bias_dw.ori_p,
+		//		trainableInstance.filters_dw.ori_p
+		//	);
+		//}
+
+
 		public bool noUpdate = false;
 		public override void train(TrainableInstance instance, Trainer trainer, float oneBatchSize)
 		{

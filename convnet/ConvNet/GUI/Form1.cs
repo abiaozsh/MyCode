@@ -23,8 +23,8 @@ namespace GUI
 		MNIST mnist = new MNIST();
 		//MNIST.MainNet mainet;
 		MNIST.Lv1TrainNet train1net;
-		//MNIST.Lv2TrainNet train2net;
-		//MNIST.Lv3TrainNet train3net;
+		MNIST.Lv2TrainNet train2net;
+		MNIST.Lv3TrainNet train3net;
 
 		Bitmap baseimg;
 
@@ -67,11 +67,11 @@ namespace GUI
 			train1net = new MNIST.Lv1TrainNet();
 			train1net.init();
 
-			//			train2net = new MNIST.Lv2TrainNet();
-			//			train2net.init();
-			//
-			//			train3net = new MNIST.Lv3TrainNet();
-			//			train3net.init();
+			train2net = new MNIST.Lv2TrainNet();
+			train2net.init();
+
+			train3net = new MNIST.Lv3TrainNet();
+			train3net.init();
 
 
 		}
@@ -168,16 +168,29 @@ namespace GUI
 
 		private void button2_Click(object sender, EventArgs e)
 		{
+			Util.load(@"..\cv3.txt", (s) =>
+			{
+				train3net.cv3.load(s);
+			});
+			Util.load(@"..\cv3_ufc.txt", (s) =>
+			{
+				train3net.ufc.load(s);
+			});
+			//
+			vis16();
+			test16();
+			//
+
 		}
 
-		public void vis()
+		public void vis4()
 		{
 			//float scale;
 			//float.TryParse(textBox1.Text, out scale);
 			string dir = @"vis\";
 			float scale;
-			float.TryParse(textBox1.Text,out scale);
-			for (int i = 0; i < train1net.Lv1filters; i++)
+			float.TryParse(textBox1.Text, out scale);
+			for (int i = 0; i < MNIST.Lv1TrainNet.Lv1filters; i++)
 			{
 				train1net.cv1.vis(i, scale).Save(dir + i + ".bmp");
 			}
@@ -214,7 +227,7 @@ namespace GUI
 					Random r = new Random();
 					int sample = 0;
 					loss += train1net.train(insList[i], (int)(r.NextDouble() * MNISTData.Count), out sample);
-					samples+=sample;
+					samples += sample;
 				}
 				);
 				n++;
@@ -230,7 +243,7 @@ namespace GUI
 				if (n % 10 == 0)
 				{
 					test4();
-					vis();
+					vis4();
 					sw.Stop();
 					this.textBox2.Text = sw.Elapsed.ToString();
 
@@ -264,13 +277,13 @@ namespace GUI
 				int x = (int)(r.NextDouble() * 28);
 				int y = (int)(r.NextDouble() * 28);
 
-				MNISTData.getImg(v,n);
+				MNISTData.getImg(v, n);
 
 				MNIST.Lv1TrainNet.get4x4(v, v4, x, y);
-				g.DrawImage(v4.vis(0), 40 + i * 10, 30);
+				g.DrawImage(v4.vis(0, 255), 40 + i * 10, 30);
 
 				Vol ret = train1net.forward(ins, v4);
-				g.DrawImage(ret.vis(0), 40 + i * 10, 40);
+				g.DrawImage(ret.vis(0, 255), 40 + i * 10, 40);
 			}
 			g.Flush();
 			g.Dispose();
@@ -280,129 +293,215 @@ namespace GUI
 
 		private void button6_Click(object sender, EventArgs e)
 		{
-			//			float loss = 0;
-			//
-			//			//for (int k = 0; k < 5; k++)
-			//			{
-			//				Random r = new Random();
-			//				for (int n = 0; n < 100000; n++)
-			//				{
-			//					loss = train2net.train((int)(r.NextDouble() * MNISTData.Count));
-			//
-			//					Text = n + "," + loss;
-			//					Application.DoEvents();
-			//					Util.log(loss + "");
-			//					if (n % 10 == 0)
-			//						test8();
-			//					if (stop) { stop = false; break; }
-			//				}
-			//
-			//
-			//				Util.save("cv2.txt", (s) =>
-			//				{
-			//					train2net.cv2.save(s);
-			//				});
-			//				Util.save("cv2_ufc.txt", (s) =>
-			//				{
-			//					train2net.ufc.save(s);
-			//				});
-			//			}
+			Net.Instance[] insList = new Net.Instance[10];
+			for (int i = 0; i < 10; i++)
+			{
+				insList[i] = train2net.getInstance();
+				insList[i].inact = new Vol(8, 8, 1, 0.0f);
+			}
+
+			float loss = 0;
+			Stopwatch sw = new Stopwatch();
+			sw.Start();
+			int n = 0;
+			while (true)
+			{
+				loss = 0;
+				int samples = 0;
+				Parallel.For(0, 10, (i) =>
+				//for (int i = 0; i < 10; i++)
+				{
+					Random r = new Random();
+					int sample = 0;
+					loss += train2net.train(insList[i], (int)(r.NextDouble() * MNISTData.Count), out sample);
+					samples += sample;
+				}
+				);
+				n++;
+				if (n >= MNISTData.Count * 2 / 10)
+				{
+					break;
+				}
+
+				train2net.endofBatch(insList, samples);
+
+				Text = n + "," + loss;
+				Application.DoEvents();
+				if (n % 10 == 0)
+				{
+					test8();
+					vis8();
+					sw.Stop();
+					this.textBox2.Text = sw.Elapsed.ToString();
+
+					sw.Restart();
+				}
+				if (stop) { stop = false; break; }
+			}
+
+			Util.save("cv2.txt", (s) =>
+			{
+				train2net.cv2.save(s);
+			});
+			Util.save("cv2_ufc.txt", (s) =>
+			{
+				train2net.ufc.save(s);
+			});
+		}
+		public void vis8()
+		{
+			//float scale;
+			//float.TryParse(textBox1.Text, out scale);
+			string dir = @"vis\";
+			float scale;
+			float.TryParse(textBox1.Text, out scale);
+			for (int i = 0; i < MNIST.Lv2TrainNet.Lv2filters; i++)
+			{
+				var v = train2net.vis(i);
+				v.vis(0, scale).Save(dir + i + ".bmp");
+			}
 		}
 
-		Vol v8 = new Vol(8, 8, 1, 0);
+
 		public void test8()
 		{
+			Net.Instance ins = train2net.getInstance();
+			Vol v8 = new Vol(8, 8, 1, 0);
+			Vol v = new Vol(28, 28, 1, 0);
+			Bitmap b = new Bitmap(300, 300);
+			Graphics g = Graphics.FromImage(b);
+			Random r = new Random();
+			for (int i = 0; i < 10; i++)
+			{
+				int n = (int)(r.NextDouble() * 60000);
+				int x = (int)(r.NextDouble() * 28);
+				int y = (int)(r.NextDouble() * 28);
 
-			//			Bitmap b = new Bitmap(300, 300);
-			//			Graphics g = Graphics.FromImage(b);
-			//			Random r = new Random();
-			//			for (int i = 0; i < 10; i++)
-			//			{
-			//				int n = (int)(r.NextDouble() * 60000);
-			//				int x = (int)(r.NextDouble() * 28);
-			//				int y = (int)(r.NextDouble() * 28);
-			//
-			//				Vol v = MNISTData.getImg(n);
-			//
-			//				MNIST.Lv2TrainNet.get8x8(v, v8, x, y);
-			//				g.DrawImage(v8.vis(0), 40 + i * 10, 30);
-			//
-			//				Vol ret = train2net.forward(v8);
-			//				g.DrawImage(ret.vis(0), 40 + i * 10, 40);
-			//			}
-			//			g.Flush();
-			//			g.Dispose();
-			//
-			//			pictureBox2.Image = b;
+				MNISTData.getImg(v, n);
+
+				MNIST.Lv2TrainNet.get8x8(v, v8, x, y);
+				g.DrawImage(v8.vis(0, 255), 40 + i * 20, 30);
+
+				Vol ret = train2net.forward(ins, v8);
+				g.DrawImage(ret.vis(0, 255), 40 + i * 20, 50);
+			}
+			g.Flush();
+			g.Dispose();
+
+			pictureBox2.Image = b;
 		}
 		private void button4_Click(object sender, EventArgs e)
 		{
-			//			float loss = 0;
+			Util.load(@"..\cv3.txt", (s) =>
+			{
+				train3net.cv3.load(s);
+			});
+			Util.load(@"..\cv3_ufc.txt", (s) =>
+			{
+				train3net.ufc.load(s);
+			});
 			//
-			//			//for (int k = 0; k < 50; k++)
-			//			{
-			//				Random r = new Random();
-			//				for (int n = 0; n < 100000; n++)
-			//				{
-			//					loss = train3net.train((int)(r.NextDouble() * MNISTData.Count), r);
+			//vis16();
+			//test16();
 			//
-			//					//Util.log(loss + "");
-			//					if (n % 100 == 0)
-			//					{
-			//						test16();
-			//						Text = n + "," + loss;
-			//						Application.DoEvents();
-			//						if (stop) { stop = false; break; }
-			//					}
-			//				}
-			//
-			//
-			//				Util.save("cv3.txt", (s) =>
-			//				{
-			//					train3net.cv3.save(s);
-			//				});
-			//				Util.save("cv3_ufc.txt", (s) =>
-			//				{
-			//					train3net.ufc.save(s);
-			//				});
-			//			}
+			//return;
+			Net.Instance[] insList = new Net.Instance[10];
+			for (int i = 0; i < 10; i++)
+			{
+				insList[i] = train3net.getInstance();
+				insList[i].inact = new Vol(16, 16, 1, 0.0f);
+			}
+
+			float loss = 0;
+			Stopwatch sw = new Stopwatch();
+			sw.Start();
+			int n = 0;
+			while (true)
+			{
+				loss = 0;
+				int samples = 0;
+				Parallel.For(0, 10, (i) =>
+				//for (int i = 0; i < 10; i++)
+				{
+					Random r = new Random();
+					int sample = 0;
+					loss += train3net.train(insList[i], (int)(r.NextDouble() * MNISTData.Count), out sample);
+					samples += sample;
+				}
+				);
+				n++;
+				if (n >= MNISTData.Count * 4 / 10)
+				{
+					break;
+				}
+
+				train3net.endofBatch(insList, samples);
+
+				Text = n + "," + loss;
+				Application.DoEvents();
+				if (n % 1 == 0)
+				{
+					sw.Stop();
+					this.textBox2.Text = sw.Elapsed.ToString();
+					sw.Restart();
+				}
+
+				if (n % 10 == 0)
+				{
+					test16();
+					Util.save("cv3.txt", (s) =>
+					{
+						train3net.cv3.save(s);
+					});
+					Util.save("cv3_ufc.txt", (s) =>
+					{
+						train3net.ufc.save(s);
+					});
+				}
+				if (stop) { stop = false; break; }
+			}
+
+
 		}
-		Vol v16 = new Vol(16, 16, 1, 0);
+		public void vis16()
+		{
+			string dir = @"vis\";
+			float scale;
+			float.TryParse(textBox1.Text, out scale);
+			for (int i = 0; i < MNIST.Lv3TrainNet.Lv3filters; i++)
+			{
+				var v = train3net.vis(i);
+				Bitmap b = v.vis(0, scale);
+				b.Save(dir + i + ".bmp");
+			}
+		}
+
 		public void test16()
 		{
-			//
-			//			Bitmap b = new Bitmap(300, 300);
-			//			Graphics g = Graphics.FromImage(b);
-			//			Random r = new Random();
-			//			for (int i = 0; i < 10; i++)
-			//			{
-			//				int n = (int)(r.NextDouble() * 60000);
-			//
-			//				int Selectx1;
-			//				int Selectx2;
-			//				int Selecty1;
-			//				int Selecty2;
-			//				MNISTData.getBoundary(n, out Selectx1, out Selecty1, out Selectx2, out Selecty2);
-			//
-			//				//get4x4();
-			//				int y = (int)(Selecty1 - 8 + r.NextDouble() * (Selecty2 - Selecty1 + 8));
-			//				int x = (int)(Selectx1 - 8 + r.NextDouble() * (Selectx2 - Selectx1 + 8));
-			//
-			//				//int x = (int)(r.NextDouble() * 28);
-			//				//int y = (int)(r.NextDouble() * 28);
-			//
-			//				Vol v = MNISTData.getImg(n);
-			//
-			//				MNIST.Lv3TrainNet.get16x16(v, v16, x, y);
-			//				g.DrawImage(v16.vis(0), 40 + i * 20, 30);
-			//
-			//				Vol ret = train3net.forward(v16);
-			//				g.DrawImage(ret.vis(0), 40 + i * 20, 50);
-			//			}
-			//			g.Flush();
-			//			g.Dispose();
-			//
-			//			pictureBox2.Image = b;
+			Net.Instance ins = train3net.getInstance();
+			Vol v16 = new Vol(16, 16, 1, 0);
+			Vol v = new Vol(28, 28, 1, 0);
+			Bitmap b = new Bitmap(300, 300);
+			Graphics g = Graphics.FromImage(b);
+			Random r = new Random();
+			for (int i = 0; i < 10; i++)
+			{
+				int n = (int)(r.NextDouble() * 60000);
+				int x = (int)(r.NextDouble() * 28);
+				int y = (int)(r.NextDouble() * 28);
+
+				MNISTData.getImg(v, n);
+
+				MNIST.Lv3TrainNet.get16x16(v, v16, x, y);
+				g.DrawImage(v16.vis(0, 255), 40 + i * 20, 30);
+
+				Vol ret = train3net.forward(ins, v16);
+				g.DrawImage(ret.vis(0, 255), 40 + i * 20, 50);
+			}
+			g.Flush();
+			g.Dispose();
+
+			pictureBox2.Image = b;
 		}
 
 	}
