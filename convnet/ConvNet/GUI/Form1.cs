@@ -21,7 +21,7 @@ namespace GUI
 			InitializeComponent();
 		}
 		MNIST mnist = new MNIST();
-		//MNIST.MainNet mainet;
+		MNIST.MainNet mainet;
 		MNIST.Lv1TrainNet train1net;
 		MNIST.Lv2TrainNet train2net;
 		MNIST.Lv3TrainNet train3net;
@@ -60,8 +60,8 @@ namespace GUI
 				ex.ToString();
 			}
 
-			//			mainet = new MNIST.MainNet();
-			//			mainet.init();
+			mainet = new MNIST.MainNet();
+			mainet.init();
 
 
 			train1net = new MNIST.Lv1TrainNet();
@@ -78,15 +78,17 @@ namespace GUI
 
 		void pictureBox2_MouseMove(object sender, MouseEventArgs e)
 		{
-			//			pictureBox1.Image = _getBmp(e.X, e.Y);
-			//
-			//			var img = _getImg(e.X, e.Y);
-			//
-			//			var v10 = mainet.forward(img);
-			//
-			//			String s = MNIST.report(v10, -1, -1);
-			//			textBox2.Text = (s);
-			//
+			var ins = mainet.getInstance();
+
+			pictureBox1.Image = _getBmp(e.X, e.Y);
+
+			var img = _getImg(e.X, e.Y);
+
+			var v10 = mainet.forward(ins, img);
+
+			String s = MNIST.report(v10, -1, -1);
+			textBox2.Text = (s);
+
 
 		}
 
@@ -130,40 +132,55 @@ namespace GUI
 
 		private void button1_Click(object sender, EventArgs e)
 		{
-			//			float accu = 0;
-			//			for (int i = 0; i < 1000; i++)
-			//			{
-			//				for (int k = 0; k < MNISTData.Count; k++)
-			//				{
-			//					mainet.train(k);
-			//					this.Text = k + "," + accu;
-			//					Application.DoEvents();
-			//					if (k % 100 == 0)
-			//					{
-			//						accu = mainet.test();
-			//						if (stop) { stop = false; break; }
-			//					}
-			//				}
-			//				//vis();
-			//
-			//				//Util.save("mainet_fc144.txt", (s) =>
-			//				//{
-			//				//	mainet.fc144.save(s);
-			//				//});
-			//				//Util.save("mainet_fc10.txt", (s) =>
-			//				//{
-			//				//	mainet.fc10.save(s);
-			//				//});
-			//
-			//				//this.textBox2.Text = i + "," + accu;
-			//
-			//
-			//
-			//			}
-			//
-			//
-			//			//float accu = mainet.test();
-			//			//this.textBox2.Text =  "," + accu;
+			Net.Instance[] insList = new Net.Instance[10];
+			for (int i = 0; i < 10; i++)
+			{
+				insList[i] = mainet.getInstance();
+				insList[i].inact = new Vol(28, 28, 1, 0.0f);
+			}
+
+			float accu = 0;
+			for (int i = 0; i < 1000; i++)
+			{
+				Random r = new Random();
+
+				for (int j = 0; j < 10; j++)
+				{
+					Parallel.For(0, 10, (k) =>//	for (int k = 0; k < 10; k++)
+					{
+						mainet.train(insList[k], (int)(r.NextDouble() * MNISTData.Count));
+					}
+					);
+					mainet.endofBatch(insList, 10);
+				}
+
+
+
+				accu = mainet.test(insList[0]);
+				if (stop) { stop = false; break; }
+
+				this.Text = i + "," + accu;
+				Application.DoEvents();
+				//vis();
+
+				Util.save("mainet.txt", (s) =>
+				{
+					mainet.cv1.save(s);
+					mainet.cv2.save(s);
+					mainet.cv3.save(s);
+					mainet.fc144.save(s);
+					mainet.fc10.save(s);
+				});
+
+				//this.textBox2.Text = i + "," + accu;
+
+
+
+			}
+
+
+			//float accu = mainet.test();
+			//this.textBox2.Text =  "," + accu;
 		}
 
 		private void button2_Click(object sender, EventArgs e)
@@ -240,7 +257,7 @@ namespace GUI
 
 				Text = n + "," + loss;
 				Application.DoEvents();
-				if (n % 10 == 0)
+				if (n % 100 == 0)
 				{
 					test4();
 					vis4();
@@ -318,7 +335,7 @@ namespace GUI
 				}
 				);
 				n++;
-				if (n >= MNISTData.Count * 2 / 10)
+				if (n >= MNISTData.Count * 2)
 				{
 					break;
 				}
@@ -335,18 +352,20 @@ namespace GUI
 					this.textBox2.Text = sw.Elapsed.ToString();
 
 					sw.Restart();
+
+
+					Util.save("cv2.txt", (s) =>
+					{
+						train2net.cv2.save(s);
+					});
+					Util.save("cv2_ufc.txt", (s) =>
+					{
+						train2net.ufc.save(s);
+					});
 				}
 				if (stop) { stop = false; break; }
 			}
 
-			Util.save("cv2.txt", (s) =>
-			{
-				train2net.cv2.save(s);
-			});
-			Util.save("cv2_ufc.txt", (s) =>
-			{
-				train2net.ufc.save(s);
-			});
 		}
 		public void vis8()
 		{
@@ -392,6 +411,14 @@ namespace GUI
 		}
 		private void button4_Click(object sender, EventArgs e)
 		{
+			Util.load(@"..\cv1.txt", (s) =>
+			{
+				train3net.cv1.load(s);
+			});
+			Util.load(@"..\cv2.txt", (s) =>
+			{
+				train3net.cv2.load(s);
+			});
 			Util.load(@"..\cv3.txt", (s) =>
 			{
 				train3net.cv3.load(s);
@@ -405,8 +432,11 @@ namespace GUI
 			//test16();
 			//
 			//return;
-			Net.Instance[] insList = new Net.Instance[10];
-			for (int i = 0; i < 10; i++)
+
+			int threads = 8;
+
+			Net.Instance[] insList = new Net.Instance[threads];
+			for (int i = 0; i < threads; i++)
 			{
 				insList[i] = train3net.getInstance();
 				insList[i].inact = new Vol(16, 16, 1, 0.0f);
@@ -420,7 +450,7 @@ namespace GUI
 			{
 				loss = 0;
 				int samples = 0;
-				Parallel.For(0, 10, (i) =>
+				Parallel.For(0, threads, (i) =>
 				//for (int i = 0; i < 10; i++)
 				{
 					Random r = new Random();
@@ -430,7 +460,7 @@ namespace GUI
 				}
 				);
 				n++;
-				if (n >= MNISTData.Count * 4 / 10)
+				if (n >= MNISTData.Count * 4)
 				{
 					break;
 				}
@@ -449,6 +479,14 @@ namespace GUI
 				if (n % 10 == 0)
 				{
 					test16();
+					Util.save("cv1.txt", (s) =>
+					{
+						train3net.cv1.save(s);
+					});
+					Util.save("cv2.txt", (s) =>
+					{
+						train3net.cv2.save(s);
+					});
 					Util.save("cv3.txt", (s) =>
 					{
 						train3net.cv3.save(s);

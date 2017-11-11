@@ -13,30 +13,48 @@ namespace ConvNet
 		public delegate void DoSave(StreamWriter sw);
 		public static void save(string filename, DoSave sv)
 		{
-			FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write);
-			StreamWriter sw = new StreamWriter(fs);
-			sv(sw);
-			sw.Flush();
-			fs.Flush();
-			fs.Close();
+			try
+			{
+				FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write);
+				StreamWriter sw = new StreamWriter(fs);
+				sv(sw);
+				sw.Flush();
+				fs.Flush();
+				fs.Close();
+			}
+			catch
+			{
+			}
 		}
 
 		public delegate void DoLoad(StreamReader sr);
 		public static void load(string filename, DoLoad ld)
 		{
-			FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
-			StreamReader sr = new StreamReader(fs);
-			ld(sr);
-			fs.Close();
+			try
+			{
+				FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
+				StreamReader sr = new StreamReader(fs);
+				ld(sr);
+				fs.Close();
+			}
+			catch
+			{
+			}
 		}
 		public static void log(string txt)
 		{
-			FileStream fs = new FileStream("log.txt", FileMode.Append, FileAccess.Write);
-			StreamWriter sw = new StreamWriter(fs);
-			sw.WriteLine(txt);
-			sw.Flush();
-			fs.Flush();
-			fs.Close();
+			try
+			{
+				FileStream fs = new FileStream("log.txt", FileMode.Append, FileAccess.Write);
+				StreamWriter sw = new StreamWriter(fs);
+				sw.WriteLine(txt);
+				sw.Flush();
+				fs.Flush();
+				fs.Close();
+			}
+			catch
+			{
+			}
 		}
 
 		static Random rnd = new Random();
@@ -102,7 +120,7 @@ namespace ConvNet
 			}
 			return b;
 		}
-		public Bitmap visRGB()
+		public Bitmap visRGB(float scale)
 		{
 			if (depth != 3) return null;
 			Bitmap bmp = new Bitmap(sx, sy);
@@ -110,19 +128,19 @@ namespace ConvNet
 			{
 				for (int j = 0; j < sy; j++)
 				{
-					float r = get(j, i, 0);
-					float g = get(j, i, 1);
-					float b = get(j, i, 2);
+					float r = get(j, i, 0) * scale;
+					float g = get(j, i, 1) * scale;
+					float b = get(j, i, 2) * scale;
 					if (r < 0) r = 0;
-					if (r > 1) r = 1;
+					if (r > 255) r = 255;
 
 					if (g < 0) g = 0;
-					if (g > 1) g = 1;
+					if (g > 255) g = 255;
 
 					if (b < 0) b = 0;
-					if (b > 1) b = 1;
+					if (b > 255) b = 255;
 					Color c;
-					c = Color.FromArgb((int)(r * 255), (int)(g * 255), (int)(b * 255));
+					c = Color.FromArgb((int)(r), (int)(g), (int)(b));
 					bmp.SetPixel(i, j, c);
 				}
 			}

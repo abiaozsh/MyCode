@@ -23,42 +23,44 @@ cl_kernel _CreateKernel(cl_program program, const string& kernel_name);
 
 extern "C" __declspec(dllexport) cl_kernel GK_FCFWD(OpenCLBasic* oclobjects)
 {
-//	const char* raw_text = "__kernel void mykernal(\r\n\
-//const int out_depth,\r\n\
-//const int num_inputs,\r\n\
-//__global float* p_in_act_w,\r\n\
-//__global float* p_filters_w,\r\n\
-//__global float* p_bias_w,\r\n\
-//__global float* p_out_act_w\r\n\
-//){\r\n\
-//int i = get_global_id(0);\r\n\
-//float a = 0.0f;\r\n\
-//int i_num_inputs = i * num_inputs;\r\n\
-//for (int d = 0; d < num_inputs; d++)\r\n\
-//{\r\n\
-//a += p_in_act_w[d] * p_filters_w[i_num_inputs + d];\r\n\
-//}\r\n\
-//a += p_bias_w[i];\r\n\
-//p_out_act_w[i] = a;\r\n\
-//}";
-
 	const char* raw_text = "__kernel void mykernal(\r\n\
 const int out_depth,\r\n\
 const int num_inputs,\r\n\
-__global float4* p_in_act_w,\r\n\
-__global float4* p_filters_w,\r\n\
+__global float* p_in_act_w,\r\n\
+__global float* p_filters_w,\r\n\
 __global float* p_bias_w,\r\n\
 __global float* p_out_act_w\r\n\
 ){\r\n\
 int i = get_global_id(0);\r\n\
-float4 a = (float4)(0.0f);\r\n\
+float a = 0.0f;\r\n\
 int i_num_inputs = i * num_inputs;\r\n\
 for (int d = 0; d < num_inputs; d++)\r\n\
 {\r\n\
-a += p_in_act_w[d] * p_filters_w[i_num_inputs + d];\r\n\
+a += p_in_act_w[d] * p_filters_w[i + d*out_depth];\r\n\
 }\r\n\
-p_out_act_w[i] = a.x + a.y + a.z + a.w + p_bias_w[i];\r\n\
+a += p_bias_w[i];\r\n\
+p_out_act_w[i] = a;\r\n\
 }";
+
+//	const char* raw_text = "__kernel void mykernal(\r\n\
+//const int out_depth,\r\n\
+//const int num_inputs,\r\n\
+//__global float4* p_in_act_w,\r\n\
+//__global float4* p_filters_w,\r\n\
+//__global float* p_bias_w,\r\n\
+//__global float* p_out_act_w\r\n\
+//){\r\n\
+////int i = get_group_id(0);//get_global_id(0);\r\n\
+////int j = get_local_id(0);\r\n\
+//float4 a = (float4)(0.0f);\r\n\
+//int idx = get_global_id(0);//(i*256+j);\r\n\
+//int i_num_inputs = idx * num_inputs; \r\n\
+//for (int d = 0; d < num_inputs; d++)\r\n\
+//{\r\n\
+//a += p_in_act_w[d] * p_filters_w[idx + d*out_depth];\r\n\
+//}\r\n\
+//p_out_act_w[idx] = a.x + a.y + a.z + a.w + p_bias_w[idx];\r\n\
+//}";
 
 	cl_program program = getProgram(oclobjects, raw_text);
 
@@ -71,6 +73,8 @@ extern "C" __declspec(dllexport) int RK_FCFWD(
 	OpenCLBasic* oclobjects,
 	cl_kernel kernel,
 
+	int x,
+	int y,
 	int out_depth,
 	int num_inputs,
 	cl_mem p_in_act_w,
@@ -81,7 +85,7 @@ extern "C" __declspec(dllexport) int RK_FCFWD(
 
 	cl_int err = CL_SUCCESS;
 
-	int _num_inputs = num_inputs / 4;//
+	int _num_inputs = num_inputs;//
 	clSetKernelArg(kernel, 0, sizeof(cl_uint), (void *)&out_depth);
 	clSetKernelArg(kernel, 1, sizeof(cl_uint), (void *)&_num_inputs);
 	clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&p_in_act_w);
@@ -89,9 +93,23 @@ extern "C" __declspec(dllexport) int RK_FCFWD(
 	clSetKernelArg(kernel, 4, sizeof(cl_mem), (void *)&p_bias_w);
 	clSetKernelArg(kernel, 5, sizeof(cl_mem), (void *)&p_out_act_w);
 
-	size_t global_work_size[1] =  { out_depth };//{ 4 };//
+	size_t global_work_size[1] = { out_depth };//
 
-	err = clEnqueueNDRangeKernel(oclobjects->queue, kernel, 1, NULL, global_work_size, NULL, 0, NULL, NULL);
+	//size_t local_work_size[1] = { 256 };//
+
+	//extern CL_API_ENTRY cl_int CL_API_CALL
+	//	clEnqueueNDRangeKernel(
+	//	cl_command_queue /* command_queue */,
+	//	cl_kernel        /* kernel */,
+	//	cl_uint          /* work_dim */,
+	//	const size_t *   /* global_work_offset */,
+	//	const size_t *   /* global_work_size */,
+	//	const size_t *   /* local_work_size */,
+	//	cl_uint          /* num_events_in_wait_list */,
+	//	const cl_event * /* event_wait_list */,
+	//	cl_event *       /* event */) CL_API_SUFFIX__VERSION_1_0;
+
+	err = clEnqueueNDRangeKernel(oclobjects->queue, kernel, 1, 0, global_work_size, NULL, 0, NULL, NULL);
 
 	clFinish(oclobjects->queue);
 

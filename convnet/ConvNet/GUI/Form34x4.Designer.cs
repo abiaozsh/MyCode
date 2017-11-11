@@ -41,6 +41,8 @@
 			this.pictureBox7 = new System.Windows.Forms.PictureBox();
 			this.button4 = new System.Windows.Forms.Button();
 			this.textBox2 = new System.Windows.Forms.TextBox();
+			this.button5 = new System.Windows.Forms.Button();
+			this.button6 = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
@@ -87,7 +89,7 @@
 			// 
 			// pictureBox2
 			// 
-			this.pictureBox2.Location = new System.Drawing.Point(30, 135);
+			this.pictureBox2.Location = new System.Drawing.Point(68, 97);
 			this.pictureBox2.Name = "pictureBox2";
 			this.pictureBox2.Size = new System.Drawing.Size(32, 32);
 			this.pictureBox2.TabIndex = 4;
@@ -95,7 +97,7 @@
 			// 
 			// pictureBox3
 			// 
-			this.pictureBox3.Location = new System.Drawing.Point(68, 135);
+			this.pictureBox3.Location = new System.Drawing.Point(30, 135);
 			this.pictureBox3.Name = "pictureBox3";
 			this.pictureBox3.Size = new System.Drawing.Size(32, 32);
 			this.pictureBox3.TabIndex = 5;
@@ -103,7 +105,7 @@
 			// 
 			// pictureBox4
 			// 
-			this.pictureBox4.Location = new System.Drawing.Point(68, 97);
+			this.pictureBox4.Location = new System.Drawing.Point(68, 135);
 			this.pictureBox4.Name = "pictureBox4";
 			this.pictureBox4.Size = new System.Drawing.Size(32, 32);
 			this.pictureBox4.TabIndex = 6;
@@ -159,11 +161,33 @@
 			this.textBox2.Size = new System.Drawing.Size(100, 21);
 			this.textBox2.TabIndex = 12;
 			// 
+			// button5
+			// 
+			this.button5.Location = new System.Drawing.Point(13, 383);
+			this.button5.Name = "button5";
+			this.button5.Size = new System.Drawing.Size(75, 23);
+			this.button5.TabIndex = 13;
+			this.button5.Text = "trainLv1";
+			this.button5.UseVisualStyleBackColor = true;
+			this.button5.Click += new System.EventHandler(this.button5_Click);
+			// 
+			// button6
+			// 
+			this.button6.Location = new System.Drawing.Point(13, 354);
+			this.button6.Name = "button6";
+			this.button6.Size = new System.Drawing.Size(75, 23);
+			this.button6.TabIndex = 14;
+			this.button6.Text = "train2";
+			this.button6.UseVisualStyleBackColor = true;
+			this.button6.Click += new System.EventHandler(this.button6_Click);
+			// 
 			// Form34x4
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(961, 440);
+			this.Controls.Add(this.button6);
+			this.Controls.Add(this.button5);
 			this.Controls.Add(this.textBox2);
 			this.Controls.Add(this.button4);
 			this.Controls.Add(this.pictureBox7);
@@ -207,5 +231,7 @@
 		private System.Windows.Forms.PictureBox pictureBox7;
 		private System.Windows.Forms.Button button4;
 		private System.Windows.Forms.TextBox textBox2;
+		private System.Windows.Forms.Button button5;
+		private System.Windows.Forms.Button button6;
 	}
 }

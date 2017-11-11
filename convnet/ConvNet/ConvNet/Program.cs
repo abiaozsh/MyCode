@@ -15,10 +15,10 @@ namespace ConvNet
 		{
 			Console.WriteLine(OpenCL.getPlatforms());
             
-            int Platform = 1;
+            //int Platform = 1;
+            //int device = 1;
+            int Platform = 0;
             int device = 1;
-            //int Platform = 0;
-            //int device = 0;
             Console.WriteLine(OpenCL.getDevices(Platform));
 
 
@@ -42,21 +42,28 @@ namespace ConvNet
 			//Console.WriteLine(t);
 			//Console.WriteLine(s.Elapsed);
 			//Console.ReadLine();
-			int cnt = 8192;
+			int cnt = 1024;
 
 			var inp = new InputLayer(1, 1, cnt);
 			var fc = new FullyConnLayer(num_neurons: cnt, bias_pref: 0.1f);
 			fc.in_layer = inp;
 			fc.init();
 
-			var ins2 = fc.getInstance();
+			var ins = fc.getInstance();
+			ins.out_act = new Vol(1, 1, cnt, 9.9f);
 
 			var in_act = new Vol(1, 1, cnt, null);
 
 			Console.WriteLine("start");
 
 
-			StringBuilder sb = new StringBuilder();
+			StringBuilder[] sb = new StringBuilder[20];
+			for (int i = 0; i < 20; i++)
+			{
+				sb[i] = new StringBuilder();
+			}
+
+			StringBuilder sb0 = new StringBuilder();
 
 			int[] idx = new int[4];
 			Random r = new  Random();
@@ -67,24 +74,38 @@ namespace ConvNet
 			idx[3] = (int)(r.NextDouble() * cnt);
 
             OpenCL.oclobjects = openclp;
-			for (int i = 0; i < 10; i++)
+			for (int i = 0; i < 20; i++)
 			{
-				Stopwatch sw = new Stopwatch();
 
-				sw.Start();
+				if (i == 10) OpenCL.oclobjects = IntPtr.Zero;
 
-				if (i == 5) OpenCL.oclobjects = IntPtr.Zero;
+				var o = fc.forward(ins, in_act, i, cnt);
 
-				var o = fc.forward(ins2, in_act);
-
-				sw.Stop();
-
-				sb.AppendLine(o.w[0] + "," + o.w[1] + "," + o.w[2] + "," + o.w[3]);
+				for (int j = 0; j < cnt; j++)
+				{
+					sb[i].Append(o.w[j]+",");
+				}
+				sb0.AppendLine(o.w[idx[0]] + "," + o.w[idx[1]] + "," + o.w[idx[2]] + "," + o.w[idx[3]]);
 			}
 
+			for (int i = 1; i < 20; i++)
+			{
+				if (sb[i].ToString() != sb[i - 1].ToString()) {
+					Console.WriteLine("err");
+				}
+			}
+
+			Util.save("1.txt", (s) =>
+			{
+				s.Write(sb[5].ToString());
+			});
+			Util.save("2.txt", (s) =>
+			{
+				s.Write(sb[15].ToString());
+			});
 
 			Console.WriteLine("ok");
-			Console.WriteLine(sb.ToString());
+			Console.WriteLine(sb0.ToString());
 
 			Console.ReadLine();
 			return;

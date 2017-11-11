@@ -141,6 +141,8 @@ namespace ConvNet
 			IntPtr oclobjects,
 			IntPtr kernel,
 
+			int x,
+			int y,
 			int out_depth,
 			int num_inputs,
 			IntPtr p_in_act_w,
@@ -179,6 +181,61 @@ namespace ConvNet
 		public override Vol forward(Instance instance, Vol V)
 		{
 			instance.in_act = V;
+			
+			//16*16: 1700,2170,2399 /  5
+			//if (OpenCL.oclobjects != IntPtr.Zero)
+			//{
+			//	long t1, t2, t3;
+			//	Stopwatch sw = new Stopwatch();
+			//	sw.Start();
+			//	instance.in_act.w.copyToCLMEM();
+			//	filters_w.copyToCLMEM();
+			//	bias_w.copyToCLMEM();
+			//	//instance.out_act.w.copyToCLMEM();
+			//	sw.Stop();
+			//	t1 = sw.ElapsedTicks;
+			//	sw.Restart();
+			//	int err = RK_FCFWD(OpenCL.oclobjects, kernel_FCFWD,x,y, out_depth, num_inputs, instance.in_act.w.p_cl_mem, filters_w.p_cl_mem, bias_w.p_cl_mem, instance.out_act.w.p_cl_mem);
+			//	sw.Stop();
+			//	t2 = sw.ElapsedTicks;
+            //    sw.Restart();
+			//	//instance.in_act.w.copyFromCLMEM();
+			//	//filters_w.copyFromCLMEM();
+			//	//bias_w.copyFromCLMEM();
+			//	instance.out_act.w.copyFromCLMEM();
+			//	sw.Stop();
+			//	t3 = sw.ElapsedTicks;
+			//
+			//	Console.WriteLine(t1 + "," + t2 + "," + t3);
+			//
+			//}
+			//else
+			{
+				//long aa = Stopwatch.Frequency;
+				//long t1 = 0, t2 = 0, t3 = 0;
+				//Stopwatch sw = new Stopwatch();
+				//sw.Start();
+				FCFWD(out_depth, num_inputs, instance.in_act.w.ori_p, filters_w.ori_p, bias_w.ori_p, instance.out_act.w.ori_p);
+				//sw.Stop();
+				//t3 = sw.ElapsedTicks;
+			
+				//Console.WriteLine(t1 + "," + t2 + "," + t3);
+			
+			}
+			
+			if (act != null)
+			{
+				return act.forward(((TrainableInstance)instance).actIns, instance.out_act);
+			}
+			else
+			{
+				return instance.out_act;
+			}
+		}
+
+		public Vol forward(Instance instance, Vol V, int x, int y)
+		{
+			instance.in_act = V;
 
 			//16*16: 1700,2170,2399 /  5
 			if (OpenCL.oclobjects != IntPtr.Zero)
@@ -193,10 +250,11 @@ namespace ConvNet
 				sw.Stop();
 				t1 = sw.ElapsedTicks;
 				sw.Restart();
-				int err = RK_FCFWD(OpenCL.oclobjects, kernel_FCFWD, out_depth, num_inputs, instance.in_act.w.p_cl_mem, filters_w.p_cl_mem, bias_w.p_cl_mem, instance.out_act.w.p_cl_mem);
+				int err = RK_FCFWD(OpenCL.oclobjects, kernel_FCFWD, x, y, out_depth, num_inputs, instance.in_act.w.p_cl_mem, filters_w.p_cl_mem, bias_w.p_cl_mem, instance.out_act.w.p_cl_mem);
+				Console.WriteLine(err);
 				sw.Stop();
 				t2 = sw.ElapsedTicks;
-                sw.Restart();
+				sw.Restart();
 				//instance.in_act.w.copyFromCLMEM();
 				//filters_w.copyFromCLMEM();
 				//bias_w.copyFromCLMEM();
@@ -205,7 +263,7 @@ namespace ConvNet
 				t3 = sw.ElapsedTicks;
 
 				Console.WriteLine(t1 + "," + t2 + "," + t3);
-
+				Util.log(t1 + "," + t2 + "," + t3);
 			}
 			else
 			{
