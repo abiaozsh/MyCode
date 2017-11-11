@@ -10,7 +10,7 @@ namespace ConvNet
 {
 	class Program
 	{
-		static int cnt = 2048;
+		static int cnt = 8192;
 
 		public static void MakeData()
 		{
@@ -132,7 +132,7 @@ namespace ConvNet
 					}
 					else
 					{
-						Console.WriteLine("--ok-- :" + i + "[" + (insList[0].out_act.w[i] - insList[1].out_act.w[i]) + "]" + "," + insList[0].out_act.w[i] + "---" + insList[1].out_act.w[i]);
+						//Console.WriteLine("--ok-- :" + i + "[" + (insList[0].out_act.w[i] - insList[1].out_act.w[i]) + "]" + "," + insList[0].out_act.w[i] + "---" + insList[1].out_act.w[i]);
 					}
 				}
 
