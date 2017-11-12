@@ -109,10 +109,10 @@ namespace ConvNet
 				act.init();
 			}
 		}
-		public override Instance getInstance()
+		public override Instance getInstance(int Count)
 		{
 			TrainableInstance ins = new TrainableInstance();
-			ins.out_act = new Vol(1, 1, this.out_depth, 0.0f);
+            ins.out_act = new MultiVol(Count, 1, 1, this.out_depth, 0.0f);
 
 			ins.filters_dw = new MyFloat(num_inputs * out_depth);
 			Vol.init(ins.filters_dw, num_inputs * out_depth, 0.0f);
@@ -122,15 +122,14 @@ namespace ConvNet
 
 			if (act != null)
 			{
-				ins.actIns = act.getInstance();
+                ins.actIns = act.getInstance(Count);
 			}
 
 			return ins;
 		}
 
-		//#if CUDA
 		[DllImport("CUDA2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern int FCFWD(
+		static extern int CUDA_FCFWD(
 			int x,
 			int y,
 			int out_depth,
@@ -140,7 +139,7 @@ namespace ConvNet
 			IntPtr p_bias_w,
 			IntPtr p_out_act_w
 		);
-		//#else
+
 		[DllImport("CPULib.dll", CallingConvention = CallingConvention.Cdecl)]
 		static extern void FCFWD(
 			int out_depth,
@@ -150,7 +149,6 @@ namespace ConvNet
 			IntPtr p_bias_w,
 			IntPtr p_out_act_w
 		);
-		//#endif
 
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
 		private static extern IntPtr GK_FCBWD(IntPtr oclobjects);
@@ -169,7 +167,7 @@ namespace ConvNet
 			IntPtr p_bias_dw
 		);
 
-		public override Vol forward(Instance instance, Vol V)
+		public override MultiVol forward(Instance instance, MultiVol V)
 		{
 			instance.in_act = V;
 
@@ -206,7 +204,7 @@ namespace ConvNet
 				//long t1 = 0, t2 = 0, t3 = 0;
 				//Stopwatch sw = new Stopwatch();
 				//sw.Start();
-				FCFWD(1, 1, out_depth, num_inputs, instance.in_act.w.getHostMemPointReadOnly(), filters_w.getHostMemPointReadOnly(), bias_w.getHostMemPointReadOnly(), instance.out_act.w.getHostMemPointReadWrite());
+				CUDA_FCFWD(1, 1, out_depth, num_inputs, instance.in_act.w.getHostMemPointReadOnly(), filters_w.getHostMemPointReadOnly(), bias_w.getHostMemPointReadOnly(), instance.out_act.w.getHostMemPointReadWrite());
 				//sw.Stop();
 				//t3 = sw.ElapsedTicks;
 
@@ -246,7 +244,7 @@ namespace ConvNet
 				sw.Stop();
 				t1 = sw.ElapsedTicks;
 				sw.Restart();
-				int err = FCFWD(x, y, out_depth, num_inputs, p_in_act, p_filters_w, p_bias_w, p_out_act);
+				int err = CUDA_FCFWD(x, y, out_depth, num_inputs, p_in_act, p_filters_w, p_bias_w, p_out_act);
 				Console.WriteLine(err);
 				sw.Stop();
 				t2 = sw.ElapsedTicks;

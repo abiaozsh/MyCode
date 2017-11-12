@@ -35,15 +35,15 @@ namespace ConvNet
 		public float l2_decay_mul;
 		public abstract bool inited();
 		public abstract void init();
-		public abstract Vol forward(Instance instance, Vol V);
+        public abstract MultiVol forward(Instance instance, MultiVol V);
 		public abstract void backward(Instance instance);
 
 		public class Instance
 		{
-			public Vol in_act;
-			public Vol out_act;
+            public MultiVol in_act;
+            public MultiVol out_act;
 		}
-		public abstract Instance getInstance();
+		public abstract Instance getInstance(int Count);
 	}
 
 	public abstract class LastLayer : Layer
@@ -100,14 +100,14 @@ namespace ConvNet
 
 			_inited = true;
 		}
-		public override Instance getInstance()
+		public override Instance getInstance(int Count)
 		{
 			Instance ins = new Instance();
-			ins.out_act = new Vol(out_sx, out_sy, out_depth, null);
+            ins.out_act = new MultiVol(Count,out_sx, out_sy, out_depth, null);
 			return ins;
 		}
 
-		public override Vol forward(Instance instance, Vol V)
+        public override MultiVol forward(Instance instance, MultiVol V)
 		{
 			instance.in_act = V;
 
@@ -172,14 +172,14 @@ namespace ConvNet
 			//return (y - 1) / (y + 1);
 			_inited = true;
 		}
-		public override Instance getInstance()
+		public override Instance getInstance(int Count)
 		{
 			Instance ins = new Instance();
-			ins.out_act = new Vol(out_sx, out_sy, out_depth, null);
+            ins.out_act = new MultiVol(Count, out_sx, out_sy, out_depth, null);
 			return ins;
 		}
 
-		public override Vol forward(Instance instance, Vol V)
+        public override MultiVol forward(Instance instance, MultiVol V)
 		{
 			instance.in_act = V;
 			int N = V.w.size;
@@ -212,8 +212,8 @@ namespace ConvNet
 
 		public class PoolInstance : Instance
 		{
-			public int[] switchx;
-			public int[] switchy;
+			//public int[] switchx; 调整取值方法
+			//public int[] switchy;
 		}
 
 		public PoolLayer(int stride = 2)
@@ -245,16 +245,16 @@ namespace ConvNet
 
 			_inited = true;
 		}
-		public override Instance getInstance()
+		public override Instance getInstance(int Count)
 		{
 			PoolInstance ins = new PoolInstance();
-			ins.out_act = new Vol(out_sx, out_sy, out_depth, 0.0f);
-			ins.switchx = new int[out_sx * out_sy * out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
-			ins.switchy = new int[out_sx * out_sy * out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
+            ins.out_act = new MultiVol(Count, out_sx, out_sy, out_depth, 0.0f);
+			ins.switchx = new int[Count*out_sx * out_sy * out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
+            ins.switchy = new int[Count * out_sx * out_sy * out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
 			return ins;
 		}
 
-		public override Vol forward(Instance instance, Vol V)
+        public override MultiVol forward(Instance instance, MultiVol V)
 		{
 			PoolInstance poolInstance = (PoolInstance)instance;
 			instance.in_act = V;
@@ -269,7 +269,7 @@ namespace ConvNet
 					for (int ay = 0; ay < this.out_sy; y += stride, ay++)
 					{
 						// convolve centered at this particular location
-						float a = instance.in_act.get(x, y, d); // hopefully small enough ;\
+						float a = instance.in_act.get(x, y, d);
 						int winx = 0;
 						int winy = 0;
 						for (int fx = 0; fx < stride; fx++)
@@ -357,14 +357,14 @@ namespace ConvNet
 			//es = MyFloat.getArray(this.out_depth);
 			_inited = true;
 		}
-		public override Instance getInstance()
+		public override Instance getInstance(int Count)
 		{
 			LastInstance ins = new LastInstance();
-			ins.out_act = new Vol(1, 1, out_depth, 0.0f);
+            ins.out_act = new MultiVol(Count,1, 1, out_depth, 0.0f);
 			return ins;
 		}
 
-		public override Vol forward(Instance instance, Vol V)
+        public override MultiVol forward(Instance instance, MultiVol V)
 		{
 			instance.in_act = V;
 
@@ -447,14 +447,14 @@ namespace ConvNet
 			this.out_sy = 1;
 			_inited = true;
 		}
-		public override Instance getInstance()
+		public override Instance getInstance(int Count)
 		{
 			LastInstance ins = new LastInstance();
 			//out does not need init
 			return ins;
 		}
 
-		public override Vol forward(Instance instance, Vol V)
+        public override MultiVol forward(Instance instance, MultiVol V)
 		{
 			instance.in_act = V;
 			return V; // identity function
@@ -500,12 +500,12 @@ namespace ConvNet
 		public override void init()
 		{
 		}
-		public override Instance getInstance()
+		public override Instance getInstance(int Count)
 		{
 			return null;
 		}
 
-		public override Vol forward(Instance instance, Vol V)
+        public override MultiVol forward(Instance instance, MultiVol V)
 		{
 			//this.out_act = V;
 			//return this.out_act; // dummy identity function for now
@@ -533,14 +533,14 @@ namespace ConvNet
 		{
 			_inited = true;
 		}
-		public override Instance getInstance()
+		public override Instance getInstance(int Count)
 		{
 			Instance ins = new Instance();
-			ins.out_act = new Vol(out_sx, out_sy, out_depth, 0.0f);
+			ins.out_act = new MultiVol(Count,out_sx, out_sy, out_depth, 0.0f);
 			return ins;
 		}
 
-		public override Vol forward(Instance instance, Vol V)
+        public override MultiVol forward(Instance instance, MultiVol V)
 		{
 			instance.in_act = V;
 			int N = V.w.size;
@@ -553,7 +553,7 @@ namespace ConvNet
 		}
 		public override void backward(Instance instance)
 		{
-			Vol V = instance.in_act; // we need to set dw of this
+            MultiVol V = instance.in_act; // we need to set dw of this
 			int N = V.w.size;
 			//for (int i = 0; i < N; i++)
 			//{

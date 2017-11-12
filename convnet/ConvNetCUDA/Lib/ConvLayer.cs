@@ -126,13 +126,13 @@ namespace ConvNet
 				act.init();
 			}
 		}
-		public override Instance getInstance()
+		public override Instance getInstance(int Count)
 		{
 		//public MyFloat filters_dw;
 		//MyFloat bias_dw;
 
 			TrainableInstance ins = new TrainableInstance();
-			ins.out_act = new Vol(out_sx, out_sy, this.out_depth, 0.0f);
+            ins.out_act = new MultiVol(Count, out_sx, out_sy, this.out_depth, 0.0f);
 
 			ins.filters_dw = new MyFloat(sx * sy * in_depth * out_depth);
 			Vol.init(ins.filters_dw, sx * sy * in_depth * out_depth, 0.0f);
@@ -142,7 +142,7 @@ namespace ConvNet
 
 			if (act != null)
 			{
-				ins.actIns = act.getInstance();
+                ins.actIns = act.getInstance(Count);
 			}
 
 			return ins;
@@ -168,7 +168,7 @@ namespace ConvNet
 			IntPtr p_out_act_w
 		);
 
-		public override Vol forward(Instance instance, Vol V)
+		public override MultiVol forward(Instance instance, MultiVol V)
 		{
 			// optimized code by @mdda that achieves 2x speedup over previous version
 

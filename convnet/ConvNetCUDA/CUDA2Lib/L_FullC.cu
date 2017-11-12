@@ -20,7 +20,7 @@ __global__ void K_FCFWD(
 	p_out_act_w[i] = a;
 }
 
-extern "C" __declspec(dllexport) int FCFWD(
+extern "C" __declspec(dllexport) int CUDA_FCFWD(
 	int x,
 	int y,
 	int out_depth,
@@ -31,7 +31,7 @@ extern "C" __declspec(dllexport) int FCFWD(
 	float* p_out_act_w
 	){
 
-	K_FCFWD << <out_depth/16,16 >> >(
+	K_FCFWD << <out_depth/2,2 >> >(
 		out_depth,
 		num_inputs,
 		p_in_act_w,
