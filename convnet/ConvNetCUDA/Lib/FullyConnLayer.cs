@@ -109,10 +109,10 @@ namespace ConvNet
 				act.init();
 			}
 		}
-		public override Instance getInstance(int Count)
+		public override Instance getInstance()
 		{
 			TrainableInstance ins = new TrainableInstance();
-            ins.out_act = new MultiVol(Count, 1, 1, this.out_depth, 0.0f);
+			ins.out_act = new Vol(1, 1, this.out_depth, 0.0f);
 
 			ins.filters_dw = new MyFloat(num_inputs * out_depth);
 			Vol.init(ins.filters_dw, num_inputs * out_depth, 0.0f);
@@ -122,7 +122,7 @@ namespace ConvNet
 
 			if (act != null)
 			{
-                ins.actIns = act.getInstance(Count);
+				ins.actIns = act.getInstance();
 			}
 
 			return ins;
@@ -130,8 +130,6 @@ namespace ConvNet
 
 		[DllImport("CUDA2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
 		static extern int CUDA_FCFWD(
-			int x,
-			int y,
 			int out_depth,
 			int num_inputs,
 			IntPtr p_in_act_w,
@@ -140,7 +138,7 @@ namespace ConvNet
 			IntPtr p_out_act_w
 		);
 
-		[DllImport("CPULib.dll", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport("CPU2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
 		static extern void FCFWD(
 			int out_depth,
 			int num_inputs,
@@ -150,13 +148,73 @@ namespace ConvNet
 			IntPtr p_out_act_w
 		);
 
-		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		private static extern IntPtr GK_FCBWD(IntPtr oclobjects);
-		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern int RK_FCBWD(
-			IntPtr oclobjects,
-			IntPtr kernel,
+		[DllImport("CPU2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern void SSE_FCFWD(
+			int out_depth,
+			int num_inputs,
+			IntPtr p_in_act_w,
+			IntPtr p_filters_w,
+			IntPtr p_bias_w,
+			IntPtr p_out_act_w
+		);
 
+
+		public override Vol forward(Instance ins, Vol V)
+		{
+			ins.in_act = V;
+
+			if (Util.useGPU)
+			{
+				int err = CUDA_FCFWD(
+					out_depth,
+					num_inputs,
+					ins.in_act.w.getDeviceMemPointReadOnly(),
+					filters_w.getDeviceMemPointReadOnly(),
+					bias_w.getDeviceMemPointReadOnly(),
+					ins.out_act.w.getDeviceMemPointWriteOnly());
+
+				if (err != 0)
+				{
+					throw new Exception();
+				}
+			}
+			else
+			{
+				if (Util.useSSE && num_inputs % 8 == 0)
+				{
+					SSE_FCFWD(
+						out_depth,
+						num_inputs,
+						ins.in_act.w.getHostMemPointReadOnly(),
+						filters_w.getHostMemPointReadOnly(),
+						bias_w.getHostMemPointReadOnly(),
+						ins.out_act.w.getHostMemPointWriteOnly());
+				}
+				else
+				{
+					FCFWD(
+						out_depth,
+						num_inputs,
+						ins.in_act.w.getHostMemPointReadOnly(),
+						filters_w.getHostMemPointReadOnly(),
+						bias_w.getHostMemPointReadOnly(),
+						ins.out_act.w.getHostMemPointWriteOnly());
+				}
+			}
+
+			if (act != null)
+			{
+				return act.forward(((TrainableInstance)ins).actIns, ins.out_act);
+			}
+			else
+			{
+				return ins.out_act;
+			}
+		}
+
+
+		[DllImport("CPU2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern void SSE_FCBWD(
 			int out_depth,
 			int num_inputs,
 			IntPtr p_in_act_w,
@@ -167,125 +225,7 @@ namespace ConvNet
 			IntPtr p_bias_dw
 		);
 
-		public override MultiVol forward(Instance instance, MultiVol V)
-		{
-			instance.in_act = V;
-
-			//16*16: 1700,2170,2399 /  5
-			//if (OpenCL.oclobjects != IntPtr.Zero)
-			//{
-			//	long t1, t2, t3;
-			//	Stopwatch sw = new Stopwatch();
-			//	sw.Start();
-			//	instance.in_act.w.copyToCLMEM();
-			//	filters_w.copyToCLMEM();
-			//	bias_w.copyToCLMEM();
-			//	//instance.out_act.w.copyToCLMEM();
-			//	sw.Stop();
-			//	t1 = sw.ElapsedTicks;
-			//	sw.Restart();
-			//	int err = RK_FCFWD(OpenCL.oclobjects, kernel_FCFWD,x,y, out_depth, num_inputs, instance.in_act.w.p_cl_mem, filters_w.p_cl_mem, bias_w.p_cl_mem, instance.out_act.w.p_cl_mem);
-			//	sw.Stop();
-			//	t2 = sw.ElapsedTicks;
-			//    sw.Restart();
-			//	//instance.in_act.w.copyFromCLMEM();
-			//	//filters_w.copyFromCLMEM();
-			//	//bias_w.copyFromCLMEM();
-			//	instance.out_act.w.copyFromCLMEM();
-			//	sw.Stop();
-			//	t3 = sw.ElapsedTicks;
-			//
-			//	Console.WriteLine(t1 + "," + t2 + "," + t3);
-			//
-			//}
-			//else
-			{
-				//long aa = Stopwatch.Frequency;
-				//long t1 = 0, t2 = 0, t3 = 0;
-				//Stopwatch sw = new Stopwatch();
-				//sw.Start();
-				CUDA_FCFWD(1, 1, out_depth, num_inputs, instance.in_act.w.getHostMemPointReadOnly(), filters_w.getHostMemPointReadOnly(), bias_w.getHostMemPointReadOnly(), instance.out_act.w.getHostMemPointReadWrite());
-				//sw.Stop();
-				//t3 = sw.ElapsedTicks;
-
-				//Console.WriteLine(t1 + "," + t2 + "," + t3);
-
-			}
-
-			if (act != null)
-			{
-				return act.forward(((TrainableInstance)instance).actIns, instance.out_act);
-			}
-			else
-			{
-				return instance.out_act;
-			}
-		}
-
-		public Vol forward(Instance instance, Vol V, int x, int y, bool acc)
-		{
-			instance.in_act = V;
-
-			//16*16: 1700,2170,2399 /  5
-			if (acc)
-			{
-				long t1, t2, t3;
-				Stopwatch sw = new Stopwatch();
-				sw.Start();
-				//instance.in_act.w.copyToDeviceMEM();
-				//filters_w.copyToDeviceMEM();
-				//bias_w.copyToDeviceMEM();
-
-				var p_in_act = instance.in_act.w.getDeviceMemPointReadOnly();
-				var p_filters_w = filters_w.getDeviceMemPointReadOnly();
-				var p_bias_w = bias_w.getDeviceMemPointReadOnly();
-				var p_out_act = instance.out_act.w.getDeviceMemPointReadWrite();
-
-				sw.Stop();
-				t1 = sw.ElapsedTicks;
-				sw.Restart();
-				int err = CUDA_FCFWD(x, y, out_depth, num_inputs, p_in_act, p_filters_w, p_bias_w, p_out_act);
-				Console.WriteLine(err);
-				sw.Stop();
-				t2 = sw.ElapsedTicks;
-				sw.Restart();
-				//instance.in_act.w.copyFromCLMEM();
-				//filters_w.copyFromCLMEM();
-				//bias_w.copyFromCLMEM();
-				//instance.out_act.w.copyFromDeviceMEM();
-				sw.Stop();
-				t3 = sw.ElapsedTicks;
-
-				Console.WriteLine(t1 + "," + t2 + "," + t3);
-				Util.log(t1 + "," + t2 + "," + t3);
-
-			}
-			else
-			{
-
-				long aa = Stopwatch.Frequency;
-				long t1 = 0, t2 = 0, t3 = 0;
-				Stopwatch sw = new Stopwatch();
-				sw.Start();
-				FCFWD(out_depth, num_inputs, instance.in_act.w.getHostMemPointReadOnly(), filters_w.getHostMemPointReadOnly(), bias_w.getHostMemPointReadOnly(), instance.out_act.w.getHostMemPointReadWrite());
-				sw.Stop();
-				t3 = sw.ElapsedTicks;
-
-				Console.WriteLine(t1 + "," + t2 + "," + t3);
-
-			}
-
-			if (act != null)
-			{
-				return act.forward(((TrainableInstance)instance).actIns, instance.out_act);
-			}
-			else
-			{
-				return instance.out_act;
-			}
-		}
-
-		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport("CPU2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
 		static extern void FCBWD(
 			int out_depth,
 			int num_inputs,
@@ -297,79 +237,66 @@ namespace ConvNet
 			IntPtr p_bias_dw
 		);
 
-		public override void backward(Instance instance)
+		public override void backward(Instance ins)
 		{
 			if (noUpdate) return;
 
-			TrainableInstance trainableInstance = ((TrainableInstance)instance);
+			TrainableInstance trainableIns = ((TrainableInstance)ins);
 
 			if (act != null)
 			{
-				act.backward(trainableInstance.actIns);
+				act.backward(trainableIns.actIns);
 			}
 
-			//if (false)//OpenCL.oclobjects != IntPtr.Zero)
-			//{
-			//	for (int i = 0; i < num_inputs; i++)
-			//	{
-			//		//in_act.dw[d] = 0;
-			//		in_act.dw[i] = 0;
-			//	}
-			//	//check(in_act.w);
-			//	//check(filters.w);
-			//	//check(bias.w);
-			//	//check(out_act.w);
-			//	long t1, t2, t3;
-			//	Stopwatch sw = new Stopwatch();
-			//	sw.Start();
-			//
-			//	in_act.w.copyToCLMEM();
-			//	filters_w.copyToCLMEM();
-			//	in_act.dw.copyToCLMEM();
-			//	out_act.dw.copyToCLMEM();
-			//	filters_dw.copyToCLMEM();
-			//	bias_dw.copyToCLMEM();
-			//
-			//	sw.Stop();
-			//	t1 = sw.ElapsedTicks;
-			//	sw.Start();
-			//	int err = RK_FCBWD(OpenCL.oclobjects, kernel_FCBWD, out_depth, num_inputs, in_act.w.p_cl_mem, filters_w.p_cl_mem, in_act.dw.p_cl_mem, out_act.dw.p_cl_mem, filters_dw.p_cl_mem, bias_dw.p_cl_mem);
-			//	sw.Stop();
-			//	t2 = sw.ElapsedTicks;
-			//	sw.Start();
-			//
-			//	in_act.w.copyFromCLMEM();
-			//	filters_w.copyToCLMEM();
-			//	in_act.dw.copyToCLMEM();
-			//	out_act.dw.copyToCLMEM();
-			//	filters_dw.copyToCLMEM();
-			//	bias_dw.copyToCLMEM();
-			//
-			//	sw.Stop();
-			//	t3 = sw.ElapsedTicks;
-			//	//sw.Start();
-			//
-			//	//Console.WriteLine(t1 + "," + t2 + "," + t3);
-			//	//check(in_act.w);
-			//	//check(filters.w);
-			//	//check(bias.w);
-			//	//check(out_act.w);
-			//	//Console.WriteLine(err);
-			//}
-			//else
+
+
+			if (Util.useGPU)
 			{
-				//long aa = Stopwatch.Frequency;
-				//long t1 = 0, t2 = 0, t3 = 0;
-				//Stopwatch sw = new Stopwatch();
-				//sw.Start();
-				FCBWD(out_depth, num_inputs, instance.in_act.w.getHostMemPointReadWrite(), filters_w.getHostMemPointReadWrite(), instance.in_act.dw.getHostMemPointReadWrite(), instance.out_act.dw.getHostMemPointReadWrite(), trainableInstance.filters_dw.getHostMemPointReadWrite(), trainableInstance.bias_dw.getHostMemPointReadWrite());
-				//sw.Stop();
-				//t3 = sw.ElapsedTicks;
-				//if (t3 < -10000)
-				//{
-				//	throw new Exception("slow");
-				//}
+				FCBWD(
+					out_depth,
+					num_inputs,
+					ins.in_act.w.getHostMemPointReadOnly(),
+					filters_w.getHostMemPointReadOnly(),
+					ins.in_act.dw.getHostMemPointWriteOnly(),
+					ins.out_act.dw.getHostMemPointReadOnly(),
+					trainableIns.filters_dw.getHostMemPointWriteOnly(),
+					trainableIns.bias_dw.getHostMemPointWriteOnly());
+
+				int err = 0;
+
+				if (err != 0)
+				{
+					throw new Exception();
+				}
 			}
+			else
+			{
+				if (Util.useSSE && num_inputs % 8 == 0)
+				{
+					SSE_FCBWD(
+						out_depth,
+						num_inputs,
+						ins.in_act.w.getHostMemPointReadOnly(),
+						filters_w.getHostMemPointReadOnly(),
+						ins.in_act.dw.getHostMemPointWriteOnly(),
+						ins.out_act.dw.getHostMemPointReadOnly(),
+						trainableIns.filters_dw.getHostMemPointWriteOnly(),
+						trainableIns.bias_dw.getHostMemPointWriteOnly());
+				}
+				else
+				{
+					FCBWD(
+						out_depth,
+						num_inputs,
+						ins.in_act.w.getHostMemPointReadOnly(),
+						filters_w.getHostMemPointReadOnly(),
+						ins.in_act.dw.getHostMemPointWriteOnly(),
+						ins.out_act.dw.getHostMemPointReadOnly(),
+						trainableIns.filters_dw.getHostMemPointWriteOnly(),
+						trainableIns.bias_dw.getHostMemPointWriteOnly());
+				}
+			}
+
 		}
 		public bool noUpdate = false;
 		public override void train(TrainableInstance instance, Trainer trainer, float oneBatchSize)

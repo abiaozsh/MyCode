@@ -5,12 +5,22 @@ using System.Text;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
 namespace ConvNet
 {
 	public class Util
 	{
-        public static bool useGPU = false;
+		public static bool useGPU = false;
+		public static bool useSSE = false;
+
+		[DllImport("cuda2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern int init(int device);
+
+		public static int initGPU(int device)
+		{
+			return init(device);
+		}
 
 		public delegate void DoSave(StreamWriter sw);
 		public static void save(string filename, DoSave sv)
@@ -256,192 +266,8 @@ namespace ConvNet
 		}
 
 	}
-    public class MultiVol : Persistence
-    {
-        public int Count;
 
-        public int sx;
-        public int sy;
-        public int depth;
-        public MultiFloat multiW;
-        public MultiFloat multiDW;
-
-    //    public void vis(string path)
-    //    {
-    //        for (int d = 0; d < depth; d++)
-    //        {
-    //            Bitmap b = vis(d, 255);
-    //            b.Save(path + d + ".png", ImageFormat.Png);
-    //        }
-    //    }
-    //    public Bitmap vis(int d, float scale)
-    //    {
-    //        Bitmap b = new Bitmap(sx, sy);
-    //        for (int i = 0; i < sx; i++)
-    //        {
-    //            for (int j = 0; j < sy; j++)
-    //            {
-    //                float v = get(i, j, d) * scale;
-    //                Color c;
-    //                if (v > 0)
-    //                {
-    //                    if (v > 255) v = 255;
-    //                    c = Color.FromArgb((int)(v), 0, 0);
-    //                }
-    //                else
-    //                {
-    //                    if (v < -255) v = -255;
-    //                    c = Color.FromArgb(0, (int)(-v), 0);
-    //                }
-    //                b.SetPixel(i, j, c);
-    //            }
-    //        }
-    //        return b;
-    //    }
-    //    public Bitmap visRGB(float scale)
-    //    {
-    //        if (depth != 3) return null;
-    //        Bitmap bmp = new Bitmap(sx, sy);
-    //        for (int i = 0; i < sx; i++)
-    //        {
-    //            for (int j = 0; j < sy; j++)
-    //            {
-    //                float r = get(j, i, 0) * scale;
-    //                float g = get(j, i, 1) * scale;
-    //                float b = get(j, i, 2) * scale;
-    //                if (r < 0) r = 0;
-    //                if (r > 255) r = 255;
-    //
-    //                if (g < 0) g = 0;
-    //                if (g > 255) g = 255;
-    //
-    //                if (b < 0) b = 0;
-    //                if (b > 255) b = 255;
-    //                Color c;
-    //                c = Color.FromArgb((int)(r), (int)(g), (int)(b));
-    //                bmp.SetPixel(i, j, c);
-    //            }
-    //        }
-    //        return bmp;
-    //    }
-    //
-        public void save(TextWriter s)
-        {
-            multiW.save(s);
-        }
-        public void load(TextReader s)
-        {
-            multiW.load(s);
-        }
-    //
-    //    static bool return_v = false;
-    //    static float v_val = 0.0f;
-    //    static Random _rnd = new Random();
-    //    static object objLock = new object();
-    //    public static float gaussRandom()
-    //    {
-    //        lock (objLock)
-    //        {
-    //            if (return_v)
-    //            {
-    //                return_v = false;
-    //                return v_val;
-    //            }
-    //            float u = 2.0f * (float)_rnd.NextDouble() - 1.0f;
-    //            float v = 2.0f * (float)_rnd.NextDouble() - 1.0f;
-    //            float r = u * u + v * v;
-    //            if (r == 0 || r > 1)
-    //            {
-    //                return gaussRandom();
-    //            }
-    //            float c = (float)Math.Sqrt(-2.0f * (float)Math.Log(r) / r);
-    //            v_val = v * c; // cache this
-    //            return_v = true;
-    //            return u * c;
-    //        }
-    //    }
-    //
-       public MultiVol(int Count,int sx, int sy, int depth, float? c)
-       {
-           // we were given dimensions of the vol
-           this.sx = sx;
-           this.sy = sy;
-           this.depth = depth;
-           int n = sx * sy * depth;
-           this.multiW = new MultiFloat(Count, n);//Util.zeros(n);
-           this.multiDW = new MultiFloat(Count, n);//Util.zeros(n);
-           if (c == null)
-           {
-               // weight normalization is done to equalize the output
-               // variance of every neuron, otherwise neurons with a lot
-               // of incoming connections have outputs of larger variance
-               float scale = (float)Math.Sqrt(1.0f / (n * Count));
-               for (int i = 0; i < n * Count; i++)
-               {
-                   this.multiW[i] = Vol.gaussRandom() * scale;
-               }
-           }
-           else
-           {
-               for (int i = 0; i < n * Count; i++)
-               {
-                   this.multiW[i] = c.Value;
-               }
-           }
-       }
-    //    public static void init(MyFloat f, int length, float? c)
-    //    {
-    //        // we were given dimensions of the vol
-    //        int n = length;
-    //        if (c == null)
-    //        {
-    //            // weight normalization is done to equalize the output
-    //            // variance of every neuron, otherwise neurons with a lot
-    //            // of incoming connections have outputs of larger variance
-    //            float scale = (float)Math.Sqrt(1.0f / (length));
-    //            for (int i = 0; i < n; i++)
-    //            {
-    //                f[i] = gaussRandom() * scale;
-    //            }
-    //        }
-    //        else
-    //        {
-    //            for (int i = 0; i < n; i++)
-    //            {
-    //                f[i] = c.Value;
-    //            }
-    //        }
-    //    }
-    //
-    //    public float get(int x, int y, int d)
-    //    {
-    //        int ix = ((this.sx * y) + x) * this.depth + d;
-    //        return this.w[ix];
-    //    }
-    //    public void set(int x, int y, int d, float val)
-    //    {
-    //        int ix = ((this.sx * y) + x) * this.depth + d;
-    //        this.w[ix] = val;
-    //    }
-    //    public void add_grad(int x, int y, int d, float val)
-    //    {
-    //        int ix = ((this.sx * y) + x) * this.depth + d;
-    //        this.dw[ix] += val;
-    //    }
-    //    public float get_grad(int x, int y, int d)
-    //    {
-    //        int ix = ((this.sx * y) + x) * this.depth + d;
-    //        return this.dw[ix];
-    //    }
-    //    public void set_grad(int x, int y, int d, float val)
-    //    {
-    //        int ix = ((this.sx * y) + x) * this.depth + d;
-    //        this.dw[ix] = val;
-    //    }
-    //
-    }
-    
-    public class DataSet
+	public class DataSet
 	{
 		//Classification (SVM/Softmax) and Regression (L2) cost functions
 		public Vol data;

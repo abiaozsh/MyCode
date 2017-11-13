@@ -11,12 +11,10 @@ namespace ConvNet
     class Program
     {
 
-        [DllImport("cuda2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern int init(int device);
 
         static void Main(string[] args)
         {
-            int n = init(0);
+            int n = Util.initGPU(0);
 
             FCFWD_Test.Test();
 

@@ -35,15 +35,15 @@ namespace ConvNet
 		public float l2_decay_mul;
 		public abstract bool inited();
 		public abstract void init();
-        public abstract MultiVol forward(Instance instance, MultiVol V);
-		public abstract void backward(Instance instance);
+        public abstract Vol forward(Instance ins, Vol V);
+		public abstract void backward(Instance ins);
 
 		public class Instance
 		{
-            public MultiVol in_act;
-            public MultiVol out_act;
+			public Vol in_act;
+			public Vol out_act;
 		}
-		public abstract Instance getInstance(int Count);
+		public abstract Instance getInstance();
 	}
 
 	public abstract class LastLayer : Layer
@@ -100,14 +100,14 @@ namespace ConvNet
 
 			_inited = true;
 		}
-		public override Instance getInstance(int Count)
+		public override Instance getInstance()
 		{
 			Instance ins = new Instance();
-            ins.out_act = new MultiVol(Count,out_sx, out_sy, out_depth, null);
+            ins.out_act = new Vol(out_sx, out_sy, out_depth, null);
 			return ins;
 		}
 
-        public override MultiVol forward(Instance instance, MultiVol V)
+		public override Vol forward(Instance instance, Vol V)
 		{
 			instance.in_act = V;
 
@@ -172,14 +172,14 @@ namespace ConvNet
 			//return (y - 1) / (y + 1);
 			_inited = true;
 		}
-		public override Instance getInstance(int Count)
+		public override Instance getInstance()
 		{
 			Instance ins = new Instance();
-            ins.out_act = new MultiVol(Count, out_sx, out_sy, out_depth, null);
+            ins.out_act = new Vol(out_sx, out_sy, out_depth, null);
 			return ins;
 		}
 
-        public override MultiVol forward(Instance instance, MultiVol V)
+        public override Vol forward(Instance instance, Vol V)
 		{
 			instance.in_act = V;
 			int N = V.w.size;
@@ -212,8 +212,8 @@ namespace ConvNet
 
 		public class PoolInstance : Instance
 		{
-			//public int[] switchx; 调整取值方法
-			//public int[] switchy;
+			public int[] switchx;
+			public int[] switchy;
 		}
 
 		public PoolLayer(int stride = 2)
@@ -245,19 +245,19 @@ namespace ConvNet
 
 			_inited = true;
 		}
-		public override Instance getInstance(int Count)
+		public override Instance getInstance()
 		{
 			PoolInstance ins = new PoolInstance();
-            ins.out_act = new MultiVol(Count, out_sx, out_sy, out_depth, 0.0f);
-			ins.switchx = new int[Count*out_sx * out_sy * out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
-            ins.switchy = new int[Count * out_sx * out_sy * out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
+            ins.out_act = new Vol(out_sx, out_sy, out_depth, 0.0f);
+			ins.switchx = new int[out_sx * out_sy * out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
+            ins.switchy = new int[out_sx * out_sy * out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
 			return ins;
 		}
 
-        public override MultiVol forward(Instance instance, MultiVol V)
+        public override Vol forward(Instance ins, Vol V)
 		{
-			PoolInstance poolInstance = (PoolInstance)instance;
-			instance.in_act = V;
+			PoolInstance poolInstance = (PoolInstance)ins;
+			ins.in_act = V;
 			int n = 0; // a counter for switches
 			for (int d = 0; d < this.out_depth; d++)
 			{
@@ -269,7 +269,7 @@ namespace ConvNet
 					for (int ay = 0; ay < this.out_sy; y += stride, ay++)
 					{
 						// convolve centered at this particular location
-						float a = instance.in_act.get(x, y, d);
+						float a = ins.in_act.get(x, y, d);
 						int winx = 0;
 						int winy = 0;
 						for (int fx = 0; fx < stride; fx++)
@@ -278,9 +278,9 @@ namespace ConvNet
 							{
 								int oy = y + fy;
 								int ox = x + fx;
-								if (oy >= 0 && oy < instance.in_act.sy && ox >= 0 && ox < instance.in_act.sx)
+								if (oy >= 0 && oy < ins.in_act.sy && ox >= 0 && ox < ins.in_act.sx)
 								{
-									float v = instance.in_act.get(ox, oy, d);
+									float v = ins.in_act.get(ox, oy, d);
 									// perform max pooling and store pointers to where
 									// the max came from. This will speed up backprop 
 									// and can help make nice visualizations in future
@@ -296,11 +296,11 @@ namespace ConvNet
 						poolInstance.switchx[n] = winx;
 						poolInstance.switchy[n] = winy;
 						n++;
-						instance.out_act.set(ax, ay, d, a);
+						ins.out_act.set(ax, ay, d, a);
 					}
 				}
 			};
-			return instance.out_act;
+			return ins.out_act;
 		}
 		public override void backward(Instance instance)
 		{
@@ -357,16 +357,16 @@ namespace ConvNet
 			//es = MyFloat.getArray(this.out_depth);
 			_inited = true;
 		}
-		public override Instance getInstance(int Count)
+		public override Instance getInstance()
 		{
 			LastInstance ins = new LastInstance();
-            ins.out_act = new MultiVol(Count,1, 1, out_depth, 0.0f);
+            ins.out_act = new Vol(1, 1, out_depth, 0.0f);
 			return ins;
 		}
 
-        public override MultiVol forward(Instance instance, MultiVol V)
+        public override Vol forward(Instance ins, Vol V)
 		{
-			instance.in_act = V;
+			ins.in_act = V;
 
 			// compute max activation
 			float amax = V.w[0];
@@ -382,19 +382,19 @@ namespace ConvNet
 			{
 				float e = (float)Math.Exp(V.w[i] - amax);
 				esum += e;
-				instance.out_act.w[i] = e;
+				ins.out_act.w[i] = e;
 			}
 
 			// normalize and output to sum to one
 			for (int i = 0; i < this.out_depth; i++)
 			{
-				instance.out_act.w[i] /= esum;
+				ins.out_act.w[i] /= esum;
 				//out_act.w[i] = es[i];
 			}
 
 			//this.es = es; // save these for backprop
 			//this.out_act = A;
-			return instance.out_act;
+			return ins.out_act;
 		}
 		public override void backward(Instance instance)
 		{
@@ -447,16 +447,16 @@ namespace ConvNet
 			this.out_sy = 1;
 			_inited = true;
 		}
-		public override Instance getInstance(int Count)
+		public override Instance getInstance()
 		{
 			LastInstance ins = new LastInstance();
 			//out does not need init
 			return ins;
 		}
 
-        public override MultiVol forward(Instance instance, MultiVol V)
+        public override Vol forward(Instance ins, Vol V)
 		{
-			instance.in_act = V;
+			ins.in_act = V;
 			return V; // identity function
 		}
 		// y is a list here of size num_inputs
@@ -500,12 +500,12 @@ namespace ConvNet
 		public override void init()
 		{
 		}
-		public override Instance getInstance(int Count)
+		public override Instance getInstance()
 		{
 			return null;
 		}
 
-        public override MultiVol forward(Instance instance, MultiVol V)
+        public override Vol forward(Instance ins, Vol V)
 		{
 			//this.out_act = V;
 			//return this.out_act; // dummy identity function for now
@@ -533,14 +533,14 @@ namespace ConvNet
 		{
 			_inited = true;
 		}
-		public override Instance getInstance(int Count)
+		public override Instance getInstance()
 		{
 			Instance ins = new Instance();
-			ins.out_act = new MultiVol(Count,out_sx, out_sy, out_depth, 0.0f);
+			ins.out_act = new Vol(out_sx, out_sy, out_depth, 0.0f);
 			return ins;
 		}
 
-        public override MultiVol forward(Instance instance, MultiVol V)
+        public override Vol forward(Instance instance, Vol V)
 		{
 			instance.in_act = V;
 			int N = V.w.size;
@@ -553,7 +553,7 @@ namespace ConvNet
 		}
 		public override void backward(Instance instance)
 		{
-            MultiVol V = instance.in_act; // we need to set dw of this
+            Vol V = instance.in_act; // we need to set dw of this
 			int N = V.w.size;
 			//for (int i = 0; i < N; i++)
 			//{
@@ -564,6 +564,77 @@ namespace ConvNet
 	}
 
 
+	/*
+class DropoutLayer : Layer
+{
+	// An inefficient dropout layer
+	// Note this is not most efficient implementation since the layer before
+	// computed all these activations and now we're just going to drop them :(
+	// same goes for backward pass. Also, if we wanted to be efficient at test time
+	// we could equivalently be clever and upscale during train and copy pointers during test
+	// todo: make more efficient.
+	public float drop_prob;
+	public bool[] dropped;
+	public DropoutLayer(Def def)
+		: base(def)
+	{
+
+		Def opt = def;
+
+		// computed
+		this.out_sx = opt.in_sx;
+		this.out_sy = opt.in_sy;
+		this.out_depth = opt.in_depth;
+		//this.layer_type = "dropout";
+		this.drop_prob = opt.drop_prob.Value;
+		this.dropped = new bool[this.out_sx * this.out_sy * this.out_depth];//Util.zeros(this.out_sx*this.out_sy*this.out_depth);
+	}
+
+	static Random r = new Random();
+
+	public override Vol forward(Vol V, bool is_training)
+	{
+		this.in_act = V;
+		//if(typeof(is_training)==='undefined') { is_training = false; } // default is prediction mode
+		Vol V2 = V.clone();
+		int N = V.w.Length;
+		if (is_training)
+		{
+			// do dropout
+			for (int i = 0; i < N; i++)
+			{
+				if (r.NextDouble() < this.drop_prob) { V2.w[i] = 0; this.dropped[i] = true; } // drop!
+				else { this.dropped[i] = false; }
+			}
+		}
+		else
+		{
+			// scale the activations during prediction
+			for (int i = 0; i < N; i++) { V2.w[i] *= this.drop_prob; }
+		}
+		this.out_act = V2;
+		return this.out_act; // dummy identity function for now
+	}
+	public override float backward(DataSet y)
+	{
+		Vol V = this.in_act; // we need to set dw of this
+		Vol chain_grad = this.out_act;
+		int N = V.w.Length;
+		V.dw = Util.zeros(N); // zero out gradient wrt data
+		for (int i = 0; i < N; i++)
+		{
+			if (!(this.dropped[i]))
+			{
+				V.dw[i] = chain_grad.dw[i]; // copy over the gradient
+			}
+		}
+		return 0;
+	}
+	public override List<ParamsAndGrads> getParamsAndGrads()
+	{
+		return new List<ParamsAndGrads>();
+	}
+}*/
 
 
 }

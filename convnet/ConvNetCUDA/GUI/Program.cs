@@ -18,14 +18,16 @@ namespace GUI
 		{
 			//IntPtr openclp = OpenCL.init(0, 1);
 			//OpenCL.oclobjects = openclp;
-
+			int n = Util.initGPU(0);
+			Util.useGPU = false;
+			Util.useSSE = false;
 
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			//Application.Run(new Form1());
+			Application.Run(new Form1());
 			//Application.Run(new Form2());
 			//Application.Run(new Form3());
-			Application.Run(new Form34x4());
+			//Application.Run(new Form34x4());
 			//Application.Run(new Form4());
 			//Application.Run(new MakeBlackList());
 			//Application.Run(new OpenCLTest());

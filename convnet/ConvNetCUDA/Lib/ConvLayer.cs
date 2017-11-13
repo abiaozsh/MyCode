@@ -126,13 +126,13 @@ namespace ConvNet
 				act.init();
 			}
 		}
-		public override Instance getInstance(int Count)
+		public override Instance getInstance()
 		{
-		//public MyFloat filters_dw;
-		//MyFloat bias_dw;
+			//public MyFloat filters_dw;
+			//MyFloat bias_dw;
 
 			TrainableInstance ins = new TrainableInstance();
-            ins.out_act = new MultiVol(Count, out_sx, out_sy, this.out_depth, 0.0f);
+			ins.out_act = new Vol(out_sx, out_sy, this.out_depth, 0.0f);
 
 			ins.filters_dw = new MyFloat(sx * sy * in_depth * out_depth);
 			Vol.init(ins.filters_dw, sx * sy * in_depth * out_depth, 0.0f);
@@ -142,94 +142,156 @@ namespace ConvNet
 
 			if (act != null)
 			{
-                ins.actIns = act.getInstance(Count);
+				ins.actIns = act.getInstance();
 			}
 
 			return ins;
 
 		}
 
-		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport("CPU2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern void SSE_CVFWD(
+			int stride,
+			int pad,
+			int sx,
+			int sy,
+			int in_sx,
+			int in_sy,
+			int in_depth,
+			int out_sx,
+			int out_sy,
+			int out_depth,
+			IntPtr p_filters_w,
+			IntPtr p_in_act_w,
+			IntPtr p_bias_w,
+			IntPtr p_out_act_w
+		);
+		[DllImport("CPU2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
 		static extern void CVFWD(
 			int stride,
 			int pad,
 			int sx,
 			int sy,
+			int in_sx,
+			int in_sy,
 			int in_depth,
 			int out_sx,
 			int out_sy,
 			int out_depth,
-			int filterSize,
-			int in_act_sx,
-			int in_act_sy,
 			IntPtr p_filters_w,
 			IntPtr p_in_act_w,
 			IntPtr p_bias_w,
 			IntPtr p_out_act_w
 		);
 
-		public override MultiVol forward(Instance instance, MultiVol V)
+		public override Vol forward(Instance ins, Vol V)
 		{
 			// optimized code by @mdda that achieves 2x speedup over previous version
 
-			instance.in_act = V;
-			int filterSize = sx * sy * in_depth;
+			ins.in_act = V;
 
-			long aa = Stopwatch.Frequency;
-			long t1 = 0, t2 = 0, t3 = 0;
-			Stopwatch sw = new Stopwatch();
-			sw.Start();
-			CVFWD(
-				stride,
-				pad,
-				sx,
-				sy,
-				in_depth,
-				out_sx,
-				out_sy,
-				out_depth,
-				filterSize,
-				in_sx,
-				in_sy,
-				filters_w.getHostMemPointReadOnly(),
-				instance.in_act.w.getHostMemPointReadOnly(),
-				bias_w.getHostMemPointReadOnly(),
-				instance.out_act.w.getHostMemPointReadWrite()
-			);
-			sw.Stop();
-			t3 = sw.ElapsedTicks;
-			int count = out_sy * out_sx * out_depth * sy * sx * in_depth;
-			double t4 = t3 / (double)(3117998.0 / 1000000);
-			if (t4 < -1 && count < -1)
+			if (Util.useGPU)
 			{
-				throw new Exception("slow");
-			}
-
-			if (act != null)
-			{
-				return act.forward(((TrainableInstance)instance).actIns, instance.out_act);
+				CVFWD(
+					stride,
+					pad,
+					sx,
+					sy,
+					in_sx,
+					in_sy,
+					in_depth,
+					out_sx,
+					out_sy,
+					out_depth,
+					filters_w.getHostMemPointReadOnly(),
+					ins.in_act.w.getHostMemPointReadOnly(),
+					bias_w.getHostMemPointReadOnly(),
+					ins.out_act.w.getHostMemPointWriteOnly());
 			}
 			else
 			{
-				return instance.out_act;
+				if (Util.useSSE && in_depth % 8 == 0)
+				{
+					SSE_CVFWD(
+						stride,
+						pad,
+						sx,
+						sy,
+						in_sx,
+						in_sy,
+						in_depth,
+						out_sx,
+						out_sy,
+						out_depth,
+						filters_w.getHostMemPointReadOnly(),
+						ins.in_act.w.getHostMemPointReadOnly(),
+						bias_w.getHostMemPointReadOnly(),
+						ins.out_act.w.getHostMemPointWriteOnly());
+
+				}
+				else
+				{
+					CVFWD(
+						stride,
+						pad,
+						sx,
+						sy,
+						in_sx,
+						in_sy,
+						in_depth,
+						out_sx,
+						out_sy,
+						out_depth,
+						filters_w.getHostMemPointReadOnly(),
+						ins.in_act.w.getHostMemPointReadOnly(),
+						bias_w.getHostMemPointReadOnly(),
+						ins.out_act.w.getHostMemPointWriteOnly());
+				}
+			}
+
+
+			if (act != null)
+			{
+				return act.forward(((TrainableInstance)ins).actIns, ins.out_act);
+			}
+			else
+			{
+				return ins.out_act;
 			}
 		}
 
 
-		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport("CPU2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern void SSE_CVBWD(
+			int stride,
+			int pad,
+			int sx,
+			int sy,
+			int in_sx,
+			int in_sy,
+			int in_depth,
+			int out_sx,
+			int out_sy,
+			int out_depth,
+			IntPtr p_filters_w,
+			IntPtr p_in_act_w,
+			IntPtr p_in_act_dw,
+			IntPtr p_out_act_dw,
+			IntPtr p_bias_dw,
+			IntPtr p_filters_dw
+		);
+		[DllImport("CPU2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
 		static extern void CVBWD(
 			int stride,
 			int pad,
 			int sx,
 			int sy,
-			int in_size,
+			int in_sx,
+			int in_sy,
 			int in_depth,
 			int out_sx,
 			int out_sy,
 			int out_depth,
-			int filterSize,
-			int in_act_sx,
-			int in_act_sy,
 			IntPtr p_filters_w,
 			IntPtr p_in_act_w,
 			IntPtr p_in_act_dw,
@@ -245,70 +307,82 @@ namespace ConvNet
 			TrainableInstance trainableInstance = ((TrainableInstance)instance);
 
 			//zero out gradient wrt bottom data, we're about to fill it
-			int in_size = in_sx * in_sy * in_depth;
-			int filterSize = sx * sy * in_depth;
 
 			if (act != null)
 			{
 				act.backward(trainableInstance.actIns);
 			}
 
-			CVBWD(
-				stride,
-				pad,
-				sx,
-				sy,
-				in_size,
-				in_depth,
-				out_sx,
-				out_sy,
-				out_depth,
-				filterSize,
-				in_sx,
-				in_sy,
-				filters_w.getHostMemPointReadWrite(),
-				instance.in_act.w.getHostMemPointReadWrite(),
-				instance.in_act.dw.getHostMemPointReadWrite(),
-				instance.out_act.dw.getHostMemPointReadWrite(),
-				trainableInstance.bias_dw.getHostMemPointReadWrite(),
-				trainableInstance.filters_dw.getHostMemPointReadWrite()
-			);
-		}
 
-		//public void backward2(Instance instance)
-		//{
-		//	TrainableInstance trainableInstance = ((TrainableInstance)instance);
-		//
-		//	//????????TODO 未初始化可能影响后续????????????????V.dw = Util.zeros(V.w.Length); // zero out gradient wrt bottom data, we're about to fill it
-		//	int in_size = in_sx * in_sy * in_depth;
-		//	int filterSize = sx * sy * in_depth;
-		//
-		//	if (act != null)
-		//	{
-		//		act.backward(trainableInstance.actIns);
-		//	}
-		//
-		//	CVBWD(
-		//		stride,
-		//		pad,
-		//		sx,
-		//		sy,
-		//		in_size,
-		//		in_depth,
-		//		out_sx,
-		//		out_sy,
-		//		out_depth,
-		//		filterSize,
-		//		in_sx,
-		//		in_sy,
-		//		filters_w.ori_p,
-		//		instance.in_act.w.ori_p,
-		//		instance.in_act.dw.ori_p,
-		//		instance.out_act.dw.ori_p,
-		//		trainableInstance.bias_dw.ori_p,
-		//		trainableInstance.filters_dw.ori_p
-		//	);
-		//}
+
+			if (Util.useGPU)
+			{
+				CVBWD(
+					stride,
+					pad,
+					sx,
+					sy,
+					in_sx,
+					in_sy,
+					in_depth,
+					out_sx,
+					out_sy,
+					out_depth,
+					filters_w.getHostMemPointReadOnly(),
+					instance.in_act.w.getHostMemPointReadOnly(),
+					instance.in_act.dw.getHostMemPointWriteOnly(),
+					instance.out_act.dw.getHostMemPointReadOnly(),
+					trainableInstance.bias_dw.getHostMemPointWriteOnly(),
+					trainableInstance.filters_dw.getHostMemPointWriteOnly()
+				);
+			}
+			else
+			{
+				if (Util.useSSE && in_depth % 8 == 0)
+				{
+					SSE_CVBWD(
+						stride,
+						pad,
+						sx,
+						sy,
+						in_sx,
+						in_sy,
+						in_depth,
+						out_sx,
+						out_sy,
+						out_depth,
+						filters_w.getHostMemPointReadOnly(),
+						instance.in_act.w.getHostMemPointReadOnly(),
+						instance.in_act.dw.getHostMemPointWriteOnly(),
+						instance.out_act.dw.getHostMemPointReadOnly(),
+						trainableInstance.bias_dw.getHostMemPointWriteOnly(),
+						trainableInstance.filters_dw.getHostMemPointWriteOnly()
+					);
+				}
+				else
+				{
+					CVBWD(
+						stride,
+						pad,
+						sx,
+						sy,
+						in_sx,
+						in_sy,
+						in_depth,
+						out_sx,
+						out_sy,
+						out_depth,
+						filters_w.getHostMemPointReadOnly(),
+						instance.in_act.w.getHostMemPointReadOnly(),
+						instance.in_act.dw.getHostMemPointWriteOnly(),
+						instance.out_act.dw.getHostMemPointReadOnly(),
+						trainableInstance.bias_dw.getHostMemPointWriteOnly(),
+						trainableInstance.filters_dw.getHostMemPointWriteOnly()
+					);
+				}
+			}
+
+		}
 
 
 		public bool noUpdate = false;

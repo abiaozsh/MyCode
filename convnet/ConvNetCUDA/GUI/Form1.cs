@@ -200,18 +200,6 @@ namespace GUI
 
 		}
 
-		public void vis4()
-		{
-			//float scale;
-			//float.TryParse(textBox1.Text, out scale);
-			string dir = @"vis\";
-			float scale;
-			float.TryParse(textBox1.Text, out scale);
-			for (int i = 0; i < MNIST.Lv1TrainNet.Lv1filters; i++)
-			{
-				train1net.cv1.vis(i, scale).Save(dir + i + ".bmp");
-			}
-		}
 
 		bool stop;
 
@@ -238,15 +226,15 @@ namespace GUI
 			{
 				loss = 0;
 				int samples = 0;
-				Parallel.For(0, 10, (i) =>
-				//for (int i = 0; i < 10; i++)
+				//Parallel.For(0, 10, (i) =>
+				for (int i = 0; i < 10; i++)
 				{
 					Random r = new Random();
 					int sample = 0;
 					loss += train1net.train(insList[i], (int)(r.NextDouble() * MNISTData.Count), out sample);
 					samples += sample;
 				}
-				);
+				//);
 				n++;
 				if (n >= MNISTData.Count * 2 / 10)
 				{
@@ -278,6 +266,18 @@ namespace GUI
 				train1net.ufc.save(s);
 			});
 
+		}
+		public void vis4()
+		{
+			//float scale;
+			//float.TryParse(textBox1.Text, out scale);
+			string dir = @"vis\";
+			float scale;
+			float.TryParse(textBox1.Text, out scale);
+			for (int i = 0; i < MNIST.Lv1TrainNet.Lv1filters; i++)
+			{
+				train1net.cv1.vis(i, scale).Save(dir + i + ".bmp");
+			}
 		}
 
 		public void test4()
@@ -325,15 +325,15 @@ namespace GUI
 			{
 				loss = 0;
 				int samples = 0;
-				Parallel.For(0, 10, (i) =>
-				//for (int i = 0; i < 10; i++)
+				//Parallel.For(0, 10, (i) =>
+				for (int i = 0; i < 10; i++)
 				{
 					Random r = new Random();
 					int sample = 0;
 					loss += train2net.train(insList[i], (int)(r.NextDouble() * MNISTData.Count), out sample);
 					samples += sample;
 				}
-				);
+				//);
 				n++;
 				if (n >= MNISTData.Count * 2)
 				{
