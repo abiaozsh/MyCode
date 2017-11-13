@@ -75,6 +75,13 @@ namespace GUI
 					boundary[i * 4 + 3] = (byte)int.Parse(s.ReadLine());//bottom
 				}
 			});
+
+			//没有文件 抛异常
+			if (boundary[0] == 0)
+			{
+				boundary = null;
+				throw new Exception();
+			};
 		}
 		public static void getBoundary(int idx, out int left, out int top, out int right, out int bottom)
 		{
@@ -684,8 +691,8 @@ namespace GUI
 					MNISTData.getImgV(data, ins.inact);
 
 					//MNISTData.getImg(ins.inact,trainIndex);
-					
-					
+
+
 					ds.predict = MNISTData.getLbl(trainIndex);
 
 					train(ins, ins.inact, ds);
