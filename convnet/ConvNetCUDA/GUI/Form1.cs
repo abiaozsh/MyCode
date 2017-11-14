@@ -226,15 +226,15 @@ namespace GUI
 			{
 				loss = 0;
 				int samples = 0;
-				//Parallel.For(0, 10, (i) =>
-				for (int i = 0; i < 10; i++)
+				Parallel.For(0, 10, (i) =>
+				//for (int i = 0; i < 10; i++)
 				{
 					Random r = new Random();
 					int sample = 0;
 					loss += train1net.train(insList[i], (int)(r.NextDouble() * MNISTData.Count), out sample);
 					samples += sample;
 				}
-				//);
+				);
 				n++;
 				if (n >= MNISTData.Count * 2 / 10)
 				{

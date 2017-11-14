@@ -6,102 +6,66 @@ using System.Text;
 
 namespace ConvNet
 {
-	public class FCFWD_Test
+	public class FCFWD_Test : Test
 	{
 
-		static int cnt = 256;
+		static int in_cnt = 256;
+		static int out_cnt = 256;
+
+		static Layer.Instance initInData(FullyConnLayer fc)
+		{
+			Layer.Instance ins = fc.getInstance();
+			Vol.init(ins.out_act.w, 1 * 1 * out_cnt, 9.9f);
+			return ins;
+		}
 
 		public static void Test()
 		{
 
-			var inp = new InputLayer(1, 1, cnt);
-			var fc = new FullyConnLayer(num_neurons: cnt, bias_pref: 0.1f);
+			var inp = new InputLayer(1, 1, in_cnt);
+			var fc = new FullyConnLayer(num_neurons: out_cnt, bias_pref: 0.1f);
 			fc.in_layer = inp;
 			fc.init();
 
 			Layer.Instance[] insList = new Layer.Instance[3];
-			insList[0] = fc.getInstance();
-			insList[1] = fc.getInstance();
-			insList[2] = fc.getInstance();
 
-			insList[0].out_act = new Vol(1, 1, cnt, 9.9f);
-			insList[1].out_act = new Vol(1, 1, cnt, 9.9f);
+			insList[0] = initInData(fc);
+			insList[1] = initInData(fc);
+			insList[2] = initInData(fc);
 
-			var in_act = new Vol(1, 1, cnt, null);
+			var in_act = new Vol(1, 1, in_cnt, null);
 
 			Console.WriteLine("start");
 
-			for (int i = 0; i < 30; i++)
+
+			Util.useGPU = false;
+			Util.useSSE = false;
+			test(10, "cpu", () =>
 			{
-				long t2;
-				Stopwatch sw = new Stopwatch();
-				sw.Start();
+				fc.forward(insList[0], in_act);
+			});
 
-				Vol o;
-				string type = "";
-
-				if (i >= 0 && i < 10)
-				{
-					type = "cpu";
-					Util.useGPU = false;
-					Util.useSSE = false;
-					o = fc.forward(insList[2], in_act);
-				}
-				else if (i >= 10 && i < 20)
-				{
-					type = "sse";
-					Util.useGPU = false;
-					Util.useSSE = true;
-					o = fc.forward(insList[1], in_act);
-				}
-				else
-				{
-					type = "gpu";
-					Util.useGPU = true;
-					Util.useSSE = false;
-					o = fc.forward(insList[0], in_act);
-				}
-
-				sw.Stop();
-				t2 = sw.ElapsedTicks;
-
-				Console.WriteLine(type + " time:" + t2);
-			}
-
-			for (int i = 0; i < insList[0].out_act.w.size; i++)
+			Util.useGPU = false;
+			Util.useSSE = true;
+			test(10, "sse", () =>
 			{
-				float val0 = insList[0].out_act.w[i];
-				float val1 = insList[1].out_act.w[i];
-				float val2 = insList[2].out_act.w[i];
+				fc.forward(insList[1], in_act);
+			});
 
-				testVal(val0, val1, i);
-				testVal(val0, val2, i);
-			}
+			Util.useGPU = true;
+			Util.useSSE = false;
+			test(10, "gpu", () =>
+			{
+				fc.forward(insList[2], in_act);
+			});
+
+
+			compare("out_act.w 1 ", insList[0].out_act.w, insList[1].out_act.w);
+			compare("out_act.w 2 ", insList[0].out_act.w, insList[2].out_act.w);
 
 			Console.WriteLine("ok");
 
-			Console.ReadLine();
-			return;
-
 		}
 
-		static void testVal(float val0, float val1, int i)
-		{
-			if (val0 != val1)
-			{
-				if (val0 - val1 > 0.000001)
-				{
-					Console.WriteLine("--err--:" + i + "[" + (val0 - val1) + "]" + "," + val0 + "---" + val1);
-				}
-				else if (val0 - val1 < -0.000001)
-				{
-					Console.WriteLine("--err-- :" + i + "[" + (val0 - val1) + "]" + "," + val0 + "---" + val1);
-				}
-				else
-				{
-					//Console.WriteLine("--ok-- :" + i + "[" + (val0 - val1) + "]" + "," + val0 + "---" + val1);
-				}
-			}
-		}
 	}
 }

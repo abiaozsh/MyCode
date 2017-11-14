@@ -149,6 +149,23 @@ namespace ConvNet
 
 		}
 
+		[DllImport("CUDA2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern int CUDA_CVFWD(
+			int stride,
+			int pad,
+			int sx,
+			int sy,
+			int in_sx,
+			int in_sy,
+			int in_depth,
+			int out_sx,
+			int out_sy,
+			int out_depth,
+			IntPtr p_filters_w,
+			IntPtr p_in_act_w,
+			IntPtr p_bias_w,
+			IntPtr p_out_act_w
+		);
 		[DllImport("CPU2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
 		static extern void SSE_CVFWD(
 			int stride,
@@ -192,7 +209,7 @@ namespace ConvNet
 
 			if (Util.useGPU)
 			{
-				CVFWD(
+				int err = CUDA_CVFWD(
 					stride,
 					pad,
 					sx,
@@ -207,6 +224,10 @@ namespace ConvNet
 					ins.in_act.w.getHostMemPointReadOnly(),
 					bias_w.getHostMemPointReadOnly(),
 					ins.out_act.w.getHostMemPointWriteOnly());
+				if (err != 0)
+				{
+					throw new Exception();
+				}
 			}
 			else
 			{
@@ -227,7 +248,6 @@ namespace ConvNet
 						ins.in_act.w.getHostMemPointReadOnly(),
 						bias_w.getHostMemPointReadOnly(),
 						ins.out_act.w.getHostMemPointWriteOnly());
-
 				}
 				else
 				{

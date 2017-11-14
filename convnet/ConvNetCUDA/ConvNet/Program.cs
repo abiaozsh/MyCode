@@ -16,7 +16,15 @@ namespace ConvNet
         {
             int n = Util.initGPU(0);
 
+			MyFloat mf = new MyFloat(1000);
+			mf = null;
             FCFWD_Test.Test();
+			FCBWD_Test.Test();
+
+			GC.Collect();
+			//CVFWD_Test.Test();
+
+			Console.ReadLine();
 
         }
     }

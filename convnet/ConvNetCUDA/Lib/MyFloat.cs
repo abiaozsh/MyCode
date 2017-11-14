@@ -145,20 +145,20 @@ namespace ConvNet
 				}
 			}
 			this.size = size;
-			DeviceMemPoint = allocDeviceMemory(size);
+			//DeviceMemPoint = allocDeviceMemory(size);
 		}
 
 		~MyFloat()
 		{
-			try
-			{
-				freeDeviceMemory(DeviceMemPoint);
+			//try
+			//{
+				//freeDeviceMemory(DeviceMemPoint);
 				freefloat(HostMemPoint);
-			}
-			catch
-			{
-				Util.log("err");
-			}
+			//}
+			//catch
+			//{
+			//	Util.log("err");
+			//}
 		}
 
 

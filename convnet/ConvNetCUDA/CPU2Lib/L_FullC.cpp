@@ -65,55 +65,100 @@ extern "C" __declspec(dllexport) void FCFWD(
 }
 
 
-extern "C" __declspec(dllexport) void SSE_FCBWD(
-	int out_depth,
-	int num_inputs,
-	float* p_in_act_w,
-	float* p_filters_w,
-	float* p_in_act_dw,
-	float* p_out_act_dw,
-	float* p_filters_dw,
-	float* p_bias_dw
-	)
-{
-	for (int i = 0; i < num_inputs; i++)
-	{
-		p_in_act_dw[i] = 0;
-	}
-	for (int i = 0; i < out_depth; i++)
-	{
-		int i_num_inputs = i * num_inputs;
-		float chain_grad = p_out_act_dw[i];
-		__m256 cg = _mm256_set1_ps(chain_grad);
-		for (int d = 0; d < num_inputs; d += 8)
-		{
-			//p_in_act_dw[d] += p_filters_w[i_num_inputs + d] * chain_grad; // grad wrt input data
-			__m256 v_in = _mm256_load_ps(p_in_act_dw + d);
-			__m256 v_filters = _mm256_load_ps(p_filters_w + i_num_inputs + d);
-			v_filters = _mm256_mul_ps(v_filters, cg);
-			v_in = _mm256_add_ps(v_in, v_filters);
-			_mm256_store_ps(p_in_act_dw + d, v_in);
+//extern "C" __declspec(dllexport) void SSE_FCBWD(
+//	int out_depth,
+//	int num_inputs,
+//
+//	const float* p_in_act_w,
+//	const float* p_filters_w,
+//	const float* p_out_act_dw,
+//
+//	float* p_in_act_dw,
+//	float* p_filters_dw,
+//	float* p_bias_dw
+//	)
+//{
+//	for (int i = 0; i < num_inputs; i++)
+//	{
+//		p_in_act_dw[i] = 0;
+//	}
+//	for (int i = 0; i < out_depth; i++)
+//	{
+//		int i_num_inputs = i * num_inputs;
+//		float chain_grad = p_out_act_dw[i];
+//		__m256 cg = _mm256_set1_ps(chain_grad);
+//		for (int d = 0; d < num_inputs; d += 8)
+//		{
+//			//p_in_act_dw[d] += p_filters_w[i_num_inputs + d] * chain_grad; // grad wrt input data
+//			__m256 v_filters = _mm256_load_ps(p_filters_w + i_num_inputs + d);
+//			v_filters = _mm256_mul_ps(v_filters, cg);
+//			__m256 v_in = _mm256_load_ps(p_in_act_dw + d);
+//			v_in = _mm256_add_ps(v_in, v_filters);
+//			_mm256_store_ps(p_in_act_dw + d, v_in);
+//		//}
+//		//for (int d = 0; d < num_inputs; d += 8)
+//		//{
+//			//p_filters_dw[i_num_inputs + d] += p_in_act_w[d] * chain_grad; // grad wrt params
+//			__m256 v_in_w = _mm256_load_ps(p_in_act_w + d);
+//			v_in_w = _mm256_mul_ps(v_in_w, cg);
+//			__m256 v_fw = _mm256_load_ps(p_filters_dw + i_num_inputs + d);
+//			v_fw = _mm256_add_ps(v_fw, v_in_w);
+//			_mm256_store_ps(p_filters_dw + i_num_inputs + d, v_fw);
+//		}
+//		p_bias_dw[i] += chain_grad;
+//	}
+//}
 
-			//p_filters_dw[i_num_inputs + d] += p_in_act_w[d] * chain_grad; // grad wrt params
-			__m256 v_fw = _mm256_load_ps(p_filters_dw + i_num_inputs + d);
-			__m256 v_in_w = _mm256_load_ps(p_in_act_w + d);
-			v_in_w = _mm256_mul_ps(v_in_w, cg);
-			v_fw = _mm256_add_ps(v_fw, v_in_w);
-			_mm256_store_ps(p_filters_dw + i_num_inputs + d, v_fw);
-
-		}
-		p_bias_dw[i] += chain_grad;
-	}
-}
+//extern "C" __declspec(dllexport) void SSE_FCBWD(
+//	int out_depth,
+//	int num_inputs,
+//
+//	const float* p_in_act_w,
+//	const float* p_filters_w,
+//	const float* p_out_act_dw,
+//
+//	float* p_in_act_dw,
+//	float* p_filters_dw,
+//	float* p_bias_dw
+//	)
+//{
+//
+//	for (int d = 0; d < num_inputs; d++)
+//	{
+//		float f_in_act_dw = 0.0f;
+//
+//		int i_num_inputs = 0;
+//		for (int i = 0; i < out_depth; i++)
+//		{
+//			float chain_grad = p_out_act_dw[i];
+//			f_in_act_dw += p_filters_w[i_num_inputs + d] * chain_grad; // grad wrt input data
+//			//}
+//			//for (int d = 0; d < num_inputs; d++)
+//			//{
+//			p_filters_dw[i_num_inputs + d] += p_in_act_w[d] * chain_grad; // grad wrt params
+//
+//			i_num_inputs += num_inputs;
+//		}
+//		p_in_act_dw[d] = f_in_act_dw;
+//	}
+//	for (int i = 0; i < out_depth; i++)
+//	{
+//		int i_num_inputs = i * num_inputs;
+//		float chain_grad = p_out_act_dw[i];
+//		p_bias_dw[i] += chain_grad;
+//	}
+//}
 
 
 extern "C" __declspec(dllexport) void FCBWD(
 	int out_depth,
 	int num_inputs,
-	float* p_in_act_w,
-	float* p_filters_w,
+
+	const float* p_in_act_w,
+	const float* p_filters_w,
+	const float* p_out_act_dw,
+
 	float* p_in_act_dw,
-	float* p_out_act_dw,
 	float* p_filters_dw,
 	float* p_bias_dw
 	)

@@ -18,7 +18,7 @@ namespace GUI
 		{
 			//IntPtr openclp = OpenCL.init(0, 1);
 			//OpenCL.oclobjects = openclp;
-			int n = Util.initGPU(0);
+			//int n = Util.initGPU(0);
 			Util.useGPU = false;
 			Util.useSSE = false;
 

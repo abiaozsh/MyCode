@@ -27,7 +27,7 @@ namespace ConvNet
 			bias_w.load(s);
 		}
 		//Vol[] filters;
-		MyFloat filters_w;
+		public MyFloat filters_w;
 
 		MyFloat[] filters_gsum; //[]?
 		MyFloat[] filters_xsum; //[]?
@@ -163,7 +163,7 @@ namespace ConvNet
 		{
 			ins.in_act = V;
 
-			if (Util.useGPU)
+			if (Util.useGPU && out_depth * num_inputs >= 65536)
 			{
 				int err = CUDA_FCFWD(
 					out_depth,
@@ -213,14 +213,16 @@ namespace ConvNet
 		}
 
 
-		[DllImport("CPU2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern void SSE_FCBWD(
+		[DllImport("CUDA2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern int CUDA_FCBWD(
 			int out_depth,
 			int num_inputs,
+
 			IntPtr p_in_act_w,
 			IntPtr p_filters_w,
-			IntPtr p_in_act_dw,
 			IntPtr p_out_act_dw,
+
+			IntPtr p_in_act_dw,
 			IntPtr p_filters_dw,
 			IntPtr p_bias_dw
 		);
@@ -229,10 +231,12 @@ namespace ConvNet
 		static extern void FCBWD(
 			int out_depth,
 			int num_inputs,
+
 			IntPtr p_in_act_w,
 			IntPtr p_filters_w,
-			IntPtr p_in_act_dw,
 			IntPtr p_out_act_dw,
+
+			IntPtr p_in_act_dw,
 			IntPtr p_filters_dw,
 			IntPtr p_bias_dw
 		);
@@ -248,21 +252,19 @@ namespace ConvNet
 				act.backward(trainableIns.actIns);
 			}
 
-
-
-			if (Util.useGPU)
+			if (Util.useGPU && out_depth * num_inputs >= 65536)
 			{
-				FCBWD(
+				int err = CUDA_FCBWD(
 					out_depth,
 					num_inputs,
-					ins.in_act.w.getHostMemPointReadOnly(),
-					filters_w.getHostMemPointReadOnly(),
-					ins.in_act.dw.getHostMemPointWriteOnly(),
-					ins.out_act.dw.getHostMemPointReadOnly(),
-					trainableIns.filters_dw.getHostMemPointWriteOnly(),
-					trainableIns.bias_dw.getHostMemPointWriteOnly());
 
-				int err = 0;
+					ins.in_act.w.getDeviceMemPointReadOnly(),
+					filters_w.getDeviceMemPointReadOnly(),
+					ins.out_act.dw.getDeviceMemPointReadOnly(),
+
+					ins.in_act.dw.getDeviceMemPointWriteOnly(),
+					trainableIns.filters_dw.getDeviceMemPointReadWrite(),
+					trainableIns.bias_dw.getDeviceMemPointReadWrite());
 
 				if (err != 0)
 				{
@@ -271,30 +273,18 @@ namespace ConvNet
 			}
 			else
 			{
-				if (Util.useSSE && num_inputs % 8 == 0)
-				{
-					SSE_FCBWD(
-						out_depth,
-						num_inputs,
-						ins.in_act.w.getHostMemPointReadOnly(),
-						filters_w.getHostMemPointReadOnly(),
-						ins.in_act.dw.getHostMemPointWriteOnly(),
-						ins.out_act.dw.getHostMemPointReadOnly(),
-						trainableIns.filters_dw.getHostMemPointWriteOnly(),
-						trainableIns.bias_dw.getHostMemPointWriteOnly());
-				}
-				else
-				{
-					FCBWD(
-						out_depth,
-						num_inputs,
-						ins.in_act.w.getHostMemPointReadOnly(),
-						filters_w.getHostMemPointReadOnly(),
-						ins.in_act.dw.getHostMemPointWriteOnly(),
-						ins.out_act.dw.getHostMemPointReadOnly(),
-						trainableIns.filters_dw.getHostMemPointWriteOnly(),
-						trainableIns.bias_dw.getHostMemPointWriteOnly());
-				}
+				//SSE 和CPU一样慢，不要了
+				FCBWD(
+					out_depth,
+					num_inputs,
+
+					ins.in_act.w.getHostMemPointReadOnly(),
+					filters_w.getHostMemPointReadOnly(),
+					ins.out_act.dw.getHostMemPointReadOnly(),
+
+					ins.in_act.dw.getHostMemPointWriteOnly(),
+					trainableIns.filters_dw.getHostMemPointReadWrite(),
+					trainableIns.bias_dw.getHostMemPointReadWrite());
 			}
 
 		}
