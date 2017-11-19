@@ -6,7 +6,7 @@ using System.Text;
 
 namespace ConvNet
 {
-	public class CVFWD_Test : Test
+	public class CVBWD_Test : Test
 	{
 
 		static int in_cnt_x = 55;
@@ -18,6 +18,7 @@ namespace ConvNet
 		static Layer.Instance initInData(ConvLayer cv)
 		{
 			Layer.Instance ins = cv.getInstance();
+			ins.in_act = new Vol(in_cnt_x, in_cnt_y, in_cnt_d, null);
 			Vol.init(ins.out_act.w, ins.out_act.w.size, 9.9f);
 			return ins;
 		}
@@ -36,6 +37,14 @@ namespace ConvNet
 			insList[1] = initInData(cv);
 
 			var in_act = new Vol(in_cnt_x, in_cnt_y, in_cnt_d, null);
+			var out_act = new Vol(cv.out_sx, cv.out_sy, out_cnt, null);
+			Vol.init(out_act.dw, cv.out_sx * cv.out_sy * out_cnt, null);
+
+			insList[0].in_act.w = in_act.w;
+			insList[1].in_act.w = in_act.w;
+
+			insList[0].out_act.dw = out_act.dw;
+			insList[1].out_act.dw = out_act.dw;
 
 			Console.WriteLine("start");
 
@@ -43,17 +52,21 @@ namespace ConvNet
 			Util.useSSE = false;
 			test(10, "cpu", () =>
 			{
-				cv.forward(insList[0], in_act);
+				cv.backward(insList[0]);
 			});
 
 			Util.useSSE = true;
 			test(10, "sse", () =>
 			{
-				cv.forward(insList[1], in_act);
+				cv.backward(insList[1]);
 			});
 
 
-			compare("out_act.w 1 ", insList[0].out_act.w, insList[1].out_act.w);
+			compare("in_act.dw 1 ", insList[0].in_act.dw, insList[1].in_act.dw);
+
+			compare("filters_dw 1 ", ((TrainableLayer.TrainableInstance)insList[0]).filters_dw, ((TrainableLayer.TrainableInstance)insList[1]).filters_dw);
+
+			compare("bias_dw 1 ", ((TrainableLayer.TrainableInstance)insList[0]).bias_dw, ((TrainableLayer.TrainableInstance)insList[1]).bias_dw);
 
 			Console.WriteLine("ok");
 

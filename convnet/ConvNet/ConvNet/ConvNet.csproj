@@ -82,6 +82,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CVBWD_Test.cs" />
     <Compile Include="CVFWD_Test.cs" />
     <Compile Include="Data.cs" />
     <Compile Include="FCBWD_Test.cs" />

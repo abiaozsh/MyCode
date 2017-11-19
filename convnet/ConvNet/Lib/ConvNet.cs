@@ -11,16 +11,7 @@ namespace ConvNet
 {
 	public class Util
 	{
-		public static bool useGPU = false;
-		public static bool useSSE = false;
-
-		[DllImport("cuda2Lib.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern int init(int device);
-
-		public static int initGPU(int device)
-		{
-			return init(device);
-		}
+		public static bool useSSE = true;
 
 		public delegate void DoSave(StreamWriter sw);
 		public static void save(string filename, DoSave sv)

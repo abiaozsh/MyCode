@@ -132,6 +132,19 @@ namespace GUI
 
 		private void button1_Click(object sender, EventArgs e)
 		{
+			Util.load(@"..\cv3_cv1.txt", (s) =>
+			{
+				mainet.cv1.load(s); mainet.cv1.noUpdate = true;
+			});
+			Util.load(@"..\cv3_cv2.txt", (s) =>
+			{
+				mainet.cv2.load(s); mainet.cv2.noUpdate = true;
+			});
+			Util.load(@"..\cv3.txt", (s) =>
+			{
+				mainet.cv3.load(s); mainet.cv3.noUpdate = true;
+			});
+
 			Net.Instance[] insList = new Net.Instance[10];
 			for (int i = 0; i < 10; i++)
 			{
@@ -140,44 +153,47 @@ namespace GUI
 			}
 
 			float accu = 0;
-			for (int i = 0; i < 1000; i++)
+			for (int i = 0; i < 60; i++)
 			{
 				Random r = new Random();
 
 				for (int j = 0; j < 10; j++)
 				{
-					Parallel.For(0, 10, (k) =>//	for (int k = 0; k < 10; k++)
+					Parallel.For(0, 10, (k) =>
 					{
-						mainet.train(insList[k], (int)(r.NextDouble() * MNISTData.Count));
+						mainet.train(insList[k], j * 10 + k);
 					}
 					);
 					mainet.endofBatch(insList, 10);
+					this.Text = i + "," + j;
+					Application.DoEvents();
 				}
-
-
-
-				accu = mainet.test(insList[0]);
-				if (stop) { stop = false; break; }
-
-				this.Text = i + "," + accu;
-				Application.DoEvents();
-				//vis();
-
-				Util.save("mainet.txt", (s) =>
-				{
-					mainet.cv1.save(s);
-					mainet.cv2.save(s);
-					mainet.cv3.save(s);
-					mainet.fc144.save(s);
-					mainet.fc10.save(s);
-				});
-
-				//this.textBox2.Text = i + "," + accu;
-
-
-
+				accu = mainet.test(insList[0], 1000, 2000);
+				this.textBox2.Text = "," + accu;
 			}
+			return;
+			mainet.cv1.noUpdate = false;
+			mainet.cv2.noUpdate = false;
+			mainet.cv3.noUpdate = false;
 
+			for (int i = 0; i < 30; i++)
+			{
+				Random r = new Random();
+
+				for (int j = 0; j < 10; j++)
+				{
+					Parallel.For(0, 10, (k) =>
+					{
+						mainet.train(insList[k], j * 10 + k);
+					}
+					);
+					mainet.endofBatch(insList, 10);
+					this.Text = i + "," + j;
+					Application.DoEvents();
+				}
+				accu = mainet.test(insList[0], 1000, 2000);
+				this.textBox2.Text = "," + accu;
+			}
 
 			//float accu = mainet.test();
 			//this.textBox2.Text =  "," + accu;
@@ -185,31 +201,19 @@ namespace GUI
 
 		private void button2_Click(object sender, EventArgs e)
 		{
-			Util.load(@"..\cv3.txt", (s) =>
-			{
-				train3net.cv3.load(s);
-			});
-			Util.load(@"..\cv3_ufc.txt", (s) =>
-			{
-				train3net.ufc.load(s);
-			});
-			//
-			vis16();
-			test16();
-			//
 
 		}
 
-		public void vis4()
+		public void vis4(ConvLayer cv1)
 		{
 			//float scale;
 			//float.TryParse(textBox1.Text, out scale);
-			string dir = @"vis\";
+			string dir = @"vis\1_";
 			float scale;
 			float.TryParse(textBox1.Text, out scale);
 			for (int i = 0; i < MNIST.Lv1TrainNet.Lv1filters; i++)
 			{
-				train1net.cv1.vis(i, scale).Save(dir + i + ".bmp");
+				cv1.vis(i, scale).Save(dir + i + ".bmp");
 			}
 		}
 
@@ -223,6 +227,17 @@ namespace GUI
 
 		private void button5_Click(object sender, EventArgs e)
 		{
+
+			Util.load(@"..\cv1.txt", (s) =>
+			{
+				train1net.cv1.load(s);
+			});
+
+			Util.load(@"..\cv1_ufc.txt", (s) =>
+			{
+				train1net.ufc.load(s);
+			});
+
 			Net.Instance[] insList = new Net.Instance[10];
 			for (int i = 0; i < 10; i++)
 			{
@@ -260,7 +275,15 @@ namespace GUI
 				if (n % 100 == 0)
 				{
 					test4();
-					vis4();
+					vis4(train1net.cv1);
+					Util.save("cv1.txt", (s) =>
+					{
+						train1net.cv1.save(s);
+					});
+					Util.save("cv1_ufc.txt", (s) =>
+					{
+						train1net.ufc.save(s);
+					});
 					sw.Stop();
 					this.textBox2.Text = sw.Elapsed.ToString();
 
@@ -269,14 +292,6 @@ namespace GUI
 				if (stop) { stop = false; break; }
 			}
 
-			Util.save("cv1.txt", (s) =>
-			{
-				train1net.cv1.save(s);
-			});
-			Util.save("cv1_ufc.txt", (s) =>
-			{
-				train1net.ufc.save(s);
-			});
 
 		}
 
@@ -310,6 +325,25 @@ namespace GUI
 
 		private void button6_Click(object sender, EventArgs e)
 		{
+			Util.load(@"..\cv1.txt", (s) =>
+			{
+				train2net.cv1.load(s); train2net.cv1.noUpdate = true;
+			});
+
+			Util.load(@"..\cv2_cv1.txt", (s) =>
+			{
+				train2net.cv1.load(s); train2net.cv1.noUpdate = false;
+			});
+
+			Util.load(@"..\cv2.txt", (s) =>
+			{
+				train2net.cv2.load(s);
+			});
+			Util.load(@"..\cv2_ufc.txt", (s) =>
+			{
+				train2net.ufc.load(s);
+			});
+
 			Net.Instance[] insList = new Net.Instance[10];
 			for (int i = 0; i < 10; i++)
 			{
@@ -347,13 +381,17 @@ namespace GUI
 				if (n % 10 == 0)
 				{
 					test8();
+					vis4(train2net.cv1);
 					vis8();
 					sw.Stop();
 					this.textBox2.Text = sw.Elapsed.ToString();
 
 					sw.Restart();
 
-
+					Util.save("cv2_cv1.txt", (s) =>
+					{
+						train2net.cv1.save(s);
+					});
 					Util.save("cv2.txt", (s) =>
 					{
 						train2net.cv2.save(s);
@@ -362,6 +400,7 @@ namespace GUI
 					{
 						train2net.ufc.save(s);
 					});
+
 				}
 				if (stop) { stop = false; break; }
 			}
@@ -371,7 +410,7 @@ namespace GUI
 		{
 			//float scale;
 			//float.TryParse(textBox1.Text, out scale);
-			string dir = @"vis\";
+			string dir = @"vis\2_";
 			float scale;
 			float.TryParse(textBox1.Text, out scale);
 			for (int i = 0; i < MNIST.Lv2TrainNet.Lv2filters; i++)
@@ -411,14 +450,27 @@ namespace GUI
 		}
 		private void button4_Click(object sender, EventArgs e)
 		{
-			Util.load(@"..\cv1.txt", (s) =>
+			Util.load(@"..\cv2_cv1.txt", (s) =>
 			{
-				train3net.cv1.load(s);
+				train3net.cv1.load(s); train3net.cv1.noUpdate = true;
 			});
+
+			Util.load(@"..\cv3_cv1.txt", (s) =>
+			{
+				train3net.cv1.load(s); train3net.cv1.noUpdate = false;
+			});
+
+
 			Util.load(@"..\cv2.txt", (s) =>
 			{
-				train3net.cv2.load(s);
+				train3net.cv2.load(s); train3net.cv2.noUpdate = true;
 			});
+			Util.load(@"..\cv3_cv2.txt", (s) =>
+			{
+				train3net.cv2.load(s); train3net.cv2.noUpdate = false;
+			});
+
+
 			Util.load(@"..\cv3.txt", (s) =>
 			{
 				train3net.cv3.load(s);
@@ -478,12 +530,13 @@ namespace GUI
 
 				if (n % 10 == 0)
 				{
+					vis16();
 					test16();
-					Util.save("cv1.txt", (s) =>
+					Util.save("cv3_cv1.txt", (s) =>
 					{
 						train3net.cv1.save(s);
 					});
-					Util.save("cv2.txt", (s) =>
+					Util.save("cv3_cv2.txt", (s) =>
 					{
 						train3net.cv2.save(s);
 					});

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using ConvNet;
-using Lib;
 
 namespace GUI
 {
@@ -19,6 +18,7 @@ namespace GUI
 			//IntPtr openclp = OpenCL.init(0, 1);
 			//OpenCL.oclobjects = openclp;
 
+			Util.useSSE = true;
 
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);

@@ -307,16 +307,6 @@ namespace GUI
 				Add(ufc);
 				Add(new ReshapeLayer(out_sx: 4, out_sy: 4, out_depth: 1));
 				Add(new RegressionLayer());
-
-				Util.load(@"..\cv1.txt", (s) =>
-				{
-					cv1.load(s);
-				});
-
-				Util.load(@"..\cv1_ufc.txt", (s) =>
-				{
-					ufc.load(s);
-				});
 			}
 
 			public float train(Net.Instance ins, int n, out int sampleNum)
@@ -396,18 +386,6 @@ namespace GUI
 				Add(new ReshapeLayer(out_sx: 8, out_sy: 8, out_depth: 1));
 				Add(new RegressionLayer());
 
-				Util.load(@"..\cv1.txt", (s) =>
-				{
-					cv1.load(s); cv1.noUpdate = true;
-				});
-				Util.load(@"..\cv2.txt", (s) =>
-				{
-					cv2.load(s);
-				});
-				Util.load(@"..\cv2_ufc.txt", (s) =>
-				{
-					ufc.load(s);
-				});
 			}
 
 			public Vol vis(int n)
@@ -627,10 +605,10 @@ namespace GUI
 				//this, new Trainer.Option() 
 				trainer = new AdaDeltaTrainer() { l2_decay = 0.001f };//0.001f
 
-				cv1 = new ConvLayer(sx: 4, sy: 4, filters: 16, stride: 1, pad: 2, adj: -1, bias_pref: 0.1f, act: new ReluLayer());
-				cv2 = new ConvLayer(sx: 4, sy: 4, filters: 32, stride: 1, pad: 2, adj: -1, bias_pref: 0.1f, act: new ReluLayer());
-				cv3 = new ConvLayer(sx: 4, sy: 4, filters: 64, stride: 1, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				fc144 = new FullyConnLayer(num_neurons: 1024, bias_pref: 0.1f, act: new ReluLayer());
+				cv1 = new ConvLayer(sx: 4, sy: 4, filters: Lv1TrainNet.Lv1filters, stride: 1, pad: 2, adj: -1, bias_pref: 0.1f, act: new ReluLayer());
+				cv2 = new ConvLayer(sx: 4, sy: 4, filters: Lv2TrainNet.Lv2filters, stride: 1, pad: 2, adj: -1, bias_pref: 0.1f, act: new ReluLayer());
+				cv3 = new ConvLayer(sx: 4, sy: 4, filters: Lv3TrainNet.Lv3filters, stride: 1, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
+				//fc144 = new FullyConnLayer(num_neurons: 1024, bias_pref: 0.1f, act: new ReluLayer());
 				fc10 = new FullyConnLayer(num_neurons: 11, bias_pref: 0.1f);
 
 				Add(new InputLayer(out_sx: 28, out_sy: 28, out_depth: 1));
@@ -640,34 +618,9 @@ namespace GUI
 				Add(new PoolLayer(stride: 2));
 				Add(cv3);
 				Add(new PoolLayer(stride: 2));
-				Add(fc144);
+				//Add(fc144);
 				Add(fc10);
 				Add(new SoftmaxLayer());
-
-
-				Util.load(@"..\mainet.txt", (s) =>
-				{
-					cv1.load(s);
-					cv2.load(s);
-					cv3.load(s);
-					fc144.load(s);
-					fc10.load(s);
-				});
-
-				//Util.load(@"..\cv1.txt", (s) =>
-				//{
-				//	cv1.load(s); //cv1.noUpdate = true;
-				//});
-				//
-				//Util.load(@"..\cv2.txt", (s) =>
-				//{
-				//	cv2.load(s); //cv2.noUpdate = true;
-				//});
-				//
-				//Util.load(@"..\cv3.txt", (s) =>
-				//{
-				//	cv3.load(s); //cv3.noUpdate = true;
-				//});
 
 			}
 
@@ -679,13 +632,16 @@ namespace GUI
 				//for (int i = 0; i < 1000; i++)
 				int[] data = new int[28 * 28];
 				{
-
-					MNISTData.rotate(trainIndex, data);
-					MNISTData.getImgV(data, ins.inact);
-
-					//MNISTData.getImg(ins.inact,trainIndex);
-					
-					
+					bool shift = false;
+					if (shift)
+					{
+						MNISTData.rotate(trainIndex, data);
+						MNISTData.getImgV(data, ins.inact);
+					}
+					else
+					{
+						MNISTData.getImg(ins.inact, trainIndex);
+					}
 					ds.predict = MNISTData.getLbl(trainIndex);
 
 					train(ins, ins.inact, ds);
@@ -693,23 +649,28 @@ namespace GUI
 
 			}
 
-			public float test(Net.Instance ins)
+			public float test(Net.Instance ins,int start,int end)
 			{
 				float accu = 0;
 				DataSet ds = new DataSet();
 
 				int[] data = new int[28 * 28];
 
-				for (int j = 0; j < 100; j++)//test
+				for (int j = start; j < end; j++)//test
 				{
-					int trainIndex = (int)(MNISTData.rnd.NextDouble() * MNISTData.Count);
+					int trainIndex = j;//(int)(MNISTData.rnd.NextDouble() * MNISTData.Count);
 
+					bool shift = false;
+					if (shift)
+					{
+						MNISTData.rotate(trainIndex, data);
+						MNISTData.getImgV(data, ins.inact);
+					}
+					else
+					{
+						MNISTData.getImg(ins.inact, trainIndex);
+					}
 					ds.predict = MNISTData.getLbl(trainIndex);
-
-					MNISTData.rotate(trainIndex, data);
-					MNISTData.getImgV(data, ins.inact);
-
-					//MNISTData.getImg(ins.inact, trainIndex);
 
 					var o = forward(ins, ins.inact);
 					int predict = MNIST.GetPredicted(o);
@@ -718,7 +679,7 @@ namespace GUI
 						accu += 1.0f;
 					}
 				}
-				return accu / 100.0f;
+				return accu;
 			}
 		}
 		//

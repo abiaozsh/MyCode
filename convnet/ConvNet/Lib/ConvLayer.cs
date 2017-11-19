@@ -43,7 +43,7 @@ namespace ConvNet
 		MyFloat[] filters_gsum; //[]?
 		MyFloat[] filters_xsum; //[]?
 
-		MyFloat bias_w;
+		public MyFloat bias_w;
 
 		MyFloat bias_gsum; //[]?
 		MyFloat bias_xsum; //[]?
@@ -79,16 +79,16 @@ namespace ConvNet
 
 			filterSize = sx * sy * in_depth;
 			{
-				if ((in_sx + pad * 2 - sx + adj) / stride * stride != (in_sx + pad * 2 - sx + adj))
-				{
-					throw new Exception("err");
-				}
-				if ((in_sy + pad * 2 - sy + adj) / stride * stride != (in_sy + pad * 2 - sy + adj))
-				{
-					throw new Exception("err");
-				}
 				this.out_sx = (in_sx + pad * 2 - sx + adj) / stride + 1;
 				this.out_sy = (in_sy + pad * 2 - sy + adj) / stride + 1;
+				//if ((in_sx + pad * 2 - sx + adj) / stride * stride != (in_sx + pad * 2 - sx + adj))
+				//{
+				//	//out_sx--;
+				//}
+				//if ((in_sy + pad * 2 - sy + adj) / stride * stride != (in_sy + pad * 2 - sy + adj))
+				//{
+				//	//out_sy--;
+				//}
 			}
 
 			filters_gsum = new MyFloat[out_depth];
@@ -128,8 +128,8 @@ namespace ConvNet
 		}
 		public override Instance getInstance()
 		{
-		//public MyFloat filters_dw;
-		//MyFloat bias_dw;
+			//public MyFloat filters_dw;
+			//MyFloat bias_dw;
 
 			TrainableInstance ins = new TrainableInstance();
 			ins.out_act = new Vol(out_sx, out_sy, this.out_depth, 0.0f);
@@ -150,90 +150,130 @@ namespace ConvNet
 		}
 
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern void SSE_CVFWD(
+			int stride,
+			int pad,
+			int sx,
+			int sy,
+			int in_sx,
+			int in_sy,
+			int in_depth,
+			int out_sx,
+			int out_sy,
+			int out_depth,
+			IntPtr p_filters_w,
+			IntPtr p_in_act_w,
+			IntPtr p_bias_w,
+			IntPtr p_out_act_w
+		);
+		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
 		static extern void CVFWD(
 			int stride,
 			int pad,
 			int sx,
 			int sy,
+			int in_sx,
+			int in_sy,
 			int in_depth,
 			int out_sx,
 			int out_sy,
 			int out_depth,
-			int filterSize,
-			int in_act_sx,
-			int in_act_sy,
 			IntPtr p_filters_w,
 			IntPtr p_in_act_w,
 			IntPtr p_bias_w,
 			IntPtr p_out_act_w
 		);
 
-		public override Vol forward(Instance instance, Vol V)
+		public override Vol forward(Instance ins, Vol V)
 		{
 			// optimized code by @mdda that achieves 2x speedup over previous version
 
-			instance.in_act = V;
-			int filterSize = sx * sy * in_depth;
+			ins.in_act = V;
 
-			long aa = Stopwatch.Frequency;
-			long t1 = 0, t2 = 0, t3 = 0;
-			Stopwatch sw = new Stopwatch();
-			sw.Start();
-			CVFWD(
-				stride,
-				pad,
-				sx,
-				sy,
-				in_depth,
-				out_sx,
-				out_sy,
-				out_depth,
-				filterSize,
-				in_sx,
-				in_sy,
-				filters_w.ori_p,
-				instance.in_act.w.ori_p,
-				bias_w.ori_p,
-				instance.out_act.w.ori_p
-			);
-			sw.Stop();
-			t3 = sw.ElapsedTicks;
-			int count = out_sy * out_sx * out_depth * sy * sx * in_depth;
-			double t4 = t3 / (double)(3117998.0 / 1000000);
-			if (t4 < -1 && count < -1)
+			if (Util.useSSE && in_depth % 8 == 0)
 			{
-				throw new Exception("slow");
-			}
-
-			if (act != null)
-			{
-				return act.forward(((TrainableInstance)instance).actIns, instance.out_act);
+				SSE_CVFWD(
+					stride,
+					pad,
+					sx,
+					sy,
+					in_sx,
+					in_sy,
+					in_depth,
+					out_sx,
+					out_sy,
+					out_depth,
+					filters_w.p,
+					ins.in_act.w.p,
+					bias_w.p,
+					ins.out_act.w.p);
 			}
 			else
 			{
-				return instance.out_act;
+				CVFWD(
+					stride,
+					pad,
+					sx,
+					sy,
+					in_sx,
+					in_sy,
+					in_depth,
+					out_sx,
+					out_sy,
+					out_depth,
+					filters_w.p,
+					ins.in_act.w.p,
+					bias_w.p,
+					ins.out_act.w.p);
+			}
+
+
+			if (act != null)
+			{
+				return act.forward(((TrainableInstance)ins).actIns, ins.out_act);
+			}
+			else
+			{
+				return ins.out_act;
 			}
 		}
 
 
+		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern void SSE_CVBWD(
+			int stride,
+			int pad,
+			int sx,
+			int sy,
+			int in_sx,
+			int in_sy,
+			int in_depth,
+			int out_sx,
+			int out_sy,
+			int out_depth,
+			IntPtr p_filters_w,
+			IntPtr p_in_act_w,
+			IntPtr p_out_act_dw,
+			IntPtr p_in_act_dw,
+			IntPtr p_bias_dw,
+			IntPtr p_filters_dw
+		);
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
 		static extern void CVBWD(
 			int stride,
 			int pad,
 			int sx,
 			int sy,
-			int in_size,
+			int in_sx,
+			int in_sy,
 			int in_depth,
 			int out_sx,
 			int out_sy,
 			int out_depth,
-			int filterSize,
-			int in_act_sx,
-			int in_act_sy,
 			IntPtr p_filters_w,
 			IntPtr p_in_act_w,
-			IntPtr p_in_act_dw,
 			IntPtr p_out_act_dw,
+			IntPtr p_in_act_dw,
 			IntPtr p_bias_dw,
 			IntPtr p_filters_dw
 		);
@@ -245,70 +285,57 @@ namespace ConvNet
 			TrainableInstance trainableInstance = ((TrainableInstance)instance);
 
 			//zero out gradient wrt bottom data, we're about to fill it
-			int in_size = in_sx * in_sy * in_depth;
-			int filterSize = sx * sy * in_depth;
 
 			if (act != null)
 			{
 				act.backward(trainableInstance.actIns);
 			}
 
-			CVBWD(
-				stride,
-				pad,
-				sx,
-				sy,
-				in_size,
-				in_depth,
-				out_sx,
-				out_sy,
-				out_depth,
-				filterSize,
-				in_sx,
-				in_sy,
-				filters_w.ori_p,
-				instance.in_act.w.ori_p,
-				instance.in_act.dw.ori_p,
-				instance.out_act.dw.ori_p,
-				trainableInstance.bias_dw.ori_p,
-				trainableInstance.filters_dw.ori_p
-			);
-		}
 
-		//public void backward2(Instance instance)
-		//{
-		//	TrainableInstance trainableInstance = ((TrainableInstance)instance);
-		//
-		//	//????????TODO 未初始化可能影响后续????????????????V.dw = Util.zeros(V.w.Length); // zero out gradient wrt bottom data, we're about to fill it
-		//	int in_size = in_sx * in_sy * in_depth;
-		//	int filterSize = sx * sy * in_depth;
-		//
-		//	if (act != null)
-		//	{
-		//		act.backward(trainableInstance.actIns);
-		//	}
-		//
-		//	CVBWD(
-		//		stride,
-		//		pad,
-		//		sx,
-		//		sy,
-		//		in_size,
-		//		in_depth,
-		//		out_sx,
-		//		out_sy,
-		//		out_depth,
-		//		filterSize,
-		//		in_sx,
-		//		in_sy,
-		//		filters_w.ori_p,
-		//		instance.in_act.w.ori_p,
-		//		instance.in_act.dw.ori_p,
-		//		instance.out_act.dw.ori_p,
-		//		trainableInstance.bias_dw.ori_p,
-		//		trainableInstance.filters_dw.ori_p
-		//	);
-		//}
+
+			if (Util.useSSE && in_depth % 8 == 0)
+			{
+				SSE_CVBWD(
+					stride,
+					pad,
+					sx,
+					sy,
+					in_sx,
+					in_sy,
+					in_depth,
+					out_sx,
+					out_sy,
+					out_depth,
+					filters_w.p,
+					instance.in_act.w.p,
+					instance.out_act.dw.p,
+					instance.in_act.dw.p,
+					trainableInstance.bias_dw.p,
+					trainableInstance.filters_dw.p
+				);
+			}
+			else
+			{
+				CVBWD(
+					stride,
+					pad,
+					sx,
+					sy,
+					in_sx,
+					in_sy,
+					in_depth,
+					out_sx,
+					out_sy,
+					out_depth,
+					filters_w.p,
+					instance.in_act.w.p,
+					instance.out_act.dw.p,
+					instance.in_act.dw.p,
+					trainableInstance.bias_dw.p,
+					trainableInstance.filters_dw.p
+				);
+			}
+		}
 
 
 		public bool noUpdate = false;

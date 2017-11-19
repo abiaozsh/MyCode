@@ -31,37 +31,25 @@ namespace ConvNet
 
 			insList[0] = initInData(fc);
 			insList[1] = initInData(fc);
-			insList[2] = initInData(fc);
 
 			var in_act = new Vol(1, 1, in_cnt, null);
 
 			Console.WriteLine("start");
 
 
-			Util.useGPU = false;
 			Util.useSSE = false;
 			test(10, "cpu", () =>
 			{
 				fc.forward(insList[0], in_act);
 			});
 
-			Util.useGPU = false;
 			Util.useSSE = true;
 			test(10, "sse", () =>
 			{
 				fc.forward(insList[1], in_act);
 			});
 
-			//Util.useGPU = true;
-			//Util.useSSE = false;
-			//test(10, "gpu", () =>
-			//{
-			//	fc.forward(insList[2], in_act);
-			//});
-
-
 			compare("out_act.w 1 ", insList[0].out_act.w, insList[1].out_act.w);
-			compare("out_act.w 2 ", insList[0].out_act.w, insList[2].out_act.w);
 
 			Console.WriteLine("ok");
 

@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using Lib;
 
 namespace ConvNet
 {
@@ -24,7 +23,7 @@ namespace ConvNet
 			bias_w.load(s);
 		}
 		//Vol[] filters;
-		MyFloat filters_w;
+		public MyFloat filters_w;
 
 		MyFloat[] filters_gsum; //[]?
 		MyFloat[] filters_xsum; //[]?
@@ -134,15 +133,9 @@ namespace ConvNet
 			IntPtr p_bias_w,
 			IntPtr p_out_act_w
 		);
-		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		private static extern IntPtr GK_FCFWD(IntPtr oclobjects);
-		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern int RK_FCFWD(
-			IntPtr oclobjects,
-			IntPtr kernel,
 
-			int x,
-			int y,
+		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern void SSE_FCFWD(
 			int out_depth,
 			int num_inputs,
 			IntPtr p_in_act_w,
@@ -150,230 +143,111 @@ namespace ConvNet
 			IntPtr p_bias_w,
 			IntPtr p_out_act_w
 		);
-		static IntPtr kernel_FCFWD;
+
+
+		public override Vol forward(Instance ins, Vol V)
+		{
+			ins.in_act = V;
+
+				if (Util.useSSE && num_inputs % 8 == 0)
+				{
+					SSE_FCFWD(
+						out_depth,
+						num_inputs,
+						ins.in_act.w.p,
+						filters_w.p,
+						bias_w.p,
+						ins.out_act.w.p);
+				}
+				else
+				{
+					FCFWD(
+						out_depth,
+						num_inputs,
+						ins.in_act.w.p,
+						filters_w.p,
+						bias_w.p,
+						ins.out_act.w.p);
+				}
+
+			if (act != null)
+			{
+				return act.forward(((TrainableInstance)ins).actIns, ins.out_act);
+			}
+			else
+			{
+				return ins.out_act;
+			}
+		}
+
 
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		private static extern IntPtr GK_FCBWD(IntPtr oclobjects);
-		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern int RK_FCBWD(
-			IntPtr oclobjects,
-			IntPtr kernel,
-
+		static extern void SSE_FCBWD(
 			int out_depth,
 			int num_inputs,
+
 			IntPtr p_in_act_w,
 			IntPtr p_filters_w,
-			IntPtr p_in_act_dw,
 			IntPtr p_out_act_dw,
+
+			IntPtr p_in_act_dw,
 			IntPtr p_filters_dw,
 			IntPtr p_bias_dw
 		);
-		static IntPtr kernel_FCBWD;
-		static FullyConnLayer()
-		{
-			if (OpenCL.oclobjects != IntPtr.Zero)
-			{
-				kernel_FCFWD = GK_FCFWD(OpenCL.oclobjects);
-				kernel_FCBWD = GK_FCBWD(OpenCL.oclobjects);
-			}
-		}
-
-		public override Vol forward(Instance instance, Vol V)
-		{
-			instance.in_act = V;
-			
-			//16*16: 1700,2170,2399 /  5
-			//if (OpenCL.oclobjects != IntPtr.Zero)
-			//{
-			//	long t1, t2, t3;
-			//	Stopwatch sw = new Stopwatch();
-			//	sw.Start();
-			//	instance.in_act.w.copyToCLMEM();
-			//	filters_w.copyToCLMEM();
-			//	bias_w.copyToCLMEM();
-			//	//instance.out_act.w.copyToCLMEM();
-			//	sw.Stop();
-			//	t1 = sw.ElapsedTicks;
-			//	sw.Restart();
-			//	int err = RK_FCFWD(OpenCL.oclobjects, kernel_FCFWD,x,y, out_depth, num_inputs, instance.in_act.w.p_cl_mem, filters_w.p_cl_mem, bias_w.p_cl_mem, instance.out_act.w.p_cl_mem);
-			//	sw.Stop();
-			//	t2 = sw.ElapsedTicks;
-            //    sw.Restart();
-			//	//instance.in_act.w.copyFromCLMEM();
-			//	//filters_w.copyFromCLMEM();
-			//	//bias_w.copyFromCLMEM();
-			//	instance.out_act.w.copyFromCLMEM();
-			//	sw.Stop();
-			//	t3 = sw.ElapsedTicks;
-			//
-			//	Console.WriteLine(t1 + "," + t2 + "," + t3);
-			//
-			//}
-			//else
-			{
-				//long aa = Stopwatch.Frequency;
-				//long t1 = 0, t2 = 0, t3 = 0;
-				//Stopwatch sw = new Stopwatch();
-				//sw.Start();
-				FCFWD(out_depth, num_inputs, instance.in_act.w.ori_p, filters_w.ori_p, bias_w.ori_p, instance.out_act.w.ori_p);
-				//sw.Stop();
-				//t3 = sw.ElapsedTicks;
-			
-				//Console.WriteLine(t1 + "," + t2 + "," + t3);
-			
-			}
-			
-			if (act != null)
-			{
-				return act.forward(((TrainableInstance)instance).actIns, instance.out_act);
-			}
-			else
-			{
-				return instance.out_act;
-			}
-		}
-
-		public Vol forward(Instance instance, Vol V, int x, int y)
-		{
-			instance.in_act = V;
-
-			//16*16: 1700,2170,2399 /  5
-			if (OpenCL.oclobjects != IntPtr.Zero)
-			{
-				long t1, t2, t3;
-				Stopwatch sw = new Stopwatch();
-				sw.Start();
-				instance.in_act.w.copyToCLMEM();
-				filters_w.copyToCLMEM();
-				bias_w.copyToCLMEM();
-				//instance.out_act.w.copyToCLMEM();
-				sw.Stop();
-				t1 = sw.ElapsedTicks;
-				sw.Restart();
-				int err = RK_FCFWD(OpenCL.oclobjects, kernel_FCFWD, x, y, out_depth, num_inputs, instance.in_act.w.p_cl_mem, filters_w.p_cl_mem, bias_w.p_cl_mem, instance.out_act.w.p_cl_mem);
-				Console.WriteLine(err);
-				sw.Stop();
-				t2 = sw.ElapsedTicks;
-				sw.Restart();
-				//instance.in_act.w.copyFromCLMEM();
-				//filters_w.copyFromCLMEM();
-				//bias_w.copyFromCLMEM();
-				instance.out_act.w.copyFromCLMEM();
-				sw.Stop();
-				t3 = sw.ElapsedTicks;
-
-				Console.WriteLine(t1 + "," + t2 + "," + t3);
-				Util.log(t1 + "," + t2 + "," + t3);
-			}
-			else
-			{
-				long aa = Stopwatch.Frequency;
-				long t1 = 0, t2 = 0, t3 = 0;
-				Stopwatch sw = new Stopwatch();
-				sw.Start();
-				FCFWD(out_depth, num_inputs, instance.in_act.w.ori_p, filters_w.ori_p, bias_w.ori_p, instance.out_act.w.ori_p);
-				sw.Stop();
-				t3 = sw.ElapsedTicks;
-
-				Console.WriteLine(t1 + "," + t2 + "," + t3);
-
-			}
-
-			if (act != null)
-			{
-				return act.forward(((TrainableInstance)instance).actIns, instance.out_act);
-			}
-			else
-			{
-				return instance.out_act;
-			}
-		}
-
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
 		static extern void FCBWD(
 			int out_depth,
 			int num_inputs,
+
 			IntPtr p_in_act_w,
 			IntPtr p_filters_w,
-			IntPtr p_in_act_dw,
 			IntPtr p_out_act_dw,
+
+			IntPtr p_in_act_dw,
 			IntPtr p_filters_dw,
 			IntPtr p_bias_dw
 		);
 
-		public override void backward(Instance instance)
+		public override void backward(Instance ins)
 		{
 			if (noUpdate) return;
 
-			TrainableInstance trainableInstance = ((TrainableInstance)instance);
+			TrainableInstance trainableIns = ((TrainableInstance)ins);
 
 			if (act != null)
 			{
-				act.backward(trainableInstance.actIns);
+				act.backward(trainableIns.actIns);
 			}
 
-			//if (false)//OpenCL.oclobjects != IntPtr.Zero)
-			//{
-			//	for (int i = 0; i < num_inputs; i++)
-			//	{
-			//		//in_act.dw[d] = 0;
-			//		in_act.dw[i] = 0;
-			//	}
-			//	//check(in_act.w);
-			//	//check(filters.w);
-			//	//check(bias.w);
-			//	//check(out_act.w);
-			//	long t1, t2, t3;
-			//	Stopwatch sw = new Stopwatch();
-			//	sw.Start();
-			//
-			//	in_act.w.copyToCLMEM();
-			//	filters_w.copyToCLMEM();
-			//	in_act.dw.copyToCLMEM();
-			//	out_act.dw.copyToCLMEM();
-			//	filters_dw.copyToCLMEM();
-			//	bias_dw.copyToCLMEM();
-			//
-			//	sw.Stop();
-			//	t1 = sw.ElapsedTicks;
-			//	sw.Start();
-			//	int err = RK_FCBWD(OpenCL.oclobjects, kernel_FCBWD, out_depth, num_inputs, in_act.w.p_cl_mem, filters_w.p_cl_mem, in_act.dw.p_cl_mem, out_act.dw.p_cl_mem, filters_dw.p_cl_mem, bias_dw.p_cl_mem);
-			//	sw.Stop();
-			//	t2 = sw.ElapsedTicks;
-			//	sw.Start();
-			//
-			//	in_act.w.copyFromCLMEM();
-			//	filters_w.copyToCLMEM();
-			//	in_act.dw.copyToCLMEM();
-			//	out_act.dw.copyToCLMEM();
-			//	filters_dw.copyToCLMEM();
-			//	bias_dw.copyToCLMEM();
-			//
-			//	sw.Stop();
-			//	t3 = sw.ElapsedTicks;
-			//	//sw.Start();
-			//
-			//	//Console.WriteLine(t1 + "," + t2 + "," + t3);
-			//	//check(in_act.w);
-			//	//check(filters.w);
-			//	//check(bias.w);
-			//	//check(out_act.w);
-			//	//Console.WriteLine(err);
-			//}
-			//else
-			{
-				//long aa = Stopwatch.Frequency;
-				//long t1 = 0, t2 = 0, t3 = 0;
-				//Stopwatch sw = new Stopwatch();
-				//sw.Start();
-				FCBWD(out_depth, num_inputs, instance.in_act.w.ori_p, filters_w.ori_p, instance.in_act.dw.ori_p, instance.out_act.dw.ori_p, trainableInstance.filters_dw.ori_p, trainableInstance.bias_dw.ori_p);
-				//sw.Stop();
-				//t3 = sw.ElapsedTicks;
-				//if (t3 < -10000)
-				//{
-				//	throw new Exception("slow");
-				//}
-			}
+				if (Util.useSSE && num_inputs % 8 == 0)
+				{
+					SSE_FCBWD(
+						out_depth,
+						num_inputs,
+
+						ins.in_act.w.p,
+						filters_w.p,
+						ins.out_act.dw.p,
+
+						ins.in_act.dw.p,
+						trainableIns.filters_dw.p,
+						trainableIns.bias_dw.p);
+				}
+				else
+				{
+					FCBWD(
+						out_depth,
+						num_inputs,
+
+						ins.in_act.w.p,
+						filters_w.p,
+						ins.out_act.dw.p,
+
+						ins.in_act.dw.p,
+						trainableIns.filters_dw.p,
+						trainableIns.bias_dw.p);
+				}
+
 		}
 		public bool noUpdate = false;
 		public override void train(TrainableInstance instance, Trainer trainer, float oneBatchSize)
