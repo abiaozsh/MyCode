@@ -14,13 +14,13 @@ namespace ConvNet
 		public string name;
 		public override void save(TextWriter s)
 		{
-			filters_w.save(s);
 			bias_w.save(s);
+			filters_w.save(s);
 		}
 		public override void load(TextReader s)
 		{
-			filters_w.load(s);
 			bias_w.load(s);
+			filters_w.load(s);
 		}
 		//Vol[] filters;
 		public MyFloat filters_w;

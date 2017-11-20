@@ -32,6 +32,12 @@ namespace ConvNet
 				Add(fcb);
 				Add(new RegressionLayer());
 
+				Util.load("test.txt", (s) =>
+				{
+					fca.load(s);
+					fcb.load(s);
+				});
+
 			}
 
 
@@ -50,15 +56,7 @@ namespace ConvNet
 				return this.forward(ins, data);
 			}
 		}
-
-		static void Main(string[] args)
-		{
-
-			//FCFWD_Test.Test();
-			//FCBWD_Test.Test();
-			//CVFWD_Test.Test();
-			//CVBWD_Test.Test();
-
+		/*
 
 			MainNet net = new MainNet();
 			net.init();
@@ -85,15 +83,15 @@ namespace ConvNet
 			volc.w[2] = 1.0f;
 			volc.w[3] = 1.5f;
 
-			for (int j = 0; j < 1000; j++)
+			for (int j = 0; j < 1; j++)
 			{
-				for (int i = 0; i < 1000; i++)
-				{
-					net.train(ins, vola);
-					net.train(ins, volb);
-					net.train(ins, volc);
-					net.endofBatch(new Net.Instance[] { ins }, 3);
-				}
+				//for (int i = 0; i < 1000; i++)
+				//{
+				//	net.train(ins, vola);
+				//	net.train(ins, volb);
+				//	net.train(ins, volc);
+				//	net.endofBatch(new Net.Instance[] { ins }, 3);
+				//}
 
 				Vol v;
 				v = net.forward(ins, vola);
@@ -120,9 +118,85 @@ namespace ConvNet
 				Console.WriteLine();
 			}
 
+			//Util.save("test2.txt", (s) =>
+			//{
+			//	net.fca.save(s);
+			//	net.fcb.save(s);
+			//});
+		 
+		 */
+		static void Main(string[] args)
+		{
+
+			//FCFWD_Test.Test();
+			//FCBWD_Test.Test();
+			//CVFWD_Test.Test();
+			//CVBWD_Test.Test();
+
+			Vol inp = new Vol(6, 6, 2, 0);
+
+			InputLayer inlayer = new InputLayer(6, 6, 2);
+
+			for (int i = 0; i < 6; i++)
+			{
+				for (int j = 0; j < 6; j++)
+				{
+					//inp.set(j, i, 0, (i+1) * 6 + j+1);
+					//inp.set(j, i, 1, (i+1) * 6 + j+1 + 0.5f);
+					inp.w[i * 6 * 2 + j * 2 + 0] = (i + 1) * 6 + j + 1;
+					inp.w[i * 6 * 2 + j * 2 + 1] = (i + 1) * 6 + j + 1 + 0.5f;
+				}
+			}
+
+			ReshapeLayer reshape2 = new ReshapeLayer(1, 1, inlayer.out_sx * inlayer.out_sy * inlayer.out_depth);
+			reshape2.in_layer = inlayer;
+			reshape2.init();
+			var resIns2 = reshape2.getInstance();
+
+			ConvLayer cv = new ConvLayer(3, 3, 4, 1, pad: 1, bias_pref: 0.1f);//, act: new ReluLayer()
+			cv.in_layer = inlayer;
+			cv.init();
+			var ins = cv.getInstance();
+
+			ReshapeLayer reshape = new ReshapeLayer(1, 1, cv.out_sx * cv.out_sy * cv.out_depth);
+			reshape.in_layer = cv;
+			reshape.init();
+			var resIns = reshape.getInstance();
+
+			FullyConnLayer fc = new FullyConnLayer(8);
+			fc.in_layer = reshape;
+			fc.init();
+			var fcins = fc.getInstance();
+
+			Util.load("conv.txt", (s) =>
+			{
+				cv.load(s);
+				fc.load(s);
+			});
+
+			Vol vres2 = reshape2.forward(resIns2, inp);
+
+			for (int i = 0; i < vres2.depth; i++)
+			{
+				Console.WriteLine(vres2.get(0, 0, i) + "\t");
+			}
+			Console.WriteLine();
+
+			Vol vcv = cv.forward(ins, inp);
+			Vol vres = reshape.forward(resIns, vcv);
+			Vol _out = fc.forward(fcins, vres);
+
+			for (int i = 0; i < vres.depth; i++)
+			{
+				Console.WriteLine(vres.get(0, 0, i) + "\t");
+			}
+			Console.WriteLine();
+			for (int i = 0; i < 8; i++)
+			{
+				Console.WriteLine(_out.get(0, 0, i) + "\t");
+			}
 
 			Console.ReadLine();
-
 		}
 	}
 }

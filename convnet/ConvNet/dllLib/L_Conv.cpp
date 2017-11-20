@@ -9,7 +9,7 @@
 #include <wmmintrin.h>//AES(include nmmintrin.h)  #include <immintrin.h>//AVX(include wmmintrin.h)  
 #include <intrin.h>//(include immintrin.h)  
 
-
+/*
 extern "C" __declspec(dllexport) void SSE_CVFWD(
 	int stride,
 	int pad,
@@ -79,7 +79,7 @@ extern "C" __declspec(dllexport) void SSE_CVFWD(
 	}
 
 }
-
+*/
 
 extern "C" __declspec(dllexport) void CVFWD(
 	int stride,
@@ -145,7 +145,7 @@ extern "C" __declspec(dllexport) void CVFWD(
 	}
 }
 
-
+/*
 extern "C" __declspec(dllexport) void SSE_CVBWD(
 	int stride,
 	int pad,
@@ -225,7 +225,7 @@ extern "C" __declspec(dllexport) void SSE_CVBWD(
 		}
 	}
 }
-
+*/
 
 extern "C" __declspec(dllexport) void CVBWD(
 	int stride,

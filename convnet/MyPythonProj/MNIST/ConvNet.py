@@ -1,6 +1,18 @@
 import tensorflow as tf
 import numpy as np
+from six.moves import xrange
 
+def openEmptyFileR(filename):
+    try:
+        return open(filename, 'r')
+    except:
+        return None
+
+def openEmptyFileW(filename):
+    try:
+        return open(filename, 'w')
+    except:
+        return None
 #  hidden = tf.nn.dropout(hidden, 0.5, seed=SEED)
 
 def Conv2FC_Reshape(conv):
@@ -10,14 +22,15 @@ def Conv2FC_Reshape(conv):
 
 #tf.nn.conv2d_transpose(value, filter, output_shape, strides, padding='SAME', name=None)
 
-def ConvLayer(inputT,filterSize,inDepth,outDepth,convStride,poolSize, loadFromFile = None, noChange=False):
+def ConvLayer(inputT,filterSize,outDepth,convStride,poolSize, loadFromFile = None, noChange=False, isRelu = True):
     
-
+    inDepth = int(inputT.shape[3])
+    
     if loadFromFile:
         biasarray = np.ndarray([outDepth], np.float32)
 
-        for i in range(0,outDepth):
-            line = loadFromFile.next();
+        for i in xrange(0,outDepth):
+            line = loadFromFile.readline();
             biasarray[i] = float(line)
 
         biases = tf.constant(biasarray)
@@ -25,11 +38,12 @@ def ConvLayer(inputT,filterSize,inDepth,outDepth,convStride,poolSize, loadFromFi
 
         warray = np.ndarray([filterSize, filterSize, inDepth, outDepth], np.float32)
 
-        for x in range(0,filterSize):
-            for y in range(0,filterSize):
-                for i in range(0,inDepth):
-                    for j in range(0,outDepth):
-                        line = loadFromFile.next();
+      
+        for j in xrange(0,outDepth):
+            for x in xrange(0,filterSize):
+                for y in xrange(0,filterSize):
+                    for i in xrange(0,inDepth):
+                        line = loadFromFile.readline();
                         warray[x,y,i,j] = float(line)
 
         weights = tf.constant(warray)
@@ -37,6 +51,11 @@ def ConvLayer(inputT,filterSize,inDepth,outDepth,convStride,poolSize, loadFromFi
         
     else:
         biases = tf.Variable(tf.constant(0.1, shape=[outDepth], dtype=tf.float32))
+        #biasarray = np.ndarray([outDepth], np.float32)
+        #for i in xrange(0,outDepth):
+        #    biasarray[i] = float((i+1)*0.1)
+        #biases = tf.constant(biasarray)
+        
         weights = tf.truncated_normal([filterSize, filterSize, inDepth, outDepth], stddev=0.1, dtype=tf.float32)
 
 
@@ -49,18 +68,35 @@ def ConvLayer(inputT,filterSize,inDepth,outDepth,convStride,poolSize, loadFromFi
     # Bias and rectified linear non-linearity.
     #tf.zeros([32], dtype=data_type())
 
-    _relu = tf.nn.relu(tf.nn.bias_add(_conv, biases))
+    if isRelu:
+        _relu = tf.nn.relu(tf.nn.bias_add(_conv, biases))
+    else:
+        _relu = tf.nn.bias_add(_conv, biases)
     # Max pooling. The kernel size spec {ksize} also follows the layout of
     # the data. Here we have a pooling window of 2, and a stride of 2.
-    _pool = tf.nn.max_pool(_relu,ksize=[1, poolSize, poolSize, 1],strides=[1, poolSize, poolSize, 1],padding='SAME')
-    
-    def saver(sess):
-        #_arrW = sess.run(weights)
-        #_arrB = sess.run(biases)
-        bbb = sess + biases + weights
-        return
+    if poolSize>1:
+        _out = tf.nn.max_pool(_relu,ksize=[1, poolSize, poolSize, 1],strides=[1, poolSize, poolSize, 1],padding='SAME')
+    else:
+        _out = _relu
+        
+    def saver(sess,saveToFile):
+        biasarray = sess.run(biases)
 
-    return _pool,saver
+        for i in xrange(0,outDepth):
+            val = biasarray[i]
+            saveToFile.write(str(val)+"\n");
+
+        warray = sess.run(weights)
+
+        for j in xrange(0,outDepth):
+            for x in xrange(0,filterSize):
+                for y in xrange(0,filterSize):
+                    for i in xrange(0,inDepth):
+                        val = warray[x,y,i,j]
+                        saveToFile.write(str(val)+"\n");
+
+
+    return _out,saver
 
 def FCLayer(inputT,outCnt,isRelu = False, loadFromFile = None, noChange=False):#inCnt,
     inCnt = int(inputT.shape[1])
@@ -70,8 +106,8 @@ def FCLayer(inputT,outCnt,isRelu = False, loadFromFile = None, noChange=False):#
     if loadFromFile:
         biasarray = np.ndarray([outCnt], np.float32)
 
-        for i in range(0,outCnt):
-            line = loadFromFile.next();
+        for i in xrange(0,outCnt):
+            line = loadFromFile.readline();
             biasarray[i] = float(line)
 
         biases = tf.constant(biasarray)
@@ -79,9 +115,9 @@ def FCLayer(inputT,outCnt,isRelu = False, loadFromFile = None, noChange=False):#
 
         warray = np.ndarray([inCnt,outCnt], np.float32)
 
-        for i in range(0,inCnt):
-            for j in range(0,outCnt):
-                line = loadFromFile.next();
+        for j in xrange(0,outCnt):
+            for i in xrange(0,inCnt):
+                line = loadFromFile.readline();
                 warray[i,j] = float(line)
 
         weights = tf.constant(warray)
@@ -89,6 +125,11 @@ def FCLayer(inputT,outCnt,isRelu = False, loadFromFile = None, noChange=False):#
         
     else:
         biases = tf.Variable(tf.constant(0.1, shape=[outCnt], dtype=tf.float32))
+        #biasarray = np.ndarray([outCnt], np.float32)
+        #for i in xrange(0,outCnt):
+        #    biasarray[i] = float((i+1)*0.1)
+        #biases = tf.constant(biasarray)
+        
         weights = tf.truncated_normal([inCnt,outCnt], stddev=0.1, dtype=tf.float32)
 
 
@@ -98,10 +139,21 @@ def FCLayer(inputT,outCnt,isRelu = False, loadFromFile = None, noChange=False):#
    
     layer = tf.nn.bias_add(tf.matmul(inputT, weights), biases)
     
-    def saver(sess):
-        #_arrW = sess.run(weights)
-        #_arrB = sess.run(biases)
-        bbb = sess + biases + weights
+    def saver(sess,saveToFile):
+
+        biasarray = sess.run(biases)
+
+        for i in xrange(0,outCnt):
+            val = biasarray[i]
+            saveToFile.write(str(val)+"\n");
+
+        warray = sess.run(weights)
+
+        for j in xrange(0,outCnt):
+            for i in xrange(0,inCnt):
+                val = warray[i,j]
+                saveToFile.write(str(val)+"\n");
+
         return
         
     

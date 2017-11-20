@@ -11,7 +11,7 @@ namespace ConvNet
 {
 	public class Util
 	{
-		public static bool useSSE = true;
+		public static bool useSSE = false;
 
 		public delegate void DoSave(StreamWriter sw);
 		public static void save(string filename, DoSave sv)
@@ -40,8 +40,9 @@ namespace ConvNet
 				ld(sr);
 				fs.Close();
 			}
-			catch
+			catch (Exception ex)
 			{
+				ex.ToString();
 			}
 		}
 		public static void log(string txt)

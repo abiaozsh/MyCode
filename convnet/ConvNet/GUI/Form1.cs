@@ -86,7 +86,7 @@ namespace GUI
 
 			var v10 = mainet.forward(ins, img);
 
-			String s = MNIST.report(v10, -1, -1);
+			String s = MNISTData.report(v10, -1, -1);
 			textBox2.Text = (s);
 
 
@@ -201,7 +201,37 @@ namespace GUI
 
 		private void button2_Click(object sender, EventArgs e)
 		{
+			MNIST.TestNet net = new MNIST.TestNet();
+			net.init();
+			var ins = net.getInstance();
 
+			Util.load("conv.txt", (s) =>
+			{
+				net.cv1.load(s);
+				net.cv2.load(s);
+				net.fc1.load(s);
+				net.fc2.load(s);
+			});
+
+			int cnt = 0;
+			for (int i = 64; i < 128; i++)
+			{
+				Vol v = new Vol(28, 28, 1, 0);
+				MNISTData.getImg(v, i);
+				int l = MNISTData.getLbl(i);
+
+				this.pictureBox1.Image = v.vis(0, 255);
+				
+				Application.DoEvents();
+
+				Vol outv = net.forward(ins, v);
+				int pred = MNISTData.GetPredicted(outv);
+				if (pred == l)
+				{
+					cnt++;
+				}
+			}
+			textBox1.Text = "" + cnt;
 		}
 
 		public void vis4(ConvLayer cv1)

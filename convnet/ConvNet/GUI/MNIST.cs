@@ -182,10 +182,10 @@ namespace GUI
 
 		static MNISTData()
 		{
-			FileStream fsimg1 = new FileStream(@"E:\MNIST\t10k-images.idx3-ubyte", FileMode.Open, FileAccess.Read);
-			FileStream fslbl1 = new FileStream(@"E:\MNIST\t10k-labels.idx1-ubyte", FileMode.Open, FileAccess.Read);
-			FileStream fsimg2 = new FileStream(@"E:\MNIST\train-images.idx3-ubyte", FileMode.Open, FileAccess.Read);
-			FileStream fslbl2 = new FileStream(@"E:\MNIST\train-labels.idx1-ubyte", FileMode.Open, FileAccess.Read);
+			FileStream fsimg1 = new FileStream(@"E:\MNIST\train-images.idx3-ubyte", FileMode.Open, FileAccess.Read);
+			FileStream fslbl1 = new FileStream(@"E:\MNIST\train-labels.idx1-ubyte", FileMode.Open, FileAccess.Read);
+			FileStream fsimg2 = new FileStream(@"E:\MNIST\t10k-images.idx3-ubyte", FileMode.Open, FileAccess.Read);
+			FileStream fslbl2 = new FileStream(@"E:\MNIST\t10k-labels.idx1-ubyte", FileMode.Open, FileAccess.Read);
 
 			fsimg1.Read(buffimg, 0, 16);//head
 			int len = fsimg1.Read(buffimg, 0, 1024 * 1024 * 64);
@@ -212,20 +212,31 @@ namespace GUI
 
 		public static void getImg(Vol v, int idx)
 		{
-			//idx = MNIST.getGoodData(idx);
-			int[] data = new int[28 * 28];
-
-			for (int i = 0; i < 28 * 28; i++)
+			for (int j = 0; j < 28; j++)
 			{
-				int val = buffimg[idx * 28 * 28 + i];
-				data[i] = val;
+				for (int i = 0; i < 28; i++)
+				{
+					int val = buffimg[idx * 28 * 28 + j * 28 + i];
+
+					v.w[j * 28 + i] = val / 255.0f;
+				}
 			}
 
-			int[] img = data;
-			for (var i = 0; i < 28 * 28; i++)
-			{
-				v.w[i] = (float)img[i] / 255.0f;
-			}
+
+//			//idx = MNIST.getGoodData(idx);
+//			int[] data = new int[28 * 28];
+//
+//			for (int i = 0; i < 28 * 28; i++)
+//			{
+//				int val = buffimg[idx * 28 * 28 + i];
+//				data[i] = val;
+//			}
+//
+//			int[] img = data;
+//			for (var i = 0; i < 28 * 28; i++)
+//			{
+//				v.w[i] = (float)img[i] / 255.0f;
+//			}
 		}
 		public static void getImg(Vol v, int[] data)
 		{
@@ -245,7 +256,6 @@ namespace GUI
 		}
 		static public Bitmap getBmp(int idx)
 		{
-			//idx = MNIST.getGoodData(idx);
 			Bitmap b = new Bitmap(28, 28);
 
 			for (int j = 0; j < 28; j++)
@@ -279,6 +289,63 @@ namespace GUI
 		{
 			//idx = MNIST.getGoodData(idx);
 			return bufflbl[idx];
+		}
+		public class Pack
+		{
+			public float predict;
+			public int val;
+		}
+		public static string report(Vol v, int index, int correctVal)
+		{
+			List<Pack> list = new List<Pack>();
+			for (int i = 0; i < 11; i++)
+			{
+				list.Add(new Pack() { predict = v.w[i], val = i });
+			}
+
+			list.Sort((a, b) => ((a.predict > b.predict) ? -1 : 1));
+
+			string ret = index + "\t";
+			ret += correctVal + "\t";
+			ret += list[0].val + "\t";
+			if (correctVal != list[0].val)
+			{
+				ret += "X\t";
+				ret += "L\t";
+			}
+			else
+			{
+				ret += "O\t";
+				if (list[0].predict > 0.9f)
+				{
+					ret += "H\t";
+				}
+				else
+				{
+					ret += "L\t";
+				}
+			}
+
+			for (int i = 0; i < 3; i++)
+			{
+				ret += list[i].val + ":" + list[i].predict + "\t";
+			}
+			return ret;
+		}
+
+
+		public static int GetPredicted(Vol v)
+		{
+
+			List<Pack> list = new List<Pack>();
+			for (int i = 0; i < 10; i++)
+			{
+				list.Add(new Pack() { predict = v.w[i], val = i });
+			}
+
+			list.Sort((a, b) => ((a.predict > b.predict) ? -1 : 1));
+
+			return list[0].val;
 		}
 
 	}
@@ -462,7 +529,6 @@ namespace GUI
 				}
 			}
 		}
-
 		public class Lv3TrainNet : Net
 		{
 			public ConvLayer cv1;
@@ -673,7 +739,94 @@ namespace GUI
 					ds.predict = MNISTData.getLbl(trainIndex);
 
 					var o = forward(ins, ins.inact);
-					int predict = MNIST.GetPredicted(o);
+					int predict = MNISTData.GetPredicted(o);
+					if (ds.predict == predict)
+					{
+						accu += 1.0f;
+					}
+				}
+				return accu;
+			}
+		}
+
+		public class TestNet : Net
+		{
+			public ConvLayer cv1;
+			public ConvLayer cv2;
+			public FullyConnLayer fc1;
+			public FullyConnLayer fc2;
+
+			public void init()
+			{
+				//this, new Trainer.Option() 
+				trainer = new AdaDeltaTrainer() { l2_decay = 0.001f };//0.001f
+
+				cv1 = new ConvLayer(sx: 5, sy: 5, filters: 32, stride: 1, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
+				cv2 = new ConvLayer(sx: 5, sy: 5, filters: 64, stride: 1, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
+				fc1 = new FullyConnLayer(num_neurons: 512, bias_pref: 0.1f, act: new ReluLayer());
+				fc2 = new FullyConnLayer(num_neurons: 10, bias_pref: 0.1f);
+
+				Add(new InputLayer(out_sx: 28, out_sy: 28, out_depth: 1));
+				Add(cv1);
+				Add(new PoolLayer(stride: 2));
+				Add(cv2);
+				Add(new PoolLayer(stride: 2));
+				Add(fc1);
+				Add(fc2);
+				Add(new SoftmaxLayer());
+
+			}
+
+
+			public void train(Net.Instance ins, int trainIndex)
+			{
+				DataSet ds = new DataSet();
+				//train
+				//for (int i = 0; i < 1000; i++)
+				int[] data = new int[28 * 28];
+				{
+					bool shift = false;
+					if (shift)
+					{
+						MNISTData.rotate(trainIndex, data);
+						MNISTData.getImgV(data, ins.inact);
+					}
+					else
+					{
+						MNISTData.getImg(ins.inact, trainIndex);
+					}
+					ds.predict = MNISTData.getLbl(trainIndex);
+
+					train(ins, ins.inact, ds);
+				}
+
+			}
+
+			public float test(Net.Instance ins, int start, int end)
+			{
+				float accu = 0;
+				DataSet ds = new DataSet();
+
+				int[] data = new int[28 * 28];
+
+				for (int j = start; j < end; j++)//test
+				{
+					int trainIndex = j;//(int)(MNISTData.rnd.NextDouble() * MNISTData.Count);
+
+					bool shift = false;
+					if (shift)
+					{
+						MNISTData.rotate(trainIndex, data);
+						MNISTData.getImgV(data, ins.inact);
+					}
+					else
+					{
+						MNISTData.getImg(ins.inact, trainIndex);
+					}
+					ds.predict = MNISTData.getLbl(trainIndex);
+
+					var v = forward(ins, ins.inact);
+					int predict = MNISTData.GetPredicted(v);
 					if (ds.predict == predict)
 					{
 						accu += 1.0f;
@@ -774,62 +927,6 @@ namespace GUI
 		}
 
 
-
-		public class Pack
-		{
-			public float predict;
-			public int val;
-		}
-		public static string report(Vol v, int index, int correctVal)
-		{
-			List<Pack> list = new List<Pack>();
-			for (int i = 0; i < 11; i++)
-			{
-				list.Add(new Pack() { predict = v.w[i], val = i });
-			}
-
-			list.Sort((a, b) => ((a.predict > b.predict) ? -1 : 1));
-
-			string ret = index + "\t";
-			ret += correctVal + "\t";
-			ret += list[0].val + "\t";
-			if (correctVal != list[0].val)
-			{
-				ret += "X\t";
-				ret += "L\t";
-			}
-			else
-			{
-				ret += "O\t";
-				if (list[0].predict > 0.9f)
-				{
-					ret += "H\t";
-				}
-				else
-				{
-					ret += "L\t";
-				}
-			}
-
-			for (int i = 0; i < 3; i++)
-			{
-				ret += list[i].val + ":" + list[i].predict + "\t";
-			}
-			return ret;
-		}
-		public static int GetPredicted(Vol v)
-		{
-
-			List<Pack> list = new List<Pack>();
-			for (int i = 0; i < 10; i++)
-			{
-				list.Add(new Pack() { predict = v.w[i], val = i });
-			}
-
-			list.Sort((a, b) => ((a.predict > b.predict) ? -1 : 1));
-
-			return list[0].val;
-		}
 
 	}
 }
