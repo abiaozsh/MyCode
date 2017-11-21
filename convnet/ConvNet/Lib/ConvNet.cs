@@ -11,7 +11,7 @@ namespace ConvNet
 {
 	public class Util
 	{
-		public static bool useSSE = false;
+		public static bool useSSE = true;
 
 		public delegate void DoSave(StreamWriter sw);
 		public static void save(string filename, DoSave sv)

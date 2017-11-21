@@ -11,6 +11,52 @@ namespace GUI
 {
 	class Cifar
 	{
+		public static void ToHWC()
+		{
+
+			string[] files = {
+				@"E:\MNIST\cifar-10-batches-bin\data_batch_1.bin",
+				@"E:\MNIST\cifar-10-batches-bin\data_batch_2.bin",
+				@"E:\MNIST\cifar-10-batches-bin\data_batch_3.bin",
+				@"E:\MNIST\cifar-10-batches-bin\data_batch_4.bin",
+				@"E:\MNIST\cifar-10-batches-bin\data_batch_5.bin",
+				@"E:\MNIST\cifar-10-batches-bin\test_batch.bin" };
+
+			FileStream fs = new FileStream(@"E:\MNIST\cifar-10-batches-bin\HWC.bin", FileMode.Create, FileAccess.Write);
+
+			foreach (var file in files)
+			{
+
+				load(file, 0);
+
+				byte[] buff = new byte[32 * 32 * 3];
+
+				for (int imgI = 0; imgI < 10000; imgI++)
+				{
+					for (int i = 0; i < 32; i++)
+					{
+						for (int j = 0; j < 32; j++)
+						{
+							byte r = imgData[imgI][32 * 32 * 0 + i * 32 + j];
+							byte g = imgData[imgI][32 * 32 * 1 + i * 32 + j];
+							byte b = imgData[imgI][32 * 32 * 2 + i * 32 + j];
+
+							buff[i * 32 * 3 + j * 3 + 0] = r;
+							buff[i * 32 * 3 + j * 3 + 1] = g;
+							buff[i * 32 * 3 + j * 3 + 2] = b;
+						}
+					}
+
+					fs.Write(buff, 0, 32 * 32 * 3);
+				}
+
+			}
+
+			fs.Close();
+		}
+
+
+
 		static byte[][] imgData = new byte[60000][];
 		static byte[] lblData = new byte[60000];
 
@@ -43,20 +89,21 @@ namespace GUI
 		//	fsimg1.Flush();
 		//	fsimg1.Close();
 		//}
-		//static int load(string filename, int idx)
-		//{
-		//	FileStream fsimg1 = new FileStream(filename, FileMode.Open, FileAccess.Read);
-		//
-		//	for(int i=0;i<10000;i++){
-		//		fsimg1.Read(lblData, idx, 1);
-		//		byte[] img = new byte[3072];
-		//		fsimg1.Read(img, 0, 3072);
-		//		imgData[idx] = img;
-		//		idx++;
-		//	}
-		//	fsimg1.Close();
-		//	return idx;
-		//}
+		static int load(string filename, int idx)
+		{
+			FileStream fsimg1 = new FileStream(filename, FileMode.Open, FileAccess.Read);
+
+			for (int i = 0; i < 10000; i++)
+			{
+				fsimg1.Read(lblData, idx, 1);
+				byte[] img = new byte[3072];
+				fsimg1.Read(img, 0, 3072);
+				imgData[idx] = img;
+				idx++;
+			}
+			fsimg1.Close();
+			return idx;
+		}
 		static void load(string filename)
 		{
 			FileStream fsimg1 = new FileStream(filename, FileMode.Open, FileAccess.Read);
@@ -396,7 +443,7 @@ namespace GUI
 				cv2 = new ConvLayer(sx: 4, sy: 4, filters: 32, stride: 1, pad: 2, adj: -1, bias_pref: 0.1f, act: new ReluLayer());
 				cv3 = new ConvLayer(sx: 4, sy: 4, filters: 64, stride: 1, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
 				fc2 = new FullyConnLayer(num_neurons: 2, bias_pref: 0.1f, act: new ReluLayer());
-				fcn = new FullyConnLayer(num_neurons: 32*32*3, bias_pref: 0.1f, act: new ReluLayer());
+				fcn = new FullyConnLayer(num_neurons: 32 * 32 * 3, bias_pref: 0.1f, act: new ReluLayer());
 
 				Add(new InputLayer(out_sx: 32, out_sy: 32, out_depth: 3));
 				Add(cv1);
@@ -438,7 +485,7 @@ namespace GUI
 
 					train(ins, v, ds);
 				}
-				return ins.list[ins.list.Length-1].out_act;
+				return ins.list[ins.list.Length - 1].out_act;
 			}
 		}
 

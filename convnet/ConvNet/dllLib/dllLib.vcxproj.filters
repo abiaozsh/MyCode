@@ -24,5 +24,8 @@
     <ClCompile Include="L_FullC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="L_DeConv.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
