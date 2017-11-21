@@ -41,9 +41,8 @@ fc1,fc1saver = ConvNet.FCLayer(inputlayer,5,isRelu = True,loadFromFile=testfile)
 fc2,fc2saver = ConvNet.FCLayer(fc1,4,loadFromFile=testfile)
 if testfile:testfile.close()   
 
-# loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
-#      labels=train_labels_node, logits=logits))
-  
+# loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=train_labels_node, logits=logits))
+
 loss = tf.reduce_sum(tf.square(fc2 - finaldata))
 #optimizer = tf.train.AdadeltaOptimizer(learning_rate=1).minimize(loss)  # tf.train.AdadeltaOptimizer.init(learning_rate=0.001, rho=0.95, epsilon=1e-08, use_locking=False, name='Adadelta')
 optimizer = tf.train.GradientDescentOptimizer(0.001).minimize(loss)

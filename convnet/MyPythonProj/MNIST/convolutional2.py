@@ -2,8 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
-import sys
 import time
 
 import numpy
@@ -11,14 +9,10 @@ from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 import ConvNet
 
-from PIL import Image
-
-WORK_DIRECTORY = 'data'
 IMAGE_SIZE = 28
 NUM_CHANNELS = 1
 PIXEL_DEPTH = 255
 NUM_LABELS = 10
-SEED = 66478  # Set to None for random seed.
 BATCH_SIZE = 64
 VALIDATION_SIZE = 64  # Size of the validation set.
 NUM_EPOCHS = 10
@@ -26,11 +20,6 @@ EVAL_FREQUENCY = 10  # Number of steps between evaluations.
 
 
 FLAGS = None
-
-def maybe_download(filename):
-    """Download the data from Yann's website, unless it's already here."""
-    filepath = os.path.join(WORK_DIRECTORY, filename)
-    return filepath
 
 
 def extract_data(filename, num_images):
@@ -63,17 +52,11 @@ def error_rate(predictions, labels):
     return str(numpy.sum(numpy.argmax(predictions, 1) == labels))
 
 
-# Get the data.
-train_data_filename = maybe_download('train-images.idx3-ubyte')
-train_labels_filename = maybe_download('train-labels.idx1-ubyte')
-test_data_filename = maybe_download('t10k-images.idx3-ubyte')
-test_labels_filename = maybe_download('t10k-labels.idx1-ubyte')
-
 # Extract it into numpy arrays.
-train_data = extract_data(train_data_filename, 60000)
-train_labels = extract_labels(train_labels_filename, 60000)
-test_data = extract_data(test_data_filename, 10000)
-test_labels = extract_labels(test_labels_filename, 10000)
+train_data = extract_data('E:\\MNIST\\train-images.idx3-ubyte', 60000)
+train_labels = extract_labels('E:\\MNIST\\train-labels.idx1-ubyte', 60000)
+test_data = extract_data('E:\\MNIST\\t10k-images.idx3-ubyte', 10000)
+test_labels = extract_labels('E:\\MNIST\\t10k-labels.idx1-ubyte', 10000)
 
 # Generate a validation set.
 validation_data = train_data[:VALIDATION_SIZE, ...]
@@ -84,39 +67,6 @@ num_epochs = NUM_EPOCHS
 
 train_size = train_labels.shape[0]
 
-def setpixel(imgdata,x,y,r,g,b):
-    imgdata[y,x,0] = r
-    imgdata[y,x,1] = g
-    imgdata[y,x,2] = b
-    
-def clearImg(imgdata):
-    for i in xrange(0,28):
-        for j in xrange(0,28):
-            setpixel(imgdata,i,j,0,0,0)
-    
-    
-def saveimg(idx):
-    data = numpy.ndarray([28,28,4],numpy.byte)
-    clearImg(data)
-    for i in xrange(0,28):
-        for j in xrange(0,28):
-            val = train_data[idx,j,i,0]
-            color = (val) * 254
-            setpixel(data,i,j,int(color),int(color),int(color))
-    lbl = train_labels[idx]
-    img = Image.frombytes("RGBA", (28,28), data)
-    img.save(str(idx)+"-"+str(lbl)+"a.bmp")
-    
-saveimg(0)
-saveimg(1)
-saveimg(2)
-saveimg(3)
-saveimg(4)
-saveimg(5)
-saveimg(6)
-saveimg(7)
-saveimg(8)
-    
 # This is where training samples and labels are fed to the graph.
 # These placeholder nodes will be fed a batch of training data at each
 # training step using the {feed_dict} argument to the Run() call below.
@@ -173,7 +123,7 @@ def train():
             # print some extra information once reach the evaluation frequency
             if step % EVAL_FREQUENCY == 0:
                 # fetch some extra nodes' data
-                l, lr, predictions = sess.run([loss, learning_rate, train_prediction],
+                l, predictions = sess.run([loss, train_prediction],
                                               feed_dict=feed_dict)
                 elapsed_time = time.time() - start_time
                 start_time = time.time()
