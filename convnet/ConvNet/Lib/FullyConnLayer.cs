@@ -110,12 +110,6 @@ namespace ConvNet
 			TrainableInstance ins = new TrainableInstance();
 			ins.out_act = new Vol(1, 1, this.out_depth, 0.0f);
 
-			ins.filters_dw = new MyFloat(num_inputs * out_depth);
-			Vol.init(ins.filters_dw, num_inputs * out_depth, 0.0f);
-
-			ins.bias_dw = new MyFloat(out_depth);
-			Vol.init(ins.bias_dw, out_depth, 0.0f);
-
 			if (act != null)
 			{
 				ins.actIns = act.getInstance();
@@ -181,108 +175,6 @@ namespace ConvNet
 		}
 
 
-		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern void SSE_FCBWD(
-			int out_depth,
-			int num_inputs,
 
-			IntPtr p_in_act_w,
-			IntPtr p_filters_w,
-			IntPtr p_out_act_dw,
-
-			IntPtr p_in_act_dw,
-			IntPtr p_filters_dw,
-			IntPtr p_bias_dw
-		);
-		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern void FCBWD(
-			int out_depth,
-			int num_inputs,
-
-			IntPtr p_in_act_w,
-			IntPtr p_filters_w,
-			IntPtr p_out_act_dw,
-
-			IntPtr p_in_act_dw,
-			IntPtr p_filters_dw,
-			IntPtr p_bias_dw
-		);
-
-		public override void backward(Instance ins)
-		{
-			if (noUpdate) return;
-
-			TrainableInstance trainableIns = ((TrainableInstance)ins);
-
-			if (act != null)
-			{
-				act.backward(trainableIns.actIns);
-			}
-
-				if (Util.useSSE && num_inputs % 8 == 0)
-				{
-					SSE_FCBWD(
-						out_depth,
-						num_inputs,
-
-						ins.in_act.w.p,
-						filters_w.p,
-						ins.out_act.dw.p,
-
-						ins.in_act.dw.p,
-						trainableIns.filters_dw.p,
-						trainableIns.bias_dw.p);
-				}
-				else
-				{
-					FCBWD(
-						out_depth,
-						num_inputs,
-
-						ins.in_act.w.p,
-						filters_w.p,
-						ins.out_act.dw.p,
-
-						ins.in_act.dw.p,
-						trainableIns.filters_dw.p,
-						trainableIns.bias_dw.p);
-				}
-
-		}
-		public bool noUpdate = false;
-		public override void train(TrainableInstance instance, Trainer trainer, float oneBatchSize)
-		{
-			if (noUpdate) return;
-			for (int i = 0; i < this.out_depth; i++)
-			{
-				//int iw = i * this.num_inputs;
-				//response.Add(new ParamsAndGrads() { Params = this.filters[i].w, grads = this.filters[i].dw, l1_decay_mul = this.l1_decay_mul, l2_decay_mul = this.l2_decay_mul });
-				trainer.train(
-					num_inputs,//params_size = 
-					this.filters_w,//params_ = 
-					instance.filters_dw,//grads_ = 
-					i * num_inputs,//params_idx = 
-					i * num_inputs,//grads_idx = 
-					filters_gsum[i],//gsum = 
-					filters_xsum[i],//xsum = 
-					this.l1_decay_mul,//l1_decay_mul = 
-					this.l2_decay_mul,//l2_decay_mul = 
-					oneBatchSize
-				);
-			}
-			//response.Add(new ParamsAndGrads() { Params = this.biases.w, grads = this.biases.dw, l1_decay_mul = 0.0f, l2_decay_mul = 0.0f });
-			trainer.train(
-				out_depth,//params_size = 
-				this.bias_w,//params_ = 
-				instance.bias_dw,//grads_ = 
-				0,//params_idx = 
-				0,//grads_idx = 
-				bias_gsum,//gsum = 
-				bias_xsum,//xsum = 
-				0.0f,//l1_decay_mul = 
-				0.0f,//l2_decay_mul = 
-				oneBatchSize
-			);
-		}
 	}
 }

@@ -10,16 +10,6 @@ using System.Diagnostics;
 
 namespace ConvNet
 {
-	//in_depth % 8 == 0)  有问题 ok
-
-	//w 和 dw 分离
-	//instance 化
-	//并行训练
-	//合并后调参
-
-	//输入参数归一化
-
-
 
 	public abstract class Layer
 	{
@@ -30,12 +20,9 @@ namespace ConvNet
 		public int out_sx;
 		public int out_sy;
 		public int out_depth;
-		public float l1_decay_mul;
-		public float l2_decay_mul;
 		public abstract bool inited();
 		public abstract void init();
 		public abstract Vol forward(Instance ins, Vol V);
-		public abstract void backward(Instance ins);
 
 		public class Instance
 		{
@@ -68,12 +55,8 @@ namespace ConvNet
 
 		public class TrainableInstance : Instance
 		{
-			public MyFloat filters_dw;
-			public MyFloat bias_dw;
 			public Instance actIns;
 		}
-
-		public abstract void train(TrainableInstance instance, Trainer trainer, float oneBatchSize);
 	}
 
 
@@ -113,12 +96,11 @@ namespace ConvNet
 			//Vol V2 = V.clone();
 
 			int N = V.w.size;
-			//float[] V2w = V2.w;
 			for (int i = 0; i < N; i++)
 			{
 				if (V.w[i] < 0)
 				{
-					instance.out_act.w[i] = 0; // threshold at 0
+					instance.out_act.w[i] = V.w[i]*0.2f;
 				}
 				else
 				{
@@ -127,25 +109,6 @@ namespace ConvNet
 			}
 			//this.out_act = V2;
 			return instance.out_act;
-		}
-		public override void backward(Instance instance)
-		{
-			//Vol V = this.in_act; // we need to set dw of this
-			//Vol V2 = this.out_act;
-			int N = instance.in_act.w.size;
-			//V.dw = Util.zeros(N); // zero out gradient wrt data
-			for (int i = 0; i < N; i++)
-			{
-				//in_act.dw[i] = 0;
-				if (instance.out_act.w[i] <= 0)
-				{
-					instance.in_act.dw[i] = 0; // threshold
-				}
-				else
-				{
-					instance.in_act.dw[i] = instance.out_act.dw[i];
-				}
-			}
 		}
 	}
 	public class TanhLayer : ActivationLayer
@@ -188,15 +151,6 @@ namespace ConvNet
 			}
 			return instance.out_act;
 		}
-		public override void backward(Instance instance)
-		{
-			//V.dw = Util.zeros(N); // zero out gradient wrt data
-			for (int i = 0; i < in_size; i++)
-			{
-				float v2wi = instance.out_act.w[i];
-				instance.in_act.dw[i] = (1.0f - v2wi * v2wi) * instance.out_act.dw[i];
-			}
-		}
 	}
 
 	public class PoolLayer : Layer
@@ -208,12 +162,6 @@ namespace ConvNet
 		public int in_sy;
 		public int stride;
 		//public int pad;
-
-		public class PoolInstance : Instance
-		{
-			public int[] switchx;
-			public int[] switchy;
-		}
 
 		public PoolLayer(int stride = 2)
 		{
@@ -246,18 +194,14 @@ namespace ConvNet
 		}
 		public override Instance getInstance()
 		{
-			PoolInstance ins = new PoolInstance();
+			Instance ins = new Instance();
 			ins.out_act = new Vol(out_sx, out_sy, out_depth, 0.0f);
-			ins.switchx = new int[out_sx * out_sy * out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
-			ins.switchy = new int[out_sx * out_sy * out_depth];//Util.zeros(this.out_sx * this.out_sy * this.out_depth);
 			return ins;
 		}
 
 		public override Vol forward(Instance ins, Vol V)
 		{
-			PoolInstance poolInstance = (PoolInstance)ins;
 			ins.in_act = V;
-			int n = 0; // a counter for switches
 			for (int d = 0; d < this.out_depth; d++)
 			{
 				int x = 0;
@@ -269,8 +213,6 @@ namespace ConvNet
 					{
 						// convolve centered at this particular location
 						float a = ins.in_act.get(x, y, d);
-						int winx = 0;
-						int winy = 0;
 						for (int fx = 0; fx < stride; fx++)
 						{
 							for (int fy = 0; fy < stride; fy++)
@@ -286,47 +228,15 @@ namespace ConvNet
 									if (v > a)
 									{
 										a = v;
-										winx = ox;
-										winy = oy;
 									}
 								}
 							}
 						}
-						poolInstance.switchx[n] = winx;
-						poolInstance.switchy[n] = winy;
-						n++;
 						ins.out_act.set(ax, ay, d, a);
 					}
 				}
 			};
 			return ins.out_act;
-		}
-		public override void backward(Instance instance)
-		{
-			PoolInstance poolInstance = (PoolInstance)instance;
-			// pooling layers have no parameters, so simply compute 
-			// gradient wrt data here
-			for (int i = 0; i < instance.in_act.dw.size; i++)
-			{
-				instance.in_act.dw[i] = 0;
-			}
-
-			int n = 0;
-			for (int d = 0; d < this.out_depth; d++)
-			{
-				int x = 0;
-				int y = 0;
-				for (int ax = 0; ax < this.out_sx; x += this.stride, ax++)
-				{
-					y = 0;
-					for (int ay = 0; ay < this.out_sy; y += this.stride, ay++)
-					{
-						float chain_grad = instance.out_act.get_grad(ax, ay, d);
-						instance.in_act.add_grad(poolInstance.switchx[n], poolInstance.switchy[n], d, chain_grad);
-						n++;
-					}
-				}
-			};
 		}
 	}
 	public class SoftmaxLayer : LastLayer
@@ -395,27 +305,6 @@ namespace ConvNet
 			//this.out_act = A;
 			return ins.out_act;
 		}
-		public override void backward(Instance instance)
-		{
-			LastInstance ins = (LastInstance)instance;
-			// compute and accumulate gradient wrt weights and bias of this layer
-			Vol x = instance.in_act;
-
-			for (int i = 0; i < x.dw.size; i++)
-			{
-				x.dw[i] = 0;
-			}
-
-			for (int i = 0; i < this.out_depth; i++)
-			{
-				float indicator = (i == ins.y.predict) ? 1.0f : 0.0f;
-				float mul = -(indicator - instance.out_act.w[i]);
-				x.dw[i] = mul;
-			}
-
-			// loss is the class negative log likelihood
-			ins.loss = -(float)Math.Log(instance.out_act.w[ins.y.predict]);
-		}
 	}
 	//mse = tf.reduce_sum(tf.square(y_ -  y))
 	public class RegressionLayer : LastLayer
@@ -460,19 +349,6 @@ namespace ConvNet
 			return V; // identity function
 		}
 		// y is a list here of size num_inputs
-		public override void backward(Instance instance)
-		{
-			LastInstance ins = (LastInstance)instance;
-			// compute and accumulate gradient wrt weights and bias of this layer
-			float loss = 0.0f;
-			for (int i = 0; i < this.out_depth; i++)
-			{
-				float dy = instance.in_act.w[i] - ins.y.data.w[i];
-				instance.in_act.dw[i] = dy;
-				loss += 2 * dy * dy;
-			}
-			ins.loss = loss;
-		}
 	}
 	public class InputLayer : Layer
 	{
@@ -512,9 +388,6 @@ namespace ConvNet
 			return V;
 		}
 
-		public override void backward(Instance instance)
-		{
-		}
 	}
 	public class ReshapeLayer : Layer
 	{
@@ -551,90 +424,7 @@ namespace ConvNet
 			instance.out_act.w = instance.in_act.w;
 			return instance.out_act;
 		}
-		public override void backward(Instance instance)
-		{
-			Vol V = instance.in_act; // we need to set dw of this
-			int N = V.w.size;
-			//for (int i = 0; i < N; i++)
-			//{
-			//	instance.in_act.dw[i] = instance.out_act.dw[i];
-			//}
-			instance.in_act.dw = instance.out_act.dw;
-		}
 	}
-
-
-	/*
-class DropoutLayer : Layer
-{
-	// An inefficient dropout layer
-	// Note this is not most efficient implementation since the layer before
-	// computed all these activations and now we're just going to drop them :(
-	// same goes for backward pass. Also, if we wanted to be efficient at test time
-	// we could equivalently be clever and upscale during train and copy pointers during test
-	// todo: make more efficient.
-	public float drop_prob;
-	public bool[] dropped;
-	public DropoutLayer(Def def)
-		: base(def)
-	{
-
-		Def opt = def;
-
-		// computed
-		this.out_sx = opt.in_sx;
-		this.out_sy = opt.in_sy;
-		this.out_depth = opt.in_depth;
-		//this.layer_type = "dropout";
-		this.drop_prob = opt.drop_prob.Value;
-		this.dropped = new bool[this.out_sx * this.out_sy * this.out_depth];//Util.zeros(this.out_sx*this.out_sy*this.out_depth);
-	}
-
-	static Random r = new Random();
-
-	public override Vol forward(Vol V, bool is_training)
-	{
-		this.in_act = V;
-		//if(typeof(is_training)==='undefined') { is_training = false; } // default is prediction mode
-		Vol V2 = V.clone();
-		int N = V.w.Length;
-		if (is_training)
-		{
-			// do dropout
-			for (int i = 0; i < N; i++)
-			{
-				if (r.NextDouble() < this.drop_prob) { V2.w[i] = 0; this.dropped[i] = true; } // drop!
-				else { this.dropped[i] = false; }
-			}
-		}
-		else
-		{
-			// scale the activations during prediction
-			for (int i = 0; i < N; i++) { V2.w[i] *= this.drop_prob; }
-		}
-		this.out_act = V2;
-		return this.out_act; // dummy identity function for now
-	}
-	public override float backward(DataSet y)
-	{
-		Vol V = this.in_act; // we need to set dw of this
-		Vol chain_grad = this.out_act;
-		int N = V.w.Length;
-		V.dw = Util.zeros(N); // zero out gradient wrt data
-		for (int i = 0; i < N; i++)
-		{
-			if (!(this.dropped[i]))
-			{
-				V.dw[i] = chain_grad.dw[i]; // copy over the gradient
-			}
-		}
-		return 0;
-	}
-	public override List<ParamsAndGrads> getParamsAndGrads()
-	{
-		return new List<ParamsAndGrads>();
-	}
-}*/
 
 
 }

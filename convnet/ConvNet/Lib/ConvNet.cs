@@ -73,11 +73,6 @@ namespace ConvNet
 		}
 
 	}
-	public class Range
-	{
-		public float max;
-		public float min;
-	}
 	public interface Persistence
 	{
 		void save(TextWriter s);
@@ -90,7 +85,6 @@ namespace ConvNet
 		public int sy;
 		public int depth;
 		public MyFloat w;
-		public MyFloat dw;
 
 		public void vis(string path)
 		{
@@ -132,9 +126,9 @@ namespace ConvNet
 			{
 				for (int j = 0; j < sy; j++)
 				{
-					float r = get(j, i, 0) * scale;
-					float g = get(j, i, 1) * scale;
-					float b = get(j, i, 2) * scale;
+					float r = get(j, i, 0) * scale + 128;
+					float g = get(j, i, 1) * scale + 128;
+					float b = get(j, i, 2) * scale + 128;
 					if (r < 0) r = 0;
 					if (r > 255) r = 255;
 
@@ -195,7 +189,6 @@ namespace ConvNet
 			this.depth = depth;
 			int n = sx * sy * depth;
 			this.w = new MyFloat(n);//Util.zeros(n);
-			this.dw = new MyFloat(n);//Util.zeros(n);
 			if (c == null)
 			{
 				// weight normalization is done to equalize the output
@@ -249,21 +242,6 @@ namespace ConvNet
 			int ix = ((this.sx * y) + x) * this.depth + d;
 			this.w[ix] = val;
 		}
-		public void add_grad(int x, int y, int d, float val)
-		{
-			int ix = ((this.sx * y) + x) * this.depth + d;
-			this.dw[ix] += val;
-		}
-		public float get_grad(int x, int y, int d)
-		{
-			int ix = ((this.sx * y) + x) * this.depth + d;
-			return this.dw[ix];
-		}
-		public void set_grad(int x, int y, int d, float val)
-		{
-			int ix = ((this.sx * y) + x) * this.depth + d;
-			this.dw[ix] = val;
-		}
 
 	}
 	public class DataSet
@@ -278,8 +256,6 @@ namespace ConvNet
 	public abstract class Net
 	{
 		public List<Layer> layers;
-
-		public Trainer trainer;
 
 		public Net()
 		{
@@ -315,19 +291,11 @@ namespace ConvNet
 			Vol act = V;
 			for (int i = 0; i < this.layers.Count; i++)
 			{
-				act = this.layers[i].forward(ins.list[i], act);
+				var layer = this.layers[i];
+				var lins = ins.list[i];
+				act = layer.forward(lins, act);
 			}
 			return act;
-		}
-
-		// backprop: compute gradients wrt all parameters
-		public void backward(Instance ins)
-		{
-			int N = this.layers.Count;
-			for (int i = N - 1; i >= 0; i--)
-			{
-				this.layers[i].backward(ins.list[i]);
-			}
 		}
 
 		public class Instance
@@ -348,73 +316,8 @@ namespace ConvNet
 			return instance;
 		}
 
-		public float train(Instance instance, Vol x, DataSet y)//Report
-		{
-			//Stopwatch sw = new Stopwatch();
-			//sw.Start();
-			forward(instance, x); // also set the flag that lets the net know we're just training
-			//long t1 = sw.ElapsedTicks;
-			//var lastLayer = ((LastLayer)this.net.layers[this.net.layers.Count - 1]);
-			var lastLayer = (LastLayer)out_layer;
-			var lastIns = ((LastLayer.LastInstance)instance.list[instance.list.Length - 1]);
-			lastIns.y = y;
-			//lastLayer.setData(y);
-			backward(instance);
-			float cost_loss = lastIns.loss;
-			//long t2 = sw.ElapsedTicks;
-			//float l2_decay_loss = 0.0f;
-			//float l1_decay_loss = 0.0f;
 
 
-			// appending softmax_loss for backwards compatibility, but from now on we will always use cost_loss
-			// in future, TODO: have to completely redo the way loss is done around the network as currently 
-			// loss is a bit of a hack. Ideally, user should specify arbitrary number of loss functions on any layer
-			// and it should all be computed correctly and automatically. 
-
-			//return new Report()
-			//{
-			//	l2_decay_loss = l2_decay_loss,
-			//	l1_decay_loss = l1_decay_loss,
-			//	cost_loss = cost_loss,
-			//	softmax_loss = cost_loss,
-			//	loss = cost_loss + l1_decay_loss + l2_decay_loss
-			//};
-			return cost_loss;
-		}
-
-
-		public void endofBatch(Instance[] instance, int batchSize)
-		{
-			for (int i = 0; i < this.layers.Count; i++)
-			{
-				if (layers[i] is TrainableLayer)
-				{
-					TrainableLayer.TrainableInstance instance0 = (TrainableLayer.TrainableInstance)instance[0].list[i];
-					MyFloat bias_dw_0 = instance0.bias_dw;
-					MyFloat filters_dw_0 = instance0.filters_dw;
-					for (int j = 1; j < instance.Length; j++)
-					{
-
-						MyFloat bias_dw_j = ((TrainableLayer.TrainableInstance)instance[j].list[i]).bias_dw;
-						for (int k = 0; k < bias_dw_0.size; k++)
-						{
-							bias_dw_0[k] += bias_dw_j[k];
-							bias_dw_j[k] = 0;
-						}
-
-						MyFloat filters_dw_j = ((TrainableLayer.TrainableInstance)instance[j].list[i]).filters_dw;
-						for (int k = 0; k < filters_dw_0.size; k++)
-						{
-							filters_dw_0[k] += filters_dw_j[k];
-							filters_dw_j[k] = 0;
-						}
-					}
-
-					((TrainableLayer)layers[i]).train(instance0, trainer, 1.0f / batchSize);
-				}
-			}
-
-		}
 	}
 
 

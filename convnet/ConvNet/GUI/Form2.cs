@@ -27,9 +27,6 @@ namespace GUI
 
 			public void init()
 			{
-				//trainer = new Trainer(this, new Trainer.Option() { learning_rate = 0.01f, momentum = 0.1f, batch_size = 10, l2_decay = 0.001f });//0.001f
-				trainer = new AdaDeltaTrainer(){  l2_decay = 0.0f };//0.001f method = "adadelta",
-
 				fc1 = new FullyConnLayer(num_neurons: 6, bias_pref: 0.1f,act: new ReluLayer());
 				fc2 = new FullyConnLayer(num_neurons: 2, bias_pref: 0.1f);
 
@@ -108,23 +105,6 @@ namespace GUI
 				d.label = new DataSet();
 				d.label.predict = 1;
 				data.Add(d);
-			}
-		}
-
-		private void button1_Click(object sender, EventArgs e)
-		{
-			var ins = net.getInstance();
-			for (int j = 0; j < 10000; j++)
-			{
-				int batchSize = 10;
-				for (int i = 0; i < batchSize; i++)
-				{
-					int idx = (int)Util.randf(0, 100);
-					net.train(ins,data[idx].val, data[idx].label);
-				}
-				net.endofBatch(new Net.Instance[] { ins }, batchSize);
-				draw();
-				Application.DoEvents();
 			}
 		}
 
