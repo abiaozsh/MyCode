@@ -32,9 +32,8 @@ def saveimg(filename,wholeData,idx,scale = 255,bias = 128):
             ConvNet.setpixel(data,i,j,r,g,b)
     #lbl = wholeData[idx]
     ConvNet.saveImg(data, filename)
-print("loading")
+
 CifarData = extract_data("E:\\MNIST\\cifar-10-batches-bin\\HWC.bin",60000)
-print("loaded")
 
 inputLayer = tf.placeholder(tf.float32,shape=(BATCH_SIZE, IMAGE_SIZEH, IMAGE_SIZEW, NUM_CHANNELS))
 finaldata = tf.placeholder(tf.float32, shape=(BATCH_SIZE, IMAGE_SIZEH, IMAGE_SIZEW, NUM_CHANNELS))
@@ -47,20 +46,19 @@ conv1,conv1save = ConvNet.ConvLayer(inputLayer,filterSize = 5,outDepth = 32,conv
 conv2,conv2save = ConvNet.ConvLayer(conv1,filterSize = 5,outDepth = 32,convStride = 1,poolSize = 2,loadFromFile=testfile)
 conv3,conv3save = ConvNet.ConvLayer(conv2,filterSize = 5,outDepth = 64,convStride = 1,poolSize = 2,loadFromFile=testfile)
 reshape = ConvNet.Conv2FC_Reshape(conv3)
+#fc1,fc1saver = ConvNet.FCLayer(reshape,2048,isRelu = False,loadFromFile=testfile)
+fc2,fc1saver = ConvNet.FCLayer(reshape,2048,isRelu = True,loadFromFile=testfile)
 
-fc1,fc1saver = ConvNet.FCLayer(reshape,2048,loadFromFile=testfile)
-
-deshape = ConvNet.FC2Conv_Reshape(fc1,4,4,128)
-uconv1,uconv1save = ConvNet.DeConvLayer(deshape,filterSize=5,output_shape=[BATCH_SIZE,8,8,64],convStride = 2, loadFromFile = testfile)
-uconv2,uconv2save = ConvNet.DeConvLayer(uconv1,filterSize=5,output_shape=[BATCH_SIZE,16,16,64],convStride = 2, loadFromFile = testfile)
-uconv3,uconv3save = ConvNet.DeConvLayer(uconv2,filterSize=5,output_shape=[BATCH_SIZE,32,32,3],convStride = 2, loadFromFile = testfile, isRelu = False)
+deshape = ConvNet.FC2Conv_Reshape(fc2,4,4,128)
+uconv1,uconv1save = ConvNet.DeConvLayer(deshape,filterSize=5,output_shape=[BATCH_SIZE,8,8,64],convStride = 2,poolSize = 0, loadFromFile = None, noChange=False, isRelu = True,padding = True)
+uconv2,uconv2save = ConvNet.DeConvLayer(uconv1,filterSize=5,output_shape=[BATCH_SIZE,16,16,64],convStride = 2,poolSize = 0, loadFromFile = None, noChange=False, isRelu = True,padding = True)
+uconv3,uconv3save = ConvNet.DeConvLayer(uconv2,filterSize=5,output_shape=[BATCH_SIZE,32,32,3],convStride = 2,poolSize = 0, loadFromFile = None, noChange=False, isRelu = False,padding = True)
 regeneratedImg = uconv3
 
 if testfile:testfile.close()   
 
 loss = tf.reduce_sum(tf.square(regeneratedImg - finaldata))
-# tf.train.AdadeltaOptimizer.init(learning_rate=0.001, rho=0.95, epsilon=1e-08, use_locking=False, name='Adadelta')
-optimizer = tf.train.AdadeltaOptimizer(learning_rate=1).minimize(loss)
+optimizer = tf.train.AdadeltaOptimizer(learning_rate=1).minimize(loss)  # tf.train.AdadeltaOptimizer.init(learning_rate=0.001, rho=0.95, epsilon=1e-08, use_locking=False, name='Adadelta')
 #optimizer = tf.train.GradientDescentOptimizer(0.00001).minimize(loss)
 
 
@@ -87,12 +85,12 @@ def train():
         verifydata[6] = CifarData[59112]
         verifydata[7] = CifarData[59113]
   
-        for j in xrange(0, 20):
-
-            for k in xrange(0,100):#train times
+        for j in xrange(0, 100):
+            
+            for k in xrange(0,10):#train times
                 print(str(k)+' ',end='')
                 sys.stdout.flush()
-                for i in xrange(0, 1):#train range 800
+                for i in xrange(0, 800):#train range 800
                     for dj in xrange(0, BATCH_SIZE):
                         inputData[dj] = CifarData[dj+i*BATCH_SIZE]
                     sess.run(optimizer, feed_dict={finaldata: inputData, inputLayer: inputData})
@@ -109,37 +107,25 @@ def train():
             saveimg(str(j)+"5.bmp",_out,5)
             saveimg(str(j)+"6.bmp",_out,6)
             saveimg(str(j)+"7.bmp",_out,7)
-            
-            print("saving")
-            testfile = ConvNet.openEmptyFileW("cifar"+str(j)+".txt")
-            conv1save(sess,testfile)
-            conv2save(sess,testfile)
-            conv3save(sess,testfile)
-            fc1saver(sess,testfile)
-            uconv1save(sess,testfile)
-            uconv2save(sess,testfile)
-            uconv3save(sess,testfile)
-            if testfile:testfile.flush(),testfile.close()   
-            print("saved")
+
+#         testfile = ConvNet.openEmptyFileW('cifar.txt')
+#         conv1save(sess,testfile)
+#         conv2save(sess,testfile)
+#         conv3save(sess,testfile)
+#         fc1saver(sess,testfile)
+#         fc2saver(sess,testfile)
+#         if testfile:testfile.flush(),testfile.close()   
+         
 def test():
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        
-        verifydata[0] = CifarData[0]
-        verifydata[1] = CifarData[1]
-
-        saveimg("base0.bmp",verifydata,0)
-        saveimg("base1.bmp",verifydata,1)
-        
         _out = sess.run(regeneratedImg, feed_dict={inputLayer:verifydata})
         
         saveimg("0.bmp",_out,0)
         saveimg("1.bmp",_out,1)
 
-        print("done")
-
-#train()
-test()
+train()
+#test()
 
 #saveimg("0.bmp", data, 0)
 

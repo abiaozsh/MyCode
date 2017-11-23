@@ -16,12 +16,12 @@ for i in xrange(0, 6):
 inputLayer = tf.placeholder(tf.float32, shape=(1,6, 6, 2))
 
 testfile = ConvNet.openEmptyFileR('conv.txt')
-conv1, conv1save = ConvNet.ConvLayer(inputLayer, filterSize=3, outDepth=4, convStride=2,padding=True, poolSize=0, loadFromFile=testfile,isRelu = False)
+conv1, conv1save = ConvNet.ConvLayer(inputLayer, filterSize=3, outDepth=4, convStride=1,padding=True, poolSize=2, loadFromFile=testfile,isRelu = False)
 reshape = ConvNet.Conv2FC_Reshape(conv1)
 fc1,fc1save = ConvNet.FCLayer(reshape, 8, isRelu = False, loadFromFile=testfile)
 fc2,fc2save = ConvNet.FCLayer(fc1, 3*3*4, isRelu = False, loadFromFile=testfile)
 deshape = ConvNet.FC2Conv_Reshape(fc2,3,3,4)
-uconv1,uconv1save = ConvNet.DeConvLayer(deshape,filterSize=3,output_shape=[1,6,6,2],convStride = 2,padding=True,loadFromFile = testfile, isRelu = False)
+uconv1,uconv1save = ConvNet.DeConvLayer(deshape,filterSize=3,output_shape=[1,6,6,2],convStride = 2,loadFromFile = testfile, isRelu = False)
 
 if testfile:testfile.close()
 
