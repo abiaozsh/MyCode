@@ -149,7 +149,7 @@ namespace ConvNet
 			public void init()
 			{
 
-				cv1 = new ConvLayer(filterSize: 3, out_depth: 4, stride: 1, padding: true,act :new ReluLayer());
+				cv1 = new ConvLayer(filterSize: 3, out_depth: 4, stride: 1, padding: true, act: new ReluLayer());
 				fc1 = new FullyConnLayer(num_neurons: 8, act: new ReluLayer());
 				fc2 = new FullyConnLayer(num_neurons: 3 * 3 * 4, act: new ReluLayer());
 				ucv1 = new DeConvLayer(filterSize: 3, out_sx: 6, out_sy: 6, out_depth: 2, stride: 2, pad: 0, act: new ReluLayer());
@@ -206,35 +206,49 @@ namespace ConvNet
 
 		class ConvTestNet4 : Net
 		{
+			public InputLayer inputL;
 			public ConvLayer cv1;
+			public PoolLayer p1;
+			public ConvLayer cv2;
+			public PoolLayer p2;
 			public FullyConnLayer fc1;
 			public FullyConnLayer fc2;
 			public DeConvLayer ucv1;
+			public DeConvLayer ucv2;
 
 			public void init()
 			{
-				试试看再卷积到2*2
-
-				cv1 = new ConvLayer(filterSize: 3, out_depth: 4, stride: 1, padding: true, act: new ReluLayer());
+				inputL = new InputLayer(8, 8, 2);
+				cv1 = new ConvLayer(filterSize: 5, out_depth: 4, stride: 1, padding: true, act: new ReluLayer());
+				p1 = new PoolLayer(stride: 2);
+				cv2 = new ConvLayer(filterSize: 5, out_depth: 8, stride: 1, padding: true, act: new ReluLayer());
+				p2 = new PoolLayer(stride: 2);
 				fc1 = new FullyConnLayer(num_neurons: 8, act: new ReluLayer());
-				fc2 = new FullyConnLayer(num_neurons: 4 * 4 * 4, act: new ReluLayer());
-				ucv1 = new DeConvLayer(filterSize: 3, out_sx: 8, out_sy: 8, out_depth: 2, stride: 2, pad: 0, act: new ReluLayer());
+				fc2 = new FullyConnLayer(num_neurons: 2 * 2 * 8, act: new ReluLayer());
+				ucv1 = new DeConvLayer(filterSize: 5, out_sx: 4, out_sy: 4, out_depth: 4, stride: 2, pad: 1, act: new ReluLayer());//pad关联 filterSize  0:3  1:5 (?2:7)
+				ucv2 = new DeConvLayer(filterSize: 5, out_sx: 8, out_sy: 8, out_depth: 2, stride: 2, pad: 1, act: new ReluLayer());
 
-				Add(new InputLayer(8, 8, 2));
+
+				Add(inputL);
 				Add(cv1);
-				Add(new PoolLayer(stride: 2));
-				Add(new ReshapeLayer(1, 1, 4 * 4 * 4));
+				Add(p1);
+				Add(cv2);
+				Add(p2);
+				Add(new ReshapeLayer(1, 1, 2 * 2 * 8));
 				Add(fc1);
 				Add(fc2);
-				Add(new ReshapeLayer(4, 4, 4));
+				Add(new ReshapeLayer(2, 2, 8));
 				Add(ucv1);
+				Add(ucv2);
 
 				Util.load(@"..\conv.txt", (s) =>
 				{
 					cv1.load(s);
+					cv2.load(s);
 					fc1.load(s);
 					fc2.load(s);
 					ucv1.load(s);
+					ucv2.load(s);
 				});
 
 			}
@@ -256,19 +270,20 @@ namespace ConvNet
 
 				var ins = getInstance();
 
-				Vol vres2 = forward(ins, inp);
-
-				Console.WriteLine(print(ins.list[1].in_act));
-				Console.WriteLine(print(ins.list[2].out_act));
-				Console.WriteLine(print(ins.list[5].in_act));
-				Console.WriteLine(print(ins.list[6].in_act));
-				Console.WriteLine(print(vres2));
+				Console.WriteLine(print(forward(ins, inp,null, inputL)));
+				Console.WriteLine(print(forward(ins, inp,null, p1)));
+				Console.WriteLine(print(forward(ins, inp,null, p2)));
+				Console.WriteLine(print(forward(ins, inp,null, fc1)));
+				Console.WriteLine(print(forward(ins, inp,null, fc2)));
+				Console.WriteLine(print(forward(ins, inp,null, ucv1)));
+				Console.WriteLine(print(forward(ins, inp,null, ucv2)));
 
 
 				Console.ReadLine();
 			}
 
 		}
+
 
 		public static string print(Vol v)
 		{

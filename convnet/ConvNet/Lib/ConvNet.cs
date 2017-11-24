@@ -126,9 +126,9 @@ namespace ConvNet
 			{
 				for (int j = 0; j < sy; j++)
 				{
-					float r = get(j, i, 0) * scale + 128;
-					float g = get(j, i, 1) * scale + 128;
-					float b = get(j, i, 2) * scale + 128;
+					float r = get(i, j, 0) * scale + 128;
+					float g = get(i, j, 1) * scale + 128;
+					float b = get(i, j, 2) * scale + 128;
 					if (r < 0) r = 0;
 					if (r > 255) r = 255;
 
@@ -294,6 +294,28 @@ namespace ConvNet
 				var layer = this.layers[i];
 				var lins = ins.list[i];
 				act = layer.forward(lins, act);
+			}
+			return act;
+		}
+		public Vol forward(Instance ins, Vol V, Layer start, Layer end)
+		{
+			//if(typeof(is_training)==='undefined') is_training = false;
+			Vol act = V;
+			bool started = false;
+			for (int i = 0; i < this.layers.Count; i++)
+			{
+				var layer = this.layers[i];
+				if (!started && start == null || layer == start)
+				{
+					act = V;
+					started = true;
+				}
+				if (started)
+				{
+					var lins = ins.list[i];
+					act = layer.forward(lins, act);
+					if (layer == end) return act;
+				}
 			}
 			return act;
 		}

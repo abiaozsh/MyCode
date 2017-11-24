@@ -161,7 +161,8 @@ namespace ConvNet
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
 		static extern void SSE_CVFWD(
 			int stride,
-			int pad,
+			int padx,
+			int pady,
 			int sx,
 			int sy,
 			int in_sx,
@@ -178,7 +179,8 @@ namespace ConvNet
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
 		static extern void CVFWD(
 			int stride,
-			int pad,
+			int padx,
+			int pady,
 			int sx,
 			int sy,
 			int in_sx,
@@ -199,80 +201,43 @@ namespace ConvNet
 
 			ins.in_act = V;
 
-			//if (Util.useSSE && in_depth % 8 == 0)
-			//{
-			//	SSE_CVFWD(
-			//		stride,
-			//		pad,
-			//		sx,
-			//		sy,
-			//		in_sx,
-			//		in_sy,
-			//		in_depth,
-			//		out_sx,
-			//		out_sy,
-			//		out_depth,
-			//		filters_w.p,
-			//		ins.in_act.w.p,
-			//		bias_w.p,
-			//		ins.out_act.w.p);
-			//}
-			//else
-			//{
-			//	CVFWD(
-			//		stride,
-			//		pad,
-			//		sx,
-			//		sy,
-			//		in_sx,
-			//		in_sy,
-			//		in_depth,
-			//		out_sx,
-			//		out_sy,
-			//		out_depth,
-			//		filters_w.p,
-			//		ins.in_act.w.p,
-			//		bias_w.p,
-			//		ins.out_act.w.p);
-			//}
-			int filterSize = sx * sy * in_depth;
-			for (int out_y = 0; out_y < out_sy; out_y++)
+			if (Util.useSSE && in_depth % 8 == 0)
 			{
-				int frame_y = out_y * stride - pady;
-				int out_act_sx_out_y = out_sx * out_y;
-				for (int out_x = 0; out_x < out_sx; out_x++)
-				{
-					int frame_x = out_x * stride - padx;
-					// convolve centered at this particular location
-					for (int d = 0; d < out_depth; d++)
-					{
-						//Vol f = this.filters[d];
-						int filterIdx = d * filterSize;
-						float a = 0.0f;
-						for (int fy = 0; fy < sy; fy++)
-						{
-							int oy = frame_y + fy; // coordinates in the original input array coordinates
-							int oy2 = (in_sx * oy);
-							int fy2 = (fy * sx);
-							for (int fx = 0; fx < sx; fx++)
-							{
-								int ox = frame_x + fx;
-								if (oy >= 0 && oy < in_sy && ox >= 0 && ox < in_sx)
-								{
-									int fidx = (fy2 + fx) * in_depth + filterIdx;
-									int Vidx = (oy2 + ox) * in_depth;
-									for (int fd = 0; fd < in_depth; fd++)
-									{
-										// avoid function call overhead (x2) for efficiency, compromise modularity :(
-										a += filters_w[fidx + fd] * ins.in_act.w[Vidx + fd];
-									}
-								}
-							}
-						}
-						a += bias_w[d];
-						ins.out_act.w[(out_act_sx_out_y + out_x) * out_depth + d] = a;
-					}
-				}
+				SSE_CVFWD(
+					stride,
+					padx,
+					pady,
+					sx,
+					sy,
+					in_sx,
+					in_sy,
+					in_depth,
+					out_sx,
+					out_sy,
+					out_depth,
+					filters_w.p,
+					ins.in_act.w.p,
+					bias_w.p,
+					ins.out_act.w.p);
+			}
+			else
+			{
+				CVFWD(
+					stride,
+					padx,
+					pady,
+					sx,
+					sy,
+					in_sx,
+					in_sy,
+					in_depth,
+					out_sx,
+					out_sy,
+					out_depth,
+					filters_w.p,
+					ins.in_act.w.p,
+					bias_w.p,
+					ins.out_act.w.p);
 			}
 
 

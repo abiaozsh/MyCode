@@ -56,6 +56,7 @@ namespace ConvNet
 		public class TrainableInstance : Instance
 		{
 			public Instance actIns;
+			public Instance poolIns;
 		}
 	}
 
@@ -206,25 +207,20 @@ namespace ConvNet
 			{
 				int x = 0;
 				int y = 0;
-				for (int ax = 0; ax < this.out_sx; x += stride, ax++)
+				for (int ax = 0; ax < out_sx; x += stride, ax++)
 				{
 					y = 0;
-					for (int ay = 0; ay < this.out_sy; y += stride, ay++)
+					for (int ay = 0; ay < out_sy; y += stride, ay++)
 					{
-						// convolve centered at this particular location
-						float a = ins.in_act.get(x, y, d);
+						float a = ins.in_act.w[((in_sx * y) + x) * in_depth + d];
 						for (int fx = 0; fx < stride; fx++)
 						{
 							for (int fy = 0; fy < stride; fy++)
 							{
 								int oy = y + fy;
 								int ox = x + fx;
-								if (oy >= 0 && oy < ins.in_act.sy && ox >= 0 && ox < ins.in_act.sx)
 								{
-									float v = ins.in_act.get(ox, oy, d);
-									// perform max pooling and store pointers to where
-									// the max came from. This will speed up backprop 
-									// and can help make nice visualizations in future
+									float v = ins.in_act.w[((in_sx * oy) + ox) * in_depth + d];
 									if (v > a)
 									{
 										a = v;

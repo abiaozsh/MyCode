@@ -34,14 +34,9 @@ namespace GUI
 
 			Bitmap bmp = (Bitmap)Bitmap.FromFile(@"E:\MNIST\无标题.png");
 
-			pictureBox2.Image = bmp;
-			pictureBox2.Width = bmp.Width;
-			pictureBox2.Height = bmp.Height;
-
 			bigImg = new byte[bmp.Width * bmp.Height];
 			bigImgW = bmp.Width;
 
-			pictureBox2.MouseMove += pictureBox2_MouseMove;
 			try
 			{
 				for (int j = 0; j < bmp.Height; j++)

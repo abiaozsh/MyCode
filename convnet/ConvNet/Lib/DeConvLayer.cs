@@ -42,6 +42,7 @@ namespace ConvNet
 		public MyFloat bias_w;
 
 		ActivationLayer act;
+		////pad关联 filterSize  0:3  1:5 (?2:7)
 		public DeConvLayer(int filterSize = 0, int out_sx = 0, int out_sy = 0, int out_depth = 0, int stride = 1, int pad = 0, float bias_pref = 0.0f, ActivationLayer act = null)//if pad = sx(sy) / 2  the size is same   bigger pad bigger out
 		{
 			// required
@@ -115,47 +116,6 @@ namespace ConvNet
 
 		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
 		static extern void SSE_UCVFWD(
-		);
-		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern void UCVFWD(
-		);
-
-		public override Vol forward(Instance ins, Vol V)
-		{
-			// optimized code by @mdda that achieves 2x speedup over previous version
-
-			ins.in_act = V;
-
-
-			proc(
-				out_sx,//int in_sx,
-				out_sy,//int in_sy,
-				out_depth,//int in_depth,
-				sx,//int sx,
-				sy,//int sy,
-				pad,//int pad,
-				stride,//int stride,
-				in_sx,//int out_sx,
-				in_sy,//int out_sy,
-				in_depth,//int out_depth,
-				ins.in_act.w,//MyFloat p_in_act_dw,
-				ins.out_act.w,//MyFloat p_out_act_dw,
-				this.filters_w,//MyFloat p_filters_w
-				this.bias_w//MyFloat p_bias_w,
-			);
-
-
-			if (act != null)
-			{
-				return act.forward(((TrainableInstance)ins).actIns, ins.out_act);
-			}
-			else
-			{
-				return ins.out_act;
-			}
-		}
-
-		private static void proc(
 			int out_sx,
 			int out_sy,
 			int out_depth,
@@ -166,55 +126,81 @@ namespace ConvNet
 			int in_sx,
 			int in_sy,
 			int in_depth,
-			MyFloat p_in_act_dw,
-			MyFloat p_out_act_dw,
-			MyFloat p_filters_w,
-			MyFloat p_bias_w
-		)
+			IntPtr p_in_act_dw,
+			IntPtr p_out_act_dw,
+			IntPtr p_filters_w,
+			IntPtr p_bias_w
+		);
+		[DllImport("dllLib.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern void UCVFWD(
+			int out_sx,
+			int out_sy,
+			int out_depth,
+			int sx,
+			int sy,
+			int pad,
+			int stride,
+			int in_sx,
+			int in_sy,
+			int in_depth,
+			IntPtr p_in_act_dw,
+			IntPtr p_out_act_dw,
+			IntPtr p_filters_w,
+			IntPtr p_bias_w
+		);
+
+		public override Vol forward(Instance ins, Vol V)
 		{
-		//、、??
-		//下面的逻辑 pad 可能有问题
+			// optimized code by @mdda that achieves 2x speedup over previous version
 
+			ins.in_act = V;
 
-			//pad = 0;//文本下测试ok
-			//pad = stride/2;//
-			int filterSize = sx * sy * out_depth;
-			for (int out_y = 0; out_y < out_sy; out_y++)
+			if (Util.useSSE && in_depth % 8 == 0)
 			{
-				for (int out_x = 0; out_x < out_sx; out_x++)
-				{
-					for (int od = 0; od < out_depth; od++)
-					{
-						float a = 0.0f;
-						for (int fy = 0; fy < sy; fy++)
-						{
-							for (int fx = 0; fx < sx; fx++)
-							{
-								for (int d = 0; d < in_depth; d++)
-								{
-									int in_y = (out_y - fy + pad) / stride;
-									int in_x = (out_x - fx + pad) / stride;
+				SSE_UCVFWD(
+					out_sx,//int in_sx,
+					out_sy,//int in_sy,
+					out_depth,//int in_depth,
+					sx,//int sx,
+					sy,//int sy,
+					pad,//int pad,
+					stride,//int stride,
+					in_sx,//int out_sx,
+					in_sy,//int out_sy,
+					in_depth,//int out_depth,
+					ins.in_act.w.p,//MyFloat p_in_act_dw,
+					ins.out_act.w.p,//MyFloat p_out_act_dw,
+					this.filters_w.p,//MyFloat p_filters_w
+					this.bias_w.p//MyFloat p_bias_w,
+				);
+			}
+			else
+			{
+				UCVFWD(
+					out_sx,//int in_sx,
+					out_sy,//int in_sy,
+					out_depth,//int in_depth,
+					sx,//int sx,
+					sy,//int sy,
+					pad,//int pad,
+					stride,//int stride,
+					in_sx,//int out_sx,
+					in_sy,//int out_sy,
+					in_depth,//int out_depth,
+					ins.in_act.w.p,//MyFloat p_in_act_dw,
+					ins.out_act.w.p,//MyFloat p_out_act_dw,
+					this.filters_w.p,//MyFloat p_filters_w
+					this.bias_w.p//MyFloat p_bias_w,
+				);
+			}
 
-									if (in_y >= 0 && in_y < in_sy && in_x >= 0 && in_x < in_sx)
-									{
-										if ((out_y - fy + pad) % stride == 0 && (out_x - fx + pad) % stride == 0)
-										{
-											float chain_grad = p_in_act_dw[((in_sx * in_y) + in_x) * in_depth + d];
-
-											a += p_filters_w[
-												d * sx * sy * out_depth + 
-												fy * sx * out_depth + 
-												fx * out_depth + 
-												od] * chain_grad;
-
-										}
-									}
-								}
-							}
-						}
-						p_out_act_dw[(out_y * out_sx + out_x) * out_depth + od] = a + p_bias_w[od];
-					}
-				}
+			if (act != null)
+			{
+				return act.forward(((TrainableInstance)ins).actIns, ins.out_act);
+			}
+			else
+			{
+				return ins.out_act;
 			}
 		}
 

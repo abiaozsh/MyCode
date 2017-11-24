@@ -122,12 +122,11 @@ namespace GUI
 		{
 			for (int i = 0; i < 32; i++)
 			{
-				int linepos = i * 32;
 				for (int j = 0; j < 32; j++)
 				{
-					int r = imgData[idx][linepos + j];
-					int g = imgData[idx][linepos + j + 1024];
-					int b = imgData[idx][linepos + j + 2048];
+					int r = imgData[idx][i + j * 32];
+					int g = imgData[idx][i + j * 32 + 1024];
+					int b = imgData[idx][i + j * 32 + 2048];
 					v.set(i, j, 0, r / 255.0f - 0.5f);
 					v.set(i, j, 1, g / 255.0f - 0.5f);
 					v.set(i, j, 2, b / 255.0f - 0.5f);
