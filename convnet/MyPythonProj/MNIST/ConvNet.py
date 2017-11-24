@@ -36,31 +36,31 @@ def FC2Conv_Reshape(fc, h, w, c):
 
 
 # output_shape [batch, height, width, in_channels]
-def DeConvLayer(inputT, filterSize, output_shape, convStride, loadFromFile=None, noChange=False, isRelu=True, padding=True):
+def DeConvLayer(inputT, filterSize, output_shape, convStride, loadFromFile=None, noChange=False, isRelu=True):
     
     inDepth = int(inputT.shape[3])
     outDepth = output_shape[3]
     
     if loadFromFile:
         biasarray = np.ndarray([outDepth], np.float32)
-
+        
         for i in xrange(0, outDepth):
             line = loadFromFile.readline();
             biasarray[i] = float(line)
-
+        
         biases = tf.constant(biasarray)
-
+        
         warray = np.ndarray([filterSize, filterSize, outDepth, inDepth], np.float32)
-      
+        
         for i in xrange(0, inDepth):
             for x in xrange(0, filterSize):
                 for y in xrange(0, filterSize):
                     for j in xrange(0, outDepth):
                         line = loadFromFile.readline();
                         warray[x, y, j, i] = float(line)
-
-        weights = tf.constant(warray)
         
+        weights = tf.constant(warray)
+
     else:
         biases = tf.Variable(tf.constant(0.1, shape=[outDepth], dtype=tf.float32))
         weights = tf.truncated_normal([filterSize, filterSize, outDepth, inDepth], stddev=0.1, dtype=tf.float32)
@@ -69,14 +69,7 @@ def DeConvLayer(inputT, filterSize, output_shape, convStride, loadFromFile=None,
         weights = tf.Variable(weights)
         biases = tf.Variable(biases)
     
-    if padding:
-        padding = "SAME"
-    else:
-        padding = "VALID"
-        
-    #tf.nn.convolution
-    
-    _conv = tf.nn.conv2d_transpose(inputT, weights, output_shape=output_shape, strides=[1, convStride, convStride, 1], padding=padding)
+    _conv = tf.nn.conv2d_transpose(inputT, weights, output_shape=output_shape, strides=[1, convStride, convStride, 1], padding="SAME")
 
     if isRelu:
         _relu = tf.nn.leaky_relu(tf.nn.bias_add(_conv, biases))
@@ -94,10 +87,10 @@ def DeConvLayer(inputT, filterSize, output_shape, convStride, loadFromFile=None,
 
         warray = sess.run(weights)
 
-        for i in xrange(0, inDepth):
+        for j in xrange(0, outDepth):
             for x in xrange(0, filterSize):
                 for y in xrange(0, filterSize):
-                    for j in xrange(0, outDepth):
+                    for i in xrange(0, inDepth):
                         val = warray[x, y, j, i]
                         saveToFile.write(str(val) + "\n");
 

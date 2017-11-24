@@ -48,10 +48,9 @@ conv2,conv2save = ConvNet.ConvLayer(conv1,filterSize = 5,outDepth = 32,convStrid
 conv3,conv3save = ConvNet.ConvLayer(conv2,filterSize = 5,outDepth = 64,convStride = 1,poolSize = 2,loadFromFile=testfile)
 reshape = ConvNet.Conv2FC_Reshape(conv3)
 
-fc1,fc1saver = ConvNet.FCLayer(reshape,64,loadFromFile=testfile)
-fc2,fc2saver = ConvNet.FCLayer(fc1,2048,loadFromFile=testfile)
+fc1,fc1saver = ConvNet.FCLayer(reshape,2048,loadFromFile=testfile)
 
-deshape = ConvNet.FC2Conv_Reshape(fc2,4,4,128)
+deshape = ConvNet.FC2Conv_Reshape(fc1,4,4,128)
 uconv1,uconv1save = ConvNet.DeConvLayer(deshape,filterSize=5,output_shape=[BATCH_SIZE,8,8,64],convStride = 2, loadFromFile = testfile)
 uconv2,uconv2save = ConvNet.DeConvLayer(uconv1,filterSize=5,output_shape=[BATCH_SIZE,16,16,64],convStride = 2, loadFromFile = testfile)
 uconv3,uconv3save = ConvNet.DeConvLayer(uconv2,filterSize=5,output_shape=[BATCH_SIZE,32,32,3],convStride = 2, loadFromFile = testfile, isRelu = False)
@@ -117,7 +116,6 @@ def train():
             conv2save(sess,testfile)
             conv3save(sess,testfile)
             fc1saver(sess,testfile)
-            fc2saver(sess,testfile)
             uconv1save(sess,testfile)
             uconv2save(sess,testfile)
             uconv3save(sess,testfile)
