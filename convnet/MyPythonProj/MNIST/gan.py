@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+http://blog.topspeedsnail.com/archives/10977/comment-page-1#comment-1484
+
 """
 Energy Based Generative Adversarial Networks (EBGAN): https://arxiv.org/pdf/1609.03126v2.pdf
 <blog.topspeedsnail.com>

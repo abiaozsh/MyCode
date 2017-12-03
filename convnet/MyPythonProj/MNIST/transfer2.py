@@ -106,10 +106,13 @@ def main():
     #CONTENT_LAYERS =[('conv5_4',1.)]
     #STYLE_LAYERS=[('conv1_1',1.),('conv2_1',1.),('conv3_1',1.),('conv4_1',1.),('conv5_1',1.)]
     #STYLE_LAYERS=[('conv1_1',1.),('conv2_1',1.),('conv3_1',1.),('conv4_1',1.),('conv5_1',1.)]
+    
+    #CONTENT_LAYERS = [('conv4_2', 1.)]
+    #STYLE_LAYERS = [('conv1_1', 0.2), ('conv2_1', 0.2), ('conv3_1', 0.2), ('conv4_1', 0.2), ('conv5_1', 0.2)]
         
     sess.run([net['input'].assign(content_img)])
     
-    cost_content = 1.0*build_content_loss(sess.run(net['conv5_2']) ,  net['conv5_2'])
+    cost_content = 1.0*build_content_loss(sess.run(net['conv4_2']) ,  net['conv4_2'])
     
     sess.run([net['input'].assign(style_img)])
     
@@ -117,8 +120,7 @@ def main():
                    1.0*build_style_loss(sess.run(net['conv2_1']) ,  net['conv2_1']) +
                    1.5*build_style_loss(sess.run(net['conv3_1']) ,  net['conv3_1']) +
                    3.0*build_style_loss(sess.run(net['conv4_1']) ,  net['conv4_1']) +
-                   4.0*build_style_loss(sess.run(net['conv5_1']) ,  net['conv5_1']) +
-                   4.0*build_style_loss(sess.run(net['conv5_2']) ,  net['conv5_2']) )
+                   4.0*build_style_loss(sess.run(net['conv5_1']) ,  net['conv5_1']))
     
     cost_total = cost_content + STYLE_STRENGTH * cost_style
     optimizer = tf.train.AdamOptimizer(1)

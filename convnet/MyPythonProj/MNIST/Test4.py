@@ -6,6 +6,9 @@ import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 import ConvNet
+import tensorflow.contrib.rnn.BasicLSTMCell
+
+
 
 ind1 = np.ndarray([1, 8, 8, 2], np.float32)
 for i in xrange(0, 8):
@@ -55,3 +58,5 @@ with tf.Session() as sess:
     uconv1save(sess, testfile)
     uconv2save(sess, testfile)
     if testfile:testfile.flush(), testfile.close()   
+
+

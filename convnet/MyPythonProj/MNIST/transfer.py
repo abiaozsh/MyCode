@@ -1,16 +1,16 @@
-import os
-import sys
+OOM
+
+ï»¿#!/usr/bin/env python  
+#-*- coding: utf-8 -*-  
 import numpy as np
 import scipy.io
 import scipy.misc
 import tensorflow as tf
 
-# Output folder for the images.
-OUTPUT_DIR = 'output/'
 # Style image to use.
-STYLE_IMAGE = '/images/ocean.jpg'
+STYLE_IMAGE = 'StarryNight.jpg'
 # Content image to use.
-CONTENT_IMAGE = '/images/Taipei101.jpg'
+CONTENT_IMAGE = 'Taipei101.jpg'
 # Image dimensions constants.
 IMAGE_WIDTH = 800
 IMAGE_HEIGHT = 600
@@ -19,21 +19,20 @@ COLOR_CHANNELS = 3
 ###############################################################################
 # Algorithm constants
 ###############################################################################
-# ÉèÖÃËæ»úÔëÉùÍ¼ÏñÓëÄÚÈİÍ¼ÏñµÄ±ÈÂÊ
+# è®¾ç½®éšæœºå™ªå£°å›¾åƒä¸å†…å®¹å›¾åƒçš„æ¯”ç‡
 NOISE_RATIO = 0.6
-# ÉèÖÃµü´ú´ÎÊı
+# è®¾ç½®è¿­ä»£æ¬¡æ•°
 ITERATIONS = 1000
-# ÉèÖÃÄÚÈİÍ¼ÏñÓë·ç¸ñÍ¼ÏñµÄÈ¨ÖØ
+# è®¾ç½®å†…å®¹å›¾åƒä¸é£æ ¼å›¾åƒçš„æƒé‡
 alpha = 1
 beta = 500
-# ¼ÓÔØVGG-19 MODEL¼°Éè¶¨¾ùÖµ
-VGG_Model = 'Downloads/imagenet-vgg-verydeep-19.mat'
+# åŠ è½½VGG-19 MODELåŠè®¾å®šå‡å€¼
 MEAN_VALUES = np.array([123.68, 116.779, 103.939]).reshape((1, 1, 1, 3))
-# ÉèÖÃĞèÒªÓÃµ½µÄ¾í»ı²ã
+# è®¾ç½®éœ€è¦ç”¨åˆ°çš„å·ç§¯å±‚
 CONTENT_LAYERS = [('conv4_2', 1.)]
 STYLE_LAYERS = [('conv1_1', 0.2), ('conv2_1', 0.2), ('conv3_1', 0.2), ('conv4_1', 0.2), ('conv5_1', 0.2)]
 
-# Éú³ÉËæ»úÔëÉùÍ¼£¬ÓëcontentÍ¼ÒÔÒ»¶¨±ÈÂÊÈÚºÏ
+# ç”Ÿæˆéšæœºå™ªå£°å›¾ï¼Œä¸contentå›¾ä»¥ä¸€å®šæ¯”ç‡èåˆ
 def generate_noise_image(content_image, noise_ratio = NOISE_RATIO):
     """
     Returns a noise image intermixed with the content image at a certain ratio.
@@ -71,10 +70,10 @@ def build_net(ntype, nin, nwb=None):
         return tf.nn.avg_pool(nin, ksize=[1, 2, 2, 1],
                               strides=[1, 2, 2, 1], padding='SAME')
 
-def get_weight_bias(vgg_layers, i):
-    weights = vgg_layers[i][0][0][2][0][0]
+def get_weight_bias(vgg_layers, i,):
+    weights = vgg_layers[i][0][0][0][0][0]
     weights = tf.constant(weights)
-    bias = vgg_layers[i][0][0][2][0][1]
+    bias = vgg_layers[i][0][0][0][0][1]
     bias = tf.constant(np.reshape(bias, (bias.size)))
     return weights, bias
 
@@ -158,7 +157,7 @@ def style_loss_func(sess, net):
 
 
 def main():
-    net = build_vgg19(VGG_Model)
+    net = build_vgg19('E:\\MNIST\\imagenet-vgg-verydeep-19.mat')
     sess = tf.Session()
     sess.run(tf.initialize_all_variables())
 
@@ -182,6 +181,7 @@ def main():
 
     for it in range(ITERATIONS):
         sess.run(train_op)
+        print(it)
         if it % 100 == 0:
             # Print every 100 iteration.
             mixed_image = sess.run(net['input'])
@@ -189,10 +189,7 @@ def main():
             print('sum : ', sess.run(tf.reduce_sum(mixed_image)))
             print('cost: ', sess.run(total_loss))
 
-            if not os.path.exists(OUTPUT_DIR):
-                os.mkdir(OUTPUT_DIR)
-
-            filename = 'output/%d.png' % (it)
+            filename = 'output%d.png' % (it)
             save_image(filename, mixed_image)
 
 if __name__ == '__main__':
