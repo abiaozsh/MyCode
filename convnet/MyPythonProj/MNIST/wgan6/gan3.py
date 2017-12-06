@@ -2,7 +2,6 @@
 import numpy as np
 import scipy.misc
 import tensorflow as tf
-from logging import CRITICAL
 
 BATCH_SIZE = 64
 OUTPUT_SIZE = 64
@@ -65,10 +64,8 @@ def deconv2d(value, output_shape, k_h = 5, k_w = 5, strides =[1, 2, 2, 1],
              name = 'deconv2d', with_w = False):
     
     with tf.variable_scope(name):
-        weights = weight('weights', 
-                         [k_h, k_w, output_shape[-1], value.get_shape()[-1]])
-        deconv = tf.nn.conv2d_transpose(value, weights, 
-                                        output_shape, strides = strides)
+        weights = weight('weights',[k_h, k_w, output_shape[-1], value.get_shape()[-1]])
+        deconv = tf.nn.conv2d_transpose(value, weights, output_shape, strides = strides)
         biases = bias('biases', [output_shape[-1]])
         deconv = tf.reshape(tf.nn.bias_add(deconv, biases), deconv.get_shape())
         if with_w:
@@ -81,8 +78,7 @@ def conv2d(value, output_dim, k_h = 5, k_w = 5,
             strides =[1, 2, 2, 1], name = 'conv2d'):
     
     with tf.variable_scope(name):
-        weights = weight('weights', 
-                         [k_h, k_w, value.get_shape()[-1], output_dim])
+        weights = weight('weights', [k_h, k_w, value.get_shape()[-1], output_dim])
         conv = tf.nn.conv2d(value, weights, strides = strides, padding = 'SAME')
         biases = bias('biases', [output_dim])
         conv = tf.reshape(tf.nn.bias_add(conv, biases), conv.get_shape())
@@ -269,18 +265,18 @@ def train():
     d_loss = d_loss_real + d_loss_fake
     g_loss = tf.reduce_mean(tf.scalar_mul(-1, D_logits_))
                                                                       
-    z_sum = tf.summary.histogram('z', z)
-    d_sum = tf.summary.histogram('d', D_logits)
-    d__sum = tf.summary.histogram('d_', D_logits_)
-    G_sum = tf.summary.image('G', G)
+    #z_sum = tf.summary.histogram('z', z)
+    #d_sum = tf.summary.histogram('d', D_logits)
+    #d__sum = tf.summary.histogram('d_', D_logits_)
+    #G_sum = tf.summary.image('G', G)
 
-    d_loss_real_sum = tf.summary.scalar('d_loss_real', d_loss_real)
-    d_loss_fake_sum = tf.summary.scalar('d_loss_fake', d_loss_fake)
-    d_loss_sum = tf.summary.scalar('d_loss', d_loss)                                                
-    g_loss_sum = tf.summary.scalar('g_loss', g_loss)
+    #d_loss_real_sum = tf.summary.scalar('d_loss_real', d_loss_real)
+    #d_loss_fake_sum = tf.summary.scalar('d_loss_fake', d_loss_fake)
+    #d_loss_sum = tf.summary.scalar('d_loss', d_loss)                                                
+    #g_loss_sum = tf.summary.scalar('g_loss', g_loss)
     
-    g_sum = tf.summary.merge([z_sum, d__sum, G_sum, d_loss_fake_sum, g_loss_sum])
-    d_sum = tf.summary.merge([z_sum, d_sum, d_loss_real_sum, d_loss_sum])
+    #g_sum = tf.summary.merge([z_sum, d__sum, G_sum, d_loss_fake_sum, g_loss_sum])
+    #d_sum = tf.summary.merge([z_sum, d_sum, d_loss_real_sum, d_loss_sum])
 
     t_vars = tf.trainable_variables()
     d_vars = [var for var in t_vars if 'd_' in var.name]

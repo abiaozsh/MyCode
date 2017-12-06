@@ -2,6 +2,7 @@
 import numpy as np
 import scipy.misc
 import tensorflow as tf
+from tensorflow.python.ops import math_ops
 
 BATCH_SIZE = 64
 OUTPUT_SIZE = 64
@@ -19,13 +20,13 @@ CURRENT_DIR = os.getcwd()
 
 def bias(name, shape, bias_start = 0.0, trainable = True):
     
-    var = tf.get_variable(name, shape, tf.float32, trainable = trainable, initializer = tf.constant_initializer(bias_start, dtype = tf.float32))
+    var = tf.get_variable(name, shape, tf.float32,trainable = trainable, initializer = tf.constant_initializer(bias_start, dtype = tf.float32))
     return var
 
 
 def weight(name, shape, stddev = 0.02, trainable = True):
     
-    var = tf.get_variable(name, shape, tf.float32, trainable = trainable, initializer = tf.random_normal_initializer(stddev = stddev, dtype = tf.float32))
+    var = tf.get_variable(name, shape, tf.float32,trainable = trainable, initializer = tf.random_normal_initializer(stddev = stddev, dtype = tf.float32))
     return var
 
 
@@ -44,45 +45,45 @@ def fully_connected(value, output_shape, name = 'fully_connected', with_w = Fals
 
 
     
-def deconv2d(value, output_shape, k_h = 5, k_w = 5, strides =[1, 2, 2, 1], 
-             name = 'deconv2d', with_w = False):
+def deconv2d(value, output_shape, k_h = 5, k_w = 5, strides =[1, 2, 2, 1], name = 'deconv2d'):
     
     with tf.variable_scope(name):
-        weights = weight('weights', 
-                         [k_h, k_w, output_shape[-1], value.get_shape()[-1]])
-        deconv = tf.nn.conv2d_transpose(value, weights, 
-                                        output_shape, strides = strides)
+        weights = weight('weights', [k_h, k_w, output_shape[-1], value.get_shape()[-1]])
         biases = bias('biases', [output_shape[-1]])
+        
+        deconv = tf.nn.conv2d_transpose(value, weights, output_shape, strides = strides)
         deconv = tf.reshape(tf.nn.bias_add(deconv, biases), deconv.get_shape())
-        if with_w:
-            return deconv, weights, biases
-        else:
-            return deconv
+        
+        return deconv
             
             
-def conv2d(value, output_dim, k_h = 5, k_w = 5, 
-            strides =[1, 2, 2, 1], name = 'conv2d'):
+def conv2d(value, output_dim, k_h = 5, k_w = 5, strides =[1, 2, 2, 1], name = 'conv2d'):
     
     with tf.variable_scope(name):
-        weights = weight('weights', 
-                         [k_h, k_w, value.get_shape()[-1], output_dim])
-        conv = tf.nn.conv2d(value, weights, strides = strides, padding = 'SAME')
+        weights = weight('weights', [k_h, k_w, value.get_shape()[-1], output_dim])
         biases = bias('biases', [output_dim])
+        
+        conv = tf.nn.conv2d(value, weights, strides = strides, padding = 'SAME')
         conv = tf.reshape(tf.nn.bias_add(conv, biases), conv.get_shape())
         
         return conv
 
+def b_n(value, mean, variance, beta, gamma, epsilon):#beta=offset   gamma=scale
+    inv = math_ops.rsqrt(variance + epsilon)#rsqrt = 1/sqrt(value)
+    inv *= gamma
+    return value * inv + (beta - mean * inv)
+
 
 def batch_norm(value, is_train = True, name = 'batch_norm', epsilon = 1e-5, momentum = 0.9):
-    #return value
+    return value
     with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
         
-        ema = tf.train.ExponentialMovingAverage(decay = momentum)
         shape = value.get_shape().as_list()[-1]
         beta = bias('beta', [shape], bias_start = 0.0)
         gamma = bias('gamma', [shape], bias_start = 1.0)
         
         if is_train:
+            ema = tf.train.ExponentialMovingAverage(decay = momentum)
 
             batch_mean, batch_variance = tf.nn.moments(value, [0, 1, 2], name = 'moments')
 
@@ -92,21 +93,19 @@ def batch_norm(value, is_train = True, name = 'batch_norm', epsilon = 1e-5, mome
             ema_apply_op = ema.apply([batch_mean, batch_variance])
             
             assign_mean = moving_mean.assign(ema.average(batch_mean))
-            assign_variance = \
-                moving_variance.assign(ema.average(batch_variance))
+            assign_variance = moving_variance.assign(ema.average(batch_variance))
             
             with tf.control_dependencies([ema_apply_op]):
-                mean, variance = \
-                    tf.identity(batch_mean), tf.identity(batch_variance)
+                mean, variance = tf.identity(batch_mean), tf.identity(batch_variance)
             
             with tf.control_dependencies([assign_mean, assign_variance]):
-                return tf.nn.batch_normalization(value, mean, variance, beta, gamma, 1e-5)
+                return b_n(value, mean, variance, beta, gamma, 1e-5)
         
         else:
             mean = bias('moving_mean', [shape], 0.0, False)
             variance = bias('moving_variance', [shape], 1.0, False)
 
-            return tf.nn.batch_normalization(value, mean, variance, beta, gamma, epsilon)
+            return b_n(value, mean, variance, beta, gamma, epsilon)
 
 
 def generator(z, is_train = True, name = 'generator'):
@@ -148,7 +147,7 @@ def discriminator(image, reuse = False, name = 'discriminator'):
         h4 = fully_connected(tf.reshape(h3, [BATCH_SIZE, -1]), 1, 'd_h4_fc')#用fclayer转成0,1
         
         #return tf.nn.sigmoid(h4), h4
-        return None,h4
+        return h4
     
         
 def sampler(z, is_train = False, name = 'sampler'):
@@ -160,10 +159,6 @@ def sampler(z, is_train = False, name = 'sampler'):
     
     
 def read_and_decode(filename_queue):
-    
-    """
-    read and decode tfrecords
-    """
     
     reader = tf.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)
@@ -180,11 +175,7 @@ def read_and_decode(filename_queue):
     
 
 def inputs(data_dir, batch_size, name = 'input'):
-    
-    """
-    Reads input data num_epochs times.
-    """
-            
+
     with tf.name_scope(name):
         filenames = [os.path.join(data_dir,'train%d.tfrecords' % ii) for ii in range(12)]
         filename_queue = tf.train.string_input_producer(filenames)
@@ -217,38 +208,49 @@ def save_images(images, size, path):
 
     
 def train():
-        
+
     global_step = tf.Variable(0, name = 'global_step', trainable = False)
 
     train_dir = CURRENT_DIR + '/logs_without_condition/'
     data_dir = CURRENT_DIR + '/data/img_align_celeba_tfrecords/'
 
-    images = inputs(data_dir, BATCH_SIZE)
+    loader = inputs(data_dir, BATCH_SIZE)
+    #images = inputs(data_dir, BATCH_SIZE)
+    images = tf.placeholder(tf.float32, [64, 64, 64, 3])
 
     z = tf.placeholder(tf.float32, [None, Z_DIM], name='z')
 
     G = generator(z)
-    _, D_logits  = discriminator(images)
+    D_logits  = discriminator(images)
     samples = sampler(z)
-    _, D_logits_ = discriminator(G, reuse = True)
+    D_logits_F = discriminator(G, reuse = True)
     
-    d_loss_real = tf.reduce_mean(tf.scalar_mul(-1, D_logits))
-    d_loss_fake = tf.reduce_mean(D_logits_)
-    d_loss = d_loss_real + d_loss_fake
-    g_loss = tf.reduce_mean(tf.scalar_mul(-1, D_logits_))
-                                                                      
-    #z_sum = tf.summary.histogram('z', z)
-    #d_sum = tf.summary.histogram('d', D_logits)
-    #d__sum = tf.summary.histogram('d_', D_logits_)
-    #G_sum = tf.summary.image('G', G)
+    
+    gen_cost = -tf.reduce_mean(D_logits_F)#disc_fake
+    
+    
+    disc_cost = tf.reduce_mean(D_logits_F) - tf.reduce_mean(D_logits)
 
-    #d_loss_real_sum = tf.summary.scalar('d_loss_real', d_loss_real)
-    #d_loss_fake_sum = tf.summary.scalar('d_loss_fake', d_loss_fake)
-    #d_loss_sum = tf.summary.scalar('d_loss', d_loss)                                                
-    #g_loss_sum = tf.summary.scalar('g_loss', g_loss)
+    alpha = tf.random_uniform(
+        shape=[BATCH_SIZE,1], 
+        minval=0.,
+        maxval=1.
+    )
     
-    #g_sum = tf.summary.merge([z_sum, d__sum, G_sum, d_loss_fake_sum, g_loss_sum])
-    #d_sum = tf.summary.merge([z_sum, d_sum, d_loss_real_sum, d_loss_sum])
+    #differences = fake_data - real_data
+    differences = G - images
+    
+    #interpolates = real_data + (alpha*differences)
+    interpolates = images + (alpha*differences)
+    
+    gradients = tf.gradients(discriminator(interpolates), [interpolates])[0]
+    
+    slopes = tf.sqrt(tf.reduce_sum(tf.square(gradients), reduction_indices=[1]))
+    
+    gradient_penalty = tf.reduce_mean((slopes-1.)**2)
+    
+    LAMBDA = 10 # Gradient penalty lambda hyperparameter
+    disc_cost += LAMBDA*gradient_penalty
 
     t_vars = tf.trainable_variables()
     d_vars = [var for var in t_vars if 'd_' in var.name]
@@ -257,14 +259,16 @@ def train():
     saver = tf.train.Saver()
     
     with tf.variable_scope("", reuse=tf.AUTO_REUSE):
-        d_optim = tf.train.RMSPropOptimizer(LR).minimize(d_loss, var_list = d_vars, global_step = global_step)
-        g_optim = tf.train.RMSPropOptimizer(LR).minimize(g_loss, var_list = g_vars, global_step = global_step)
-    clip_d_op = [var.assign(tf.clip_by_value(var, CLIP[0], CLIP[1])) for var in d_vars]   
-    
-    #os.environ['CUDA_VISIBLE_DEVICES'] = str(0)
-    #config = tf.ConfigProto()
-    #config.gpu_options.per_process_gpu_memory_fraction = 0.2
-    #sess = tf.InteractiveSession(config=config)
+        #d_optim = tf.train.RMSPropOptimizer(LR).minimize(d_loss, var_list = d_vars, global_step = global_step)
+        d_optim = tf.train.AdamOptimizer(learning_rate=LR,beta1=0.5,beta2=0.9).minimize(disc_cost, var_list=d_vars)        
+        
+        #g_optim = tf.train.RMSPropOptimizer(LR).minimize(g_loss, var_list = g_vars, global_step = global_step)
+        g_optim = tf.train.AdamOptimizer(learning_rate=LR,beta1=0.5,beta2=0.9).minimize(gen_cost, var_list=g_vars)
+        
+    #clip_d_op = [var.assign(tf.clip_by_value(var, CLIP[0], CLIP[1])) for var in d_vars]   
+  
+
+
     sess = tf.Session()
      
     #writer = tf.summary.FileWriter(train_dir, sess.graph)    
@@ -304,38 +308,25 @@ def train():
             print(idx)
             for _ in range(critic_num):
                 batch_z = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
+
+                loadedimage = sess.run(loader)
+
+                sess.run(d_optim, feed_dict = {z:batch_z, images:loadedimage})
                 
-                #_,summary_str = sess.run([d_optim,d_sum], feed_dict = {z:batch_z})
-                sess.run(d_optim, feed_dict = {z:batch_z})
-                
-                sess.run(clip_d_op)
-                
-                #writer.add_summary(summary_str,idx+1)
-            
+                #sess.run(clip_d_op)
+
             batch_z = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
-            
-            
-            #_, summary_str = sess.run([d_optim, d_sum], feed_dict = {z: batch_z})
-            sess.run(d_optim, feed_dict = {z: batch_z})
-            #writer.add_summary(summary_str, idx+1)
 
-            # Update G network
-            #_, summary_str = sess.run([g_optim, g_sum], feed_dict = {z: batch_z})
-            sess.run(g_optim, feed_dict = {z: batch_z})
-            #writer.add_summary(summary_str, idx+1)
+            #sess.run(d_optim, feed_dict = {z: batch_z})
 
-            # Run g_optim twice to make sure that d_loss does not go to zero
-            #_, summary_str = sess.run([g_optim, g_sum], feed_dict = {z: batch_z})
+            #sess.run(g_optim, feed_dict = {z: batch_z})
+
             sess.run(g_optim, feed_dict = {z: batch_z})
-            #writer.add_summary(summary_str, idx+1)
-            
-            errD_fake = 0#d_loss_fake.eval({z: batch_z})
-            errD_real = 0#d_loss_real.eval()
-            errG = 0#g_loss.eval({z: batch_z})
+
             if idx % 20 == 0:
-                errD_fake = sess.run(d_loss_fake,feed_dict={z: batch_z})
-                errD_real = sess.run(d_loss_real)
-                errG = sess.run(g_loss,feed_dict={z: batch_z})
+                errD_fake = 0#sess.run(d_loss_fake,feed_dict={z: batch_z})
+                errD_real = 0#sess.run(d_loss_real)
+                errG = 0#sess.run(g_loss,feed_dict={z: batch_z})
                 print("[%4d/%4d] d_loss: %.8f, g_loss: %.8f" \
                             % (idx, batch_idxs, errD_fake+errD_real, errG))
             

@@ -2,6 +2,8 @@
 import numpy as np
 import scipy.misc
 import tensorflow as tf
+from tensorflow.python.framework import ops
+from tensorflow.python.ops import math_ops
 
 BATCH_SIZE = 64
 OUTPUT_SIZE = 64
@@ -72,17 +74,21 @@ def conv2d(value, output_dim, k_h = 5, k_w = 5,
         
         return conv
 
+def b_n(value, mean, variance, beta, gamma, epsilon):#beta=offset   gamma=scale
+    inv = math_ops.rsqrt(variance + epsilon)#rsqrt = 1/sqrt(value)
+    inv *= gamma
+    return value * inv + (beta - mean * inv)
+
 
 def batch_norm(value, is_train = True, name = 'batch_norm', epsilon = 1e-5, momentum = 0.9):
-    #return value
     with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
         
-        ema = tf.train.ExponentialMovingAverage(decay = momentum)
         shape = value.get_shape().as_list()[-1]
         beta = bias('beta', [shape], bias_start = 0.0)
         gamma = bias('gamma', [shape], bias_start = 1.0)
         
         if is_train:
+            ema = tf.train.ExponentialMovingAverage(decay = momentum)
 
             batch_mean, batch_variance = tf.nn.moments(value, [0, 1, 2], name = 'moments')
 
@@ -100,13 +106,13 @@ def batch_norm(value, is_train = True, name = 'batch_norm', epsilon = 1e-5, mome
                     tf.identity(batch_mean), tf.identity(batch_variance)
             
             with tf.control_dependencies([assign_mean, assign_variance]):
-                return tf.nn.batch_normalization(value, mean, variance, beta, gamma, 1e-5)
+                return b_n(value, mean, variance, beta, gamma, 1e-5)
         
         else:
             mean = bias('moving_mean', [shape], 0.0, False)
             variance = bias('moving_variance', [shape], 1.0, False)
 
-            return tf.nn.batch_normalization(value, mean, variance, beta, gamma, epsilon)
+            return b_n(value, mean, variance, beta, gamma, epsilon)
 
 
 def generator(z, is_train = True, name = 'generator'):
