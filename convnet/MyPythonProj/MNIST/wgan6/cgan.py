@@ -1,4 +1,4 @@
-import os, time, itertools, imageio, pickle, random
+import os, time, itertools, pickle, random
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -180,12 +180,6 @@ if not os.path.isdir(root):
 if not os.path.isdir(root + 'Fixed_results'):
     os.mkdir(root + 'Fixed_results')
 
-train_hist = {}
-train_hist['D_losses'] = []
-train_hist['G_losses'] = []
-train_hist['per_epoch_ptimes'] = []
-train_hist['total_ptime'] = []
-
 # training-loop
 np.random.seed(int(time.time()))
 print('training start!')
@@ -225,25 +219,9 @@ for epoch in range(train_epoch):
     print('[%d/%d] - ptime: %.2f loss_d: %.3f, loss_g: %.3f' % ((epoch + 1), train_epoch, per_epoch_ptime, np.mean(D_losses), np.mean(G_losses)))
     fixed_p = root + 'Fixed_results/' + model + str(epoch + 1) + '.png'
     show_result((epoch + 1), save=True, path=fixed_p)
-    train_hist['D_losses'].append(np.mean(D_losses))
-    train_hist['G_losses'].append(np.mean(G_losses))
-    train_hist['per_epoch_ptimes'].append(per_epoch_ptime)
 
 end_time = time.time()
 total_ptime = end_time - start_time
-train_hist['total_ptime'].append(total_ptime)
 
-print('Avg per epoch ptime: %.2f, total %d epochs ptime: %.2f' % (np.mean(train_hist['per_epoch_ptimes']), train_epoch, total_ptime))
-print("Training finish!... save training results")
-with open(root + model + 'train_hist.pkl', 'wb') as f:
-    pickle.dump(train_hist, f)
-
-show_train_hist(train_hist, save=True, path=root + model + 'train_hist.png')
-
-images = []
-for e in range(train_epoch):
-    img_name = root + 'Fixed_results/' + model + str(e + 1) + '.png'
-    images.append(imageio.imread(img_name))
-imageio.mimsave(root + model + 'generation_animation.gif', images, fps=5)
 
 sess.close()
