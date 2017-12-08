@@ -1,23 +1,23 @@
-from __future__ import print_function
+ï»¿from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
-import sys
+#import sys
 
-import numpy as np
-from six.moves import xrange  # pylint: disable=redefined-builtin
-import tensorflow as tf
-import ConvNet
+#import numpy as np
+#from six.moves import xrange  # pylint: disable=redefined-builtin
+#import tensorflow as tf
+#import ConvNet
 
-0Ğ¡Ã¨
-1Ğ¡¹·
-2Ğ¡Äñ
-3Ğ¡½Î³µ
-4¹«¹²Æû³µ
-5»õ³µ
-6·É»ú
-7´¬
-8×ÔĞĞ³µ
-9Ê÷Ä¾
-10Â·ÈË
-11ÊÖ»ú
-12Âí
+# 0å°çŒ«
+# 1å°ç‹—
+# 2å°é¸Ÿ
+# 3å°è½¿è½¦
+# 4å…¬å…±æ±½è½¦
+# 5è´§è½¦
+# 6é£æœº
+# 7èˆ¹
+# 8è‡ªè¡Œè½¦
+# 9æ ‘æœ¨
+# 10è·¯äºº
+# 11æ‰‹æœº
+# 12é©¬

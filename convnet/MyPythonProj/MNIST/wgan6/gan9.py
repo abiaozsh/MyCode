@@ -2,21 +2,47 @@
 import numpy as np
 import scipy.misc
 import tensorflow as tf
-from tensorflow.python.ops import math_ops
+
+import ConvNet
+
+from six.moves import xrange
 
 BATCH_SIZE = 64
-OUTPUT_SIZE = 64
+
+IMAGE_W = 208
+IMAGE_H = 160
+
 GF = 64             # Dimension of G filters in first conv layer. default [64]
 DF = 64             # Dimension of D filters in first conv layer. default [64]
 Z_DIM = 100
 IMAGE_CHANNEL = 3
 LR = 0.0002         # Learning rate
 EPOCH = 5
-CLIP = [-0.01, 0.01]
 CRITIC_NUM = 5
 LOAD_MODEL = False  # Whether or not continue train from saved model。
 TRAIN = True
 CURRENT_DIR = os.getcwd()
+
+
+
+bytestream = open("e:\\MNIST\\celebaHI.bin","br")
+file_index = 0
+def extract_data():
+    global file_index
+    global bytestream
+    file_index = file_index + 64
+    if file_index>=202599:#202599
+        bytestream.close()
+        bytestream = open("e:\\MNIST\\celebaHI.bin","br")
+        file_index = 0
+
+    buf = bytestream.read(BATCH_SIZE * IMAGE_H * IMAGE_W * IMAGE_CHANNEL)
+    data = np.frombuffer(buf, dtype=np.uint8).astype(np.float32)
+    data = (data) / 256.0 - 0.5
+    data = data.reshape(BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL)
+    return data
+
+
 
 def bias(name, shape, bias_start = 0.0, trainable = True):
     
@@ -68,69 +94,21 @@ def conv2d(value, output_dim, k_h = 5, k_w = 5, strides =[1, 2, 2, 1], name = 'c
         
         return conv
 
-def b_n(value, mean, variance, beta, gamma, epsilon):#beta=offset   gamma=scale
-    inv = math_ops.rsqrt(variance + epsilon)#rsqrt = 1/sqrt(value)
-    inv *= gamma
-    return value * inv + (beta - mean * inv)
-
-
-def batch_norm(value, is_train = True, name = 'batch_norm', epsilon = 1e-5, momentum = 0.9):
-    return value
-    with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
-        
-        shape = value.get_shape().as_list()[-1]
-        beta = bias('beta', [shape], bias_start = 0.0)
-        gamma = bias('gamma', [shape], bias_start = 1.0)
-        
-        if is_train:
-            ema = tf.train.ExponentialMovingAverage(decay = momentum)
-
-            batch_mean, batch_variance = tf.nn.moments(value, [0, 1, 2], name = 'moments')
-
-            moving_mean = bias('moving_mean', [shape], 0.0, False)
-            moving_variance = bias('moving_variance', [shape], 1.0, False)
-            
-            ema_apply_op = ema.apply([batch_mean, batch_variance])
-            
-            assign_mean = moving_mean.assign(ema.average(batch_mean))
-            assign_variance = moving_variance.assign(ema.average(batch_variance))
-            
-            with tf.control_dependencies([ema_apply_op]):
-                mean, variance = tf.identity(batch_mean), tf.identity(batch_variance)
-            
-            with tf.control_dependencies([assign_mean, assign_variance]):
-                return b_n(value, mean, variance, beta, gamma, 1e-5)
-        
-        else:
-            mean = bias('moving_mean', [shape], 0.0, False)
-            variance = bias('moving_variance', [shape], 1.0, False)
-
-            return b_n(value, mean, variance, beta, gamma, epsilon)
-
-
-def generator(z, is_train = True, name = 'generator'):
+def generator(z, name = 'generator'):
     
     with tf.name_scope(name):
+
+        t2, t4, t8, t16 = IMAGE_H//2, IMAGE_H//4, IMAGE_H//8, IMAGE_H//16
+        s2, s4, s8, s16 = IMAGE_W//2, IMAGE_W//4, IMAGE_W//8, IMAGE_W//16
+
+        h1 = tf.nn.leaky_relu(tf.reshape(fully_connected(z, GF*8*t16*s16, 'g_fc1'), [-1, t16, s16, GF*8], name = 'reshap'))
+        h2 = tf.nn.leaky_relu(deconv2d(h1, [BATCH_SIZE, t8, s8, GF*4], name = 'g_deconv2d1'))
+        h3 = tf.nn.leaky_relu(deconv2d(h2, [BATCH_SIZE, t4, s4, GF*2], name = 'g_deconv2d2'))
+        h4 = tf.nn.leaky_relu(deconv2d(h3, [BATCH_SIZE, t2, s2, GF*1], name = 'g_deconv2d3'))
+
+        h5 = deconv2d(h4, [BATCH_SIZE, IMAGE_H, IMAGE_W, 3], name = 'g_deconv2d4')    
         
-        #全部用leaky_relu 效果更好
-        
-        s2, s4, s8, s16 = OUTPUT_SIZE//2, OUTPUT_SIZE//4, OUTPUT_SIZE//8, OUTPUT_SIZE//16
-    
-        h1 = tf.reshape(fully_connected(z, GF*8*s16*s16, 'g_fc1'), [-1, s16, s16, GF*8], name = 'reshap')
-        h1 = tf.nn.leaky_relu(batch_norm(h1, name = 'g_bn1', is_train = is_train))
-        
-        h2 = deconv2d(h1, [BATCH_SIZE, s8, s8, GF*4], name = 'g_deconv2d1')
-        h2 = tf.nn.leaky_relu(batch_norm(h2, name = 'g_bn2', is_train = is_train))
-        
-        h3 = deconv2d(h2, [BATCH_SIZE, s4, s4, GF*2], name = 'g_deconv2d2')
-        h3 = tf.nn.leaky_relu(batch_norm(h3, name = 'g_bn3', is_train = is_train))
-        
-        h4 = deconv2d(h3, [BATCH_SIZE, s2, s2, GF*1], name = 'g_deconv2d3')
-        h4 = tf.nn.leaky_relu(batch_norm(h4, name = 'g_bn4', is_train = is_train))
-        
-        h5 = deconv2d(h4, [BATCH_SIZE, OUTPUT_SIZE, OUTPUT_SIZE, 3], name = 'g_deconv2d4')    
-        
-        return tf.nn.tanh(h5)
+        return h5
     
     
 def discriminator(image, reuse = False, name = 'discriminator'):
@@ -141,61 +119,21 @@ def discriminator(image, reuse = False, name = 'discriminator'):
             tf.get_variable_scope().reuse_variables()
         
         h0 = tf.nn.leaky_relu(conv2d(image, DF, name='d_h0_conv'), name = 'd_h0_lrelu')
-        h1 = tf.nn.leaky_relu(batch_norm(conv2d(h0, DF*2, name='d_h1_conv'), name = 'd_h1_bn'), name = 'd_h1_lrelu')
-        h2 = tf.nn.leaky_relu(batch_norm(conv2d(h1, DF*4, name='d_h2_conv'), name = 'd_h2_bn'), name = 'd_h2_lrelu')
-        h3 = tf.nn.leaky_relu(batch_norm(conv2d(h2, DF*8, name='d_h3_conv'), name = 'd_h3_bn'), name = 'd_h3_lrelu')
+        h1 = tf.nn.leaky_relu(conv2d(h0, DF*2, name='d_h1_conv'), name = 'd_h1_lrelu')
+        h2 = tf.nn.leaky_relu(conv2d(h1, DF*4, name='d_h2_conv'), name = 'd_h2_lrelu')
+        h3 = tf.nn.leaky_relu(conv2d(h2, DF*8, name='d_h3_conv'), name = 'd_h3_lrelu')
         h4 = fully_connected(tf.reshape(h3, [BATCH_SIZE, -1]), 1, 'd_h4_fc')#用fclayer转成0,1
         
-        #return tf.nn.sigmoid(h4), h4
         return h4
     
         
-def sampler(z, is_train = False, name = 'sampler'):
-    
+def sampler(z, name = 'sampler'):
     with tf.name_scope(name):
-        
         tf.get_variable_scope().reuse_variables()
-        return generator(z, is_train = is_train)
+        return generator(z)
     
-    
-def read_and_decode(filename_queue):
-    
-    reader = tf.TFRecordReader()
-    _, serialized_example = reader.read(filename_queue)
-    
-    features = tf.parse_single_example(serialized_example,features = {
-                        'image_raw':tf.FixedLenFeature([], tf.string)})
-    image = tf.decode_raw(features['image_raw'], tf.uint8)
-    
-    image = tf.reshape(image, [OUTPUT_SIZE, OUTPUT_SIZE, 3])
-    image = tf.cast(image, tf.float32)
-    image = image / 255.0
-    
-    return image
-    
-
-def inputs(data_dir, batch_size, name = 'input'):
-
-    with tf.name_scope(name):
-        filenames = [os.path.join(data_dir,'train%d.tfrecords' % ii) for ii in range(12)]
-        filename_queue = tf.train.string_input_producer(filenames)
-        
-        image = read_and_decode(filename_queue)
-        
-        images = tf.train.shuffle_batch([image], batch_size = batch_size, 
-                                        num_threads = 4, 
-                                        capacity = 20000 + 3 * batch_size, 
-                                        min_after_dequeue = 20000)
-        return images#看看这是什么
-
 
 def save_images(images, size, path):
-    
-    """
-    Save the samples images
-    The best size number is
-            int(max(sqrt(image.shape[1]),sqrt(image.shape[1]))) + 1
-    """
     img = (images + 1.0) / 2.0
     h, w = img.shape[1], img.shape[2]
     merge_img = np.zeros((h * size[0], w * size[1], 3))
@@ -206,17 +144,62 @@ def save_images(images, size, path):
         
     return scipy.misc.imsave(path, merge_img)    
 
+def saveimg(filename,wholeData,idx,scale = 255,bias = 128):
+    data = ConvNet.newImage(wholeData.shape[1],wholeData.shape[2])
+    #clearImg(data,0)
+    for i in xrange(0,wholeData.shape[1]):
+        for j in xrange(0,wholeData.shape[2]):
+            r = wholeData[idx,i,j,0] * scale + bias
+            g = wholeData[idx,i,j,1] * scale + bias
+            b = wholeData[idx,i,j,2] * scale + bias
+            ConvNet.setpixel(data,i,j,r,g,b)
+    #lbl = wholeData[idx]
+    ConvNet.saveImg(data, filename)
+
+def saveimgx(filename,wholeData,idx,scale = 255,bias = 128):
+    from PIL import Image
+    data = np.ndarray([wholeData.shape[2], wholeData.shape[1], 3], np.byte)
+
+    for i in xrange(0,wholeData.shape[1]):
+        for j in xrange(0,wholeData.shape[2]):
+            r = wholeData[idx,i,j,0] * scale + bias
+            g = wholeData[idx,i,j,1] * scale + bias
+            b = wholeData[idx,i,j,2] * scale + bias
+            if r < 0: r = 0
+            if r > 255: r = 255
+            if g < 0: g = 0
+            if g > 255: g = 255
+            if b < 0: b = 0
+            if b > 255: b = 255
+            
+            data[j, i, 0] = r
+            data[j, i, 1] = g
+            data[j, i, 2] = b
+            #data[j, i, 3] = 255
+
+    img = Image.frombytes("RGB", (data.shape[1], data.shape[0]), data)
+    img.save(filename)
+    #scipy.misc.imsave(filename, data)
+
+def saveimg2(filename,wholeData,idx,scale = 255,bias = 128):
+
+    scipy.misc.imsave(filename, wholeData[idx])
     
 def train():
+    ###################
+    loadedimage = extract_data()
+    saveimg("test0.png",loadedimage,0)
+    saveimg("test1.png",loadedimage,1)
+    saveimg("test2.png",loadedimage,2)
+    saveimg("test3.png",loadedimage,3)
+    exit()
+    ###################
 
     global_step = tf.Variable(0, name = 'global_step', trainable = False)
 
     train_dir = CURRENT_DIR + '/logs_without_condition/'
-    data_dir = CURRENT_DIR + '/data/img_align_celeba_tfrecords/'
 
-    loader = inputs(data_dir, BATCH_SIZE)
-    #images = inputs(data_dir, BATCH_SIZE)
-    images = tf.placeholder(tf.float32, [64, 64, 64, 3])
+    images = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL])
 
     z = tf.placeholder(tf.float32, [None, Z_DIM], name='z')
 
@@ -226,27 +209,13 @@ def train():
     D_logits_F = discriminator(G, reuse = True)
     
     
-    gen_cost = -tf.reduce_mean(D_logits_F)#disc_fake
-    
-    
+    gen_cost = -tf.reduce_mean(D_logits_F)
     disc_cost = tf.reduce_mean(D_logits_F) - tf.reduce_mean(D_logits)
-
-    alpha = tf.random_uniform(
-        shape=[BATCH_SIZE,1], 
-        minval=0.,
-        maxval=1.
-    )
-    
-    #differences = fake_data - real_data
+    alpha = tf.random_uniform(shape=[BATCH_SIZE,1], minval=0.0,maxval=1.0)
     differences = G - images
-    
-    #interpolates = real_data + (alpha*differences)
     interpolates = images + (alpha*differences)
-    
     gradients = tf.gradients(discriminator(interpolates), [interpolates])[0]
-    
     slopes = tf.sqrt(tf.reduce_sum(tf.square(gradients), reduction_indices=[1]))
-    
     gradient_penalty = tf.reduce_mean((slopes-1.)**2)
     
     LAMBDA = 10 # Gradient penalty lambda hyperparameter
@@ -259,41 +228,17 @@ def train():
     saver = tf.train.Saver()
     
     with tf.variable_scope("", reuse=tf.AUTO_REUSE):
-        #d_optim = tf.train.RMSPropOptimizer(LR).minimize(d_loss, var_list = d_vars, global_step = global_step)
         d_optim = tf.train.AdamOptimizer(learning_rate=LR,beta1=0.5,beta2=0.9).minimize(disc_cost, var_list=d_vars)        
-        
-        #g_optim = tf.train.RMSPropOptimizer(LR).minimize(g_loss, var_list = g_vars, global_step = global_step)
         g_optim = tf.train.AdamOptimizer(learning_rate=LR,beta1=0.5,beta2=0.9).minimize(gen_cost, var_list=g_vars)
-        
-    #clip_d_op = [var.assign(tf.clip_by_value(var, CLIP[0], CLIP[1])) for var in d_vars]   
-  
 
 
     sess = tf.Session()
     
     
-    
-    
-    #writer = tf.summary.FileWriter(train_dir, sess.graph)    
-    
     sample_z = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
     
-    coord = tf.train.Coordinator()
-    threads = tf.train.start_queue_runners(sess = sess, coord = coord)
     init = tf.initialize_all_variables()  
     sess.run(init)
-    
-    ####################################################
-#     loadedimage = sess.run(loader)
-#     save_images(loadedimage, [8, 8], 'dataimg1.png')
-#     loadedimage = sess.run(loader)
-#     save_images(loadedimage, [8, 8], 'dataimg2.png')
-#     loadedimage = sess.run(loader)
-#     save_images(loadedimage, [8, 8], 'dataimg3.png')
-#     loadedimage = sess.run(loader)
-#     save_images(loadedimage, [8, 8], 'dataimg4.png')
-#     exit()
-    ####################################################
 
     start = 0
     if LOAD_MODEL:        
@@ -316,35 +261,19 @@ def train():
             start = 0
             
         for idx in range(start, batch_idxs):
-            if idx<25 or idx % 500 == 0:
-                critic_num = 25
-            else:
-                critic_num = CRITIC_NUM
+            #if idx<25 or idx % 500 == 0:
+            #    critic_num = 25
+            #else:
+            critic_num = 5
             print(idx)
             for _ in range(critic_num):
                 batch_z = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
-
-                loadedimage = sess.run(loader)
-
+                loadedimage = extract_data()
                 sess.run(d_optim, feed_dict = {z:batch_z, images:loadedimage})
-                
-                #sess.run(clip_d_op)
 
             batch_z = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
-
-            #sess.run(d_optim, feed_dict = {z: batch_z})
-
-            #sess.run(g_optim, feed_dict = {z: batch_z})
-
             sess.run(g_optim, feed_dict = {z: batch_z})
 
-            if idx % 20 == 0:
-                errD_fake = 0#sess.run(d_loss_fake,feed_dict={z: batch_z})
-                errD_real = 0#sess.run(d_loss_real)
-                errG = 0#sess.run(g_loss,feed_dict={z: batch_z})
-                print("[%4d/%4d] d_loss: %.8f, g_loss: %.8f" \
-                            % (idx, batch_idxs, errD_fake+errD_real, errG))
-            
             if idx % 100 == 0:
                 sample = sess.run(samples, feed_dict = {z: sample_z})
                 samples_path = CURRENT_DIR + '\\out\\'
@@ -365,8 +294,6 @@ def train():
 
         print('******* start with %d *******' % start)
     
-    coord.request_stop()    
-    coord.join(threads)
     sess.close()
     
     
@@ -378,7 +305,7 @@ def evaluate():
      
     z = tf.placeholder(tf.float32, [None, Z_DIM], name='z')
      
-    G = generator(z, is_train = False)
+    G = generator(z)
      
     sample_z1 = np.random.uniform(-1, 1, size=(BATCH_SIZE, Z_DIM))
     sample_z2 = np.random.uniform(-1, 1, size=(BATCH_SIZE, Z_DIM))
@@ -417,5 +344,5 @@ def evaluate():
     sess.close()
 
 
-#train()
-evaluate()
+train()
+#evaluate()

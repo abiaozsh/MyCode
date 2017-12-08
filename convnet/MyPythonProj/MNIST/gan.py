@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-http://blog.topspeedsnail.com/archives/10977/comment-page-1#comment-1484
+#http://blog.topspeedsnail.com/archives/10977/comment-page-1#comment-1484
 
 """
 Energy Based Generative Adversarial Networks (EBGAN): https://arxiv.org/pdf/1609.03126v2.pdf
@@ -13,9 +13,9 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 #import cv2
-#import scipy.misc as misc
+import scipy.misc
 
-CELEBA_DATE_DIR= 'img_align_celeba'
+CELEBA_DATE_DIR= 'E:\\mnist\\img_align_celeba\\img_align_celeba'
 
 train_images = []
 for image_filename in os.listdir(CELEBA_DATE_DIR):
@@ -103,22 +103,22 @@ def generator(noise):
         out_1 = batch_norm(out_1, generator_variables_dict["beta_1"], generator_variables_dict["gamma_1"], train_phase, scope='bn_1')
         out_1 = tf.nn.relu(out_1, name='relu_1')
 
-        out_2 = tf.nn.conv2d_transpose(out_1, generator_variables_dict['W_2'],  output_shape=tf.pack([tf.shape(out_1)[0], IMAGE_SIZE//8, IMAGE_SIZE//8, 256]), strides=[1, 2, 2, 1], padding='SAME')
+        out_2 = tf.nn.conv2d_transpose(out_1, generator_variables_dict['W_2'],  output_shape=tf.stack([tf.shape(out_1)[0], IMAGE_SIZE//8, IMAGE_SIZE//8, 256]), strides=[1, 2, 2, 1], padding='SAME')
         out_2 = tf.nn.bias_add(out_2, generator_variables_dict['b_2'])
         out_2 = batch_norm(out_2, generator_variables_dict["beta_2"], generator_variables_dict["gamma_2"], train_phase, scope='bn_2')
         out_2 = tf.nn.relu(out_2, name='relu_2')
 
-        out_3 = tf.nn.conv2d_transpose(out_2, generator_variables_dict['W_3'],  output_shape=tf.pack([tf.shape(out_2)[0], IMAGE_SIZE//4, IMAGE_SIZE//4, 128]), strides=[1, 2, 2, 1], padding='SAME')
+        out_3 = tf.nn.conv2d_transpose(out_2, generator_variables_dict['W_3'],  output_shape=tf.stack([tf.shape(out_2)[0], IMAGE_SIZE//4, IMAGE_SIZE//4, 128]), strides=[1, 2, 2, 1], padding='SAME')
         out_3 = tf.nn.bias_add(out_3, generator_variables_dict['b_3'])
         out_3 = batch_norm(out_3, generator_variables_dict["beta_3"], generator_variables_dict["gamma_3"], train_phase, scope='bn_3')
         out_3 = tf.nn.relu(out_3, name='relu_3')
         
-        out_4 = tf.nn.conv2d_transpose(out_3, generator_variables_dict['W_4'],  output_shape=tf.pack([tf.shape(out_3)[0], IMAGE_SIZE//2, IMAGE_SIZE//2, 64]), strides=[1, 2, 2, 1], padding='SAME')
+        out_4 = tf.nn.conv2d_transpose(out_3, generator_variables_dict['W_4'],  output_shape=tf.stack([tf.shape(out_3)[0], IMAGE_SIZE//2, IMAGE_SIZE//2, 64]), strides=[1, 2, 2, 1], padding='SAME')
         out_4 = tf.nn.bias_add(out_4, generator_variables_dict['b_4'])
         out_4 = batch_norm(out_4, generator_variables_dict["beta_4"], generator_variables_dict["gamma_4"], train_phase, scope='bn_4')
         out_4 = tf.nn.relu(out_4, name='relu_4')
 
-        out_5 = tf.nn.conv2d_transpose(out_4, generator_variables_dict['W_5'],  output_shape=tf.pack([tf.shape(out_4)[0], IMAGE_SIZE, IMAGE_SIZE, IMAGE_CHANNEL]), strides=[1, 2, 2, 1], padding='SAME')
+        out_5 = tf.nn.conv2d_transpose(out_4, generator_variables_dict['W_5'],  output_shape=tf.stack([tf.shape(out_4)[0], IMAGE_SIZE, IMAGE_SIZE, IMAGE_CHANNEL]), strides=[1, 2, 2, 1], padding='SAME')
         out_5 = tf.nn.bias_add(out_5, generator_variables_dict['b_5'])
         out_5 = tf.nn.tanh(out_5, name='tanh_5')
 
@@ -176,17 +176,17 @@ def discriminator(input_images):
         # Decoder
         out_3 = tf.reshape(encode, [-1, IMAGE_SIZE//8, IMAGE_SIZE//8, 128])
         
-        out_4 = tf.nn.conv2d_transpose(out_3, discriminator_variables_dict['W_4'],  output_shape=tf.pack([tf.shape(out_3)[0], IMAGE_SIZE//4, IMAGE_SIZE//4, 64]), strides=[1, 2, 2, 1], padding='SAME')
+        out_4 = tf.nn.conv2d_transpose(out_3, discriminator_variables_dict['W_4'],  output_shape=tf.stack([tf.shape(out_3)[0], IMAGE_SIZE//4, IMAGE_SIZE//4, 64]), strides=[1, 2, 2, 1], padding='SAME')
         out_4 = tf.nn.bias_add(out_4, discriminator_variables_dict['b_4'])
         out_4 = batch_norm(out_4, discriminator_variables_dict['beta_4'], discriminator_variables_dict['gamma_4'], train_phase, scope='bn_4')
         out_4 = tf.maximum(0.2 * out_4, out_4, 'leaky_relu_4')
 
-        out_5 = tf.nn.conv2d_transpose(out_4, discriminator_variables_dict['W_5'],  output_shape=tf.pack([tf.shape(out_4)[0], IMAGE_SIZE//2, IMAGE_SIZE//2, 32]), strides=[1, 2, 2, 1], padding='SAME')
+        out_5 = tf.nn.conv2d_transpose(out_4, discriminator_variables_dict['W_5'],  output_shape=tf.stack([tf.shape(out_4)[0], IMAGE_SIZE//2, IMAGE_SIZE//2, 32]), strides=[1, 2, 2, 1], padding='SAME')
         out_5 = tf.nn.bias_add(out_5, discriminator_variables_dict['b_5'])
         out_5 = batch_norm(out_5, discriminator_variables_dict['beta_5'], discriminator_variables_dict['gamma_5'], train_phase, scope='bn_5')
         out_5 = tf.maximum(0.2 * out_5, out_5, 'leaky_relu_5')
 
-        out_6 = tf.nn.conv2d_transpose(out_5, discriminator_variables_dict['W_6'],  output_shape=tf.pack([tf.shape(out_5)[0], IMAGE_SIZE, IMAGE_SIZE, 3]), strides=[1, 2, 2, 1], padding='SAME')
+        out_6 = tf.nn.conv2d_transpose(out_5, discriminator_variables_dict['W_6'],  output_shape=tf.stack([tf.shape(out_5)[0], IMAGE_SIZE, IMAGE_SIZE, 3]), strides=[1, 2, 2, 1], padding='SAME')
         out_6 = tf.nn.bias_add(out_6, discriminator_variables_dict['b_6'])
         decoded = tf.nn.tanh(out_6, name="tanh_6")
 
@@ -218,15 +218,15 @@ train_op_D = optimizer(D_loss, 'Discriminator')
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer(), feed_dict={train_phase: True})
-    saver = tf.train.Saver()
+    #saver = tf.train.Saver()
 
     # �ָ�ǰһ��ѵ��
-    ckpt = tf.train.get_checkpoint_state('.')
-    if ckpt != None:
-        print(ckpt.model_checkpoint_path)
-        saver.restore(sess, ckpt.model_checkpoint_path)
-    else:
-        print("û�ҵ�ģ��")
+    #ckpt = tf.train.get_checkpoint_state('.')
+    #if ckpt != None:
+    #    print(ckpt.model_checkpoint_path)
+        #saver.restore(sess, ckpt.model_checkpoint_path)
+    #else:
+    #    print("û�ҵ�ģ��")
 
     step = 0
     for i in range(40):
@@ -241,7 +241,7 @@ with tf.Session() as sess:
 
             # ����ģ�Ͳ�����ͼ��
             if step % 100 == 0:
-                saver.save(sess, "celeba.model", global_step=step)
+                #saver.save(sess, "celeba.model", global_step=step)
 
                 test_noise = np.random.uniform(-1.0, 1.0, size=(5, z_dim)).astype(np.float32)
                 images = sess.run(fake_image, feed_dict={noise: test_noise, train_phase: False})
@@ -252,6 +252,6 @@ with tf.Session() as sess:
                     image *= 127.5
                     image = np.clip(image, 0, 255).astype(np.uint8)
                     image = np.reshape(image, (IMAGE_SIZE, IMAGE_SIZE, -1))
-                    ??misc.imsave('fake_image' + str(step) + str(k) + '.jpg', image)
+                    scipy.misc.imsave('fake_image' + str(step) + str(k) + '.jpg', image)
 
             step += 1

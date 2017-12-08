@@ -57,7 +57,7 @@ def convert_to(data_path, name):
 if __name__ == '__main__':
     
     current_dir = os.getcwd()    
-    data_path = 'E:\\MNIST\\img_align_celeba_large\\'
+    data_path = 'E:\\MNIST\\img_align_celeba_total\\'
     name = current_dir + '\\data\\img_align_celeba_tfrecords\\train'
     start_time = time.time() 
     
