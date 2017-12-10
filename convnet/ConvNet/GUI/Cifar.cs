@@ -72,7 +72,7 @@ namespace GUI
 			//idx = load(@"E:\MNIST\cifar-10-batches-bin\data_batch_4.bin", idx);
 			//idx = load(@"E:\MNIST\cifar-10-batches-bin\data_batch_5.bin", idx);
 			//idx = load(@"E:\MNIST\cifar-10-batches-bin\test_batch.bin", idx);
-			load(@"E:\MNIST\cifar-10-batches-bin\32x32.bin");
+//load(@"E:\MNIST\cifar-10-batches-bin\32x32.bin");
 
 		}
 
