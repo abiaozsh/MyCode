@@ -9,8 +9,8 @@ from six.moves import xrange
 
 BATCH_SIZE = 64
 
-IMAGE_W = 208
-IMAGE_H = 160
+OUTPUT_SIZE = 64
+IMAGE_SIZE = 64
 
 GF = 64             # Dimension of G filters in first conv layer. default [64]
 DF = 64             # Dimension of D filters in first conv layer. default [64]
@@ -22,7 +22,7 @@ CRITIC_NUM = 5
 TRAIN = True
 CURRENT_DIR = os.getcwd()
 
-bytestream = open("e:\\MNIST\\celebaHI.bin","br")
+bytestream = open("e:\\MNIST\\celeba.bin","br")
 file_index = 0
 def extract_data():
     global file_index
@@ -30,20 +30,20 @@ def extract_data():
     file_index = file_index + 64
     if file_index>=64*10:#202599
         bytestream.close()
-        bytestream = open("e:\\MNIST\\celebaHI.bin","br")
+        bytestream = open("e:\\MNIST\\celeba.bin","br")
         file_index = 0
 
-    buf = bytestream.read(BATCH_SIZE * IMAGE_H * IMAGE_W * IMAGE_CHANNEL)
+    buf = bytestream.read(BATCH_SIZE * IMAGE_SIZE * IMAGE_SIZE * IMAGE_CHANNEL)
     data = np.frombuffer(buf, dtype=np.uint8).astype(np.float32)
     data = (data) / 256.0 - 0.5
-    data = data.reshape(BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL)
+    data = data.reshape(BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, IMAGE_CHANNEL)
     return data
 
-t2, t4, t8, t16 = IMAGE_H//2, IMAGE_H//4, IMAGE_H//8, IMAGE_H//16
-s2, s4, s8, s16 = IMAGE_W//2, IMAGE_W//4, IMAGE_W//8, IMAGE_W//16
+s2, s4, s8, s16 = OUTPUT_SIZE//2, OUTPUT_SIZE//4, OUTPUT_SIZE//8, OUTPUT_SIZE//16
+
 
 loadFromFile = ConvNet.openEmptyFileR('gan9g.txt')
-gfc0 = ConvNet.FC(inDepth = Z_DIM,outDepth = GF*8*t16*s16,loadFromFile = loadFromFile)
+gfc0 = ConvNet.FC(inDepth = Z_DIM,outDepth = GF*8*s16*s16,loadFromFile = loadFromFile)
 gdc0 = ConvNet.DeConv(inDepth = GF*8,outDepth = GF*4,filterSize = 5,loadFromFile = loadFromFile)
 gdc1 = ConvNet.DeConv(inDepth = GF*4,outDepth = GF*2,filterSize = 5,loadFromFile = loadFromFile)
 gdc2 = ConvNet.DeConv(inDepth = GF*2,outDepth = GF*1,filterSize = 5,loadFromFile = loadFromFile)
@@ -55,16 +55,16 @@ dcv0 = ConvNet.Conv(inDepth = IMAGE_CHANNEL,outDepth = DF*1,filterSize = 5,loadF
 dcv1 = ConvNet.Conv(inDepth = DF*1,outDepth = DF*2,filterSize = 5,loadFromFile = loadFromFile)
 dcv2 = ConvNet.Conv(inDepth = DF*2,outDepth = DF*4,filterSize = 5,loadFromFile = loadFromFile)
 dcv3 = ConvNet.Conv(inDepth = DF*4,outDepth = DF*8,filterSize = 5,loadFromFile = loadFromFile)
-dfc0 = ConvNet.FC(inDepth = DF*8*t16*s16,outDepth = 1,loadFromFile = loadFromFile)
+dfc0 = ConvNet.FC(inDepth = DF*8*s16*s16,outDepth = 1,loadFromFile = loadFromFile)
 if loadFromFile:loadFromFile.close()
 
 def generator(z):
     _ret = gfc0.getLayer(z, isRelu=True, fixed = False)
-    _ret = ConvNet.FC2Conv_Reshape(_ret, t16, s16, GF*8)
-    _ret = gdc0.getLayer(_ret, height = t8, width = s8, convStride = 2, isRelu=True, fixed = False)
-    _ret = gdc1.getLayer(_ret, height = t4, width = s4, convStride = 2, isRelu=True, fixed = False)
-    _ret = gdc2.getLayer(_ret, height = t2, width = s2, convStride = 2, isRelu=True, fixed = False)
-    _ret = gdc3.getLayer(_ret, height = IMAGE_H, width = IMAGE_W, convStride = 2, isRelu=False, fixed = False)
+    _ret = ConvNet.FC2Conv_Reshape(_ret, s16, s16, GF*8)
+    _ret = gdc0.getLayer(_ret, height = s8, width = s8, convStride = 2, isRelu=True, fixed = False)
+    _ret = gdc1.getLayer(_ret, height = s4, width = s4, convStride = 2, isRelu=True, fixed = False)
+    _ret = gdc2.getLayer(_ret, height = s2, width = s2, convStride = 2, isRelu=True, fixed = False)
+    _ret = gdc3.getLayer(_ret, height = OUTPUT_SIZE, width = OUTPUT_SIZE, convStride = 2, isRelu=False, fixed = False)
     return _ret
     
 def discriminator(inputT):
@@ -113,7 +113,7 @@ def train():
 #     exit()
     ###################
 
-    images = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL])
+    images = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, IMAGE_CHANNEL])
     z = tf.placeholder(tf.float32, [BATCH_SIZE, Z_DIM], name='z')
 
     G = generator(z)
@@ -167,21 +167,6 @@ def train():
             samples_path = CURRENT_DIR + '\\out\\'
             save_images(sample, [8, 8], samples_path + 'sample_%d.png' % (idx))
 
-#             saveToFile = ConvNet.openEmptyFileW('gan9g.txt')
-#             gfc0.save(sess,saveToFile)
-#             gdc0.save(sess,saveToFile)
-#             gdc1.save(sess,saveToFile)
-#             gdc2.save(sess,saveToFile)
-#             gdc3.save(sess,saveToFile)
-#             saveToFile.flush();saveToFile.close()
-#             
-#             saveToFile = ConvNet.openEmptyFileW('gan9d.txt')
-#             dcv0.save(sess,saveToFile)
-#             dcv1.save(sess,saveToFile)
-#             dcv2.save(sess,saveToFile)
-#             dcv3.save(sess,saveToFile)
-#             dfc0.save(sess,saveToFile)
-#             saveToFile.flush();saveToFile.close()
 
     sess.close()
     

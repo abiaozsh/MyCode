@@ -71,8 +71,8 @@ class DeConv:
             
             self.weightsROM = tf.constant(warray)
         else:
-            self.biasesROM = tf.constant(0.1, shape=[outDepth], dtype=tf.float32)
-            self.weightsROM = tf.truncated_normal([filterSize, filterSize, outDepth, inDepth], stddev=0.1, dtype=tf.float32)
+            self.biasesROM = tf.constant(0.0, shape=[outDepth], dtype=tf.float32)
+            self.weightsROM = tf.truncated_normal([filterSize, filterSize, outDepth, inDepth], stddev=0.02, dtype=tf.float32)
 
         self.biases = tf.Variable(self.biasesROM)
         self.weights = tf.Variable(self.weightsROM)
@@ -138,8 +138,8 @@ class Conv:
             self.weightsROM = tf.constant(warray)
             
         else:
-            self.biasesROM = tf.constant(0.1, shape=[outDepth], dtype=tf.float32)
-            self.weightsROM = tf.truncated_normal([filterSize, filterSize, inDepth, outDepth], stddev=0.1, dtype=tf.float32)
+            self.biasesROM = tf.constant(0.0, shape=[outDepth], dtype=tf.float32)
+            self.weightsROM = tf.truncated_normal([filterSize, filterSize, inDepth, outDepth], stddev=0.02, dtype=tf.float32)
 
         self.biases = tf.Variable(self.biasesROM)
         self.weights = tf.Variable(self.weightsROM)
@@ -205,8 +205,8 @@ class FC:
             self.weightsROM = tf.constant(warray)
             
         else:
-            self.biasesROM = tf.constant(0.1, shape=[outDepth], dtype=tf.float32)
-            self.weightsROM = tf.truncated_normal([inDepth, outDepth], stddev=0.1, dtype=tf.float32)
+            self.biasesROM = tf.constant(0.0, shape=[outDepth], dtype=tf.float32)
+            self.weightsROM = tf.truncated_normal([inDepth, outDepth], stddev=0.02, dtype=tf.float32)
     
         self.biases = tf.Variable(self.biasesROM)
         self.weights = tf.Variable(self.weightsROM)

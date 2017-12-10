@@ -19,8 +19,8 @@ def write_image(path, image):
 
 IMAGE_W = 800 
 IMAGE_H = 600 
-CONTENT_IMG = "..\\IMG_20171206_183450.jpg"#'..\\pilatus800.jpg'
-STYLE_IMG = '..\\StarryNight.jpg'
+CONTENT_IMG = "..\\b.jpg"#'..\\pilatus800.jpg'
+STYLE_IMG = '..\\a.jpg'
 INI_NOISE_RATIO = 0.5
 
 

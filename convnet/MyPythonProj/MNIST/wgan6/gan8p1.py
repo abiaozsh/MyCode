@@ -61,8 +61,8 @@ def fully_connected(value, output_shape, name = 'fully_connected', with_w = Fals
     shape = value.get_shape().as_list()
     
     with tf.variable_scope(name):
-        weights = weight('weights', [shape[1], output_shape], 0.02)
         biases = bias('biases', [output_shape], 0.0)
+        weights = weight('weights', [shape[1], output_shape], 0.02)
         
     if with_w:
         return tf.matmul(value, weights) + biases, weights, biases
@@ -74,11 +74,11 @@ def fully_connected(value, output_shape, name = 'fully_connected', with_w = Fals
 def deconv2d(value, output_shape, k_h = 5, k_w = 5, strides =[1, 2, 2, 1], name = 'deconv2d'):
     
     with tf.variable_scope(name):
-        weights = weight('weights', [k_h, k_w, output_shape[-1], value.get_shape()[-1]])
         biases = bias('biases', [output_shape[-1]])
+        weights = weight('weights', [k_h, k_w, output_shape[-1], value.get_shape()[-1]])
         
         deconv = tf.nn.conv2d_transpose(value, weights, output_shape, strides = strides)
-        deconv = tf.reshape(tf.nn.bias_add(deconv, biases), deconv.get_shape())
+        deconv = tf.nn.bias_add(deconv, biases)
         
         return deconv
             
@@ -86,11 +86,11 @@ def deconv2d(value, output_shape, k_h = 5, k_w = 5, strides =[1, 2, 2, 1], name 
 def conv2d(value, output_dim, k_h = 5, k_w = 5, strides =[1, 2, 2, 1], name = 'conv2d'):
     
     with tf.variable_scope(name):
-        weights = weight('weights', [k_h, k_w, value.get_shape()[-1], output_dim])
         biases = bias('biases', [output_dim])
+        weights = weight('weights', [k_h, k_w, value.get_shape()[-1], output_dim])
         
         conv = tf.nn.conv2d(value, weights, strides = strides, padding = 'SAME')
-        conv = tf.reshape(tf.nn.bias_add(conv, biases), conv.get_shape())
+        conv = tf.nn.bias_add(conv, biases)
         
         return conv
 
@@ -104,7 +104,6 @@ def generator(z, name = 'generator'):
         h2 = tf.nn.leaky_relu(deconv2d(h1, [BATCH_SIZE, s8, s8, GF*4], name = 'g_deconv2d1'))
         h3 = tf.nn.leaky_relu(deconv2d(h2, [BATCH_SIZE, s4, s4, GF*2], name = 'g_deconv2d2'))
         h4 = tf.nn.leaky_relu(deconv2d(h3, [BATCH_SIZE, s2, s2, GF*1], name = 'g_deconv2d3'))
-
         h5 = deconv2d(h4, [BATCH_SIZE, OUTPUT_SIZE, OUTPUT_SIZE, 3], name = 'g_deconv2d4')    
         
         return h5
@@ -173,7 +172,7 @@ def train():
 
     images = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, IMAGE_CHANNEL])
 
-    z = tf.placeholder(tf.float32, [None, Z_DIM], name='z')
+    z = tf.placeholder(tf.float32, [BATCH_SIZE, Z_DIM])
 
     G = generator(z)
     D_logits  = discriminator(images)
