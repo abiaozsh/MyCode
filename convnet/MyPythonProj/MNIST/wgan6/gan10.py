@@ -20,16 +20,22 @@ EPOCH = 5
 CRITIC_NUM = 5
 TRAIN = True
 
-bytestream = open("e:\\MNIST\\celebaHI.bin","br")
 file_index = 0
+content_index = 0
+bytestream = open("e:\\MNIST\\celebaHI\\"+str(file_index)+".bin","br")
 def extract_data():
     global file_index
+    global content_index
     global bytestream
-    file_index = file_index + BATCH_SIZE
-    if file_index>=12800:#202599
+
+    content_index = content_index + BATCH_SIZE
+    if content_index>=4096:#202599
+        file_index = file_index + 1
+        if file_index >= 49:
+            file_index = 0
         bytestream.close()
-        bytestream = open("e:\\MNIST\\celebaHI.bin","br")
-        file_index = 0
+        bytestream = open("e:\\MNIST\\celebaHI\\"+str(file_index)+".bin","br")
+        content_index = 0
 
     buf = bytestream.read(BATCH_SIZE * IMAGE_H * IMAGE_W * IMAGE_CHANNEL)
     data = np.frombuffer(buf, dtype=np.uint8).astype(np.float32)
@@ -85,8 +91,18 @@ def train():
 #     loadedimage = extract_data()
 #     ConvNet.saveImages(loadedimage, [8, 8], "test1.png")
 #     exit()
-    ###################
 
+    
+    
+#     for idx in xrange(0, 1000000000):
+#         loadedimage = extract_data()
+#         global file_index
+#         global content_index
+#         print(str(file_index)+","+str(content_index))         
+#     exit()
+
+    ###################
+    
     images = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL])
     z = tf.placeholder(tf.float32, [BATCH_SIZE, Z_DIM], name='z')
 
@@ -124,7 +140,10 @@ def train():
     sess.run(init)
 
     for idx in xrange(0, 10000):
-        print(idx)
+        global file_index
+        global content_index
+        print(str(idx)+","+str(file_index)+","+str(content_index))
+        
         for _ in xrange(5):
             batch_z = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
             loadedimage = extract_data()
