@@ -118,7 +118,7 @@ namespace ConvNet
 			}
 			return b;
 		}
-		public Bitmap visRGB(float scale)
+		public Bitmap visRGB(float scale,float bias)
 		{
 			if (depth != 3) return null;
 			Bitmap bmp = new Bitmap(sx, sy);
@@ -126,9 +126,9 @@ namespace ConvNet
 			{
 				for (int j = 0; j < sy; j++)
 				{
-					float r = get(i, j, 0) * scale + 128;
-					float g = get(i, j, 1) * scale + 128;
-					float b = get(i, j, 2) * scale + 128;
+					float r = get(i, j, 0) * scale + bias;
+					float g = get(i, j, 1) * scale + bias;
+					float b = get(i, j, 2) * scale + bias;
 					if (r < 0) r = 0;
 					if (r > 255) r = 255;
 
@@ -228,6 +228,17 @@ namespace ConvNet
 				for (int i = 0; i < n; i++)
 				{
 					f[i] = c.Value;
+				}
+			}
+		}
+		public static void init(MyFloat f, int length,float low, float high)
+		{
+			// we were given dimensions of the vol
+			int n = length;
+			{
+				for (int i = 0; i < n; i++)
+				{
+					f[i] = (float)(low + _rnd.NextDouble() * (high - low));
 				}
 			}
 		}

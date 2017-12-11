@@ -51,7 +51,7 @@ namespace GUI
 				idx--;
 			}
 			this.Text = classify[cifar.getLbl(idx)];
-			this.BackgroundImage = Cifar.getBmp(idx);
+			//this.BackgroundImage = Cifar.getBmp(idx);
 		}
 
 		bool stop = false;

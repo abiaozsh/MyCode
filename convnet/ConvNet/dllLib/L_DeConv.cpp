@@ -37,6 +37,7 @@ extern "C" __declspec(dllexport) void SSE_UCVFWD(
 			int outX = out_x * out_depth;
 			for (int od = 0; od < out_depth; od++)
 			{
+				int odfs = od * filterSize;
 				//float a = 0.0f;
 				__m256 a = _mm256_setzero_ps();
 				for (int fy = 0; fy < sy; fy++)
@@ -57,7 +58,8 @@ extern "C" __declspec(dllexport) void SSE_UCVFWD(
 								{
 									//a += p_filters_w[d + filterY + filterX + od* filterSize] * p_in_act_dw[in_y_x + in_x_x + d];
 									__m256 v_in = _mm256_load_ps(p_in_act_dw + in_y_x + in_x_x + d);
-									__m256 v_filters = _mm256_load_ps(p_filters_w + d + filterY + filterX + od* filterSize);
+									//IXYO
+									__m256 v_filters = _mm256_load_ps(p_filters_w + d + filterX + filterY + odfs);
 									v_in = _mm256_mul_ps(v_in, v_filters);
 									a = _mm256_add_ps(a, v_in);
 								}

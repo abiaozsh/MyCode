@@ -21,9 +21,9 @@ namespace ConvNet
 			{
 
 				cv1 = new ConvLayer(filterSize: 3, out_depth: 4, stride: 2, padding: true);
-				fc1 = new FullyConnLayer(num_neurons: 8);
-				fc2 = new FullyConnLayer(num_neurons: 3 * 3 * 4);
-				ucv1 = new DeConvLayer(filterSize: 3, out_sx: 6, out_sy: 6, out_depth: 2, stride: 2, pad: 0);
+				fc1 = new FullyConnLayer(outDepth: 8);
+				fc2 = new FullyConnLayer(outDepth: 3 * 3 * 4);
+				ucv1 = new DeConvLayer(filterSize: 3, out_sx: 6, out_sy: 6, out_depth: 2, stride: 2);
 
 				Add(new InputLayer(6, 6, 2));
 				Add(cv1);
@@ -85,9 +85,9 @@ namespace ConvNet
 			{
 
 				cv1 = new ConvLayer(filterSize: 3, out_depth: 4, stride: 1, padding: true);
-				fc1 = new FullyConnLayer(num_neurons: 8);
-				fc2 = new FullyConnLayer(num_neurons: 3 * 3 * 4);
-				ucv1 = new DeConvLayer(filterSize: 3, out_sx: 6, out_sy: 6, out_depth: 2, stride: 2, pad: 0);
+				fc1 = new FullyConnLayer(outDepth: 8);
+				fc2 = new FullyConnLayer(outDepth: 3 * 3 * 4);
+				ucv1 = new DeConvLayer(filterSize: 3, out_sx: 6, out_sy: 6, out_depth: 2, stride: 2);
 
 				Add(new InputLayer(6, 6, 2));
 				Add(cv1);
@@ -150,9 +150,9 @@ namespace ConvNet
 			{
 
 				cv1 = new ConvLayer(filterSize: 3, out_depth: 4, stride: 1, padding: true, act: new ReluLayer());
-				fc1 = new FullyConnLayer(num_neurons: 8, act: new ReluLayer());
-				fc2 = new FullyConnLayer(num_neurons: 3 * 3 * 4, act: new ReluLayer());
-				ucv1 = new DeConvLayer(filterSize: 3, out_sx: 6, out_sy: 6, out_depth: 2, stride: 2, pad: 0, act: new ReluLayer());
+				fc1 = new FullyConnLayer(outDepth: 8, act: new ReluLayer());
+				fc2 = new FullyConnLayer(outDepth: 3 * 3 * 4, act: new ReluLayer());
+				ucv1 = new DeConvLayer(filterSize: 3, out_sx: 6, out_sy: 6, out_depth: 2, stride: 2, act: new ReluLayer());
 
 				Add(new InputLayer(6, 6, 2));
 				Add(cv1);
@@ -223,10 +223,10 @@ namespace ConvNet
 				p1 = new PoolLayer(stride: 2);
 				cv2 = new ConvLayer(filterSize: 5, out_depth: 8, stride: 1, padding: true, act: new ReluLayer());
 				p2 = new PoolLayer(stride: 2);
-				fc1 = new FullyConnLayer(num_neurons: 8, act: new ReluLayer());
-				fc2 = new FullyConnLayer(num_neurons: 2 * 2 * 8, act: new ReluLayer());
-				ucv1 = new DeConvLayer(filterSize: 5, out_sx: 4, out_sy: 4, out_depth: 4, stride: 2, pad: 1, act: new ReluLayer());//pad关联 filterSize  0:3  1:5 (?2:7)
-				ucv2 = new DeConvLayer(filterSize: 5, out_sx: 8, out_sy: 8, out_depth: 2, stride: 2, pad: 1, act: new ReluLayer());
+				fc1 = new FullyConnLayer(outDepth: 8, act: new ReluLayer());
+				fc2 = new FullyConnLayer(outDepth: 2 * 2 * 8, act: new ReluLayer());
+				ucv1 = new DeConvLayer(filterSize: 5, out_sx: 4, out_sy: 4, out_depth: 4, stride: 2, act: new ReluLayer());//pad关联 filterSize  0:3  1:5 (?2:7)
+				ucv2 = new DeConvLayer(filterSize: 5, out_sx: 8, out_sy: 8, out_depth: 2, stride: 2, act: new ReluLayer());
 
 
 				Add(inputL);

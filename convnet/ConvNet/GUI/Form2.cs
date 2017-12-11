@@ -18,24 +18,60 @@ namespace GUI
 			InitializeComponent();
 		}
 		MainNet net;
-		List<Data> data = new List<Data>();
 
 		public class MainNet : Net//net
 		{
-			public FullyConnLayer fc1;
-			public FullyConnLayer fc2;
-
 			public void init()
 			{
-				fc1 = new FullyConnLayer(num_neurons: 6, bias_pref: 0.1f,act: new ReluLayer());
-				fc2 = new FullyConnLayer(num_neurons: 2, bias_pref: 0.1f);
+				int Z_DIM = 100;
+				int IMAGE_W = 160;
+				int IMAGE_H = 208;
+				int t2 = IMAGE_H / 2;
+				int t4 = IMAGE_H / 4;
+				int t8 = IMAGE_H / 8;
+				int t16 = IMAGE_H / 16;
+				int s2 = IMAGE_W / 2;
+				int s4 = IMAGE_W / 4;
+				int s8 = IMAGE_W / 8;
+				int s16 = IMAGE_W / 16;
+				int GF = 64;
 
-				Add(new InputLayer(out_sx: 1, out_sy: 1, out_depth: 2));
+				//gfc0 = ConvNet.FC(inDepth = Z_DIM,outDepth = GF*8*t16*s16,loadFromFile = loadFromFile)
+				//gdc0 = ConvNet.DeConv(inDepth = GF*8,outDepth = GF*4,filterSize = 5,loadFromFile = loadFromFile)
+				//gdc1 = ConvNet.DeConv(inDepth = GF*4,outDepth = GF*2,filterSize = 5,loadFromFile = loadFromFile)
+				//gdc2 = ConvNet.DeConv(inDepth = GF*2,outDepth = GF*1,filterSize = 5,loadFromFile = loadFromFile)
+				//gdc3 = ConvNet.DeConv(inDepth = GF*1,outDepth = IMAGE_CHANNEL,filterSize = 5,loadFromFile = loadFromFile)
 
-				Add(fc1);
-				Add(fc2);
+				//    _ret = gfc0.getLayer(z, isRelu=True, fixed = False)
+				//    _ret = ConvNet.FC2Conv_Reshape(_ret, t16, s16, GF*8)
+				//    _ret = gdc0.getLayer(_ret, height = t8, width = s8, convStride = 2, isRelu=True, fixed = False)
+				//    _ret = gdc1.getLayer(_ret, height = t4, width = s4, convStride = 2, isRelu=True, fixed = False)
+				//    _ret = gdc2.getLayer(_ret, height = t2, width = s2, convStride = 2, isRelu=True, fixed = False)
+				//    _ret = gdc3.getLayer(_ret, height = IMAGE_H, width = IMAGE_W, convStride = 2, isRelu=False, fixed = False)
 
-				Add(new SoftmaxLayer());
+
+				Add(new InputLayer(out_sx: 1, out_sy: 1, out_depth: Z_DIM));
+				FullyConnLayer gfc0 = new FullyConnLayer(outDepth: GF * 8 * s16 * t16, act: new ReluLayer());
+				Add(gfc0);
+				Add(new ReshapeLayer(s16, t16, GF * 8));
+				DeConvLayer gdc0 = new DeConvLayer(5, s8, t8, GF * 4, 2, act: new ReluLayer());
+				Add(gdc0);
+				DeConvLayer gdc1 = new DeConvLayer(5, s4, t4, GF * 2, 2, act: new ReluLayer());
+				Add(gdc1);
+				DeConvLayer gdc2 = new DeConvLayer(5, s2, t2, GF * 1, 2, act: new ReluLayer());
+				Add(gdc2);
+				DeConvLayer gdc3 = new DeConvLayer(5, IMAGE_W, IMAGE_H, 3, 2);
+				Add(gdc3);
+
+				Util.load(@"..\gan9g.txt", (s) =>
+				{
+					gfc0.load(s);
+					gdc0.load(s);
+					gdc1.load(s);
+					gdc2.load(s);
+					gdc3.load(s);
+				});
+
 
 			}
 		}
@@ -43,69 +79,33 @@ namespace GUI
 		{
 			net = new MainNet();
 			net.init();
-			circle_data();
-		}
-
-		class Data
-		{
-			public Vol val;
-			public DataSet label;
 		}
 
 		private void draw()
 		{
-//			Vol v = new Vol(1, 1, 2, 0.0f);
-//			Bitmap b = new Bitmap(100, 100);
-//			for (int i = 0; i < 100; i++)
-//			{
-//				for (int j = 0; j < 100; j++)
-//				{
-//					v.w[0] = i / 10.0f - 5.0f;
-//					v.w[1] = j / 10.0f - 5.0f;
-//					Vol _out = net.forward(v);
-//					Color c = _out.w[1] > 0.5f ? Color.PaleVioletRed : Color.Green;
-//					b.SetPixel(i, j, c);
-//				}
-//
-//			}
-//
-//			Graphics g = Graphics.FromImage(b);
-//
-//			//g.
-//
-//			g.Flush();
-//			g.Dispose();
-//
-//			pictureBox1.Image = b;
 		}
 
-		private void circle_data()
+		private void pictureBox1_Click(object sender, EventArgs e)
 		{
-			for (var i = 0; i < 50; i++)
-			{
-				var r = Util.randf(0.0f, 2.0f);
-				var t = Util.randf(0.0f, 2 * (float)Math.PI);
-				Data d = new Data();
-				d.val = new Vol(1, 1, 2, 0);
-				d.val.w[0] = r * (float)Math.Sin(t);
-				d.val.w[1] = r * (float)Math.Cos(t);
-				d.label = new DataSet();
-				d.label.predict = 0;
-				data.Add(d);
-			}
-			for (var i = 0; i < 50; i++)
-			{
-				var r = Util.randf(3.0f, 5.0f);
-				//var t = convnetjs.randf(0.0, 2*Math.PI);
-				var t = 2 * (float)Math.PI * i / 50.0f;
-				Data d = new Data();
-				d.val = new Vol(1, 1, 2, 0);
-				d.val.w[0] = r * (float)Math.Sin(t);
-				d.val.w[1] = r * (float)Math.Cos(t);
-				d.label = new DataSet();
-				d.label.predict = 1;
-				data.Add(d);
-			}
+
+		}
+
+		private void button1_Click(object sender, EventArgs e)
+		{
+			Vol v = new Vol(1, 1, 100, null);
+			Vol.init(v.w, 100, -1, 1);
+
+			//Vol.init(v.w, 100, 0);
+
+			//v.w[0] = 1;
+			//v.w[1] = -1;
+
+			var ins = net.getInstance();
+
+			Vol ret = net.forward(ins, v);
+
+
+			pictureBox1.Image = ret.visRGB(255,128);
 		}
 
 	}

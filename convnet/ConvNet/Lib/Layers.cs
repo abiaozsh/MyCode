@@ -36,7 +36,6 @@ namespace ConvNet
 	{
 		public class LastInstance : Instance
 		{
-			public float loss;
 			public void setData(DataSet y)
 			{
 				this.y = y;

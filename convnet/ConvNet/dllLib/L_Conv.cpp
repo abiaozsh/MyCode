@@ -60,8 +60,8 @@ extern "C" __declspec(dllexport) void SSE_CVFWD(
 							{
 								// avoid function call overhead (x2) for efficiency, compromise modularity :(
 								//a += p_in_act_w[Vidx + fd] * p_filters_w[fidx + fd];
-
 								__m256 v_in = _mm256_load_ps(p_in_act_w + Vidx + fd);
+								//IXYO
 								__m256 v_filters = _mm256_load_ps(p_filters_w + fidx + fd);
 								v_in = _mm256_mul_ps(v_in, v_filters);
 								a = _mm256_add_ps(a, v_in);

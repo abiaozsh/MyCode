@@ -25,33 +25,22 @@ namespace ConvNet
 		//Vol[] filters;
 		public MyFloat filters_w;
 
-		MyFloat[] filters_gsum; //[]?
-		MyFloat[] filters_xsum; //[]?
-
 		MyFloat bias_w;
-
-
-		MyFloat bias_gsum; //[]?
-		MyFloat bias_xsum; //[]?
 
 		public int num_inputs;
 
-		float bias_pref;
-
 		public ActivationLayer act;
 
-		public FullyConnLayer(int num_neurons = 0, float bias_pref = 0.0f, ActivationLayer act = null)
+		public FullyConnLayer(int outDepth = 0, ActivationLayer act = null)
 		{
 
 			// required
 			// ok fine we will allow 'filters' as the word as well
-			this.out_depth = num_neurons;
+			this.out_depth = outDepth;
 
 			// optional 
 			//this.l1_decay_mul = opt.l1_decay_mul;
 			//this.l2_decay_mul = opt.l2_decay_mul;
-
-			this.bias_pref = bias_pref;
 
 			this.act = act;
 		}
@@ -66,37 +55,10 @@ namespace ConvNet
 			this.out_sx = 1;
 			this.out_sy = 1;
 
-			// initializations
-			filters_gsum = new MyFloat[out_depth];
-			filters_xsum = new MyFloat[out_depth];
-			for (int i = 0; i < this.out_depth; i++)
-			{
-				filters_gsum[i] = new MyFloat(num_inputs);
-				filters_xsum[i] = new MyFloat(num_inputs);
-				for (int j = 0; j < num_inputs; j++)
-				{
-					filters_gsum[i][j] = 0.0f;
-					filters_xsum[i][j] = 0.0f;
-				}
-			}
 			//filters = new Vol[out_depth];
 			//filters[i] = new Vol(1, 1, this.num_inputs, null);
 			filters_w = new MyFloat(num_inputs * out_depth);
-			Vol.init(filters_w, num_inputs * out_depth, null);
-
-
-
 			bias_w = new MyFloat(out_depth);
-			Vol.init(bias_w, out_depth, bias_pref);
-
-			this.bias_gsum = new MyFloat(out_depth); // last iteration gradients (used for momentum calculations)
-			this.bias_xsum = new MyFloat(out_depth); // used in adadelta
-
-			for (int j = 0; j < out_depth; j++)
-			{
-				bias_gsum[j] = 0.0f;
-				bias_xsum[j] = 0.0f;
-			}
 
 			_inited = true;
 			if (act != null)

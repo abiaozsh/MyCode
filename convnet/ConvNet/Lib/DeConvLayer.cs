@@ -42,8 +42,7 @@ namespace ConvNet
 		public MyFloat bias_w;
 
 		ActivationLayer act;
-		////pad关联 filterSize  0:3  1:5 (?2:7)
-		public DeConvLayer(int filterSize = 0, int out_sx = 0, int out_sy = 0, int out_depth = 0, int stride = 1, int pad = 0, float bias_pref = 0.0f, ActivationLayer act = null)//if pad = sx(sy) / 2  the size is same   bigger pad bigger out
+		public DeConvLayer(int filterSize = 0, int out_sx = 0, int out_sy = 0, int out_depth = 0, int stride = 1, ActivationLayer act = null)//if pad = sx(sy) / 2  the size is same   bigger pad bigger out
 		{
 			// required
 			this.out_depth = out_depth;
@@ -54,8 +53,25 @@ namespace ConvNet
 			this.out_sy = out_sy;
 
 			// optional
-			this.stride = stride; // stride at which we apply filters to input volume
-			this.pad = pad; // amount of 0 padding to add around borders of input volume
+			this.stride = stride;
+			//pad = 0 if filterSize = 3
+			//pad关联 filterSize  0:3  1:5 (?2:7)
+			if (filterSize == 3)
+			{
+				this.pad = 0;
+			}
+			else if (filterSize == 5)
+			{
+				this.pad = 1;
+			}
+			else if (filterSize == 7)
+			{
+				this.pad = 2;
+			}
+			else
+			{
+				throw new Exception("filterSize wrong");
+			}
 			//this.l1_decay_mul = opt.l1_decay_mul;
 			//this.l2_decay_mul = opt.l2_decay_mul;
 			this.act = act;

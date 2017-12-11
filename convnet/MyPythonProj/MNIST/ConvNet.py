@@ -56,18 +56,18 @@ class DeConv:
             
             for i in xrange(0, self.outDepth):
                 line = loadFromFile.readline();
-                self.biasarray[i] = float(line)
+                biasarray[i] = float(line)
             
             self.biasesROM = tf.constant(biasarray)
     
             warray = np.ndarray([self.filterSize, self.filterSize, self.outDepth, self.inDepth], np.float32)
             
-            for i in xrange(0, self.inDepth):
-                for x in xrange(0, self.filterSize):
-                    for y in xrange(0, self.filterSize):
-                        for j in xrange(0, self.outDepth):
+            for j in xrange(0, self.outDepth):
+                for x in xrange(0, self.filterSize):#H
+                    for y in xrange(0, self.filterSize):#W
+                        for i in xrange(0, self.inDepth):
                             line = loadFromFile.readline();
-                            self.warray[x, y, j, i] = float(line)
+                            warray[x, y, j, i] = float(line)
             
             self.weightsROM = tf.constant(warray)
         else:
@@ -78,14 +78,18 @@ class DeConv:
         self.weights = tf.Variable(self.weightsROM)
 
     def save(self,sess,saveToFile):
-        biasarray = sess.run(self.biases)
+        biasarray, warray = self.save_getParam(sess)
+        self.save_ToFile(biasarray, warray, saveToFile)
 
+    def save_getParam(self,sess):
+        biasarray = sess.run(self.biases)
+        warray = sess.run(self.weights)
+        return biasarray, warray
+    
+    def save_ToFile(self, biasarray, warray, saveToFile):
         for i in xrange(0, self.outDepth):
             val = biasarray[i]
             saveToFile.write(str(val) + "\n");
-
-        warray = sess.run(self.weights)
-
         for j in xrange(0, self.outDepth):
             for x in xrange(0, self.filterSize):
                 for y in xrange(0, self.filterSize):
@@ -128,10 +132,10 @@ class Conv:
     
             warray = np.ndarray([filterSize, filterSize, inDepth, outDepth], np.float32)
           
-            for j in xrange(0, outDepth):
-                for x in xrange(0, filterSize):
-                    for y in xrange(0, filterSize):
-                        for i in xrange(0, inDepth):
+            for j in xrange(0, self.outDepth):
+                for x in xrange(0, self.filterSize):
+                    for y in xrange(0, self.filterSize):
+                        for i in xrange(0, self.inDepth):
                             line = loadFromFile.readline();
                             warray[x, y, i, j] = float(line)
     
@@ -145,14 +149,18 @@ class Conv:
         self.weights = tf.Variable(self.weightsROM)
 
     def save(self,sess,saveToFile):
-        biasarray = sess.run(self.biases)
+        biasarray, warray = self.save_getParam(sess)
+        self.save_ToFile(biasarray, warray, saveToFile)
 
+    def save_getParam(self,sess):
+        biasarray = sess.run(self.biases)
+        warray = sess.run(self.weights)
+        return biasarray, warray
+    
+    def save_ToFile(self, biasarray, warray, saveToFile):
         for i in xrange(0, self.outDepth):
             val = biasarray[i]
             saveToFile.write(str(val) + "\n");
-
-        warray = sess.run(self.weights)
-
         for j in xrange(0, self.outDepth):
             for x in xrange(0, self.filterSize):
                 for y in xrange(0, self.filterSize):
@@ -198,7 +206,7 @@ class FC:
             warray = np.ndarray([inDepth, outDepth], np.float32)
     
             for j in xrange(0, outDepth):
-                for i in xrange(0, outDepth):
+                for i in xrange(0, inDepth):
                     line = loadFromFile.readline();
                     warray[i, j] = float(line)
     
@@ -212,15 +220,18 @@ class FC:
         self.weights = tf.Variable(self.weightsROM)
 
     def save(self,sess,saveToFile):
+        biasarray, warray = self.save_getParam(sess)
+        self.save_ToFile(biasarray, warray, saveToFile)
 
+    def save_getParam(self,sess):
         biasarray = sess.run(self.biases)
-
+        warray = sess.run(self.weights)
+        return biasarray, warray
+    
+    def save_ToFile(self, biasarray, warray, saveToFile):
         for i in xrange(0, self.outDepth):
             val = biasarray[i]
             saveToFile.write(str(val) + "\n");
-
-        warray = sess.run(self.weights)
-
         for j in xrange(0, self.outDepth):
             for i in xrange(0, self.inDepth):
                 val = warray[i, j]
@@ -241,32 +252,55 @@ class FC:
             _out = tf.nn.leaky_relu(_out)
         return _out
 
-def saveImg(data, filename):
-    img = Image.frombytes("RGB", (data.shape[1], data.shape[0]), data)
-    img.save(filename)  # str(idx)+"-"+str(lbl)+"a.bmp"
-    
-    
-def newImage(w, h):
-    return numpy.ndarray([h, w, 3], numpy.byte)
 
 
-def setpixel(imgdata, x, y, r, g, b):
-    if r < 0: r = 0
-    if r > 255: r = 255
-    if g < 0: g = 0
-    if g > 255: g = 255
-    if b < 0: b = 0
-    if b > 255: b = 255
-    
-    imgdata[y, x, 0] = r
-    imgdata[y, x, 1] = g
-    imgdata[y, x, 2] = b
+import imageio
+import scipy.misc
 
+def saveImages(images, size, path):
+    img = images
+    h, w = img.shape[1], img.shape[2]
+    merge_img = np.zeros((h * size[0], w * size[1], 3))
+    for idx, image in enumerate(images):
+        i = idx % size[1]
+        j = idx // size[1]
+        merge_img[j*h:j*h+h, i*w:i*w+w, :] = image
     
-def clearImg(imgdata):
-    for i in xrange(0, imgdata.shape[1]):
-        for j in xrange(0, imgdata.shape[2]):
-            setpixel(imgdata, i, j, 0, 0, 0)
+    merge_img = np.clip(merge_img, -0.5, 0.5)
+    #img = Image.frombytes("RGB", (merge_img.shape[0], merge_img.shape[1]), (merge_img + 0.5) * 255)
+    #img.save("_"+path)
+    #scipy.misc.imsave(path, merge_img)
+    imageio.imwrite(path, merge_img)
+    #imageio.imwrite()
+    return
+
+
+# def saveImg(data, filename):
+#     img = Image.frombytes("RGB", (data.shape[1], data.shape[0]), data)
+#     img.save(filename)  # str(idx)+"-"+str(lbl)+"a.bmp"
+#     
+#     
+# def newImage(w, h):
+#     return numpy.ndarray([h, w, 3], numpy.byte)
+# 
+# 
+# def setpixel(imgdata, x, y, r, g, b):
+#     if r < 0: r = 0
+#     if r > 255: r = 255
+#     if g < 0: g = 0
+#     if g > 255: g = 255
+#     if b < 0: b = 0
+#     if b > 255: b = 255
+#     
+#     imgdata[y, x, 0] = r
+#     imgdata[y, x, 1] = g
+#     imgdata[y, x, 2] = b
+# 
+#     
+# def clearImg(imgdata):
+#     for i in xrange(0, imgdata.shape[1]):
+#         for j in xrange(0, imgdata.shape[2]):
+#             setpixel(imgdata, i, j, 0, 0, 0)
     
 
 def outprint(v):

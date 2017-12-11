@@ -370,7 +370,7 @@ namespace GUI
 				//cv2 = new ConvLayer(sx: 4, sy: 4, filters: 1, stride: 1, pad: 2, adj: -1, bias_pref: 0.1f, act: new ReluLayer());
 				//cv3 = new ConvLayer(sx: 4, sy: 4, filters: 1, stride: 1, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
 				//fc144 = new FullyConnLayer(num_neurons: 1024, bias_pref: 0.1f, act: new ReluLayer());
-				fc10 = new FullyConnLayer(num_neurons: 11, bias_pref: 0.1f);
+				fc10 = new FullyConnLayer(outDepth: 11);
 
 				Add(new InputLayer(out_sx: 28, out_sy: 28, out_depth: 1));
 				Add(cv1);
@@ -430,8 +430,8 @@ namespace GUI
 			{
 				//cv1 = new ConvLayer(sx: 5, sy: 5, filters: 32, stride: 1, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
 				//cv2 = new ConvLayer(sx: 5, sy: 5, filters: 64, stride: 1, pad: 2, bias_pref: 0.1f, act: new ReluLayer());
-				fc1 = new FullyConnLayer(num_neurons: 512, bias_pref: 0.1f, act: new ReluLayer());
-				fc2 = new FullyConnLayer(num_neurons: 10, bias_pref: 0.1f);
+				fc1 = new FullyConnLayer(outDepth: 512, act: new ReluLayer());
+				fc2 = new FullyConnLayer(outDepth: 10);
 
 				Add(new InputLayer(out_sx: 28, out_sy: 28, out_depth: 1));
 				Add(cv1);
