@@ -71,7 +71,7 @@ if loadFromFile:loadFromFile.close()
 print("endload")
 def generator(z):
     _ret = gfc0.getLayer(z, isRelu=True, fixed = False)
-    _ret = ConvNet.FC2Conv_Reshape(_ret, 4, 3, GF*16)
+    _ret = ConvNet.FC2Conv_Reshape(_ret, 4, 3, GF*8)
     _ret = gdc0.getLayer(_ret, height = 8, width = 6, convStride = 2, isRelu=True, fixed = False)
     _ret = gdc1.getLayer(_ret, height = 16, width = 12, convStride = 2, isRelu=True, fixed = False)
     _ret = gdc2.getLayer(_ret, height = 32, width = 24, convStride = 2, isRelu=True, fixed = False)
