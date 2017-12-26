@@ -4,6 +4,7 @@ import tensorflow as tf
 import threading
 import ConvNet
 import time
+import os
 
 from six.moves import xrange
 
@@ -13,11 +14,9 @@ saveSize = [2, 8]
 IMAGE_W = 192
 IMAGE_H = 256
 
-GF = 48             # Dimension of G filters in first conv layer. default [64]
-DF = 48             # Dimension of D filters in first conv layer. default [64]
 Z_DIM = 128
 IMAGE_CHANNEL = 3
-LR = 0.0001         # Learning rate
+LR = 0.00001         # Learning rate
 
 file_index = 0
 content_index = 0
@@ -47,25 +46,27 @@ def extract_data():
 
 print("startload")
 glist = []
+GF = 96             # Dimension of G filters in first conv layer. default [64]
 loadFromFile = ConvNet.openEmptyFileR('gan10g.txt')
-gfc0 = ConvNet.addlist(glist,ConvNet.FC(inDepth = Z_DIM,outDepth = GF*16*3*4,loadFromFile = loadFromFile))
-gdc0 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*16,outDepth = GF*16,filterSize = 3,loadFromFile = loadFromFile))#4in
-gdc1 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*16,outDepth = GF*8,filterSize = 3,loadFromFile = loadFromFile))#8in
-gdc2 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*8,outDepth = GF*4,filterSize = 5,loadFromFile = loadFromFile))#16in
-gdc3 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*4,outDepth = GF*4,filterSize = 5,loadFromFile = loadFromFile))#32in
-gdc4 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*4,outDepth = GF*2,filterSize = 5,loadFromFile = loadFromFile))#32in
-gdc5 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*2,outDepth = IMAGE_CHANNEL,filterSize = 5,loadFromFile = loadFromFile))#64in
+gfc0 = ConvNet.addlist(glist,ConvNet.FC(inDepth = Z_DIM,outDepth = GF*8*3*4,loadFromFile = loadFromFile))
+gdc0 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*8,outDepth = GF*8,filterSize = 3,loadFromFile = loadFromFile))#4in
+gdc1 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*8,outDepth = GF*4,filterSize = 3,loadFromFile = loadFromFile))#8in
+gdc2 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*4,outDepth = GF*2,filterSize = 5,loadFromFile = loadFromFile))#16in
+gdc3 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*2,outDepth = GF*2,filterSize = 5,loadFromFile = loadFromFile))#32in
+gdc4 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*2,outDepth = GF*1,filterSize = 5,loadFromFile = loadFromFile))#32in
+gdc5 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*1,outDepth = IMAGE_CHANNEL,filterSize = 5,loadFromFile = loadFromFile))#64in
 if loadFromFile:loadFromFile.close()
 
 dlist = []
+DF = 96             # Dimension of D filters in first conv layer. default [64]
 loadFromFile = ConvNet.openEmptyFileR('gan10d.txt')
-dcv0 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = IMAGE_CHANNEL,outDepth = DF*2,filterSize = 7,loadFromFile = loadFromFile))#64out
-dcv1 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*4,filterSize = 5,loadFromFile = loadFromFile))#32out
-dcv2 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*4,outDepth = DF*8,filterSize = 5,loadFromFile = loadFromFile))#16out
-dcv3 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*8,outDepth = DF*16,filterSize = 3,loadFromFile = loadFromFile))#8out
-dcv4 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*16,outDepth = DF*16,filterSize = 3,loadFromFile = loadFromFile))#4out
-dfc0 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = DF*16*3*4,outDepth = DF*2,loadFromFile = loadFromFile))
-dfc1 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = DF*2,outDepth = 1,loadFromFile = loadFromFile))
+dcv0 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = IMAGE_CHANNEL,outDepth = DF*1,filterSize = 7,loadFromFile = loadFromFile))#64out
+dcv1 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*1,outDepth = DF*2,filterSize = 5,loadFromFile = loadFromFile))#32out
+dcv2 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*4,filterSize = 5,loadFromFile = loadFromFile))#16out
+dcv3 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*4,outDepth = DF*8,filterSize = 3,loadFromFile = loadFromFile))#8out
+dcv4 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*8,outDepth = DF*8,filterSize = 3,loadFromFile = loadFromFile))#4out
+dfc0 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = DF*8*3*4,outDepth = DF*1,loadFromFile = loadFromFile))
+dfc1 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = DF*1,outDepth = 1,loadFromFile = loadFromFile))
 if loadFromFile:loadFromFile.close()
 print("endload")
 def generator(z):
@@ -145,12 +146,16 @@ def train():
     sess = tf.Session()
 
     sample_z = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
+    for i in xrange(0,BATCH_SIZE):
+        sample_z[i] = np.random.uniform(-(i/BATCH_SIZE), (i/BATCH_SIZE), size = (Z_DIM))
     
-    init = tf.initialize_all_variables()  
+    init = tf.global_variables_initializer()  
     sess.run(init)
 
     start_time = time.time()
-    for idx in xrange(0, 50001):
+    idx = 0
+    while True:
+        idx = idx + 1
         global file_index
         global content_index
         elapsed_time = time.time() - start_time
@@ -165,7 +170,7 @@ def train():
         batch_z = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
         sess.run(g_optim, feed_dict = {z: batch_z})
 
-        if idx % 10 == 0:
+        if idx % 200 == 0:
 
             sample = sess.run(samples, feed_dict = {z: sample_z})
 
@@ -175,8 +180,13 @@ def train():
                 
             t = threading.Thread(target=imgSave,args=(idx,sample))
             t.start()
+        
+        exist = False
+        
+        if idx%10 == 0:
+            exist = os.path.exists("stop.txt")
             
-        if idx % 100 == 0:
+        if idx % 2000 == 0 or exist:
             
             def save(idx, gSaver, dSaver):
                 print("start save")
@@ -202,7 +212,8 @@ def train():
             t.start()
             
             
-            
+        if exist:
+            break
 
     sess.close()
     
