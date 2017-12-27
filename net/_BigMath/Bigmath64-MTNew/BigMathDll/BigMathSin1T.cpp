@@ -101,15 +101,20 @@ void sin1T(int Precision, unsigned int* Num_Array, int* pSign, int* pExponent)
 		{
 			Snum2 = -Snum2;
 		}
+		//result+=num2
+		add(Precision, Num_Array, pSign, pExponent, num2, Snum2, Enum2);
+
+		limit = Precision + Enum2;
+
+		if (limit < 2)
+		{
+			break;
+		}
 
 		if ((*pExponent) - Enum2 > (Precision - 2))
 		{
 			break;
 		}
-		//result+=num2
-		add(Precision, Num_Array, pSign, pExponent, num2, Snum2, Enum2);
-
-		limit = Precision - (*pExponent - Enum2);
 
 		if(limit > Precision) limit = Precision;
 		if(limit <= 0) limit = 1;

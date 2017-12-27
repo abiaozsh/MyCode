@@ -60,15 +60,15 @@ void sin_part2T(LPVOID pParam)
 		//num2=a/b
 		divi(limit, argList->num2, &argList->Snum2, &argList->Enum2, argList->num_b, argList->Snum_b, argList->Enum_b, argList->r_value, argList->b);
 
-		if ((argList->Exponent) - argList->Enum2 > (argList->Precision - 2))
-		{
-			break;
-		}
-
 		//result+=num2
 		add(argList->Precision, argList->Num_Array, &argList->Sign, &argList->Exponent, argList->num2, argList->Snum2, argList->Enum2);
 
-		limit = argList->Precision - (argList->Exponent - argList->Enum2);
+		limit = argList->Precision + argList->Enum2;
+
+		if (limit < 2)
+		{
+			break;
+		}
 
 		if(limit > argList->Precision) limit = argList->Precision;
 		if(limit <= 0) limit = 1;

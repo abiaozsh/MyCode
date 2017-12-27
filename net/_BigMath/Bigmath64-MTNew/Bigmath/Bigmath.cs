@@ -579,6 +579,48 @@ namespace BigMathLib
 		}
 
 		[DllImport("BigMathDll.dll")]
+		private static extern void N_SinMT(Int64[] PSE, UInt64[] Num_Array, int threads);
+		public void SinMT()
+		{
+			Int64[] PSE = new Int64[3];
+
+			PSE[0] = Precision;
+			PSE[1] = Sign;
+			PSE[2] = Exponent;
+
+			if (Precision > 1000)
+			{
+				N_SinMT(PSE, Num_Array, 1);
+			}
+			else if (Precision > 50)
+			{
+				N_SinMT(PSE, Num_Array, 1);
+			}
+			else
+			{
+				N_SinMT(PSE, Num_Array, 1);
+			}
+
+			Sign = (int)PSE[1];
+			Exponent = (int)PSE[2];
+		}
+		public void SinMT(int n)
+		{
+			Int64[] PSE = new Int64[3];
+
+			PSE[0] = Precision;
+			PSE[1] = Sign;
+			PSE[2] = Exponent;
+
+			N_SinMT(PSE, Num_Array, n);
+
+			Sign = (int)PSE[1];
+			Exponent = (int)PSE[2];
+		}
+
+
+
+		[DllImport("BigMathDll.dll")]
 		private static extern void N_Exp(Int64[] PSE, UInt64[] Num_Array);
 		void Exp()
 		{
@@ -695,33 +737,6 @@ namespace BigMathLib
 
 			Add(adj);
 
-		}
-
-
-
-		public void Sin(int threads)
-		{
-			Int64[] PSE = new Int64[3];
-
-			PSE[0] = Precision;
-			PSE[1] = Sign;
-			PSE[2] = Exponent;
-
-			if (Precision > 1000)
-			{
-				N_Sin(PSE, Num_Array, threads >= 4 ? 4 : (threads >= 2 ? 2 : 1));
-			}
-			else if (Precision > 50)
-			{
-				N_Sin(PSE, Num_Array, threads >= 2 ? 2 : 1);
-			}
-			else
-			{
-				N_Sin(PSE, Num_Array, 1);
-			}
-
-			Sign = (int)PSE[1];
-			Exponent = (int)PSE[2];
 		}
 
 		public void Sin_slow()

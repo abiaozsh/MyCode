@@ -15,8 +15,7 @@ unsigned int* newArray(int Precision, unsigned int n);
 
 struct ArgList
 {
-	CRITICAL_SECTION cs;
-	int flag;
+	HANDLE* doneEvent;
 
 	int Precision;
 
@@ -40,10 +39,8 @@ struct ArgList
 };
 
 
-void sin_part4T(LPVOID pParam)
-{
-	ArgList* argList = (ArgList*)pParam;
-	EnterCriticalSection(&(argList->cs));
+DWORD WINAPI sin_part4T(LPVOID lpParam){
+	ArgList* argList = (ArgList*)lpParam;
 
 	int limit = argList->Precision;
 
@@ -60,15 +57,15 @@ void sin_part4T(LPVOID pParam)
 		//num2=a/b
 		divi(limit, argList->num2, &argList->Snum2, &argList->Enum2, argList->num_b, argList->Snum_b, argList->Enum_b, argList->r_value, argList->b);
 
-		if ((argList->Exponent) - argList->Enum2 > (argList->Precision - 2))
-		{
-			break;
-		}
-
 		//result+=num2
 		add(argList->Precision, argList->Num_Array, &argList->Sign, &argList->Exponent, argList->num2, argList->Snum2, argList->Enum2);
 
-		limit = argList->Precision - (argList->Exponent - argList->Enum2);
+		limit = argList->Precision + argList->Enum2;
+
+		if (limit < 1)
+		{
+			break;
+		}
 
 		if(limit > argList->Precision) limit = argList->Precision;
 		if(limit <= 0) limit = 1;
@@ -111,9 +108,9 @@ void sin_part4T(LPVOID pParam)
 		mul(limit, argList->num_b, &argList->Snum_b, &argList->Enum_b, argList->num_i, argList->Snum_i, argList->Enum_i, argList->b);
 	}
 
-	argList->flag = 1;
+	SetEvent(*(argList->doneEvent));
 
-	LeaveCriticalSection(&(argList->cs));
+	return 0;
 }
 
 
@@ -122,11 +119,14 @@ void sin_part4T(LPVOID pParam)
 
 void sin4T(int Precision, unsigned int* Num_Array, int* pSign, int* pExponent)
 {
+	HANDLE* doneEventList;
+	doneEventList = new HANDLE[4];
+
 	//TODO regular by pi
 	ArgList* argList3 = new ArgList();
-	InitializeCriticalSection(&(argList3->cs));
 	{
-		argList3->flag = 0;
+		doneEventList[0] = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+		argList3->doneEvent = &doneEventList[0];
 
 		argList3->r_value = new unsigned int[Precision + 2];
 		argList3->b = new unsigned int[Precision];
@@ -154,9 +154,10 @@ void sin4T(int Precision, unsigned int* Num_Array, int* pSign, int* pExponent)
 	}
 
 	ArgList* argList5 = new ArgList();
-	InitializeCriticalSection(&(argList5->cs));
 	{
-		argList5->flag = 0;
+		doneEventList[1] = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+		argList5->doneEvent = &doneEventList[1];
+
 		argList5->r_value = new unsigned int[Precision + 2];
 		argList5->b = new unsigned int[Precision];
 		argList5->Precision = Precision;
@@ -182,10 +183,10 @@ void sin4T(int Precision, unsigned int* Num_Array, int* pSign, int* pExponent)
 	}
 
 	ArgList* argList7 = new ArgList();
-	InitializeCriticalSection(&(argList7->cs));
 	{
-		argList7->flag = 0;
-
+		doneEventList[2] = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+		argList7->doneEvent = &doneEventList[2];
+		
 		argList7->r_value = new unsigned int[Precision + 2];
 		argList7->b = new unsigned int[Precision];
 		argList7->Precision = Precision;
@@ -218,9 +219,10 @@ void sin4T(int Precision, unsigned int* Num_Array, int* pSign, int* pExponent)
 	argList5->num_x8 = clone(Precision, argList7->num_x8);argList5->Snum_x8 = argList7->Snum_x8;argList5->Enum_x8 = argList7->Enum_x8;
 
 	ArgList* argList9 = new ArgList();
-	InitializeCriticalSection(&(argList9->cs));
 	{
-		argList9->flag = 0;
+		doneEventList[3] = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+		argList9->doneEvent = &doneEventList[3];
+
 		argList9->r_value = new unsigned int[Precision + 2];
 		argList9->b = new unsigned int[Precision];
 		argList9->Precision = Precision;
@@ -247,53 +249,19 @@ void sin4T(int Precision, unsigned int* Num_Array, int* pSign, int* pExponent)
 		mul(argList9->Precision, argList9->num_a, &argList9->Snum_a, &argList9->Enum_a, Num_Array, (*pSign), (*pExponent), argList9->b);
 	}
 
+	::CreateThread(NULL, 0, sin_part4T, argList3, 0, NULL);
+	::CreateThread(NULL, 0, sin_part4T, argList5, 0, NULL);
+	::CreateThread(NULL, 0, sin_part4T, argList7, 0, NULL);
+	::CreateThread(NULL, 0, sin_part4T, argList9, 0, NULL);
 
-	_beginthread(sin_part4T, 0, argList3);
-	_beginthread(sin_part4T, 0, argList5);
-	_beginthread(sin_part4T, 0, argList7);
-	_beginthread(sin_part4T, 0, argList9);
-
-	if(argList3->flag==0 || argList5->flag==0 || argList7->flag==0 || argList9->flag==0)
-	{
-		EnterCriticalSection(&(argList3->cs));
-		LeaveCriticalSection(&(argList3->cs));
-
-		EnterCriticalSection(&(argList5->cs));
-		LeaveCriticalSection(&(argList5->cs));
-
-		EnterCriticalSection(&(argList7->cs));
-		LeaveCriticalSection(&(argList7->cs));
-
-		EnterCriticalSection(&(argList9->cs));
-		LeaveCriticalSection(&(argList9->cs));
-	}
-
-	while(argList3->flag==0 || argList5->flag==0 || argList7->flag==0 || argList9->flag==0)
-	{
-		Sleep(10);
-
-		EnterCriticalSection(&(argList3->cs));
-		LeaveCriticalSection(&(argList3->cs));
-
-		EnterCriticalSection(&(argList5->cs));
-		LeaveCriticalSection(&(argList5->cs));
-
-		EnterCriticalSection(&(argList7->cs));
-		LeaveCriticalSection(&(argList7->cs));
-
-		EnterCriticalSection(&(argList9->cs));
-		LeaveCriticalSection(&(argList9->cs));
-	}
-
-	DeleteCriticalSection(&(argList3->cs));
-	DeleteCriticalSection(&(argList5->cs));
-	DeleteCriticalSection(&(argList7->cs));
-	DeleteCriticalSection(&(argList9->cs));
+	WaitForMultipleObjects(4, doneEventList, TRUE,INFINITE);
 
 	add(Precision, Num_Array, pSign, pExponent, argList3->Num_Array, -argList3->Sign, argList3->Exponent); //¸º°ë
 	add(Precision, Num_Array, pSign, pExponent, argList5->Num_Array,  argList5->Sign, argList5->Exponent);
 	add(Precision, Num_Array, pSign, pExponent, argList7->Num_Array, -argList7->Sign, argList7->Exponent); //¸º°ë
 	add(Precision, Num_Array, pSign, pExponent, argList9->Num_Array,  argList9->Sign, argList9->Exponent);
+
+	delete doneEventList;
 
 	delete argList3->Num_Array;
 	delete argList3->r_value;

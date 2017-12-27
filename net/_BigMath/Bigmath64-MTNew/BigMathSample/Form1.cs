@@ -40,13 +40,40 @@ namespace BigMathSample
 				b = t.clone();
 
 				uint start = GetTickCount();
-				b.Sin(4);
+				b.Sin();
 				//b.Sin_slow();
 				textBox1.Text = textBox1.Text + "," + (GetTickCount() - start);
 				Application.DoEvents();
 				t.Add(b);
 				b = t;
-				System.IO.StreamWriter sw = new System.IO.StreamWriter("d:\\" + i + ".txt");
+				System.IO.StreamWriter sw = new System.IO.StreamWriter("d:\\pi\\b" + i + ".txt");
+				sw.WriteLine(b.toString(-1));
+				sw.Close();
+			}
+		}
+		public void testPiMT()
+		{
+			//,31,0,0,0, 0,15,16,109, 672,4718,33625,239093
+			//,15,0,0,0, 0, 0,47,313,2282,19125
+			//,15,0,0,0, 0,15,32,140, 953,6781
+			// ,0,0,0,0,15,16,15,141, 546,3760
+			textBox1.Text = "";
+			//,0,0,0,0, 15,16,94,608,4102,28923
+			BigMath b = new BigMath(2, "3.141592653589793238462");
+			for (int i = 0; i < 10; i++)
+			{
+				BigMath t = new BigMath(b.Precision * 2, 0);
+				b.CopyTo(t);
+				b = t.clone();
+
+				uint start = GetTickCount();
+				b.SinMT();
+				//b.Sin_slow();
+				textBox1.Text = textBox1.Text + "," + (GetTickCount() - start);
+				Application.DoEvents();
+				t.Add(b);
+				b = t;
+				System.IO.StreamWriter sw = new System.IO.StreamWriter("d:\\pi\\b" + i + ".txt");
 				sw.WriteLine(b.toString(-1));
 				sw.Close();
 			}
@@ -284,6 +311,11 @@ namespace BigMathSample
 		private void textBox1_TextChanged(object sender, EventArgs e)
 		{
 
+		}
+
+		private void button3_Click(object sender, EventArgs e)
+		{
+		testPiMT();
 		}
 
 
