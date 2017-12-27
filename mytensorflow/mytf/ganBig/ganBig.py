@@ -1,5 +1,5 @@
 ﻿import numpy as np
-
+bad
 import tensorflow as tf
 import threading
 import ConvNet
@@ -19,7 +19,7 @@ Z_DIM = 128
 IMAGE_CHANNEL = 3
 LR = 0.0001
 start = 1
-end = 100001
+end = 1000001
 
 
 file_index = 0
@@ -51,7 +51,7 @@ s2, s4, s8, s16 = IMAGE_W//2, IMAGE_W//4, IMAGE_W//8, IMAGE_W//16
 
 print("loading")
 glist = []
-loadFromFile = ConvNet.openEmptyFileR("gan10g"+str(start)+".txt")
+loadFromFile = ConvNet.openEmptyFileR("gan10g.txt")
 gfc0 = ConvNet.addlist(glist,ConvNet.FC(inDepth = Z_DIM,outDepth = GF*8*t16*s16,loadFromFile = loadFromFile))
 gdc0 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*8,outDepth = GF*4,filterSize = 5,loadFromFile = loadFromFile))
 gdc1 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*4,outDepth = GF*2,filterSize = 5,loadFromFile = loadFromFile))
@@ -60,7 +60,7 @@ gdc3 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*2,outDepth = IMAGE_CHAN
 if loadFromFile:loadFromFile.close()
 
 dlist = []
-loadFromFile = ConvNet.openEmptyFileR("gan10d"+str(start)+".txt")
+loadFromFile = ConvNet.openEmptyFileR("gan10d.txt")
 dcv0 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = IMAGE_CHANNEL,outDepth = DF*1,filterSize = 5,loadFromFile = loadFromFile))
 dcv1 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*1,outDepth = DF*2,filterSize = 5,loadFromFile = loadFromFile))
 dcv2 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*4,filterSize = 5,loadFromFile = loadFromFile))
@@ -171,7 +171,7 @@ def train():
         batch_z = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
         sess.run(g_optim, feed_dict = {z: batch_z})
 
-        if idx % 50 == 0 or idx==10:
+        if idx % 100 == 0:
 
             sample = sess.run(G, feed_dict = {z: sample_z})
 
@@ -182,7 +182,7 @@ def train():
             t = threading.Thread(target=imgSave,args=(idx,sample))
             t.start()
             
-        if idx % 500 == 0 or idx==10:
+        if idx % 1000 == 0:
             
             def save(idx, gSaver, dSaver):
                 print("start save")
