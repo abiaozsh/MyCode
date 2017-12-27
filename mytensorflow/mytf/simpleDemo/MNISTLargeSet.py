@@ -1,69 +1,25 @@
 ﻿import tensorflow as tf
 import numpy as np
-import ConvNet #我写的tensorflow的壳，不用太在意，主要是打包层，和保存层的参数，tensorflow有自己的序列化方法，不过和我以前用的框架不通用所以我自己写了一个
 from six.moves import xrange
 
+import ConvNet #我写的tensorflow的壳，不用太在意，主要是打包层，和保存层的参数，tensorflow有自己的序列化方法，不过和我以前用的框架不通用所以我自己写了一个
+import MNISTDataLargeSet
+
 BATCH_SIZE = 256
-
-IMAGE_W = 28
-IMAGE_H = 28
-V_DIM = 10
-IMAGE_CHANNEL = 1
-
-
-#训练数据： 输入网络这3条数据，不断训练
-#期望网络在训练后， 输入某一组数据，就能返相应的概率
-content_index = 0
-filePath = "e:\\MNIST\\MNISTLargeSet"
-bytestreamDat = open(filePath + "Dat.bin","br")
-def extract_data():
-    global content_index
-    global bytestreamDat
-
-    content_index = content_index + BATCH_SIZE
-    if content_index>=2000000-BATCH_SIZE:#202599
-        bytestreamDat.close()
-        bytestreamDat = open(filePath + "Dat.bin","br")
-        content_index = 0
-
-    buf = bytestreamDat.read(BATCH_SIZE * IMAGE_H * IMAGE_W * IMAGE_CHANNEL)
-    data = np.frombuffer(buf, dtype=np.uint8).astype(np.float32)
-    data = (data) / 256.0 - 0.5
-    data = data.reshape(BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL)
-
-    return data
-
-label_index = 0
-bytestreamLbl = open(filePath + "Lbl.bin","br")
-def extract_label():
-    global label_index
-    global bytestreamLbl
-
-    label_index = label_index + BATCH_SIZE
-    if label_index>=2000000-BATCH_SIZE:#202599
-        bytestreamLbl.close()
-        bytestreamLbl = open(filePath + "Lbl.bin","br")
-        label_index = 0
-
-    buf = bytestreamLbl.read(BATCH_SIZE)
-    label = np.frombuffer(buf, dtype=np.uint8).astype(np.int64)
-    
-    return label
-
 
 #用来验证的数据，和训练数据一样，也可以用不同的数据验证
 
 #输入层
-inputlayer = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL])
-testOne = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL])
+inputlayer = tf.placeholder(tf.float32, [BATCH_SIZE, MNISTDataLargeSet.IMAGE_H, MNISTDataLargeSet.IMAGE_W, MNISTDataLargeSet.IMAGE_CHANNEL])
+testOne = tf.placeholder(tf.float32, [BATCH_SIZE, MNISTDataLargeSet.IMAGE_H, MNISTDataLargeSet.IMAGE_W, MNISTDataLargeSet.IMAGE_CHANNEL])
 
 #预期的数据
 labels_node = tf.placeholder(tf.int64, shape=(BATCH_SIZE))
 
 #网络定义
 plist = []
-loadFromFile = ConvNet.openEmptyFileR('test.txt')#从文件中加载已训练的，文件不存在的话默认会随机初始化网络
-cv0 = ConvNet.addlist(plist,ConvNet.Conv(inDepth = IMAGE_CHANNEL,outDepth = 16,filterSize = 5,loadFromFile = loadFromFile))
+loadFromFile = ConvNet.openEmptyFileR('MNISTLargeSet.txt')#从文件中加载已训练的，文件不存在的话默认会随机初始化网络
+cv0 = ConvNet.addlist(plist,ConvNet.Conv(inDepth = MNISTDataLargeSet.IMAGE_CHANNEL,outDepth = 16,filterSize = 5,loadFromFile = loadFromFile))
 cv1 = ConvNet.addlist(plist,ConvNet.Conv(inDepth = 16,outDepth = 32,filterSize = 5,loadFromFile = loadFromFile))
 fc0 = ConvNet.addlist(plist,ConvNet.FC(inDepth = 7*7*32,outDepth = 64,loadFromFile = loadFromFile))
 fc1 = ConvNet.addlist(plist,ConvNet.FC(inDepth = 64,outDepth = 10,loadFromFile = loadFromFile))
@@ -99,47 +55,35 @@ def train():
     with tf.Session() as sess:
         #初始化参数
         sess.run(tf.global_variables_initializer())
-    
-        ##################################
-        saveSize = [1, 256]
-        loadedimage = extract_data()
-        lbl1 = extract_label()
-        lbl2 = sess.run(_test, feed_dict={testOne:loadedimage})
-        ConvNet.saveImagesMono(loadedimage, saveSize, "test0.png")
-        print(lbl1,np.argmax(lbl2, 1))
-
-        exit()
-        ##################################
 
 
-        for j in xrange(0, 100):
+        for j in xrange(0, 1000):
             #打印当前网络的输出值
             accurate = 0
-            testData = extract_data()
-            testLabel = extract_label()
+            testData = MNISTDataLargeSet.extract_data(BATCH_SIZE)
+            testLabel = MNISTDataLargeSet.extract_label(BATCH_SIZE)
             lbl = sess.run(_test, feed_dict={testOne:testData})
             accurate = error_rate(lbl,testLabel)
             
             #执行训练
             totalLoss = 0.0
-            for i in xrange(0,100):
-                trainData = extract_data()
-                trainLabel = extract_label()
+            for _i in xrange(0,100):
+                trainData = MNISTDataLargeSet.extract_data(BATCH_SIZE)
+                trainLabel = MNISTDataLargeSet.extract_label(BATCH_SIZE)
                 _,_loss = sess.run([optimizer,loss], feed_dict={labels_node: trainLabel, inputlayer: trainData})
                 totalLoss = totalLoss + _loss
             
             print(j,"accu:",accurate,"loss",totalLoss)
             
-        #保存已训练的网络
-        Saver = []
-        for item in plist:
-            Saver.append(item.getSaver(sess))
-            
-        saveToFile = ConvNet.openEmptyFileW("test2.txt")
-        for item in Saver:
-            item(saveToFile)
-        saveToFile.flush();saveToFile.close()
+            #保存已训练的网络
+            Saver = []
+            for item in plist:
+                Saver.append(item.getSaver(sess))
+                
+            saveToFile = ConvNet.openEmptyFileW("MNISTLargeSet.txt")
+            for item in Saver:
+                item(saveToFile)
+            saveToFile.flush();saveToFile.close()
         
 
 train()
-#test()#可以试着不训练直接跑test，会出来相等的概率
