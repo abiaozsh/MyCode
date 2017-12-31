@@ -1,4 +1,4 @@
-﻿import numpy as np
+import numpy as np
 
 import tensorflow as tf
 import threading
@@ -47,7 +47,7 @@ def extract_data():
 print("startload")
 glist = []
 GF = 96             # Dimension of G filters in first conv layer. default [64]
-loadFromFile = ConvNet.openEmptyFileR('gan10g.txt')
+loadFromFile = ConvNet.openEmptyFileR('gan11g.txt')
 gfc0 = ConvNet.addlist(glist,ConvNet.FC(inDepth = Z_DIM,outDepth = GF*8*3*4,loadFromFile = loadFromFile))
 gdc0 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*8,outDepth = GF*8,filterSize = 3,loadFromFile = loadFromFile))#4in
 gdc1 = ConvNet.addlist(glist,ConvNet.DeConv(inDepth = GF*8,outDepth = GF*4,filterSize = 3,loadFromFile = loadFromFile))#8in
@@ -59,14 +59,15 @@ if loadFromFile:loadFromFile.close()
 
 dlist = []
 DF = 96             # Dimension of D filters in first conv layer. default [64]
-loadFromFile = ConvNet.openEmptyFileR('gan10d.txt')
-dcv0 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = IMAGE_CHANNEL,outDepth = DF*1,filterSize = 7,loadFromFile = loadFromFile))#64out
-dcv1 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*1,outDepth = DF*2,filterSize = 5,loadFromFile = loadFromFile))#32out
-dcv2 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*4,filterSize = 5,loadFromFile = loadFromFile))#16out
-dcv3 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*4,outDepth = DF*8,filterSize = 3,loadFromFile = loadFromFile))#8out
-dcv4 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*8,outDepth = DF*8,filterSize = 3,loadFromFile = loadFromFile))#4out
-dfc0 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = DF*8*3*4,outDepth = DF*1,loadFromFile = loadFromFile))
-dfc1 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = DF*1,outDepth = 1,loadFromFile = loadFromFile))
+loadFromFile = ConvNet.openEmptyFileR('gan11d.txt')
+dcv0 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = IMAGE_CHANNEL,outDepth = DF*1,filterSize = 5,loadFromFile = loadFromFile))#128out
+dcv1 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*1,outDepth = DF*2,filterSize = 5,loadFromFile = loadFromFile))#64out
+dcv2 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*2,filterSize = 5,loadFromFile = loadFromFile))#32out
+dcv3 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*4,filterSize = 5,loadFromFile = loadFromFile))#16out
+dcv4 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*4,outDepth = DF*8,filterSize = 3,loadFromFile = loadFromFile))#8out
+dcv5 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*8,outDepth = DF*8,filterSize = 3,loadFromFile = loadFromFile))#4out
+dfc0 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = DF*8*3*4,outDepth = 128,loadFromFile = loadFromFile))
+dfc1 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = 128,outDepth = 1,loadFromFile = loadFromFile))
 if loadFromFile:loadFromFile.close()
 print("endload")
 def generator(z):
@@ -81,11 +82,12 @@ def generator(z):
     return _ret
     
 def discriminator(inputT):
-    _ret = dcv0.getLayer(inputT, convStride = 2, poolSize = 2,isRelu=True, fixed = False)
+    _ret = dcv0.getLayer(inputT, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
     _ret = dcv1.getLayer(_ret, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
     _ret = dcv2.getLayer(_ret, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
     _ret = dcv3.getLayer(_ret, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
     _ret = dcv4.getLayer(_ret, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
+    _ret = dcv5.getLayer(_ret, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
     _ret = ConvNet.Conv2FC_Reshape(_ret)
     _ret = dfc0.getLayer(_ret, isRelu=True, fixed = False)
     _ret = dfc1.getLayer(_ret, isRelu=False, fixed = False)
@@ -132,7 +134,7 @@ def train():
     interpolates = tf.reshape(interpolates,images.shape)
     gradients = tf.gradients(discriminator(interpolates), [interpolates])[0]
     slopes = tf.sqrt(tf.reduce_sum(tf.square(gradients), reduction_indices=[1]))
-    gradient_penalty = tf.reduce_mean((slopes-1.)**2)
+    gradient_penalty = tf.reduce_mean((slopes-1.0)**2)
     
     LAMBDA = 10 # Gradient penalty lambda hyperparameter
     disc_cost += LAMBDA*gradient_penalty
@@ -190,12 +192,12 @@ def train():
             
             def save(idx, gSaver, dSaver):
                 print("start save")
-                saveToFile = ConvNet.openEmptyFileW("gan10g"+str(idx)+".txt")
+                saveToFile = ConvNet.openEmptyFileW("gan11g"+str(idx)+".txt")
                 for item in gSaver:
                     item(saveToFile)
                 saveToFile.flush();saveToFile.close()
  
-                saveToFile = ConvNet.openEmptyFileW("gan10d"+str(idx)+".txt")
+                saveToFile = ConvNet.openEmptyFileW("gan11d"+str(idx)+".txt")
                 for item in dSaver:
                     item(saveToFile)
                 saveToFile.flush();saveToFile.close()

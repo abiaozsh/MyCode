@@ -1,4 +1,4 @@
-import numpy as np
+﻿import numpy as np
 
 IMAGE_CHANNEL = 1
 
@@ -27,7 +27,7 @@ def extract_data(BATCH_SIZE):
 
 label_index = 0
 bytestreamLbl = open(filePath + "Lbl.bin","br")
-def extract_label(BATCH_SIZE):
+def extract_label(BATCH_SIZE,onehot = False):
     global label_index
     global bytestreamLbl
 
@@ -40,16 +40,18 @@ def extract_label(BATCH_SIZE):
     buf = bytestreamLbl.read(BATCH_SIZE)
     label = np.frombuffer(buf, dtype=np.uint8).astype(np.int64)
     
+    if onehot:
+        label = ConvNet.onehot(10,label)
+    
     return label
+
+import ConvNet
     
-    
-        ##################################
-#         saveSize = [1, 256]
-#         loadedimage = extract_data()
-#         lbl1 = extract_label()
-#         lbl2 = sess.run(_test, feed_dict={testOne:loadedimage})
-#         ConvNet.saveImagesMono(loadedimage, saveSize, "test0.png")
-#         print(lbl1,np.argmax(lbl2, 1))
-# 
-#         exit()
-        ##################################
+def test():
+    saveSize = [2, 32]
+    loadedimage = extract_data(64)
+    lbl1 = extract_label(64)
+    print(lbl1)
+    ConvNet.saveImagesMono(loadedimage, saveSize, "test0.png")
+
+#test()

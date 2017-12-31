@@ -1,4 +1,4 @@
-import tensorflow as tf
+﻿import tensorflow as tf
 import numpy as np
 from six.moves import xrange
 #import numpy
@@ -19,6 +19,8 @@ def openEmptyFileW(filename):
         return None
 #  hidden = tf.nn.dropout(hidden, 0.5, seed=SEED)
 
+def onehot(count,values):
+    return np.eye(count)[values]
 
 def Conv2FC_Reshape(conv):
     _shape = conv.get_shape().as_list()
@@ -330,35 +332,28 @@ import imageio
 def saveImages(images, size, path):
     img = images
     h, w = img.shape[1], img.shape[2]
-    merge_img = np.zeros((h * size[0], w * size[1], 3))
+    merge_img = np.zeros((h * size[0], w * size[1], 3),DataType="float32")
     for idx, image in enumerate(images):
         i = idx % size[1]
         j = idx // size[1]
         merge_img[j*h:j*h+h, i*w:i*w+w, :] = image
     
     merge_img = np.clip(merge_img, -0.5, 0.5)
-    #img = Image.frombytes("RGB", (merge_img.shape[0], merge_img.shape[1]), (merge_img + 0.5) * 255)
-    #img.save("_"+path)
-    #scipy.misc.imsave(path, merge_img)
     imageio.imwrite(path, merge_img)
-    #imageio.imwrite()
     return
 
 def saveImagesMono(images, size, path):
     img = images
     h, w = img.shape[1], img.shape[2]
-    merge_img = np.zeros((h * size[0], w * size[1], 1))
+    merge_img = np.zeros((h * size[0], w * size[1], 1),dtype="float32")
     for idx, image in enumerate(images):
         i = idx % size[1]
         j = idx // size[1]
         merge_img[j*h:j*h+h, i*w:i*w+w, :] = image
     
+    #Max value == min value, ambiguous given dtype 因为值全是0
     merge_img = np.clip(merge_img, -0.5, 0.5)
-    #img = Image.frombytes("RGB", (merge_img.shape[0], merge_img.shape[1]), (merge_img + 0.5) * 255)
-    #img.save("_"+path)
-    #scipy.misc.imsave(path, merge_img)
     imageio.imwrite(path, merge_img)
-    #imageio.imwrite()
     return
 
 # def saveImg(data, filename):
