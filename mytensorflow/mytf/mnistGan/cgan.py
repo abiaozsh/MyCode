@@ -125,6 +125,7 @@ def train():
             testLabel[j*10+i,j] = -1+i*0.2
             testLabel[j*10+i,j+1] = - (-1+i*0.2)
 
+    #with tf.Session(config=tf.ConfigProto(device_count = {'GPU': 0})) as sess:
     sess = tf.Session()
     
     init = tf.initialize_all_variables()  
@@ -132,14 +133,13 @@ def train():
 
     start_time = time.time()
     for idx in xrange(0, 50001):
-        global content_index
         elapsed_time = time.time() - start_time
         start_time = time.time()
-        print(str(idx)+","+str(content_index)+","+str(elapsed_time))
+        print(str(idx)+","+str(elapsed_time))
         
         for _ in xrange(2):
             batch_z = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
-            loadedimage,yLabel = MNISTData.extract_data(BATCH_SIZE)
+            loadedimage,yLabel = MNISTData.extract_data(BATCH_SIZE,onehot = True)
             
             yFill = yLabel.reshape([BATCH_SIZE, 1, 1, 10]) * np.ones([BATCH_SIZE, MNISTData.IMAGE_H, MNISTData.IMAGE_W, V_DIM])
 
