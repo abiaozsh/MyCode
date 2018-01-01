@@ -8,15 +8,14 @@ import os
 
 from six.moves import xrange
 
-BATCH_SIZE = 16
-saveSize = [2, 8]
+BATCH_SIZE = 4
+saveSize = [1, 4]
 
 IMAGE_W = 192
 IMAGE_H = 256
 
-Z_DIM = 128
 IMAGE_CHANNEL = 3
-LR = 0.00001         # Learning rate
+LR = 0.0001         # Learning rate
 
 
 class celebaBetter:
@@ -67,7 +66,7 @@ CBLR = celebaBetter("K:\\MNIST\\CelebABetterLowRes\\")
 
 print("startload")
 glist = []
-GF = 96             # Dimension of G filters in first conv layer. default [64]
+GF = 64             # Dimension of G filters in first conv layer. default [64]
 loadFromFile = ConvNet.openEmptyFileR('gan12srg.txt')
 
 def resblock():
@@ -87,16 +86,15 @@ gcva5,gcvb5,gcvc5,gcvd5 = resblock()
 if loadFromFile:loadFromFile.close()
 
 dlist = []
-DF = 96             # Dimension of D filters in first conv layer. default [64]
+DF = 64             # Dimension of D filters in first conv layer. default [64]
 loadFromFile = ConvNet.openEmptyFileR('gan12srd.txt')
 dcv0 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = IMAGE_CHANNEL,outDepth = DF*1,filterSize = 5,loadFromFile = loadFromFile))#128out
 dcv1 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*1,outDepth = DF*2,filterSize = 5,loadFromFile = loadFromFile))#64out
 dcv2 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*2,filterSize = 5,loadFromFile = loadFromFile))#32out
-dcv3 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*4,filterSize = 5,loadFromFile = loadFromFile))#16out
-dcv4 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*4,outDepth = DF*8,filterSize = 3,loadFromFile = loadFromFile))#8out
-dcv5 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*8,outDepth = DF*8,filterSize = 3,loadFromFile = loadFromFile))#4out
-dfc0 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = DF*8*3*4,outDepth = 128,loadFromFile = loadFromFile))
-dfc1 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = 128,outDepth = 1,loadFromFile = loadFromFile))
+dcv3 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*2,filterSize = 3,loadFromFile = loadFromFile))#16out
+dcv4 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*1,filterSize = 3,loadFromFile = loadFromFile))#8out
+dcv5 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*1,outDepth = 1,filterSize = 1,loadFromFile = loadFromFile))#8out
+
 if loadFromFile:loadFromFile.close()
 
 print("endload")
@@ -108,7 +106,7 @@ def generator(inputT):
         inter = gcvb.getLayer(inter, convStride = 1, poolSize = 1,isRelu=True, fixed = False)
         inter = gcvc.getLayer(inter, convStride = 1, poolSize = 1,isRelu=True, fixed = False)
         inter = gcvd.getLayer(inter, convStride = 1, poolSize = 1,isRelu=True, fixed = False)
-        net = net + inter
+        return net + inter
     
     net = getLayer(net,gcva0,gcvb0,gcvc0,gcvd0)
     net = getLayer(net,gcva1,gcvb1,gcvc1,gcvd1)
@@ -121,36 +119,16 @@ def generator(inputT):
     
 def discriminator(inputT):
     _ret = dcv0.getLayer(inputT, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
-    _ret = dcv1.getLayer(_ret, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
+    _ret = dcv1.getLayer(_ret, convStride = 1, poolSize = 1,isRelu=True, fixed = False)
     _ret = dcv2.getLayer(_ret, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
-    _ret = dcv3.getLayer(_ret, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
-    _ret = dcv4.getLayer(_ret, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
-    _ret = dcv5.getLayer(_ret, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
-    _ret = ConvNet.Conv2FC_Reshape(_ret)
-    _ret = dfc0.getLayer(_ret, isRelu=True, fixed = False)
-    _ret = dfc1.getLayer(_ret, isRelu=False, fixed = False)
+    _ret = dcv3.getLayer(_ret, convStride = 1, poolSize = 1,isRelu=True, fixed = False)
+    _ret = dcv4.getLayer(_ret, convStride = 1, poolSize = 1,isRelu=True, fixed = False)
+    _ret = dcv5.getLayer(_ret, convStride = 1, poolSize = 1,isRelu=False, fixed = False)
     return _ret
 
 
 def train():
-    ###################
-#     loadedimage = extract_data()
-#     ConvNet.saveImages(loadedimage, [8, 8], "test0.png")
-#     loadedimage = extract_data()
-#     ConvNet.saveImages(loadedimage, [8, 8], "test1.png")
-#     exit()
 
-    
-    
-#     for idx in xrange(0, 1000000000):
-#         loadedimage = extract_data()
-#         global file_index
-#         global content_index
-#         print(str(file_index)+","+str(content_index))         
-#     exit()
-
-    ###################
-    
     imagesHR = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL])
     imagesLR = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL])
     

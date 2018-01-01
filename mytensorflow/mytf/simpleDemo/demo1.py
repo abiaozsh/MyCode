@@ -1,8 +1,8 @@
 
 import tensorflow as tf
 
-datax = [2,3,4,5]
-datay = [1,2,3,4]
+datax = [2,3,4,5,2.3]
+datay = [1,2,3,4,3.4]
 
 #w = tf.Variable(0.12,dtype=tf.float32)
 #b = tf.Variable(0.13,dtype=tf.float32)

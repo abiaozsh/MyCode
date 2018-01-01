@@ -135,7 +135,7 @@ class DeConv:
 
 class Conv:
     
-    def __init__(self,inDepth,outDepth,filterSize,loadFromFile = None):
+    def __init__(self,inDepth,outDepth,filterSize,biasInitVal = 0.1,loadFromFile = None):
         self.inDepth = inDepth
         self.outDepth = outDepth
         self.filterSize = filterSize
@@ -162,7 +162,7 @@ class Conv:
             self.weightsROM = warray
             
         else:
-            self.biasesROM = tf.constant(0.1, shape=[outDepth], dtype=tf.float32)
+            self.biasesROM = tf.constant(biasInitVal, shape=[outDepth], dtype=tf.float32)
             dev = 1/(filterSize * filterSize * outDepth)**0.5
             self.weightsROM = tf.truncated_normal([filterSize, filterSize, inDepth, outDepth], stddev=dev, dtype=tf.float32)
 
@@ -221,7 +221,6 @@ class Conv:
 
         if poolSize > 1:
             _out = tf.nn.max_pool(_out, ksize=[1, poolSize, poolSize, 1], strides=[1, poolSize, poolSize, 1], padding="SAME")
-
         return _out
 
 class FC:
@@ -332,7 +331,7 @@ import imageio
 def saveImages(images, size, path):
     img = images
     h, w = img.shape[1], img.shape[2]
-    merge_img = np.zeros((h * size[0], w * size[1], 3),DataType="float32")
+    merge_img = np.zeros((h * size[0], w * size[1], 3),dtype="float32")
     for idx, image in enumerate(images):
         i = idx % size[1]
         j = idx // size[1]
@@ -383,6 +382,43 @@ def saveImagesMono(images, size, path):
 #         for j in xrange(0, imgdata.shape[2]):
 #             setpixel(imgdata, i, j, 0, 0, 0)
     
+def upsample(net, stride, mode='ZEROS'):
+    """
+    Imitate reverse operation of Max-Pooling by either placing original max values
+    into a fixed postion of upsampled cell:
+    [0.9] =>[[.9, 0],   (stride=2)
+             [ 0, 0]]
+    or copying the value into each cell:
+    [0.9] =>[[.9, .9],  (stride=2)
+             [ .9, .9]]
+    :param net: 4D input tensor with [batch_size, width, heights, channels] axis
+    :param stride:
+    :param mode: string 'ZEROS' or 'COPY' indicating which value to use for undefined cells
+    :return:  4D tensor of size [batch_size, width*stride, heights*stride, channels]
+    """
+    assert mode in ['COPY', 'ZEROS']
+    with tf.name_scope('Upsampling'):
+        net = _upsample_along_axis(net, 2, stride, mode=mode)
+        net = _upsample_along_axis(net, 1, stride, mode=mode)
+        return net
+
+
+def _upsample_along_axis(volume, axis, stride, mode='ZEROS'):
+    shape = volume.get_shape().as_list()
+    
+    assert mode in ['COPY', 'ZEROS']
+    assert 0 <= axis < len(shape)
+    
+    target_shape = shape[:]
+    target_shape[axis] *= stride
+    
+    padding = tf.zeros(shape, dtype=volume.dtype) if mode == 'ZEROS' else volume
+    parts = [volume] + [padding for _ in range(stride - 1)]
+    volume = tf.concat(parts, min(axis+1, len(shape)-1))
+    
+    volume = tf.reshape(volume, target_shape)
+    return volume
+
 
 def outprint(v):
     ret = ""

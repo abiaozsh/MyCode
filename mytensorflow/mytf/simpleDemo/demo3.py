@@ -4,7 +4,7 @@ import tensorflow as tf
 datax = [2,3,4,5]
 datay = [1,2,3,4]
 
-w = tf.Variable(0.12)
+w = tf.Variable(5.12)
 b = tf.Variable(0.13)
 
 x = tf.placeholder(tf.float32)
@@ -12,7 +12,7 @@ y_predict = tf.placeholder(tf.float32)
 
 net = w * x + b
 loss = tf.square(net - y_predict)
-optimizer = tf.train.GradientDescentOptimizer(0.0001).minimize(loss)
+optimizer = tf.train.GradientDescentOptimizer(0.001).minimize(loss)
 
 with tf.Session(config=tf.ConfigProto(device_count = {'GPU': 0})) as sess:
     init = tf.global_variables_initializer()

@@ -4,8 +4,8 @@ import tensorflow as tf
 datax = [2,3,4,5]
 datay = [1,2,3,4]
 
-w = tf.Variable(0.12)
-b = tf.Variable(0.13)
+w = tf.Variable(0.0)
+b = tf.Variable(0.0)
 
 x = tf.placeholder(tf.float32)
 y_predict = tf.placeholder(tf.float32)
