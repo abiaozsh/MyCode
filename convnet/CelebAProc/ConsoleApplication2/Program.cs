@@ -14,13 +14,83 @@ namespace ConsoleApplication2
     {
         static void Main(string[] args)
         {
-            PackAndLabel();
+            lowres_CelebaBetter();
+            //PackAndLabel_CelebaBetter();
             //CelebaBetter();
             //CelebaAttr3();
             //NoFace();
         }
 
-        static void PackAndLabel()
+        static void lowres_CelebaBetter()
+        {
+            string ss1;
+
+            StringBuilder sb = new StringBuilder();
+            int OUTW = 192;
+            int OUTH = 256;
+
+            byte[] buff = new byte[4096 * OUTH * OUTW * 3];//603979776
+            for (int fileindex = 0; fileindex < 31; fileindex++)
+            {
+
+                {//
+                    FileStream _in = new FileStream("F:\\MNIST\\CelebABetter\\" + fileindex + ".bin", FileMode.Open, FileAccess.Read);
+                    _in.Read(buff, 0, buff.Length);
+                    _in.Close();
+                }
+
+                for (int packidx = 0; packidx < 4096; packidx++)
+                {
+                    for (int x = 0; x < OUTW; x += 4)
+                    {
+                        for (int y = 0; y < OUTH; y += 4)
+                        {
+                            int r = 0;
+                            int g = 0;
+                            int b = 0;
+
+                            for (int i = 0; i < 4; i++)
+                            {
+                                for (int j = 0; j < 4; j++)
+                                {
+                                    r += buff[packidx * OUTW * OUTH * 3 + (y + j) * OUTW * 3 + (x + i) * 3 + 0];
+                                    g += buff[packidx * OUTW * OUTH * 3 + (y + j) * OUTW * 3 + (x + i) * 3 + 1];
+                                    b += buff[packidx * OUTW * OUTH * 3 + (y + j) * OUTW * 3 + (x + i) * 3 + 2];
+                                }
+                            }
+
+                            r /= 16;
+                            g /= 16;
+                            b /= 16;
+
+                            for (int i = 0; i < 4; i++)
+                            {
+                                for (int j = 0; j < 4; j++)
+                                {
+                                    buff[packidx * OUTW * OUTH * 3 + (y + j) * OUTW * 3 + (x + i) * 3 + 0] = (byte)r;
+                                    buff[packidx * OUTW * OUTH * 3 + (y + j) * OUTW * 3 + (x + i) * 3 + 1] = (byte)g;
+                                    buff[packidx * OUTW * OUTH * 3 + (y + j) * OUTW * 3 + (x + i) * 3 + 2] = (byte)b;
+
+                                }
+                            }
+
+                        }
+                    }
+                }
+                {//
+                    FileStream _out = new FileStream("K:\\MNIST\\CelebABetterLowRes\\" + fileindex + ".bin", FileMode.Create, FileAccess.Write);
+                    _out.Write(buff, 0, buff.Length);
+                    _out.Close();
+                }
+
+
+
+                GC.Collect();
+            }
+
+        }
+
+        static void PackAndLabel_CelebaBetter()
         {
             string ss1;
 
@@ -36,7 +106,7 @@ namespace ConsoleApplication2
                 int folder = i / 10000;
 
 
-                string filename = @"K:\MNIST\CelebA\Img\img_celeba.7z\img_celebaProc\" + folder + "\\" + string.Format("{0:000000}",i) + ".jpg";
+                string filename = @"K:\MNIST\CelebA\Img\img_celeba.7z\img_celebaProc\" + folder + "\\" + string.Format("{0:000000}", i) + ".jpg";
                 if (File.Exists(filename))
                 {
                     sb.AppendLine(string.Format("{0:000000}", i) + ".jpg");
@@ -693,7 +763,7 @@ namespace ConsoleApplication2
             return destImage;
         }
 
-
+        /*
         static void CelebaHI()
         {
             FileStream fs = new FileStream(@"E:\MNIST\CelebA\Anno\list_attr_celeba.txt", FileMode.Open, FileAccess.Read);
@@ -770,5 +840,6 @@ namespace ConsoleApplication2
             _out.Close();
             return s1Index;
         }
+         */
     }
 }
