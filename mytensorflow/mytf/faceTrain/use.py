@@ -1,32 +1,26 @@
 ﻿import numpy as np
 
-import scipy.io
 import scipy.misc
-import random
 import tensorflow as tf
-import threading
 import ConvNet
-import time
 import os
 from six.moves import xrange
-from ConvNet import Conv
 
 BATCH_SIZE = 1
 
 IMAGE_W = 192
 IMAGE_H = 256
 
-GF = 32             # Dimension of G filters in first conv layer. default [64]
 DF = 32             # Dimension of D filters in first conv layer. default [64]
 Z_DIM = 100
 IMAGE_CHANNEL = 3
-LR = 0.0001         # Learning rate
-#左右翻转
 
 def read_image(path):
     image = scipy.misc.imread(path)
-    image = scipy.misc.imresize(image,(IMAGE_H,IMAGE_W))
-    image = image[np.newaxis,:,:,:] 
+    #image = scipy.misc.imresize(image,(IMAGE_H,IMAGE_W))
+    image = image[np.newaxis,:,:,:]
+    if(image.shape[3]==4):
+        image = np.delete(image,3,3)
     image = image.astype('float32')/255.0 - 0.5
     return image
 
@@ -54,14 +48,7 @@ def discriminator(inputT):
 
 
 def train():
-    ###################
 
-
-#ConvNet.saveImages(images, [4,4], "test.jpg")
-#     exit()
-
-    ###################
-    
     images = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL])
 
     D = discriminator(images)
@@ -71,8 +58,35 @@ def train():
     init = tf.global_variables_initializer()  
     sess.run(init)
     
-    for i in xrange(0,21):
-        dirs = "K:\\MNIST\\CelebA\\Img\\img_celeba.7z\\img_celebaProc\\"+str(i)+"\\"
+    if False:
+        img = read_image("l7demo0minus.png")
+        lbl = sess.run(D, feed_dict = {images: img})
+        print(lbl)
+        img = read_image("l7demo0plus.png")
+        lbl = sess.run(D, feed_dict = {images: img})
+        print(lbl)
+        img = read_image("badtogood out.png")
+        lbl = sess.run(D, feed_dict = {images: img})
+        print(lbl)
+        img = read_image("badtogood.png")
+        lbl = sess.run(D, feed_dict = {images: img})
+        print(lbl)
+        img = read_image("goodtobad out.png")
+        lbl = sess.run(D, feed_dict = {images: img})
+        print(lbl)
+        img = read_image("goodtobad.png")
+        lbl = sess.run(D, feed_dict = {images: img})
+        print(lbl)
+        exit()
+    
+    for i in xrange(220,230):
+        
+        folder1 = str(i // 100);
+        folder2 = str(i // 10);
+        folder3 = str(i // 1);
+
+        
+        dirs = "E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\img_celebaProc\\"+folder1+"\\"+folder2+"\\"+folder3+"\\";
         files = os.listdir(dirs)
     
         for file in files:
@@ -80,11 +94,10 @@ def train():
             img = read_image(dirs+file)
     
             lbl = sess.run(D, feed_dict = {images: img})
-    
+
+            val = int((100 - lbl) * 200)
             print(lbl)
-            
-            if lbl <0.5: 
-                os.system ("move %s %s" % (dirs+file, "K:\\MNIST\\CelebA\\Img\\img_celeba.7z\\img_celebaProc\\garbage\\"))
+            os.system ("copy %s \"%s\"" % (dirs+file, "E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\trainData\\"+str(val)+"-"+str(lbl)+"-"+file))
 
     sess.close()
     
