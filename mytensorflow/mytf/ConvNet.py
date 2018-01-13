@@ -338,6 +338,8 @@ def saveImages(images, size, path):
         merge_img[j*h:j*h+h, i*w:i*w+w, :] = image
     
     merge_img = np.clip(merge_img, -0.5, 0.5)
+    merge_img[0,0,0] = 0.5
+    merge_img[0,0,1] = -0.5
     imageio.imwrite(path, merge_img)
     return
 
@@ -354,6 +356,15 @@ def saveImagesMono(images, size, path):
     merge_img = np.clip(merge_img, -0.5, 0.5)
     imageio.imwrite(path, merge_img)
     return
+
+import scipy.misc
+def read_image(path,SCALE,MEAN,IMAGE_H = None,IMAGE_W = None):
+    image = scipy.misc.imread(path)
+    if IMAGE_H:
+        image = scipy.misc.imresize(image,(IMAGE_H,IMAGE_W))
+    image = image[np.newaxis,:,:,:] 
+    image = image/SCALE - MEAN
+    return image
 
 # def saveImg(data, filename):
 #     img = Image.frombytes("RGB", (data.shape[1], data.shape[0]), data)
