@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Drawing.Drawing2D;
+using System.Threading.Tasks;
 
 namespace ConsoleApplication2
 {
@@ -14,9 +15,15 @@ namespace ConsoleApplication2
     {
         static void Main(string[] args)
         {
-            lowres_CelebaBetter();
+            //lowres_CelebaBetter();
             //PackAndLabel_CelebaBetter();
             //CelebaBetter();
+            Console.WriteLine("50650 * 3, 202600");
+            //CelebaBetterFull(1, 50650, @"E:\MNIST\CelebA");
+            //CelebaBetterFull(50650, 50650 * 2, @"E:\MNIST\CelebA");
+            //CelebaBetterFull(50650 * 2, 50650 * 3, @"E:\MNIST\CelebA");
+            CelebaBetterFull(50650 * 3, 202600, @"E:\MNIST\CelebA");
+
             //CelebaAttr3();
             //NoFace();
         }
@@ -631,6 +638,218 @@ namespace ConsoleApplication2
                 Console.WriteLine((i + 1) + ":" + "\t" + folder);
 
                 outbmp2.Save(@"K:\MNIST\CelebA\Img\img_celeba.7z\img_celebaProc\" + folder + "\\" + s2[0], ImageFormat.Bmp);
+                GC.Collect();
+            }
+
+        }
+
+        static void CelebaBetterFull(int start, int end, string dir)//E:\MNIST\CelebA
+        {
+            string ss1;
+            string ss2;
+            string ss3;
+            {
+                FileStream fs = new FileStream(dir + @"\Anno\list_landmarks_celeba.txt", FileMode.Open, FileAccess.Read);
+                StreamReader sr = new StreamReader(fs);
+                ss1 = sr.ReadToEnd();
+                sr.Close();
+                fs.Close();
+            }
+            {
+                FileStream fs = new FileStream(dir + @"\Anno\list_bbox_celeba.txt", FileMode.Open, FileAccess.Read);
+                StreamReader sr = new StreamReader(fs);
+                ss2 = sr.ReadToEnd();
+                sr.Close();
+                fs.Close();
+            }
+            {
+                FileStream fs = new FileStream(dir + @"\Anno\list_attr_celeba.txt", FileMode.Open, FileAccess.Read);
+                StreamReader sr = new StreamReader(fs);
+                ss3 = sr.ReadToEnd();
+                sr.Close();
+                fs.Close();
+            }
+
+
+
+            for (int i = 0; i < 10; i++)
+            {
+                ss1 = ss1.Replace("  ", " ");
+                ss2 = ss2.Replace("  ", " ");
+                ss3 = ss3.Replace("  ", " ");
+            }
+
+            var s1 = ss1.Split('\n');
+            var sB = ss2.Split('\n');
+            var sB3 = ss3.Split('\n');
+
+            for (int i = start; i < end; i++)
+            {
+                int fn = i;
+
+                string[] s2 = s1[i + 1].Split(' ');
+                string[] sb2 = sB[i + 1].Split(' ');
+                string[] sb3 = sB3[i + 1].Split(' ');
+                string folder1 = "" + (i / 10000);
+                string folder2 = "" + (i / 1000);
+                string folder3 = "" + (i / 100);
+
+                string fnn = s2[0].Substring(0, 7) + "png";
+
+                string folder = dir + @"\Img\img_celeba.7z\img_celebaProc\" + folder1 + "\\" + folder2 + "\\" + folder3 + "\\";
+
+                if (!Directory.Exists(folder))
+                {
+                    Directory.CreateDirectory(folder);
+                }
+
+                //if (File.Exists(@"K:\MNIST\CelebA\Img\img_celeba.7z\img_celebaProc\" + folder + "\\" + s2[0]))
+                //{
+                //    continue;
+                //}
+
+                double lex = double.Parse(s2[1]);
+                double ley = double.Parse(s2[2]);
+                double rex = double.Parse(s2[3]);
+                double rey = double.Parse(s2[4]);
+
+                double lmx = double.Parse(s2[7]);
+                double lmy = double.Parse(s2[8]);
+                double rmx = double.Parse(s2[9]);
+                double rmy = double.Parse(s2[10]);
+
+                double distE = Math.Sqrt((lex - ley) * (lex - ley) + (rex - rey) * (rex - rey));
+
+                double centex = (lex + rex) / 2;
+                double centey = (ley + rey) / 2;
+
+                double centmx = (lmx + rmx) / 2;
+                double centmy = (lmy + rmy) / 2;
+
+                double centfx = (centex + centmx) / 2;
+                double centfy = (centey + centmy) / 2;
+
+                double nx = double.Parse(s2[5]);
+                double ny = double.Parse(s2[6]);
+
+                double theta;
+                if (centey - centmy != 0)
+                {
+                    if (centey >= centmy)
+                    {
+                        theta = Math.Atan((centex - centmx) / (centey - centmy));
+                        theta = theta + Math.PI;
+                    }
+                    else
+                    {
+                        theta = Math.Atan((centex - centmx) / (centey - centmy));
+                    }
+                }
+                else
+                {
+                    theta = 0;
+                }
+
+                //if (sb3[11] == "1")
+                //{
+                //	continue;
+                //}
+                //整理歪脸度
+                //白平衡 自动曝光
+
+                //theta /= Math.PI / 2;
+                //theta *= 90;
+
+                Bitmap bmp = new Bitmap(dir + @"\Img\img_celeba.7z\img_celeba\" + s2[0]);
+                Graphics graph;
+
+                double bx1 = double.Parse(sb2[1]);
+                double by1 = double.Parse(sb2[2]);
+                double bx2 = double.Parse(sb2[3]);
+                double by2 = double.Parse(sb2[4]);
+
+                bool mark = false;
+                if (mark)
+                {
+                    graph = Graphics.FromImage(bmp);
+
+                    Pen penw = new Pen(Color.White, 1.5f);
+                    Pen penr = new Pen(Color.Red, 1.5f);
+                    Pen penb = new Pen(Color.Blue, 1.5f);
+                    Pen peng = new Pen(Color.Green, 1.5f);
+
+                    graph.DrawLine(penw, (float)lex, (float)ley, (float)rex, (float)rey);
+                    graph.DrawLine(penr, (float)centex, (float)centey, (float)nx, (float)ny);
+                    graph.DrawLine(penb, (float)lmx, (float)lmy, (float)rmx, (float)rmy);
+                    graph.DrawLine(peng, (float)lex, (float)ley, (float)lmx, (float)lmy);
+                    graph.DrawLine(peng, (float)rex, (float)rey, (float)rmx, (float)rmy);
+
+                    graph.DrawRectangle(new Pen(Color.Black, 1.5f), (float)bx1, (float)by1, (float)bx2, (float)by2);
+                    graph.Flush();
+                    graph.Dispose();
+                    bmp.Save(folder + fnn, ImageFormat.Png);
+                    break;
+                }
+
+
+                bmp = GetRotateImage(bmp, theta, centfx, centfy);
+
+                double h = Math.Sqrt((centex - centmx) * (centex - centmx) + (centey - centmy) * (centey - centmy)) * 5;
+                //double w = Math.Sqrt((lex - rex) * (lex - rex) + (ley - rey) * (ley - rey)) * 5;
+                //w = h * 0.75;
+
+
+
+                //double h = by2 * 1.5;
+
+
+
+                //if (h < 180)
+                //{
+                //	continue;
+                //}
+                double w = h * 0.75;
+
+
+                double x1 = centfx - w / 2;
+                double x2 = centfx + w / 2;
+                double y1 = centfy - h * 0.55;
+                double y2 = centfy + h / 2;
+
+                //graph = Graphics.FromImage(bmp);
+                //graph.DrawRectangle(penr, (float)x1, (float)y1, (float)w, (float)h);
+                //
+                //graph.Flush();
+                //graph.Dispose();
+
+                Bitmap outbmp = new Bitmap((int)w, (int)h);
+                graph = Graphics.FromImage(outbmp);
+                graph.Clear(Color.FromArgb(128, 128, 128));
+                graph.DrawImage(bmp, new Point(-(int)x1, -(int)y1));
+
+                graph.Flush();
+                graph.Dispose();
+
+                Bitmap outbmp2 = new Bitmap(192, 256);
+                graph = Graphics.FromImage(outbmp2);
+                graph.Clear(Color.FromArgb(128, 128, 128));
+                //设置高质量插值法  
+                graph.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
+                //设置高质量,低速度呈现平滑程度  
+                graph.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                graph.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                //消除锯齿
+                graph.SmoothingMode = SmoothingMode.AntiAlias;
+
+                graph.DrawImage(outbmp, new Rectangle(0, 0, 192, 256));
+
+                graph.Flush();
+                graph.Dispose();
+
+
+                Console.WriteLine((i) + ":" + "\t" + folder1);
+
+                outbmp2.Save(folder + fnn, ImageFormat.Png);
                 GC.Collect();
             }
 
