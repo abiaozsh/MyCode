@@ -1,6 +1,5 @@
 ﻿import numpy as np
 
-import imageio
 import scipy.misc
 import random
 import tensorflow as tf
@@ -12,16 +11,13 @@ from six.moves import xrange
 
 #训练检测眼口鼻
 
-BATCH_SIZE = 16
+BATCH_SIZE = 6
 
 IMAGE_W = 192
 IMAGE_H = 256
 
-DF = 32             # Dimension of D filters in first conv layer. default [64]
-Z_DIM = 100
 IMAGE_CHANNEL = 3
-LR = 0.00001         # Learning rate
-#左右翻转
+
 
 
 def read_image(path):
@@ -84,6 +80,13 @@ def read_image(path):
     
     return image
 
+def getFullPath(_sname):
+    i = int(_sname[0:6])
+    folder1 = str(i // 10000);
+    folder2 = str(i // 1000);
+    folder3 = str(i // 100);
+    dirs = "E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\img_celebaProc\\"+folder1+"\\"+folder2+"\\"+folder3+"\\"+_sname;
+    return dirs
 
 class celebaFacePretty:
     def __init__(self, _dir):
@@ -91,65 +94,134 @@ class celebaFacePretty:
         self._file = os.listdir(_dir)
         self.nextImage = None
         self.t = None
-    def extract_data(self):
-
-        def _load_t():
-            buff = np.ndarray([BATCH_SIZE, IMAGE_H,IMAGE_W,IMAGE_CHANNEL], np.float32)
-            for i in xrange(0,BATCH_SIZE):
-                idx = int(random.uniform(0, len(self._file)))
-                data = read_image(self._dir+self._file[idx])
-                buff[i] = data
-            #return buff
-            self.nextImage = buff
-            self.t = None
+        
+    def _load_t(self):
+        buff = np.ndarray([BATCH_SIZE, IMAGE_H,IMAGE_W,IMAGE_CHANNEL], np.float32)
+        for i in xrange(0,BATCH_SIZE):
+            idx = int(random.uniform(0, len(self._file)))
             
-        _load_t()
-        return self.nextImage
+            _name = self._file[idx]
+            _name = _name[len(_name)-10:len(_name)]
+            _name = getFullPath(_name)
+            data = read_image(_name)
+            buff[i] = data
+
+        #return buff
+        self.nextImage = buff
+        self.t = None
+        
+    def extract_data(self):
+    
+        #_load_t()
+        #return self.nextImage
 
         while self.nextImage is None:
             if self.t and self.t.isAlive():
                 self.t.join()
                 print("join")
             else:
-                self.t = threading.Thread(target=_load_t,args=())
+                self.t = threading.Thread(target=self._load_t,args=())
                 self.t.start()
                 print("start")
 
         ret = self.nextImage
         self.nextImage = None
     
-        self.t = threading.Thread(target=_load_t,args=())
+        self.t = threading.Thread(target=self._load_t,args=())
         self.t.start()
     
         return ret
+
+class celebaFacePretty2:
+    def __init__(self, flg, _dir):
+        self._dir = _dir
+        self.flg = flg
+        self._file = os.listdir(_dir)
+        self.nextImage = None
+        self.t = None
+    def _load_t(self):
+        buffG = np.ndarray([BATCH_SIZE, IMAGE_H,IMAGE_W,IMAGE_CHANNEL], np.float32)
+        buffB = np.ndarray([BATCH_SIZE, IMAGE_H,IMAGE_W,IMAGE_CHANNEL], np.float32)
+
+        for i in xrange(0,BATCH_SIZE):
+            idx = int(random.uniform(0, len(self._file)))
+            
+            _name = self._file[idx].split("_")
+            
+            
+            _name0 = getFullPath(_name[0])
+            _name1 = getFullPath(_name[1])
+            
+            if self.flg:
+                dataG = read_image(_name0)
+                dataB = read_image(_name1)
+            else:
+                dataG = read_image(_name1)
+                dataB = read_image(_name0)
+            
+            buffG[i] = dataG
+            buffB[i] = dataB
+            
+            
+            
+        #return buff
+        self.nextImage = buffG,buffB
+        self.t = None
+    def extract_data(self):
+            
+        #_load_t()
+        #return self.nextImage
+
+        while self.nextImage is None:
+            if self.t and self.t.isAlive():
+                self.t.join()
+                print("join")
+            else:
+                self.t = threading.Thread(target=self._load_t,args=())
+                self.t.start()
+                print("start")
+
+        ret = self.nextImage
+        self.nextImage = None
+    
+        self.t = threading.Thread(target=self._load_t,args=())
+        self.t.start()
+    
+        return ret
+
 
 CBT = celebaFacePretty("E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\trainData\\good\\")
 CBF = celebaFacePretty("E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\trainData\\nogood\\")
 CBM = celebaFacePretty("E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\trainData\\mid\\")
 CBPL = celebaFacePretty("E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\trainData\\plus\\")
 CBMI = celebaFacePretty("E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\trainData\\minus\\")
+#CB_GB =  celebaFacePretty2(True,"E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\trainData\\GB\\")
+CB_BG =  celebaFacePretty2(False,"E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\trainData\\BG\\")
 
 #img = CBT.extract_data()
 #ConvNet.saveImages(img, [4,4], "test.jpg")
 #exit()
 
+DF = 32             # Dimension of D filters in first conv layer. default [64]
 dlist = []
-loadFromFile = ConvNet.openEmptyFileR('gan10d.txt')
-dcv0 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = IMAGE_CHANNEL,outDepth = DF*2,filterSize = 7,loadFromFile = loadFromFile))#64out
-dcv1 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*4,filterSize = 5,loadFromFile = loadFromFile))#32out
-dcv2 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*4,outDepth = DF*8,filterSize = 5,loadFromFile = loadFromFile))#16out
-dcv3 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*8,outDepth = DF*16,filterSize = 3,loadFromFile = loadFromFile))#8out
-dcv4 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*16,outDepth = DF*16,filterSize = 3,loadFromFile = loadFromFile))#4out
-dfc0 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = DF*16*3*4,outDepth = 64,loadFromFile = loadFromFile))
-dfc1 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = 64,outDepth = 1,loadFromFile = loadFromFile))
+loadFromFile = ConvNet.openEmptyFileR('faceTrain.txt')
+dcv0 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = IMAGE_CHANNEL,outDepth = DF,filterSize = 5,loadFromFile = loadFromFile))#64out
+dcv1 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF,outDepth = DF*2,filterSize = 5,loadFromFile = loadFromFile))#64out
+dcv2 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*4,filterSize = 5,loadFromFile = loadFromFile))#32out
+dcv3 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*4,outDepth = DF*8,filterSize = 5,loadFromFile = loadFromFile))#16out
+dcv4 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*8,outDepth = DF*16,filterSize = 3,loadFromFile = loadFromFile))#8out
+dcv5 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*16,outDepth = DF*16,filterSize = 3,loadFromFile = loadFromFile))#4out
+dfc0 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = DF*16*3*4,outDepth = 128,loadFromFile = loadFromFile))
+dfc1 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = 128,outDepth = 1,loadFromFile = loadFromFile))
 if loadFromFile:loadFromFile.close()
 
 def discriminator(inputT):
-    _ret = dcv0.getLayer(inputT, convStride = 2, poolSize = 2,isRelu=True, fixed = False)
-    _ret = dcv1.getLayer(_ret, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
-    _ret = dcv2.getLayer(_ret, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
-    _ret = dcv3.getLayer(_ret, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
-    _ret = dcv4.getLayer(_ret, convStride = 2, poolSize = 1,isRelu=True, fixed = False)
+    _ret = dcv0.getLayer(inputT, convStride = 1, poolSize = 2,isRelu=True, fixed = False)
+    _ret = dcv1.getLayer(_ret, convStride = 1, poolSize = 2,isRelu=True, fixed = False)
+    _ret = dcv2.getLayer(_ret, convStride = 1, poolSize = 2,isRelu=True, fixed = False)
+    _ret = dcv3.getLayer(_ret, convStride = 1, poolSize = 2,isRelu=True, fixed = False)
+    _ret = dcv4.getLayer(_ret, convStride = 1, poolSize = 2,isRelu=True, fixed = False)
+    _ret = dcv5.getLayer(_ret, convStride = 1, poolSize = 2,isRelu=True, fixed = False)
     _ret = ConvNet.Conv2FC_Reshape(_ret)
     _ret = dfc0.getLayer(_ret, isRelu=True, fixed = False)
     _ret = dfc1.getLayer(_ret, isRelu=False, fixed = False)
@@ -170,19 +242,25 @@ def train():
     imagesM = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL])
     imagesPL = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL])
     imagesMI = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL])
+    
+    imagesG = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL])
+    imagesB = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL])
 
     DT = discriminator(imagesT)
     DF = discriminator(imagesF)
     DM = discriminator(imagesM)
     DPL = discriminator(imagesPL)
     DMI = discriminator(imagesMI)
+    DG = discriminator(imagesG)
+    DB = discriminator(imagesB)
 
     loss = (tf.reduce_mean(tf.nn.relu(  DF -  1))   + 
             tf.reduce_mean(tf.nn.relu(   1 - DT))   +
             tf.reduce_mean(tf.nn.relu(  DM -  1))   +
             tf.reduce_mean(tf.nn.relu(- DM -  1)) +
             tf.reduce_mean(tf.nn.relu(-DPL))     +
-            tf.reduce_mean(tf.nn.relu( DMI))
+            tf.reduce_mean(tf.nn.relu( DMI))   +
+            tf.reduce_mean(tf.nn.relu(DB  - DG     ))
              )
     
     #训练器
@@ -207,8 +285,21 @@ def train():
         ImagesM = CBM.extract_data()
         ImagesPL = CBPL.extract_data()
         ImagesMI = CBMI.extract_data()
+        
+        #if random.uniform(-1,1)>0 :
+        #    ImagesG,ImagesB = CB_GB.extract_data()
+        #else:
+        ImagesG,ImagesB = CB_BG.extract_data()
 
-        _,Loss = sess.run([optimizer,loss], feed_dict = {imagesT: ImagesT,imagesF: ImagesF,imagesM: ImagesM,imagesPL: ImagesPL,imagesMI: ImagesMI})
+        _,Loss = sess.run([optimizer,loss], feed_dict = {imagesT: ImagesT,
+                                                         imagesF: ImagesF,
+                                                         imagesM: ImagesM,
+                                                         imagesPL: ImagesPL,
+                                                         imagesMI: ImagesMI,
+                                                         imagesG: ImagesG,
+                                                         imagesB: ImagesB,
+
+                                                         })
 
         elapsed_time = time.time() - start_time
         start_time = time.time()
@@ -218,13 +309,18 @@ def train():
             zeros = zeros + 1
         else:
             zeros = 0
-            
+
+        if idx%10 == 0:
+            exist = os.path.exists("stop.txt")
+            if exist:
+                zeros = 200
+                    
         if zeros >= 200 or idx%500==0:
             
             def save(idx, dSaver):
                 print("start save")
 
-                saveToFile = ConvNet.openEmptyFileW("gan10d"+str(idx)+".txt")
+                saveToFile = ConvNet.openEmptyFileW("faceTrain"+str(idx)+".txt")
                 for item in dSaver:
                     item(saveToFile)
                 saveToFile.flush();saveToFile.close()
@@ -240,7 +336,7 @@ def train():
         if zeros >= 200:
             break
         
-        if idx >=20000:
+        if idx >=200000:
             break
 
     sess.close()

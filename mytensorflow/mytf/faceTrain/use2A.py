@@ -13,8 +13,6 @@ BATCH_SIZE = 1
 IMAGE_W = 192
 IMAGE_H = 256
 
-DF = 32             # Dimension of D filters in first conv layer. default [64]
-Z_DIM = 100
 IMAGE_CHANNEL = 3
 
 def read_image(path):
@@ -26,16 +24,17 @@ def read_image(path):
     image = image.astype('float32')/255.0 - 0.5
     return image
 
+DF = 32             # Dimension of D filters in first conv layer. default [64]
 dlist = []
-loadFromFile = ConvNet.openEmptyFileR('faceTrain2_.txt')
+loadFromFile = ConvNet.openEmptyFileR('faceTrain.txt')
 dcv0 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = IMAGE_CHANNEL,outDepth = DF,filterSize = 5,loadFromFile = loadFromFile))#64out
 dcv1 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF,outDepth = DF*2,filterSize = 5,loadFromFile = loadFromFile))#64out
 dcv2 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*4,filterSize = 5,loadFromFile = loadFromFile))#32out
 dcv3 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*4,outDepth = DF*8,filterSize = 5,loadFromFile = loadFromFile))#16out
 dcv4 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*8,outDepth = DF*16,filterSize = 3,loadFromFile = loadFromFile))#8out
 dcv5 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*16,outDepth = DF*16,filterSize = 3,loadFromFile = loadFromFile))#4out
-dfc0 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = DF*16*3*4,outDepth = 64,loadFromFile = loadFromFile))
-dfc1 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = 64,outDepth = 1,loadFromFile = loadFromFile))
+dfc0 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = DF*16*3*4,outDepth = 128,loadFromFile = loadFromFile))
+dfc1 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = 128,outDepth = 1,loadFromFile = loadFromFile))
 if loadFromFile:loadFromFile.close()
 
 def discriminator(inputT):
@@ -87,15 +86,21 @@ def train():
         
         lbl1 = sess.run(D, feed_dict = {images: img1})
         lbl2 = sess.run(D, feed_dict = {images: img2})
+        
+        if (lbl1 < 1 and
+            lbl1 >-1 and 
+            lbl2 < 1 and 
+            lbl2 >-1 ): 
+        
+            if(lbl1>lbl2):
+                img[0] = img1
+                img[1] = img2
+                ConvNet.saveImages(img, [1,2], "E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\trainData\\"+file1+"_"+file2)
+            else:
+                img[0] = img2
+                img[1] = img1
+                ConvNet.saveImages(img, [1,2], "E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\trainData\\"+file2+"_"+file1)
 
-        if(lbl1>lbl2):
-            img[0] = img1
-            img[1] = img2
-        else:
-            img[1] = img1
-            img[0] = img2
-
-        ConvNet.saveImages(img, [1,2], "E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\trainData\\"+file1+"_"+file2)
 
     sess.close()
     

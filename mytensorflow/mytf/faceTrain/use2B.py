@@ -24,16 +24,18 @@ def read_image(path):
         image = np.delete(image,3,3)
     image = image.astype('float32')/255.0 - 0.5
     return image
+
+DF = 32             # Dimension of D filters in first conv layer. default [64]
 dlist = []
-loadFromFile = ConvNet.openEmptyFileR('faceTrain2_.txt')
+loadFromFile = ConvNet.openEmptyFileR('faceTrain.txt')
 dcv0 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = IMAGE_CHANNEL,outDepth = DF,filterSize = 5,loadFromFile = loadFromFile))#64out
 dcv1 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF,outDepth = DF*2,filterSize = 5,loadFromFile = loadFromFile))#64out
 dcv2 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*4,filterSize = 5,loadFromFile = loadFromFile))#32out
 dcv3 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*4,outDepth = DF*8,filterSize = 5,loadFromFile = loadFromFile))#16out
 dcv4 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*8,outDepth = DF*16,filterSize = 3,loadFromFile = loadFromFile))#8out
 dcv5 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*16,outDepth = DF*16,filterSize = 3,loadFromFile = loadFromFile))#4out
-dfc0 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = DF*16*3*4,outDepth = 64,loadFromFile = loadFromFile))
-dfc1 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = 64,outDepth = 1,loadFromFile = loadFromFile))
+dfc0 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = DF*16*3*4,outDepth = 128,loadFromFile = loadFromFile))
+dfc1 = ConvNet.addlist(dlist,ConvNet.FC(inDepth = 128,outDepth = 1,loadFromFile = loadFromFile))
 if loadFromFile:loadFromFile.close()
 
 def discriminator(inputT):
@@ -73,8 +75,8 @@ def train():
     init = tf.global_variables_initializer()  
     sess.run(init)
     
-    for _ in xrange(0,100):
-
+    for idx in xrange(0,1000):
+        print(idx)
         i1 = int(random.uniform(1,202599))
 
         img1,file = getImg(i1)
