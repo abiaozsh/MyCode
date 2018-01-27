@@ -40,10 +40,10 @@ namespace LogTool
 
         private void button2_Click(object sender, EventArgs e)
         {
-            DateTime start = DateTime.Parse("2018/01/02 00:00:00");
-            DateTime end = DateTime.Parse("2018/01/03 00:00:00");
+			DateTime start = DateTime.Parse(textBox1.Text);
+			DateTime end = DateTime.Parse(textBox2.Text);
 
-            for (DateTime date = start; date < end; date = date.AddMinutes(10))
+			for (DateTime date = start; date < end; date = date.AddMinutes(10))
             {
                 Core.Job job = new Core.Job(c);
                 job.target = date;
@@ -85,7 +85,7 @@ namespace LogTool
                 }
             }
 
-            if (totalActive < 3 && started && firstFree != null)
+            if (totalActive < 1 && started && firstFree != null)
             {
                 if (firstFree.status == 2)
                 {
@@ -119,6 +119,20 @@ namespace LogTool
             }
 
         }
+
+		private void button4_Click(object sender, EventArgs e)
+		{
+			DateTime start = DateTime.Parse(textBox1.Text);
+			DateTime end = DateTime.Parse(textBox2.Text);
+
+			for (DateTime date = start; date < end; date = date.AddDays(1))
+			{
+				Core.Job job = new Core.Job(c);
+				job.target = date;
+				list.Add(job);
+			}
+		}
+
 
 
     }

@@ -21,7 +21,7 @@ namespace LogTool
 	{
 		CookieContainer cookieContainer = new CookieContainer();
 		string token1;
-		string saveDir = @"F:\\MTSAT\\";
+		string saveDir = @"D:\\MTSAT\\";
 		//public List<Job> jobs;
 
 		public class Job
@@ -207,28 +207,34 @@ namespace LogTool
 			}
 			FileStream fs = new FileStream(saveDir + fn, FileMode.Create, FileAccess.Write);
 
-            try
-            {
-                long idx = 0;
-                while (true)
-                {
-                    int data = st.ReadByte();
-                    if (data == -1) break;
-                    fs.WriteByte((byte)data);
-                    fs.Flush();
-                    idx++;
-                    job.index = idx;
-                }
-            }
-            finally {
-                fs.Close();
-            }
-
-
+			try
+			{
+				long idx = 0;
+				var a = fs.CanSeek;
+				for (long i = 0; i < job.length; i++)
+				{
+					fs.WriteByte(0);
+				}
+				fs.Flush();
+				fs.Seek(0, SeekOrigin.Begin);
+				while (true)
+				{
+					int data = st.ReadByte();
+					if (data == -1) break;
+					fs.WriteByte((byte)data);
+					fs.Flush();
+					idx++;
+					job.index = idx;
+				}
+				if (idx != job.length)
+				{
+					throw new Exception();
+				}
+			}
+			finally
+			{
+				fs.Close();
+			}
 		}
-
-
-
-
 	}
 }
