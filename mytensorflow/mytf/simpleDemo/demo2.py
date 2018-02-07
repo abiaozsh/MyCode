@@ -1,7 +1,12 @@
-
+﻿
 import tensorflow as tf
 
+# y = f(x)
+
+#输入（训练数据）
 datax = [2,3,4,5]
+
+#输出（训练数据）
 datay = [1,2,3,4]
 
 w = tf.Variable(0.12)
@@ -21,4 +26,4 @@ with tf.Session(config=tf.ConfigProto(device_count = {'GPU': 0})) as sess:
         y = sess.run(net,feed_dict = {x:datax[i]})
         
         _loss = sess.run(loss, feed_dict = {x:datax[i],y_predict:datay[i]})
-        print(y,_loss)
+        print("input:"+str(datay[i])+"\t output:"+str(y) + "\t loss:"+str(_loss))

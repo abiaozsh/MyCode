@@ -49,8 +49,10 @@ namespace ConvNet
 	}
 	public abstract class TrainableLayer : Layer, Persistence
 	{
-		public abstract void save(TextWriter s);
+		//public abstract void save(TextWriter s);
 		public abstract void load(TextReader s);
+		//public abstract void save(BinaryWriter s);
+		public abstract void load(BinaryReader s);
 
 		public class TrainableInstance : Instance
 		{

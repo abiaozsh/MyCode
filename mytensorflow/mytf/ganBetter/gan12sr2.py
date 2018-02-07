@@ -59,8 +59,8 @@ class celebaBetter:
     
         return ret
 
-CBHR = celebaBetter("F:\\MNIST\\celebaBetter\\")
-CBLR = celebaBetter("K:\\MNIST\\CelebABetterLowRes\\")
+CBHR = celebaBetter("E:\\MNIST\\celebaBetter\\")
+CBLR = celebaBetter("E:\\MNIST\\CelebABetterLowRes\\")
 
 
 
@@ -182,7 +182,7 @@ def train():
         loadedimageHR = CBHR.extract_data()
         sess.run(g_optim, feed_dict = {imagesLR:loadedimageLR})
 
-        if idx % 10 == 0:
+        if idx % 200 == 0:
 
             sample = sess.run(G, feed_dict = {imagesLR:sampleLR})
 

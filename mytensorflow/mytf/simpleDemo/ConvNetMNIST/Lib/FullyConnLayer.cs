@@ -12,12 +12,17 @@ namespace ConvNet
 	public class FullyConnLayer : TrainableLayer
 	{
 		public string name;
-		public override void save(TextWriter s)
-		{
-			bias_w.save(s);
-			filters_w.save(s);
-		}
+		//public override void save(TextWriter s)
+		//{
+		//	bias_w.save(s);
+		//	filters_w.save(s);
+		//}
 		public override void load(TextReader s)
+		{
+			bias_w.load(s);
+			filters_w.load(s);
+		}
+		public override void load(BinaryReader s)
 		{
 			bias_w.load(s);
 			filters_w.load(s);
@@ -25,7 +30,7 @@ namespace ConvNet
 		//Vol[] filters;
 		public MyFloat filters_w;
 
-		MyFloat bias_w;
+		public MyFloat bias_w;
 
 		public int num_inputs;
 

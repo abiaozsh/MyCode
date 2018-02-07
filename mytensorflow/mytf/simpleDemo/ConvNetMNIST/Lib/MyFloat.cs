@@ -70,13 +70,13 @@ namespace ConvNet
 		}
 
 
-		public void save(TextWriter s)
-		{
-			for (int i = 0; i < size; i++)
-			{
-				s.WriteLine(this[i]);
-			}
-		}
+		//public void save(TextWriter s)
+		//{
+		//	for (int i = 0; i < size; i++)
+		//	{
+		//		s.WriteLine(this[i]);
+		//	}
+		//}
 		public void load(TextReader s)
 		{
 			for (int i = 0; i < size; i++)
@@ -86,6 +86,13 @@ namespace ConvNet
 			}
 		}
 
+		public void load(BinaryReader s)
+		{
+			for (int i = 0; i < size; i++)
+			{
+				this[i] = s.ReadSingle();
+			}
+		}
 
 		public override string ToString()
 		{

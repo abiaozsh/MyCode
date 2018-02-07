@@ -1,18 +1,32 @@
 ﻿import tensorflow as tf
+import struct
 import numpy as np
 from six.moves import xrange
 #import numpy
 #from PIL import Image
 
 
-def openEmptyFileR(filename):
+def openBinaryFileR(filename):
+    try:
+        return open(filename, 'br')
+    except:
+        return None
+
+
+def openBinaryFileW(filename):
+    try:
+        return open(filename, 'bw')
+    except:
+        return None
+    
+def openTextFileR(filename):
     try:
         return open(filename, 'r')
     except:
         return None
 
 
-def openEmptyFileW(filename):
+def openTextFileW(filename):
     try:
         return open(filename, 'w')
     except:
@@ -49,7 +63,7 @@ class DeConv:
     #weights
     #inDepth,outDepth,filterSize
     
-    def __init__(self,inDepth,outDepth,filterSize,loadFromFile = None):
+    def __init__(self,inDepth,outDepth,filterSize,loadFromFile = None,loadFromFileBin = None):
         self.inDepth = inDepth
         self.outDepth = outDepth
         self.filterSize = filterSize
@@ -73,6 +87,27 @@ class DeConv:
                             warray[x, y, j, i] = float(line)
             
             self.weightsROM = warray
+        elif loadFromFileBin:
+            biasarray = np.ndarray([self.outDepth], np.float32)
+            
+            for i in xrange(0, self.outDepth):
+                line = loadFromFileBin.read(4)
+                line, = struct.unpack('f',line)
+                biasarray[i] = line
+            
+            self.biasesROM = biasarray
+    
+            warray = np.ndarray([self.filterSize, self.filterSize, self.outDepth, self.inDepth], np.float32)
+            
+            for j in xrange(0, self.outDepth):
+                for x in xrange(0, self.filterSize):#H
+                    for y in xrange(0, self.filterSize):#W
+                        for i in xrange(0, self.inDepth):
+                            line = loadFromFileBin.read(4)
+                            line, = struct.unpack('f',line)
+                            warray[x, y, j, i] = line
+            
+            self.weightsROM = warray
         else:
             self.biasesROM = tf.constant(0.1, shape=[outDepth], dtype=tf.float32)
             dev = 1/(filterSize * filterSize * outDepth)**0.5
@@ -81,15 +116,21 @@ class DeConv:
         self.biases = tf.Variable(self.biasesROM)
         self.weights = tf.Variable(self.weightsROM)
 
-    def save(self,sess,saveToFile):
+    def save(self,sess,saveToFile,binary):
         biasarray, warray = self.save_getParam(sess)
-        self.save_ToFile(biasarray, warray, saveToFile)
+        if binary:
+            self.save_ToBinaryFile(biasarray, warray, saveToFile)
+        else:
+            self.save_ToFile(biasarray, warray, saveToFile)
 
-    def getSaver(self,sess):
+    def getSaver(self,sess,binary):
         biasarray, warray = self.save_getParam(sess)
         
         def saver(saveToFile):
-            self.save_ToFile(biasarray, warray, saveToFile)
+            if binary:
+                self.save_ToBinaryFile(biasarray, warray, saveToFile)
+            else:
+                self.save_ToFile(biasarray, warray, saveToFile)
             
         return saver
     
@@ -109,6 +150,19 @@ class DeConv:
                     for i in xrange(0, self.inDepth):
                         val = warray[x, y, j, i]
                         saveToFile.write(str(val) + "\n")
+        saveToFile.flush()
+        
+    def save_ToBinaryFile(self, biasarray, warray, saveToFile):
+        for i in xrange(0, self.outDepth):
+            val = biasarray[i]
+            saveToFile.write(val)
+        saveToFile.flush()
+        for j in xrange(0, self.outDepth):
+            for x in xrange(0, self.filterSize):
+                for y in xrange(0, self.filterSize):
+                    for i in xrange(0, self.inDepth):
+                        val = warray[x, y, j, i]
+                        saveToFile.write(val)
         saveToFile.flush()
         
     def getLayer(self, inputT, height, width, convStride ,isRelu=True, fixed = False):
@@ -135,7 +189,7 @@ class DeConv:
 
 class Conv:
     
-    def __init__(self,inDepth,outDepth,filterSize,biasInitVal = 0.1,loadFromFile = None):
+    def __init__(self,inDepth,outDepth,filterSize,biasInitVal = 0.1,loadFromFile = None,loadFromFileBin = None):
         self.inDepth = inDepth
         self.outDepth = outDepth
         self.filterSize = filterSize
@@ -160,6 +214,27 @@ class Conv:
                             warray[x, y, i, j] = float(line)
     
             self.weightsROM = warray
+        elif loadFromFileBin:
+            biasarray = np.ndarray([outDepth], np.float32)
+    
+            for i in xrange(0, outDepth):
+                line = loadFromFileBin.read(4)
+                line, = struct.unpack('f',line)
+                biasarray[i] = line
+    
+            self.biasesROM = biasarray
+    
+            warray = np.ndarray([filterSize, filterSize, inDepth, outDepth], np.float32)
+          
+            for j in xrange(0, self.outDepth):
+                for x in xrange(0, self.filterSize):
+                    for y in xrange(0, self.filterSize):
+                        for i in xrange(0, self.inDepth):
+                            line = loadFromFileBin.read(4)
+                            line, = struct.unpack('f',line)
+                            warray[x, y, i, j] = line
+    
+            self.weightsROM = warray
             
         else:
             self.biasesROM = tf.constant(biasInitVal, shape=[outDepth], dtype=tf.float32)
@@ -169,15 +244,21 @@ class Conv:
         self.biases = tf.Variable(self.biasesROM)
         self.weights = tf.Variable(self.weightsROM)
 
-    def save(self,sess,saveToFile):
+    def save(self,sess,saveToFile,binary):
         biasarray, warray = self.save_getParam(sess)
-        self.save_ToFile(biasarray, warray, saveToFile)
+        if binary:
+            self.save_ToBinaryFile(biasarray, warray, saveToFile)
+        else:
+            self.save_ToFile(biasarray, warray, saveToFile)
 
-    def getSaver(self,sess):
+    def getSaver(self,sess,binary):
         biasarray, warray = self.save_getParam(sess)
         
         def saver(saveToFile):
-            self.save_ToFile(biasarray, warray, saveToFile)
+            if binary:
+                self.save_ToBinaryFile(biasarray, warray, saveToFile)
+            else:
+                self.save_ToFile(biasarray, warray, saveToFile)
             
         return saver
 
@@ -197,6 +278,19 @@ class Conv:
                     for i in xrange(0, self.inDepth):
                         val = warray[x, y, i, j]
                         saveToFile.write(str(val) + "\n")
+        saveToFile.flush()
+        
+    def save_ToBinaryFile(self, biasarray, warray, saveToFile):
+        for i in xrange(0, self.outDepth):
+            val = biasarray[i]
+            saveToFile.write(val)
+        saveToFile.flush()
+        for j in xrange(0, self.outDepth):
+            for x in xrange(0, self.filterSize):
+                for y in xrange(0, self.filterSize):
+                    for i in xrange(0, self.inDepth):
+                        val = warray[x, y, i, j]
+                        saveToFile.write(val)
         saveToFile.flush()
 
     def getLayer(self, inputT, convStride, poolSize,isRelu=True, fixed = False):
@@ -224,7 +318,7 @@ class Conv:
         return _out
 
 class FC:
-    def __init__(self,inDepth,outDepth,loadFromFile = None):
+    def __init__(self,inDepth,outDepth,loadFromFile = None,loadFromFileBin = None):
         self.inDepth = inDepth
         self.outDepth = outDepth
         self.loadFromFile = loadFromFile
@@ -247,6 +341,26 @@ class FC:
     
             self.weightsROM = warray
             
+        elif loadFromFileBin:
+            biasarray = np.ndarray([outDepth], np.float32)
+    
+            for i in xrange(0, outDepth):
+                line = loadFromFileBin.read(4)
+                line, = struct.unpack('f',line)
+                biasarray[i] = line
+    
+            self.biasesROM = biasarray
+    
+            warray = np.ndarray([inDepth, outDepth], np.float32)
+    
+            for j in xrange(0, outDepth):
+                for i in xrange(0, inDepth):
+                    line = loadFromFileBin.read(4)
+                    line, = struct.unpack('f',line)
+                    warray[i, j] = line
+    
+            self.weightsROM = warray
+           
         else:
             self.biasesROM = tf.constant(0.1, shape=[outDepth], dtype=tf.float32)
             dev = 1/(outDepth)**0.5
@@ -255,16 +369,22 @@ class FC:
         self.biases = tf.Variable(self.biasesROM)
         self.weights = tf.Variable(self.weightsROM)
 
-    def save(self,sess,saveToFile):
+    def save(self,sess,saveToFile,binary):
         biasarray, warray = self.save_getParam(sess)
-        self.save_ToFile(biasarray, warray, saveToFile)
+        if binary:
+            self.save_ToBinaryFile(biasarray, warray, saveToFile)
+        else:
+            self.save_ToFile(biasarray, warray, saveToFile)
         
-    def getSaver(self,sess):
+    def getSaver(self,sess,binary):
         biasarray, warray = self.save_getParam(sess)
         
         def saver(saveToFile):
-            self.save_ToFile(biasarray, warray, saveToFile)
-            
+            if binary:
+                self.save_ToBinaryFile(biasarray, warray, saveToFile)
+            else:
+                self.save_ToFile(biasarray, warray, saveToFile)
+                
         return saver
 
     def save_getParam(self,sess):
@@ -281,6 +401,17 @@ class FC:
             for i in xrange(0, self.inDepth):
                 val = warray[i, j]
                 saveToFile.write(str(val) + "\n")
+        saveToFile.flush()
+        
+    def save_ToBinaryFile(self, biasarray, warray, saveToFile):
+        for i in xrange(0, self.outDepth):
+            val = biasarray[i]
+            saveToFile.write(val)
+        saveToFile.flush()
+        for j in xrange(0, self.outDepth):
+            for i in xrange(0, self.inDepth):
+                val = warray[i, j]
+                saveToFile.write(val)
         saveToFile.flush()
 
     def getLayer(self, inputT, isRelu=True, fixed = False):

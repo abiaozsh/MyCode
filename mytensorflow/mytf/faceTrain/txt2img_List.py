@@ -22,14 +22,16 @@ def read_image(path):
 
 def getFullPath(_sname):
     i = int(_sname[0:6])
-    folder1 = str(i // 10000);
-    folder2 = str(i // 1000);
-    folder3 = str(i // 100);
-    dirs = "E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\img_celebaProc\\"+folder1+"\\"+folder2+"\\"+folder3+"\\"+_sname;
+    folder1 = str(i // 10000)
+    folder2 = str(i // 1000)
+    folder3 = str(i // 100)
+    dirs = "E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\img_celebaProc\\"+folder1+"\\"+folder2+"\\"+folder3+"\\"+_sname
     return dirs
 
 class celebaFacePretty:
     def __init__(self, _dir):
+        os.system ("mkdir \"%s\"" % (_dir))
+        
         list_file = open(_dir+".txt", 'r')
         
         while 1:
@@ -49,8 +51,10 @@ class celebaFacePretty:
 
 class celebaFacePretty2:
     def __init__(self, flg, _dir):
+        os.system ("mkdir \"%s\"" % (_dir))
+        
         list_file = open(_dir+".txt", 'r')
-
+        
         while 1:
             line = list_file.readline()
             if not line:

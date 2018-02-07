@@ -18,11 +18,11 @@ labels_node = tf.placeholder(tf.float32, [BATCH_SIZE,10])
 
 #网络定义
 plist = []
-loadFromFile = ConvNet.openEmptyFileR('MNISTLargeSet.txt')#从文件中加载已训练的，文件不存在的话默认会随机初始化网络
-cv0 = ConvNet.addlist(plist,ConvNet.Conv(inDepth = MNISTDataLargeSet.IMAGE_CHANNEL,outDepth = 16,filterSize = 5,loadFromFile = loadFromFile))
-cv1 = ConvNet.addlist(plist,ConvNet.Conv(inDepth = 16,outDepth = 32,filterSize = 5,loadFromFile = loadFromFile))
-fc0 = ConvNet.addlist(plist,ConvNet.FC(inDepth = 7*7*32,outDepth = 64,loadFromFile = loadFromFile))
-fc1 = ConvNet.addlist(plist,ConvNet.FC(inDepth = 64,outDepth = 10,loadFromFile = loadFromFile))
+loadFromFile = ConvNet.openBinaryFileR('MNISTLargeSet.bin')#从文件中加载已训练的，文件不存在的话默认会随机初始化网络
+cv0 = ConvNet.addlist(plist,ConvNet.Conv(inDepth = MNISTDataLargeSet.IMAGE_CHANNEL,outDepth = 16,filterSize = 5,loadFromFileBin = loadFromFile))
+cv1 = ConvNet.addlist(plist,ConvNet.Conv(inDepth = 16,outDepth = 32,filterSize = 5,loadFromFileBin = loadFromFile))
+fc0 = ConvNet.addlist(plist,ConvNet.FC(inDepth = 7*7*32,outDepth = 64,loadFromFileBin = loadFromFile))
+fc1 = ConvNet.addlist(plist,ConvNet.FC(inDepth = 64,outDepth = 10,loadFromFileBin = loadFromFile))
 if loadFromFile:loadFromFile.close()   
 
 def net(inputT):
@@ -57,7 +57,7 @@ def train():
         sess.run(tf.global_variables_initializer())
 
 
-        for j in xrange(0, 1000):
+        for j in xrange(0, 10):
             #打印当前网络的输出值
             accurate = 0
             for _i in xrange(0,100):
@@ -76,14 +76,14 @@ def train():
                 _,_loss = sess.run([optimizer,loss], feed_dict={labels_node: trainLabel, inputlayer: trainData})
                 totalLoss = totalLoss + _loss
             
-            print(j,"accu:",accurate,"loss",totalLoss)
+            print(j,"accu:",accurate,"loss:",totalLoss)
             
             #保存已训练的网络
             Saver = []
             for item in plist:
-                Saver.append(item.getSaver(sess))
+                Saver.append(item.getSaver(sess, True))
                 
-            saveToFile = ConvNet.openEmptyFileW("MNISTLargeSet.txt")
+            saveToFile = ConvNet.openBinaryFileW("MNISTLargeSet.bin")
             for item in Saver:
                 item(saveToFile)
             saveToFile.flush();saveToFile.close()

@@ -13,22 +13,22 @@ namespace ConvNet
 	{
 		public static bool useSSE = true;
 
-		public delegate void DoSave(StreamWriter sw);
-		public static void save(string filename, DoSave sv)
-		{
-			try
-			{
-				FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write);
-				StreamWriter sw = new StreamWriter(fs);
-				sv(sw);
-				sw.Flush();
-				fs.Flush();
-				fs.Close();
-			}
-			catch
-			{
-			}
-		}
+		//public delegate void DoSave(StreamWriter sw);
+		//public static void save(string filename, DoSave sv)
+		//{
+		//	try
+		//	{
+		//		FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write);
+		//		StreamWriter sw = new StreamWriter(fs);
+		//		sv(sw);
+		//		sw.Flush();
+		//		fs.Flush();
+		//		fs.Close();
+		//	}
+		//	catch
+		//	{
+		//	}
+		//}
 
 		public delegate void DoLoad(StreamReader sr);
 		public static void load(string filename, DoLoad ld)
@@ -45,6 +45,23 @@ namespace ConvNet
 				ex.ToString();
 			}
 		}
+
+		public delegate void BDoLoad(BinaryReader sr);
+		public static void bload(string filename, BDoLoad ld)
+		{
+			try
+			{
+				FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
+				BinaryReader sr = new BinaryReader(fs);
+				ld(sr);
+				fs.Close();
+			}
+			catch (Exception ex)
+			{
+				ex.ToString();
+			}
+		}
+
 		public static void log(string txt)
 		{
 			try
@@ -75,12 +92,28 @@ namespace ConvNet
 	}
 	public interface Persistence
 	{
-		void save(TextWriter s);
+		//void save(TextWriter s);
 		void load(TextReader s);
+		//void save(BinaryWriter s);
+		void load(BinaryReader s);
 	}
 
 	public class Vol : Persistence
 	{
+
+		//public void save(TextWriter s)
+		//{
+		//	w.save(s);
+		//}
+		public void load(TextReader s)
+		{
+			w.load(s);
+		}
+		public void load(BinaryReader s)
+		{
+			w.load(s);
+		}
+
 		public int sx;
 		public int sy;
 		public int depth;
@@ -143,15 +176,6 @@ namespace ConvNet
 				}
 			}
 			return bmp;
-		}
-
-		public void save(TextWriter s)
-		{
-			w.save(s);
-		}
-		public void load(TextReader s)
-		{
-			w.load(s);
 		}
 
 		static bool return_v = false;

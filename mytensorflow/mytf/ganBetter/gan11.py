@@ -17,31 +17,49 @@ Z_DIM = 128
 IMAGE_CHANNEL = 3
 LR = 0.00001         # Learning rate
 
-file_index = 0
-content_index = 0
-filePath = "F:\\MNIST\\celebaBetter\\"
-bytestream = open(filePath + str(file_index)+".bin","br")
-def extract_data():
-    global file_index
-    global content_index
-    global bytestream
 
-    content_index = content_index + BATCH_SIZE
-    if content_index>=4096:#202599
-        file_index = file_index + 1
-        if file_index >= 31:
-            file_index = 0
-        bytestream.close()
-        bytestream = open(filePath + str(file_index)+".bin","br")
-        content_index = 0
+class celebaBetter:
+    def __init__(self, filePath):
+        self.file_index = 0
+        self.content_index = 0
+        self.filePath = filePath
+        self.bytestream = open(self.filePath + str(self.file_index)+".bin","br")
+        self.nextImage = None
+        self.t = None
+    def extract_data(self):
+        def _load_t():
+            self.content_index = self.content_index + BATCH_SIZE
+            if self.content_index>=4096:#202599
+                self.file_index = self.file_index + 1
+                if self.file_index >= 31:
+                    self.file_index = 0
+                self.bytestream.close()
+                self.bytestream = open(self.filePath + str(self.file_index)+".bin","br")
+                self.content_index = 0
+        
+            buf = self.bytestream.read(BATCH_SIZE * IMAGE_H * IMAGE_W * IMAGE_CHANNEL)
+            data = np.frombuffer(buf, dtype=np.uint8).astype(np.float32)
+            data = (data) / 256.0 - 0.5
+            data = data.reshape(BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL)
+            self.nextImage = data
 
-    buf = bytestream.read(BATCH_SIZE * IMAGE_H * IMAGE_W * IMAGE_CHANNEL)
-    data = np.frombuffer(buf, dtype=np.uint8).astype(np.float32)
-    data = (data) / 256.0 - 0.5
-    data = data.reshape(BATCH_SIZE, IMAGE_H, IMAGE_W, IMAGE_CHANNEL)
-    return data
+        while self.nextImage is None:
+            if self.t and self.t.isAlive():
+                self.t.join()
+                print("glich")
+            else:
+                self.t = threading.Thread(target=_load_t,args=())
+                self.t.start()
 
+        ret = self.nextImage
+        self.nextImage = None
+    
+        self.t = threading.Thread(target=_load_t,args=())
+        self.t.start()
+    
+        return ret
 
+CBHR = celebaBetter("F:\\MNIST\\celebaBetter\\")
 
 print("startload")
 glist = []
@@ -116,11 +134,12 @@ def train():
     z = tf.placeholder(tf.float32, [BATCH_SIZE, Z_DIM])
     
     G = generator(z)
-    D_logits  = discriminator(images)
-    D_logits_F = discriminator(G)
+    D_logits  = tf.reduce_mean(discriminator(images))
+    D_logits_F = tf.reduce_mean(discriminator(G))
+    
+    gen_cost = -D_logits_F
+    disc_cost = D_logits_F - D_logits
 
-    gen_cost = -tf.reduce_mean(D_logits_F)
-    disc_cost = tf.reduce_mean(D_logits_F) - tf.reduce_mean(D_logits)
     alpha = tf.random_uniform(shape=[BATCH_SIZE,1], minval=0.0,maxval=1.0)
     differences = G - images
     differences = tf.reshape(differences,[BATCH_SIZE,-1])
@@ -144,8 +163,8 @@ def train():
 
     sample_z1 = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
     sample_z2 = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
-    sample_z3 = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
-    sample_z4 = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
+    #sample_z3 = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
+    #sample_z4 = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
     #for i in xrange(0,BATCH_SIZE):
     #    sample_z[i] = np.random.uniform(-(i/BATCH_SIZE), (i/BATCH_SIZE), size = (Z_DIM))
     
@@ -153,33 +172,36 @@ def train():
     sess.run(init)
 
     start_time = time.time()
-    idx = -1
+    idx = 0
     while True:
         idx = idx + 1
-        global file_index
-        global content_index
         elapsed_time = time.time() - start_time
         start_time = time.time()
-        print(str(idx)+","+str(file_index)+","+str(content_index)+","+str(elapsed_time))
-        
+
+        dt = 0
+        df = 0
         for _ in xrange(2):
             batch_z = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
-            loadedimage = extract_data()
-            sess.run(d_optim, feed_dict = {z:batch_z, images:loadedimage})
+            loadedimage = CBHR.extract_data()
+            _,d1,d2 = sess.run([d_optim,D_logits,D_logits_F], feed_dict = {z:batch_z, images:loadedimage})
+            dt = dt + d1
+            df = df + d2
+
+        print(str(idx)+","+str(CBHR.file_index)+","+str(CBHR.content_index)+","+str(elapsed_time)+","+str(dt)+","+str(df))
 
         batch_z = np.random.uniform(-1, 1, size = (BATCH_SIZE, Z_DIM))
         sess.run(g_optim, feed_dict = {z: batch_z})
 
-        if idx % 200 == 0:
+        if idx % 10 == 0:
 
-            sample = np.zeros([BATCH_SIZE*4, IMAGE_H, IMAGE_W, IMAGE_CHANNEL], dtype=np.float32)
+            sample = np.zeros([BATCH_SIZE*2, IMAGE_H, IMAGE_W, IMAGE_CHANNEL], dtype=np.float32)
             sample[BATCH_SIZE*0:BATCH_SIZE*1] = sess.run(G, feed_dict = {z: sample_z1})
             sample[BATCH_SIZE*1:BATCH_SIZE*2] = sess.run(G, feed_dict = {z: sample_z2})
-            sample[BATCH_SIZE*2:BATCH_SIZE*3] = sess.run(G, feed_dict = {z: sample_z3})
-            sample[BATCH_SIZE*3:BATCH_SIZE*4] = sess.run(G, feed_dict = {z: sample_z4})
+            #sample[BATCH_SIZE*2:BATCH_SIZE*3] = sess.run(G, feed_dict = {z: sample_z3})
+            #sample[BATCH_SIZE*3:BATCH_SIZE*4] = sess.run(G, feed_dict = {z: sample_z4})
 
             def imgSave(idx,sample):
-                ConvNet.saveImages(sample, [4,16], 'out\\sample_%d.png' % (idx))
+                ConvNet.saveImages(sample, [4,8], 'out11\\sample_%d.png' % (idx))
                 
                 
             t = threading.Thread(target=imgSave,args=(idx,sample))

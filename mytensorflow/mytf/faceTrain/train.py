@@ -275,6 +275,15 @@ def train():
     
     zeros = 0
     
+    def save(idx, dSaver):
+        print("start save")
+
+        saveToFile = ConvNet.openEmptyFileW("faceTrain"+str(idx)+".txt")
+        for item in dSaver:
+            item(saveToFile)
+        saveToFile.flush();saveToFile.close()
+        print("end save")
+    
     start_time = time.time()
     idx = 0
     while True:
@@ -290,7 +299,15 @@ def train():
         #    ImagesG,ImagesB = CB_GB.extract_data()
         #else:
         ImagesG,ImagesB = CB_BG.extract_data()
-
+        
+        if False:
+            img = np.ndarray([1, IMAGE_H, IMAGE_W, IMAGE_CHANNEL], np.float32)
+            img[0] = ImagesG[0]
+            ConvNet.saveImages(img, [1,1], "G.png")
+            img[0] = ImagesB[0]
+            ConvNet.saveImages(img, [1,1], "B.png")
+            exit()
+            
         _,Loss = sess.run([optimizer,loss], feed_dict = {imagesT: ImagesT,
                                                          imagesF: ImagesF,
                                                          imagesM: ImagesM,
@@ -301,7 +318,7 @@ def train():
 
                                                          })
 
-        elapsed_time = time.time() - start_time
+        elapsed_time = int((time.time() - start_time)*1000)
         start_time = time.time()
         print(str(idx)+","+str(Loss)+","+str(elapsed_time))
         
@@ -315,16 +332,7 @@ def train():
             if exist:
                 zeros = 200
                     
-        if zeros >= 200 or idx%500==0:
-            
-            def save(idx, dSaver):
-                print("start save")
-
-                saveToFile = ConvNet.openEmptyFileW("faceTrain"+str(idx)+".txt")
-                for item in dSaver:
-                    item(saveToFile)
-                saveToFile.flush();saveToFile.close()
-                print("end save")
+        if zeros >= 200 or idx%1000==0:
             
             dSaver = []
             for item in dlist:

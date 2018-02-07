@@ -74,8 +74,8 @@ def train():
     init = tf.global_variables_initializer()  
     sess.run(init)
     
-    for _ in xrange(0,100):
-        
+    for i in xrange(0,400):
+        print(i)
         i1 = int(random.uniform(1,202599))
         i2 = int(random.uniform(1,202599))
         
@@ -90,7 +90,8 @@ def train():
         if (lbl1 < 1 and
             lbl1 >-1 and 
             lbl2 < 1 and 
-            lbl2 >-1 ): 
+            lbl2 >-1 and
+            abs(lbl1-lbl2)<0.5): 
         
             if(lbl1>lbl2):
                 img[0] = img1

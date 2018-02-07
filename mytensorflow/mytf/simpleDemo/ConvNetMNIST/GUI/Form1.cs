@@ -43,7 +43,9 @@ namespace GUI
 				Add(fc1);
 				Add(new SoftmaxLayer());
 
-				Util.load(@"..\..\test.txt",(s)=>{
+				Util.bload(@"..\..\MNISTLargeSet.bin", (s) =>
+				//Util.load(@"..\..\MNISTLargeSet.txt", (s) =>
+				{
 					cv1.load(s);
 					cv2.load(s);
 					fc0.load(s);

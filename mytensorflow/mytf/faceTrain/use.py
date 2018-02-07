@@ -24,7 +24,7 @@ def read_image(path):
 
 DF = 32             # Dimension of D filters in first conv layer. default [64]
 dlist = []
-loadFromFile = ConvNet.openEmptyFileR('faceTrain.txt')
+loadFromFile = ConvNet.openTextFileR('faceTrain.txt')
 dcv0 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = IMAGE_CHANNEL,outDepth = DF,filterSize = 5,loadFromFile = loadFromFile))#64out
 dcv1 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF,outDepth = DF*2,filterSize = 5,loadFromFile = loadFromFile))#64out
 dcv2 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*4,filterSize = 5,loadFromFile = loadFromFile))#32out
@@ -80,7 +80,7 @@ def train():
         print(lbl)
         exit()
     
-    for i in xrange(220,230):
+    for i in xrange(0,2025):
         
         folder1 = str(i // 100);
         folder2 = str(i // 10);
@@ -96,9 +96,20 @@ def train():
     
             lbl = sess.run(D, feed_dict = {images: img})
 
+            fold = ""
+            
+            if lbl > 1:
+                fold = "4"
+            if lbl <=1 and lbl >0:
+                fold = "3"
+            if lbl <=0 and lbl >-1:
+                fold = "2"
+            if lbl <= -1:
+                fold = "1"
+                
             val = int((100 - lbl) * 200)
             print(lbl)
-            os.system ("copy %s \"%s\"" % (dirs+file, "E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\trainData\\"+str(val)+"-"+str(lbl)+"-"+file))
+            os.system ("copy %s \"%s\"" % (dirs+file, "E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\testOut\\"+fold+"\\"+str(val)+"-"+str(lbl)+"-"+file))
 
     sess.close()
     

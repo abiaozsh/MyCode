@@ -69,7 +69,8 @@ namespace GUI
 				DeConvLayer gdc5 = new DeConvLayer(5, IMAGE_W, IMAGE_H, 3, 2);
 				Add(gdc5);
 
-				Util.load(@"..\..\ganbetter96g.txt", (s) =>
+				//Util.load(@"..\..\ganbetter96g.txt", (s) =>
+				Util.bload(@"..\..\..\ganGood\gan11g4000.bin", (s) =>
 				{
 					gfc0.load(s);
 					gdc0.load(s);
@@ -189,31 +190,67 @@ namespace GUI
 			}
 			return ret;
 		}
+		Vol neg(Vol v1)
+		{
+			Vol ret = new Vol(1, 1, Z_DIM, null);
+
+			for (int i = 0; i < Z_DIM; i++)
+			{
+				ret.w[i] = -v1.w[i];
+			}
+			return ret;
+		}
 
 		private void button2_Click(object sender, EventArgs e)
 		{
-			var ins1 = net.getInstance();
-			var ins2 = net.getInstance();
-			var ins3 = net.getInstance();
-			var ins4 = net.getInstance();
+			{
+				var ins1 = net.getInstance();
+				var ins2 = net.getInstance();
+				var ins3 = net.getInstance();
+				var ins4 = net.getInstance();
 
-			Vol v1 = new Vol(1, 1, Z_DIM, null);
-			Vol.init(v1.w, Z_DIM, -0.5f, 0.5f);
-			Vol v2 = new Vol(1, 1, Z_DIM, null);
-			Vol.init(v2.w, Z_DIM, -0.5f, 0.5f);
+				Vol v1 = new Vol(1, 1, Z_DIM, null);
+				Vol.init(v1.w, Z_DIM, -0.5f, 0.5f);
+				Vol v2 = new Vol(1, 1, Z_DIM, null);
+				Vol.init(v2.w, Z_DIM, -0.5f, 0.5f);
 
-			Vol v3 = add(v1, v2);
-			Vol v4 = sub(v1, v2);
+				Vol v3 = add(v1, v2);
+				Vol v4 = sub(v1, v2);
 
-			Vol ret1 = net.forward(ins1, v1);
-			Vol ret2 = net.forward(ins2, v2);
-			Vol ret3 = net.forward(ins3, v3);
-			Vol ret4 = net.forward(ins4, v4);
+				Vol ret1 = net.forward(ins1, v1);
+				Vol ret2 = net.forward(ins2, v2);
+				Vol ret3 = net.forward(ins3, v3);
+				Vol ret4 = net.forward(ins4, v4);
 
-			this.pictureBox1.Image = ret1.visRGB(256, 128);
-			this.pictureBox2.Image = ret2.visRGB(256, 128);
-			this.pictureBox3.Image = ret3.visRGB(256, 128);
-			this.pictureBox4.Image = ret4.visRGB(256, 128);
+				this.pictureBox1.Image = ret1.visRGB(256, 128);
+				this.pictureBox2.Image = ret2.visRGB(256, 128);
+				this.pictureBox3.Image = ret3.visRGB(256, 128);
+				this.pictureBox4.Image = ret4.visRGB(256, 128);
+			}
+			{
+				var ins1 = net.getInstance();
+				var ins2 = net.getInstance();
+				var ins3 = net.getInstance();
+				var ins4 = net.getInstance();
+
+				Vol v1 = new Vol(1, 1, Z_DIM, null);
+				Vol.init(v1.w, Z_DIM, -1f, 1f);
+				Vol v2 = new Vol(1, 1, Z_DIM, null);
+				Vol.init(v2.w, Z_DIM, -1f, 1f);
+
+				Vol v3 = neg(v1);
+				Vol v4 = neg(v2);
+
+				Vol ret1 = net.forward(ins1, v1);
+				Vol ret2 = net.forward(ins2, v2);
+				Vol ret3 = net.forward(ins3, v3);
+				Vol ret4 = net.forward(ins4, v4);
+
+				this.pictureBox5.Image = ret1.visRGB(256, 128);
+				this.pictureBox6.Image = ret2.visRGB(256, 128);
+				this.pictureBox7.Image = ret3.visRGB(256, 128);
+				this.pictureBox8.Image = ret4.visRGB(256, 128);
+			}
 		}
 
 	}

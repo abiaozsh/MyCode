@@ -27,7 +27,7 @@ def read_image(path):
 
 DF = 32             # Dimension of D filters in first conv layer. default [64]
 dlist = []
-loadFromFile = ConvNet.openEmptyFileR('faceTrain.txt')
+loadFromFile = ConvNet.openTextFileR('faceTrain.txt')
 dcv0 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = IMAGE_CHANNEL,outDepth = DF,filterSize = 5,loadFromFile = loadFromFile))#64out
 dcv1 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF,outDepth = DF*2,filterSize = 5,loadFromFile = loadFromFile))#64out
 dcv2 = ConvNet.addlist(dlist,ConvNet.Conv(inDepth = DF*2,outDepth = DF*4,filterSize = 5,loadFromFile = loadFromFile))#32out
@@ -70,24 +70,22 @@ def train():
 
     D = discriminator(images)
 
-    sess = tf.Session()
-
-    init = tf.global_variables_initializer()  
-    sess.run(init)
+    with tf.Session(config=tf.ConfigProto(device_count = {'GPU': 0})) as sess:
     
-    for idx in xrange(0,1000):
-        print(idx)
-        i1 = int(random.uniform(1,202599))
-
-        img1,file = getImg(i1)
-
-        lbl = sess.run(D, feed_dict = {images: img1})
-
-        val = int((100 - lbl) * 200)
-
-        ConvNet.saveImages(img1, [1,1], "E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\trainData\\"+str(val)+"-"+str(lbl)+"-"+file)
-
-    sess.close()
+        init = tf.global_variables_initializer()  
+        sess.run(init)
+        
+        for idx in xrange(0,500):
+            print(idx)
+            i1 = int(random.uniform(1,202599))
     
+            img1,file = getImg(i1)
+    
+            lbl = sess.run(D, feed_dict = {images: img1})
+    
+            val = int((100 - lbl) * 200)
+    
+            ConvNet.saveImages(img1, [1,1], "E:\\MNIST\\CelebA\\Img\\img_celeba.7z\\trainData\\"+str(val)+"-"+str(lbl)+"-"+file)
+   
 
 train()
