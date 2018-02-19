@@ -3,7 +3,6 @@
 #include <avr/interrupt.h>
 #include "../config.h"
 
-
 //a6 start signal / restartup signal
 //a7 throttle
 
@@ -35,18 +34,47 @@ uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 volatile uint8_t Step = 0;
 volatile uint8_t FStart = 0;
 volatile uint8_t aread;
-volatile uint8_t Status = 0;//0 halt ,1 running, 2 starting
+volatile uint8_t Status = 0;
 volatile uint8_t noskip = 1;
 
 uint16_t rpm;
 uint16_t Power = 0;
 uint16_t NextPower = 0;
 
-uint8_t CMD = 0;
-uint8_t TempData=0;
-uint8_t TempDataCnt=8;
 
-void adj();
+inline void _MaxPower(){
+  uint32_t temp = rpm;
+  //28 耗时
+  //224clock
+  temp*=aread;
+  temp>>=8;
+  uint16_t temp2 = temp;
+  if(aread==255){NextPower = 60000;return;}
+  if(temp2<50)temp2 = 0;
+  NextPower = temp2;
+}
+
+inline void adj(){
+  NextPower = 0;
+  if(Status)
+  {
+    if(rpm>StartRpm)//too slow, halt
+    {
+      Status = 0;STAOff;
+    }
+    else
+    {
+      _MaxPower();
+    }
+  }
+  else
+  {
+    if(PIN_startBTN)
+    {
+      _MaxPower();
+    }
+  }
+}
 
 int main(void) {
   //初始化时钟：1MHz -> 8MHz
@@ -118,37 +146,6 @@ int main(void) {
 
 ISR(TIM1_COMPA_vect){
   PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-}
-
-uint16_t _MaxPower(uint16_t val){
-  uint32_t temp = val;
-  //28 耗时
-  //224clock
-  temp*=aread;
-  temp>>=8;
-  return (uint16_t)temp;
-}
-
-void adj(){
-  NextPower = 0;
-  if(Status)
-  {
-    if(rpm>StartRpm)//too slow, halt
-    {
-      Status = 0;STAOff;
-    }
-    else
-    {
-      NextPower = _MaxPower(rpm);
-    }
-  }
-  else
-  {
-    if(PIN_startBTN)
-    {
-      NextPower = _MaxPower(rpm);
-    }
-  }
 }
 
 ISR(PCINT0_vect){
