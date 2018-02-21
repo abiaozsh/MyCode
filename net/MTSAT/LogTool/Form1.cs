@@ -97,7 +97,7 @@ namespace LogTool
                 }
             }
 
-            if (totalActive < 2 && started && firstFree != null)
+            if (totalActive < 3 && started && firstFree != null)
             {
                 if (firstFree.status == 2)
                 {

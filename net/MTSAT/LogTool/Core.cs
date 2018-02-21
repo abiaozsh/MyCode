@@ -63,7 +63,7 @@ namespace LogTool
             public override string ToString()
             {
                 int prog = ((int)((index * 1.0 / (length * 1.0 + 1)) * 100.0));
-                return target.ToString() + "\t" + length.ToString("###,###") + "\t" + index.ToString("###,###") + "\t" + prog + "%\t" + status;
+                return target.ToString() + "\t" + length.ToString("###,###") + "\t" + index.ToString("###,###") + "\t" + prog + "%\t" + status + "\terr:" + fail;
             }
 
             public void start()
@@ -259,19 +259,19 @@ namespace LogTool
             try
             {
                 long idx = 0;
-                var a = fs.CanSeek;
-                for (long i = 0; i < job.length; i++)
-                {
-                    fs.WriteByte(0);
-                }
-                fs.Flush();
-                fs.Seek(0, SeekOrigin.Begin);
+                //var a = fs.CanSeek;
+                //for (long i = 0; i < job.length; i++)
+                //{
+                //    fs.WriteByte(0);
+                //}
+                //fs.Flush();
+                //fs.Seek(0, SeekOrigin.Begin);
                 while (true)
                 {
                     int data = st.ReadByte();
                     if (data == -1) break;
                     fs.WriteByte((byte)data);
-                    fs.Flush();
+                    //fs.Flush();
                     idx++;
                     job.index = idx;
                 }
