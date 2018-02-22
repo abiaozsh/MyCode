@@ -118,19 +118,19 @@ int main(void) {
     //转速调整
     adj();
     RPMFlip;
-    //等待过零
+    //等待“过零”
     {
       uint8_t valbase = DigitReadBaseVal[tempStep];
       uint8_t drMask = DigitRead[tempStep];
       
       uint16_t temp = (rpm>>1);
       CPUFree;
-      while(TCNT1<temp);
+      while(TCNT1<temp);//换向后延迟30度后检测“过零”
       noskip = 1;
       while(((PIN3I&drMask)==valbase) && noskip);
       CPUBusy;
     }
-    if(!PIN_startBTN)
+    if(!PIN_startBTN)//检测到过零后，再等待22.5度
     {
       uint16_t tmp = (rpm>>3)+(rpm>>2)+TCNT1;
       CPUFree;
