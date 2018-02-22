@@ -123,16 +123,16 @@ int main(void) {
       uint8_t valbase = DigitReadBaseVal[tempStep];
       uint8_t drMask = DigitRead[tempStep];
       
-      uint16_t temp = (rpm>>1);
+      uint16_t temp = (rpm>>2);//(rpm>>3)+
       CPUFree;
-      while(TCNT1<temp);//换向后延迟30度后检测“过零”
+      while(TCNT1<temp);//换向后延迟15(22.5)度后检测“过零”
       noskip = 1;
       while(((PIN3I&drMask)==valbase) && noskip);
       CPUBusy;
     }
-    if(!PIN_startBTN)//检测到过零后，再等待22.5度
+    if(!PIN_startBTN)//检测到过零后，再等待30度
     {
-      uint16_t tmp = (rpm>>3)+(rpm>>2)+TCNT1;
+      uint16_t tmp = (rpm>>1)+TCNT1;
       CPUFree;
       while(TCNT1<tmp);
       CPUBusy;
