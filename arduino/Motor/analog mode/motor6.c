@@ -43,15 +43,16 @@ uint16_t NextPower = 0;
 
 
 inline void _MaxPower(){
+  if(aread==255){NextPower = 4096;return;}//StartRpm 的一半
   uint32_t temp = rpm;
   //28 耗时
   //224clock
   temp*=aread;
   temp>>=8;
   uint16_t temp2 = temp;
-  if(aread==255){NextPower = 60000;return;}
   if(temp2<50)temp2 = 0;
   NextPower = temp2;
+  if(NextPower>4096)NextPower = 4096;
 }
 
 inline void adj(){
@@ -119,9 +120,22 @@ int main(void) {
     adj();
     RPMFlip;
     //等待“过零”
+    uint8_t valbase = DigitReadBaseVal[tempStep];
+    uint8_t drMask = DigitRead[tempStep];
+	if(PIN_startBTN)
     {
-      uint8_t valbase = DigitReadBaseVal[tempStep];
-      uint8_t drMask = DigitRead[tempStep];
+      
+      uint16_t temp = (rpm>>1);
+      CPUFree;
+      while(TCNT1<temp);//换向后延迟30度后检测“过零”
+      noskip = 1;
+      while(((PIN3I&drMask)==valbase) && noskip);
+      CPUBusy;
+	  //检测到过零后，立即换向
+    }
+	else
+    //等待“过零”
+    {
       
       uint16_t temp = (rpm>>2);//(rpm>>3)+
       CPUFree;
@@ -129,14 +143,15 @@ int main(void) {
       noskip = 1;
       while(((PIN3I&drMask)==valbase) && noskip);
       CPUBusy;
-    }
-    if(!PIN_startBTN)//检测到过零后，再等待30度
-    {
+    
+	  //检测到过零后，再等待30度
+    
       uint16_t tmp = (rpm>>1)+TCNT1;
       CPUFree;
       while(TCNT1<tmp);
       CPUBusy;
     }
+
     PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
     Step = NextStep[Step];//CmdNextStep;
     //记录当前转速
