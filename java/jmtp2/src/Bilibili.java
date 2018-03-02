@@ -3,20 +3,22 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
-
-import jmtp.PortableDevice;
-import jmtp.PortableDeviceFolderObject;
-import jmtp.PortableDeviceManager;
-import jmtp.PortableDeviceObject;
-import jmtp.PortableDeviceStorageObject;
-import jmtp.PortableDeviceToHostImpl32;
 
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.type.TypeFactory;
 
 import be.derycke.pieter.com.COMException;
+import jmtp.PortableDevice;
+import jmtp.PortableDeviceFolderObject;
+import jmtp.PortableDeviceManager;
+import jmtp.PortableDeviceObject;
+import jmtp.PortableDeviceStorageObject;
+import jmtp.PortableDeviceToHostImpl32;
 
 //https://github.com/ultrah/jMTPe
 public class Bilibili {
@@ -27,9 +29,9 @@ public class Bilibili {
 	 */
 	public static void main(String[] args) throws Exception {
 
-		getList(1, "a.txt");
+		//getList(1, "a.txt");
 
-		// copy(1, "a.txt", "d:\\bilibili");
+		copy(1, "b.txt", "E:\\bilibili");
 	}
 
 	static PortableDevice device;
@@ -41,10 +43,12 @@ public class Bilibili {
 			device.open();
 			Bilibili.device = device;
 			PortableDeviceObject[] roots = device.getRootObjects();
-			for (int i = 0; i < roots.length; i++) {
-				if (i == idx) {
-					PortableDeviceStorageObject root = (PortableDeviceStorageObject) roots[i];
-					return root;
+			if (roots.length >= 2) {
+				for (int i = 0; i < roots.length; i++) {
+					if (i == idx) {
+						PortableDeviceStorageObject root = (PortableDeviceStorageObject) roots[i];
+						return root;
+					}
 				}
 			}
 		}
@@ -147,7 +151,7 @@ public class Bilibili {
 		ObjectMapper objectMapper = new ObjectMapper();
 		T object = null;
 		try {
-			object = (T)objectMapper.readValue(json, TypeFactory.rawClass(clazz));
+			object = (T) objectMapper.readValue(json, TypeFactory.rawClass(clazz));
 		} catch (Throwable e) {
 			e.printStackTrace();
 		}
@@ -168,6 +172,11 @@ public class Bilibili {
 		}
 	}
 
+	public static class ObjF {
+		public String id;
+		public String title;
+	}
+
 	public static void getList(int dev, String fn) throws Exception {
 
 		FileOutputStream fos = new FileOutputStream(fn);
@@ -176,6 +185,16 @@ public class Bilibili {
 		PortableDeviceStorageObject root = getRoot(dev);
 		PortableDeviceFolderObject bilibili = getBilibili(root);
 		PortableDeviceObject[] objs = bilibili.getChildObjects();
+
+		ArrayList<ObjF> list = new ArrayList<ObjF>();
+
+		Comparator<ObjF> comparator = new Comparator<ObjF>() {
+			@Override
+			public int compare(ObjF a, ObjF b) {
+				return a.title.compareTo(b.title);
+			}
+		};
+
 		for (PortableDeviceObject item : objs) {
 			System.out.println(item.getOriginalFileName());
 			PortableDeviceFolderObject one = (PortableDeviceFolderObject) findFile(item);
@@ -201,9 +220,17 @@ public class Bilibili {
 			isr.close();
 			fis.close();
 
-			osw.write(item.getOriginalFileName() + "," + obj.title + "\r\n");
-			osw.flush();
+			ObjF objf = new ObjF();
+			objf.id = item.getOriginalFileName();
+			objf.title = obj.title;
 
+			list.add(objf);
+		}
+		Collections.sort(list, comparator);
+		for (ObjF item : list) {
+
+			osw.write(item.id + "," + item.title + "\r\n");
+			osw.flush();
 		}
 
 		fos.close();
@@ -261,6 +288,7 @@ public class Bilibili {
 			name = name.replace(":", "");
 			name = name.replace("-", "");
 			name = name.replace("?", "£¿");
+			name = name.replace("|", "£ü");
 
 			String tmp = item.getOriginalFileName() + "_" + name;
 

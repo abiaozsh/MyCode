@@ -25,16 +25,6 @@
  </configPage>
  
  <fileSystem>
-  <url>/c/</url>
-  <rootPath>c:\</rootPath>
-  <allowList>true</allowList>
-  <allowUpLoad>true</allowUpLoad>
-  <allowDel>false</allowDel>
-  <userName>admin</userName>
-  <passWord>uYCu8m0wTlCO+9yXSWeIoA==</passWord>
- </fileSystem>
- 
- <fileSystem>
   <url>/file/</url>
   <rootPath>fileSystem\</rootPath>
   <allowList>true</allowList>
@@ -47,8 +37,8 @@
  <fileSystem>
   <url>/diskd/</url>
   <rootPath>d:\</rootPath>
-  <allowList>true</allowList>
-  <allowUpLoad>true</allowUpLoad>
+  <allowList>false</allowList>
+  <allowUpLoad>false</allowUpLoad>
   <allowDel>false</allowDel>
   <userName>admin</userName>
   <passWord>uYCu8m0wTlCO+9yXSWeIoA==</passWord>

@@ -1,4 +1,4 @@
-package iptool;
+﻿package iptool;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -72,7 +72,7 @@ public class Iptool {
 
 	static void V2() throws Throwable {
 		// http://192.168.0.1/RST_status.htm
-		URL url = new URL("http://www.ip.cn/");// "http://localhost:81/test"
+		URL url = new URL("http://ip.cn/");// "http://localhost:81/test"
 		HttpURLConnection urlcon = (HttpURLConnection) url.openConnection();
 
 		// urlcon.setRequestProperty("Authorization", "Basic " + encoded);

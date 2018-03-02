@@ -28,7 +28,7 @@ public class Sample {
 
 	public static Folder.TRoot GetFolder() {
 		Folder.TRoot tRoot = new Folder.TRoot();
-		PortableDeviceStorageObject root = getRoot(1);
+		PortableDeviceStorageObject root = getRoot(0);
 		Folder.TFolder tFolder = GetFolder(root);
 
 		tRoot.root = root.getName();
