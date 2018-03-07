@@ -131,7 +131,10 @@ ISR(TIM0_OVF_vect){
     PORT6O = PWR_ON[Step];PWROn;
     Power = 1;
   }
-  Power = 0;
+  else
+  {
+    Power = 0;
+  }
 }
 
 ISR(PCINT0_vect){
