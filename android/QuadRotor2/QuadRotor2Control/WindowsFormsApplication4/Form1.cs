@@ -22,13 +22,13 @@ namespace WindowsFormsApplication4
 		}
 		Socket sSocket;
 
-		//public string ComputerIP = "192.168.43.151";
-		//public byte[] byteIP = { 192, 168, 43, 151 };
-		//public string PhoneIP = "192.168.43.1";
+		public string ComputerIP = "192.168.43.46";
+		public byte[] byteIP = { 192, 168, 43, 46 };
+		public string PhoneIP = "192.168.43.1";
 
-		public string ComputerIP = "192.168.0.10";
-		public byte[] byteIP = { 192, 168, 0, 10 };
-		public string PhoneIP = "192.168.0.6";
+		//public string ComputerIP = "192.168.1.40";
+		//public byte[] byteIP = { 192, 168, 1, 40 };
+		//public string PhoneIP = "192.168.1.8";
 
 		//private Device applicationDevice = null;
 
@@ -249,6 +249,7 @@ namespace WindowsFormsApplication4
 		int TAKEPIC = 31;
 		int SETQUALITY = 32;
 		int SETLED = 33;
+		int SETMAXPWR = 34;
 
 
 		private void button2_Click(object sender, EventArgs e)
@@ -521,6 +522,12 @@ namespace WindowsFormsApplication4
 			{
 				Send(SETLED, 0);
 			}
+		}
+
+		private void trackBar4_Scroll(object sender, EventArgs e)
+		{
+			Send(SETMAXPWR, trackBar4.Value);
+
 		}
 
 	}

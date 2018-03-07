@@ -49,15 +49,48 @@ public class MainActivity extends Activity implements MySensorListener {
 	public double pwm3;// left -
 	public double pwm4;// right -
 	public double minPower = 10;
+	public double maxPower = 10;
 
 	public double gravityx = 0;
 	public double gravityy = 0;
-	public double gravityxAccum = 0;
-	public double gravityyAccum = 0;
 
 	class Task extends TimerTask {
 		MainActivity act;
 		NetThread[] threadPool = new NetThread[5];
+
+		public PID pidx;
+		public PID pidy;
+
+		public class PID {
+			double Proportion = 10; // 比例常数 Proportional Cons
+			double Integral = 0.1; // 积分常数 Integral Const
+			double Derivative = 1; // 微分常数 Derivative Const
+
+			double SumError = 0; // 误差累计
+			double LastError = 0; // Error[-1]
+
+			double LocPIDCalc(double Err) {
+				double iError, dError;
+
+				iError = -Err; // 偏差
+				SumError += iError; // 积分
+				if (SumError > 10) {
+					SumError = 10;
+				}
+				if (SumError < -10) {
+					SumError = -10;
+				}
+
+				dError = iError - LastError; // 微分
+				LastError = iError;
+
+				double ret = (Proportion * iError // 比例项
+						+ Integral * SumError // 积分项
+				+ Derivative * dError); // 微分项
+
+				return ret;
+			}
+		}
 
 		public Task(MainActivity act) {
 			this.act = act;
@@ -65,6 +98,9 @@ public class MainActivity extends Activity implements MySensorListener {
 				threadPool[i] = new NetThread();
 				threadPool[i].start();
 			}
+			
+			pidx = new PID();
+			pidy = new PID();
 		}
 
 		class NetThread extends Thread {
@@ -99,8 +135,6 @@ public class MainActivity extends Activity implements MySensorListener {
 
 					sb.append("gravityx:" + String.format(fmt, gravityx) + "\t");
 					sb.append("gravityy:" + String.format(fmt, gravityy) + "\r\n");
-					sb.append("gravityxAccum:" + String.format(fmt, gravityxAccum) + "\t");
-					sb.append("gravityyAccum:" + String.format(fmt, gravityyAccum) + "\r\n");
 
 					sb.append("msg:" + Message.toString() + "\r\n");
 					byte[] dataSend = sb.toString().getBytes();
@@ -148,18 +182,20 @@ public class MainActivity extends Activity implements MySensorListener {
 				pwm2 = currentPower;
 				pwm3 = currentPower;
 				pwm4 = currentPower;
-
+				double tmpmaxPower = currentPower + maxPower;
+				if (tmpmaxPower > 255) {
+					tmpmaxPower = 255;
+				}
 				// PID
 				{
+					double adjx = pidx.LocPIDCalc(gravityx);
+					double adjy = pidy.LocPIDCalc(gravityy);
 
-					// side add
-					// adjZConst
+					pwm4 += adjx;
+					pwm3 -= adjx;
 
-					pwm4 += gravityx * 20;// + (gravityyAccum / 100)
-					pwm3 -= gravityx * 20;// + (gravityyAccum / 100)
-
-					pwm1 += gravityy * 20;// + (gravityxAccum / 100)
-					pwm2 -= gravityy * 20;// + (gravityxAccum / 100)
+					pwm1 += adjy;
+					pwm2 -= adjy;
 
 					pwm4 += adjZConst;// +- ~30
 					pwm3 += adjZConst;
@@ -168,23 +204,23 @@ public class MainActivity extends Activity implements MySensorListener {
 
 				}
 
-				if (pwm1 > 255)
-					pwm1 = 255;
+				if (pwm1 > tmpmaxPower)
+					pwm1 = tmpmaxPower;
 				if (pwm1 < minPower)
 					pwm1 = minPower;
 
-				if (pwm2 > 255)
-					pwm2 = 255;
+				if (pwm2 > tmpmaxPower)
+					pwm2 = tmpmaxPower;
 				if (pwm2 < minPower)
 					pwm2 = minPower;
 
-				if (pwm3 > 255)
-					pwm3 = 255;
+				if (pwm3 > tmpmaxPower)
+					pwm3 = tmpmaxPower;
 				if (pwm3 < minPower)
 					pwm3 = minPower;
 
-				if (pwm4 > 255)
-					pwm4 = 255;
+				if (pwm4 > tmpmaxPower)
+					pwm4 = tmpmaxPower;
 				if (pwm4 < minPower)
 					pwm4 = minPower;
 
@@ -297,7 +333,8 @@ public class MainActivity extends Activity implements MySensorListener {
 		final int TAKEPIC = 31;
 		final int SETQUALITY = 32;
 		final int SETLED = 33;
-		
+		final int SETMAXPWR = 34;
+
 		int AL = 0x04;
 		int AH = 0x08;
 		int BL = 0x10;
@@ -501,6 +538,9 @@ public class MainActivity extends Activity implements MySensorListener {
 				break;
 			case SETMINPWR:
 				minPower = value;
+				break;
+			case SETMAXPWR:
+				maxPower = value;
 				break;
 			}
 

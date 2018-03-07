@@ -110,9 +110,9 @@ public class MySensor implements SensorEventListener {
 				y /= accu;
 				z /= accu;
 
-				// 这边要反一下的
-				x -= CurrGryoy;
-				y += CurrGryox;
+				// 这边要反一下的 (陀螺仪补偿)
+				x -= CurrGryoy*2;
+				y += CurrGryox*2;
 				// z += CurrGryoz / 5;
 
 				x -= adjX;

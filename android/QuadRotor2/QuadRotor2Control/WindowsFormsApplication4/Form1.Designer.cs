@@ -63,6 +63,8 @@
 			this.checkBox1 = new System.Windows.Forms.CheckBox();
 			this.label1 = new System.Windows.Forms.Label();
 			this.label2 = new System.Windows.Forms.Label();
+			this.label3 = new System.Windows.Forms.Label();
+			this.trackBar4 = new System.Windows.Forms.TrackBar();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.pwr1)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
@@ -72,6 +74,7 @@
 			((System.ComponentModel.ISupportInitialize)(this.pwr3)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.pwr4)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.trackBar4)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// pictureBox1
@@ -118,11 +121,11 @@
 			// 
 			this.textBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-			this.textBox1.Location = new System.Drawing.Point(12, 332);
+			this.textBox1.Location = new System.Drawing.Point(45, 379);
 			this.textBox1.MaxLength = 0;
 			this.textBox1.Multiline = true;
 			this.textBox1.Name = "textBox1";
-			this.textBox1.Size = new System.Drawing.Size(396, 304);
+			this.textBox1.Size = new System.Drawing.Size(396, 260);
 			this.textBox1.TabIndex = 6;
 			this.textBox1.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox1_KeyPress);
 			// 
@@ -150,7 +153,7 @@
 			// 
 			// trackBar2
 			// 
-			this.trackBar2.Location = new System.Drawing.Point(37, 284);
+			this.trackBar2.Location = new System.Drawing.Point(37, 271);
 			this.trackBar2.Maximum = 255;
 			this.trackBar2.Name = "trackBar2";
 			this.trackBar2.Size = new System.Drawing.Size(371, 42);
@@ -404,17 +407,37 @@
 			// label2
 			// 
 			this.label2.AutoSize = true;
-			this.label2.Location = new System.Drawing.Point(9, 286);
+			this.label2.Location = new System.Drawing.Point(9, 273);
 			this.label2.Name = "label2";
 			this.label2.Size = new System.Drawing.Size(29, 24);
 			this.label2.TabIndex = 35;
 			this.label2.Text = "目标\r\n功率";
+			// 
+			// label3
+			// 
+			this.label3.AutoSize = true;
+			this.label3.Location = new System.Drawing.Point(10, 331);
+			this.label3.Name = "label3";
+			this.label3.Size = new System.Drawing.Size(29, 72);
+			this.label3.TabIndex = 37;
+			this.label3.Text = "上限\r\n功率\r\n（相\r\n对目\r\n标功\r\n率）";
+			// 
+			// trackBar4
+			// 
+			this.trackBar4.Location = new System.Drawing.Point(37, 331);
+			this.trackBar4.Maximum = 128;
+			this.trackBar4.Name = "trackBar4";
+			this.trackBar4.Size = new System.Drawing.Size(371, 42);
+			this.trackBar4.TabIndex = 36;
+			this.trackBar4.Scroll += new System.EventHandler(this.trackBar4_Scroll);
 			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1262, 651);
+			this.Controls.Add(this.label3);
+			this.Controls.Add(this.trackBar4);
 			this.Controls.Add(this.label2);
 			this.Controls.Add(this.label1);
 			this.Controls.Add(this.checkBox1);
@@ -460,6 +483,7 @@
 			((System.ComponentModel.ISupportInitialize)(this.pwr3)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.pwr4)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.trackBar4)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -501,6 +525,8 @@
 		private System.Windows.Forms.CheckBox checkBox1;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.Label label2;
+		private System.Windows.Forms.Label label3;
+		private System.Windows.Forms.TrackBar trackBar4;
 	}
 }
 
