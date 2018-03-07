@@ -24,12 +24,6 @@
 
 #define StartRpm 8192
 
-uint8_t NextStep[] = {
-  1,  2,  3,  4,  5,  0
-};
-
-uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
-uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};
 
 volatile uint8_t Step = 0;
 volatile uint8_t FStart = 0;
@@ -44,13 +38,14 @@ uint16_t NextPower = 0;
 
 inline void _MaxPower(){
   if(aread==255){NextPower = 4096;return;}//StartRpm 的一半
+  if(aread==0){NextPower = 0;return;}//StartRpm 的一半
   uint32_t temp = rpm;
   //28 耗时
   //224clock
   temp*=aread;
   temp>>=8;
   uint16_t temp2 = temp;
-  if(temp2<50)temp2 = 0;
+  if(temp2<50){NextPower = 0;return;}
   NextPower = temp2;
   if(NextPower>4096)NextPower = 4096;
 }
@@ -122,7 +117,7 @@ int main(void) {
     //等待“过零”
     uint8_t valbase = DigitReadBaseVal[tempStep];
     uint8_t drMask = DigitRead[tempStep];
-	if(PIN_startBTN)
+    if(PIN_startBTN)
     {
       
       uint16_t temp = (rpm>>1);
@@ -133,7 +128,7 @@ int main(void) {
       CPUBusy;
 	  //检测到过零后，立即换向
     }
-	else
+    else
     //等待“过零”
     {
       
@@ -144,7 +139,7 @@ int main(void) {
       while(((PIN3I&drMask)==valbase) && noskip);
       CPUBusy;
     
-	  //检测到过零后，再等待30度
+      //检测到过零后，再等待30度
     
       uint16_t tmp = (rpm>>1)+TCNT1;
       CPUFree;

@@ -10,6 +10,9 @@
 #define boardNew
 //#define boardold
 
+#define FWD
+//#define REV
+
 
 #ifdef boardold
   #define BP1D _BV(5)
@@ -70,4 +73,21 @@
     0    + BP1D, // 3-1
     0    + BP2D  // 3-2
   };
+#endif
+
+
+#ifdef FWD
+  uint8_t NextStep[] = {     //for F
+    1,  2,  3,  4,  5,  0
+  };
+  uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
+  uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};   //for F
+#endif
+
+#ifdef REV
+  uint8_t NextStep[] = {   //for R
+    5,  0,  1,  2,  3,  4
+  };
+  uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
+  uint8_t DigitReadBaseVal[] = {   0,  BP2A,     0,  BP3A,     0,  BP1A}; // for R
 #endif

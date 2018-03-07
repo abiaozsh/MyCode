@@ -23,17 +23,6 @@
 
 #define StartRpm 8192
 
-//uint8_t NextStep[] = {     //for F
-//  1,  2,  3,  4,  5,  0
-//};
-uint8_t NextStep[] = {   //for R
-  5,  0,  1,  2,  3,  4
-};
-
-uint8_t DigitRead[] =        {BP3A,  BP2A,  BP1A,  BP3A,  BP2A,  BP1A};
-//uint8_t DigitReadBaseVal[] = {BP3A,     0,  BP1A,     0,  BP2A,     0};   //for F
-uint8_t DigitReadBaseVal[] = {   0,  BP2A,     0,  BP3A,     0,  BP1A}; // for R
-
 volatile uint8_t Step = 0;
 volatile uint8_t FStart = 0;
 volatile uint8_t MaxPower = 0;
@@ -48,7 +37,42 @@ uint8_t CMD = 0;
 uint8_t TempData=0;
 uint8_t TempDataCnt=8;
 
-void adj();
+
+inline void _MaxPower(){
+  if(MaxPower==255){NextPower = 4096;return;}//StartRpm 的一半
+  if(MaxPower==0){NextPower = 0;return;}//StartRpm 的一半
+  uint32_t temp = rpm;
+  //28 耗时
+  //224clock
+  temp*=MaxPower;
+  temp>>=8;
+  uint16_t temp2 = temp;
+  if(temp2<50){NextPower = 0;return;}
+  NextPower = temp2;
+  if(NextPower>4096)NextPower = 4096;
+}
+
+inline void adj(){
+  NextPower = 0;
+  if(Status)
+  {
+    if(rpm>StartRpm)//too slow, halt
+    {
+      Status = 0;STAOff;
+    }
+    else
+    {
+      _MaxPower(rpm);
+    }
+  }
+  else
+  {
+    if(FStart)
+    {
+      _MaxPower(rpm);
+    }
+	}
+}
 
 int main(void) {
   //初始化时钟：1MHz -> 8MHz
@@ -88,24 +112,37 @@ int main(void) {
     adj();
     RPMFlip;
     //等待过零
+    uint8_t valbase = DigitReadBaseVal[tempStep];
+    uint8_t drMask = DigitRead[tempStep];
+    if(FStart)
     {
-      uint8_t valbase = DigitReadBaseVal[tempStep];
-      uint8_t drMask = DigitRead[tempStep];
-      
       uint16_t temp = (rpm>>1);
       CPUFree;
-      while(TCNT1<temp);
+      while(TCNT1<temp);//换向后延迟30度后检测“过零”
       noskip = 1;
       while(((PIN3I&drMask)==valbase) && noskip);
       CPUBusy;
+	  //检测到过零后，立即换向
     }
-    if(Pitch && !FStart)//
+    else
+    //等待“过零”
     {
-      uint16_t tmp = (rpm>>3)+(rpm>>2)+TCNT1;
+      uint16_t temp = (rpm>>2);//(rpm>>3)+
+      CPUFree;
+      while(TCNT1<temp);//换向后延迟15(22.5)度后检测“过零”
+      noskip = 1;
+      while(((PIN3I&drMask)==valbase) && noskip);
+      CPUBusy;
+    
+      //检测到过零后，再等待30度
+      uint16_t tmp = (rpm>>1)+TCNT1;
       CPUFree;
       while(TCNT1<tmp);
       CPUBusy;
     }
+
+
+
     PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
     Step = NextStep[Step];//CmdNextStep;
     //记录当前转速
@@ -115,37 +152,6 @@ int main(void) {
 
 ISR(TIM1_COMPA_vect){
   PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-}
-
-uint16_t _MaxPower(uint16_t val){
-  uint32_t temp = val;
-  //28 耗时
-  //224clock
-  temp*=MaxPower;
-  temp>>=8;
-  return (uint16_t)temp;
-}
-
-void adj(){
-  NextPower = 0;
-  if(Status)
-  {
-    if(rpm>StartRpm)//too slow, halt
-    {
-      Status = 0;STAOff;
-    }
-    else
-    {
-      NextPower = _MaxPower(rpm);
-    }
-  }
-  else
-  {
-    if(FStart)
-    {
-      NextPower = _MaxPower(rpm);
-    }
-	}
 }
 
 #define CMD_START         1  /*START          */
