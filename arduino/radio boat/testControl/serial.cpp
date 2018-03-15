@@ -22,11 +22,11 @@ int main(void) {
 	TIMSK1 = 0;
   ICR1 = 20000;
   //PA5 OC1B
-  DDRA |= _BV(5);
+  DDRA |= _BV(5);//这个作为完全亮度测试
   //PA6 OC1A
-  DDRA |= _BV(6);
-  
-
+  DDRA |= _BV(6);//<--------测试这个
+  //输入A0
+  //输出A6
   sei();
 
 
@@ -58,13 +58,19 @@ void loop() {
       uint16_t tempB = 0;
       
       uint32_t temp = val0;
-      temp = temp * 2000;
+      temp = temp * 1000;
       temp = temp>>8;
       
-      tempA = 500;
+      tempA = 1000;
       tempA = tempA + temp;
       
 			OCR1A = tempA;//1000~2000;//1ms~2ms
-			OCR1B = tempB;//0.5到2.5mS 对应 舵机的 -90度到+90度
+      
+      temp = val0;
+      temp = temp * 20000;
+      temp = temp>>8;
+      tempB = temp;
+      
+			OCR1B = tempB;//全亮度LED
 	}
 }
