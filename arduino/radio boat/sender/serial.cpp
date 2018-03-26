@@ -58,7 +58,7 @@ void loop() {
   uint8_t status=0;
 	for(;;)
 	{
-      wait(3000);
+      wait(1000);
       uint8_t val1 = aread(0);//电调 0~64 反 192~255 正 其他关
       uint8_t val2 = aread(1);//舵机 0~255 转0~128
       
@@ -112,7 +112,7 @@ void TimerInit() {
 
 //#define PORT_Send_ON PORT_Send |= BIT_Send
 //#define PORT_Send_OFF PORT_Send &= ~BIT_Send
-#define timing 200
+#define timing 100
 #define PORT_Send_ON PORT_Send &= ~BIT_Send
 #define PORT_Send_OFF PORT_Send |= BIT_Send
 

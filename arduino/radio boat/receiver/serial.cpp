@@ -45,6 +45,7 @@ int main(void) {
 void loop() {
 	for(;;)
 	{
+    uint8_t correct = 0;
 		uint8_t val = SerialRead();
     if(val==0x5A){
       uint8_t val0 = SerialRead();//电调 0~64 反 192~255 正 其他关
@@ -68,21 +69,27 @@ void loop() {
             temp = temp >> 6;//  /64
             tempA = tempA + temp;
             OCR1A = tempA;//1000~2000;//1ms~2ms
+            correct = 1;
+            DDRB |= _BV(3);
           }
           
           if(val2<=128){
-            uint16_t tempB = 1000;
+            uint16_t tempB = 600;
             uint32_t temp = val2;
-            temp = temp * 1000;
+            temp = temp * 1800;
             temp = temp >> 7;//  /128
             tempB = tempB + temp;
             OCR1B = tempB;// 1~2ms 对应 舵机的 -45度到+45度
             //0.5到2.5mS 对应 舵机的 -90度到+90度
-
+            correct = 1;
+            DDRB |= _BV(3);
           }
           
         }
       }
+    }
+    if(!correct){
+    DDRB &= ~_BV(3);
     }
 	}
 }
@@ -90,7 +97,7 @@ void loop() {
 
 //#define PIN_Recv_val (PIN_Recv&BIT_Recv)
 #define PIN_Recv_val (!(PIN_Recv&BIT_Recv))
-#define timing 200
+#define timing 100
 
 uint8_t SerialRead()
 {
@@ -99,7 +106,7 @@ uint8_t SerialRead()
 	while(PIN_Recv_val);
 	TCCR0B = 3;
 	TCNT0 = 0;
-	while(TCNT0<100);TCNT0 = 0;
+	while(TCNT0<50);TCNT0 = 0;
 	for(uint8_t i = 8 ; i > 0 ; i--)
 	{
 		while(TCNT0<timing);TCNT0 = 0;
