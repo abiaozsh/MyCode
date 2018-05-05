@@ -72,6 +72,39 @@ inline void adj(){
   }
 }
 
+void startup(){
+  uint8_t cnt = 0;
+  
+  rpm = 12000;
+  
+  for(cnt=0;cnt<90;cnt++)
+  {
+    PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
+    Step = NextStep[Step];//CmdNextStep;
+    
+    rpm = rpm - 90;
+    TCNT1 = 0;
+    Power = NextPower;
+    uint8_t tempStep = Step;
+    if(Power)
+    {
+      PORT6O = PWR_ON[tempStep];PWROn;//CmdPWROn;
+    }
+    else
+    {
+      PORT6O = PWR_OFF[tempStep];PWROff;//CmdPWROff;
+    }
+    OCR1A = Power;
+    //转速调整
+    NextPower = 0;
+    _MaxPower();
+    //等待“过零”
+    while(TCNT1<rpm);
+  }
+  Status = 1;STAOn;
+
+}
+
 int main(void) {
   //初始化时钟：1MHz -> 8MHz
   CLKPR = 128;//The CLKPCE bit must be written to logic one to enable change of the CLKPS bits. The CLKPCE bit is only updated when the other bits in CLKPR are simultaniosly written to zero.
@@ -119,14 +152,16 @@ int main(void) {
     uint8_t drMask = DigitRead[tempStep];
     if(PIN_startBTN)
     {
-      
+      //if(!Status){
+        startup();
+      //}
       uint16_t temp = (rpm>>1);
       CPUFree;
       while(TCNT1<temp);//换向后延迟30度后检测“过零”
       noskip = 1;
       while(((PIN3I&drMask)==valbase) && noskip);
       CPUBusy;
-	  //检测到过零后，立即换向
+      //检测到过零后，立即换向
     }
     else
     //等待“过零”
