@@ -174,7 +174,7 @@ void loop() {
 				if(flg)alert2();
 			}
 			
-			if(read5<80){
+			if(read5<160){//数字越大越暗
 				state = 0;//alarm off
 			}
 		
@@ -185,7 +185,7 @@ void loop() {
 //			SerialSend('\r');
 //			SerialSend('\n');
 			
-			if(read5>130){
+			if(read5>170){//数字越大越暗
 				state = 10;//alarm on
 			}
 			wait(500);
