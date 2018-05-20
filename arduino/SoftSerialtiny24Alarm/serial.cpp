@@ -2,8 +2,8 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 	
-#define CUR_TIMING TIMING__8M_TCCR1B_3____300
-#define TCCR1B_Value 3
+#define CUR_TIMING TIMING__8M_TCCR1B_1___9600
+#define TCCR1B_Value 1
 
 PROGMEM prog_uint16_t TIMING__8M_TCCR1B_3____300[] = {  416,  833, 1250, 1666, 2083, 2500, 2916, 3333, 3750, 4166};
 PROGMEM prog_uint16_t TIMING__8M_TCCR1B_2___1200[] = {  833, 1666, 2500, 3333, 4166, 5000, 5833, 6666, 7500, 8333};
@@ -19,10 +19,6 @@ PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1_115200[] = {   69,  138,  208,  277,  
 
 #define currTick ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1)
 
-#define DDR_Send DDRA
-#define PORT_Send PORTA
-#define SEND_ON PORT_Send |= BIT_Send
-#define SEND_OFF PORT_Send &= ~BIT_Send
 
 #define BIT_Send _BV(6)
 
@@ -39,7 +35,7 @@ uint32_t ReadInt();
 void wait(uint16_t timing){
 	for(uint16_t i=0;i<timing;i++){
 		TCNT1 = 0;
-		while(TCNT1<125);//startbit  8000/64
+		while(TCNT1<8000);//startbit  8000/64
 	}
 }
 
@@ -69,7 +65,7 @@ int main(void) {
 	ADCSRA = _BV(ADEN) | _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2);
 	ADCSRB = _BV(ADLAR);
 	TCCR1B = TCCR1B_Value;
-	wait(5000);//1s = 8000000
+	wait(1000);//1s = 8000000
 
 	loop();
 }
@@ -96,78 +92,104 @@ void teston(){
 	valon0 = readAnalog(0);
 	valon1 = readAnalog(1);
 	valon2 = readAnalog(2);
-	valon3 = readAnalog(3);
-	valon4 = readAnalog(4);
+	//valon3 = readAnalog(3);
+	//valon4 = readAnalog(4);
 }
 void testoff(){
 	valoff0 = readAnalog(0);
 	valoff1 = readAnalog(1);
 	valoff2 = readAnalog(2);
-	valoff3 = readAnalog(3);
-	valoff4 = readAnalog(4);
+	//valoff3 = readAnalog(3);
+	//valoff4 = readAnalog(4);
 }
 
-void alert(){
-	DDRB |= _BV(3);
+void alert1(){
+	DDRB |= _BV(1);
+	PORTB |= _BV(1);
+	while(true);
 }
-void unalert(){
-	DDRB &= ~_BV(3);
+void alert2(){
+	DDRB |= _BV(2);
+	PORTB |= _BV(2);
+	while(true);
 }
 
 uint8_t state = 0;
 
 void loop() {
+	//PORTB |= _BV(0);while(true);
+	//for(;;)
+	//{
+	//	SerialSend('a');
+	//	SerialSend('\r');
+	//	SerialSend('\n');
+	//	wait(1000);
+	//}
 	for(;;)
 	{
+		uint8_t read5 = readAnalog(5);
+		
 		if(state)
 		{
-			PORTB |= _BV(0);wait(20);//1ms
+			PORTB |= _BV(0);wait(30);
 			teston();
-			PORTB &= ~_BV(0);
-			
-			wait(20);//1ms
+			PORTB &= ~_BV(0);wait(30);
 			testoff();
 
 			
-			SendInt(state);SerialSend(',');
-			SerialSend('\r');
-			SerialSend('\n');
-			SendInt(valon0);SerialSend(',');
-			SendInt(valon1);SerialSend(',');
-			SendInt(valon2);SerialSend(',');
-			SendInt(valon3);SerialSend(',');
-			SendInt(valon4);SerialSend(',');
-			SerialSend('\r');
-			SerialSend('\n');
-			SendInt(valoff0);SerialSend(',');
-			SendInt(valoff1);SerialSend(',');
-			SendInt(valoff2);SerialSend(',');
-			SendInt(valoff3);SerialSend(',');
-			SendInt(valoff4);SerialSend(',');
-			SerialSend('\r');
-			SerialSend('\n');
-
-			if(valoff0<valon0 || valoff0-valon0<100)alert();
-			if(valoff1<valon1 || valoff1-valon1<100)alert();
-			if(valoff2<valon2 || valoff2-valon2<100)alert();
+//			SendInt(state);SerialSend(',');
+//			SerialSend('\r');
+//			SerialSend('\n');
+//			SendInt(valon0);SerialSend(',');
+//			SendInt(valon1);SerialSend(',');
+//			SendInt(valon2);SerialSend(',');
+//			//SendInt(valon3);SerialSend(',');
+//			//SendInt(valon4);SerialSend(',');
+//			SerialSend('\r');
+//			SerialSend('\n');
+//			SendInt(valoff0);SerialSend(',');
+//			SendInt(valoff1);SerialSend(',');
+//			SendInt(valoff2);SerialSend(',');
+//			//SendInt(valoff3);SerialSend(',');
+//			//SendInt(valoff4);SerialSend(',');
+//			SerialSend('\r');
+//			SerialSend('\n');
+//			wait(500);
+			
+			
+			uint8_t flg = 0;
+			if(valoff0<valon0 || valoff0-valon0<70)flg=1;
+			if(valoff1<valon1 || valoff1-valon1<70)flg=1;
+			if(valoff2<valon2 || valoff2-valon2<70)flg=1;
 			//if(valoff3-valon3<100)alert();
 			//if(valoff4-valon4<100)alert();
 			
-			if(readAnalog(5)<80){
+			if(state>1)
+			{
+				state--;
+				if(flg)alert1();
+			}
+			else
+			{
+				if(flg)alert2();
+			}
+			
+			if(read5<80){
 				state = 0;//alarm off
 			}
 		
 		}
 		else
 		{
-			SendInt(state);SerialSend(',');
-			SerialSend('\r');
-			SerialSend('\n');
-			if(readAnalog(5)>130){
-				state = 1;//alarm on
+//			SendInt(state);SerialSend(',');
+//			SerialSend('\r');
+//			SerialSend('\n');
+			
+			if(read5>130){
+				state = 10;//alarm on
 			}
-			wait(300);
-			unalert();
+			wait(500);
+			//unalert();
 		}
 		
 		
@@ -178,11 +200,6 @@ void TimerInit() {
 	TCCR1A = 0;
 	TCCR1C = 0;
 	TIMSK1 = 0;
-}
-void SerialInit(){
-	//UCSR0B = 0;//not forget turnoff usart0 on mega328p
-	DDR_Send |= BIT_Send;
-	SEND_OFF;
 }
 
 PROGMEM prog_uint32_t num10s[] = {
@@ -220,8 +237,23 @@ void SendInt(uint32_t val){
 	}
 }
 
+#define DDR_Send DDRA
+#define PORT_Send PORTA
+//#define SEND_ON PORT_Send |= BIT_Send
+//#define SEND_OFF PORT_Send &= ~BIT_Send
+#define SEND_ON DDR_Send |= BIT_Send
+#define SEND_OFF DDR_Send &= ~BIT_Send
+
+void SerialInit(){
+	//UCSR0B = 0;//not forget turnoff usart0 on mega328p
+	//DDR_Send |= BIT_Send;
+	PORT_Send &= ~BIT_Send;
+	SEND_OFF;
+}
+
 void SerialSend(uint8_t val){
-	cli();
+	//cli();
+	
 	TCCR1B = TCCR1B_Value;
 	TCNT1 = 0;
 	uint16_t timing;
@@ -233,5 +265,5 @@ void SerialSend(uint8_t val){
 		if(val&chkbit){SEND_OFF;}else{SEND_ON;}chkbit<<=1;timing = pgm_read_word_near(pTiming++);while(TCNT1<timing);
 	}
 	SEND_OFF;timing = pgm_read_word_near(pTiming);while(TCNT1<timing);
-	sei();
+	//sei();
 }
