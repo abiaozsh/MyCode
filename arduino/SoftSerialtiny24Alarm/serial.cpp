@@ -76,29 +76,20 @@ void ClockInit() {
 	CLKPR = 0;//1/1 //8MHz
 }
 
-uint8_t valon0 = 0;
-uint8_t valon1 = 0;
-uint8_t valon2 = 0;
-uint8_t valon3 = 0;
-uint8_t valon4 = 0;
-
-uint8_t valoff0 = 0;
-uint8_t valoff1 = 0;
-uint8_t valoff2 = 0;
-uint8_t valoff3 = 0;
-uint8_t valoff4 = 0;
+uint8_t vals[48];
+uint8_t valIdx = 0;
 
 void teston(){
-	valon0 = readAnalog(0);
-	valon1 = readAnalog(1);
-	valon2 = readAnalog(2);
+	vals[valIdx+0] = readAnalog(0);//valon0
+	vals[valIdx+1] = readAnalog(1);//valon1
+	vals[valIdx+2] = readAnalog(2);//valon2
 	//valon3 = readAnalog(3);
 	//valon4 = readAnalog(4);
 }
 void testoff(){
-	valoff0 = readAnalog(0);
-	valoff1 = readAnalog(1);
-	valoff2 = readAnalog(2);
+	vals[valIdx+3] = readAnalog(0);//valoff0
+	vals[valIdx+4] = readAnalog(1);//valoff1
+	vals[valIdx+5] = readAnalog(2);//valoff2
 	//valoff3 = readAnalog(3);
 	//valoff4 = readAnalog(4);
 }
@@ -111,10 +102,32 @@ void alert1(){
 void alert2(){
 	DDRB |= _BV(2);
 	PORTB |= _BV(2);
-	while(true);
+  while(true){
+    uint8_t valIdx2 = valIdx;
+    for(uint8_t i = 0;i<8;i++){
+
+      SerialSend('0'+i);SerialSend(',');
+			SendInt(vals[valIdx2+0]);SerialSend(',');
+			SendInt(vals[valIdx2+1]);SerialSend(',');
+			SendInt(vals[valIdx2+2]);SerialSend(',');
+			SendInt(vals[valIdx2+3]);SerialSend(',');
+			SendInt(vals[valIdx2+4]);SerialSend(',');
+			SendInt(vals[valIdx2+5]);SerialSend(',');
+			SerialSend('\r');
+			SerialSend('\n');
+      
+      
+			valIdx2+=6;
+			if(valIdx2==48){
+        valIdx2 = 0;
+      }
+    }
+			wait(5000);
+	}
 }
 
 uint8_t state = 0;
+uint8_t errCount = 0;
 
 void loop() {
 	//PORTB |= _BV(0);while(true);
@@ -135,8 +148,6 @@ void loop() {
 			teston();
 			PORTB &= ~_BV(0);wait(30);
 			testoff();
-
-			
 //			SendInt(state);SerialSend(',');
 //			SerialSend('\r');
 //			SerialSend('\n');
@@ -158,26 +169,42 @@ void loop() {
 			
 			
 			uint8_t flg = 0;
-			if(valoff0<valon0 || valoff0-valon0<70)flg=1;
-			if(valoff1<valon1 || valoff1-valon1<70)flg=1;
-			if(valoff2<valon2 || valoff2-valon2<70)flg=1;
+      //vals[valIdx+0] = readAnalog(0);//valon0
+      //vals[valIdx+1] = readAnalog(1);//valon1
+      //vals[valIdx+2] = readAnalog(2);//valon2
+      //vals[valIdx+3] = readAnalog(0);//valoff0
+      //vals[valIdx+4] = readAnalog(1);//valoff1
+      //vals[valIdx+5] = readAnalog(2);//valoff2
+			if(vals[valIdx+3]<vals[valIdx+0] || vals[valIdx+3]-vals[valIdx+0]<70)flg=1;
+			if(vals[valIdx+4]<vals[valIdx+1] || vals[valIdx+4]-vals[valIdx+1]<70)flg=1;
+			if(vals[valIdx+5]<vals[valIdx+2] || vals[valIdx+5]-vals[valIdx+2]<70)flg=1;
 			//if(valoff3-valon3<100)alert();
 			//if(valoff4-valon4<100)alert();
-			
+			if(flg){
+				errCount++;
+			}else
+			{
+				errCount = 0;
+			}
+      
 			if(state>1)
 			{
 				state--;
-				if(flg)alert1();
+				if(errCount>=5)alert1();//小警报
 			}
 			else
 			{
-				if(flg)alert2();
+				if(errCount>=5)alert2();//大警报
 			}
 			
 			if(read5<160){//数字越大越暗
 				state = 0;//alarm off
 			}
 		
+			valIdx+=6;
+			if(valIdx==48){
+				valIdx = 0;
+			}
 		}
 		else
 		{
@@ -186,7 +213,7 @@ void loop() {
 //			SerialSend('\n');
 			
 			if(read5>170){//数字越大越暗
-				state = 10;//alarm on
+				state = 50;//alarm on
 			}
 			wait(500);
 			//unalert();
