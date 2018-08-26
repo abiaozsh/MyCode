@@ -53,16 +53,28 @@ rt
 
 ofonrd11000040ofrt
 */
+//	_BV(1), // D2 - PD1
+//	_BV(0),	// D3 - PD0
+//	_BV(4),	// D4 - PD4
+//	_BV(6), // D5 - PC6
 
-#define cs _BV(4)
-#define so _BV(5)//readin
-#define sclk _BV(3)
-#define si _BV(2)//data out
+#define si _BV(1)//_BV(2)//data out
+#define sclk _BV(0)//_BV(3)
+#define cs _BV(4)//_BV(4)
+#define so _BV(6)//_BV(5)//readin
 
 void setup()
 {
-  PORTD = 0;
-  Serial.begin(57600);
+  //PORTD = 0;
+  //	_BV(1), // D2 - PD1
+//	_BV(0),	// D3 - PD0
+//	_BV(4),	// D4 - PD4
+//	_BV(6), // D5 - PC6
+  PORTD &=~_BV(1);
+  PORTD &=~_BV(0);
+  PORTD &=~_BV(4);
+  PORTC &=~_BV(6);
+  Serial.begin(9600);
   //U2Xn is 1
   //UBRR0 = 7;//250000
   //UBRR0 = 1;//1M
@@ -72,17 +84,14 @@ void setup()
 
 void loop()
 {
-  while(!Serial.available());
   int cmd1 = Serial.read();
   if(cmd1>='a'&&cmd1<='z'){}else{return;}
-  while(!Serial.available());
   int cmd2 = Serial.read();
   if(cmd2>='a'&&cmd2<='z'){}else{return;}
 
   if(cmd1=='o' && cmd2=='n')
   {
     DDRD |= cs;
-    //DDRD |= sclk;//fall
   }
   else if(cmd1=='o' && cmd2=='f')
   {
@@ -128,6 +137,11 @@ void loop()
   else if(cmd1=='r' && cmd2=='t')
   {
     Serial.print('\n');
+  }
+  else if(cmd1=='t' && cmd2=='s')
+  {
+    Serial.print("test test\n");
+    Serial.flush();
   }
 
 }
@@ -202,7 +216,7 @@ uint8_t shiftIn2(){
     DDRD &= ~sclk;//rise
 	wait();
     inBits <<=1;
-    if(PIND & so)
+    if(PINC & so)
     {
       inBits |= 1;
 	}

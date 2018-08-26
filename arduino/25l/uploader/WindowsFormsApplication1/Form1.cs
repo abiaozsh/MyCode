@@ -42,7 +42,8 @@ namespace WindowsFormsApplication1
 			if (port == null)
 			{
 				//COM4为Arduino使用的串口号，需根据实际情况调整
-				port = new SerialPort(textBox1.Text, 1000000, Parity.None, 8, StopBits.One);
+                //port = new SerialPort("COM22", 9600, Parity.None, 8, StopBits.One);
+                port = new SerialPort("COM22");
 				port.Open();
 			}
 
@@ -80,17 +81,18 @@ namespace WindowsFormsApplication1
 		//	}
 		//
 		//}
+        int size = 1024;//（1024 = 4M） (1=4k block)
 		private void button4_Click(object sender, EventArgs e)
 		{
 			//FileStream fs = new FileStream("d:\\outdata.txt", FileMode.Create, FileAccess.Write);
-			FileStream fs1 = new FileStream("e:\\data.bin", FileMode.Create, FileAccess.Write);
+			FileStream fs1 = new FileStream("e:\\datar.bin", FileMode.Create, FileAccess.Write);
 			//StreamWriter sw = new StreamWriter(fs);
 
 			portWrite("of");
-			for (int i = 0; i < 4096 * int.Parse(textBox2.Text); i += 4096)
+            for (int i = 0; i < 4096 * size; i += 4096)
 			{
 				portWrite("on");
-				portWrite("br" + getHex6(i) + "0C");
+				portWrite("br" + getHex6(i) + "0C");//2^0c = 4096
 
 				byte[] buff = readFromPortBin(4096);
 				fs1.Write(buff, 0, 4096);
@@ -123,11 +125,14 @@ namespace WindowsFormsApplication1
 
 		private void button3_Click(object sender, EventArgs e)
 		{
-			FileStream fs = new FileStream("e:\\dataout.bin", FileMode.Open, FileAccess.Read);
+            FileStream fs = new FileStream("d:\\full_wr841nv7.bin", FileMode.Open, FileAccess.Read);
+            //FileStream fs = new FileStream("e:\\dataw.bin", FileMode.Open, FileAccess.Read);
 
 			int idx = 0;
-			for (int i = 0; i < 256; i++)//256*16*256 = 1M
+            for (int i = 0; i <  size; i++)//64*64=4k
 			{
+                //WaitUntilReady();
+                //return;
 				portWrite("of");
 				portWrite("on");
 				portWrite("sd06");//we
@@ -155,12 +160,17 @@ namespace WindowsFormsApplication1
 					portWrite("sd" + convt[((idx & 0x00F000) >> 12)] + convt[((idx & 0x000F00) >> 8)]);//ad
 					portWrite("sd" + convt[((idx & 0x0000F0) >> 4)] + convt[((idx & 0x00000F))]);//ad
 
-					for (int k = 0; k < 64; k++)
-					{
-						int val = fs.ReadByte();
-						portWrite("sd" + convt[((val & 0x0000F0) >> 4)] + convt[((val & 0x00000F))]);//ad
-						idx++;
-					}
+                    //portWrite("bw");
+                    //byte[] buff = new byte[64];
+                    //fs.Read(buff, 0, 64);
+                    //port.Write(buff, 0, 64);
+                    //idx += 64;
+                    for (int k = 0; k < 64; k++)
+                    {
+                        int val = fs.ReadByte();
+                        portWrite("sd" + convt[((val & 0x0000F0) >> 4)] + convt[((val & 0x00000F))]);//ad
+                        idx++;
+                    }
 
 					portWrite("of");
 					WaitUntilReady();
@@ -180,10 +190,12 @@ namespace WindowsFormsApplication1
 				portWrite("sd05");//Read Status Register
 				portWrite("gt");//ad
 				string read = readFromPort(2);
-				if (read == "00")
-				{
-					break;
-				}
+                int val = Convert.ToInt32("0x0"+read, 16);
+                if ((val & 1) == 0) { break; }
+				//if (read == "00")
+				//{
+				//	break;
+				//}
 				//if (read == "FF")
 				//{
 				//	break;
@@ -321,15 +333,13 @@ namespace WindowsFormsApplication1
 
 		private void button7_Click(object sender, EventArgs e)
 		{
-			portWrite("of");
-			portWrite("on");
-			portWrite("sd05");//se
-			portWrite("gt");//ad
-			string read = readFromPort(2);
-			portWrite("gt");//ad
-			string read2 = readFromPort(2);
-			portWrite("of");
-			textBox3.Text = read + read2;
+			//portWrite("of");
+			//portWrite("on");
+			portWrite("ts");//se
+			//portWrite("gt");//ad
+			string read = readFromPort(1);
+			//portWrite("gt");//ad
+			textBox3.Text = read;
 		}
 
 		private void button8_Click(object sender, EventArgs e)
