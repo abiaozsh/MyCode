@@ -307,7 +307,7 @@ void handleNotFound() {
 void setup(void) {
   Serial.begin(115200);
   WiFi.begin(ssid, password);
-  Serial.println("");
+  Serial.println("start");
 
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
