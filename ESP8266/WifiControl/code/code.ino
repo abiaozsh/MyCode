@@ -2,6 +2,20 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 
+/*
+static const uint8_t D0   = 16;
+static const uint8_t D1   = 5;
+static const uint8_t D2   = 4;
+static const uint8_t D3   = 0;
+static const uint8_t D4   = 2;
+static const uint8_t D5   = 14;
+static const uint8_t D6   = 12;
+static const uint8_t D7   = 13;
+static const uint8_t D8   = 15;
+static const uint8_t D9   = 3;
+static const uint8_t D10  = 1;
+
+ */
 #define powerD D1
 #define resetD D2
 
@@ -19,7 +33,7 @@ void handleRoot() {
 }
 
 void handlePage() {
-	String ret = "";
+  String ret = "";
   ret+="<html>";
   ret+="return:<input id=\"J_read\" type=\"text\" style=\"width:250px\" value=\"\"><br/>";
   ret+="<input id=\"J_P\" type=\"button\" style=\"height:70px\" value=\"_____PowerButton_____\"><br/><br/><br/>";
@@ -131,7 +145,7 @@ void handleNotFound() {
 void setup(void) {
   Serial.begin(115200);
   WiFi.begin(ssid, password);
-  Serial.println("");
+  Serial.println("poweron");
 
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
@@ -146,7 +160,7 @@ void setup(void) {
   Serial.println(WiFi.localIP());
 
   server.on("/", handleRoot);
-  server.on("/f3tr4gr", handlePage);
+  server.on("/main", handlePage);
   server.on("/base.js", basejs);
   
   
