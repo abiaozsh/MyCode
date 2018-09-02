@@ -22,6 +22,11 @@
 
 
   VIN GND RST EN 3V3 GND CLK SDO CMD SD1 SD2 SD3 NC ADC A0
+  
+									LED D0
+									
+											LED D4  
+  
   3V3 GND TX  RX D8  D7  D6  D5  GND 3V3  D4  D3 D2 D1  D0
 D0-led-vcc
 

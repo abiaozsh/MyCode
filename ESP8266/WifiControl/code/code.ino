@@ -3,24 +3,24 @@
 #include <ESP8266WebServer.h>
 
 /*
-static const uint8_t D0   = 16;
+static const uint8_t D0   = 16; LED1
 static const uint8_t D1   = 5;
 static const uint8_t D2   = 4;
 static const uint8_t D3   = 0;
-static const uint8_t D4   = 2;
+static const uint8_t D4   = 2;  LED2
 static const uint8_t D5   = 14;
 static const uint8_t D6   = 12;
 static const uint8_t D7   = 13;
 static const uint8_t D8   = 15;
-static const uint8_t D9   = 3;
-static const uint8_t D10  = 1;
+static const uint8_t D9   = 3; rx
+static const uint8_t D10  = 1; tx
 
  */
-#define powerD D1
-#define resetD D2
+#define powerD D5
+#define resetD D6
 
-#define volt5D D4
-#define hddD D0
+#define volt5D D7
+#define hddD D8
 
 const char* t_p = "text/plain";
 const char* ssid = "zsh2";
@@ -128,7 +128,7 @@ void _reset() {
 void _status() {
   int v = digitalRead(volt5D);
   String ret = "ok ";
-  ret += v == 0 ? "PWR on " : "PWR off ";//0 pwr on         1 pwr off
+  ret += v == 1 ? "PWR on " : "PWR off ";
   float vv1 = _V1;
   float vv2 = _V2;
   vv1 = (vv1*100/(vv1+vv2));
@@ -177,23 +177,43 @@ void setup(void) {
   digitalWrite(resetD, 0);
   pinMode(powerD, OUTPUT);
   pinMode(resetD, OUTPUT);
+  
+  digitalWrite(D4, 0);
+  digitalWrite(D0, 0);
+  pinMode(D4, OUTPUT);
+  pinMode(D0, OUTPUT);
 
   Serial.println("started");
 }
-
+int tick = 0;
 void loop(void) {
   server.handleClient();
   unsigned long mills = millis();
   
   int v = digitalRead(hddD);
   if(v){
-    V1++;
-  }else{
     V2++;
+  }else{
+    V1++;
   }
   
   if(mills - currentMillisTime > 1000){
     currentMillisTime = mills;
+    //1秒事件
+    if(WiFi.status() != WL_CONNECTED){
+	  digitalWrite(D4, 1);
+    }else{
+	  digitalWrite(D4, 0);
+    }
+    if(tick==0){
+      tick = 1;
+	  digitalWrite(D0, 1);
+    }
+    else
+    {
+	  tick = 0;
+	  digitalWrite(D0, 0);
+    }
     _V1 = V1;
     _V2 = V2;
     V1 = 0;
