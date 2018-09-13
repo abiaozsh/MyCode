@@ -74,74 +74,83 @@ void setup()
   PORTD &=~_BV(0);
   PORTD &=~_BV(4);
   PORTC &=~_BV(6);
-  Serial.begin(9600);
+  Serial.begin(300);//32u4速率无所谓
+  Serial.setTimeout(1000000);
   //U2Xn is 1
   //UBRR0 = 7;//250000
   //UBRR0 = 1;//1M
 }
 
-
+char buff[64];
 
 void loop()
 {
-  int cmd1 = Serial.read();
+  //Serial.print("aa\n");
+  Serial.readBytes(buff, 2);
+  uint8_t cmd1 = buff[0];
   if(cmd1>='a'&&cmd1<='z'){}else{return;}
-  int cmd2 = Serial.read();
+  uint8_t cmd2 = buff[1];
   if(cmd2>='a'&&cmd2<='z'){}else{return;}
 
-  if(cmd1=='o' && cmd2=='n')
+  if(cmd1=='o' && cmd2=='n')//on
   {
     DDRD |= cs;
   }
-  else if(cmd1=='o' && cmd2=='f')
+  else if(cmd1=='o' && cmd2=='f')//off
   {
     DDRD &= ~cs;
   }
-  else if(cmd1=='s' && cmd2=='d')
+  else if(cmd1=='w' && cmd2=='e')//write enable
+  {
+    DDRD &= ~cs;//off
+    DDRD |= cs;//on
+    shiftOut2(0x06);
+    DDRD &= ~cs;//off
+  }
+  else if(cmd1=='s' && cmd2=='d')//send byte
   {
     uint8_t val = GetByte();
     shiftOut2(val);
   }
-  else if(cmd1=='g' && cmd2=='t')
+  else if(cmd1=='s' && cmd2=='a')//send address
+  {
+    Serial.readBytes(buff, 3);
+    shiftOut2(buff[0]);
+    shiftOut2(buff[1]);
+    shiftOut2(buff[2]);
+  }
+  else if(cmd1=='s' && cmd2=='b')//binary send byte
+  {
+      Serial.readBytes(buff, 1);
+      uint8_t data = buff[0];
+      shiftOut2(data);
+  }
+  else if(cmd1=='g' && cmd2=='t')//get
   {
     uint8_t data = shiftIn2();
     printHex(data);
   }
-  else if(cmd1=='b' && cmd2=='r')
+  else if(cmd1=='b' && cmd2=='r')//binary read
   {
-    uint8_t add0 = GetByte();
-    uint8_t add1 = GetByte();
-    uint8_t add2 = GetByte();
-    uint8_t shift = GetByte();
-    uint32_t cnt = 1;
-    cnt <<= shift;
-    shiftOut2(0x0B);
-    shiftOut2(add0);
-    shiftOut2(add1);
-    shiftOut2(add2);
-    shiftOut2(0);
-    while(cnt--)
+    for(uint16_t i = 0;i<4096;i++)
     {
       uint8_t data = shiftIn2();
       Serial.write(data);
     }
   }
-  else if(cmd1=='b' && cmd2=='w')
+  else if(cmd1=='b' && cmd2=='w')//binary write
   {
+    Serial.readBytes(buff, 64);
     for(uint8_t i = 0;i<64;i++)
     {
-      uint8_t data = Serial.read();
-	  shiftOut2(data);
+      shiftOut2(buff[i]);
     }
   }
-  else if(cmd1=='r' && cmd2=='t')
+  else if(cmd1=='t' && cmd2=='s')//test
   {
-    Serial.print('\n');
-  }
-  else if(cmd1=='t' && cmd2=='s')
-  {
-    Serial.print("test test\n");
-    Serial.flush();
+    Serial.readBytes(buff, 1);
+    uint8_t data = buff[0];
+    printHex(data);
   }
 
 }
@@ -160,10 +169,9 @@ void printHex(uint8_t val){//"hl"
 }
 
 uint8_t GetByte(){
-  while(!Serial.available());
-  int vh = ConvBCD(Serial.read());
-  while(!Serial.available());
-  int vl = ConvBCD(Serial.read());
+  Serial.readBytes(buff, 2);
+  uint8_t vh = ConvBCD(buff[0]);
+  uint8_t vl = ConvBCD(buff[1]);
   uint8_t val = (( vh << 4 ) & 0xF0 ) | (vl & 0x0F);
   return val;
 }
@@ -184,9 +192,9 @@ uint8_t ConvBCD(uint8_t val){
   return val;
 }
 void wait(){
-	for(uint16_t i = 0;i<10;i++){
-		volatile uint8_t tmp = 0;
-	}
+	//for(uint16_t i = 0;i<1;i++){
+	//	volatile uint8_t tmp = 0;
+	//}
 }
 void shiftOut2(byte val){
   for (uint8_t i = 0; i < 8; i++)  {
@@ -212,16 +220,16 @@ uint8_t shiftIn2(){
   uint8_t inBits = 0;
   for (uint8_t i = 0; i < 8; i++)  {
     DDRD |= sclk;//fall
-	wait();
+    wait();
     DDRD &= ~sclk;//rise
-	wait();
+    wait();
     inBits <<=1;
     if(PINC & so)
     {
       inBits |= 1;
-	}
-	else
-	{
+    }
+    else
+    {
     }
   }
   return inBits;
