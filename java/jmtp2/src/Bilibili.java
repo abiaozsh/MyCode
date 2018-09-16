@@ -29,9 +29,84 @@ public class Bilibili {
 	 */
 	public static void main(String[] args) throws Exception {
 
-		//getList(1, "a.txt");
+		getList(1, "a.txt");
 
-		copy(1, "b.txt", "E:\\bilibili");
+		//copy(1, "b.txt", "E:\\bilibili");
+	}
+
+	public static void getList(int dev, String fn) throws Exception {
+
+		FileOutputStream fos = new FileOutputStream(fn);
+		OutputStreamWriter osw = new OutputStreamWriter(fos);
+
+		PortableDeviceStorageObject root = getRoot(dev);
+		PortableDeviceFolderObject bilibili = getBilibili(root);
+		PortableDeviceObject[] objs = bilibili.getChildObjects();
+
+		ArrayList<ObjF> list = new ArrayList<ObjF>();
+
+		Comparator<ObjF> comparatorName = new Comparator<ObjF>() {
+			@Override
+			public int compare(ObjF a, ObjF b) {
+				return a.title.compareTo(b.title);
+			}
+		};
+
+		Comparator<ObjF> comparatorSize = new Comparator<ObjF>() {
+			@Override
+			public int compare(ObjF a, ObjF b) {
+				return (a.size > b.size) ? -1 : 1;
+			}
+		};
+
+		for (PortableDeviceObject item : objs) {
+			System.out.println(item.getOriginalFileName());
+
+			PortableDeviceObject[] all = getList(item);
+			if (all == null)
+				continue;
+			boolean first = true;
+			ObjF objf = new ObjF();
+			objf.size = 0;
+			for (PortableDeviceObject item2 : all) {
+				PortableDeviceObject entry = (PortableDeviceObject) findFile(item2, "entry.json");
+
+				deleteFile("entry.json");
+				try {
+					host.copyFromPortableDeviceToHost(entry.getID(), ".", device);
+				} catch (COMException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+				FileInputStream fis = new FileInputStream("entry.json");
+				InputStreamReader isr = new InputStreamReader(fis, "utf-8");
+				char[] buff = new char[4096];
+				int len = isr.read(buff);
+				String s = new String(buff, 0, len);
+				Obj obj = deserialize(s, Obj.class);
+
+				isr.close();
+				fis.close();
+
+				if (first) {
+					first = false;
+					objf.id = item.getOriginalFileName();
+					objf.title = obj.title;
+				}
+				objf.size += obj.downloaded_bytes;
+			}
+
+			list.add(objf);
+		}
+		Collections.sort(list, comparatorSize);
+		for (ObjF item : list) {
+
+			osw.write(item.id + "," + (item.size / 1024 / 1024) + "," + item.title + "\r\n");
+			osw.flush();
+		}
+
+		fos.close();
 	}
 
 	static PortableDevice device;
@@ -43,7 +118,7 @@ public class Bilibili {
 			device.open();
 			Bilibili.device = device;
 			PortableDeviceObject[] roots = device.getRootObjects();
-			if (roots.length >= 2) {
+			if (roots.length > idx) {
 				for (int i = 0; i < roots.length; i++) {
 					if (i == idx) {
 						PortableDeviceStorageObject root = (PortableDeviceStorageObject) roots[i];
@@ -97,6 +172,20 @@ public class Bilibili {
 		return null;
 	}
 
+	static PortableDeviceObject[] getList(PortableDeviceObject folder) {
+		if (PortableDeviceStorageObject.class.isAssignableFrom(folder.getClass())) {
+			PortableDeviceStorageObject f = (PortableDeviceStorageObject) folder;
+			PortableDeviceObject[] objs = f.getChildObjects();
+			return objs;
+		} else if (PortableDeviceFolderObject.class.isAssignableFrom(folder.getClass())) {
+			PortableDeviceFolderObject f = (PortableDeviceFolderObject) folder;
+			PortableDeviceObject[] objs = f.getChildObjects();
+			return objs;
+		} else {
+			return null;
+		}
+	}
+
 	static PortableDeviceFolderObject getBilibili(PortableDeviceStorageObject root) {
 		PortableDeviceFolderObject Android = (PortableDeviceFolderObject) findFile(root, "Android");
 		PortableDeviceFolderObject data = (PortableDeviceFolderObject) findFile(Android, "data");
@@ -145,6 +234,9 @@ public class Bilibili {
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class Obj {
 		public String title;
+		public long total_bytes;
+		public long downloaded_bytes;
+		// "total_bytes":30569301,"downloaded_bytes":30569301,
 	}
 
 	public static <T> T deserialize(String json, Class<T> clazz) {
@@ -175,65 +267,7 @@ public class Bilibili {
 	public static class ObjF {
 		public String id;
 		public String title;
-	}
-
-	public static void getList(int dev, String fn) throws Exception {
-
-		FileOutputStream fos = new FileOutputStream(fn);
-		OutputStreamWriter osw = new OutputStreamWriter(fos);
-
-		PortableDeviceStorageObject root = getRoot(dev);
-		PortableDeviceFolderObject bilibili = getBilibili(root);
-		PortableDeviceObject[] objs = bilibili.getChildObjects();
-
-		ArrayList<ObjF> list = new ArrayList<ObjF>();
-
-		Comparator<ObjF> comparator = new Comparator<ObjF>() {
-			@Override
-			public int compare(ObjF a, ObjF b) {
-				return a.title.compareTo(b.title);
-			}
-		};
-
-		for (PortableDeviceObject item : objs) {
-			System.out.println(item.getOriginalFileName());
-			PortableDeviceFolderObject one = (PortableDeviceFolderObject) findFile(item);
-			if (one == null)
-				continue;
-			PortableDeviceObject entry = (PortableDeviceObject) findFile(one, "entry.json");
-
-			deleteFile("entry.json");
-			try {
-				host.copyFromPortableDeviceToHost(entry.getID(), ".", device);
-			} catch (COMException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			FileInputStream fis = new FileInputStream("entry.json");
-			InputStreamReader isr = new InputStreamReader(fis, "utf-8");
-			char[] buff = new char[4096];
-			int len = isr.read(buff);
-			String s = new String(buff, 0, len);
-			Obj obj = deserialize(s, Obj.class);
-
-			isr.close();
-			fis.close();
-
-			ObjF objf = new ObjF();
-			objf.id = item.getOriginalFileName();
-			objf.title = obj.title;
-
-			list.add(objf);
-		}
-		Collections.sort(list, comparator);
-		for (ObjF item : list) {
-
-			osw.write(item.id + "," + item.title + "\r\n");
-			osw.flush();
-		}
-
-		fos.close();
+		public long size;
 	}
 
 	public static void copy(int dev, String fn, String path) throws Exception {
