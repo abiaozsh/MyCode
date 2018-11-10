@@ -45,7 +45,7 @@ inline void _MaxPower(){
   temp*=aread;
   temp>>=8;
   uint16_t temp2 = temp;
-  if(temp2<50){NextPower = 0;return;}
+  //if(temp2<50){NextPower = 0;return;}²»ÐèÒª
   NextPower = temp2;
   if(NextPower>4096)NextPower = 4096;
 }
