@@ -11,13 +11,13 @@
 #define PIN_startBTN (!(PINA & _BV(7)))
 #define PCINT_startBTN _BV(PCINT7)
 
-#define CPUFree ;/*DDRB |= _BV(3) */ //free亮灯
+#define CPUFree ;/*DDRB |=  _BV(3)*/ //free亮灯
 #define CPUBusy ;/*DDRB &= ~_BV(3)*/ //busy暗灯
-#define STAOn   DDRB |= _BV(3) ;/**/
-#define STAOff  DDRB &= ~_BV(3);/**/
-#define PWROn   ;/*DDRB |= _BV(3) */
+#define STAOn   ;/*DDRB |=  _BV(3)*/
+#define STAOff  ;/*DDRB &= ~_BV(3)*/
+#define PWROn   ;/*DDRB |=  _BV(3)*/
 #define PWROff  ;/*DDRB &= ~_BV(3)*/
-#define RPMFlip ;/*DDRB ^= _BV(3)*/
+#define RPMFlip ;/*DDRB ^=  _BV(3)*/
 
 #define DBGOn   ;/*DDRB |= _BV(3) */
 #define DBGOff  ;/*DDRB &= ~_BV(3)*/
@@ -37,15 +37,36 @@ uint16_t NextPower = 0;
 
 
 inline void _MaxPower(){
-  if(aread==255){NextPower = 4096;return;}//StartRpm 的一半
-  if(aread==0){NextPower = 0;return;}//StartRpm 的一半
+
+//  32 128
+//0~32 均匀 0~32
+//33~?? 一高两低
+
+
+	
+  uint8_t tempp = aread;
+
+  if(PINB & _BV(3)){
+  }
+  else
+  {
+	  if(Step & 1){
+		  if(tempp<128){
+			  tempp <<= 1;
+		  }
+	  }else{
+		  tempp = 0;
+	  }
+  }
+  
+  if(tempp==255){NextPower = 4096;return;}//StartRpm 的一半
+  if(tempp==0){NextPower = 0;return;}//StartRpm 的一半
   uint32_t temp = rpm;
   //28 耗时
   //224clock
-  temp*=aread;
+  temp*=tempp;
   temp>>=8;
   uint16_t temp2 = temp;
-  //if(temp2<50){NextPower = 0;return;}不需要
   NextPower = temp2;
   if(NextPower>4096)NextPower = 4096;
 }
@@ -131,8 +152,6 @@ int main(void) {
   //主循环
   for(;;) 
   {
-    //定时器清零
-    TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
     Power = NextPower;
     uint8_t tempStep = Step;
     if(Power)
@@ -143,9 +162,9 @@ int main(void) {
     {
       PORT6O = PWR_OFF[tempStep];PWROff;//CmdPWROff;
     }
+    //定时器清零
+    TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
     OCR1A = Power;
-    //转速调整
-    adj();
     RPMFlip;
     //等待“过零”
     uint8_t valbase = DigitReadBaseVal[tempStep];
@@ -162,12 +181,13 @@ int main(void) {
       while(((PIN3I&drMask)==valbase) && noskip);
       CPUBusy;
       //检测到过零后，立即换向
+      //转速调整
+      adj();
     }
     else
     //等待“过零”
     {
-      
-      uint16_t temp = (rpm>>2);//(rpm>>3)+
+      uint16_t temp = (rpm>>3)+(rpm>>2);//
       CPUFree;
       while(TCNT1<temp);//换向后延迟15(22.5)度后检测“过零”
       noskip = 1;
@@ -175,8 +195,9 @@ int main(void) {
       CPUBusy;
     
       //检测到过零后，再等待30度
-    
       uint16_t tmp = (rpm>>1)+TCNT1;
+      //转速调整
+      adj();
       CPUFree;
       while(TCNT1<tmp);
       CPUBusy;
