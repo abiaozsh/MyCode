@@ -67,13 +67,6 @@ inline void adj(){
       _MaxPower();
     }
   }
-  else
-  {
-    if(PIN_startBTN)
-    {
-      _MaxPower();
-    }
-  }
 }
 
 void startup(){
@@ -81,29 +74,64 @@ void startup(){
   
   rpm = 12000;
   
-  for(cnt=0;cnt<90;cnt++)
+  for(cnt=0;cnt<100;cnt++)
   {
-    rpm = rpm - 90;
-    TCNT1 = 0;
-    Power = NextPower;
     uint8_t tempStep = Step;
-    if(Power)
+    //检测过零
+    //{
+    //  uint8_t valbase = DigitReadBaseVal[tempStep];
+    //  uint8_t drMask = DigitRead[tempStep];
+    //  noskip = 1;
+    //  while(((PIN3I&drMask)==valbase) && noskip);
+    //}
+    uint16_t temp2 = (rpm>>1)+TCNT1;
+    while(TCNT1<temp2);//换向后延迟15(22.5)度后检测“过零”
+    
+    //检测到过零 开机 清定时器
     {
-      PORT6O = PWR_ON[tempStep];PWROn;//CmdPWROn;
+      Power = NextPower;
+      if(Power)
+      {
+        PORT6O = PWR_ON[tempStep];PWROn;//CmdPWROn;
+        PowerState = 1;
+      }
+      else
+      {
+        PORT6O = PWR_OFF[tempStep];PWROff;//CmdPWROff;
+        PowerState = 0;
+      }
+      //记录当前转速
+      rpm = rpm - (rpm>>6) - 1;//TCNT1;
+      //定时器清零
+      TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
+      OCR1A = Power;
     }
-    else
-    {
-      PORT6O = PWR_OFF[tempStep];PWROff;//CmdPWROff;
-    }
-    OCR1A = Power;
-    //转速调整
+    
+    //功率计算
     NextPower = 0;
     _MaxPower();
-    //等待“过零”
-    while(TCNT1<rpm);
     
-    PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-    Step = NextStep[Step];//CmdNextStep;
+    //等待30度
+    while(TCNT1<(rpm>>1));
+    
+    //换向
+    {
+      cli();
+      Step = NextStep[Step];//CmdNextStep;
+      tempStep = Step;
+      if(PowerState)
+      {
+        PORT6O = PWR_ON[tempStep];PWROn;//CmdPWROn;
+      }
+      else
+      {
+        PORT6O = PWR_OFF[tempStep];PWROff;//CmdPWROff;
+      }
+      sei();
+    }
+    
+    uint16_t temp = (rpm>>2)+TCNT1;
+    while(TCNT1<temp);//换向后延迟15(22.5)度后检测“过零”
   }
   Status = 1;STAOn;
 
