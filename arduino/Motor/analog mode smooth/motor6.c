@@ -178,7 +178,11 @@ int main(void) {
       uint8_t valbase = DigitReadBaseVal[tempStep];
       uint8_t drMask = DigitRead[tempStep];
       noskip = 1;
-      while(((PIN3I&drMask)==valbase) && noskip);
+      while(
+        ((PIN3I&drMask)==valbase) && 
+        noskip && 
+        (!(TIFR1 & _BV(TOV1)))
+        );
     }
     
     //检测到过零 开机 清定时器
@@ -195,9 +199,10 @@ int main(void) {
         PowerState = 0;
       }
       //记录当前转速
-      rpm = TCNT1;
+      rpm = ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1);
       //定时器清零
       TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
+      TIFR1 |= _BV(TOV1);
       OCR1A = Power;
     }
     
