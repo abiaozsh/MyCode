@@ -8,8 +8,8 @@
 
 #define POWER_IN 6
 
-#define PIN_startBTN (!(PINA & _BV(7)))
-#define PCINT_startBTN _BV(PCINT7)
+
+
 
 #define CPUFree ;/*DDRB |=  _BV(3)*/ //free亮灯
 #define CPUBusy ;/*DDRB &= ~_BV(3)*/ //busy暗灯
@@ -27,10 +27,10 @@
 
 volatile uint8_t Step = 0;
 volatile uint8_t PowerState = 0;
-volatile uint8_t aread;
+volatile uint8_t aread = 255;
 volatile uint8_t Status = 0;
 volatile uint8_t noskip = 1;
-
+volatile uint8_t Startup = 0;
 
 uint16_t rpm;
 uint16_t Power = 0;
@@ -71,7 +71,7 @@ inline void adj(){
 }
 
 void startup(){
-
+  Status = 1;
 
   uint8_t cnt = 0;
   
@@ -136,8 +136,8 @@ void startup(){
     uint16_t temp = (rpm>>2)+TCNT1;
     while(TCNT1<temp);//换向后延迟15(22.5)度后检测“过零”
   }
-  Status = 1;STAOn;
-
+  
+  
 }
 
 int main(void) {
@@ -147,10 +147,10 @@ int main(void) {
   //初始化定时器 1/8
   TCCR1B = 2;//  1/8	1MHz 1us
   TIMSK1 |= _BV(OCIE1A);
-  //初始化输入
-  GIMSK |= _BV(PCIE0);
-  PCMSK0 |= PCINT_startBTN;//start button
 
+  
+  
+  
   ADMUX = POWER_IN;//A7 power
   DIDR0 |= _BV(POWER_IN);
   ADCSRA = _BV(ADEN) | _BV(ADSC) | _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2) | _BV(ADIE) | _BV(ADATE);
@@ -163,13 +163,16 @@ int main(void) {
   PORT6O = BP1D | BP2D | BP3D;
   
   sei();
+  
+  while(aread>32);
   //主循环
   for(;;) 
   {
     //启动序列
-    if(PIN_startBTN)
+    if(Startup)
     {
       startup();
+      Startup=0;
     }
 
     uint8_t tempStep = Step;
@@ -178,7 +181,11 @@ int main(void) {
       uint8_t valbase = DigitReadBaseVal[tempStep];
       uint8_t drMask = DigitRead[tempStep];
       noskip = 1;
-      while(((PIN3I&drMask)==valbase) && noskip);
+      while(
+        ((PIN3I&drMask)==valbase) && 
+        noskip && 
+        (!(TIFR1 & _BV(TOV1)))
+        );
     }
     
     //检测到过零 开机 清定时器
@@ -195,9 +202,10 @@ int main(void) {
         PowerState = 0;
       }
       //记录当前转速
-      rpm = TCNT1;
+      rpm = ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1);
       //定时器清零
       TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
+      TIFR1 |= _BV(TOV1);
       OCR1A = Power;
     }
     
@@ -233,16 +241,10 @@ ISR(TIM1_COMPA_vect){
   PowerState = 0;
 }
 
-ISR(PCINT0_vect){
-  if(noskip)
-  {
-    if(PIN_startBTN)
-    {
-      noskip = 0;
-    }
-  }
-}
-
 ISR(ADC_vect){
   aread = ADCH;
+  if((!Status) && aread>32){
+    Startup = 1;
+    noskip = 0;
+  }
 }
