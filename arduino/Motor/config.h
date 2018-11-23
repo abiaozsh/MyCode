@@ -25,7 +25,7 @@
   #define BP3U _BV(0)
   #define BP3A _BV(2)
   
-  下臂常开，反驱
+  //下臂常开，下反驱，上正驱
   uint8_t PWR_ON[] = {
     BP1U + BP1D + BP3D, // 1-2 a
     BP1U + BP1D + BP2D, // 1-3 b
@@ -33,6 +33,14 @@
     BP2U + BP3D + BP2D, // 2-1 d
     BP3U + BP3D + BP2D, // 3-1 e
     BP3U + BP1D + BP3D  // 3-2 f
+  };
+  uint8_t PWR_BRAKE[] = {
+    0    + 0    + BP3D, // 1-2 a
+    0    + 0    + BP2D, // 1-3 b
+    0    + BP1D + 0   , // 2-3 c
+    0    + BP3D + 0   , // 2-1 d
+    0    + 0    + BP2D, // 3-1 e
+    0    + BP1D + 0     // 3-2 f
   };
   uint8_t PWR_OFF[] = {
     0    + BP1D + BP3D, // 1-2
@@ -56,7 +64,7 @@
   #define BP3A _BV(2)
 
 
-  //下臂常开，反驱
+  //下臂常开，上下正驱
   uint8_t PWR_ON[] = {
     BP1U + BP2D, // 1-2 a
     BP1U + BP3D, // 1-3 b
@@ -64,6 +72,14 @@
     BP2U + BP1D, // 2-1 d
     BP3U + BP1D, // 3-1 e
     BP3U + BP2D  // 3-2 f
+  };
+  uint8_t PWR_BREAK[] = {
+    BP1D + BP2D, // 1-2 a
+    BP1D + BP3D, // 1-3 b
+    BP2D + BP3D, // 2-3 c
+    BP2D + BP1D, // 2-1 d
+    BP3D + BP1D, // 3-1 e
+    BP3D + BP2D  // 3-2 f
   };
   uint8_t PWR_OFF[] = {
     0    + BP2D, // 1-2
