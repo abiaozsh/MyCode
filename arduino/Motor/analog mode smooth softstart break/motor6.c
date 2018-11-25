@@ -52,20 +52,24 @@ inline void _MaxPower(){
   }
   else
   {
-    Break = 1;
-    temparead = 128 - temparead;
-    if(temparead==0){
-      NextPower = 0;
-    }else{
-      uint32_t temp = rpm;
-      //28 ºÄÊ±
-      //224clock
-      temp*=temparead;
-      temp>>=8;
-      uint16_t temp2 = temp;
-      NextPower = temp2;
-      if(NextPower>4096)NextPower = 4096;
-    }  
+    if(temparead<64)
+    {
+      Break = 1;
+      temparead = 64 - temparead;
+      temparead = temparead << 1;
+      if(temparead==0){
+        NextPower = 0;
+      }else{
+        uint32_t temp = rpm;
+        //28 ºÄÊ±
+        //224clock
+        temp*=temparead;
+        temp>>=8;
+        uint16_t temp2 = temp;
+        NextPower = temp2;
+        if(NextPower>4096)NextPower = 4096;
+      }
+    }
   }
 }
 
