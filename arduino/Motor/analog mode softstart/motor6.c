@@ -79,6 +79,9 @@ void startup(){
   
   for(cnt=0;cnt<100;cnt++)
   {
+    uint16_t temp = (rpm>>2)+TCNT1;
+    while(TCNT1<temp);//换向后延迟15(22.5)度后检测“过零”
+
     uint8_t tempStep = Step;
     //检测过零
     //{
@@ -133,8 +136,6 @@ void startup(){
       sei();
     }
     
-    uint16_t temp = (rpm>>2)+TCNT1;
-    while(TCNT1<temp);//换向后延迟15(22.5)度后检测“过零”
   }
   
   
