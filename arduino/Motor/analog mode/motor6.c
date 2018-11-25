@@ -11,13 +11,13 @@
 #define PIN_startBTN (!(PINA & _BV(7)))
 #define PCINT_startBTN _BV(PCINT7)
 
-#define CPUFree ;/*DDRB |= _BV(3) */ //free亮灯
+#define CPUFree ;/*DDRB |=  _BV(3)*/ //free亮灯
 #define CPUBusy ;/*DDRB &= ~_BV(3)*/ //busy暗灯
-#define STAOn   DDRB |= _BV(3) ;/**/
-#define STAOff  DDRB &= ~_BV(3);/**/
-#define PWROn   ;/*DDRB |= _BV(3) */
+#define STAOn   ;/*DDRB |=  _BV(3)*/
+#define STAOff  ;/*DDRB &= ~_BV(3)*/
+#define PWROn   ;/*DDRB |=  _BV(3)*/
 #define PWROff  ;/*DDRB &= ~_BV(3)*/
-#define RPMFlip ;/*DDRB ^= _BV(3)*/
+#define RPMFlip ;/*DDRB ^=  _BV(3)*/
 
 #define DBGOn   ;/*DDRB |= _BV(3) */
 #define DBGOff  ;/*DDRB &= ~_BV(3)*/
@@ -26,10 +26,11 @@
 
 
 volatile uint8_t Step = 0;
-volatile uint8_t FStart = 0;
+volatile uint8_t PowerState = 0;
 volatile uint8_t aread;
 volatile uint8_t Status = 0;
 volatile uint8_t noskip = 1;
+
 
 uint16_t rpm;
 uint16_t Power = 0;
@@ -37,17 +38,21 @@ uint16_t NextPower = 0;
 
 
 inline void _MaxPower(){
-  if(aread==255){NextPower = 4096;return;}//StartRpm 的一半
-  if(aread==0){NextPower = 0;return;}//StartRpm 的一半
-  uint32_t temp = rpm;
-  //28 耗时
-  //224clock
-  temp*=aread;
-  temp>>=8;
-  uint16_t temp2 = temp;
-  //if(temp2<50){NextPower = 0;return;}不需要
-  NextPower = temp2;
-  if(NextPower>4096)NextPower = 4096;
+  uint8_t temparead = aread;
+  if(temparead==255){
+	  NextPower = 4096;
+  }else if(temparead==0){
+	  NextPower = 0;
+  }else{
+	  uint32_t temp = rpm;
+	  //28 耗时
+	  //224clock
+	  temp*=temparead;
+	  temp>>=8;
+	  uint16_t temp2 = temp;
+	  NextPower = temp2;
+	  if(NextPower>4096)NextPower = 4096;
+  }
 }
 
 inline void adj(){
@@ -63,43 +68,73 @@ inline void adj(){
       _MaxPower();
     }
   }
-  else
-  {
-    if(PIN_startBTN)
-    {
-      _MaxPower();
-    }
-  }
 }
 
 void startup(){
+
+
   uint8_t cnt = 0;
   
   rpm = 12000;
   
-  for(cnt=0;cnt<90;cnt++)
+  for(cnt=0;cnt<100;cnt++)
   {
-    PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-    Step = NextStep[Step];//CmdNextStep;
-    
-    rpm = rpm - 90;
-    TCNT1 = 0;
-    Power = NextPower;
     uint8_t tempStep = Step;
-    if(Power)
+    //检测过零
+    //{
+    //  uint8_t valbase = DigitReadBaseVal[tempStep];
+    //  uint8_t drMask = DigitRead[tempStep];
+    //  noskip = 1;
+    //  while(((PIN3I&drMask)==valbase) && noskip);
+    //}
+    uint16_t temp2 = (rpm>>1)+TCNT1;
+    while(TCNT1<temp2);//换向后延迟15(22.5)度后检测“过零”
+    
+    //检测到过零 开机 清定时器
     {
-      PORT6O = PWR_ON[tempStep];PWROn;//CmdPWROn;
+      Power = NextPower;
+      if(Power)
+      {
+        PORT6O = PWR_ON[tempStep];PWROn;//CmdPWROn;
+        PowerState = 1;
+      }
+      else
+      {
+        PORT6O = PWR_OFF[tempStep];PWROff;//CmdPWROff;
+        PowerState = 0;
+      }
+      //记录当前转速
+      rpm = rpm - (rpm>>6) - 1;//TCNT1;
+      //定时器清零
+      TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
+      OCR1A = Power;
     }
-    else
-    {
-      PORT6O = PWR_OFF[tempStep];PWROff;//CmdPWROff;
-    }
-    OCR1A = Power;
-    //转速调整
+    
+    //功率计算
     NextPower = 0;
     _MaxPower();
-    //等待“过零”
-    while(TCNT1<rpm);
+    
+    //等待30度
+    while(TCNT1<(rpm>>1));
+    
+    //换向
+    {
+      cli();
+      Step = NextStep[Step];//CmdNextStep;
+      tempStep = Step;
+      if(PowerState)
+      {
+        PORT6O = PWR_ON[tempStep];PWROn;//CmdPWROn;
+      }
+      else
+      {
+        PORT6O = PWR_OFF[tempStep];PWROff;//CmdPWROff;
+      }
+      sei();
+    }
+    
+    uint16_t temp = (rpm>>2)+TCNT1;
+    while(TCNT1<temp);//换向后延迟15(22.5)度后检测“过零”
   }
   Status = 1;STAOn;
 
@@ -131,66 +166,76 @@ int main(void) {
   //主循环
   for(;;) 
   {
-    //定时器清零
-    TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
-    Power = NextPower;
-    uint8_t tempStep = Step;
-    if(Power)
-    {
-      PORT6O = PWR_ON[tempStep];PWROn;//CmdPWROn;
-    }
-    else
-    {
-      PORT6O = PWR_OFF[tempStep];PWROff;//CmdPWROff;
-    }
-    OCR1A = Power;
-    //转速调整
-    adj();
-    RPMFlip;
-    //等待“过零”
-    uint8_t valbase = DigitReadBaseVal[tempStep];
-    uint8_t drMask = DigitRead[tempStep];
+    //启动序列
     if(PIN_startBTN)
     {
-      //if(!Status){
-        startup();
-      //}
-      uint16_t temp = (rpm>>1);
-      CPUFree;
-      while(TCNT1<temp);//换向后延迟30度后检测“过零”
-      noskip = 1;
-      while(((PIN3I&drMask)==valbase) && noskip);
-      CPUBusy;
-      //检测到过零后，立即换向
-    }
-    else
-    //等待“过零”
-    {
-      
-      uint16_t temp = (rpm>>2);//(rpm>>3)+
-      CPUFree;
-      while(TCNT1<temp);//换向后延迟15(22.5)度后检测“过零”
-      noskip = 1;
-      while(((PIN3I&drMask)==valbase) && noskip);
-      CPUBusy;
-    
-      //检测到过零后，再等待30度
-    
-      uint16_t tmp = (rpm>>1)+TCNT1;
-      CPUFree;
-      while(TCNT1<tmp);
-      CPUBusy;
+      startup();
     }
 
-    PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
-    Step = NextStep[Step];//CmdNextStep;
-    //记录当前转速
-    rpm = TCNT1;
+    uint8_t tempStep = Step;
+    //检测过零
+    {
+      uint8_t valbase = DigitReadBaseVal[tempStep];
+      uint8_t drMask = DigitRead[tempStep];
+      noskip = 1;
+      while(
+        ((PIN3I&drMask)==valbase) && 
+        noskip && 
+        (!(TIFR1 & _BV(TOV1)))
+        );
+    }
+    
+    //检测到过零 开机 清定时器
+    {
+      Power = NextPower;
+      if(Power)
+      {
+        PORT6O = PWR_ON[tempStep];PWROn;//CmdPWROn;
+        PowerState = 1;
+      }
+      else
+      {
+        PORT6O = PWR_OFF[tempStep];PWROff;//CmdPWROff;
+        PowerState = 0;
+      }
+      //记录当前转速
+      rpm = ((TIFR1 & _BV(TOV1))?0x0FFFF:TCNT1);
+      //定时器清零
+      TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
+      TIFR1 |= _BV(TOV1);
+      OCR1A = Power;
+    }
+    
+    //功率计算
+    adj();
+    
+    //等待30度
+    while(TCNT1<(rpm>>1));
+    
+    //换向
+    {
+      cli();
+      Step = NextStep[Step];//CmdNextStep;
+      tempStep = Step;
+      if(PowerState)
+      {
+        PORT6O = PWR_ON[tempStep];PWROn;//CmdPWROn;
+      }
+      else
+      {
+        PORT6O = PWR_OFF[tempStep];PWROff;//CmdPWROff;
+      }
+      sei();
+    }
+    
+    uint16_t temp = (rpm>>3)+(rpm>>2)+TCNT1;
+    while(TCNT1<temp);//换向后延迟15(22.5)度后检测“过零”
   }
 }
 
 ISR(TIM1_COMPA_vect){
   PORT6O = PWR_OFF[Step];PWROff;//CmdPWROff;
+  PowerState = 0;
 }
 
 ISR(PCINT0_vect){
@@ -200,14 +245,9 @@ ISR(PCINT0_vect){
     {
       noskip = 0;
     }
-    else
-    {
-      Status = 1;STAOn;
-    }
   }
 }
 
 ISR(ADC_vect){
   aread = ADCH;
 }
-
