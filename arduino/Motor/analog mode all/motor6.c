@@ -3,7 +3,7 @@
 #include <avr/interrupt.h>
 #include "../config.h"
 
-//#define SOFT_START_BREAK
+#define SOFT_START_BREAK
 //#define CURRENT_LIMIT
 
 #define POWER_IN 6
@@ -33,6 +33,7 @@ volatile uint8_t Status = 0;
 volatile uint8_t noskip = 1;
 volatile uint8_t Startup = 0;
 volatile uint8_t Break = 0;
+volatile uint8_t onCurrLmt = 0;
 
 uint16_t rpm;
 uint16_t Power = 0;
@@ -104,19 +105,21 @@ inline void _MaxPower(){
 inline void adj(){
   NextPower = 0;
   #ifdef CURRENT_LIMIT
-  if(!PIN_CURLMT)
-  #endif
+  if(onCurrLmt)
   {
-    if(Status)
+    //onCurrLmt = 0;
+    return;
+  }
+  #endif
+  if(Status)
+  {
+    if(rpm>StartRpm)//too slow, halt
     {
-      if(rpm>StartRpm)//too slow, halt
-      {
-        Status = 0;
-      }
-      else
-      {
-        _MaxPower();
-      }
+      Status = 0;
+    }
+    else
+    {
+      _MaxPower();
     }
   }
 }
@@ -167,11 +170,17 @@ void startup(){
     //功率计算
     NextPower = 0;
     #ifdef CURRENT_LIMIT
-    if(!PIN_CURLMT)
-    #endif
+    if(onCurrLmt)
+    {
+      //onCurrLmt = 0;
+    }
+    else
     {
       _MaxPower();
     }
+    #else
+    _MaxPower();
+    #endif
     
     //等待30度
     while(TCNT1<(rpm>>1));
@@ -325,8 +334,11 @@ ISR(TIM1_COMPA_vect){
 ISR(PCINT1_vect){
   if(PIN_CURLMT)
   {
-    PORT6O = PWR_OFF[Step];
-    PowerState = 0;
+    onCurrLmt = 1;
+  }
+  else
+  {
+    onCurrLmt = 0;
   }
 }
 #endif
