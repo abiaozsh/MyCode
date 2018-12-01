@@ -22,10 +22,6 @@ import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
-import com.sun.image.codec.jpeg.JPEGCodec;
-import com.sun.image.codec.jpeg.JPEGEncodeParam;
-import com.sun.image.codec.jpeg.JPEGImageEncoder;
-
 final class FileSystem
 {
 	private String url = null;
@@ -243,6 +239,49 @@ final class FileSystem
 			}
 			else
 			{
+				if(isImg(file.getName())) {
+					FileInputStream fis = new FileInputStream(file);
+					try
+					{
+						OutputStream os = res.getOutputStream();
+						byte[] buff = new byte[1024];
+						while (true)
+						{
+							int len = fis.read(buff);
+							if (len <= 0) break;
+							os.write(buff, 0, len);
+						}
+					}
+					finally
+					{
+						fis.close();
+					}
+					res.setContentType("image");
+					return;
+				}
+				if(isText(file.getName())) {
+					FileInputStream fis = new FileInputStream(file);
+					InputStreamReader isr = new InputStreamReader(fis, server.currentConfig.getDefaultEncoding());
+					try
+					{
+						PrintWriter pw = res.getWriter();
+						char[] cbuff = new char[1024];
+						while (true)
+						{
+							int len = isr.read(cbuff);
+							if (len <= 0) break;
+							pw.write(cbuff, 0, len);
+						}
+					}
+					finally
+					{
+						isr.close();
+						fis.close();
+					}
+					res.setContentType("text");
+					return;
+				}
+				
 				if (isDownload)
 				{
 					int start;
@@ -358,15 +397,11 @@ final class FileSystem
 		}
 		try
 		{
-			JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(os);
-			JPEGEncodeParam param = JPEGCodec.getDefaultJPEGEncodeParam(b);
-			param.setQuality(q, false);
-			encoder.setJPEGEncodeParam(param);
-			encoder.encode(b);
+			ImgProc.Proc(os, b, q);
 		}
 		catch (Throwable t)
 		{
-			//
+			t.printStackTrace();
 		}
 		finally
 		{
@@ -634,9 +669,14 @@ final class FileSystem
 		}
 	}
 
+	private boolean isText(String filename)
+	{
+		filename = filename.toLowerCase();
+		return (filename.endsWith(".html") || filename.endsWith(".htm") || filename.endsWith(".js"));
+	}
 	private boolean isImg(String filename)
 	{
 		filename = filename.toLowerCase();
-		return (filename.endsWith(".jpeg") || filename.endsWith(".jpg") || filename.endsWith(".gif") || filename.endsWith(".bmp"));
+		return (filename.endsWith(".jpeg") || filename.endsWith(".jpg") || filename.endsWith(".gif") || filename.endsWith(".bmp") || filename.endsWith(".png"));
 	}
 }
