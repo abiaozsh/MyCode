@@ -15,6 +15,7 @@ import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.net.ssl.HttpsURLConnection;
 
 public class Iptool {
 	static String oldip = "";
@@ -72,8 +73,8 @@ public class Iptool {
 
 	static void V2() throws Throwable {
 		// http://192.168.0.1/RST_status.htm
-		URL url = new URL("http://ip.cn/");// "http://localhost:81/test"
-		HttpURLConnection urlcon = (HttpURLConnection) url.openConnection();
+		URL url = new URL("https://ip.cn/");// "http://localhost:81/test"
+		HttpsURLConnection urlcon = (HttpsURLConnection) url.openConnection();
 
 		// urlcon.setRequestProperty("Authorization", "Basic " + encoded);
 		urlcon.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
@@ -113,7 +114,7 @@ public class Iptool {
 		System.out.println("curr IP：" + ip);
 		if (!oldip.equals(ip)) {
 			oldip = ip;
-			SimpleMailSender mail = new SimpleMailSender("abiaozsh@sina.cn", "920662zsh");
+			SimpleMailSender mail = new SimpleMailSender("abiaozsh@sina.cn", "920662_zsh");
 
 			try {
 				mail.send("abiaozsh@sina.cn", "ip", ip);
