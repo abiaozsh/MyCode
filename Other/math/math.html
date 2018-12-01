@@ -1,0 +1,298 @@
+<html>
+<body>
+<style>
+input {font:48px Arial;}
+</style>
+<table border=1>
+  <tr>
+    <td>
+      <div>
+        <input type="button" id="btn1" value="1"></input>
+        <input type="button" id="btn2" value="2"></input>
+        <input type="button" id="btn3" value="3"></input><br/>
+        <input type="button" id="btn4" value="4"></input>
+        <input type="button" id="btn5" value="5"></input>
+        <br>
+        <input type="button" id="btnleft" value="<-"></input>
+        <input type="button" id="btnright" value="->"></input>
+      </div>
+      </td>
+    <td>
+      <div>
+        <div id="list">
+        </div>
+        <input type="button" id="btnstart" value="¿ªÊ¼"></input><br/>
+        <div id="score">
+        </div>
+        
+        <div style="display:none;">
+        <input type="button" id="win" value="win"></input>
+        </div>
+      </div>
+    </td>
+    <td>
+      <canvas id="Canvas" width="640" height="640"></canvas>
+    </td>
+  </tr>
+</table>
+<img id="t" src="t.png" style="display:none;"></img>
+<img id="flg" src="flg.png" style="display:none;"></img>
+<img id="rt" src="rt.png" style="display:none;"></img>
+<img id="a" src="apple.png" style="display:none;"></img>
+<img id="m" src="m.png" style="display:none;"></img>
+
+<script src="jquery-3.3.1.js"></script>
+<script src="comm.js"></script>
+<script>
+var c = $("#Canvas")[0];
+var ctx=c.getContext("2d");
+
+var score = 0;
+
+var scenes = [
+{
+  a:[{x:0,y:2}],
+  m:[{x:3,y:3},{x:-3,y:3},{x:1,y:3}]
+},
+{
+  a:[{x:2,y:0}],
+  m:[{x:3,y:3},{x:-3,y:3},{x:1,y:3}]
+},
+{
+  a:[{x:1,y:2}],
+  m:[{x:3,y:3},{x:-3,y:3},{x:1,y:3}]
+},
+{
+  a:[{x:0,y:3}],
+  m:[{x:0,y:1}]
+}
+];
+var scene = scenes[score];
+
+queue.list = function(){
+  var item = queue.head;
+  $("#list").html("");
+  while(item){
+    var a;
+    if(item.cmd == "f"){
+      a=item.val;
+    }
+    if(item.cmd == "r" && item.val=="-1"){
+      a="<-";
+    }
+    if(item.cmd == "r" && item.val=="1"){
+      a="->";
+    }
+    $("#list").append("<input type='button' value='"+a+"' disabled></input><br/>")
+    item = item.next;
+  }
+};
+
+
+var cur_t = {x:0,y:0};
+var direction = -Math.PI/2;
+
+
+drawScene(cur_t.x,cur_t.y,direction);
+
+var exec = function(){
+  var self = this;
+  if(self.op == "f"){
+    self.move(self.val);
+  }
+  if(self.op == "r"){
+    self.rotate(self.val);
+  }
+  if(self.op == "end"){
+    $("#btnstart").removeAttr("disabled");
+    if(scene.a.length==0){
+      winAnimation();
+    }
+  }
+}
+
+var rotate = function(dirct){
+  var theta;
+  var self = this;
+  if(dirct==1){
+    theta = Math.PI/2;
+  }else if(dirct==-1){
+    theta = -Math.PI/2;
+  }
+  var newdirection = direction + theta;
+  var delta = theta / 10;
+  
+  var cnt = 0;
+  var dir = direction;
+  var timer = setInterval(function(){
+    drawScene(cur_t.x,cur_t.y,dir);
+    cnt++;
+    dir+=delta;
+    if(cnt>10){
+      clearInterval(timer);
+      drawScene(cur_t.x,cur_t.y,newdirection);
+      if(self.nextop){
+        self.nextop.exec();
+      }
+    }
+  }, 50); 
+  
+  direction = newdirection;
+};
+
+var move = function(step){
+  var new_t = {};
+  var self = this;
+
+  new_t.x = Math.round(cur_t.x + step*Math.cos(direction));
+  new_t.y = Math.round(cur_t.y - step*Math.sin(direction));
+  
+  var deltax = (new_t.x - cur_t.x)/20;
+  var deltay = (new_t.y - cur_t.y)/20;
+  
+  var cnt = 0;
+  var x = cur_t.x;
+  var y = cur_t.y;
+  var timer = setInterval(function(){
+
+    drawScene(x,y,direction);
+    cnt++;
+    x+=deltax;
+    y+=deltay;
+    if(cnt>20){
+      clearInterval(timer);
+      drawScene(cur_t.x,cur_t.y,direction);
+
+      if(processHit(new_t)){
+        return;
+      }
+
+      if(self.nextop){
+        self.nextop.exec();
+      }
+    }
+  }, 50); 
+
+  
+  cur_t = new_t;
+};
+
+var processHit = function(new_t){
+  for(var i=0;i<scene.m.length;i++){
+    if(new_t.x == scene.m[i].x && new_t.y == scene.m[i].y){
+      console.log("hit");
+      hitAnimation();
+      return true;
+    }
+  }
+  for(var i=0;i<scene.a.length;i++){
+    if(new_t.x == scene.a[i].x && new_t.y == scene.a[i].y){
+      console.log("apple");
+      scene.a.splice(i,1);
+      return;
+    }
+  }
+  return false;
+};
+
+$("#win").bind("click",function(){
+  winAnimation();
+});
+var winAnimation = function(){
+  score++;
+  $("#score").html("");
+  for(var i=0;i<score;i++){
+    $("#score").append("<img src='flg.png'></img>");
+  }
+  scene = scenes[score];
+  cur_t = {x:0,y:0};
+  direction = -Math.PI/2;
+  drawScene(cur_t.x,cur_t.y,direction);
+
+};
+var hitAnimation = function(){
+  rt = true;
+  drawScene(cur_t.x,cur_t.y,direction);
+};
+
+$("#btn1").bind("click",function(){
+  queue.add({cmd:"f",val:1});queue.list();
+});
+$("#btn2").bind("click",function(){
+  queue.add({cmd:"f",val:2});queue.list();
+});
+$("#btn3").bind("click",function(){
+  queue.add({cmd:"f",val:3});queue.list();
+});
+$("#btn4").bind("click",function(){
+  queue.add({cmd:"f",val:4});queue.list();
+});
+$("#btn5").bind("click",function(){
+  queue.add({cmd:"f",val:5});queue.list();
+});
+
+$("#btnleft").bind("click",function(){
+  queue.add({cmd:"r",val:-1});queue.list();
+});
+$("#btnright").bind("click",function(){
+  queue.add({cmd:"r",val:1});queue.list();
+});
+
+$("#btnstart").bind("click",function(){
+  $("#btnstart").attr("disabled","disabled");
+  var op = null;
+  var firstop = null;
+  while(true){
+    var item = queue.get();
+    console.log(item);
+    if(!item){
+      break;
+    }
+    var add = function(oper,val){
+      var temp;
+      if(op){
+        temp = op;
+      }
+      op = {};
+      op.op = oper;
+      op.val = val;
+      op.exec = exec;
+      op.rotate = rotate;
+      op.move = move;
+      if(temp){
+        temp.nextop = op;
+      }
+      if(!firstop){
+        firstop = op;
+      }
+    };
+    if(item.cmd == "r"){
+      add("r",item.val);
+    }
+    if(item.cmd == "f"){
+      for(var i=0;i<item.val;i++){
+        add("f",1);
+      }
+    }
+  }
+
+  var temp;
+  if(op){
+    temp = op;
+  }
+  op = {};
+  op.op = "end";
+  op.exec = exec;
+  if(temp){
+    temp.nextop = op;
+  }
+  if(!firstop){
+    firstop = op;
+  }
+
+  firstop.exec();
+  queue.list();
+});
+</script>
+</body>
+</html>
