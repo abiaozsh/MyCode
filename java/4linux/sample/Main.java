@@ -36,7 +36,7 @@ public class Main {
 		//c.ssl.keyStorePass = "123456";
 		//c.ssl.keyPassword = "123456";
 
-		c.javaCompiler = "file:///C:\\ProgramFiles\\Java\\jdk1.7.0_01\\lib\\tools.jar";
+		c.javaCompiler = null;//"file:///C:\\ProgramFiles\\Java\\jdk1.7.0_01\\lib\\tools.jar"
 		c.defaultEncodingInput = "utf-8";
 		c.defaultEncodingOutput = "utf-8";
 		c.sessionExpires = 30000;
@@ -45,7 +45,7 @@ public class Main {
 		{
 			ServerConfig.FileSystem f = new ServerConfig.FileSystem();
 			f.url = "/file/";
-			f.rootPath = "fileSystem/";
+			f.rootPath = "/home/zsh/sd/4linux/filesystem/";
 			f.allowList = true;
 			f.allowUpLoad = true;
 			f.allowDel = true;
@@ -69,7 +69,7 @@ public class Main {
 		{
 			ServerConfig.FileSystem f = new ServerConfig.FileSystem();
 			f.url = "/js/";
-			f.rootPath = "js/";
+			f.rootPath = "/home/zsh/sd/4linux/js/";
 			f.allowList = false;
 			f.allowUpLoad = false;
 			f.allowDel = false;
@@ -82,7 +82,7 @@ public class Main {
 		{
 			ServerConfig.JspProcessor j = new ServerConfig.JspProcessor();
 			j.url = "/jsp/";
-			j.rootPath = "jsp/";
+			j.rootPath = "/home/zsh/sd/4linux/jsp/";
 			c.jsps.add(j);
 		}
 

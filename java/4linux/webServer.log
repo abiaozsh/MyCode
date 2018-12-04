@@ -1,0 +1,694 @@
+2013/01/08 12:22:09:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+	at webServer.Server.applyConfig(Server.java:366)
+	at webServer.Main.main(Main.java:8)
+
+2013/01/08 12:22:10:class sample.ProxyAction not found.
+2013/01/08 12:22:10:listening port:80
+2013/01/08 12:22:10:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.PlainSocketImpl.socketBind(Native Method)
+	at java.net.PlainSocketImpl.bind(PlainSocketImpl.java:383)
+	at java.net.ServerSocket.bind(ServerSocket.java:328)
+	at java.net.ServerSocket.<init>(ServerSocket.java:194)
+	at java.net.ServerSocket.<init>(ServerSocket.java:106)
+	at webServer.ServerThread.<init>(Server.java:510)
+	at webServer.Monitor.run(Server.java:638)
+
+2013/01/08 12:22:10:listening port:443(SSL)
+2013/01/09 18:07:21:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+	at webServer.Server.applyConfig(Server.java:366)
+	at webServer.Main.main(Main.java:8)
+
+2013/01/09 18:07:21:class sample.ProxyAction not found.
+2013/01/09 18:07:21:listening port:80
+2013/01/09 18:07:21:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.PlainSocketImpl.socketBind(Native Method)
+	at java.net.PlainSocketImpl.bind(PlainSocketImpl.java:383)
+	at java.net.ServerSocket.bind(ServerSocket.java:328)
+	at java.net.ServerSocket.<init>(ServerSocket.java:194)
+	at java.net.ServerSocket.<init>(ServerSocket.java:106)
+	at webServer.ServerThread.<init>(Server.java:510)
+	at webServer.Monitor.run(Server.java:638)
+
+2013/01/09 18:07:21:listening port:443(SSL)
+2013/01/11 12:23:47:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+	at webServer.Server.applyConfig(Server.java:366)
+	at webServer.Main.main(Main.java:8)
+
+2013/01/11 12:23:47:class sample.ProxyAction not found.
+2013/01/11 12:23:47:listening port:80
+2013/01/11 12:23:47:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.PlainSocketImpl.socketBind(Native Method)
+	at java.net.PlainSocketImpl.bind(PlainSocketImpl.java:383)
+	at java.net.ServerSocket.bind(ServerSocket.java:328)
+	at java.net.ServerSocket.<init>(ServerSocket.java:194)
+	at java.net.ServerSocket.<init>(ServerSocket.java:106)
+	at webServer.ServerThread.<init>(Server.java:510)
+	at webServer.Monitor.run(Server.java:638)
+
+2013/01/11 12:23:47:listening port:443(SSL)
+2013/01/11 12:26:50:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+	at webServer.Server.applyConfig(Server.java:366)
+	at webServer.Main.main(Main.java:8)
+
+2013/01/11 12:26:50:class sample.ProxyAction not found.
+2013/01/11 12:26:50:listening port:80
+2013/01/11 12:26:50:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.PlainSocketImpl.socketBind(Native Method)
+	at java.net.PlainSocketImpl.bind(PlainSocketImpl.java:383)
+	at java.net.ServerSocket.bind(ServerSocket.java:328)
+	at java.net.ServerSocket.<init>(ServerSocket.java:194)
+	at java.net.ServerSocket.<init>(ServerSocket.java:106)
+	at webServer.ServerThread.<init>(Server.java:510)
+	at webServer.Monitor.run(Server.java:638)
+
+2013/01/11 12:26:50:listening port:443(SSL)
+2013/01/11 12:28:22:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+	at webServer.Server.applyConfig(Server.java:366)
+	at webServer.Main.main(Main.java:8)
+
+2013/01/11 12:28:22:class sample.ProxyAction not found.
+2013/01/11 12:28:22:listening port:80
+2013/01/11 12:28:22:listening port:443(SSL)
+2013/01/11 12:28:24:connection at:443 ip:127.0.0.1 port:19111
+2013/01/11 12:28:24:connection at:443 ip:127.0.0.1 port:19112
+2013/01/11 12:28:25:requested:/ajax/libs/webfont/1/webfont.js[127.0.0.1:19112]
+2013/01/11 12:28:27:requested:/ajax/libs/webfont/1/webfont.js[127.0.0.1:19111]
+2013/01/11 12:30:43:connection at:443 ip:127.0.0.1 port:19154
+2013/01/11 12:30:43:connection at:443 ip:127.0.0.1 port:19155
+2013/01/11 12:30:46:connection at:443 ip:127.0.0.1 port:19156
+2013/01/11 12:30:46:
+javax.net.ssl.SSLHandshakeException: Received fatal alert: bad_certificate
+	at com.sun.net.ssl.internal.ssl.Alerts.getSSLException(Alerts.java:174)
+	at com.sun.net.ssl.internal.ssl.Alerts.getSSLException(Alerts.java:136)
+	at com.sun.net.ssl.internal.ssl.SSLSocketImpl.recvAlert(SSLSocketImpl.java:1720)
+	at com.sun.net.ssl.internal.ssl.SSLSocketImpl.readRecord(SSLSocketImpl.java:954)
+	at com.sun.net.ssl.internal.ssl.SSLSocketImpl.readDataRecord(SSLSocketImpl.java:755)
+	at com.sun.net.ssl.internal.ssl.AppInputStream.read(AppInputStream.java:75)
+	at com.sun.net.ssl.internal.ssl.AppInputStream.read(AppInputStream.java:50)
+	at webServer.Processor.getHead(Processor.java:130)
+	at webServer.Processor.run(Processor.java:58)
+
+2013/01/11 12:30:46:connection at:443 ip:127.0.0.1 port:19157
+2013/01/11 12:30:48:connection at:443 ip:127.0.0.1 port:19158
+2013/01/11 12:30:48:requested:/ajax/libs/webfont/1/webfont.js[127.0.0.1:19158]
+2013/01/11 12:30:48:connection at:443 ip:127.0.0.1 port:19159
+2013/01/11 12:31:23:connection at:443 ip:127.0.0.1 port:19161
+2013/01/11 12:31:24:requested:/ajax/libs/webfont/1/webfont.js[127.0.0.1:19161]
+2013/01/11 12:31:24:connection at:443 ip:127.0.0.1 port:19162
+2015/01/13 17:43:21:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at webServer.Server.applyConfig(Server.java:366)
+	at webServer.Main.main(Main.java:8)
+
+2015/01/13 17:43:21:class sample.ProxyAction not found.
+2015/01/13 17:43:21:listening port:81
+2015/01/13 17:43:21:listening port:445(SSL)
+2015/01/13 17:43:21:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.DualStackPlainSocketImpl.bind0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketBind(Unknown Source)
+	at java.net.AbstractPlainSocketImpl.bind(Unknown Source)
+	at java.net.PlainSocketImpl.bind(Unknown Source)
+	at java.net.ServerSocket.bind(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at javax.net.ssl.SSLServerSocket.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketImpl.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketFactoryImpl.createServerSocket(Unknown Source)
+	at webServer.ServerThread.getSSLServerSocket(Server.java:615)
+	at webServer.ServerThread.<init>(Server.java:504)
+	at webServer.Monitor.run(Server.java:643)
+
+2015/01/13 17:44:04:connection at:81 ip:192.168.43.1 port:47272
+2015/01/13 17:44:04:requested:/[192.168.43.1:47272]
+2015/01/13 17:44:10:connection at:81 ip:192.168.43.1 port:47273
+2015/01/13 17:44:10:requested:/[192.168.43.1:47273]
+2015/01/13 17:44:11:connection at:81 ip:192.168.43.1 port:47274
+2015/01/13 17:44:11:requested:/[192.168.43.1:47274]
+2015/01/13 17:44:11:connection at:81 ip:192.168.43.1 port:47275
+2015/01/13 17:44:11:requested:/[192.168.43.1:47275]
+2015/01/13 17:44:12:connection at:81 ip:192.168.43.1 port:47276
+2015/01/13 17:44:12:requested:/[192.168.43.1:47276]
+2015/01/13 17:44:12:connection at:81 ip:192.168.43.1 port:47277
+2015/01/13 17:44:12:requested:/[192.168.43.1:47277]
+2015/01/13 17:44:12:connection at:81 ip:192.168.43.1 port:47278
+2015/01/13 17:44:12:requested:/[192.168.43.1:47278]
+2015/01/13 17:44:13:connection at:81 ip:192.168.43.1 port:47279
+2015/01/13 17:44:13:requested:/[192.168.43.1:47279]
+2015/01/13 17:44:13:connection at:81 ip:192.168.43.1 port:47280
+2015/01/13 17:44:13:requested:/[192.168.43.1:47280]
+2015/01/13 17:44:13:connection at:81 ip:192.168.43.1 port:47281
+2015/01/13 17:44:13:requested:/[192.168.43.1:47281]
+2015/01/13 17:44:13:connection at:81 ip:192.168.43.1 port:47282
+2015/01/13 17:44:13:requested:/[192.168.43.1:47282]
+2015/01/13 17:44:13:connection at:81 ip:192.168.43.1 port:47283
+2015/01/13 17:44:13:requested:/[192.168.43.1:47283]
+2015/01/13 17:44:14:connection at:81 ip:192.168.43.1 port:47284
+2015/01/13 17:44:14:requested:/[192.168.43.1:47284]
+2015/01/13 17:44:19:connection at:81 ip:192.168.43.1 port:47285
+2015/01/13 17:44:19:requested:/jsp/upload.jsp[192.168.43.1:47285]
+2015/01/13 17:44:24:connection at:81 ip:192.168.43.1 port:47286
+2015/01/13 17:44:24:requested:/jsp/control.jsp[192.168.43.1:47286]
+2015/01/13 17:44:28:connection at:81 ip:192.168.43.1 port:47287
+2015/01/13 17:44:28:requested:/Control[192.168.43.1:47287]
+2015/01/13 17:44:28:connection at:81 ip:192.168.43.1 port:47288
+2015/01/13 17:44:28:requested:/Login[192.168.43.1:47288]
+2015/01/13 17:44:31:connection at:81 ip:192.168.43.1 port:47289
+2015/01/13 17:44:31:requested:/file/[192.168.43.1:47289]
+2015/01/13 17:44:31:connection at:81 ip:192.168.43.1 port:47290
+2015/01/13 17:44:31:requested:/file/1552846.gif[192.168.43.1:47290]
+2015/01/13 17:44:31:connection at:81 ip:192.168.43.1 port:47291
+2015/01/13 17:44:31:requested:/file/3257918.gif[192.168.43.1:47291]
+2015/01/13 17:44:31:connection at:81 ip:192.168.43.1 port:47292
+2015/01/13 17:44:31:requested:/file/4406651.gif[192.168.43.1:47292]
+2015/01/13 17:44:31:connection at:81 ip:192.168.43.1 port:47293
+2015/01/13 17:44:31:requested:/file/5144936.gif[192.168.43.1:47293]
+2016/06/22 15:55:29:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at webServer.Server.applyConfig(Server.java:366)
+	at webServer.Main.main(Main.java:8)
+
+2016/06/22 15:55:29:class sample.ProxyAction not found.
+2016/06/22 15:55:29:listening port:81
+2016/06/22 15:55:29:listening port:445(SSL)
+2016/06/22 15:55:29:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.DualStackPlainSocketImpl.bind0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketBind(Unknown Source)
+	at java.net.AbstractPlainSocketImpl.bind(Unknown Source)
+	at java.net.PlainSocketImpl.bind(Unknown Source)
+	at java.net.ServerSocket.bind(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at javax.net.ssl.SSLServerSocket.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketImpl.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketFactoryImpl.createServerSocket(Unknown Source)
+	at webServer.ServerThread.getSSLServerSocket(Server.java:615)
+	at webServer.ServerThread.<init>(Server.java:504)
+	at webServer.Monitor.run(Server.java:643)
+
+2016/06/22 15:55:40:connection at:81 ip:0:0:0:0:0:0:0:1 port:30807
+2016/06/22 15:55:40:requested:/[0:0:0:0:0:0:0:1:30807]
+2016/06/22 15:55:40:connection at:81 ip:0:0:0:0:0:0:0:1 port:30808
+2016/06/22 15:55:40:requested:/favicon.ico[0:0:0:0:0:0:0:1:30808]
+2016/06/22 15:55:40:connection at:81 ip:0:0:0:0:0:0:0:1 port:30809
+2016/06/22 15:55:40:requested:/favicon.ico[0:0:0:0:0:0:0:1:30809]
+2016/06/22 15:55:41:connection at:81 ip:0:0:0:0:0:0:0:1 port:30810
+2016/06/22 15:55:43:requested:/Control[0:0:0:0:0:0:0:1:30810]
+2016/06/22 15:55:43:connection at:81 ip:0:0:0:0:0:0:0:1 port:30811
+2016/06/22 15:55:43:requested:/Login[0:0:0:0:0:0:0:1:30811]
+2016/06/22 15:55:43:connection at:81 ip:0:0:0:0:0:0:0:1 port:30812
+2016/06/22 15:55:43:requested:/favicon.ico[0:0:0:0:0:0:0:1:30812]
+2016/06/22 15:55:43:connection at:81 ip:0:0:0:0:0:0:0:1 port:30813
+2016/06/22 15:55:43:requested:/favicon.ico[0:0:0:0:0:0:0:1:30813]
+2016/06/22 15:55:45:connection at:81 ip:0:0:0:0:0:0:0:1 port:30814
+2016/06/22 15:55:45:requested:/Login[0:0:0:0:0:0:0:1:30814]
+2016/06/22 15:55:45:connection at:81 ip:0:0:0:0:0:0:0:1 port:30815
+2016/06/22 15:55:45:connection at:81 ip:0:0:0:0:0:0:0:1 port:30816
+2016/06/22 15:55:45:requested:/favicon.ico[0:0:0:0:0:0:0:1:30815]
+2016/06/22 15:55:45:requested:/favicon.ico[0:0:0:0:0:0:0:1:30816]
+2016/06/22 15:55:51:connection at:81 ip:0:0:0:0:0:0:0:1 port:30817
+2016/06/22 15:55:51:requested:/favicon.ico[0:0:0:0:0:0:0:1:30817]
+2016/06/22 15:55:51:connection at:81 ip:0:0:0:0:0:0:0:1 port:30818
+2016/06/22 15:55:51:requested:/favicon.ico[0:0:0:0:0:0:0:1:30818]
+2016/06/22 15:55:56:connection at:81 ip:0:0:0:0:0:0:0:1 port:30820
+2016/06/22 15:55:56:requested:/Login[0:0:0:0:0:0:0:1:30820]
+2016/06/22 15:55:56:connection at:81 ip:0:0:0:0:0:0:0:1 port:30821
+2016/06/22 15:55:56:requested:/favicon.ico[0:0:0:0:0:0:0:1:30821]
+2016/06/22 15:55:56:connection at:81 ip:0:0:0:0:0:0:0:1 port:30822
+2016/06/22 15:55:56:requested:/favicon.ico[0:0:0:0:0:0:0:1:30822]
+2016/06/22 15:55:59:connection at:81 ip:0:0:0:0:0:0:0:1 port:30823
+2016/06/22 15:55:59:connection at:81 ip:0:0:0:0:0:0:0:1 port:30824
+2016/06/22 15:55:59:requested:/favicon.ico[0:0:0:0:0:0:0:1:30823]
+2016/06/22 15:55:59:requested:/favicon.ico[0:0:0:0:0:0:0:1:30824]
+2016/06/22 15:56:12:connection at:81 ip:0:0:0:0:0:0:0:1 port:30829
+2016/06/22 15:56:12:requested:/Login[0:0:0:0:0:0:0:1:30829]
+2016/06/22 15:56:12:connection at:81 ip:0:0:0:0:0:0:0:1 port:30830
+2016/06/22 15:56:12:requested:/Control[0:0:0:0:0:0:0:1:30830]
+2016/06/22 15:56:12:connection at:81 ip:0:0:0:0:0:0:0:1 port:30831
+2016/06/22 15:56:12:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30831]
+2016/06/22 15:56:12:connection at:81 ip:0:0:0:0:0:0:0:1 port:30832
+2016/06/22 15:56:12:connection at:81 ip:0:0:0:0:0:0:0:1 port:30833
+2016/06/22 15:56:12:requested:/favicon.ico[0:0:0:0:0:0:0:1:30833]
+2016/06/22 15:56:12:requested:/favicon.ico[0:0:0:0:0:0:0:1:30832]
+2016/06/22 15:56:25:connection at:81 ip:0:0:0:0:0:0:0:1 port:30909
+2016/06/22 15:56:25:requested:/MouseAction[0:0:0:0:0:0:0:1:30909]
+2016/06/22 15:56:25:connection at:81 ip:0:0:0:0:0:0:0:1 port:30911
+2016/06/22 15:56:25:requested:/Control[0:0:0:0:0:0:0:1:30911]
+2016/06/22 15:56:25:connection at:81 ip:0:0:0:0:0:0:0:1 port:30912
+2016/06/22 15:56:25:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30912]
+2016/06/22 15:56:25:connection at:81 ip:0:0:0:0:0:0:0:1 port:30913
+2016/06/22 15:56:25:requested:/favicon.ico[0:0:0:0:0:0:0:1:30913]
+2016/06/22 15:56:25:connection at:81 ip:0:0:0:0:0:0:0:1 port:30914
+2016/06/22 15:56:25:requested:/favicon.ico[0:0:0:0:0:0:0:1:30914]
+2016/06/22 15:56:44:connection at:81 ip:0:0:0:0:0:0:0:1 port:30926
+2016/06/22 15:56:44:connection at:81 ip:0:0:0:0:0:0:0:1 port:30927
+2016/06/22 15:56:44:requested:/Control[0:0:0:0:0:0:0:1:30927]
+2016/06/22 15:56:44:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30926]
+2016/06/22 15:56:44:connection at:81 ip:0:0:0:0:0:0:0:1 port:30928
+2016/06/22 15:56:44:connection at:81 ip:0:0:0:0:0:0:0:1 port:30929
+2016/06/22 15:56:44:requested:/favicon.ico[0:0:0:0:0:0:0:1:30929]
+2016/06/22 15:56:44:requested:/favicon.ico[0:0:0:0:0:0:0:1:30928]
+2016/06/22 15:56:48:connection at:81 ip:0:0:0:0:0:0:0:1 port:30930
+2016/06/22 15:56:48:requested:/Control[0:0:0:0:0:0:0:1:30930]
+2016/06/22 15:56:48:connection at:81 ip:0:0:0:0:0:0:0:1 port:30931
+2016/06/22 15:56:48:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30931]
+2016/06/22 15:56:48:connection at:81 ip:0:0:0:0:0:0:0:1 port:30932
+2016/06/22 15:56:48:connection at:81 ip:0:0:0:0:0:0:0:1 port:30933
+2016/06/22 15:56:48:requested:/favicon.ico[0:0:0:0:0:0:0:1:30933]
+2016/06/22 15:56:48:requested:/favicon.ico[0:0:0:0:0:0:0:1:30932]
+2016/06/22 15:56:54:connection at:81 ip:0:0:0:0:0:0:0:1 port:30934
+2016/06/22 15:56:54:requested:/Control[0:0:0:0:0:0:0:1:30934]
+2016/06/22 15:56:55:connection at:81 ip:0:0:0:0:0:0:0:1 port:30935
+2016/06/22 15:56:55:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30935]
+2016/06/22 15:56:55:connection at:81 ip:0:0:0:0:0:0:0:1 port:30936
+2016/06/22 15:56:55:requested:/favicon.ico[0:0:0:0:0:0:0:1:30936]
+2016/06/22 15:56:55:connection at:81 ip:0:0:0:0:0:0:0:1 port:30937
+2016/06/22 15:56:55:requested:/favicon.ico[0:0:0:0:0:0:0:1:30937]
+2016/06/22 15:57:00:connection at:81 ip:0:0:0:0:0:0:0:1 port:30938
+2016/06/22 15:57:00:requested:/MouseAction[0:0:0:0:0:0:0:1:30938]
+2016/06/22 15:57:00:connection at:81 ip:0:0:0:0:0:0:0:1 port:30939
+2016/06/22 15:57:00:requested:/Control[0:0:0:0:0:0:0:1:30939]
+2016/06/22 15:57:00:connection at:81 ip:0:0:0:0:0:0:0:1 port:30940
+2016/06/22 15:57:00:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30940]
+2016/06/22 15:57:00:connection at:81 ip:0:0:0:0:0:0:0:1 port:30941
+2016/06/22 15:57:00:requested:/favicon.ico[0:0:0:0:0:0:0:1:30941]
+2016/06/22 15:57:00:connection at:81 ip:0:0:0:0:0:0:0:1 port:30942
+2016/06/22 15:57:00:requested:/favicon.ico[0:0:0:0:0:0:0:1:30942]
+2016/06/22 15:57:02:connection at:81 ip:0:0:0:0:0:0:0:1 port:30943
+2016/06/22 15:57:02:requested:/MouseAction[0:0:0:0:0:0:0:1:30943]
+2016/06/22 15:57:02:connection at:81 ip:0:0:0:0:0:0:0:1 port:30944
+2016/06/22 15:57:02:requested:/Control[0:0:0:0:0:0:0:1:30944]
+2016/06/22 15:57:02:connection at:81 ip:0:0:0:0:0:0:0:1 port:30945
+2016/06/22 15:57:02:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30945]
+2016/06/22 15:57:02:connection at:81 ip:0:0:0:0:0:0:0:1 port:30946
+2016/06/22 15:57:02:connection at:81 ip:0:0:0:0:0:0:0:1 port:30947
+2016/06/22 15:57:02:requested:/favicon.ico[0:0:0:0:0:0:0:1:30947]
+2016/06/22 15:57:02:requested:/favicon.ico[0:0:0:0:0:0:0:1:30946]
+2016/06/22 15:57:05:connection at:81 ip:0:0:0:0:0:0:0:1 port:30948
+2016/06/22 15:57:05:requested:/MouseAction[0:0:0:0:0:0:0:1:30948]
+2016/06/22 15:57:05:connection at:81 ip:0:0:0:0:0:0:0:1 port:30949
+2016/06/22 15:57:05:requested:/Control[0:0:0:0:0:0:0:1:30949]
+2016/06/22 15:57:05:connection at:81 ip:0:0:0:0:0:0:0:1 port:30950
+2016/06/22 15:57:05:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30950]
+2016/06/22 15:57:05:connection at:81 ip:0:0:0:0:0:0:0:1 port:30951
+2016/06/22 15:57:05:connection at:81 ip:0:0:0:0:0:0:0:1 port:30952
+2016/06/22 15:57:05:requested:/favicon.ico[0:0:0:0:0:0:0:1:30952]
+2016/06/22 15:57:05:requested:/favicon.ico[0:0:0:0:0:0:0:1:30951]
+2016/06/22 15:57:08:connection at:81 ip:0:0:0:0:0:0:0:1 port:30953
+2016/06/22 15:57:08:requested:/MouseAction[0:0:0:0:0:0:0:1:30953]
+2016/06/22 15:57:08:connection at:81 ip:0:0:0:0:0:0:0:1 port:30954
+2016/06/22 15:57:08:requested:/Control[0:0:0:0:0:0:0:1:30954]
+2016/06/22 15:57:08:connection at:81 ip:0:0:0:0:0:0:0:1 port:30955
+2016/06/22 15:57:08:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30955]
+2016/06/22 15:57:08:connection at:81 ip:0:0:0:0:0:0:0:1 port:30956
+2016/06/22 15:57:08:requested:/favicon.ico[0:0:0:0:0:0:0:1:30956]
+2016/06/22 15:57:08:connection at:81 ip:0:0:0:0:0:0:0:1 port:30957
+2016/06/22 15:57:08:requested:/favicon.ico[0:0:0:0:0:0:0:1:30957]
+2016/06/22 15:57:23:connection at:81 ip:0:0:0:0:0:0:0:1 port:30964
+2016/06/22 15:57:23:requested:/MouseAction[0:0:0:0:0:0:0:1:30964]
+2016/06/22 15:57:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:30965
+2016/06/22 15:57:24:requested:/Control[0:0:0:0:0:0:0:1:30965]
+2016/06/22 15:57:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:30966
+2016/06/22 15:57:24:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30966]
+2016/06/22 15:57:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:30967
+2016/06/22 15:57:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:30968
+2016/06/22 15:57:24:requested:/favicon.ico[0:0:0:0:0:0:0:1:30967]
+2016/06/22 15:57:24:requested:/favicon.ico[0:0:0:0:0:0:0:1:30968]
+2016/06/22 15:57:32:connection at:81 ip:0:0:0:0:0:0:0:1 port:30971
+2016/06/22 15:57:32:requested:/MouseAction[0:0:0:0:0:0:0:1:30971]
+2016/06/22 15:57:32:connection at:81 ip:0:0:0:0:0:0:0:1 port:30972
+2016/06/22 15:57:32:requested:/Control[0:0:0:0:0:0:0:1:30972]
+2016/06/22 15:57:32:connection at:81 ip:0:0:0:0:0:0:0:1 port:30973
+2016/06/22 15:57:32:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30973]
+2016/06/22 15:57:32:connection at:81 ip:0:0:0:0:0:0:0:1 port:30974
+2016/06/22 15:57:32:requested:/favicon.ico[0:0:0:0:0:0:0:1:30974]
+2016/06/22 15:57:32:connection at:81 ip:0:0:0:0:0:0:0:1 port:30975
+2016/06/22 15:57:32:requested:/favicon.ico[0:0:0:0:0:0:0:1:30975]
+2016/06/22 15:57:37:connection at:81 ip:0:0:0:0:0:0:0:1 port:30976
+2016/06/22 15:57:37:requested:/MouseAction[0:0:0:0:0:0:0:1:30976]
+2016/06/22 15:57:37:connection at:81 ip:0:0:0:0:0:0:0:1 port:30977
+2016/06/22 15:57:37:requested:/Control[0:0:0:0:0:0:0:1:30977]
+2016/06/22 15:57:37:connection at:81 ip:0:0:0:0:0:0:0:1 port:30978
+2016/06/22 15:57:37:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30978]
+2016/06/22 15:57:37:connection at:81 ip:0:0:0:0:0:0:0:1 port:30979
+2016/06/22 15:57:37:requested:/favicon.ico[0:0:0:0:0:0:0:1:30979]
+2016/06/22 15:57:37:connection at:81 ip:0:0:0:0:0:0:0:1 port:30980
+2016/06/22 15:57:37:requested:/favicon.ico[0:0:0:0:0:0:0:1:30980]
+2016/06/22 15:57:46:connection at:81 ip:0:0:0:0:0:0:0:1 port:30981
+2016/06/22 15:57:46:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30981]
+2016/06/22 15:57:46:connection at:81 ip:0:0:0:0:0:0:0:1 port:30982
+2016/06/22 15:57:46:requested:/favicon.ico[0:0:0:0:0:0:0:1:30982]
+2016/06/22 15:57:46:connection at:81 ip:0:0:0:0:0:0:0:1 port:30983
+2016/06/22 15:57:46:requested:/favicon.ico[0:0:0:0:0:0:0:1:30983]
+2016/06/22 15:57:50:connection at:81 ip:0:0:0:0:0:0:0:1 port:30984
+2016/06/22 15:57:50:requested:/favicon.ico[0:0:0:0:0:0:0:1:30984]
+2016/06/22 15:57:50:connection at:81 ip:0:0:0:0:0:0:0:1 port:30985
+2016/06/22 15:57:50:requested:/favicon.ico[0:0:0:0:0:0:0:1:30985]
+2016/06/22 15:57:57:connection at:81 ip:0:0:0:0:0:0:0:1 port:30986
+2016/06/22 15:57:57:requested:/MouseAction[0:0:0:0:0:0:0:1:30986]
+2016/06/22 15:57:57:connection at:81 ip:0:0:0:0:0:0:0:1 port:30987
+2016/06/22 15:57:57:requested:/Control[0:0:0:0:0:0:0:1:30987]
+2016/06/22 15:57:57:connection at:81 ip:0:0:0:0:0:0:0:1 port:30988
+2016/06/22 15:57:57:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30988]
+2016/06/22 15:57:57:connection at:81 ip:0:0:0:0:0:0:0:1 port:30989
+2016/06/22 15:57:57:requested:/favicon.ico[0:0:0:0:0:0:0:1:30989]
+2016/06/22 15:57:57:connection at:81 ip:0:0:0:0:0:0:0:1 port:30990
+2016/06/22 15:57:57:requested:/favicon.ico[0:0:0:0:0:0:0:1:30990]
+2016/06/22 15:58:03:connection at:81 ip:0:0:0:0:0:0:0:1 port:30991
+2016/06/22 15:58:03:connection at:81 ip:0:0:0:0:0:0:0:1 port:30992
+2016/06/22 15:58:03:requested:/Control[0:0:0:0:0:0:0:1:30992]
+2016/06/22 15:58:03:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30991]
+2016/06/22 15:58:03:connection at:81 ip:0:0:0:0:0:0:0:1 port:30993
+2016/06/22 15:58:03:requested:/favicon.ico[0:0:0:0:0:0:0:1:30993]
+2016/06/22 15:58:03:connection at:81 ip:0:0:0:0:0:0:0:1 port:30994
+2016/06/22 15:58:03:requested:/favicon.ico[0:0:0:0:0:0:0:1:30994]
+2016/06/22 15:58:06:connection at:81 ip:0:0:0:0:0:0:0:1 port:30995
+2016/06/22 15:58:06:requested:/MouseAction[0:0:0:0:0:0:0:1:30995]
+2016/06/22 15:58:06:connection at:81 ip:0:0:0:0:0:0:0:1 port:30996
+2016/06/22 15:58:06:requested:/Control[0:0:0:0:0:0:0:1:30996]
+2016/06/22 15:58:06:connection at:81 ip:0:0:0:0:0:0:0:1 port:30997
+2016/06/22 15:58:06:requested:/Screen.jpg[0:0:0:0:0:0:0:1:30997]
+2016/06/22 15:58:06:connection at:81 ip:0:0:0:0:0:0:0:1 port:30998
+2016/06/22 15:58:06:connection at:81 ip:0:0:0:0:0:0:0:1 port:30999
+2016/06/22 15:58:06:requested:/favicon.ico[0:0:0:0:0:0:0:1:30999]
+2016/06/22 15:58:06:requested:/favicon.ico[0:0:0:0:0:0:0:1:30998]
+2016/06/22 15:58:09:connection at:81 ip:0:0:0:0:0:0:0:1 port:31000
+2016/06/22 15:58:09:requested:/MouseAction[0:0:0:0:0:0:0:1:31000]
+2016/06/22 15:58:09:connection at:81 ip:0:0:0:0:0:0:0:1 port:31001
+2016/06/22 15:58:09:requested:/Control[0:0:0:0:0:0:0:1:31001]
+2016/06/22 15:58:09:connection at:81 ip:0:0:0:0:0:0:0:1 port:31002
+2016/06/22 15:58:09:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31002]
+2016/06/22 15:58:09:connection at:81 ip:0:0:0:0:0:0:0:1 port:31003
+2016/06/22 15:58:09:connection at:81 ip:0:0:0:0:0:0:0:1 port:31004
+2016/06/22 15:58:09:requested:/favicon.ico[0:0:0:0:0:0:0:1:31004]
+2016/06/22 15:58:09:requested:/favicon.ico[0:0:0:0:0:0:0:1:31003]
+2016/06/22 15:58:12:connection at:81 ip:0:0:0:0:0:0:0:1 port:31008
+2016/06/22 15:58:12:connection at:81 ip:0:0:0:0:0:0:0:1 port:31009
+2016/06/22 15:58:12:requested:/Control[0:0:0:0:0:0:0:1:31009]
+2016/06/22 15:58:12:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31008]
+2016/06/22 15:58:12:connection at:81 ip:0:0:0:0:0:0:0:1 port:31010
+2016/06/22 15:58:12:connection at:81 ip:0:0:0:0:0:0:0:1 port:31011
+2016/06/22 15:58:12:requested:/favicon.ico[0:0:0:0:0:0:0:1:31011]
+2016/06/22 15:58:12:requested:/favicon.ico[0:0:0:0:0:0:0:1:31010]
+2016/06/22 15:58:14:connection at:81 ip:0:0:0:0:0:0:0:1 port:31012
+2016/06/22 15:58:14:requested:/MouseAction[0:0:0:0:0:0:0:1:31012]
+2016/06/22 15:58:14:connection at:81 ip:0:0:0:0:0:0:0:1 port:31013
+2016/06/22 15:58:14:requested:/Control[0:0:0:0:0:0:0:1:31013]
+2016/06/22 15:58:14:connection at:81 ip:0:0:0:0:0:0:0:1 port:31014
+2016/06/22 15:58:14:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31014]
+2016/06/22 15:58:14:connection at:81 ip:0:0:0:0:0:0:0:1 port:31015
+2016/06/22 15:58:14:connection at:81 ip:0:0:0:0:0:0:0:1 port:31016
+2016/06/22 15:58:14:requested:/favicon.ico[0:0:0:0:0:0:0:1:31015]
+2016/06/22 15:58:14:requested:/favicon.ico[0:0:0:0:0:0:0:1:31016]
+2016/06/22 15:58:21:connection at:81 ip:0:0:0:0:0:0:0:1 port:31017
+2016/06/22 15:58:21:requested:/MouseAction[0:0:0:0:0:0:0:1:31017]
+2016/06/22 15:58:21:connection at:81 ip:0:0:0:0:0:0:0:1 port:31018
+2016/06/22 15:58:21:requested:/Control[0:0:0:0:0:0:0:1:31018]
+2016/06/22 15:58:21:connection at:81 ip:0:0:0:0:0:0:0:1 port:31019
+2016/06/22 15:58:21:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31019]
+2016/06/22 15:58:21:connection at:81 ip:0:0:0:0:0:0:0:1 port:31020
+2016/06/22 15:58:21:requested:/favicon.ico[0:0:0:0:0:0:0:1:31020]
+2016/06/22 15:58:21:connection at:81 ip:0:0:0:0:0:0:0:1 port:31021
+2016/06/22 15:58:21:requested:/favicon.ico[0:0:0:0:0:0:0:1:31021]
+2016/06/22 15:58:25:connection at:81 ip:0:0:0:0:0:0:0:1 port:31026
+2016/06/22 15:58:25:connection at:81 ip:0:0:0:0:0:0:0:1 port:31027
+2016/06/22 15:58:25:requested:/Control[0:0:0:0:0:0:0:1:31027]
+2016/06/22 15:58:25:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31026]
+2016/06/22 15:58:26:connection at:81 ip:0:0:0:0:0:0:0:1 port:31028
+2016/06/22 15:58:26:requested:/favicon.ico[0:0:0:0:0:0:0:1:31028]
+2016/06/22 15:58:26:connection at:81 ip:0:0:0:0:0:0:0:1 port:31029
+2016/06/22 15:58:26:requested:/favicon.ico[0:0:0:0:0:0:0:1:31029]
+2016/06/22 15:58:32:connection at:81 ip:0:0:0:0:0:0:0:1 port:31030
+2016/06/22 15:58:32:requested:/MouseAction[0:0:0:0:0:0:0:1:31030]
+2016/06/22 15:58:32:connection at:81 ip:0:0:0:0:0:0:0:1 port:31031
+2016/06/22 15:58:32:requested:/Control[0:0:0:0:0:0:0:1:31031]
+2016/06/22 15:58:32:connection at:81 ip:0:0:0:0:0:0:0:1 port:31032
+2016/06/22 15:58:32:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31032]
+2016/06/22 15:58:32:connection at:81 ip:0:0:0:0:0:0:0:1 port:31033
+2016/06/22 15:58:32:requested:/favicon.ico[0:0:0:0:0:0:0:1:31033]
+2016/06/22 15:58:32:connection at:81 ip:0:0:0:0:0:0:0:1 port:31034
+2016/06/22 15:58:32:requested:/favicon.ico[0:0:0:0:0:0:0:1:31034]
+2016/06/22 16:00:26:connection at:81 ip:0:0:0:0:0:0:0:1 port:31064
+2016/06/22 16:00:26:requested:/MouseAction[0:0:0:0:0:0:0:1:31064]
+2016/06/22 16:00:27:connection at:81 ip:0:0:0:0:0:0:0:1 port:31065
+2016/06/22 16:00:27:requested:/Control[0:0:0:0:0:0:0:1:31065]
+2016/06/22 16:00:27:connection at:81 ip:0:0:0:0:0:0:0:1 port:31066
+2016/06/22 16:00:27:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31066]
+2016/06/22 16:00:27:connection at:81 ip:0:0:0:0:0:0:0:1 port:31067
+2016/06/22 16:00:27:requested:/favicon.ico[0:0:0:0:0:0:0:1:31067]
+2016/06/22 16:00:27:connection at:81 ip:0:0:0:0:0:0:0:1 port:31068
+2016/06/22 16:00:27:requested:/favicon.ico[0:0:0:0:0:0:0:1:31068]
+2016/06/22 16:00:34:connection at:81 ip:0:0:0:0:0:0:0:1 port:31069
+2016/06/22 16:00:34:requested:/MouseAction[0:0:0:0:0:0:0:1:31069]
+2016/06/22 16:00:34:connection at:81 ip:0:0:0:0:0:0:0:1 port:31070
+2016/06/22 16:00:34:requested:/Control[0:0:0:0:0:0:0:1:31070]
+2016/06/22 16:00:34:connection at:81 ip:0:0:0:0:0:0:0:1 port:31071
+2016/06/22 16:00:34:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31071]
+2016/06/22 16:00:34:connection at:81 ip:0:0:0:0:0:0:0:1 port:31072
+2016/06/22 16:00:34:requested:/favicon.ico[0:0:0:0:0:0:0:1:31072]
+2016/06/22 16:00:34:connection at:81 ip:0:0:0:0:0:0:0:1 port:31073
+2016/06/22 16:00:34:requested:/favicon.ico[0:0:0:0:0:0:0:1:31073]
+2016/06/22 16:00:37:connection at:81 ip:0:0:0:0:0:0:0:1 port:31076
+2016/06/22 16:00:37:requested:/MouseAction[0:0:0:0:0:0:0:1:31076]
+2016/06/22 16:00:37:connection at:81 ip:0:0:0:0:0:0:0:1 port:31077
+2016/06/22 16:00:37:requested:/Control[0:0:0:0:0:0:0:1:31077]
+2016/06/22 16:00:37:connection at:81 ip:0:0:0:0:0:0:0:1 port:31078
+2016/06/22 16:00:37:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31078]
+2016/06/22 16:00:37:connection at:81 ip:0:0:0:0:0:0:0:1 port:31079
+2016/06/22 16:00:37:connection at:81 ip:0:0:0:0:0:0:0:1 port:31080
+2016/06/22 16:00:37:requested:/favicon.ico[0:0:0:0:0:0:0:1:31079]
+2016/06/22 16:00:37:requested:/favicon.ico[0:0:0:0:0:0:0:1:31080]
+2016/06/22 16:07:43:connection at:81 ip:0:0:0:0:0:0:0:1 port:31163
+2016/06/22 16:07:43:requested:/MouseAction[0:0:0:0:0:0:0:1:31163]
+2016/06/22 16:07:43:connection at:81 ip:0:0:0:0:0:0:0:1 port:31164
+2016/06/22 16:07:43:requested:/Login[0:0:0:0:0:0:0:1:31164]
+2016/06/22 16:07:43:connection at:81 ip:0:0:0:0:0:0:0:1 port:31165
+2016/06/22 16:07:43:requested:/favicon.ico[0:0:0:0:0:0:0:1:31165]
+2016/06/22 16:07:43:connection at:81 ip:0:0:0:0:0:0:0:1 port:31166
+2016/06/22 16:07:43:requested:/favicon.ico[0:0:0:0:0:0:0:1:31166]
+2016/06/22 16:07:49:connection at:81 ip:0:0:0:0:0:0:0:1 port:31168
+2016/06/22 16:07:49:requested:/Login[0:0:0:0:0:0:0:1:31168]
+2016/06/22 16:07:49:connection at:81 ip:0:0:0:0:0:0:0:1 port:31169
+2016/06/22 16:07:49:requested:/Control[0:0:0:0:0:0:0:1:31169]
+2016/06/22 16:07:49:connection at:81 ip:0:0:0:0:0:0:0:1 port:31170
+2016/06/22 16:07:49:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31170]
+2016/06/22 16:07:49:connection at:81 ip:0:0:0:0:0:0:0:1 port:31173
+2016/06/22 16:07:49:requested:/favicon.ico[0:0:0:0:0:0:0:1:31173]
+2016/06/22 16:07:49:connection at:81 ip:0:0:0:0:0:0:0:1 port:31174
+2016/06/22 16:07:49:requested:/favicon.ico[0:0:0:0:0:0:0:1:31174]
+2016/06/22 16:07:51:connection at:81 ip:0:0:0:0:0:0:0:1 port:31176
+2016/06/22 16:07:51:requested:/MouseAction[0:0:0:0:0:0:0:1:31176]
+2016/06/22 16:07:51:connection at:81 ip:0:0:0:0:0:0:0:1 port:31177
+2016/06/22 16:07:51:requested:/Control[0:0:0:0:0:0:0:1:31177]
+2016/06/22 16:07:51:connection at:81 ip:0:0:0:0:0:0:0:1 port:31178
+2016/06/22 16:07:51:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31178]
+2016/06/22 16:07:51:connection at:81 ip:0:0:0:0:0:0:0:1 port:31179
+2016/06/22 16:07:51:requested:/favicon.ico[0:0:0:0:0:0:0:1:31179]
+2016/06/22 16:07:51:connection at:81 ip:0:0:0:0:0:0:0:1 port:31180
+2016/06/22 16:07:51:requested:/favicon.ico[0:0:0:0:0:0:0:1:31180]
+2016/06/22 16:08:05:connection at:81 ip:0:0:0:0:0:0:0:1 port:31186
+2016/06/22 16:08:57:connection at:81 ip:0:0:0:0:0:0:0:1 port:31202
+2016/06/22 16:08:57:requested:/MouseAction[0:0:0:0:0:0:0:1:31202]
+2016/06/22 16:08:57:connection at:81 ip:0:0:0:0:0:0:0:1 port:31203
+2016/06/22 16:08:57:requested:/Control[0:0:0:0:0:0:0:1:31203]
+2016/06/22 16:08:57:connection at:81 ip:0:0:0:0:0:0:0:1 port:31204
+2016/06/22 16:08:57:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31204]
+2016/06/22 16:08:58:connection at:81 ip:0:0:0:0:0:0:0:1 port:31205
+2016/06/22 16:08:58:requested:/favicon.ico[0:0:0:0:0:0:0:1:31205]
+2016/06/22 16:08:58:connection at:81 ip:0:0:0:0:0:0:0:1 port:31206
+2016/06/22 16:08:58:requested:/favicon.ico[0:0:0:0:0:0:0:1:31206]
+2016/06/22 16:09:07:connection at:81 ip:0:0:0:0:0:0:0:1 port:31210
+2016/06/22 16:09:07:requested:/MouseAction[0:0:0:0:0:0:0:1:31210]
+2016/06/22 16:09:07:connection at:81 ip:0:0:0:0:0:0:0:1 port:31211
+2016/06/22 16:09:07:requested:/Control[0:0:0:0:0:0:0:1:31211]
+2016/06/22 16:09:07:connection at:81 ip:0:0:0:0:0:0:0:1 port:31212
+2016/06/22 16:09:07:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31212]
+2016/06/22 16:09:07:connection at:81 ip:0:0:0:0:0:0:0:1 port:31213
+2016/06/22 16:09:07:requested:/favicon.ico[0:0:0:0:0:0:0:1:31213]
+2016/06/22 16:09:07:connection at:81 ip:0:0:0:0:0:0:0:1 port:31214
+2016/06/22 16:09:07:requested:/favicon.ico[0:0:0:0:0:0:0:1:31214]
+2016/06/22 16:09:16:connection at:81 ip:0:0:0:0:0:0:0:1 port:31232
+2016/06/22 16:09:16:requested:/MouseAction[0:0:0:0:0:0:0:1:31232]
+2016/06/22 16:09:16:connection at:81 ip:0:0:0:0:0:0:0:1 port:31233
+2016/06/22 16:09:16:requested:/Control[0:0:0:0:0:0:0:1:31233]
+2016/06/22 16:09:16:connection at:81 ip:0:0:0:0:0:0:0:1 port:31234
+2016/06/22 16:09:16:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31234]
+2016/06/22 16:09:16:connection at:81 ip:0:0:0:0:0:0:0:1 port:31235
+2016/06/22 16:09:16:requested:/favicon.ico[0:0:0:0:0:0:0:1:31235]
+2016/06/22 16:09:16:connection at:81 ip:0:0:0:0:0:0:0:1 port:31236
+2016/06/22 16:09:16:requested:/favicon.ico[0:0:0:0:0:0:0:1:31236]
+2016/06/22 16:09:21:connection at:81 ip:0:0:0:0:0:0:0:1 port:31237
+2016/06/22 16:09:21:requested:/MouseAction[0:0:0:0:0:0:0:1:31237]
+2016/06/22 16:09:21:connection at:81 ip:0:0:0:0:0:0:0:1 port:31238
+2016/06/22 16:09:21:requested:/Control[0:0:0:0:0:0:0:1:31238]
+2016/06/22 16:09:21:connection at:81 ip:0:0:0:0:0:0:0:1 port:31239
+2016/06/22 16:09:21:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31239]
+2016/06/22 16:09:21:connection at:81 ip:0:0:0:0:0:0:0:1 port:31240
+2016/06/22 16:09:21:requested:/favicon.ico[0:0:0:0:0:0:0:1:31240]
+2016/06/22 16:09:21:connection at:81 ip:0:0:0:0:0:0:0:1 port:31241
+2016/06/22 16:09:21:requested:/favicon.ico[0:0:0:0:0:0:0:1:31241]
+2016/06/22 16:09:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:31244
+2016/06/22 16:09:24:requested:/MouseAction[0:0:0:0:0:0:0:1:31244]
+2016/06/22 16:09:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:31245
+2016/06/22 16:09:24:requested:/Control[0:0:0:0:0:0:0:1:31245]
+2016/06/22 16:09:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:31246
+2016/06/22 16:09:24:requested:/Screen.jpg[0:0:0:0:0:0:0:1:31246]
+2016/06/22 16:09:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:31247
+2016/06/22 16:09:24:requested:/favicon.ico[0:0:0:0:0:0:0:1:31247]
+2016/06/22 16:09:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:31248
+2016/06/22 16:09:24:requested:/favicon.ico[0:0:0:0:0:0:0:1:31248]
+2018/12/03 13:27:12:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at webServer.Server.applyConfig(Server.java:158)
+	at sample.Main.main(Main.java:25)
+
+2018/12/03 13:27:12:listening port:81
+2018/12/03 13:27:12:listening port:445(SSL)
+2018/12/03 13:27:12:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.DualStackPlainSocketImpl.bind0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketBind(Unknown Source)
+	at java.net.AbstractPlainSocketImpl.bind(Unknown Source)
+	at java.net.PlainSocketImpl.bind(Unknown Source)
+	at java.net.ServerSocket.bind(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at javax.net.ssl.SSLServerSocket.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketImpl.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketFactoryImpl.createServerSocket(Unknown Source)
+	at webServer.ServerThread.getSSLServerSocket(Server.java:396)
+	at webServer.ServerThread.<init>(Server.java:281)
+	at webServer.Monitor.run(Server.java:424)
+
+2018/12/03 13:27:20:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at webServer.Server.applyConfig(Server.java:158)
+	at sample.Main.main(Main.java:25)
+
+2018/12/03 13:27:20:listening port:81
+2018/12/03 13:27:20:listening port:445(SSL)
+2018/12/03 13:27:20:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.DualStackPlainSocketImpl.bind0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketBind(Unknown Source)
+	at java.net.AbstractPlainSocketImpl.bind(Unknown Source)
+	at java.net.PlainSocketImpl.bind(Unknown Source)
+	at java.net.ServerSocket.bind(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at javax.net.ssl.SSLServerSocket.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketImpl.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketFactoryImpl.createServerSocket(Unknown Source)
+	at webServer.ServerThread.getSSLServerSocket(Server.java:396)
+	at webServer.ServerThread.<init>(Server.java:281)
+	at webServer.Monitor.run(Server.java:424)
+
+2018/12/03 13:27:36:connection at:81 ip:0:0:0:0:0:0:0:1 port:53740
+2018/12/03 13:27:36:requested:/[0:0:0:0:0:0:0:1:53740]
+2018/12/03 13:27:36:connection at:81 ip:0:0:0:0:0:0:0:1 port:53741
+2018/12/03 13:27:36:requested:/favicon.ico[0:0:0:0:0:0:0:1:53741]
+2018/12/03 13:27:36:connection at:81 ip:0:0:0:0:0:0:0:1 port:53742
+2018/12/03 13:27:36:requested:/favicon.ico[0:0:0:0:0:0:0:1:53742]
+2018/12/03 16:35:19:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at webServer.Server.applyConfig(Server.java:158)
+	at sample.Main.main(Main.java:25)
+
+2018/12/03 16:35:19:listening port:81
+2018/12/03 16:35:19:listening port:445(SSL)
+2018/12/03 16:35:19:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.DualStackPlainSocketImpl.bind0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketBind(Unknown Source)
+	at java.net.AbstractPlainSocketImpl.bind(Unknown Source)
+	at java.net.PlainSocketImpl.bind(Unknown Source)
+	at java.net.ServerSocket.bind(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at javax.net.ssl.SSLServerSocket.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketImpl.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketFactoryImpl.createServerSocket(Unknown Source)
+	at webServer.ServerThread.getSSLServerSocket(Server.java:396)
+	at webServer.ServerThread.<init>(Server.java:281)
+	at webServer.Monitor.run(Server.java:424)
+
+2018/12/03 16:35:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:51481
+2018/12/03 16:35:24:requested:/[0:0:0:0:0:0:0:1:51481]
+2018/12/03 16:35:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:51482
+2018/12/03 16:35:24:requested:/favicon.ico[0:0:0:0:0:0:0:1:51482]
+2018/12/03 16:35:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:51483
+2018/12/03 16:35:24:requested:/favicon.ico[0:0:0:0:0:0:0:1:51483]
+2018/12/03 16:35:25:connection at:81 ip:0:0:0:0:0:0:0:1 port:51484
+2018/12/03 16:35:26:requested:/file/[0:0:0:0:0:0:0:1:51484]
+2018/12/03 16:35:26:connection at:81 ip:0:0:0:0:0:0:0:1 port:51485
+2018/12/03 16:35:26:requested:/favicon.ico[0:0:0:0:0:0:0:1:51485]
+2018/12/03 16:35:26:connection at:81 ip:0:0:0:0:0:0:0:1 port:51486
+2018/12/03 16:35:28:requested:/favicon.ico[0:0:0:0:0:0:0:1:51486]
+2018/12/03 16:35:28:connection at:81 ip:0:0:0:0:0:0:0:1 port:51487
+2018/12/03 16:35:28:requested:/favicon.ico[0:0:0:0:0:0:0:1:51487]
+2018/12/03 16:35:29:connection at:81 ip:0:0:0:0:0:0:0:1 port:51488

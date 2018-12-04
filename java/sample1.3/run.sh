@@ -1,1 +1,1 @@
-java -jar lib/webServer.jar -classpath ./
+java -classpath ./,./sample/,./lib/webServer.jar sample.Main
