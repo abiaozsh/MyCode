@@ -27,7 +27,8 @@ public class Extract {
 		return object;
 	}
 
-	public static String root = "e:\\bilibili\\";
+	public static String root = "e:\\bilibili2\\";
+	public static String output = "g:\\";
 
 	public static void main(String[] args) throws IOException {
 
@@ -110,7 +111,7 @@ public class Extract {
 			File file = files[i];
 			if (!"index.json".equals(file.getName())) {
 
-				Files.copy(file.toPath(), (new File(root + obj.avid + "_" + obj.title + "_" + pos.getName() + "_" + file.getName())).toPath());
+				Files.copy(file.toPath(), (new File(output + obj.avid + "_" + obj.title + "_" + pos.getName() + "_" + file.getName())).toPath());
 
 			}
 

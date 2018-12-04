@@ -1,0 +1,90 @@
+{
+	"port": 81,
+	"ssl": {
+		"port": 445,
+		"clientKeysFile": "clientKeys.key",
+		"keyStorePass": "123456",
+		"keyPassword": "123456"
+	},
+	"javaCompiler": "file:///C:\\ProgramFiles\\Java\\jdk1.7.0_01\\lib\\tools.jar",
+	"defaultEncodingInput": "utf-8",
+	"defaultEncodingOutput": "utf-8",
+	"sessionExpires": 30000,
+	"fileSystems": [{
+		"url": "/file/",
+		"rootPath": "fileSystem\\",
+		"allowList": true,
+		"allowUpLoad": true,
+		"allowDel": true,
+		"contentType": "auto",
+		"userName": "",
+		"passWord": ""
+	},
+	{
+		"url": "/js/",
+		"rootPath": "js\\",
+		"allowList": false,
+		"allowUpLoad": false,
+		"allowDel": false,
+		"contentType": "auto",
+		"userName": "",
+		"passWord": ""
+	}],
+	"jsps": [{
+		"url": "/jsp/",
+		"rootPath": "jsp\\"
+	}],
+	"servlets": [{
+		"url": "/",
+		"classFileName": "sample.Root",
+		"isSingleton": false
+	},
+	{
+		"url": "/Control",
+		"classFileName": "sample.Control"
+	},
+	{
+		"url": "/ControlV2",
+		"classFileName": "sample.ControlV2"
+	},
+	{
+		"url": "/screen.jpg",
+		"classFileName": "sample.ScreenServlet"
+	},
+	{
+		"url": "/Screen.jpg",
+		"classFileName": "sample.ScreenServlet"
+	},
+	{
+		"url": "/setQuality",
+		"classFileName": "sample.setQualityServlet"
+	},
+	{
+		"url": "/MouseAction",
+		"classFileName": "sample.MouseAction"
+	},
+	{
+		"url": "/KeyAction",
+		"classFileName": "sample.KeyAction"
+	},
+	{
+		"url": "/MessageBoxAction",
+		"classFileName": "sample.MessageboxAction"
+	},
+	{
+		"url": "/ClipBoardAction",
+		"classFileName": "sample.ClipBoardAction"
+	},
+	{
+		"url": "/processList",
+		"classFileName": "sample.ProcessListAction"
+	},
+	{
+		"url": "/processKill",
+		"classFileName": "sample.ProcessKillAction"
+	},
+	{
+		"url": "/Login",
+		"classFileName": "sample.LoginServlet"
+	}]
+}

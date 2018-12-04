@@ -130,7 +130,7 @@ final class JspProcessor
 
         fis.close();
 
-        String s = new String(b, server.currentConfig.getDefaultEncoding());
+        String s = new String(b, server.currentConfig.defaultEncodingInput);
 
         char[] cs = s.toCharArray();
 
@@ -291,7 +291,7 @@ final class JspProcessor
         }
 
         FileOutputStream fos = new FileOutputStream(javaFile);
-        OutputStreamWriter osw = new OutputStreamWriter(fos, server.currentConfig.getDefaultEncoding());
+        OutputStreamWriter osw = new OutputStreamWriter(fos, server.currentConfig.defaultEncodingOutput);
         PrintWriter pw = new PrintWriter(osw);
 
         pw.println("import java.io.PrintStream;");

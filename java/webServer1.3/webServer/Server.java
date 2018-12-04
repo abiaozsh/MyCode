@@ -30,8 +30,7 @@ public final class Server
 	public static Server serverInstance = null;
 
 	ServerConfig currentConfig = null;
-	String configFile = "";
-	
+
 	ArrayList<JspProcessor> jspProcessors = null;
 
 	ArrayList<FileSystem> fileSystems = null;
@@ -89,34 +88,38 @@ public final class Server
 		}
 	}
 
-	void init(String configFile)
+	public void init(ServerConfig configFile)
 	{
 		sessionPooling = new HashMap<String, Session>();
 		applicationData = new HashMap<String, Object>();
 
-		currentConfig = new ServerConfig();
-		currentConfig.LoadConfig(configFile);
-		this.configFile = configFile;
+		currentConfig = configFile;
 	}
 
-	void applyConfig()
+	public void applyConfig()
 	{
 
 		jspProcessors = new ArrayList<JspProcessor>();
-		for (ServerConfig.JspProcessor cjp : currentConfig.getJspProcessors())
+		if (currentConfig.jsps != null)
 		{
-			jspProcessors.add(new JspProcessor(cjp.url, cjp.rootPath));
+			for (ServerConfig.JspProcessor cjp : currentConfig.jsps)
+			{
+				jspProcessors.add(new JspProcessor(cjp.url, cjp.rootPath));
+			}
 		}
 
 		fileSystems = new ArrayList<FileSystem>();
-		for (ServerConfig.FileSystem cfs : currentConfig.getFileSystems())
+		if (currentConfig.fileSystems != null)
 		{
-			fileSystems.add(new FileSystem(cfs.url, cfs.rootPath, cfs.allowList, cfs.allowUpLoad, cfs.allowDel, cfs.isDownload, cfs.userName, cfs.passWord));
+			for (ServerConfig.FileSystem cfs : currentConfig.fileSystems)
+			{
+				fileSystems.add(new FileSystem(cfs));
+			}
 		}
 
-		if (currentConfig.getJavaCompiler() != null)
+		if (currentConfig.javaCompiler != null)
 		{
-			String path = currentConfig.getJavaCompiler();
+			String path = currentConfig.javaCompiler;
 			if (path.startsWith("file:///"))
 			{
 				if (path.substring(8).indexOf(":") >= 0 || path.substring(8).startsWith("/"))
@@ -178,45 +181,41 @@ public final class Server
 
 		servlets = new HashMap<String, ServletPack>();
 
-		for (ServerConfig.Servlet sc : currentConfig.getServlets())
+		if (currentConfig.servlets != null)
 		{
-			String classFileName = sc.classFileName;
-			try
+			for (ServerConfig.Servlet sc : currentConfig.servlets)
 			{
-				ServletPack sp = new ServletPack();
-
-				sp.clazz = classloader.loadClass(classFileName);
-
-				if (sc.isSingleton)
+				String classFileName = sc.classFileName;
+				try
 				{
-					sp.Instance = sp.getInstance();
-					sp.isSingleton = true;
+					ServletPack sp = new ServletPack();
+
+					sp.clazz = classloader.loadClass(classFileName);
+
+					if (sc.isSingleton)
+					{
+						sp.Instance = sp.getInstance();
+						sp.isSingleton = true;
+					}
+
+					sp.url = sc.url;
+
+					servlets.put(sp.url, sp);
 				}
-
-				sp.url = sc.url;
-
-				servlets.put(sp.url, sp);
-			}
-			catch (ClassNotFoundException e)
-			{
-				Log.log("class " + classFileName + " not found.");
-			}
-			catch (Exception e)
-			{
-				Log.log(e);
+				catch (ClassNotFoundException e)
+				{
+					Log.log("class " + classFileName + " not found.");
+				}
+				catch (Exception e)
+				{
+					Log.log(e);
+				}
 			}
 		}
 
-		if (currentConfig.getConfigPageEnabled() && currentConfig.getConfigPageUrl() != null)
-		{
-			ServletPack sp = new ServletPack();
-			sp.clazz = ConfigServlet.class;
-			sp.url = currentConfig.getConfigPageUrl();
-			servlets.put(currentConfig.getConfigPageUrl(), sp);
-		}
 	}
 
-	void startService()
+	public void startService()
 	{
 		monitor = new Monitor(this);
 		monitor.start();
@@ -224,7 +223,7 @@ public final class Server
 		sessionCleaner = new Timer("Session Cleaner");
 	}
 
-	void restart()
+	public void restart()
 	{
 		synchronized (monitor)
 		{
@@ -233,7 +232,7 @@ public final class Server
 		Log.log("server reseted");
 	}
 
-	void shutdown()
+	public void shutdown()
 	{
 		monitor.stop = true;
 		synchronized (monitor)
@@ -277,13 +276,13 @@ final class ServerThread extends Thread
 			this.server = server;
 			if (SSL)
 			{
-				System.out.println("listening port:" + server.currentConfig.getSSLport() + "(SSL)");
-				Log.log("listening port:" + server.currentConfig.getSSLport() + "(SSL)");
+				System.out.println("listening port:" + server.currentConfig.ssl.port + "(SSL)");
+				Log.log("listening port:" + server.currentConfig.ssl.port + "(SSL)");
 				sv = getSSLServerSocket(server.currentConfig);
 			}
 			else
 			{
-				int port = server.currentConfig.getPort();
+				int port = server.currentConfig.port;
 				System.out.println("listening port:" + port);
 				Log.log("listening port:" + port);
 				sv = new ServerSocket(port);
@@ -372,13 +371,13 @@ final class ServerThread extends Thread
 	{
 		ServerSocket s = null;
 
-		char keyStorePass[] = currentConfig.getSSLkeyStorePass().toCharArray();
-		char keyPassword[] = currentConfig.getSSLkeyPassword().toCharArray();
+		char keyStorePass[] = currentConfig.ssl.keyStorePass.toCharArray();
+		char keyPassword[] = currentConfig.ssl.keyPassword.toCharArray();
 
 		// KeyStore ks = KeyStore.getInstance("JKS");
 		KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 
-		ks.load(new FileInputStream(currentConfig.getSSLclientKeysFile()), keyStorePass);
+		ks.load(new FileInputStream(currentConfig.ssl.clientKeysFile), keyStorePass);
 
 		// KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -394,7 +393,7 @@ final class ServerThread extends Thread
 
 		SSLServerSocketFactory factory = sslContext.getServerSocketFactory();
 
-		s = factory.createServerSocket(currentConfig.getSSLport());
+		s = factory.createServerSocket(currentConfig.ssl.port);
 
 		return s;
 	}
@@ -420,7 +419,7 @@ final class Monitor extends Thread
 			server.st = new ServerThread(server, false);
 			server.st.setName("Request Listener");
 			server.st.start();
-			if (server.currentConfig.getSSLactive())
+			if (server.currentConfig.ssl != null)
 			{
 				server.sst = new ServerThread(server, true);
 				server.sst.setName("Request Listener(ssl)");
@@ -461,7 +460,7 @@ final class Monitor extends Thread
 			{
 				server.st.shutdown();
 			}
-			if (server.currentConfig.getSSLactive())
+			if (server.currentConfig.ssl != null)
 			{
 				if (server.sst != null)
 				{

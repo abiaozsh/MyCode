@@ -584,3 +584,111 @@ java.net.BindException: Address already in use: JVM_Bind
 2016/06/22 16:09:24:requested:/favicon.ico[0:0:0:0:0:0:0:1:31247]
 2016/06/22 16:09:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:31248
 2016/06/22 16:09:24:requested:/favicon.ico[0:0:0:0:0:0:0:1:31248]
+2018/12/03 13:27:12:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at webServer.Server.applyConfig(Server.java:158)
+	at sample.Main.main(Main.java:25)
+
+2018/12/03 13:27:12:listening port:81
+2018/12/03 13:27:12:listening port:445(SSL)
+2018/12/03 13:27:12:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.DualStackPlainSocketImpl.bind0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketBind(Unknown Source)
+	at java.net.AbstractPlainSocketImpl.bind(Unknown Source)
+	at java.net.PlainSocketImpl.bind(Unknown Source)
+	at java.net.ServerSocket.bind(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at javax.net.ssl.SSLServerSocket.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketImpl.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketFactoryImpl.createServerSocket(Unknown Source)
+	at webServer.ServerThread.getSSLServerSocket(Server.java:396)
+	at webServer.ServerThread.<init>(Server.java:281)
+	at webServer.Monitor.run(Server.java:424)
+
+2018/12/03 13:27:20:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at webServer.Server.applyConfig(Server.java:158)
+	at sample.Main.main(Main.java:25)
+
+2018/12/03 13:27:20:listening port:81
+2018/12/03 13:27:20:listening port:445(SSL)
+2018/12/03 13:27:20:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.DualStackPlainSocketImpl.bind0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketBind(Unknown Source)
+	at java.net.AbstractPlainSocketImpl.bind(Unknown Source)
+	at java.net.PlainSocketImpl.bind(Unknown Source)
+	at java.net.ServerSocket.bind(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at javax.net.ssl.SSLServerSocket.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketImpl.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketFactoryImpl.createServerSocket(Unknown Source)
+	at webServer.ServerThread.getSSLServerSocket(Server.java:396)
+	at webServer.ServerThread.<init>(Server.java:281)
+	at webServer.Monitor.run(Server.java:424)
+
+2018/12/03 13:27:36:connection at:81 ip:0:0:0:0:0:0:0:1 port:53740
+2018/12/03 13:27:36:requested:/[0:0:0:0:0:0:0:1:53740]
+2018/12/03 13:27:36:connection at:81 ip:0:0:0:0:0:0:0:1 port:53741
+2018/12/03 13:27:36:requested:/favicon.ico[0:0:0:0:0:0:0:1:53741]
+2018/12/03 13:27:36:connection at:81 ip:0:0:0:0:0:0:0:1 port:53742
+2018/12/03 13:27:36:requested:/favicon.ico[0:0:0:0:0:0:0:1:53742]
+2018/12/03 16:35:19:
+java.lang.ClassNotFoundException: com.sun.tools.javac.Main
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.net.URLClassLoader$1.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at webServer.Server.applyConfig(Server.java:158)
+	at sample.Main.main(Main.java:25)
+
+2018/12/03 16:35:19:listening port:81
+2018/12/03 16:35:19:listening port:445(SSL)
+2018/12/03 16:35:19:
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.DualStackPlainSocketImpl.bind0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketBind(Unknown Source)
+	at java.net.AbstractPlainSocketImpl.bind(Unknown Source)
+	at java.net.PlainSocketImpl.bind(Unknown Source)
+	at java.net.ServerSocket.bind(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at java.net.ServerSocket.<init>(Unknown Source)
+	at javax.net.ssl.SSLServerSocket.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketImpl.<init>(Unknown Source)
+	at sun.security.ssl.SSLServerSocketFactoryImpl.createServerSocket(Unknown Source)
+	at webServer.ServerThread.getSSLServerSocket(Server.java:396)
+	at webServer.ServerThread.<init>(Server.java:281)
+	at webServer.Monitor.run(Server.java:424)
+
+2018/12/03 16:35:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:51481
+2018/12/03 16:35:24:requested:/[0:0:0:0:0:0:0:1:51481]
+2018/12/03 16:35:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:51482
+2018/12/03 16:35:24:requested:/favicon.ico[0:0:0:0:0:0:0:1:51482]
+2018/12/03 16:35:24:connection at:81 ip:0:0:0:0:0:0:0:1 port:51483
+2018/12/03 16:35:24:requested:/favicon.ico[0:0:0:0:0:0:0:1:51483]
+2018/12/03 16:35:25:connection at:81 ip:0:0:0:0:0:0:0:1 port:51484
+2018/12/03 16:35:26:requested:/file/[0:0:0:0:0:0:0:1:51484]
+2018/12/03 16:35:26:connection at:81 ip:0:0:0:0:0:0:0:1 port:51485
+2018/12/03 16:35:26:requested:/favicon.ico[0:0:0:0:0:0:0:1:51485]
+2018/12/03 16:35:26:connection at:81 ip:0:0:0:0:0:0:0:1 port:51486
+2018/12/03 16:35:28:requested:/favicon.ico[0:0:0:0:0:0:0:1:51486]
+2018/12/03 16:35:28:connection at:81 ip:0:0:0:0:0:0:0:1 port:51487
+2018/12/03 16:35:28:requested:/favicon.ico[0:0:0:0:0:0:0:1:51487]
+2018/12/03 16:35:29:connection at:81 ip:0:0:0:0:0:0:0:1 port:51488

@@ -29,9 +29,9 @@ public class Bilibili {
 	 */
 	public static void main(String[] args) throws Exception {
 
-		getList(1, "a.txt");
+		//getList(0, "a.txt");
 
-		//copy(1, "b.txt", "E:\\bilibili");
+		copy(0, "b.txt", "E:\\bilibili2");
 	}
 
 	public static void getList(int dev, String fn) throws Exception {

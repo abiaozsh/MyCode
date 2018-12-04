@@ -24,51 +24,16 @@ import javax.imageio.stream.ImageInputStream;
 
 final class FileSystem
 {
-	private String url = null;
+	private ServerConfig.FileSystem config;
 
-	private String rootPath = null;
-
-	private boolean allowList = false;
-
-	private boolean allowUpLoad = false;
-
-	private boolean allowDel = false;
-
-	private boolean isDownload = true;
-
-	private String userName = null;
-
-	private String passWord = null;
-
-	FileSystem(String url, String rootPath, boolean allowList, boolean allowUpLoad, boolean allowDel, boolean isDownload, String userName, String passWord)
+	FileSystem(ServerConfig.FileSystem config)
 	{
-		this.url = url;
-
-		if (rootPath.endsWith(Server.SEP))
-		{
-			this.rootPath = rootPath;
-		}
-		else
-		{
-			this.rootPath = rootPath + Server.SEP;
-		}
-
-		this.allowList = allowList;
-
-		this.allowUpLoad = allowUpLoad;
-
-		this.allowDel = allowDel;
-
-		this.isDownload = isDownload;
-
-		this.userName = userName;
-
-		this.passWord = passWord;
+		this.config = config;
 	}
 
 	String getUrl()
 	{
-		return url;
+		return config.url;
 	}
 
 	boolean authorization(String userName, String passWord)
@@ -83,13 +48,13 @@ final class FileSystem
 		{
 			u1 = userName;
 		}
-		if (this.userName == null)
+		if (this.config.userName == null)
 		{
 			u2 = "";
 		}
 		else
 		{
-			u2 = this.userName;
+			u2 = this.config.userName;
 		}
 
 		if (passWord == null)
@@ -100,13 +65,13 @@ final class FileSystem
 		{
 			p1 = passWord;
 		}
-		if (this.passWord == null)
+		if (this.config.passWord == null)
 		{
 			p2 = "";
 		}
 		else
 		{
-			p2 = this.passWord;
+			p2 = this.config.passWord;
 		}
 
 		if (u2 == "" && p2 == "")
@@ -130,7 +95,7 @@ final class FileSystem
 
 		String action = req.getPOSTParam("action");
 
-		if (userName != null && passWord != null && !"".equals(userName) && !"".equals(passWord))
+		if (config.userName != null && config.passWord != null && !"".equals(config.userName) && !"".equals(config.passWord))
 		{
 			if ("login".equals(action))
 			{
@@ -138,7 +103,7 @@ final class FileSystem
 
 				if (pass)
 				{
-					session.setPrivate("FileLogin" + this.url, "T");
+					session.setPrivate("FileLogin" + this.config.url, "T");
 				}
 				else
 				{
@@ -147,13 +112,13 @@ final class FileSystem
 			}
 			else if ("logout".equals(action))
 			{
-				session.setPrivate("FileLogin" + this.url, null);
+				session.setPrivate("FileLogin" + this.config.url, null);
 				makeLogin(req, res);
 				return;
 			}
 			else
 			{
-				if (!"T".equals(session.getPrivate("FileLogin" + this.url)))
+				if (!"T".equals(session.getPrivate("FileLogin" + this.config.url)))
 				{
 					makeLogin(req, res);
 					return;
@@ -161,8 +126,15 @@ final class FileSystem
 			}
 		}
 
-		String fn = path.substring(url.length());
-		fn = rootPath + fn.replace("/", Server.SEP);
+		String fn = path.substring(config.url.length());
+		if (config.rootPath.endsWith(Server.SEP))
+		{
+			fn = config.rootPath + fn.replace("/", Server.SEP);
+		}
+		else
+		{
+			fn = config.rootPath + Server.SEP + fn.replace("/", Server.SEP);
+		}
 
 		fn = fn.replace("..", "");
 
@@ -193,14 +165,14 @@ final class FileSystem
 				res.sendRedirect(".");
 				return;
 			}
-			else if (allowDel && del != null)
+			else if (config.allowDel && del != null)
 			{
 				File delFile = new File(file.getPath() + Server.SEP + del);
 				delFile.delete();
 				res.sendRedirect(".");
 				return;
 			}
-			else if (allowUpLoad && req.getMultipartData("file") != null)
+			else if (config.allowUpLoad && req.getMultipartData("file") != null)
 			{
 				File upFile = new File(req.getMultipartData("file").filename);
 				try
@@ -239,102 +211,105 @@ final class FileSystem
 			}
 			else
 			{
-				if(isImg(file.getName())) {
-					FileInputStream fis = new FileInputStream(file);
-					try
-					{
-						OutputStream os = res.getOutputStream();
-						byte[] buff = new byte[1024];
-						while (true)
-						{
-							int len = fis.read(buff);
-							if (len <= 0) break;
-							os.write(buff, 0, len);
-						}
-					}
-					finally
-					{
-						fis.close();
-					}
-					res.setContentType("image");
-					return;
-				}
-				if(isText(file.getName())) {
-					FileInputStream fis = new FileInputStream(file);
-					InputStreamReader isr = new InputStreamReader(fis, server.currentConfig.getDefaultEncoding());
-					try
-					{
-						PrintWriter pw = res.getWriter();
-						char[] cbuff = new char[1024];
-						while (true)
-						{
-							int len = isr.read(cbuff);
-							if (len <= 0) break;
-							pw.write(cbuff, 0, len);
-						}
-					}
-					finally
-					{
-						isr.close();
-						fis.close();
-					}
-					res.setContentType("text");
-					return;
-				}
-				
-				if (isDownload)
+				if (config.contentType == ServerConfig.FileSystem.ContentType.auto)
 				{
-					int start;
-					int end;
-
-					String Range = req.getHTTPParam("Range");
-
-					start = 0;
-					end = (int) file.length() - 1;
-
-					if (Range != null)
+					if (isImg(file.getName()))
 					{
-						Range = Range.substring(6);
-						String[] Ranges = Range.split(",");
-						if (Ranges.length > 0)
-						{
-							Ranges = Ranges[0].split("-");
-							if (Ranges.length > 0)
-							{
-								start = Util.strToInt(Ranges[0]);
-							}
-							if (Ranges.length > 1)
-							{
-								end = Util.strToInt(Ranges[1]);
-							}
-						}
+						outputImg(res, file);
 					}
-
-					setFileHead(file, start, end, res);
+					else if (isText(file.getName()))
+					{
+						outputText(server, res, file);
+					}
+					else
+					{
+						outputDownload(req, res, file);
+					}
 				}
-				else
+				else if (config.contentType == ServerConfig.FileSystem.ContentType.forceText)
 				{
-					FileInputStream fis = new FileInputStream(file);
-					InputStreamReader isr = new InputStreamReader(fis, server.currentConfig.getDefaultEncoding());
-					try
-					{
-						PrintWriter pw = res.getWriter();
-						char[] cbuff = new char[1024];
-						while (true)
-						{
-							int len = isr.read(cbuff);
-							if (len <= 0) break;
-							pw.write(cbuff, 0, len);
-						}
-					}
-					finally
-					{
-						isr.close();
-						fis.close();
-					}
+					outputText(server, res, file);
+				}
+				else if (config.contentType == ServerConfig.FileSystem.ContentType.forceDownload)
+				{
+					outputDownload(req, res, file);
 				}
 			}
 		}
+	}
+
+	private void outputDownload(Request req, Response res, File file) throws IOException
+	{
+		int start;
+		int end;
+
+		String Range = req.getHTTPParam("Range");
+
+		start = 0;
+		end = (int) file.length() - 1;
+
+		if (Range != null)
+		{
+			Range = Range.substring(6);
+			String[] Ranges = Range.split(",");
+			if (Ranges.length > 0)
+			{
+				Ranges = Ranges[0].split("-");
+				if (Ranges.length > 0)
+				{
+					start = Util.strToInt(Ranges[0]);
+				}
+				if (Ranges.length > 1)
+				{
+					end = Util.strToInt(Ranges[1]);
+				}
+			}
+		}
+		setFileHead(file, start, end, res);
+	}
+
+	private void outputText(Server server, Response res, File file) throws IOException
+	{
+		FileInputStream fis = new FileInputStream(file);
+		InputStreamReader isr = new InputStreamReader(fis, server.currentConfig.defaultEncodingInput);
+		try
+		{
+			PrintWriter pw = res.getWriter();
+			char[] cbuff = new char[1024];
+			while (true)
+			{
+				int len = isr.read(cbuff);
+				if (len <= 0) break;
+				pw.write(cbuff, 0, len);
+			}
+		}
+		finally
+		{
+			isr.close();
+			fis.close();
+		}
+	}
+
+	private void outputImg(Response res, File file) throws IOException
+	{
+		FileInputStream fis = new FileInputStream(file);
+		try
+		{
+			OutputStream os = res.getOutputStream();
+			byte[] buff = new byte[1024];
+			while (true)
+			{
+				int len = fis.read(buff);
+				if (len <= 0) break;
+				os.write(buff, 0, len);
+			}
+		}
+		finally
+		{
+			fis.close();
+		}
+		res.setContentType("image");
+
 	}
 
 	private static void makeThumbNail(int wid, int hei, float q, File fis, OutputStream os) throws Exception
@@ -415,6 +390,7 @@ final class FileSystem
 
 		int sort2 = 0;
 
+		@Override
 		public int compare(File f1, File f2)
 		{
 			if (f1.isDirectory() && !f2.isDirectory())
@@ -523,20 +499,20 @@ final class FileSystem
 		out.println("	<td align = 'right'>");
 		out.println("	<a href='./?sort=size'>size</a>");
 		out.println("	</td>");
-		if (allowDel)
+		if (config.allowDel)
 		{
 			out.println("	<td>&nbsp;</td>");
 		}
 		out.println("</tr>");
 
-		if (!this.url.equals(req.getPath()))
+		if (!this.config.url.equals(req.getPath()))
 		{
 			out.println("<tr>");
 			out.println("	<td>");
 			out.println("		<a href='../'>../</a>");
 			out.println("	</td>");
 			out.println("	<td align = 'right'>&nbsp;</td>");
-			if (allowDel)
+			if (config.allowDel)
 			{
 				out.println("	<td>&nbsp;</td>");
 			}
@@ -566,7 +542,7 @@ final class FileSystem
 			out.println("		" + fmt.format(f.length()) + "");
 			total += f.length();
 			out.println("	</td>");
-			if (allowDel)
+			if (config.allowDel)
 			{
 				if (f.isDirectory())
 				{
@@ -584,14 +560,14 @@ final class FileSystem
 		out.println("<tr>");
 		out.println("	<td>total:</td>");
 		out.println("	<td align = 'right'>" + fmt.format(total) + "</td>");
-		if (allowDel)
+		if (config.allowDel)
 		{
 			out.println("	<td>&nbsp;</td>");
 		}
 
 		out.println("</tr>");
 
-		if (allowUpLoad)
+		if (config.allowUpLoad)
 		{
 			out.println("<form action = './' method = 'post' enctype='multipart/form-data'>");
 			out.println("<tr>");
@@ -599,7 +575,7 @@ final class FileSystem
 			out.println("		upload: <input type = file name = 'file'>");
 			out.println("	</td>");
 			out.println("	<td align = 'right'><input type = submit value = upload></td>");
-			if (allowDel)
+			if (config.allowDel)
 			{
 				out.println("	<td>&nbsp;</td>");
 			}
@@ -641,15 +617,22 @@ final class FileSystem
 
 	boolean isExist(String req, Server server)
 	{
-		String fn = req.substring(url.length());
-
-		File file = new File(rootPath + fn.replace("/", Server.SEP));
+		String fn = req.substring(config.url.length());
+		File file;
+		if (config.rootPath.endsWith(Server.SEP))
+		{
+			file = new File(config.rootPath + fn.replace("/", Server.SEP));
+		}
+		else
+		{
+			file = new File(config.rootPath + Server.SEP + fn.replace("/", Server.SEP));
+		}
 
 		if (file.exists())
 		{
 			if (file.isDirectory())
 			{
-				if (allowList)
+				if (config.allowList)
 				{
 					return true;
 				}
@@ -674,6 +657,7 @@ final class FileSystem
 		filename = filename.toLowerCase();
 		return (filename.endsWith(".html") || filename.endsWith(".htm") || filename.endsWith(".js"));
 	}
+
 	private boolean isImg(String filename)
 	{
 		filename = filename.toLowerCase();

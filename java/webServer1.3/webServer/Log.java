@@ -5,9 +5,9 @@ import java.io.PrintStream;
 
 public class Log
 {
-	private static PrintStream log = null;
+	private static PrintStream log = System.out;
 
-	static void initLog(String logInFile)
+	public static void initLog(String logInFile)
 	{
 		try
 		{

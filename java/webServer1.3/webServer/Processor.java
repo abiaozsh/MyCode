@@ -384,7 +384,7 @@ final class Processor extends Thread
 								}
 								head[k] = b[lastIndex + k];
 							}
-							String sHead = new String(head, 0, headLength, server.currentConfig.getDefaultEncoding());
+							String sHead = new String(head, 0, headLength, server.currentConfig.defaultEncodingOutput);
 							byte[] data = null;
 							if (len - headLength - 4 > 0)
 							{

@@ -166,7 +166,7 @@ public class Response
             }
             else
             {
-                this.characterEncoding = server.currentConfig.getDefaultEncoding();
+                this.characterEncoding = server.currentConfig.defaultEncodingOutput;
             }
             if (GZIP)
             {

@@ -1,8 +1,34 @@
-package webServer;
+package sample;
 
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
+
+import webServer.ConfigServlet;
+import webServer.Request;
+import webServer.Response;
+import webServer.Server;
+import webServer.ServerConfig;
+import webServer.Servlet;
+import webServer.ServletPack;
+import webServer.Session;
+import webServer.Util;
+import webServer.ServerConfig.FileSystem;
+import webServer.ServerConfig.JspProcessor;
+
+if (currentConfig.getConfigPageEnabled() && currentConfig.getConfigPageUrl() != null)
+{
+	ServletPack sp = new ServletPack();
+	sp.clazz = ConfigServlet.class;
+	sp.url = currentConfig.getConfigPageUrl();
+	servlets.put(currentConfig.getConfigPageUrl(), sp);
+}
+<configPage>
+<enabled>true</enabled>
+<url>/config</url>
+<userName>admin</userName>
+<passWord>uYCu8m0wTlCO+9yXSWeIoA==</passWord>
+</configPage>
 
 final class ConfigServlet extends Servlet
 {
