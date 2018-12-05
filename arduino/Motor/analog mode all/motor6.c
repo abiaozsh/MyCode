@@ -35,6 +35,10 @@ volatile uint8_t Startup = 0;
 volatile uint8_t Break = 0;
 volatile uint8_t onCurrLmt = 0;
 
+volatile uint8_t pwrOn = 0;
+volatile uint8_t pwrOff = 0;
+volatile uint8_t timerStatus = 0;
+
 uint16_t rpm;
 uint16_t Power = 0;
 uint16_t NextPower = 0;
@@ -126,16 +130,31 @@ inline void adj(){
 
 void startup(){
   Status = 1;
+ pwrOn = PWR_ON[Step];
+  pwrOff = PWR_OFF[Step];
+ 
+  //初始化定时器0
+  TCCR0A = 0;
+  TCCR0B = 1; // 1/1 8Mhz  31.250 Khz PWM
+  TIMSK0 |= _BV(OCIE0A) | _BV(TOIE0);
+  OCR0A = 0;
 
   uint8_t cnt = 0;
+  uint8_t total;
   
-  rpm = 12000;
-  
-  for(cnt=0;cnt<100;cnt++)
+  if((PINB & _BV(3)))
   {
-    uint16_t temp = (rpm>>2)+TCNT1;
-    while(TCNT1<temp);//换向后延迟15(22.5)度后检测“过零”
-
+    rpm = 10000;
+    total = 70;
+  }
+  else
+  {
+    rpm = 65000;
+    total = 200;
+  }
+  for(cnt=0;cnt<total;cnt++)
+  {
+    
     uint8_t tempStep = Step;
     //检测过零
     //{
@@ -149,60 +168,68 @@ void startup(){
     
     //检测到过零 开机 清定时器
     {
-      Power = NextPower;
-      if(Power)
+      cli();
+      pwrOn = PWR_ON[tempStep];
+      pwrOff = PWR_OFF[tempStep];
+      if(timerStatus){
+        PORT6O = pwrOn;
+      }else
       {
-        PORT6O = PWR_ON[tempStep];
-        PowerState = 1;
+        PORT6O = pwrOff;
       }
-      else
-      {
-        PORT6O = PWR_OFF[tempStep];
-        PowerState = 0;
-      }
-      //记录当前转速
+      sei();
+      //
       rpm = rpm - (rpm>>6) - 1;//TCNT1;
       //定时器清零
       TCNT1 = 0;//TIFR1 |= _BV(TOV1);timer reset //overflow flg reset
-      OCR1A = Power;
+      //OCR1A = Power;
     }
-    
-    //功率计算
-    NextPower = 0;
-    #ifdef CURRENT_LIMIT
-    if(onCurrLmt)
-    {
-      //onCurrLmt = 0;
-    }
-    else
-    {
-      _MaxPower();
-    }
-    #else
-    _MaxPower();
-    #endif
-    
     //等待30度
     while(TCNT1<(rpm>>1));
     
+    if(cnt==total-1)
+    {
+      OCR0A = 0;
+      TIMSK0 = 0;
+      timerStatus = 0;
+    }
+    else
+    {
+      OCR0A = aread;
+    }
     //换向
     {
       cli();
       Step = NextStep[Step];
       tempStep = Step;
-      if(PowerState)
+      pwrOn = PWR_ON[tempStep];
+      pwrOff = PWR_OFF[tempStep];
+      if(timerStatus){
+        PORT6O = pwrOn;
+      }else
       {
-        PORT6O = PWR_ON[tempStep];
-      }
-      else
-      {
-        PORT6O = PWR_OFF[tempStep];
+        PORT6O = pwrOff;
       }
       sei();
     }
+    
+    uint16_t temp = (rpm>>2)+TCNT1;
+    while(TCNT1<temp);//换向后延迟15(22.5)度后检测“过零”
   }
-  
-  
+
+  OCR0A = 0;
+  TIMSK0 = 0;
+  NextPower = 0;
+}
+
+ISR(TIM0_OVF_vect){
+  PORT6O = pwrOn;
+  timerStatus = 1;
+}
+
+ISR(TIM0_COMPA_vect){
+  PORT6O = pwrOff;
+  timerStatus = 0;
 }
 
 int main(void) {
@@ -239,9 +266,9 @@ int main(void) {
   sei();
   
   #ifdef SOFT_START_BREAK
-  while(aread>(128+32));
+  while(aread>(128+8));
   #else
-  while(aread>(32));
+  while(aread>(16));
   #endif
   
   //主循环
@@ -360,7 +387,7 @@ ISR(PCINT0_vect){
 ISR(ADC_vect){
   aread = ADCH;
   #ifdef SOFT_START_BREAK
-  if((!Status) && aread>(128+32)){
+  if((!Status) && aread>(128+8)){
     Startup = 1;
     noskip = 0;
   }
