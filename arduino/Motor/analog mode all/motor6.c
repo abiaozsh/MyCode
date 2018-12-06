@@ -4,15 +4,8 @@
 #include "../config.h"
 
 #define SOFT_START_BREAK
-//#define CURRENT_LIMIT
 
 #define POWER_IN 6
-
-
-#ifdef CURRENT_LIMIT
-#define PIN_CURLMT ((PINB & _BV(3)))
-#define PCINT_CURLMT _BV(PCINT11)
-#endif
 
 #ifdef SOFT_START_BREAK
 #else
@@ -33,7 +26,6 @@ volatile uint8_t Status = 0;
 volatile uint8_t noskip = 1;
 volatile uint8_t Startup = 0;
 volatile uint8_t Break = 0;
-volatile uint8_t onCurrLmt = 0;
 
 volatile uint8_t pwrOn = 0;
 volatile uint8_t pwrOff = 0;
@@ -108,29 +100,29 @@ inline void _MaxPower(){
 
 inline void adj(){
   NextPower = 0;
-  #ifdef CURRENT_LIMIT
-  if(onCurrLmt)
-  {
-    //onCurrLmt = 0;
-    return;
-  }
-  #endif
   if(Status)
   {
-    if(rpm>StartRpm)//too slow, halt
-    {
-      Status = 0;
+    if(Status>1){
+      Status--;
+      NextPower = 0;
     }
     else
     {
-      _MaxPower();
+      if(rpm>StartRpm)//too slow, halt
+      {
+        Status = 0;
+      }
+      else
+      {
+        _MaxPower();
+      }
     }
   }
 }
 
 void startup(){
-  Status = 1;
- pwrOn = PWR_ON[Step];
+  Status = 5;
+  pwrOn = PWR_ON[Step];
   pwrOff = PWR_OFF[Step];
  
   //初始化定时器0
@@ -195,7 +187,20 @@ void startup(){
     }
     else
     {
-      OCR0A = aread;
+      uint8_t temparead = aread;
+      #ifdef SOFT_START_BREAK
+      if(temparead>=128){
+        temparead = temparead - 128;
+        temparead = temparead << 1;
+        OCR0A = temparead;
+      }
+      else
+      {
+        OCR0A = 0;
+      }
+      #else
+        OCR0A = aread;
+      #endif
     }
     //换向
     {
@@ -244,12 +249,6 @@ int main(void) {
   #else
   GIMSK |= _BV(PCIE0);
   PCMSK0 |= PCINT_startBTN;//start button
-  #endif
-
-  #ifdef CURRENT_LIMIT
-  //初始化输入
-  GIMSK |= _BV(PCIE1);
-  PCMSK1 |= PCINT_CURLMT;
   #endif
 
   ADMUX = POWER_IN;
@@ -356,19 +355,6 @@ ISR(TIM1_COMPA_vect){
   PORT6O = PWR_OFF[Step];
   PowerState = 0;
 }
-
-#ifdef CURRENT_LIMIT
-ISR(PCINT1_vect){
-  if(PIN_CURLMT)
-  {
-    onCurrLmt = 1;
-  }
-  else
-  {
-    onCurrLmt = 0;
-  }
-}
-#endif
 
 #ifdef SOFT_START_BREAK
 #else
