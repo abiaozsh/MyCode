@@ -3,7 +3,7 @@
 #include <avr/interrupt.h>
 #include "../config.h"
 
-#define SOFT_START_BREAK
+//#define SOFT_START_BREAK
 
 #define POWER_IN 6
 
@@ -192,14 +192,16 @@ void startup(){
       if(temparead>=128){
         temparead = temparead - 128;
         temparead = temparead << 1;
+        temparead++;
         OCR0A = temparead;
       }
       else
       {
-        OCR0A = 0;
+        OCR0A = 1;
       }
       #else
-        OCR0A = aread;
+        temparead |= 1;
+        OCR0A = temparead;
       #endif
     }
     //»»Ïò
