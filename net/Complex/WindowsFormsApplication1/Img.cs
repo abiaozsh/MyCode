@@ -123,8 +123,9 @@ namespace WindowsFormsApplication1
 							for (int j = 0; j < Size; j++)
 							{
 								double s2 = 1.0 / Size;
-								double x = ((i - currentShiftX / scale) * 2 - Size) * s2;
-								double y = ((j - currentShiftY / scale) * 2 - Size) * s2;
+                                double scale1 = 1 / scale;
+                                double x = ((i - currentShiftX * scale1) * 2 - Size) * s2;
+                                double y = ((j - currentShiftY * scale1) * 2 - Size) * s2;
 								Complex z = new Complex(x * scale, y * scale);
 
 								var z1 = func(z);

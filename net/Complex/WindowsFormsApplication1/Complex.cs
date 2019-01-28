@@ -118,7 +118,7 @@ namespace WindowsFormsApplication1
 		{
 			double x = c.a;
 			double y = c.b;
-			double h = (Math.Atan2(y, x) + (Math.PI)) / (Math.PI * 2);
+            double h = (Math.Atan2(y, x) + (Math.PI)) / (Math.PI) * 3;
 			double d = Math.Sqrt(x * x + y * y);
 			double v = Math.Atan(d) / Math.PI * 2;
 			double s;
@@ -132,15 +132,13 @@ namespace WindowsFormsApplication1
 				s = (3 + (l - Math.Floor(l))) / 4;
 			}
 
+			double r = 0.0;
+			double g = 0.0;
 			double b = 0.0;
 
-			double g = 0.0;
+			int flag = (int)Math.Abs(h);
 
-			double r = 0.0;
-
-			int flag = (int)Math.Abs(h * 6);
-
-			double f = h * 6 - flag;
+			double f = h - flag;
 
 			double p = v * (1 - s);
 
