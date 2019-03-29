@@ -174,7 +174,9 @@ namespace FileTool
 		public void makeAvatar(TFolder folder, string path)
 		{
 			{
-				string temp = path + folder.getFullPath();
+				string fullpath = folder.getFullPath();
+				fullpath = fullpath.Replace(':', '-');
+				string temp = path + fullpath;
 				if (!Directory.Exists(temp))
 				{
 					Directory.CreateDirectory(temp);
@@ -183,12 +185,14 @@ namespace FileTool
 			foreach (var item in folder.fileList)
 			{
 				var fullpath = item.getFullPath();
+				fullpath = fullpath.Replace(':', '-');
 				var temp = path + fullpath;
 				string md5 = "";
 				if (md5List.ContainsKey(fullpath))
 				{
 					md5 = md5List[fullpath];
 				}
+				Console.WriteLine(temp);
 				FileStream fs = new FileStream(temp, FileMode.CreateNew, FileAccess.Write);
 				StreamWriter sw = new StreamWriter(fs);
 				sw.WriteLine(md5);
@@ -204,7 +208,7 @@ namespace FileTool
 
 		public void UpdateFolder()
 		{
-			DirectoryInfo di = new DirectoryInfo(path);
+			DirectoryInfo di = new DirectoryInfo(path + name);
 
 			TFolder tFolder = GetFolder(di);
 
@@ -266,7 +270,14 @@ namespace FileTool
 			try
 			{
 				tf.setDatetime(di.LastWriteTime);
-				tf.name = di.Name;
+				if (di.Name.EndsWith("\\"))
+				{
+					tf.name = di.Name.Substring(0, di.Name.Length - 1);
+				}
+				else
+				{
+					tf.name = di.Name;
+				}
 				long size = 0;
 				int filecount = 0;
 				foreach (DirectoryInfo di2 in di.GetDirectories())

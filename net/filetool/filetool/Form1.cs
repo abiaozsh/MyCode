@@ -651,6 +651,14 @@ namespace filetool
 		private void findToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			//find(roots[0], "bbtTheme.mp3");
+			var a = root;
+			Dictionary<String, String> temp = new Dictionary<string,string>();
+			foreach (var key in root.md5List.Keys) {
+				var s = key;
+				s = root.name + s.Substring(3);
+				temp.Add(s, root.md5List[key]);
+			}
+			root.md5List = temp;
 		}
 
 		void find(TFolder folder, string findtxt)
@@ -685,7 +693,7 @@ namespace filetool
 		{
 			if (string.IsNullOrEmpty(filePath))
 			{
-				OpenFileDialog d = new OpenFileDialog();
+                SaveFileDialog d = new SaveFileDialog();
 				d.InitialDirectory = Application.ExecutablePath.Replace("FileTool.EXE", "");
 				d.ShowDialog();
 				if (d.FileNames.Length > 0)
