@@ -121,7 +121,7 @@ inline void adj(){
 }
 
 void startup(){
-  Status = 5;
+  Status = 6;
   pwrOn = PWR_ON[Step];
   pwrOff = PWR_OFF[Step];
  
@@ -144,10 +144,10 @@ void startup(){
     rpm = 65000;
     total = 200;
   }
+  
+  uint8_t tempStep = Step;
   for(cnt=0;cnt<total;cnt++)
   {
-    
-    uint8_t tempStep = Step;
     //检测过零
     //{
     //  uint8_t valbase = DigitReadBaseVal[tempStep];
@@ -200,7 +200,9 @@ void startup(){
         OCR0A = 1;
       }
       #else
-        temparead |= 1;
+        if(temparead<32){
+			temparead = 32;
+		}
         OCR0A = temparead;
       #endif
     }
@@ -273,6 +275,7 @@ int main(void) {
   #endif
   
   //主循环
+  uint8_t tempStep = Step;
   for(;;) 
   {
     //启动序列
@@ -280,9 +283,9 @@ int main(void) {
     {
       startup();
       Startup=0;
+      tempStep = Step;
     }
 
-    uint8_t tempStep = Step;
     //检测过零
     {
       uint8_t valbase = DigitReadBaseVal[tempStep];
