@@ -45,6 +45,9 @@ var initStage = function(){
   }
 };
 
+var getPos = function(x,y){
+  return {x:Math.ceil(x/64-5),y:Math.ceil(5-y/64)};
+}
 
 var drawimg = function(img,x,y){
   ctx.drawImage(img,(x+4)*64,(5-y)*64);

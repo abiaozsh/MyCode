@@ -1,0 +1,122 @@
+<html>
+<body>
+<style>
+input {font:48px Arial;}
+.cur {padding:5px;background-color:#0F0;}
+</style>
+<table border=1>
+  <tr>
+    <td>
+      <div>
+        <img id="t" src="t.png" style="transform: rotate(270deg);"></img><br/>
+        <img id="a" src="apple.png"></img><br/>
+        <img id="m" src="m.png"></img>
+      </div>
+    </td>
+    <td>
+      <div>
+        <textarea id="data" style="height:500px;"></textarea>
+        <div id="score">
+        </div>
+      </div>
+    </td>
+    <td>
+      <canvas id="Canvas" width="640" height="640"></canvas>
+    </td>
+  </tr>
+</table>
+
+<script src="jquery-3.3.1.js"></script>
+<script src="comm.js"></script>
+<script>
+var c = $("#Canvas")[0];
+var ctx=c.getContext("2d");
+
+var score = 0;
+
+var scene = {
+  s:{x:0,y:0},
+  a:[{x:0,y:0}],
+  m:[{x:0,y:0}]
+};
+var cur_t = {x:scene.s.x,y:scene.s.y};
+var direction = -Math.PI/2;
+var type = "";
+
+$("#t").bind("click",function(){
+  $("#t").removeClass("cur");
+  $("#a").removeClass("cur");
+  $("#m").removeClass("cur");
+  $("#t").addClass("cur");
+  type = "t";
+});
+$("#a").bind("click",function(){
+  $("#t").removeClass("cur");
+  $("#a").removeClass("cur");
+  $("#m").removeClass("cur");
+  $("#a").addClass("cur");
+  type = "a";
+});
+$("#m").bind("click",function(){
+  $("#t").removeClass("cur");
+  $("#a").removeClass("cur");
+  $("#m").removeClass("cur");
+  $("#m").addClass("cur");
+  type = "m";
+});
+
+$("#Canvas").bind("contextmenu",function(e){
+  return false;
+});
+$("#Canvas").bind("mousedown",function(e){
+  var pos = getPos(e.offsetX,e.offsetY);
+  
+  if(type == "t"){
+    scene.s = pos;
+    cur_t = {x:scene.s.x,y:scene.s.y};
+  }else if(type == "a" || type == "m"){
+    var temp;
+    var proc = function(item){
+      if(item.x==pos.x && item.y==pos.y){
+      }else{
+        temp.push(item);
+      }
+      return false;
+    };
+    temp = [];
+    $.each(scene.a,function(i,item){
+      proc(item);
+    });
+    scene.a = temp;
+    temp = [];
+    $.each(scene.m,function(i,item){
+      proc(item);
+    });
+    scene.m = temp;
+    if(e.button==0){
+      scene[type].push(pos);
+    }
+  }
+
+  $("#data").val(JSON.stringify(scene));
+
+  refresh();
+  return false;
+});
+
+$("#data").bind("blur",function(){
+  try{
+    scene = JSON.parse($("#data").val());
+    refresh();
+  }catch(e){
+  }
+});
+
+var refresh = function(){
+  drawScene(cur_t.x,cur_t.y,direction);
+};
+refresh();
+
+</script>
+</body>
+</html>

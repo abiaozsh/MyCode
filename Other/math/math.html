@@ -22,16 +22,20 @@ input {font:48px Arial;}
         <div id="list">
         </div>
         <input type="button" id="btnstart" value="¿ªÊ¼"></input><br/>
-        <div id="score">
-        </div>
         
-        <div style="display:none;">
+        <div>
         <input type="button" id="win" value="win"></input>
         </div>
       </div>
     </td>
     <td>
       <canvas id="Canvas" width="640" height="640"></canvas>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3">
+      <div id="score">
+      </div>
     </td>
   </tr>
 </table>
@@ -51,18 +55,22 @@ var score = 0;
 
 var scenes = [
 {
+  s:{x:0,y:0},
   a:[{x:0,y:2}],
   m:[{x:3,y:3},{x:-3,y:3},{x:1,y:3}]
 },
 {
-  a:[{x:2,y:0}],
-  m:[{x:3,y:3},{x:-3,y:3},{x:1,y:3}]
+  "s":{"x":0,"y":1},
+  "a":[{"x":2,"y":0}],
+  "m":[{"x":3,"y":3},{"x":-3,"y":3},{"x":1,"y":3}]
 },
 {
+  s:{x:0,y:0},
   a:[{x:1,y:2}],
   m:[{x:3,y:3},{x:-3,y:3},{x:1,y:3}]
 },
 {
+  s:{x:0,y:0},
   a:[{x:0,y:3}],
   m:[{x:0,y:1}]
 }
@@ -89,7 +97,7 @@ queue.list = function(){
 };
 
 
-var cur_t = {x:0,y:0};
+var cur_t = {x:scene.s.x,y:scene.s.y};
 var direction = -Math.PI/2;
 
 
@@ -205,7 +213,7 @@ var winAnimation = function(){
     $("#score").append("<img src='flg.png'></img>");
   }
   scene = scenes[score];
-  cur_t = {x:0,y:0};
+  cur_t = {x:scene.s.x,y:scene.s.y};
   direction = -Math.PI/2;
   drawScene(cur_t.x,cur_t.y,direction);
 
