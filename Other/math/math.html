@@ -22,10 +22,8 @@ input {font:48px Arial;}
         <div id="list">
         </div>
         <input type="button" id="btnstart" value="开始"></input><br/>
-        
-        <div>
-        <input type="button" id="win" value="win"></input>
-        </div>
+        <input type="button" id="win" value="跳过"></input><br/>
+        <input type="button" id="back" value="返回"></input>
       </div>
     </td>
     <td>
@@ -73,7 +71,8 @@ var scenes = [
   s:{x:0,y:0},
   a:[{x:0,y:3}],
   m:[{x:0,y:1}]
-}
+},
+{"s":{"x":0,"y":0},"a":[{"x":4,"y":1}],"m":[{"x":2,"y":1},{"x":3,"y":1},{"x":2,"y":2},{"x":5,"y":2},{"x":5,"y":1},{"x":5,"y":0},{"x":3,"y":0},{"x":2,"y":0},{"x":3,"y":2}]}
 ];
 var scene = scenes[score];
 
@@ -204,10 +203,19 @@ var processHit = function(new_t){
 };
 
 $("#win").bind("click",function(){
-  winAnimation();
+  winAnimation(1);
 });
-var winAnimation = function(){
-  score++;
+$("#back").bind("click",function(){
+  winAnimation(-1);
+});
+var winAnimation = function(n){
+  if(n<0 && score>0){
+    score+=n;
+  }
+  if(n>0 && score<scenes.length){
+    score+=n;
+  }
+   
   $("#score").html("");
   for(var i=0;i<score;i++){
     $("#score").append("<img src='flg.png'></img>");
