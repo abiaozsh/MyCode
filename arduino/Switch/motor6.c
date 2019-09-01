@@ -44,6 +44,10 @@ volatile uint32_t timer;
 
 int main(void) {
 	CLKPR = 128;CLKPR = 0;
+	//for(;;){
+	//STAOn;
+	//STAOff;
+	//}
   SerialInit();
   TimerInit();
   MCUCR |= _BV(PUD);
