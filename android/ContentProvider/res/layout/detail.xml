@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    <TextView android:id="@+id/detail_phone"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="phone"
+        android:textColor="#8B7765"/>
+    <ListView android:id="@+id/detail_listview"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/detail_phone"
+        android:divider="@null"></ListView>
+
+</RelativeLayout>
