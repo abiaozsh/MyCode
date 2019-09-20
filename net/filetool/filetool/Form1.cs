@@ -53,6 +53,7 @@ namespace filetool
 			this.updateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.setLocationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.md5ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.addMd5ListToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.makeMd5ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -67,6 +68,7 @@ namespace filetool
 			this.findToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.verifyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.makeAvatarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.testToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -78,9 +80,9 @@ namespace filetool
 			// treeView1
 			// 
 			this.treeView1.AllowDrop = true;
-			this.treeView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-			| System.Windows.Forms.AnchorStyles.Left)
-			| System.Windows.Forms.AnchorStyles.Right)));
+			this.treeView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.treeView1.Location = new System.Drawing.Point(0, 4);
 			this.treeView1.Name = "treeView1";
 			this.treeView1.Size = new System.Drawing.Size(370, 314);
@@ -89,9 +91,9 @@ namespace filetool
 			// 
 			// splitContainer1
 			// 
-			this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-			| System.Windows.Forms.AnchorStyles.Left)
-			| System.Windows.Forms.AnchorStyles.Right)));
+			this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.splitContainer1.Location = new System.Drawing.Point(2, 28);
 			this.splitContainer1.Name = "splitContainer1";
 			// 
@@ -109,9 +111,9 @@ namespace filetool
 			// dataGridView1
 			// 
 			this.dataGridView1.AllowDrop = true;
-			this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-			| System.Windows.Forms.AnchorStyles.Left)
-			| System.Windows.Forms.AnchorStyles.Right)));
+			this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.dataGridView1.Location = new System.Drawing.Point(3, 4);
 			this.dataGridView1.Name = "dataGridView1";
@@ -134,7 +136,8 @@ namespace filetool
             this.reportDupoToolStripMenuItem,
             this.findToolStripMenuItem,
             this.verifyToolStripMenuItem,
-            this.makeAvatarToolStripMenuItem});
+            this.makeAvatarToolStripMenuItem,
+            this.testToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
 			this.menuStrip1.Size = new System.Drawing.Size(801, 25);
@@ -147,7 +150,8 @@ namespace filetool
             this.createToolStripMenuItem1,
             this.updateToolStripMenuItem,
             this.openToolStripMenuItem,
-            this.saveToolStripMenuItem});
+            this.saveToolStripMenuItem,
+            this.setLocationToolStripMenuItem});
 			this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
 			this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 21);
 			this.fileToolStripMenuItem.Text = "file";
@@ -155,30 +159,37 @@ namespace filetool
 			// createToolStripMenuItem1
 			// 
 			this.createToolStripMenuItem1.Name = "createToolStripMenuItem1";
-			this.createToolStripMenuItem1.Size = new System.Drawing.Size(117, 22);
+			this.createToolStripMenuItem1.Size = new System.Drawing.Size(142, 22);
 			this.createToolStripMenuItem1.Text = "create";
 			this.createToolStripMenuItem1.Click += new System.EventHandler(this.createToolStripMenuItem1_Click);
 			// 
 			// updateToolStripMenuItem
 			// 
 			this.updateToolStripMenuItem.Name = "updateToolStripMenuItem";
-			this.updateToolStripMenuItem.Size = new System.Drawing.Size(117, 22);
+			this.updateToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
 			this.updateToolStripMenuItem.Text = "update";
 			this.updateToolStripMenuItem.Click += new System.EventHandler(this.updateToolStripMenuItem_Click);
 			// 
 			// openToolStripMenuItem
 			// 
 			this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-			this.openToolStripMenuItem.Size = new System.Drawing.Size(117, 22);
+			this.openToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
 			this.openToolStripMenuItem.Text = "open";
 			this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click_1);
 			// 
 			// saveToolStripMenuItem
 			// 
 			this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-			this.saveToolStripMenuItem.Size = new System.Drawing.Size(117, 22);
+			this.saveToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
 			this.saveToolStripMenuItem.Text = "save";
 			this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
+			// 
+			// setLocationToolStripMenuItem
+			// 
+			this.setLocationToolStripMenuItem.Name = "setLocationToolStripMenuItem";
+			this.setLocationToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+			this.setLocationToolStripMenuItem.Text = "setLocation";
+			this.setLocationToolStripMenuItem.Click += new System.EventHandler(this.setLocationToolStripMenuItem_Click);
 			// 
 			// md5ToolStripMenuItem
 			// 
@@ -194,28 +205,28 @@ namespace filetool
 			// addMd5ListToolStripMenuItem
 			// 
 			this.addMd5ListToolStripMenuItem.Name = "addMd5ListToolStripMenuItem";
-			this.addMd5ListToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.addMd5ListToolStripMenuItem.Size = new System.Drawing.Size(145, 22);
 			this.addMd5ListToolStripMenuItem.Text = "addMd5List";
 			this.addMd5ListToolStripMenuItem.Click += new System.EventHandler(this.addMd5ListToolStripMenuItem_Click);
 			// 
 			// makeMd5ToolStripMenuItem
 			// 
 			this.makeMd5ToolStripMenuItem.Name = "makeMd5ToolStripMenuItem";
-			this.makeMd5ToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.makeMd5ToolStripMenuItem.Size = new System.Drawing.Size(145, 22);
 			this.makeMd5ToolStripMenuItem.Text = "makeMd5";
 			this.makeMd5ToolStripMenuItem.Click += new System.EventHandler(this.makeMd5ToolStripMenuItem_Click_1);
 			// 
 			// stopMakeToolStripMenuItem
 			// 
 			this.stopMakeToolStripMenuItem.Name = "stopMakeToolStripMenuItem";
-			this.stopMakeToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.stopMakeToolStripMenuItem.Size = new System.Drawing.Size(145, 22);
 			this.stopMakeToolStripMenuItem.Text = "stopMake";
 			this.stopMakeToolStripMenuItem.Click += new System.EventHandler(this.stopMakeToolStripMenuItem_Click);
 			// 
 			// hashReportToolStripMenuItem
 			// 
 			this.hashReportToolStripMenuItem.Name = "hashReportToolStripMenuItem";
-			this.hashReportToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.hashReportToolStripMenuItem.Size = new System.Drawing.Size(145, 22);
 			this.hashReportToolStripMenuItem.Text = "hashReport";
 			this.hashReportToolStripMenuItem.Click += new System.EventHandler(this.hashReportToolStripMenuItem_Click_1);
 			// 
@@ -286,6 +297,13 @@ namespace filetool
 			this.makeAvatarToolStripMenuItem.Text = "makeAvatar";
 			this.makeAvatarToolStripMenuItem.Click += new System.EventHandler(this.makeAvatarToolStripMenuItem_Click);
 			// 
+			// testToolStripMenuItem
+			// 
+			this.testToolStripMenuItem.Name = "testToolStripMenuItem";
+			this.testToolStripMenuItem.Size = new System.Drawing.Size(41, 21);
+			this.testToolStripMenuItem.Text = "test";
+			this.testToolStripMenuItem.Click += new System.EventHandler(this.testToolStripMenuItem_Click);
+			// 
 			// Form1
 			// 
 			this.AllowDrop = true;
@@ -348,6 +366,8 @@ namespace filetool
 		private ToolStripMenuItem stopMakeToolStripMenuItem;
 		private ToolStripMenuItem verifyToolStripMenuItem;
 		private ToolStripMenuItem makeAvatarToolStripMenuItem;
+		private ToolStripMenuItem setLocationToolStripMenuItem;
+		private ToolStripMenuItem testToolStripMenuItem;
 		bool sortbyMd5;
 
 		public Form1()
@@ -650,15 +670,15 @@ namespace filetool
 
 		private void findToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			//find(roots[0], "bbtTheme.mp3");
-			var a = root;
-			Dictionary<String, String> temp = new Dictionary<string,string>();
-			foreach (var key in root.md5List.Keys) {
-				var s = key;
-				s = root.name + s.Substring(3);
-				temp.Add(s, root.md5List[key]);
+			Form4 form4 = new Form4();
+			form4.ShowDialog();
+			string text = form4.path;
+			if (!string.IsNullOrEmpty(text))
+			{
+				dataGridView1.Rows.Clear();
+				find(root, text);
+				AutoSizeColumn(dataGridView1);
 			}
-			root.md5List = temp;
 		}
 
 		void find(TFolder folder, string findtxt)
@@ -667,11 +687,19 @@ namespace filetool
 			{
 				if (item.name.Contains(findtxt))
 				{
-					MessageBox.Show(item.getFullPath());
+					DataGridViewRow row = new DataGridViewRow();
+					row.CreateCells(dataGridView1, item.getFullPath(), tostring(item.size), item.getDatetime().ToString("yyyy-MM-dd HH:mm:ss"), md5);
+					dataGridView1.Rows.Add(row);
 				}
 			}
 			foreach (var item in folder.folderList)
 			{
+				if (item.name.Contains(findtxt))
+				{
+					DataGridViewRow row = new DataGridViewRow();
+					row.CreateCells(dataGridView1, item.getFullPath(), tostring(item.size), item.getDatetime().ToString("yyyy-MM-dd HH:mm:ss"), md5);
+					dataGridView1.Rows.Add(row);
+				}
 				find(item, findtxt);
 			}
 		}
@@ -693,7 +721,7 @@ namespace filetool
 		{
 			if (string.IsNullOrEmpty(filePath))
 			{
-                SaveFileDialog d = new SaveFileDialog();
+				SaveFileDialog d = new SaveFileDialog();
 				d.InitialDirectory = Application.ExecutablePath.Replace("FileTool.EXE", "");
 				d.ShowDialog();
 				if (d.FileNames.Length > 0)
@@ -793,6 +821,31 @@ namespace filetool
 			string path = d.SelectedPath + "\\";
 
 			root.makeAvatar(root, path);
+		}
+
+		private void setLocationToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			if (root != null)
+			{
+				Form4 form4 = new Form4();
+				form4.path = root.path;
+				form4.ShowDialog();
+				root.path = form4.path;
+			}
+		}
+
+		private void testToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			//var a = root;
+			//Dictionary<String, String> temp = new Dictionary<string, string>();
+			//foreach (var key in root.md5List.Keys)
+			//{
+			//	var s = key;
+			//	s = root.name + s.Substring(3);
+			//	temp.Add(s, root.md5List[key]);
+			//}
+			//root.md5List = temp;
+
 		}
 	}
 
