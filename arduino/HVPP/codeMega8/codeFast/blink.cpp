@@ -469,50 +469,52 @@ void doWrite(){
 }
 
 void powerON(){
-      VCC_ON;
-      V12_ON;
+      //VCC_ON;
+      //V12_ON;
+      //
+	  //DATA_IN;
+    
+    BS2_L;
+	BS2_OUT;
+	CLK_L;
+	CLK_OUT;
+    O_E_H;
+	O_E_OUT;
+    W_R_H;
+	W_R_OUT;
+    wait();
+	
+    PGL_L;
+	PGL_OUT;
+    XA1_L;
+	XA1_OUT;
+    XA0_L;
+	XA0_OUT;
+    BS1_L;
+	BS1_OUT;
+    wait();
 
-//	  DATA_IN;
-//	
-//    PGL_L;
-//	PGL_OUT;
-//    XA1_L;
-//	XA1_OUT;
-//    XA0_L;
-//	XA0_OUT;
-//    BS1_L;
-//	BS1_OUT;
-//    wait();
-//
-//    //2. Apply 4.5V - 5.5V between VCC and GND simultaneously as 11.5V - 12.5V is applied to RESET
-//    //port.Write("x");// vcc * v12 on
-//    VCC_ON;
-//    V12_ON;
-//    
-//    BS2_L;
-//	BS2_OUT;
-//	CLK_L;
-//	CLK_OUT;
-//    O_E_H;
-//	O_E_OUT;
-//    W_R_H;
-//	W_R_OUT;
-//    wait();
+    //2. Apply 4.5V - 5.5V between VCC and GND simultaneously as 11.5V - 12.5V is applied to RESET
+    //port.Write("x");// vcc * v12 on
+    VCC_ON;
+    V12_ON;
 
     //3. Wait 100ns
     wait();
 }
 
 void powerOFF(){
-	//DATA_IN;
-	//PGL_IN;
-	//XA0_IN;
-	//XA1_IN;
-	//BS1_IN;
-	//BS2_IN;
-	//CLK_IN;
-	//O_E_IN;
-	//W_R_IN;
+	DATA_IN;
+	PGL_IN;
+	XA0_IN;
+	XA1_IN;
+	BS1_IN;
+	BS2_IN;
+	CLK_IN;
+	O_E_IN;
+	W_R_IN;
+	
+	
     VCC_OFF;
     V12_OFF;
 }
@@ -708,32 +710,32 @@ int main()
 {
 	TimerInit(); //do later
 	SerialInit();
-    //VCC_OFF;
-    //V12_OFF;
-	//VCC_OUT;
-	//V12_OUT;
+    VCC_OFF;
+    V12_OFF;
+	VCC_OUT;
+	V12_OUT;
 	
-  DATA_IN  ;
-  CLK_L    ;
-  CLK_OUT  ;
-  BS2_L    ;
-  BS2_OUT  ;
-  VCC_OFF  ;
-  VCC_OUT  ;
-  V12_OFF  ;
-  V12_OUT  ;
-  O_E_H    ;
-  O_E_OUT  ;
-  W_R_H    ;
-  W_R_OUT  ;
-  BS1_L    ;
-  BS1_OUT  ;
-  XA0_L    ;
-  XA0_OUT  ;
-  XA1_L    ;
-  XA1_OUT  ;
-  PGL_L    ;
-  PGL_OUT  ;
+  //DATA_IN  ;
+  //CLK_L    ;
+  //CLK_OUT  ;
+  //BS2_L    ;
+  //BS2_OUT  ;
+  //VCC_OFF  ;
+  //VCC_OUT  ;
+  //V12_OFF  ;
+  //V12_OUT  ;
+  //O_E_H    ;
+  //O_E_OUT  ;
+  //W_R_H    ;
+  //W_R_OUT  ;
+  //BS1_L    ;
+  //BS1_OUT  ;
+  //XA0_L    ;
+  //XA0_OUT  ;
+  //XA1_L    ;
+  //XA1_OUT  ;
+  //PGL_L    ;
+  //PGL_OUT  ;
 
 
 	for (;;) {
