@@ -1,0 +1,50 @@
+328p
+8io data 	pin2~pin9
+in  rdy		a0
+out 5v		a1
+out 12v		a2
+
+595 10 11 12 13
+
+out clockPB6	595 0
+out !oe  		595 1
+out !wr		595 2
+out bs1		595 3
+out xa0		595 4
+out xa1		595 5
+out pagel		595 6
+out bs2		595 7
+
+
+
+
+
+atmega8p
+8io pb data
+pb0		PB0
+pb1		PB1
+pb2		PB2
+pb3		PB3
+pb4		PB4
+pb5		PB5
+pb6		PC0
+pb7		PC1
+
+pc0 in  rdy	PD1
+pc1 out clock	PB6
+pc2 out bs2	PC2
+pc3 out 5v
+pc4 out 12v
+
+pd0 rxd		usb txd
+pd1 txd		usb rxd
+
+pd2 out !oe	PD2
+pd3 out !wr	PD3
+pd4 out bs1	PD4
+pd5 out xa0	PD5
+pd6 out xa1	PD6
+pd7 out pagel	PD7
+
+
+

@@ -1,0 +1,77 @@
+1  PD1
+	TXD (USART Output Pin)
+	PCINT17 (Pin Change Interrupt 17)
+0  PD0
+	RXD (USART Input Pin)
+	PCINT16 (Pin Change Interrupt 16)
+
+
+
+13 PB5
+	SCK (SPI Bus Master clock Input)
+	PCINT5 (Pin Change Interrupt 5)
+12 PB4
+	MISO (SPI Bus Master Input/Slave Output)
+	PCINT4 (Pin Change Interrupt 4)
+11 PB3
+pwm	MOSI (SPI Bus Master Output/Slave Input)
+	OC2A (Timer/Counter2 Output Compare Match A Output)
+	PCINT3 (Pin Change Interrupt 3)
+10 PB2
+	SS (SPI Bus Master Slave select)
+	OC1B (Timer/Counter1 Output Compare Match B Output)
+	PCINT2 (Pin Change Interrupt 2)
+9  PB1
+	OC1A (Timer/Counter1 Output Compare Match A Output)
+	PCINT1 (Pin Change Interrupt 1)
+8  PB0
+	ICP1 (Timer/Counter1 Input Capture Input)
+	CLKO (Divided System Clock Output)
+	PCINT0 (Pin Change Interrupt 0)
+
+
+
+7  PD7
+	AIN1 (Analog Comparator Negative Input)
+	PCINT23 (Pin Change Interrupt 23)
+6  PD6
+pwm	AIN0 (Analog Comparator Positive Input)
+	OC0A (Timer/Counter0 Output Compare Match A Output)
+	PCINT22 (Pin Change Interrupt 22)
+5  PD5
+pwm	T1 (Timer/Counter 1 External Counter Input)
+	OC0B (Timer/Counter0 Output Compare Match B Output)
+	PCINT21 (Pin Change Interrupt 21)
+4  PD4
+	XCK (USART External Clock Input/Output)
+	T0 (Timer/Counter 0 External Counter Input)
+	PCINT20 (Pin Change Interrupt 20)
+3  PD3
+pwm	INT1 (External Interrupt 1 Input)
+	OC2B (Timer/Counter2 Output Compare Match B Output)
+	PCINT19 (Pin Change Interrupt 19)
+2  PD2
+	INT0 (External Interrupt 0 Input)
+	PCINT18 (Pin Change Interrupt 18)
+
+A5 PC5
+	ADC5 (ADC Input Channel 5)
+	SCL (2-wire Serial Bus Clock Line)
+	PCINT13 (Pin Change Interrupt 13)
+A4 PC4
+	ADC4 (ADC Input Channel 4)
+	SDA (2-wire Serial Bus Data Input/Output Line)
+	PCINT12 (Pin Change Interrupt 12)
+A3 PC3
+	ADC3 (ADC Input Channel 3)
+	PCINT11 (Pin Change Interrupt 11)
+A2 PC2
+	ADC2 (ADC Input Channel 2)
+	PCINT10 (Pin Change Interrupt 10)
+A1 PC1
+	ADC1 (ADC Input Channel 1)
+	PCINT9 (Pin Change Interrupt 9)
+A0 PC0
+	ADC0 (ADC Input Channel 0)
+	PCINT8 (Pin Change Interrupt 8)
+

@@ -1,0 +1,176 @@
+XA1 XA0 Action when XTAL1 is Pulsed
+0 0 Load Flash or EEPROM Address (High or low address byte determined by BS1)
+0 1 Load Data (High or Low data byte for Flash determined by BS1)
+1 0 Load Command
+1 1 No Action, Idle
+
+PAGEL	0
+XA1		0
+XA0		0
+BS1		0
+
+
+Reading the Signature
+Bytes
+The algorithm for reading the Signature bytes is as follows (refer to “Programming the Flash” on
+page 222 for details on Command and Address loading):
+1. A: Load Command “0000 1000”
+2. B: Load Address Low byte (0x00 - 0x02)
+3. Set OE to “0”, and BS1 to “0”. The selected Signature byte can now be read at DATA.
+4. Set OE to “1”
+
+Signature Bytes All Atmel microcontrollers have a 3-byte signature code which identifies the device. This code
+can be read in both Serial and Parallel mode, also when the device is locked. The three bytes
+reside in a separate address space.
+For the ATmega8 the signature bytes are:
+1. 0x000: 0x1E (indicates manufactured by Atmel)
+2. 0x001: 0x93 (indicates 8KB Flash memory)
+3. 0x002: 0x07 (indicates ATmega8 device)
+
+
+
+1. Set Prog_enable pins listed in Table 92 on page 220 to “0000”
+2. Apply 4.5V - 5.5V between VCC and GND simultaneously as 11.5V - 12.5V is applied to
+RESET
+3. Wait 100ns
+4. Re-program the fuses to ensure that External Clock is selected as clock source
+(CKSEL3:0 = 0’b0000) and RESET pin is activated (RSTDISBL unprogrammed). If Lock
+Bits are programmed, a chip erase command must be executed before changing the
+fuses
+5. Exit Programming mode by power the device down or by bringing RESET pin to 0’b0
+6. Entering Programming mode with the original algorithm, as described above
+
+Enter Programming
+Mode
+The following algorithm puts the device in Parallel Programming mode:
+1. Apply 4.5V - 5.5V between VCC and GND, and wait at least 100μs
+2. Set RESET to “0” and toggle XTAL1 at least 6 times
+3. Set the Prog_enable pins listed in Table 92 on page 220 to “0000” and wait at least
+100ns
+4. Apply 11.5V - 12.5V to RESET. Any activity on Prog_enable pins within 100ns after +12V
+has been applied to RESET, will cause the device to fail entering Programming mode
+
+g// oe hi
+i// wr hi
+b// vcc 5v
+dly
+c// v12 0v
+l// xtal1 lo
+m// xtal1 hi
+l// xtal1 lo
+m// xtal1 hi
+l// xtal1 lo
+m// xtal1 hi
+l// xtal1 lo
+m// xtal1 hi
+l// xtal1 lo
+m// xtal1 hi
+l// xtal1 lo
+m// xtal1 hi
+l// xtal1 lo
+m// xtal1 hi
+l// xtal1 lo
+m// xtal1 hi
+l// xtal1 lo
+
+r// pagel lo
+p// xa1 lo
+n// xa0 lo
+j// bs1 lo
+d// v12 12v
+
+q// xa1 hi
+n// xa0 lo
+j// bs1 lo
+z// data output mode
+e08/“0000 1000”/e xx give data
+m// xtal1 hi
+l// xtal1 lo
+y// data input mode
+
+n// xa0 lo
+p// xa1 lo
+j// bs1 lo
+z// data output mode
+e00/“0000 0000”/e xx give data
+m// xtal1 hi
+l// xtal1 lo
+y// data input mode
+
+f// oe lo
+j// bs1 lo
+m// xtal1 hi
+l// xtal1 lo
+
+w// getdata
+
+g// oe hi
+
+a// vcc 0v
+c// v12 0v
+
+
+
+
+
+
+
+
+/////////////////////////////////////////////
+a// vcc 0v
+b// vcc 5v
+c// v12 0v
+d// v12 12v
+e//xx give data
+f// oe lo
+g// oe hi
+h// wr lo
+i// wr hi
+j// bs1 lo
+k// bs1 hi
+l// xtal1 lo
+m// xtal1 hi
+n// xa0 lo
+o// xa0 hi
+p// xa1 lo
+q// xa1 hi
+r// pagel lo
+s// pagel hi
+t// bs2 lo
+u// bs2 hi
+v// RDY in
+w// getdata
+x// vcc * v12 on
+y// data input mode
+z// data output mode
+
+
+
+
+
+  if(cmd1=='a')      a// vcc 0v
+  else if(cmd1=='b') b// vcc 5v
+  else if(cmd1=='c') c// v12 0v
+  else if(cmd1=='d') d// v12 5v
+  else if(cmd1=='e') e//xx out data
+  else if(cmd1=='f') f// oe lo
+  else if(cmd1=='g') g// oe hi
+  else if(cmd1=='h') h// wr lo
+  else if(cmd1=='i') i// wr hi
+  else if(cmd1=='j') j// bs1 lo
+  else if(cmd1=='k') k// bs1 hi
+  else if(cmd1=='l') l// xtal1 lo
+  else if(cmd1=='m') m// xtal1 hi
+  else if(cmd1=='n') n// xa0 lo
+  else if(cmd1=='o') o// xa0 hi
+  else if(cmd1=='p') p// xa1 lo
+  else if(cmd1=='q') q// xa1 hi
+  else if(cmd1=='r') r// pagel lo
+  else if(cmd1=='s') s// pagel hi
+  else if(cmd1=='t') t// bs2 lo
+  else if(cmd1=='u') u// bs2 hi
+  else if(cmd1=='v') v// RDY in
+  else if(cmd1=='w') w// getdata
+  else if(cmd1=='y') y// data input mode
+  else if(cmd1=='z') z// data output mode
+  else if(cmd1=='x')
