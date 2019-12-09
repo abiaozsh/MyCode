@@ -4,3 +4,4 @@ greybox_tmp
 output_files
 simulation
 *.bak
+.qws

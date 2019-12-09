@@ -51,7 +51,8 @@ module uart_mcu(
 	reg [7:0] timer8;
 	reg [31:0] timer32;
   
-  
+  reg [7:0] write_count;
+ 
 	///////////
 	uart_hs (
 			.sys_clk        (sys_clk), 
@@ -158,10 +159,15 @@ module uart_mcu(
 			end else if (command == 8'hA0) begin //write sdram
 				status <= 1;
 				timer8 <= 0;
-				out_pin5[0] <= 0;
+				out_pin5[0] <= 0;//led1
 			end else if (command == 8'hA1) begin //read sdram
 				status <= 2;
 				timer8 <= 0;
+        out_pin5[1] <= 0;//led1
+			end else if (command == 8'hB0) begin //write 2word sdram
+				status <= 10;
+				timer8 <= 0;
+				out_pin5[0] <= 0;//led1
 			end else begin
 				uart_send<=0;
 				/*
@@ -191,9 +197,49 @@ scA1
 gr2
 gr3
 
+03  1234  0e  5678
+
+//////////////////////////////////////////////////////////////////////////////////
+
+pr000
+pr100
+pr412
+pr534
+pr656
+pr778
+scB0
+gr4
+
+pr000
+pr100
+scA1
+gr2
+gr3
+
+pr001
+pr100
+scA1
+gr2
+gr3
+
+pr002
+pr100
+scA1
+gr2
+gr3
+
+pr003
+pr100
+scA1
+gr2
+gr3
+gr4
+
+19780078002a3f3f3f0e
 
 				 */
         
+        //write
 				if         (status == 1) begin
 					timer8 <= timer8+1;
 					if         (timer8 == 0) begin
@@ -202,9 +248,9 @@ gr3
 						//sdram_rd_addr = {8'h0,out_pin1,out_pin0};
 						out_pin2 <= reg2;//data low assign sdram_din = {out_pin3,out_pin2};
 						out_pin3 <= reg3;//data hi
+            out_pin6 <= 1;//sdram_wr_burst
 					end else if(timer8 == 1) begin
-						//sdram_wr_req = out_pin4[0];
-						out_pin4[0] = 1;
+						out_pin4[0] = 1;//sdram_wr_req = out_pin4[0];
 					end else begin
 						//in_pin2[0] = sdram_wr_ack;
 						if(in_pin2[0])begin
@@ -215,14 +261,16 @@ gr3
 							out_pin4[0] = 0;
 						end
 					end
+
+        //read
 				end else if(status == 2) begin
 					timer8 <= timer8+1;
 					if         (timer8 == 0) begin
 						out_pin0 <= reg0;//addr low  sdram_wr_addr = {8'h0,out_pin1,out_pin0};
 						out_pin1 <= reg1;//addr hi
+            out_pin7 <= 1;//sdram_rd_burst
 					end else if(timer8 == 1) begin
-						//sdram_rd_req = out_pin4[1];
-						out_pin4[1] = 1;
+						out_pin4[1] = 1;//sdram_rd_req = out_pin4[1];
 					end else begin
 						//in_pin2[1] = sdram_rd_ack;
 						if(in_pin2[1])begin
@@ -231,11 +279,51 @@ gr3
 							reg4 <= timer8;
 							out_pin5[1] <= 0;//led2
 							status <= 0;
-							//sdram_rd_req = out_pin4[1];
-							out_pin4[1] = 0;
+							out_pin4[1] = 0;//sdram_rd_req = out_pin4[1];
 						end
 					end
+          
+        //write 2word
+				end else if(status == 10) begin
+					timer8 <= timer8+1;
+					if (timer8 == 0) begin
+						out_pin0 <= reg0;//addr low  sdram_wr_addr = {8'h0,out_pin1,out_pin0};
+						out_pin1 <= reg1;//addr hi
+						//sdram_rd_addr = {8'h0,out_pin1,out_pin0};
+						out_pin2 <= reg4;//data low assign sdram_din = {out_pin3,out_pin2};
+						out_pin3 <= 0;//data hi
+            out_pin6 <= 2;//sdram_wr_burst
+            write_count <= 0;
+					end else if(timer8 == 1) begin
+						out_pin4[0] = 1;//sdram_wr_req = out_pin4[0];
+					end else begin
+						
+						if(in_pin2[0])begin//in_pin2[0] = sdram_wr_ack;
+              write_count <= write_count + 1;
+              if         (write_count==0)begin
+                out_pin2 <= reg5;//data low assign sdram_din = {out_pin3,out_pin2};
+                out_pin3 <= 0;//data hi
+              end else if(write_count==1)begin
+                out_pin2 <= reg6;//data low assign sdram_din = {out_pin3,out_pin2};
+                out_pin3 <= 0;//data hi
+              end else if(write_count==2)begin
+                out_pin2 <= reg7;//data low assign sdram_din = {out_pin3,out_pin2};
+                out_pin3 <= 0;//data hi
+              end else if(write_count==3)begin
+                reg4 <= timer8;
+                out_pin5[0] <= 0;//led1
+                status <= 0;
+                out_pin4[0] = 0;//sdram_wr_req = out_pin4[0];
+              end else begin
+              end
+              
+						end
+					end
+          
+          
 				end
+        
+        
 			end
 		end
 	end

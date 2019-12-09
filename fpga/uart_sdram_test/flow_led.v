@@ -130,8 +130,8 @@ sdram_controller(
   assign in_pin2[1] = sdram_rd_ack;
   assign sdram_wr_addr = {8'h0,out_pin1,out_pin0};
   assign sdram_rd_addr = {8'h0,out_pin1,out_pin0};
-  assign sdram_wr_burst = 1;
-  assign sdram_rd_burst = 1;
+  assign sdram_wr_burst = out_pin6;
+  assign sdram_rd_burst = out_pin7;
   
   assign sdram_din = {out_pin3,out_pin2};
   assign in_pin0 = sdram_dout[7:0];
@@ -149,6 +149,8 @@ sdram_controller(
 	wire [7:0] out_pin3;//数据高
 	wire [7:0] out_pin4;//sdram_wr_req  sdram_rd_req
 	wire [7:0] out_pin5;//led
+	wire [7:0] out_pin6;//sdram_wr_burst
+	wire [7:0] out_pin7;//sdram_rd_burst
 	uart_mcu(
 			.sys_clk           (sys_clk  ),       // 时钟信号
 			.sys_rst_n         (sys_rst_n),       // 复位信号
@@ -168,7 +170,9 @@ sdram_controller(
 			.out_pin2          ( out_pin2  ),
 			.out_pin3          ( out_pin3  ),
 			.out_pin4          ( out_pin4  ),
-			.out_pin5          ( out_pin5  ) 
+			.out_pin5          ( out_pin5  ),
+			.out_pin6          ( out_pin6  ),
+			.out_pin7          ( out_pin7  )
 		);
 
     
