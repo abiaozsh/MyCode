@@ -124,16 +124,16 @@ sdram_controller(
   assign led[1] = out_pin5[0];//sdram_wr_ack;
   assign led[2] = out_pin5[1];//sdram_rd_ack;
   
-  assign sdram_wr_req = out_pin4[0];
-  assign sdram_rd_req = out_pin4[1];
   assign in_pin2[0] = sdram_wr_ack;
   assign in_pin2[1] = sdram_rd_ack;
-  assign sdram_wr_addr = {8'h0,out_pin1,out_pin0};
-  assign sdram_rd_addr = {8'h0,out_pin1,out_pin0};
-  assign sdram_wr_burst = out_pin6;
-  assign sdram_rd_burst = out_pin7;
-  
-  assign sdram_din = {out_pin3,out_pin2};
+  assign sdram_wr_req   = mcu_sdram_wr_req  ;//out_pin4[0];
+  assign sdram_rd_req   = mcu_sdram_rd_req  ;//out_pin4[1];
+  assign sdram_wr_addr  = mcu_sdram_wr_addr ;//{8'h0,out_pin1,out_pin0};
+  assign sdram_rd_addr  = mcu_sdram_rd_addr ;//{8'h0,out_pin1,out_pin0};
+  assign sdram_wr_burst = mcu_sdram_wr_burst;//out_pin6;
+  assign sdram_rd_burst = mcu_sdram_rd_burst;//out_pin7;
+  assign sdram_din      = mcu_sdram_din     ;//{out_pin3,out_pin2};
+    
   assign in_pin0 = sdram_dout[7:0];
   assign in_pin1 = sdram_dout[15:8];
   
@@ -143,26 +143,36 @@ sdram_controller(
 	wire [7:0] in_pin1;//数据高
 	wire [7:0] in_pin2;
 	wire [7:0] in_pin3;
-	wire [7:0] out_pin0;//地址低
-	wire [7:0] out_pin1;//地址高
-	wire [7:0] out_pin2;//数据低
-	wire [7:0] out_pin3;//数据高
-	wire [7:0] out_pin4;//sdram_wr_req  sdram_rd_req
+	//wire [7:0] out_pin0;//地址低
+	//wire [7:0] out_pin1;//地址高
+	//wire [7:0] out_pin2;//数据低
+	//wire [7:0] out_pin3;//数据高
+	//wire [7:0] out_pin4;//sdram_wr_req  sdram_rd_req
 	wire [7:0] out_pin5;//led
-	wire [7:0] out_pin6;//sdram_wr_burst
-	wire [7:0] out_pin7;//sdram_rd_burst
+	//wire [7:0] out_pin6;//sdram_wr_burst
+	//wire [7:0] out_pin7;//sdram_rd_burst
+  
+  wire        mcu_sdram_wr_req  ;
+  wire        mcu_sdram_rd_req  ;
+  wire [15:0] mcu_sdram_wr_addr ;
+  wire [15:0] mcu_sdram_rd_addr ;
+  wire [9:0]  mcu_sdram_wr_burst;
+  wire [9:0]  mcu_sdram_rd_burst;
+  wire [15:0] mcu_sdram_din     ;
+  
+  
 	uart_mcu(
-			.sys_clk           (sys_clk  ),       // 时钟信号
-			.sys_rst_n         (sys_rst_n),       // 复位信号
-			.uart_rxd(uart_rxd),
-			.uart_txd(uart_txd),
+			.sys_clk    (sys_clk  ),       // 时钟信号
+			.sys_rst_n  (sys_rst_n),       // 复位信号
+			.uart_rxd  (uart_rxd),
+			.uart_txd  (uart_txd),
       
-			.out_clk    (out_clk),
+			.out_clk (out_clk),
 			.out_rst (out_rst),
       
-			.in_pin0          ( in_pin0 ),
-			.in_pin1          ( in_pin1 ),
-			.in_pin2          ( in_pin2 ),
+			.in_pin0          ( in_pin0 ),//数据低
+			.in_pin1          ( in_pin1 ),//数据高
+			.in_pin2          ( in_pin2 ),//sdram_wr_ack,sdram_rd_ack
 			.in_pin3          ( in_pin3 ),
 
 			.out_pin0          ( out_pin0  ),
@@ -170,9 +180,19 @@ sdram_controller(
 			.out_pin2          ( out_pin2  ),
 			.out_pin3          ( out_pin3  ),
 			.out_pin4          ( out_pin4  ),
-			.out_pin5          ( out_pin5  ),
+			.out_pin5          ( out_pin5  ),//led
 			.out_pin6          ( out_pin6  ),
-			.out_pin7          ( out_pin7  )
+			.out_pin7          ( out_pin7  ),
+      
+      .sdram_clk          (ref_clk),
+      .sdram_wr_req       (mcu_sdram_wr_req  ),
+      .sdram_rd_req       (mcu_sdram_rd_req  ),
+      .sdram_wr_addr      (mcu_sdram_wr_addr ),
+      .sdram_rd_addr      (mcu_sdram_rd_addr ),
+      .sdram_wr_burst     (mcu_sdram_wr_burst),
+      .sdram_rd_burst     (mcu_sdram_rd_burst),
+      .sdram_din          (mcu_sdram_din     )
+      
 		);
 
     

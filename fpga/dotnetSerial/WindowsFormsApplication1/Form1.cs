@@ -118,9 +118,15 @@ namespace WindowsFormsApplication1
 			foreach (var temp in list)
 			{
 				var item = temp.Trim();
+				var idx = item.IndexOf("//");
+				if (idx >= 0)
+				{
+					item = item.Substring(0, idx);
+				}
+
 				if (item == "dly")
 				{
-					Thread.Sleep(1);
+					Thread.Sleep(10);
 				}
 				else if (item == "clk1") //10：out_clk on
 				{
