@@ -8,8 +8,8 @@
 //8000000 / 115200 = 69.4
 //8000000 / 115200 * 1.5 = 104.16666666666666666666666666667
 #define TCCR0_Value_115200 1
-#define CNT_Value_115200 69
-#define CNT_1_5_115200 104
+#define CNT_Value_115200 64
+#define CNT_1_5_115200 96
 
 
 //1000000 / 9600 = 104.16666666666666666666666666667
@@ -74,6 +74,28 @@ void SerialSend(uint8_t val){
   while(TCNT0<CNT_Value);TCNT0 = 0;//stopbit
 	sei();
 }
+void SerialSendTest(uint8_t val,uint8_t param){
+	cli();
+	TCCR0 = TCCR0_Value;
+	TCNT0 = 0;
+	PORT_Send &= ~BIT_Send;
+  while(TCNT0<param);TCNT0 = 0;//startbit
+	uint8_t chkbit = 0x01;
+	for(uint8_t i = 8 ; i > 0 ; i--)
+	{
+		if(val&chkbit)
+    {
+      PORT_Send |= BIT_Send;
+    }else{
+      PORT_Send &= ~BIT_Send;
+    }
+    chkbit<<=1;
+    while(TCNT0<param);TCNT0 = 0;
+	}
+	PORT_Send |= BIT_Send;
+  while(TCNT0<param);TCNT0 = 0;//stopbit
+	sei();
+}
 
 uint8_t SerialRead()
 {
@@ -113,12 +135,17 @@ int main()
 	SerialInit();
 
   while(1){
-    SerialRead();
-
-    for(uint16_t i=0;i<256;i++){
-      SerialSend((uint8_t)i);
-    }
-    
+	  
+	//test1--------------------------
+    //SerialRead();
+	//for(uint8_t n=50;n<=80;n++){
+	//	for(uint16_t i=0;i<256;i++){
+	//	  SerialSendTest((uint8_t)i,n);
+	//	  wait(100);
+	//	}
+	//}
+	
+	//test2------------------------------
     uint8_t test = 0;
     for(uint16_t i=0;i<256;i++){
       uint8_t val = SerialRead();
