@@ -19,7 +19,7 @@ namespace UploaderMega8
             //if (test)
             {
                 //args = new string[] { "COM4", @"Y:\atmega8\blink.hex", "true" };
-                //args = new string[] { "COM4", @"Y:\atmega8\blinkserial\blink.hex", "true" };
+                args = new string[] { "COM4", @"Y:\atmega8\blink.hex", "true" ,"9600"};
                 //args = new string[] { "COM4", @"D:\MyCode\arduino\atmega8\blink.hex", "true" };
             }
 
@@ -98,6 +98,8 @@ namespace UploaderMega8
                         return;
                     }
                 }
+                Console.Read();
+                return;
 
                 //write
                 {

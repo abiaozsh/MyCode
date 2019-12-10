@@ -235,13 +235,6 @@ void waitt(uint16_t time){
 		;
 	}
 }
-void waitShort(){
-	TCNT1 = 0;//timer reset
-	while(TCNT1<(100))
-	{
-		;
-	}
-}
 
 void wait2()
 {
@@ -269,17 +262,17 @@ void loadCommand(uint8_t command){
     DATA_OUT;
     XA0_L;
     XA1_H;
-    waitShort();
+    waitt(100);
 	
     BS1_L;
     BS2_L;
-	waitShort();
+    waitt(100);
     DATA = command;
 	
 			
-	waitShort();
+    waitt(100);
     CLK_H;
-    waitShort();
+    waitt(100);
     CLK_L;
     DATA_IN;
 }
@@ -294,14 +287,12 @@ void loadAddressLow(uint8_t address){
     DATA_OUT;
     BS1_L;
     BS2_L;
-	//waitShort();
     DATA = address;
-	//waitShort();
     XA0_L;
     XA1_L;
-    waitShort();
+    waitt(100);
     CLK_H;
-    waitShort();
+    waitt(100);
     CLK_L;
     DATA_IN;
 }
@@ -314,14 +305,12 @@ void loadAddressHigh(uint8_t address){
     DATA_OUT;
     BS1_H;
     BS2_L;
-	//waitShort();
     DATA = address;
-    //waitShort();
     XA0_L;
     XA1_L;
-    waitShort();
+    waitt(100);
     CLK_H;
-    waitShort();
+    waitt(100);
     CLK_L;
     DATA_IN;
 }
@@ -334,10 +323,10 @@ void loadDataLow(uint8_t data){
     DATA_OUT;
     BS1_L;
     BS2_L;
-    waitShort();
+    waitt(100);
     XA0_H;
     XA1_L;
-    waitShort();
+    waitt(100);
     DATA = data;
     waitt(100);
     CLK_H;
@@ -355,10 +344,10 @@ void loadDataHigh(uint8_t data){
     DATA_OUT;
     BS1_H;
     BS2_L;
-    waitShort();
+    waitt(100);
     XA0_H;
     XA1_L;
-    waitShort();
+    waitt(100);
     DATA = data;
     waitt(100);
     CLK_H;
@@ -493,7 +482,7 @@ void powerON(){
     BS1_L;
 	BS1_OUT;
     wait();
-
+	
     //2. Apply 4.5V - 5.5V between VCC and GND simultaneously as 11.5V - 12.5V is applied to RESET
     //port.Write("x");// vcc * v12 on
     VCC_ON;
@@ -501,6 +490,7 @@ void powerON(){
 
     //3. Wait 100ns
     wait();
+	
 }
 
 void powerOFF(){
@@ -539,14 +529,14 @@ void loop()
   uint8_t cmd2 = SerialRead();
   if(cmd2>='a'&&cmd2<='z'){}else{return;}
 
-       if(cmd1=='s' && cmd2=='t')       //st Start
-  {
-    powerON();
-    printOK();
-  }
-  else if(cmd1=='e' && cmd2=='d')       //ed End
+       if(cmd1=='e' && cmd2=='d')       //ed End
   {
     powerOFF();
+    printOK();
+  }
+  else if(cmd1=='s' && cmd2=='t')       //st Start
+  {
+    powerON();
     printOK();
   }
   else if(cmd1=='s' && cmd2=='i')       //si ReadSignatureBytes
@@ -647,11 +637,11 @@ void loop()
       //1. Set BS1 to ¡°1¡±. This selects high data byte
       //2. Give PAGEL a positive pulse. This latches the data bytes (see Figure 106 on page 224 for signal waveforms)    
       BS1_H;
-      wait(100);
+      waitt(100);
       PGL_H;
-      wait(100);
+      waitt(100);
       PGL_L;
-      wait(100);
+      waitt(100);
     }
     printOK();
   }

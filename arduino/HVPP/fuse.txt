@@ -1,0 +1,5 @@
+fuse high
+1101 1001 D9
+
+fuse low
+1110 0100 E4

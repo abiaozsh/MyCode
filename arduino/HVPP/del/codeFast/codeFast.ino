@@ -458,7 +458,7 @@ void loop()
     //1. A: Load Command ��0100 0000��
     //loadCommand(0x40);
     //2. C: Load Data Low byte. Bit n = ��0�� programs and bit n = ��1�� erases the Fuse bit
-    loadDataLow(0xF9);//0xF9 1111 1001 
+    loadDataLow(0xD9);//0xD9 1101 1001
     //3. Set BS1 to ��1�� and BS2 to ��0��. This selects high data byte
     BS1=1;
     BS2=0;
