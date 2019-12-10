@@ -2,16 +2,23 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
-#define CUR_TIMING_REC TIMINGR_8M_TCCR1B_1___9600
-#define CUR_TIMING TIMING__8M_TCCR1B_1___9600
-//#define CUR_TIMING TIMING__8M_TCCR1B_1_115200
+#define CUR_TIMING TIMING__8M_TCCR1B_1_115200
 #define TCCR1B_Value 1
 
-PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1_115200[] = {   69,  138,  208,  277,  347,  416,  486,  555,  625,  694};
-//send time:                                              1,    2,    3,    4,    5,    6,    7,    8,    9,   10
+PROGMEM prog_uint16_t TIMING__8M_TCCR1B_3____300[] = {  416,  833, 1250, 1666, 2083, 2500, 2916, 3333, 3750, 4166};
+PROGMEM prog_uint16_t TIMING__8M_TCCR1B_2___1200[] = {  833, 1666, 2500, 3333, 4166, 5000, 5833, 6666, 7500, 8333};
+PROGMEM prog_uint16_t TIMING__8M_TCCR1B_2___2400[] = {  416,  833, 1250, 1666, 2083, 2500, 2916, 3333, 3750, 4166};
+PROGMEM prog_uint16_t TIMING__8M_TCCR1B_2___4800[] = {  208,  416,  625,  833, 1041, 1250, 1458, 1666, 1875, 2083};
 PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1___9600[] = {  833, 1666, 2500, 3333, 4166, 5000, 5833, 6666, 7500, 8333};
-//read time:                                            1.5,  2.5,  3.5,  4.5,  5.5,  6.5,  7.5,  8.5,  9.5,   10
-PROGMEM prog_uint16_t TIMINGR_8M_TCCR1B_1___9600[] = { 1233, 2066, 2900, 3733, 4566, 5400, 6233, 7066, 7900, 8333};
+PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1__14400[] = {  555, 1111, 1666, 2222, 2777, 3333, 3888, 4444, 5000, 5555};
+PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1__19200[] = {  416,  833, 1250, 1666, 2083, 2500, 2916, 3333, 3750, 4166};
+PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1__28800[] = {  277,  555,  833, 1111, 1388, 1666, 1944, 2222, 2500, 2777};
+PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1__38400[] = {  208,  416,  625,  833, 1041, 1250, 1458, 1666, 1875, 2083};
+PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1__57600[] = {  138,  277,  416,  555,  694,  833,  972, 1111, 1250, 1388};
+
+PROGMEM prog_uint16_t TIMING__8M_TCCR1B_1_115200[] = {   69,  138,  208,  277,  347,  416,  486,  555,  625,  694};
+
+#define currTick ((TIFR & _BV(TOV1))?0x0FFFF:TCNT1)
 
 //pd0 rxd		usb txd
 //pd1 txd		usb rxd
@@ -61,7 +68,12 @@ void SerialSend(uint8_t val){
 	sei();
 }
 
-uint8_t SerialRead()
+//uint8_t SerialRead()
+//{
+//	uint8_t timoutParam = 0;
+//	return SerialRead(65535, &timoutParam);
+//}
+uint8_t SerialRead()//uint16_t timeout, uint8_t* timoutParam
 {
 	cli();
 	uint8_t val = 0;
@@ -77,38 +89,51 @@ uint8_t SerialRead()
 	TCCR1B = TCCR1B_Value;
 	TCNT1 = 0;
 	uint16_t timing;
-	prog_uint16_t* pTiming = CUR_TIMING_REC;
-	timing = pgm_read_word_near(pTiming++);
-	while(TCNT1<timing);
-	
+	prog_uint16_t* pTiming = CUR_TIMING;
+
 	for(uint8_t i = 8 ; i > 0 ; i--)
 	{
+		timing = pgm_read_word_near(pTiming++);while(TCNT1<timing);
 		val>>=1;val |= (PIN_Recv&BIT_Recv?0x80:0);
-		timing = pgm_read_word_near(pTiming++);
-		while(TCNT1<timing);
 	}
 	sei();
 	return val;
 }
 
+
+#define blinkDDR DDRC |=  _BV(0);
+#define blinkH PORTC |=  _BV(0);
+#define blinkL PORTC &= ~_BV(0);
+
+
 void wait(uint16_t ticks)
 {
 	TCNT1 = 0;//timer reset
-	while(TCNT1<(ticks<<8))
+	while(TCNT1<(ticks<<3))
 	{
 		;
 	}
 }
 
-
-
-
-
 int main()
 {
 	TimerInit(); //do later
-	SerialInit();
 
-
+	blinkDDR;
+	
+	for (;;) {
+    uint8_t c = SerialRead();
+    if(c=='1'){
+      for(uint16_t i=0;i<1000;i++)
+      {
+        wait(1000);//1000ms
+      }
+      blinkH;
+    }
+    if(c=='0'){
+      blinkL;
+    }
+	}
+        
 	return 0;
 }

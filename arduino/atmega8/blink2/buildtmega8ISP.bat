@@ -11,8 +11,9 @@ set extptype=cpp
 "%arduinopath%\hardware\tools\avr\bin\avr-%comptype%" -Os -fno-inline -mmcu=atmega8 -save-temps -fverbose-asm -I"%arduinopath%\hardware\arduino\cores\arduino" %filename%.%extptype%
 "%arduinopath%\hardware\tools\avr\bin\avr-%comptype%" -Os -fno-inline -mmcu=atmega8                           -I"%arduinopath%\hardware\arduino\cores\arduino" %filename%.%extptype% -o %filename%.o
 "%arduinopath%\hardware\tools\avr\bin\avr-objcopy" -O ihex %filename%.o %filename%.hex
+    "%arduinopath%\hardware\tools\avr\bin\avrdude" -C"%arduinopath%\hardware\tools\avr\etc\avrdude.conf" -patmega8 -carduino   -P\\.\%comPort% -b19200 -Uflash:w:%filename%.hex:i 
 rem "%arduinopath%\hardware\tools\avr\bin\avrdude" -C"%arduinopath%\hardware\tools\avr\etc\avrdude.conf" -pattiny24 -cstk500v1 -P\\.\%comPort% -b19200 -Uflash:w:%filename%.hex:i 
-"UploaderMega8.exe" %comPort% %filename%.hex true 9600
+rem "UploaderMega8.exe" %comPort% %filename%.hex true 9600
 "%arduinopath%\hardware\tools\avr\bin\avr-size" %filename%.hex
 del %filename%.hex
 del %filename%.ii

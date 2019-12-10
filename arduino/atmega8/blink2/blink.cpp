@@ -2,9 +2,9 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
-#define blinkDDR DDRC |=  _BV(0);
-#define blinkH PORTC |=  _BV(0);
-#define blinkL PORTC &= ~_BV(0);
+#define blinkDDR DDRB |=  _BV(1);
+#define blinkH PORTB |=  _BV(1);
+#define blinkL PORTB &= ~_BV(1);
 
 void TimerInit()
 {
