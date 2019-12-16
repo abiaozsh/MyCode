@@ -128,19 +128,19 @@ namespace WindowsFormsApplication1
 				{
 					Thread.Sleep(10);
 				}
-				else if (item == "clk1") //10：out_clk on
+				else if (item == "ch") //10：out_clk on
 				{
 					portWrite((byte)0x10, 0);
 				}
-				else if (item == "clk0")//11：out_clk off
+				else if (item == "cl")//11：out_clk off
 				{
 					portWrite((byte)0x11, 0);
 				}
-				else if (item == "rst1")//12：out_rst on
+				else if (item == "rh")//12：out_rst on
 				{
 					portWrite((byte)0x12, 0);
 				}
-				else if (item == "rst0")//13：out_rst off
+				else if (item == "rl")//13：out_rst off
 				{
 					portWrite((byte)0x13, 0);
 				}
