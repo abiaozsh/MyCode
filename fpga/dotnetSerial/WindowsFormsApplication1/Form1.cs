@@ -53,7 +53,7 @@ namespace WindowsFormsApplication1
 			{
 				if (port.BytesToRead > 0)
 				{
-					buffer.Append(getHex2(port.ReadChar()));
+					buffer.Append(getHex2(port.ReadByte()));
 				}
 				else
 				{
@@ -124,9 +124,13 @@ namespace WindowsFormsApplication1
 					item = item.Substring(0, idx);
 				}
 
-				if (item == "dly")
+				if (item == "#dly")
 				{
 					Thread.Sleep(10);
+				}
+				else if (item == "#br")
+				{
+                    Thread.Sleep(10); buffer.AppendLine();
 				}
 				else if (item == "ch") //10：out_clk on
 				{
@@ -179,6 +183,11 @@ namespace WindowsFormsApplication1
 		private void textBox4_TextChanged(object sender, EventArgs e)
 		{
 
+		}
+
+		private void button5_Click(object sender, EventArgs e)
+		{
+			buffer.Clear();
 		}
 
 	}

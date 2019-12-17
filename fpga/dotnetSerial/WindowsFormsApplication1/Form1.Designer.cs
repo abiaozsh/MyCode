@@ -38,6 +38,7 @@
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.button4 = new System.Windows.Forms.Button();
             this.textBox4 = new System.Windows.Forms.TextBox();
+            this.button5 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
@@ -80,11 +81,14 @@
             // 
             // textBox3
             // 
-            this.textBox3.Location = new System.Drawing.Point(128, 41);
+            this.textBox3.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox3.Location = new System.Drawing.Point(282, 41);
             this.textBox3.Multiline = true;
             this.textBox3.Name = "textBox3";
             this.textBox3.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox3.Size = new System.Drawing.Size(299, 337);
+            this.textBox3.Size = new System.Drawing.Size(509, 412);
             this.textBox3.TabIndex = 5;
             this.textBox3.TextChanged += new System.EventHandler(this.textBox3_TextChanged);
             // 
@@ -107,7 +111,7 @@
             // 
             this.button4.Location = new System.Drawing.Point(18, 41);
             this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(90, 23);
+            this.button4.Size = new System.Drawing.Size(126, 23);
             this.button4.TabIndex = 7;
             this.button4.Text = "sendcommand";
             this.button4.UseVisualStyleBackColor = true;
@@ -115,19 +119,32 @@
             // 
             // textBox4
             // 
+            this.textBox4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
             this.textBox4.Location = new System.Drawing.Point(13, 70);
             this.textBox4.Multiline = true;
             this.textBox4.Name = "textBox4";
             this.textBox4.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox4.Size = new System.Drawing.Size(104, 308);
+            this.textBox4.Size = new System.Drawing.Size(263, 383);
             this.textBox4.TabIndex = 8;
             this.textBox4.TextChanged += new System.EventHandler(this.textBox4_TextChanged);
+            // 
+            // button5
+            // 
+            this.button5.Location = new System.Drawing.Point(150, 41);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(126, 23);
+            this.button5.TabIndex = 9;
+            this.button5.Text = "clear";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(439, 390);
+            this.ClientSize = new System.Drawing.Size(803, 465);
+            this.Controls.Add(this.button5);
             this.Controls.Add(this.textBox4);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.textBox2);
@@ -155,6 +172,7 @@
         private System.Windows.Forms.Timer timer1;
 		private System.Windows.Forms.Button button4;
 		private System.Windows.Forms.TextBox textBox4;
+		private System.Windows.Forms.Button button5;
 
 	}
 }

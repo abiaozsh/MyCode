@@ -1,7 +1,18 @@
 module sdram(
 		input  sys_clk  ,
 		input  sys_rst_n,
-
+/*
+  .sdram_clk_out     (sdram_clk_out),
+  .sdram_cke			(sdram_cke),		//SDRAM 时钟有效
+  .sdram_cs_n			(sdram_cs_n),		//SDRAM 片选
+  .sdram_ras_n		(sdram_ras_n),		//SDRAM 行有效	
+  .sdram_cas_n		(sdram_cas_n),		//SDRAM 列有效
+  .sdram_we_n			(sdram_we_n),		//SDRAM 写有效
+  .sdram_ba			  (sdram_ba),			//SDRAM Bank地址
+  .sdram_addr			(sdram_addr),		//SDRAM 行/列地址
+  .sdram_data			(sdram_data),		//SDRAM 数据	
+  .sdram_dqm		(sdram_dqm),
+*/
     //SDRAM 芯片接口
     output        sdram_clk_out,            //SDRAM 芯片时钟
     output        sdram_cke,                //SDRAM 时钟有效
@@ -35,7 +46,10 @@ module sdram(
     //写完8个字后，要保持一个周期，以写入sdram
     input write_en,//写入过程中保持高,要从8字前边界开始写，地址0x00,0x08,0x10...,否则会覆盖原有数据
     
-    
+    output reg[7:0] probe_timer8,
+    output reg[7:0] probe_locked_time,
+    output reg[7:0] probe_sdram_init_done_timer,
+    output [7:0] probe_readBuffer0,
     //vga输出端口
     //vga输出优先级最高
     output vga
@@ -60,6 +74,21 @@ pll_clk u_pll_clk(
   .locked             (locked)
 );
 
+//probe_locked_time
+always@(posedge sys_clk or negedge sys_rst_n) begin
+	if(!sys_rst_n) begin
+    probe_locked_time <= 0;
+	end else begin
+    if(!locked && probe_locked_time<255)begin
+    probe_locked_time <= probe_locked_time+2;
+    end
+  end
+end
+
+
+assign probe_readBuffer0 = readBuffer0;
+
+
 wire sdram_clk;
 assign sdram_clk = clk_100m;
 assign	sdram_clk_out = clk_100m_shift;//out_clk;                //将相位偏移时钟输出给sdram芯片
@@ -78,10 +107,21 @@ reg [ 9:0] sdram_rd_burst  ;   //读sdram时数据突发长度      input
 wire [15:0] sdram_dout      ;	    //从SDRAM读出的数据            output
 wire	      sdram_init_done ;  //SDRAM 初始化完成标志       output
 
+//probe_locked_time
+always@(posedge sys_clk or negedge sys_rst_n) begin
+	if(!sys_rst_n) begin
+    probe_sdram_init_done_timer <= 0;
+	end else begin
+    if(!sdram_init_done && probe_sdram_init_done_timer<255)begin
+    probe_sdram_init_done_timer <= probe_sdram_init_done_timer+2;
+    end
+  end
+end
+
 //TODO sdram_init_done
 
 //SDRAM控制器
-sdram_controller(
+sdram_controller ins_sdram_controller(
 	.clk				(sdram_clk),			//sdram 控制器时钟
 	.rst_n				(rst_n),			//系统复位
     
@@ -215,7 +255,7 @@ always@(posedge clk or negedge sys_rst_n) begin//地址递增
 	if(!sys_rst_n) begin
     writeAddressDataIn <= 0;
 	end else begin
-    writeAddressDataIn <= writeAddressDataInCurr+1;
+    writeAddressDataIn <= writeAddressDataInCurr+1'b1;
   end
 end
 
@@ -258,7 +298,7 @@ always@(posedge clk or negedge sys_rst_n) begin // 注入连续写缓存
       if(writeAddressDataInCurr[2:0]==0 && !(write_en && !write_en_last))begin
         //发起sdram写入
         write_sdram_req = 1;
-        writeAddressSdram <= writeAddressDataInCurr[23:3]-1;
+        writeAddressSdram <= writeAddressDataInCurr[23:3]-1'b1;
         writeBufferBack0 <= writeBufferFront0;
         writeBufferBack1 <= writeBufferFront1;
         writeBufferBack2 <= writeBufferFront2;
@@ -292,23 +332,30 @@ reg [15:0] readBuffer0;
 reg [15:0] readBuffer1;
 reg [15:0] readBuffer2;
 reg [15:0] readBuffer3;
+//sdram_rd_req sdram_rd_burst sdram_rd_addr
+//
 always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
 	if(!sys_rst_n) begin
     sdram_timer8 <= 0;
+    
     read_vga_sdram_req_last <= 0;
     read_sdram_req_last <= 0;
     write_single_sdram_req_last <= 0;
     write_sdram_req_last <= 0;
+    
     read_vga_sdram_ack <= 0;
     read_sdram_ack <= 0;
     write_single_sdram_ack <= 0;
     write_sdram_ack <= 0;
+    
+    sdram_rd_req <= 0;
+    sdram_rd_burst <= 0;
+    
 	end else begin
     read_vga_sdram_req_last <= read_vga_sdram_req;
     read_sdram_req_last <= read_sdram_req;
     write_single_sdram_req_last <= write_single_sdram_req;
     write_sdram_req_last <= write_sdram_req;
-    
     
     if          (read_vga_sdram_req && !read_vga_sdram_ack)begin
       //read vga
@@ -321,12 +368,13 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
         sdram_rd_req = 1;
       end else begin
         if(sdram_rd_ack)begin
-          sdram_timer8 <= sdram_timer8 + 1;
+          sdram_timer8 <= sdram_timer8 + 1'b1;
           if         (sdram_timer8==0)begin readBuffer0 <= sdram_dout;
           end else if(sdram_timer8==1)begin readBuffer1 <= sdram_dout;
           end else if(sdram_timer8==2)begin readBuffer2 <= sdram_dout;
           end else if(sdram_timer8==3)begin readBuffer3 <= sdram_dout;
-            sdram_rd_req = 0;
+            probe_timer8 <= sdram_timer8;
+            sdram_rd_req <= 0;
             read_sdram_ack <= 1;
           end else begin
           end
@@ -340,9 +388,10 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
         sdram_wr_req <= 1;
       end else begin
         if(sdram_wr_ack)begin
-          sdram_timer8 <= sdram_timer8 + 1;
+          sdram_timer8 <= sdram_timer8 + 1'b1;
           if         (sdram_timer8==0)begin sdram_din <= data_in;
           end else if(sdram_timer8==1)begin
+            probe_timer8 <= sdram_timer8;
             sdram_wr_req <= 0;
             write_single_sdram_ack <= 1;
           end
@@ -356,7 +405,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
         sdram_wr_req <= 1;
       end else begin
         if(sdram_wr_ack)begin
-          sdram_timer8 <= sdram_timer8 + 1;
+          sdram_timer8 <= sdram_timer8 + 1'b1;
           if         (sdram_timer8==0)begin sdram_din <= writeBufferBack0;
           end else if(sdram_timer8==1)begin sdram_din <= writeBufferBack1;
           end else if(sdram_timer8==2)begin sdram_din <= writeBufferBack2;
@@ -366,6 +415,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
           end else if(sdram_timer8==6)begin sdram_din <= writeBufferBack6;
           end else if(sdram_timer8==7)begin sdram_din <= writeBufferBack7;
           end else if(sdram_timer8==8)begin
+            probe_timer8 <= sdram_timer8;
             sdram_wr_req <= 0;
             write_sdram_ack <= 1;
           end else begin
@@ -389,32 +439,4 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
   end
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
 endmodule 

@@ -6,9 +6,9 @@ module uart_hs(
 		input             uart_rxd,                 //UART接收端口
 		output  reg   uart_txd,                  //UART发送端口
     
-		output  reg       uart_done,                //接收一帧数据完成标志信号 上升沿表示接收到
+		output  reg       uart_rec,                //接收一帧数据完成标志信号 上升沿表示接收到
 		output  reg [7:0] uart_data_out,                 //接收的数据
-		input         uart_en,                  //发送使能信号
+		input         uart_send,                  //发送使能信号
 		input  [7:0]  uart_data_in                 //待发送数据
 		);
     
@@ -17,8 +17,8 @@ module uart_hs(
 	localparam BPS_CNT_HALF  = 12;        //2000000 bps  50000000/2000000
 
 	//reg define
-	reg        uart_en_d0; 
-	reg        uart_en_d1;  
+	reg        uart_send_d0; 
+	reg        uart_send_d1;  
 	reg [ 4:0] clk_cnt;                         //系统时钟计数器
 	reg [ 3:0] tx_cnt;                          //发送数据计数器
 	reg        tx_flag;                         //发送过程标志信号
@@ -27,17 +27,17 @@ module uart_hs(
 	//wire define
 	wire       en_flag;
 
-	assign en_flag = (~uart_en_d1) & uart_en_d0;
+	assign en_flag = (~uart_send_d1) & uart_send_d0;
                                                  
-	//对发送使能信号uart_en延迟两个时钟周期
+	//对发送使能信号uart_send延迟两个时钟周期
 	always @(posedge sys_clk or negedge sys_rst_n) begin         
 		if (!sys_rst_n) begin
-			uart_en_d0 <= 1'b0;                                  
-			uart_en_d1 <= 1'b0;
+			uart_send_d0 <= 1'b0;                                  
+			uart_send_d1 <= 1'b0;
 		end                                                      
 		else begin                                               
-			uart_en_d0 <= uart_en;                               
-			uart_en_d1 <= uart_en_d0;                            
+			uart_send_d0 <= uart_send;                               
+			uart_send_d1 <= uart_send_d0;                            
 		end
 	end
 
@@ -193,15 +193,15 @@ module uart_hs(
 	always @(posedge sys_clk or negedge sys_rst_n) begin        
 		if (!sys_rst_n) begin
 			uart_data_out <= 8'd0;                               
-			uart_done <= 1'b0;
+			uart_rec <= 1'b0;
 		end
 		else if(rx_cnt == 4'd9) begin               //接收数据计数器计数到停止位时           
 			uart_data_out <= rxdata;                    //寄存输出接收到的数据
-			uart_done <= 1'b1;                      //并将接收完成标志位拉高
+			uart_rec <= 1'b1;                      //并将接收完成标志位拉高
 		end
 		else begin
 			uart_data_out <= 8'd0;                                   
-			uart_done <= 1'b0; 
+			uart_rec <= 1'b0; 
 		end    
 	end
 
