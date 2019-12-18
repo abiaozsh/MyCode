@@ -22,8 +22,10 @@ module flow_led(
 		output          uart_txd          //UART发送端口
 		);
  
+assign led[0] = !uart_rxd;
+assign led[1] = !uart_txd;
 
-assign led = out_pin0[3:0];
+//assign led = out_pin0[3:0];
 assign in_pin0[3:0] = key;
 
 

@@ -131,6 +131,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 reg [7:0] timer;
+reg [31:0] timerLong;
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     out_pin0<=0;
@@ -201,7 +202,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     end else if (command == 8'hA0 && !command_done) begin//sdram write
       timer<=timer+1'b1;
       if         (timer==0)begin
-        sdram_c_address <= {8'b0,uw_reg3,uw_reg2};
+        sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
         sdram_c_data_in <= {uw_reg1,uw_reg0};
       end else if(timer==1)begin
         sdram_c_write_req<=1;
@@ -216,7 +217,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     end else if (command == 8'hA1 && !command_done) begin//sdram read
       timer<=timer+1'b1;
       if         (timer==0)begin
-        sdram_c_address <= {8'b0,uw_reg3,uw_reg2};
+        sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
       end else if(timer==1)begin
         sdram_c_read_req<=1;
       end else begin
@@ -228,11 +229,29 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           command_done<=1;
         end
       end
+      
+    end else if (command == 8'hA2 && !command_done) begin//sdram long write
+      timerLong<=timerLong+1'b1;
+      if         (timerLong==0)begin
+        sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
+        sdram_c_data_in<={in_pin1,in_pin0};
+      end else if(timerLong==1)begin
+        sdram_c_data_in<={in_pin1,in_pin0};
+        sdram_c_write_en<=1;
+      end else if(timerLong==65536)begin//16*1024*1024
+        sdram_c_write_en<=0;
+        uart_send<=1;
+        uart_data_w<=66;
+        command_done<=1;
+      end else begin
+        sdram_c_data_in<={in_pin1,in_pin0};
+      end
+      
     end else if (command == 8'hB0 && !command_done) begin //get probe
       ur_reg0 <= probe_timer8;
       ur_reg1 <= probe_locked_time;
       ur_reg2 <= probe_sdram_init_done_timer;
-		ur_reg3 <= probe_readBuffer0;
+      ur_reg3 <= probe_readBuffer0;
       command_done<=1;
 
     end else begin
@@ -242,52 +261,6 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 
-
-/*
-pr080//data
-pr144//data
-pr200//addr
-pr300//addr
-scA0//sdram write
-gr7//timer
-#br
-
-pr200//addr
-pr300//addr
-scA1//sdram read
-gr0//data
-gr1//data
-gr7//timer
-#br
-
-06
-3f440a
-
-
-
-
-pr070//data
-pr184//data
-pr200//addr
-pr300//addr
-scA0//sdram write
-gr7//timer
-#br
-06
-
-
-pr200//addr
-pr300//addr
-scA1//sdram read
-gr0//data
-gr1//data
-gr7//timer
-#br
-//703f0a
-
-
-
-*/
 
 
 

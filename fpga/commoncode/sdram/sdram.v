@@ -80,7 +80,7 @@ always@(posedge sys_clk or negedge sys_rst_n) begin
     probe_locked_time <= 0;
 	end else begin
     if(!locked && probe_locked_time<255)begin
-    probe_locked_time <= probe_locked_time+2;
+    probe_locked_time <= probe_locked_time+1;
     end
   end
 end
@@ -113,7 +113,7 @@ always@(posedge sys_clk or negedge sys_rst_n) begin
     probe_sdram_init_done_timer <= 0;
 	end else begin
     if(!sdram_init_done && probe_sdram_init_done_timer<255)begin
-    probe_sdram_init_done_timer <= probe_sdram_init_done_timer+2;
+    probe_sdram_init_done_timer <= probe_sdram_init_done_timer+1;
     end
   end
 end
@@ -121,7 +121,7 @@ end
 //TODO sdram_init_done
 
 //SDRAM控制器
-sdram_controller ins_sdram_controller(
+sdram_controller(
 	.clk				(sdram_clk),			//sdram 控制器时钟
 	.rst_n				(rst_n),			//系统复位
     
@@ -297,7 +297,7 @@ always@(posedge clk or negedge sys_rst_n) begin // 注入连续写缓存
       //越界并且不是第一个周期
       if(writeAddressDataInCurr[2:0]==0 && !(write_en && !write_en_last))begin
         //发起sdram写入
-        write_sdram_req = 1;
+        write_sdram_req <= 1;
         writeAddressSdram <= writeAddressDataInCurr[23:3]-1'b1;
         writeBufferBack0 <= writeBufferFront0;
         writeBufferBack1 <= writeBufferFront1;
@@ -309,7 +309,7 @@ always@(posedge clk or negedge sys_rst_n) begin // 注入连续写缓存
         writeBufferBack7 <= writeBufferFront7;
       end
       if(write_sdram_ack)begin
-        write_sdram_req=0;
+        write_sdram_req<=0;
       end
     end
   end
