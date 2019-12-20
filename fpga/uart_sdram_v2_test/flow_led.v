@@ -22,8 +22,8 @@ module flow_led(
 		output          uart_txd          //UART发送端口
 		);
  
-assign led[0] = !uart_rxd;
-assign led[1] = !uart_txd;
+//assign led[0] = !uart_rxd;
+//assign led[1] = !uart_txd;
 
 //assign led = out_pin0[3:0];
 assign in_pin0[3:0] = key;
@@ -55,7 +55,9 @@ assign in_pin0[3:0] = key;
 			.sys_rst_n  (sys_rst_n),       // 复位信号
 			.uart_rxd  (uart_rxd),
 			.uart_txd  (uart_txd),
-
+			
+			.out_led (led),
+			
   //SDRAM 芯片接口
   .sdram_clk_out     (sdram_clk_out),
   .sdram_cke			(sdram_cke),		//SDRAM 时钟有效

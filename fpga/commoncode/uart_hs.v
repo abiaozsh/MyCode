@@ -1,15 +1,15 @@
 
 module uart_hs(
-		input	      sys_clk,                  //系统时钟
+		input         sys_clk,                  //系统时钟
 		input         sys_rst_n,                //系统复位，低电平有效
     
-		input             uart_rxd,                 //UART接收端口
+		input         uart_rxd,                 //UART接收端口
 		output  reg   uart_txd,                  //UART发送端口
     
 		output  reg       uart_rec,                //接收一帧数据完成标志信号 上升沿表示接收到
 		output  reg [7:0] uart_data_out,                 //接收的数据
-		input         uart_send,                  //发送使能信号
-		input  [7:0]  uart_data_in                 //待发送数据
+		input             uart_send,                  //发送使能信号
+		input       [7:0] uart_data_in                 //待发送数据
 		);
     
 	//parameter define

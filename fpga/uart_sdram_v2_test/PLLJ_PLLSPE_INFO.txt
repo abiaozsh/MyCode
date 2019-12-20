@@ -1,4 +1,4 @@
-PLL_Name	uart_mcu:comb_9|sdram:comb_9567|pll_clk:u_pll_clk|altpll:altpll_component|pll_clk_altpll:auto_generated|pll1
+PLL_Name	uart_mcu:comb_7|sdram:comb_11482|pll_clk:u_pll_clk|altpll:altpll_component|pll_clk_altpll:auto_generated|pll1
 PLLJITTER	30
 PLLSPEmax	84
 PLLSPEmin	-53

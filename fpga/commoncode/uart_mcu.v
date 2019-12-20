@@ -2,6 +2,8 @@ module uart_mcu(
 		input  sys_clk  ,
 		input  sys_rst_n,
     
+	 output reg [3:0] out_led,
+	 
 		input  uart_rxd,
 		output uart_txd,
     
@@ -54,11 +56,6 @@ module uart_mcu(
 		output reg [7:0] out_pin7
 
 		);
-reg uart_rec_old;
-reg [7:0] cmd_temp;
-reg [7:0] command;
-reg command_done;
-reg [7:0] data;
 
 wire uart_rec;
 wire [7:0] uart_data_r;
@@ -96,42 +93,41 @@ uart_hs (
     .uart_data_in   (uart_data_w)
   );
 
-
-always @(posedge sys_clk or negedge sys_rst_n) begin
-  if (!sys_rst_n) begin
-    uart_rec_old <= uart_rec;
-  end else begin
-    uart_rec_old <= uart_rec;
-  end
-end
-
+reg [7:0] command;
+reg [7:0] data;
+reg [7:0] data_index;
+reg data_arrive;
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     command <= 0;
-    cmd_temp <= 0;
     data <= 0;
+	 out_led<=0;
   end else begin
-    if (uart_rec_old != uart_rec && uart_rec==1) begin //串口数据到达  
-      if(cmd_temp == 0) begin
-        command <= 0;
-        cmd_temp <= uart_data_r;
-        data <= 0;
+    data_arrive <= 0;
+    if (uart_rec) begin //串口数据到达
+      if(command==0) begin
+        command <= uart_data_r;
+        data_index <= 8'hFF;
       end else begin
-        command <= cmd_temp;
-        cmd_temp <= 0;
+			out_led <=3;
+        data_arrive <= 1;
+        data_index <= data_index + 1;
         data <= uart_data_r;
       end
     end else begin
       if(command_done)begin
         command <= 0;
-        data <= 0;
       end
     end
   end
 end
 
+reg command_done;
 reg [7:0] timer;
-reg [31:0] timerLong;
+reg [7:0] reg_temp;
+reg [15:0] timer2;
+reg [23:0] read_address;
+reg hibit;
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     out_pin0<=0;
@@ -148,115 +144,163 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     out_rst<=0;
     command_done <= 0;
     timer<=0;
+    timer2<=0;
+    hibit<=0;
     
     sdram_c_address <= 0;
     sdram_c_data_in <= 0;
     sdram_c_read_req <= 0;
     sdram_c_write_req <= 0;
     sdram_c_write_en <= 0;
+
   end else begin
-    if          (command == 0) begin 
-      command_done<=0;
-      timer<=0;
-    end else if (command == 8'h10 && !command_done) begin out_clk<=1; command_done<=1;
-    end else if (command == 8'h11 && !command_done) begin out_clk<=0; command_done<=1;
-    end else if (command == 8'h12 && !command_done) begin out_rst<=1; command_done<=1;
-    end else if (command == 8'h13 && !command_done) begin out_rst<=0; command_done<=1;
+    if(command_done)begin
+		uart_send<=0;
+	   if          (command == 8'h00) begin 
+		  command_done<=0;
+		end
+	 end else begin//command_done==0
+      if          (command == 8'h00) begin
+      end else if (command == 8'h10) begin out_clk<=1; command_done<=1;
+      end else if (command == 8'h11) begin out_clk<=0; command_done<=1;
+      end else if (command == 8'h12) begin out_rst<=1; command_done<=1;
+      end else if (command == 8'h13) begin out_rst<=0; command_done<=1;
 
-    end else if (command == 8'h20 && !command_done) begin uart_send<=1; uart_data_w<=in_pin0; command_done<=1;
-    end else if (command == 8'h21 && !command_done) begin uart_send<=1; uart_data_w<=in_pin1; command_done<=1;
-    end else if (command == 8'h22 && !command_done) begin uart_send<=1; uart_data_w<=in_pin2; command_done<=1;
-    end else if (command == 8'h23 && !command_done) begin uart_send<=1; uart_data_w<=in_pin3; command_done<=1;
-    end else if (command == 8'h24 && !command_done) begin uart_send<=1; uart_data_w<=in_pin4; command_done<=1;
-    end else if (command == 8'h25 && !command_done) begin uart_send<=1; uart_data_w<=in_pin5; command_done<=1;
-    end else if (command == 8'h26 && !command_done) begin uart_send<=1; uart_data_w<=in_pin6; command_done<=1;
-    end else if (command == 8'h27 && !command_done) begin uart_send<=1; uart_data_w<=in_pin7; command_done<=1;
+      end else if (command == 8'h20) begin uart_send<=1; uart_data_w<=in_pin0; command_done<=1;
+      end else if (command == 8'h21) begin uart_send<=1; uart_data_w<=in_pin1; command_done<=1;
+      end else if (command == 8'h22) begin uart_send<=1; uart_data_w<=in_pin2; command_done<=1;
+      end else if (command == 8'h23) begin uart_send<=1; uart_data_w<=in_pin3; command_done<=1;
+      end else if (command == 8'h24) begin uart_send<=1; uart_data_w<=in_pin4; command_done<=1;
+      end else if (command == 8'h25) begin uart_send<=1; uart_data_w<=in_pin5; command_done<=1;
+      end else if (command == 8'h26) begin uart_send<=1; uart_data_w<=in_pin6; command_done<=1;
+      end else if (command == 8'h27) begin uart_send<=1; uart_data_w<=in_pin7; command_done<=1;
 
-    end else if (command == 8'h30 && !command_done) begin out_pin0<=data; command_done<=1;
-    end else if (command == 8'h31 && !command_done) begin out_pin1<=data; command_done<=1;
-    end else if (command == 8'h32 && !command_done) begin out_pin2<=data; command_done<=1;
-    end else if (command == 8'h33 && !command_done) begin out_pin3<=data; command_done<=1;
-    end else if (command == 8'h34 && !command_done) begin out_pin4<=data; command_done<=1;
-    end else if (command == 8'h35 && !command_done) begin out_pin5<=data; command_done<=1;
-    end else if (command == 8'h36 && !command_done) begin out_pin6<=data; command_done<=1;
-    end else if (command == 8'h37 && !command_done) begin out_pin7<=data; command_done<=1;
+      end else if (command == 8'h30 && data_arrive) begin out_pin0<=data; command_done<=1;
+      end else if (command == 8'h31 && data_arrive) begin out_pin1<=data; command_done<=1;
+      end else if (command == 8'h32 && data_arrive) begin out_pin2<=data; command_done<=1;
+      end else if (command == 8'h33 && data_arrive) begin out_pin3<=data; command_done<=1;
+      end else if (command == 8'h34 && data_arrive) begin out_pin4<=data; command_done<=1;
+      end else if (command == 8'h35 && data_arrive) begin out_pin5<=data; command_done<=1;
+      end else if (command == 8'h36 && data_arrive) begin out_pin6<=data; command_done<=1;
+      end else if (command == 8'h37 && data_arrive) begin out_pin7<=data; command_done<=1;
 
-    end else if (command == 8'h40 && !command_done) begin uw_reg0<=data; command_done<=1;
-    end else if (command == 8'h41 && !command_done) begin uw_reg1<=data; command_done<=1;
-    end else if (command == 8'h42 && !command_done) begin uw_reg2<=data; command_done<=1;
-    end else if (command == 8'h43 && !command_done) begin uw_reg3<=data; command_done<=1;
-    end else if (command == 8'h44 && !command_done) begin uw_reg4<=data; command_done<=1;
-    end else if (command == 8'h45 && !command_done) begin uw_reg5<=data; command_done<=1;
-    end else if (command == 8'h46 && !command_done) begin uw_reg6<=data; command_done<=1;
-    end else if (command == 8'h47 && !command_done) begin uw_reg7<=data; command_done<=1;
+      end else if (command == 8'h40 && data_arrive) begin uw_reg0<=data; command_done<=1;
+      end else if (command == 8'h41 && data_arrive) begin uw_reg1<=data; command_done<=1;
+      end else if (command == 8'h42 && data_arrive) begin uw_reg2<=data; command_done<=1;
+      end else if (command == 8'h43 && data_arrive) begin uw_reg3<=data; command_done<=1;
+      end else if (command == 8'h44 && data_arrive) begin uw_reg4<=data; command_done<=1;
+      end else if (command == 8'h45 && data_arrive) begin uw_reg5<=data; command_done<=1;
+      end else if (command == 8'h46 && data_arrive) begin uw_reg6<=data; command_done<=1;
+      end else if (command == 8'h47 && data_arrive) begin uw_reg7<=data; command_done<=1;
 
-    end else if (command == 8'h50 && !command_done) begin uart_send<=1; uart_data_w<=ur_reg0; command_done<=1;
-    end else if (command == 8'h51 && !command_done) begin uart_send<=1; uart_data_w<=ur_reg1; command_done<=1;
-    end else if (command == 8'h52 && !command_done) begin uart_send<=1; uart_data_w<=ur_reg2; command_done<=1;
-    end else if (command == 8'h53 && !command_done) begin uart_send<=1; uart_data_w<=ur_reg3; command_done<=1;
-    end else if (command == 8'h54 && !command_done) begin uart_send<=1; uart_data_w<=ur_reg4; command_done<=1;
-    end else if (command == 8'h55 && !command_done) begin uart_send<=1; uart_data_w<=ur_reg5; command_done<=1;
-    end else if (command == 8'h56 && !command_done) begin uart_send<=1; uart_data_w<=ur_reg6; command_done<=1;
-    end else if (command == 8'h57 && !command_done) begin uart_send<=1; uart_data_w<=ur_reg7; command_done<=1;
+      end else if (command == 8'h50) begin uart_send<=1; uart_data_w<=ur_reg0; command_done<=1;
+      end else if (command == 8'h51) begin uart_send<=1; uart_data_w<=ur_reg1; command_done<=1;
+      end else if (command == 8'h52) begin uart_send<=1; uart_data_w<=ur_reg2; command_done<=1;
+      end else if (command == 8'h53) begin uart_send<=1; uart_data_w<=ur_reg3; command_done<=1;
+      end else if (command == 8'h54) begin uart_send<=1; uart_data_w<=ur_reg4; command_done<=1;
+      end else if (command == 8'h55) begin uart_send<=1; uart_data_w<=ur_reg5; command_done<=1;
+      end else if (command == 8'h56) begin uart_send<=1; uart_data_w<=ur_reg6; command_done<=1;
+      end else if (command == 8'h57) begin uart_send<=1; uart_data_w<=ur_reg7; command_done<=1;
 
-    end else if (command == 8'hA0 && !command_done) begin//sdram write
-      timer<=timer+1'b1;
-      if         (timer==0)begin
-        sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
-        sdram_c_data_in <= {uw_reg1,uw_reg0};
-      end else if(timer==1)begin
-        sdram_c_write_req<=1;
-      end else begin
-        if(sdram_c_write_ack)begin
-          ur_reg7<=timer;
-          sdram_c_write_req<=0;
-          command_done<=1;
+      end else if (command == 8'hA0) begin//sdram write
+        timer<=timer+1'b1;
+        if(timer==0)begin
+          sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
+          sdram_c_data_in <= {uw_reg1,uw_reg0};
+        end else if(timer==1)begin
+          sdram_c_write_req<=1;
+        end else begin
+          if(sdram_c_write_ack)begin
+				
+            ur_reg7<=timer;
+            timer<=0;
+            sdram_c_write_req<=0;
+            command_done<=1;
+          end
         end
-      end
-      
-    end else if (command == 8'hA1 && !command_done) begin//sdram read
-      timer<=timer+1'b1;
-      if         (timer==0)begin
-        sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
-      end else if(timer==1)begin
-        sdram_c_read_req<=1;
-      end else begin
-        if(sdram_c_read_ack)begin
-          ur_reg7<=timer;
-          ur_reg0<=sdram_c_data_out[7:0];
-          ur_reg1<=sdram_c_data_out[15:8];
-          sdram_c_read_req<=0;
-          command_done<=1;
+        
+      end else if (command == 8'hA1) begin//sdram read
+        timer<=timer+1'b1;
+        if(timer==0)begin
+          sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
+          sdram_c_read_req<=1;
+			 
+        end else begin
+          if(sdram_c_read_ack)begin
+
+            ur_reg7<=timer;
+            timer<=0;
+            ur_reg0<=sdram_c_data_out[7:0];
+            ur_reg1<=sdram_c_data_out[15:8];
+            sdram_c_read_req<=0;
+            command_done<=1;
+          end
         end
-      end
-      
-    end else if (command == 8'hA2 && !command_done) begin//sdram long write
-      timerLong<=timerLong+1'b1;
-      if         (timerLong==0)begin
-        sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
-        sdram_c_data_in<={in_pin1,in_pin0};
-      end else if(timerLong==1)begin
-        sdram_c_data_in<={in_pin1,in_pin0};
-        sdram_c_write_en<=1;
-      end else if(timerLong==65536)begin//16*1024*1024
-        sdram_c_write_en<=0;
-        uart_send<=1;
-        uart_data_w<=66;
+        
+      end else if (command == 8'hA2) begin//sdram long write
+        if(data_arrive)begin
+          if         (data_index[0]==0)begin
+            reg_temp <= data;//锁存低字节
+          end else begin
+            sdram_c_write_en = 1;
+            sdram_c_data_in<={data,reg_temp};
+            if         (data_index==1)begin
+              sdram_c_write_latch_address = 1;
+              sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
+            end else if(data_index==255)begin
+              command_done = 1;
+            end
+          end
+        end else begin
+          sdram_c_write_en = 0;
+          sdram_c_write_latch_address = 0;
+        end
+        
+      end else if (command == 8'hA3) begin//sdram long read
+        timer2<=timer2+1;
+        uart_send<=0;
+        if(timer2==300)begin//25 * 10 +50
+          timer2<=0;
+        end
+        if(timer2==0)begin
+          if(timer==0)begin//锁存地址
+            read_address <= {uw_reg4,uw_reg3,uw_reg2};
+            sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
+          end else begin
+            read_address <= hibit?(read_address+1):read_address;
+            sdram_c_address <=read_address;
+          end
+          sdram_c_read_req<=1;
+        end else begin
+          if(sdram_c_read_ack)begin
+            timer=timer+1;
+            sdram_c_read_req<=0;
+            uart_send<=1;
+            uart_data_w<=hibit?sdram_c_data_out[15:8]:sdram_c_data_out[7:0];
+            hibit<=!hibit;
+            if(timer==7)begin
+              timer2<=0;
+              timer<=0;
+              hibit<=0;
+              command_done<=1;
+            end
+          end
+        end
+      end else if (command == 8'hB0) begin //get probe
+        ur_reg0 <= probe_timer8;
+        ur_reg1 <= probe_locked_time;
+        ur_reg2 <= probe_sdram_init_done_timer;
+        ur_reg3 <= probe_readBuffer0;
         command_done<=1;
-      end else begin
-        sdram_c_data_in<={in_pin1,in_pin0};
-      end
-      
-    end else if (command == 8'hB0 && !command_done) begin //get probe
-      ur_reg0 <= probe_timer8;
-      ur_reg1 <= probe_locked_time;
-      ur_reg2 <= probe_sdram_init_done_timer;
-      ur_reg3 <= probe_readBuffer0;
-      command_done<=1;
 
-    end else begin
-      uart_send<=0;
+      end else begin
+		  command_done<=1;
+        uart_send<=0;
+      end
     end
+
+
+
   end
 end
 
@@ -333,6 +377,7 @@ wire  sdram_c_read_ack;
 reg  sdram_c_write_req;
 wire  sdram_c_write_ack;
 reg sdram_c_write_en;
+reg sdram_c_write_latch_address;
 wire [7:0] probe_timer8;
 wire [7:0] probe_locked_time;
 wire [7:0] probe_sdram_init_done_timer;
@@ -363,6 +408,7 @@ wire sdram_c_vga;
   .write_req  (sdram_c_write_req),//in
   .write_ack  (sdram_c_write_ack),//out
   .write_en   (sdram_c_write_en),//in
+  .write_latch_address(sdram_c_write_latch_address),//in
   
   .probe_timer8 (probe_timer8),
   .probe_locked_time (probe_locked_time),

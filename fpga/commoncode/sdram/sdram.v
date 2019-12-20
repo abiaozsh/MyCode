@@ -24,7 +24,8 @@ module sdram(
     output [12:0] sdram_addr,               //SDRAM 行/列地址
     inout  [15:0] sdram_data,               //SDRAM 数据
     output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
-
+    output        sdram_prob_refresh,       //SDRAM 刷新指示
+    
     //共用
     input clk,//上升沿拉取地址数据
     input  [23:0] address,
@@ -43,7 +44,7 @@ module sdram(
     
     //连续写入端口 //2*8字缓存，触及边界后刷入
     //上升沿锁存地址，之后每次加一
-    //写完8个字后，要保持一个周期，以写入sdram
+    input write_latch_address,
     input write_en,//写入过程中保持高,要从8字前边界开始写，地址0x00,0x08,0x10...,否则会覆盖原有数据
     
     output reg[7:0] probe_timer8,
@@ -237,18 +238,8 @@ always@(posedge clk or negedge sys_rst_n) begin
   end
 end
 
-
-reg write_en_last;//用户接口 连续写请求 上升沿
-always@(posedge clk or negedge sys_rst_n) begin
-	if(!sys_rst_n) begin
-    write_en_last <= 0;
-	end else begin
-    write_en_last <= write_en;
-  end
-end
-
 wire [23:0] writeAddressDataInCurr;//连续写 地址
-assign writeAddressDataInCurr = (write_en && !write_en_last) ? address : writeAddressDataIn;
+assign writeAddressDataInCurr = (write_latch_address) ? address : writeAddressDataIn;
 
 reg [23:0] writeAddressDataIn;
 always@(posedge clk or negedge sys_rst_n) begin//地址递增
@@ -269,7 +260,7 @@ reg [15:0] writeBufferFront3;
 reg [15:0] writeBufferFront4;
 reg [15:0] writeBufferFront5;
 reg [15:0] writeBufferFront6;
-reg [15:0] writeBufferFront7;
+//reg [15:0] writeBufferFront7;
 
 reg [15:0] writeBufferBack0;
 reg [15:0] writeBufferBack1;
@@ -292,13 +283,10 @@ always@(posedge clk or negedge sys_rst_n) begin // 注入连续写缓存
       end else if(writeAddressDataInCurr[2:0]==4)begin writeBufferFront4 <= data_in;
       end else if(writeAddressDataInCurr[2:0]==5)begin writeBufferFront5 <= data_in;
       end else if(writeAddressDataInCurr[2:0]==6)begin writeBufferFront6 <= data_in;
-      end else if(writeAddressDataInCurr[2:0]==7)begin writeBufferFront7 <= data_in;
-      end
-      //越界并且不是第一个周期
-      if(writeAddressDataInCurr[2:0]==0 && !(write_en && !write_en_last))begin
+      end else if(writeAddressDataInCurr[2:0]==7)begin
         //发起sdram写入
         write_sdram_req <= 1;
-        writeAddressSdram <= writeAddressDataInCurr[23:3]-1'b1;
+        writeAddressSdram <= writeAddressDataInCurr[23:3];
         writeBufferBack0 <= writeBufferFront0;
         writeBufferBack1 <= writeBufferFront1;
         writeBufferBack2 <= writeBufferFront2;
@@ -306,11 +294,11 @@ always@(posedge clk or negedge sys_rst_n) begin // 注入连续写缓存
         writeBufferBack4 <= writeBufferFront4;
         writeBufferBack5 <= writeBufferFront5;
         writeBufferBack6 <= writeBufferFront6;
-        writeBufferBack7 <= writeBufferFront7;
+        writeBufferBack7 <= data_in;//writeBufferBack7 <= writeBufferFront7;
       end
-      if(write_sdram_ack)begin
-        write_sdram_req<=0;
-      end
+    end
+    if(write_sdram_ack)begin
+      write_sdram_req <= 0;
     end
   end
 end
