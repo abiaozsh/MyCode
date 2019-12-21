@@ -32,8 +32,8 @@ module uart_hs(
 	//对发送使能信号uart_send延迟两个时钟周期
 	always @(posedge sys_clk or negedge sys_rst_n) begin         
 		if (!sys_rst_n) begin
-			uart_send_d0 <= 1'b0;                                  
-			uart_send_d1 <= 1'b0;
+			uart_send_d0 <= 0;                                  
+			uart_send_d1 <= 0;
 		end                                                      
 		else begin                                               
 			uart_send_d0 <= uart_send;                               
@@ -194,15 +194,15 @@ module uart_hs(
 		if (!sys_rst_n) begin
 			uart_data_out <= 8'd0;                               
 			uart_rec <= 1'b0;
+		end else begin
+		  if(rx_cnt == 4'd9) begin               //接收数据计数器计数到停止位时           
+		  	  uart_data_out <= rxdata;                    //寄存输出接收到的数据
+			  uart_rec <= 1'b1;                      //并将接收完成标志位拉高
+		  end else begin
+			  uart_data_out <= 8'd0;                                   
+			  uart_rec <= 1'b0; 
+		  end
 		end
-		else if(rx_cnt == 4'd9) begin               //接收数据计数器计数到停止位时           
-			uart_data_out <= rxdata;                    //寄存输出接收到的数据
-			uart_rec <= 1'b1;                      //并将接收完成标志位拉高
-		end
-		else begin
-			uart_data_out <= 8'd0;                                   
-			uart_rec <= 1'b0; 
-		end    
 	end
 
 endmodule	

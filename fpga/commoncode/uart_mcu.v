@@ -1,13 +1,15 @@
 module uart_mcu(
-		input  sys_clk  ,
-		input  sys_rst_n,
+    input  sys_clk  ,
+    input  sys_rst_n,
     
-	 output reg [3:0] out_led,
-	 
-		input  uart_rxd,
-		output uart_txd,
+    input  uart_rxd,
+    output uart_txd,
     
-/*
+    output reg [7:0] debug_pin0,
+    output reg [7:0] debug_pin1,
+    output reg [7:0] debug_pin2,
+
+    /*
   .sdram_clk_out     (sdram_clk_out),
   .sdram_cke			(sdram_cke),		//SDRAM 时钟有效
   .sdram_cs_n			(sdram_cs_n),		//SDRAM 片选
@@ -18,6 +20,7 @@ module uart_mcu(
   .sdram_addr			(sdram_addr),		//SDRAM 行/列地址
   .sdram_data			(sdram_data),		//SDRAM 数据	
   .sdram_dqm		(sdram_dqm),
+  .sdram_prob_refresh (sdram_prob_refresh),
 */
     
     //SDRAM 芯片接口
@@ -31,7 +34,7 @@ module uart_mcu(
     output [12:0] sdram_addr,               //SDRAM 行/列地址
     inout  [15:0] sdram_data,               //SDRAM 数据
     output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
-    
+    output        sdram_prob_refresh,
     
     
 		output reg out_clk,
@@ -101,15 +104,24 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     command <= 0;
     data <= 0;
-	 out_led<=0;
+    data_index<=0;
+    data_arrive<=0;
+	 
+	debug_pin0<=0;
+    debug_pin1<=0;
   end else begin
     data_arrive <= 0;
     if (uart_rec) begin //串口数据到达
       if(command==0) begin
+		
+		
         command <= uart_data_r;
         data_index <= 8'hFF;
       end else begin
-			out_led <=3;
+		if (command == 8'h30)begin
+		debug_pin0<=command;
+		debug_pin1 <= data;
+		end
         data_arrive <= 1;
         data_index <= data_index + 1;
         data <= uart_data_r;
@@ -138,6 +150,16 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     out_pin5<=0;
     out_pin6<=0;
     out_pin7<=0;
+    
+    uw_reg0<=0;
+    uw_reg1<=0;
+    uw_reg2<=0;
+    uw_reg3<=0;
+    uw_reg4<=0;
+    uw_reg5<=0;
+    uw_reg6<=0;
+    uw_reg7<=0;
+    
     uart_send<=0;
     uart_data_w<=0;
     out_clk<=0;
@@ -153,13 +175,24 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     sdram_c_write_req <= 0;
     sdram_c_write_en <= 0;
 
+    
+    
+    debug_pin2<=0;
+    
   end else begin
+
+	 if(command!=0 && !command_done)begin
+	   debug_pin2 <= command;
+	 end
+	 
+	 //debug_pin0<= command_done;
+	 
     if(command_done)begin
-		uart_send<=0;
-	   if          (command == 8'h00) begin 
-		  command_done<=0;
-		end
-	 end else begin//command_done==0
+      uart_send<=0;
+      if          (command == 8'h00) begin 
+        command_done<=0;
+      end
+    end else begin//command_done==0
       if          (command == 8'h00) begin
       end else if (command == 8'h10) begin out_clk<=1; command_done<=1;
       end else if (command == 8'h11) begin out_clk<=0; command_done<=1;
@@ -207,39 +240,35 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         if(timer==0)begin
           sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
           sdram_c_data_in <= {uw_reg1,uw_reg0};
-        end else if(timer==1)begin
           sdram_c_write_req<=1;
         end else begin
           if(sdram_c_write_ack)begin
-				
             ur_reg7<=timer;
             timer<=0;
             sdram_c_write_req<=0;
             command_done<=1;
           end
         end
-        
+
       end else if (command == 8'hA1) begin//sdram read
         timer<=timer+1'b1;
         if(timer==0)begin
           sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
           sdram_c_read_req<=1;
-			 
         end else begin
           if(sdram_c_read_ack)begin
-
-            ur_reg7<=timer;
-            timer<=0;
-            ur_reg0<=sdram_c_data_out[7:0];
-            ur_reg1<=sdram_c_data_out[15:8];
+            ur_reg7 <= timer;
+            timer <= 0;
+            ur_reg0 <= sdram_c_data_out[7:0];
+            ur_reg1 <= sdram_c_data_out[15:8];
             sdram_c_read_req<=0;
-            command_done<=1;
+            command_done <= 1;
           end
         end
-        
+
       end else if (command == 8'hA2) begin//sdram long write
         if(data_arrive)begin
-          if         (data_index[0]==0)begin
+          if (data_index[0]==0)begin
             reg_temp <= data;//锁存低字节
           end else begin
             sdram_c_write_en = 1;
@@ -247,15 +276,15 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
             if         (data_index==1)begin
               sdram_c_write_latch_address = 1;
               sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
-            end else if(data_index==255)begin
-              command_done = 1;
+            end else if(data_index==7)begin
+              command_done <= 1;
             end
           end
         end else begin
           sdram_c_write_en = 0;
           sdram_c_write_latch_address = 0;
         end
-        
+
       end else if (command == 8'hA3) begin//sdram long read
         timer2<=timer2+1;
         uart_send<=0;
@@ -286,6 +315,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
             end
           end
         end
+        
       end else if (command == 8'hB0) begin //get probe
         ur_reg0 <= probe_timer8;
         ur_reg1 <= probe_locked_time;
@@ -294,7 +324,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         command_done<=1;
 
       end else begin
-		  command_done<=1;
+        command_done<=1;
         uart_send<=0;
       end
     end
@@ -383,10 +413,10 @@ wire [7:0] probe_locked_time;
 wire [7:0] probe_sdram_init_done_timer;
 wire [7:0] probe_readBuffer0;
 wire sdram_c_vga;
- sdram(
+sdram(
   .sys_clk    (sys_clk  ),       // 时钟信号
   .sys_rst_n  (sys_rst_n),       // 复位信号
-  
+
   //SDRAM 芯片接口
   .sdram_clk_out     (sdram_clk_out),
   .sdram_cke			(sdram_cke),		//SDRAM 时钟有效
@@ -398,6 +428,8 @@ wire sdram_c_vga;
   .sdram_addr			(sdram_addr),		//SDRAM 行/列地址
   .sdram_data			(sdram_data),		//SDRAM 数据	
   .sdram_dqm		(sdram_dqm),
+  .sdram_prob_refresh  (sdram_prob_refresh),
+
   
   .clk        (sys_clk),//in
   .address    (sdram_c_address),//in
@@ -409,15 +441,14 @@ wire sdram_c_vga;
   .write_ack  (sdram_c_write_ack),//out
   .write_en   (sdram_c_write_en),//in
   .write_latch_address(sdram_c_write_latch_address),//in
-  
+
   .probe_timer8 (probe_timer8),
   .probe_locked_time (probe_locked_time),
   .probe_sdram_init_done_timer (probe_sdram_init_done_timer),
-    .probe_readBuffer0 (probe_readBuffer0),
+  .probe_readBuffer0 (probe_readBuffer0),
   .vga        (sdram_c_vga)//out
+);
 
- );
- 
 
 
 endmodule
