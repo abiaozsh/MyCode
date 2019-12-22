@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
@@ -38,6 +39,11 @@
             this.textBox4 = new System.Windows.Forms.TextBox();
             this.button5 = new System.Windows.Forms.Button();
             this.button6 = new System.Windows.Forms.Button();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.button7 = new System.Windows.Forms.Button();
+            this.button8 = new System.Windows.Forms.Button();
+            this.button9 = new System.Windows.Forms.Button();
+            this.button10 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
@@ -87,7 +93,7 @@
             this.textBox3.Multiline = true;
             this.textBox3.Name = "textBox3";
             this.textBox3.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox3.Size = new System.Drawing.Size(509, 412);
+            this.textBox3.Size = new System.Drawing.Size(313, 699);
             this.textBox3.TabIndex = 5;
             this.textBox3.TextChanged += new System.EventHandler(this.textBox3_TextChanged);
             // 
@@ -114,11 +120,11 @@
             // 
             this.textBox4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            this.textBox4.Location = new System.Drawing.Point(13, 70);
+            this.textBox4.Location = new System.Drawing.Point(13, 146);
             this.textBox4.Multiline = true;
             this.textBox4.Name = "textBox4";
             this.textBox4.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox4.Size = new System.Drawing.Size(263, 383);
+            this.textBox4.Size = new System.Drawing.Size(263, 594);
             this.textBox4.TabIndex = 8;
             this.textBox4.TextChanged += new System.EventHandler(this.textBox4_TextChanged);
             // 
@@ -142,11 +148,60 @@
             this.button6.UseVisualStyleBackColor = true;
             this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
+            // timer1
+            // 
+            this.timer1.Enabled = true;
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
+            // button7
+            // 
+            this.button7.Location = new System.Drawing.Point(13, 70);
+            this.button7.Name = "button7";
+            this.button7.Size = new System.Drawing.Size(75, 23);
+            this.button7.TabIndex = 11;
+            this.button7.Text = "readpage";
+            this.button7.UseVisualStyleBackColor = true;
+            this.button7.Click += new System.EventHandler(this.button7_Click);
+            // 
+            // button8
+            // 
+            this.button8.Location = new System.Drawing.Point(13, 99);
+            this.button8.Name = "button8";
+            this.button8.Size = new System.Drawing.Size(75, 23);
+            this.button8.TabIndex = 12;
+            this.button8.Text = "test";
+            this.button8.UseVisualStyleBackColor = true;
+            this.button8.Click += new System.EventHandler(this.button8_Click);
+            // 
+            // button9
+            // 
+            this.button9.Location = new System.Drawing.Point(175, 82);
+            this.button9.Name = "button9";
+            this.button9.Size = new System.Drawing.Size(75, 23);
+            this.button9.TabIndex = 13;
+            this.button9.Text = "initb";
+            this.button9.UseVisualStyleBackColor = true;
+            this.button9.Click += new System.EventHandler(this.button9_Click);
+            // 
+            // button10
+            // 
+            this.button10.Location = new System.Drawing.Point(94, 82);
+            this.button10.Name = "button10";
+            this.button10.Size = new System.Drawing.Size(75, 23);
+            this.button10.TabIndex = 14;
+            this.button10.Text = "inita";
+            this.button10.UseVisualStyleBackColor = true;
+            this.button10.Click += new System.EventHandler(this.button10_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(803, 465);
+            this.ClientSize = new System.Drawing.Size(607, 752);
+            this.Controls.Add(this.button10);
+            this.Controls.Add(this.button9);
+            this.Controls.Add(this.button8);
+            this.Controls.Add(this.button7);
             this.Controls.Add(this.button6);
             this.Controls.Add(this.button5);
             this.Controls.Add(this.textBox4);
@@ -177,6 +232,11 @@
 		private System.Windows.Forms.TextBox textBox4;
 		private System.Windows.Forms.Button button5;
 		private System.Windows.Forms.Button button6;
+        private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.Button button7;
+        private System.Windows.Forms.Button button8;
+        private System.Windows.Forms.Button button9;
+        private System.Windows.Forms.Button button10;
 
 	}
 }

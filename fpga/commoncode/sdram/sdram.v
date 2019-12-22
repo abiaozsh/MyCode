@@ -26,6 +26,19 @@ module sdram(
     output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
     output        sdram_prob_refresh,       //SDRAM 刷新指示
     
+    
+    output reg [7:0] debug_port0,
+    output reg [7:0] debug_port1,
+    output reg [7:0] debug_port2,
+    output reg debug_pin0,
+    output reg debug_pin1,
+    output reg debug_pin2,
+    output reg debug_pin3,
+    output reg debug_pin6,
+    output reg debug_pin7,
+
+    
+    
     //共用
     input clk,//上升沿拉取地址数据
     input  [23:0] address,
@@ -222,10 +235,10 @@ end
 reg write_single_sdram_req;//sdram 单次写请求
 //write_ack
 always@(posedge clk or negedge sys_rst_n) begin
-	if(!sys_rst_n) begin
+  if(!sys_rst_n) begin
     write_single_sdram_req <= 0;
     write_ack <= 0;
-	end else begin
+  end else begin
     write_ack <= 0;
     if(write_req&&!write_req_last)begin//用户接口 写请求 上升沿
       write_single_sdram_req <= 1;
@@ -243,10 +256,16 @@ assign writeAddressDataInCurr = (write_latch_address) ? address : writeAddressDa
 
 reg [23:0] writeAddressDataIn;
 always@(posedge clk or negedge sys_rst_n) begin//地址递增
-	if(!sys_rst_n) begin
+  if(!sys_rst_n) begin
     writeAddressDataIn <= 0;
-	end else begin
-    writeAddressDataIn <= writeAddressDataInCurr+1'b1;
+    debug_pin6<=0;
+  end else begin
+    if(write_latch_address)begin
+      debug_pin6<=1;
+    end
+    if(write_en)begin
+      writeAddressDataIn <= writeAddressDataInCurr+1'b1;
+    end
   end
 end
 
@@ -271,10 +290,10 @@ reg [15:0] writeBufferBack5;
 reg [15:0] writeBufferBack6;
 reg [15:0] writeBufferBack7;
 always@(posedge clk or negedge sys_rst_n) begin // 注入连续写缓存
-	if(!sys_rst_n) begin
+  if(!sys_rst_n) begin
     write_sdram_req <= 0;
     writeAddressSdram <= 0;
-	end else begin
+  end else begin
     if(write_en)begin
       if         (writeAddressDataInCurr[2:0]==0)begin writeBufferFront0 <= data_in;
       end else if(writeAddressDataInCurr[2:0]==1)begin writeBufferFront1 <= data_in;
@@ -323,7 +342,7 @@ reg [15:0] readBuffer3;
 //sdram_rd_req sdram_rd_burst sdram_rd_addr
 //
 always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
-	if(!sys_rst_n) begin
+  if(!sys_rst_n) begin
     sdram_timer8 <= 0;
     
     read_vga_sdram_req_last <= 0;
@@ -339,7 +358,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     sdram_rd_req <= 0;
     sdram_rd_burst <= 0;
     
-	end else begin
+  end else begin
     read_vga_sdram_req_last <= read_vga_sdram_req;
     read_sdram_req_last <= read_sdram_req;
     write_single_sdram_req_last <= write_single_sdram_req;
@@ -388,7 +407,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     end else if(write_sdram_req && !write_sdram_ack)begin
       if(!write_sdram_req_last) begin
         sdram_wr_addr <= {writeAddressSdram,3'b0};//21bit+3bit
-        sdram_wr_burst <= 8;
+        sdram_wr_burst <= 512;
         sdram_timer8 <= 0;
         sdram_wr_req <= 1;
       end else begin
@@ -410,6 +429,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
           end
         end
       end
+      
     end else begin
       if(!read_vga_sdram_req && read_vga_sdram_ack)begin
         read_vga_sdram_ack <= 0;

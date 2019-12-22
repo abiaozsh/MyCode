@@ -20,20 +20,25 @@ module flow_led(
     inout  [15:0] sdram_data,               //SDRAM 数据
     output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
     
-    
+    output debug_pin0,
+    output debug_pin1,
+    output debug_pin2,
+    output debug_pin3,
+    output debug_pin6,
+    output debug_pin7,
+		
+		
     //uart接口
     input           uart_rxd,         //UART接收端口
     output          uart_txd          //UART发送端口
   );
  wire sdram_prob_refresh;
  
-  //assign led[0] = !uart_rxd;
-  //assign led[1] = !uart_txd;
+  assign led[0] = !uart_rxd;
+  assign led[1] = !uart_txd;
 
-  assign led = out_pin0[3:0];
+  //assign led = out_pin0[3:0];
   assign in_pin0[3:0] = key;
-
-
 
   wire [7:0] seg_data0;
   wire [7:0] seg_data1;
@@ -80,9 +85,15 @@ module flow_led(
     .uart_rxd  (uart_rxd),
     .uart_txd  (uart_txd),
 
-    .debug_pin0 (seg_data0),
-    .debug_pin1 (seg_data1),
-    .debug_pin2 (seg_data2),
+    .debug_port0 (seg_data0),
+    .debug_port1 (seg_data1),
+    .debug_port2 (seg_data2),
+    .debug_pin0(debug_pin0),
+    .debug_pin1(debug_pin1),
+    .debug_pin2(debug_pin2),
+    .debug_pin3(debug_pin3),
+    .debug_pin6(debug_pin6),
+    .debug_pin7(debug_pin7),
 
     //SDRAM 芯片接口
     .sdram_clk_out     (sdram_clk_out),
