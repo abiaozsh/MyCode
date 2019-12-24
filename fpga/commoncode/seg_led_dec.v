@@ -1,35 +1,15 @@
-//****************************************Copyright (c)***********************************//
-//技术支持：www.openedv.com
-//淘宝店铺：http://openedv.taobao.com
-//关注微信公众平台微信号："正点原子"，免费获取FPGA & STM32资料。
-//版权所有，盗版必究。
-//Copyright(C) 正点原子 2018-2028
-//All rights reserved
-//----------------------------------------------------------------------------------------
-// File name:           seg_led
-// Last modified Date:  2018/3/13 9:03:06
-// Last Version:        V1.0
-// Descriptions:        数码管动态显示模块
-//----------------------------------------------------------------------------------------
-// Created by:          正点原子
-// Created date:        2018/3/13 9:03:09
-// Version:             V1.0
-// Descriptions:        The original version
-//
-//----------------------------------------------------------------------------------------
-//****************************************************************************************//
-
 module seg_led_dec(
-    input                   clk    ,        // 时钟信号
-    input                   rst_n  ,        // 复位信号
+  input sys_clk,
+  input sys_rst_n,
+  
+  output reg  [5:0]     seg_sel,
+  output reg  [7:0]     seg_led,
 
     input         [19:0]    data   ,        // 6位数码管要显示的数值
     input         [5:0]     point  ,        // 小数点具体显示的位置,从高到低,高电平有效
     input                   en     ,        // 数码管使能信号
-    input                   sign   ,        // 符号位（高电平显示“-”号）
+    input                   sign           // 符号位（高电平显示“-”号）
 
-    output   reg  [5:0]     seg_sel,        // 数码管位选，最左侧数码管为最高位
-    output   reg  [7:0]     seg_led         // 数码管段选
     );
 
 //parameter define

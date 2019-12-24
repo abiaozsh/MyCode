@@ -1,18 +1,18 @@
-
 module seg_led_ascii(
-    input                   clk    ,        // 时钟信号
-    input                   rst_n  ,        // 复位信号
-    input                   en     ,        // 数码管使能信号
+  input sys_clk,
+  input sys_rst_n,
+    
+    output   reg  [5:0]     seg_sel,        // 数码管位选，最左侧数码管为最高位
+    output   reg  [7:0]     seg_led,         // 数码管段选
 
+    input                   en     ,        // 数码管使能信号
     input         [7:0]    char0   ,        // 6位数码管要显示的数值
     input         [7:0]    char1   ,        // 6位数码管要显示的数值
     input         [7:0]    char2   ,        // 6位数码管要显示的数值
     input         [7:0]    char3   ,        // 6位数码管要显示的数值
     input         [7:0]    char4   ,        // 6位数码管要显示的数值
-    input         [7:0]    char5   ,        // 6位数码管要显示的数值
+    input         [7:0]    char5           // 6位数码管要显示的数值
 
-    output   reg  [5:0]     seg_sel,        // 数码管位选，最左侧数码管为最高位
-    output   reg  [7:0]     seg_led         // 数码管段选
     );
 
 //parameter define
