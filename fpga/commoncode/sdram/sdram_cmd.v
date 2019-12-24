@@ -29,16 +29,15 @@ reg  [ 4:0] sdram_cmd_r;                //SDRAM操作指令
 //wire define
 wire [23:0] sys_addr;                   //SDRAM读写地址 
 
-//*****************************************************
-//**                    main code
-//***************************************************** 
-
 //SDRAM 控制信号线赋值
 assign {sdram_cke,sdram_cs_n,sdram_ras_n,sdram_cas_n,sdram_we_n} = sdram_cmd_r;
 
 //SDRAM 读/写地址总线控制
 assign sys_addr = sdram_rd_wr ? sys_rdaddr : sys_wraddr;
-    
+
+`define     end_rdburst     cnt_clk == sdram_rd_burst-4     //读突发终止
+`define     end_wrburst     cnt_clk == sdram_wr_burst-1     //写突发终止
+
 //SDRAM 操作指令控制
 always @ (posedge clk or negedge rst_n) begin
     if(!rst_n) begin

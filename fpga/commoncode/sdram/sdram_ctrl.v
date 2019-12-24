@@ -1,4 +1,4 @@
-module sdram_ctrl(
+module sdram_ctrl (
     input            clk,			    //系统时钟
     input            rst_n,			    //复位信号，低电平有效
     
@@ -14,35 +14,29 @@ module sdram_ctrl(
     output reg [3:0] work_state,	    //SDRAM工作状态
     output reg [9:0] cnt_clk,	        //时钟计数器
     output reg       sdram_rd_wr 		//SDRAM读/写控制信号，低电平为写，高电平为读
-    );
+  );
 
-`include "sdram_para.v"		            //包含SDRAM参数定义模块
+`include "sdram_para.v" //包含SDRAM参数定义模块
 
-//parameter define                      
 parameter  TRP_CLK	  = 10'd4;	        //预充电有效周期
 parameter  TRC_CLK	  = 10'd6;	        //自动刷新周期
 parameter  TRSC_CLK	  = 10'd6;	        //模式寄存器设置时钟周期
 parameter  TRCD_CLK	  = 10'd2;	        //行选通周期
 parameter  TCL_CLK	  = 10'd3;	        //列潜伏期
 parameter  TWR_CLK	  = 10'd2;	        //写入校正
-                                        
-//reg define                            
-reg [14:0] cnt_200us;                   //SDRAM 上电稳定期200us计数器
-reg [10:0] cnt_refresh;	                //刷新计数寄存器
-reg        sdram_ref_req;		        //SDRAM 自动刷新请求信号
-reg        cnt_rst_n;		            //延时计数器复位信号，低有效	
-reg [ 3:0] init_ar_cnt;                 //初始化过程自动刷新计数器
-                                        
-//wire define                           
-wire       done_200us;		            //上电后200us输入稳定期结束标志位
-wire       sdram_ref_ack;		        //SDRAM自动刷新请求应答信号	
 
-//*****************************************************
-//**                    main code
-//***************************************************** 
+//延时参数
+`define     end_trp         cnt_clk == TRP_CLK              //预充电有效周期结束
+`define     end_trfc        cnt_clk == TRC_CLK              //自动刷新周期结束
+`define     end_trsc        cnt_clk == TRSC_CLK             //模式寄存器设置时钟周期结束
+`define     end_trcd        cnt_clk == TRCD_CLK-1           //行选通周期结束
+`define     end_tcl         cnt_clk == TCL_CLK-1            //潜伏期结束
+`define     end_tread       cnt_clk == sdram_rd_burst+2     //突发读结束
+`define     end_twrite      cnt_clk == sdram_wr_burst-1     //突发写结束
+`define     end_twr         cnt_clk == TWR_CLK              //写回周期结束
 
-//SDRAM上电后200us稳定期结束后,将标志信号拉高
-assign done_200us = (cnt_200us == 15'd20000);
+wire       sdram_ref_ack;		        //SDRAM自动刷新请求应答信号
+
 
 //SDRAM初始化完成标志 
 assign sdram_init_done = (init_state == `I_DONE);
@@ -51,32 +45,41 @@ assign sdram_init_done = (init_state == `I_DONE);
 assign sdram_ref_ack = (work_state == `W_AR);
 
 //写SDRAM响应信号
-assign sdram_wr_ack = 
-  ((work_state == `W_TRCD) & ~sdram_rd_wr) | (work_state == `W_WRITE) |((work_state == `W_WD) & (cnt_clk < sdram_wr_burst - 2'd2));
-                      
+assign sdram_wr_ack = ((work_state == `W_TRCD) & ~sdram_rd_wr) | (work_state == `W_WRITE) |((work_state == `W_WD) & (cnt_clk < sdram_wr_burst - 2'd2));
+
 //读SDRAM响应信号
 assign sdram_rd_ack = (work_state == `W_RD) & (cnt_clk >= 10'd1) & (cnt_clk < sdram_rd_burst + 2'd1);
-                      
+
+
+wire done_200us; //上电后200us输入稳定期结束标志位
+//SDRAM上电后200us稳定期结束后,将标志信号拉高
+assign done_200us = (cnt_200us == 15'd20000);
+
+reg [14:0] cnt_200us;//SDRAM 上电稳定期200us计数器
 //上电后计时200us,等待SDRAM状态稳定
 always @ (posedge clk or negedge rst_n) begin
-  if(!rst_n) 
+  if(!rst_n) begin
     cnt_200us <= 15'd0;
-  else if(cnt_200us < 15'd20000) 
+  end else if(cnt_200us < 15'd20000) begin
     cnt_200us <= cnt_200us + 1'b1;
-  else
+  end else begin
     cnt_200us <= cnt_200us;
+  end
 end
  
+reg [10:0] cnt_refresh;//刷新计数寄存器
 //刷新计数器循环计数7812ns (60ms内完成全部8192行刷新操作)
 always @ (posedge clk or negedge rst_n) begin
-  if(!rst_n) 
+  if(!rst_n) begin
     cnt_refresh <= 11'd0;
-  else if(cnt_refresh < 11'd781)      // 64ms/8192 =7812ns
-    cnt_refresh <= cnt_refresh + 1'b1;	
-  else 
-    cnt_refresh <= 11'd0;	
+  end else if(cnt_refresh < 11'd781) begin // 64ms/8192 =7812ns
+    cnt_refresh <= cnt_refresh + 1'b1;
+  end else begin
+    cnt_refresh <= 11'd0;
+  end
 end
 
+reg        sdram_ref_req;		        //SDRAM 自动刷新请求信号
 //SDRAM 刷新请求
 always @ (posedge clk or negedge rst_n)begin
   if(!rst_n) 
@@ -97,16 +100,18 @@ always @ (posedge clk or negedge rst_n) begin
     cnt_clk <= cnt_clk + 1'b1;
 end
 
+reg [ 3:0] init_ar_cnt;                 //初始化过程自动刷新计数器
 //初始化过程中对自动刷新操作计数
 always @ (posedge clk or negedge rst_n) begin
-  if(!rst_n) 
+  if(!rst_n) begin
     init_ar_cnt <= 4'd0;
-  else if(init_state == `I_NOP) 
+  end else if(init_state == `I_NOP) begin
     init_ar_cnt <= 4'd0;
-  else if(init_state == `I_AR)
+  end else if(init_state == `I_AR) begin
     init_ar_cnt <= init_ar_cnt + 1'b1;
-  else
+  end else begin
     init_ar_cnt <= init_ar_cnt;
+  end
 end
 
 //SDRAM的初始化状态机
@@ -149,10 +154,10 @@ always @ (posedge clk or negedge rst_n) begin
           sdram_rd_wr <= 1'b1;
         end else if(sdram_wr_req & sdram_init_done) begin
           work_state <= `W_ACTIVE;
-          sdram_rd_wr <= 1'b0;	
+          sdram_rd_wr <= 1'b0;
         end else if(sdram_rd_req && sdram_init_done) begin
           work_state <= `W_ACTIVE;
-          sdram_rd_wr <= 1'b1;	
+          sdram_rd_wr <= 1'b1;
         end else begin 
           work_state <= `W_IDLE;
           sdram_rd_wr <= 1'b1;
@@ -195,11 +200,12 @@ always @ (posedge clk or negedge rst_n) begin
   end
 end
 
+reg        cnt_rst_n; //延时计数器复位信号，低有效
 //计数器控制逻辑
 always @ (*) begin
   case (init_state)
     `I_NOP: //延时计数器清零(cnt_rst_n低电平复位)
-      cnt_rst_n <= 1'b0;                              
+      cnt_rst_n <= 1'b0;
     `I_PRE: //预充电：延时计数器启动(cnt_rst_n高电平启动)
       cnt_rst_n <= 1'b1; //等待预充电延时计数结束后，清零计数器
     `I_TRP://自动刷新：延时计数器启动

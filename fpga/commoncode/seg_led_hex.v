@@ -1,4 +1,4 @@
-module seg_led_hex(
+﻿module seg_led_hex(
   input sys_clk,
   input sys_rst_n,
   
@@ -10,7 +10,7 @@ module seg_led_hex(
   input [7:0] data2
 );
 
-localparam  TOP    = 13'd65000  ;        // 对数码管驱动时钟(5MHz)计数1ms所需的计数值
+localparam  TOP    = 16'd65000  ;        // 对数码管驱动时钟(5MHz)计数1ms所需的计数值
 
 //每当计数器对数码管驱动时钟计数时间达1ms，输出一个时钟周期的脉冲信号
 reg [15:0] timer;        // 数码管驱动时钟计数器

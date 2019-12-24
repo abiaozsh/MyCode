@@ -23,18 +23,6 @@
 `define     W_TRP           4'd10                           //预充电等待
 `define     W_AR            4'd11                           //自动刷新
 `define     W_TRFC          4'd12                           //自动刷新等待
-  
-//延时参数
-`define     end_trp         cnt_clk == TRP_CLK              //预充电有效周期结束
-`define     end_trfc        cnt_clk == TRC_CLK              //自动刷新周期结束
-`define     end_trsc        cnt_clk == TRSC_CLK             //模式寄存器设置时钟周期结束
-`define     end_trcd        cnt_clk == TRCD_CLK-1           //行选通周期结束
-`define     end_tcl         cnt_clk == TCL_CLK-1            //潜伏期结束
-`define     end_rdburst     cnt_clk == sdram_rd_burst-4     //读突发终止
-`define     end_tread       cnt_clk == sdram_rd_burst+2     //突发读结束     
-`define     end_wrburst     cnt_clk == sdram_wr_burst-1     //写突发终止
-`define     end_twrite      cnt_clk == sdram_wr_burst-1     //突发写结束
-`define     end_twr         cnt_clk == TWR_CLK              //写回周期结束
 
 //SDRAM控制信号命令
 `define     CMD_INIT        5'b01111                        // INITIATE
