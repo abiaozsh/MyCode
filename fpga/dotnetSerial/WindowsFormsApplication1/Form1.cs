@@ -162,10 +162,28 @@ namespace WindowsFormsApplication1
 
 
 
-        private void button3_Click(object sender, EventArgs e)
-        {
-            port.Write(textBox2.Text);
-        }
+		private void button3_Click(object sender, EventArgs e)
+		{
+			Random r = new Random();
+			bool err = false;
+			int count = 0;
+			for (int i = 0; i < 10; i++)
+			{
+				byte[] buff = new byte[1];
+				r.NextBytes(buff);
+				port.Write(buff, 0, 1);
+
+				byte[] buff2 = readFromPort(1);
+
+				if (buff[0] != buff2[0])
+				{
+					err = true;
+					count = i;
+                    break;
+				}
+			}
+			this.Text = "error:" + count + "," + err.ToString();
+		}
 
         private void textBox3_TextChanged(object sender, EventArgs e)
         {

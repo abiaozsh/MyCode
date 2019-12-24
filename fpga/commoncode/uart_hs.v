@@ -11,11 +11,11 @@ module uart_hs(
     input             uart_send,                  //发送使能信号
     input       [7:0] uart_data_in                 //待发送数据
 );
-
-/*
 	//parameter define
 	localparam BPS_CNT  = 25;        //2000000 bps  50000000/2000000
 	localparam BPS_CNT_HALF  = 12;        //2000000 bps  50000000/2000000
+
+/*
 
 	//reg define
 	reg        uart_send_d0; 
@@ -104,9 +104,17 @@ module uart_hs(
 		else 
 			reg_uart_txd <= 1'b1;                   //空闲时发送端口为高电平
 	end
+*/
+  uart_send_hs(
+    .sys_clk (sys_clk),
+    .sys_rst_n (sys_rst_n),
 
+    .uart_txd (uart_txd),
     
-	
+    .uart_send (uart_send),
+    .uart_data_in (uart_data_in)
+  );
+
 	//需要对系统时钟计数BPS_CNT次
 	//reg define
 	reg        uart_rxd_d0;
@@ -192,10 +200,20 @@ module uart_hs(
     end
 	end
   
-assign uart_rec = reg_uart_rec;
+assign uart_rec = reg_uart_rec && !reg_uart_rec_last;
 assign uart_data_out = reg_uart_data_out;
   reg reg_uart_rec;
+  reg reg_uart_rec_last;
   reg [7:0] reg_uart_data_out;
+	always @(posedge sys_clk or negedge sys_rst_n) begin
+		if (!sys_rst_n) begin
+			reg_uart_rec_last <= 0;
+		end else begin
+  	  reg_uart_rec_last <= reg_uart_rec;
+		end
+	end
+
+  
 	//数据接收完毕后给出标志信号并寄存输出接收到的数据
 	always @(posedge sys_clk or negedge sys_rst_n) begin        
 		if (!sys_rst_n) begin
@@ -211,16 +229,7 @@ assign uart_data_out = reg_uart_data_out;
 		  end
 		end
 	end
-*/
-  uart_send_hs(
-    .sys_clk (sys_clk),
-    .sys_rst_n (sys_rst_n),
-
-    .uart_txd (uart_txd),
-    
-    .uart_send (uart_send),
-    .uart_data_in (uart_data_in)
-  );
+/*
 uart_recv_hs(
     .sys_clk (sys_clk),
     .sys_rst_n (sys_rst_n),
@@ -229,5 +238,5 @@ uart_recv_hs(
     
     .uart_rec (uart_rec),
     .uart_data_out (uart_data_out)
-  );
+  );*/
 endmodule

@@ -41,8 +41,8 @@ reg [7:0] data0;
 reg [7:0] data1;
 reg [7:0] data2;
 seg_led_hex(
-  .sys_clk(sys_clk),
-  .sys_rst_n(sys_rst_n),
+  .clk(sys_clk),
+  .rst_n(sys_rst_n),
 
   .seg_sel(seg_sel),
   .seg_led(seg_led),
@@ -120,7 +120,7 @@ end
 
 
 
-
+endmodule
 
 
 

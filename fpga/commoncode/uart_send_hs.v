@@ -34,38 +34,30 @@ module uart_send_hs(
   //当脉冲信号en_flag到达时,寄存待发送的数据，并进入发送过程
   always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
-      tx_flag <= 1'b0;
-      tx_data <= 8'd0;
-    end else if (en_flag) begin //检测到发送使能上升沿
-      tx_flag <= 1'b1; //进入发送过程，标志位tx_flag拉高
-      tx_data <= uart_data_in; //寄存待发送的数据
-    end else if ((tx_cnt == 4'd9)&&(clk_cnt == BPS_CNT_HALF)) begin//计数到停止位中间时，停止发送过程
-      tx_flag <= 1'b0; //发送过程结束，标志位tx_flag拉低
-      tx_data <= 8'd0;
+      tx_flag <= 0;
+      tx_data <= 0;
     end else begin
-      tx_flag <= tx_flag;
-      tx_data <= tx_data;
+      if (en_flag) begin //检测到发送使能上升沿
+        tx_flag <= 1; //进入发送过程，标志位tx_flag拉高
+        tx_data <= uart_data_in; //寄存待发送的数据
+      end else if ((clk_cnt == (9 * BPS_CNT + BPS_CNT_HALF))) begin//计数到停止位中间时，停止发送过程
+        tx_flag <= 0; //发送过程结束，标志位tx_flag拉低
+      end
     end 
   end
 
-  reg [ 4:0] clk_cnt;//系统时钟计数器
-  reg [ 3:0] tx_cnt;//发送数据计数器
+  reg [7:0] clk_cnt;//系统时钟计数器
+  //reg [ 3:0] tx_cnt;//发送数据计数器
   //进入发送过程后，启动系统时钟计数器与发送数据计数器
   always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
-      clk_cnt <= 5'd0;
-      tx_cnt  <= 4'd0;
-    end else if (tx_flag) begin//处于发送过程
-      if (clk_cnt < BPS_CNT) begin
-        clk_cnt <= clk_cnt + 1'b1;
-        tx_cnt  <= tx_cnt;
+      clk_cnt <= 0;
+    end else begin
+      if (tx_flag) begin//处于发送过程
+        clk_cnt <= clk_cnt + 1;
       end else begin
-        clk_cnt <= 5'd0;//对系统时钟计数达一个波特率周期后清零
-        tx_cnt  <= tx_cnt + 1'b1;//此时发送数据计数器加1
+        clk_cnt <= 0;//对系统时钟计数达一个波特率周期后清零
       end
-    end else begin//发送过程结束
-      clk_cnt <= 5'd0;
-      tx_cnt  <= 4'd0;
     end
   end
 
@@ -75,17 +67,17 @@ module uart_send_hs(
     if (!sys_rst_n) begin
       uart_txd <= 1'b1;        
     end else if (tx_flag) begin
-      case(tx_cnt)
-        4'd0: uart_txd <= 1'b0; //起始位 
-        4'd1: uart_txd <= tx_data[0]; //数据位最低位
-        4'd2: uart_txd <= tx_data[1];
-        4'd3: uart_txd <= tx_data[2];
-        4'd4: uart_txd <= tx_data[3];
-        4'd5: uart_txd <= tx_data[4];
-        4'd6: uart_txd <= tx_data[5];
-        4'd7: uart_txd <= tx_data[6];
-        4'd8: uart_txd <= tx_data[7]; //数据位最高位
-        4'd9: uart_txd <= 1'b1; //停止位
+      case(clk_cnt)
+        (0 * BPS_CNT): uart_txd <= 1'b0; //起始位 
+        (1 * BPS_CNT): uart_txd <= tx_data[0]; //数据位最低位
+        (2 * BPS_CNT): uart_txd <= tx_data[1];
+        (3 * BPS_CNT): uart_txd <= tx_data[2];
+        (4 * BPS_CNT): uart_txd <= tx_data[3];
+        (5 * BPS_CNT): uart_txd <= tx_data[4];
+        (6 * BPS_CNT): uart_txd <= tx_data[5];
+        (7 * BPS_CNT): uart_txd <= tx_data[6];
+        (8 * BPS_CNT): uart_txd <= tx_data[7]; //数据位最高位
+        (9 * BPS_CNT): uart_txd <= 1'b1; //停止位
         default: ;
       endcase
     end else begin
