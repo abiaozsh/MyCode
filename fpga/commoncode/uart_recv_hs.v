@@ -75,14 +75,14 @@ module uart_recv_hs(
     end else if(rx_flag) begin //系统处于接收过程
       if (clk_cnt == BPS_CNT_HALF) begin //判断系统时钟计数器计数到数据位中间
         case ( rx_cnt )
-          4'd1 : rxdata[0] <= uart_rxd_last; //寄存数据位最低位
-          4'd2 : rxdata[1] <= uart_rxd_last;
-          4'd3 : rxdata[2] <= uart_rxd_last;
-          4'd4 : rxdata[3] <= uart_rxd_last;
-          4'd5 : rxdata[4] <= uart_rxd_last;
-          4'd6 : rxdata[5] <= uart_rxd_last;
-          4'd7 : rxdata[6] <= uart_rxd_last;
-          4'd8 : rxdata[7] <= uart_rxd_last; //寄存数据位最高位
+          4'd1 : rxdata[0] <= uart_rxd; //寄存数据位最低位
+          4'd2 : rxdata[1] <= uart_rxd;
+          4'd3 : rxdata[2] <= uart_rxd;
+          4'd4 : rxdata[3] <= uart_rxd;
+          4'd5 : rxdata[4] <= uart_rxd;
+          4'd6 : rxdata[5] <= uart_rxd;
+          4'd7 : rxdata[6] <= uart_rxd;
+          4'd8 : rxdata[7] <= uart_rxd; //寄存数据位最高位
           default:;
         endcase
       end else begin

@@ -4,15 +4,15 @@ module uart_hs(
     input sys_rst_n,
     
     input  uart_rxd,                 //UART接收端口
-    output reg uart_txd,                  //UART发送端口
+    output uart_txd,                  //UART发送端口
     
-    output  reg          uart_rec,                //接收一帧数据完成标志信号 上升沿表示接收到
-    output  reg    [7:0] uart_data_out,                 //接收的数据
+    output            uart_rec,                //接收一帧数据完成标志信号 上升沿表示接收到
+    output      [7:0] uart_data_out,                 //接收的数据
     input             uart_send,                  //发送使能信号
     input       [7:0] uart_data_in                 //待发送数据
 );
 
-
+/*
 	//parameter define
 	localparam BPS_CNT  = 25;        //2000000 bps  50000000/2000000
 	localparam BPS_CNT_HALF  = 12;        //2000000 bps  50000000/2000000
@@ -81,26 +81,28 @@ module uart_hs(
 		end
 	end
 
+  assign uart_txd = reg_uart_txd;
+  reg reg_uart_txd;
 	//根据发送数据计数器来给uart发送端口赋值
 	always @(posedge sys_clk or negedge sys_rst_n) begin        
 		if (!sys_rst_n)  
-			uart_txd <= 1'b1;        
+			reg_uart_txd <= 1'b1;        
 		else if (tx_flag)
 			case(tx_cnt)
-				4'd0: uart_txd <= 1'b0;         //起始位 
-				4'd1: uart_txd <= tx_data[0];   //数据位最低位
-				4'd2: uart_txd <= tx_data[1];
-				4'd3: uart_txd <= tx_data[2];
-				4'd4: uart_txd <= tx_data[3];
-				4'd5: uart_txd <= tx_data[4];
-				4'd6: uart_txd <= tx_data[5];
-				4'd7: uart_txd <= tx_data[6];
-				4'd8: uart_txd <= tx_data[7];   //数据位最高位
-				4'd9: uart_txd <= 1'b1;         //停止位
+				4'd0: reg_uart_txd <= 1'b0;         //起始位 
+				4'd1: reg_uart_txd <= tx_data[0];   //数据位最低位
+				4'd2: reg_uart_txd <= tx_data[1];
+				4'd3: reg_uart_txd <= tx_data[2];
+				4'd4: reg_uart_txd <= tx_data[3];
+				4'd5: reg_uart_txd <= tx_data[4];
+				4'd6: reg_uart_txd <= tx_data[5];
+				4'd7: reg_uart_txd <= tx_data[6];
+				4'd8: reg_uart_txd <= tx_data[7];   //数据位最高位
+				4'd9: reg_uart_txd <= 1'b1;         //停止位
 				default: ;
 			endcase
 		else 
-			uart_txd <= 1'b1;                   //空闲时发送端口为高电平
+			reg_uart_txd <= 1'b1;                   //空闲时发送端口为高电平
 	end
 
     
@@ -189,23 +191,27 @@ module uart_hs(
 			rxdata <= 8'd0;
     end
 	end
-
+  
+assign uart_rec = reg_uart_rec;
+assign uart_data_out = reg_uart_data_out;
+  reg reg_uart_rec;
+  reg [7:0] reg_uart_data_out;
 	//数据接收完毕后给出标志信号并寄存输出接收到的数据
 	always @(posedge sys_clk or negedge sys_rst_n) begin        
 		if (!sys_rst_n) begin
-			uart_data_out <= 8'd0;                               
-			uart_rec <= 1'b0;
+			reg_uart_data_out <= 8'd0;                               
+			reg_uart_rec <= 1'b0;
 		end else begin
 		  if(rx_cnt == 4'd9) begin               //接收数据计数器计数到停止位时           
-		  	  uart_data_out <= rxdata;                    //寄存输出接收到的数据
-			  uart_rec <= 1'b1;                      //并将接收完成标志位拉高
+		  	  reg_uart_data_out <= rxdata;                    //寄存输出接收到的数据
+			  reg_uart_rec <= 1'b1;                      //并将接收完成标志位拉高
 		  end else begin
-			  uart_data_out <= 8'd0;                                   
-			  uart_rec <= 1'b0; 
+			  reg_uart_data_out <= 8'd0;                                   
+			  reg_uart_rec <= 1'b0; 
 		  end
 		end
 	end
-/*
+*/
   uart_send_hs(
     .sys_clk (sys_clk),
     .sys_rst_n (sys_rst_n),
@@ -223,5 +229,5 @@ uart_recv_hs(
     
     .uart_rec (uart_rec),
     .uart_data_out (uart_data_out)
-  );*/
+  );
 endmodule
