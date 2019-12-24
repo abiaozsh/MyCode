@@ -1,4 +1,4 @@
-﻿module seg_led_hex(
+module seg_led_hex(
   input sys_clk,
   input sys_rst_n,
   

@@ -258,11 +258,7 @@ reg [23:0] writeAddressDataIn;
 always@(posedge clk or negedge sys_rst_n) begin//地址递增
   if(!sys_rst_n) begin
     writeAddressDataIn <= 0;
-    debug_pin6<=0;
   end else begin
-    if(write_latch_address)begin
-      debug_pin6<=1;
-    end
     if(write_en)begin
       writeAddressDataIn <= writeAddressDataInCurr+1'b1;
     end
@@ -407,7 +403,8 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     end else if(write_sdram_req && !write_sdram_ack)begin
       if(!write_sdram_req_last) begin
         sdram_wr_addr <= {writeAddressSdram,3'b0};//21bit+3bit
-        sdram_wr_burst <= 512;
+        //sdram_wr_burst <= 8;// 0700 0700 0700 0700 0700 0700 0700 0700 0f00 0f00 0f00 0f00 0f00 0f00 0f00 0f00 
+        sdram_wr_burst <= 9;//必须这么写？？
         sdram_timer8 <= 0;
         sdram_wr_req <= 1;
       end else begin

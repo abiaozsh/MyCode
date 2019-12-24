@@ -342,23 +342,22 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           end
         end
         
-      end else if (command == 8'hA4) begin//sdram long write2
+      end else if (command == 8'hA4) begin//sdram long write ok
         timer2<=timer2+1;
-        if(timer2==300000)begin
+        if(timer2==2)begin//32~35xxxxxxxxxxxxxxxxxxxxxx
           timer2<=0;
         end
         if(timer2==0)begin
           data_temp <= data_temp+1;
           count_temp <= count_temp + 1;
-          //debug_port0<=count_temp;
-          
+
           if(count_temp==0)begin
             sdram_c_write_en<=1;
             sdram_c_data_in<=data_temp;
             sdram_c_write_latch_address<=1;
             sdram_c_address<=16;
           
-          end else if(count_temp==64)begin
+          end else if(count_temp==128)begin
             count_temp<=0;
             sdram_c_write_en<=0;
             command_done <= 1;
@@ -371,7 +370,27 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           sdram_c_write_en<=0;
           sdram_c_write_latch_address<=0;
         end
-          
+      end else if (command == 8'hA5) begin//sdram long write3 error
+        data_temp <= data_temp+1;
+        count_temp <= count_temp + 1;
+        //debug_port0<=count_temp;
+        
+        if(count_temp==0)begin
+          sdram_c_write_en<=1;
+          sdram_c_data_in<=data_temp;
+          sdram_c_write_latch_address<=1;
+          sdram_c_address<=16;
+        
+        end else if(count_temp==128)begin
+          count_temp<=0;
+          sdram_c_write_en<=0;
+          command_done <= 1;
+        end else begin
+          sdram_c_write_en<=1;
+          sdram_c_write_latch_address<=0;
+          sdram_c_data_in<=data_temp;
+        end
+
       end else if (command == 8'hB0) begin //get probe
         ur_reg0 <= probe_timer8;
         ur_reg1 <= probe_locked_time;
