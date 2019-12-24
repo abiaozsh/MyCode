@@ -1,17 +1,18 @@
 
 module uart_hs(
-		input         sys_clk,                  //系统时钟
-		input         sys_rst_n,                //系统复位，低电平有效
+    input sys_clk,
+    input sys_rst_n,
     
-		input         uart_rxd,                 //UART接收端口
-		output  reg   uart_txd,                  //UART发送端口
+    input  uart_rxd,                 //UART接收端口
+    output reg uart_txd,                  //UART发送端口
     
-		output  reg       uart_rec,                //接收一帧数据完成标志信号 上升沿表示接收到
-		output  reg [7:0] uart_data_out,                 //接收的数据
-		input             uart_send,                  //发送使能信号
-		input       [7:0] uart_data_in                 //待发送数据
-		);
-    
+    output  reg          uart_rec,                //接收一帧数据完成标志信号 上升沿表示接收到
+    output  reg    [7:0] uart_data_out,                 //接收的数据
+    input             uart_send,                  //发送使能信号
+    input       [7:0] uart_data_in                 //待发送数据
+);
+
+
 	//parameter define
 	localparam BPS_CNT  = 25;        //2000000 bps  50000000/2000000
 	localparam BPS_CNT_HALF  = 12;        //2000000 bps  50000000/2000000
@@ -204,5 +205,23 @@ module uart_hs(
 		  end
 		end
 	end
+/*
+  uart_send_hs(
+    .sys_clk (sys_clk),
+    .sys_rst_n (sys_rst_n),
 
-endmodule	
+    .uart_txd (uart_txd),
+    
+    .uart_send (uart_send),
+    .uart_data_in (uart_data_in)
+  );
+uart_recv_hs(
+    .sys_clk (sys_clk),
+    .sys_rst_n (sys_rst_n),
+
+    .uart_rxd (uart_rxd),
+    
+    .uart_rec (uart_rec),
+    .uart_data_out (uart_data_out)
+  );*/
+endmodule

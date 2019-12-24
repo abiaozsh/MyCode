@@ -203,7 +203,7 @@ namespace WindowsFormsApplication1
                     break;
                 }
             }
-            this.Text = err.ToString();
+            this.Text = "error:" + err.ToString();
             return err;
         }
 
@@ -248,6 +248,19 @@ namespace WindowsFormsApplication1
         //scA0//sdram write
         //gr7//timer
         //#br
+
+        private void testlongwrite()
+        {
+            byte[] buff = new byte[512];
+            for (int i = 0; i < 256; i++)
+            {
+                buff[i * 2] = (byte)i;
+                buff[i * 2 + 1] = (byte)i;
+            }
+            int size = buff.Length / 2;//65536 * 2;//words
+
+            longwrite(buff);
+        }
 
         private void initA()
         {
@@ -368,14 +381,16 @@ namespace WindowsFormsApplication1
             portWrite((byte)(0x40 + 3), (byte)addr1, s);
             portWrite((byte)(0x40 + 4), (byte)addr2, s);
             portWrite((byte)(0xA2), s);
-            for (int i = 0; i < 256; i++)
-            {
-                portWrite((byte)buff[i * 2 + 0], s);
-                portWrite((byte)buff[i * 2 + 1], s);
-            }
             s.Flush();
             byte[] buff2 = s.ToArray();
             sendall(buff2);
+            for (int i = 0; i < 256; i++)
+            {
+                Thread.Sleep(10);
+                portWrite((byte)buff[i * 2 + 0]);
+                Thread.Sleep(10);
+                portWrite((byte)buff[i * 2 + 1]);
+            }
 
 
         }
@@ -551,6 +566,11 @@ namespace WindowsFormsApplication1
         {
             textBox4.Text = "#inita//FFFFFF\r\n";
             button4_Click(null, null);
+        }
+
+        private void button11_Click(object sender, EventArgs e)
+        {
+            testlongwrite();
         }
 
     }
