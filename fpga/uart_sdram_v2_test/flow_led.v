@@ -43,13 +43,10 @@ module flow_led(
   wire [7:0] seg_data0;
   wire [7:0] seg_data1;
   wire [7:0] seg_data2;
-  wire seg_en;
-  assign seg_en = 1'b1;
   //数码管动态显示模块
   seg_led_hex(
-    .clk           (sys_clk  ),       // 时钟信号
-    .rst_n         (sys_rst_n),       // 复位信号
-    .en            (seg_en       ),       // 数码管使能信号
+    .sys_clk           (sys_clk  ),       // 时钟信号
+    .sys_rst_n         (sys_rst_n),       // 复位信号
 
     .data0          (seg_data0),       // 显示的数值
     .data1          (seg_data1),       // 显示的数值

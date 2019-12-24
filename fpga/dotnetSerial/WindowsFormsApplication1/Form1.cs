@@ -81,6 +81,7 @@ namespace WindowsFormsApplication1
         void readFromPort(int count, byte[] buff, int idx)
         {
             if (count <= 0) return;
+            if (port == null) return;
             int pos = 0;
             while (true)
             {
@@ -464,21 +465,12 @@ namespace WindowsFormsApplication1
 
                 if (item == "#dly")
                 {
-                    Thread.Sleep(10);
+                    Thread.Sleep(100);
                 }
                 else if (item == "#br")
                 {
                     Thread.Sleep(10); //buffer.AppendLine();
                 }
-                else if (item == "#inita")
-                {
-                    initA();
-                }
-                else if (item == "#initb")
-                {
-                    initB();
-                }
-
                 else if (item == "ch") //10：out_clk on
                 {
                     portWrite((byte)0x10);
@@ -557,21 +549,73 @@ namespace WindowsFormsApplication1
             }
         }
 
+        private string receivePage()
+        {
+            byte[] buff = new byte[256 * 2];
+            readFromPort(512, buff, 0);
+
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 16; i++)
+            {
+                for (int j = 0; j < 16; j++)
+                {
+                    sb.Append(getHex2(buff[(i * 16 + j) * 2 + 0]) + getHex2(buff[(i * 16 + j) * 2 + 1]) + " ");
+                }
+                sb.AppendLine();
+            }
+            sb.AppendLine();
+            return sb.ToString();
+        }
+
         private void button7_Click(object sender, EventArgs e)
         {
             textBox3.Text = "";
             textBox4.Text = "";
-            textBox4.Text += "pr200//addr\r\n";
-            textBox4.Text += "pr300//addr\r\n";
-            textBox4.Text += "pr400//addr\r\n";
-            textBox4.Text += "scA3//sdram read\r\n";
-            button4_Click(null, null);
+            //textBox4.Text += "pr200//addr\r\n";
+            portWrite((byte)(0x40 + 2), (byte)0);
+            //textBox4.Text += "pr300//addr\r\n";
+            portWrite((byte)(0x40 + 3), (byte)0);
+            //textBox4.Text += "pr400//addr\r\n";
+            portWrite((byte)(0x40 + 4), (byte)0);
+            //textBox4.Text += "scA3//sdram read\r\n";
+            portWrite((byte)(0xA3));
+            textBox3.Text += receivePage();
+
+            //textBox4.Text += "pr200//addr\r\n";
+            portWrite((byte)(0x40 + 2), (byte)0);
+            //textBox4.Text += "pr300//addr\r\n";
+            portWrite((byte)(0x40 + 3), (byte)1);
+            //textBox4.Text += "pr400//addr\r\n";
+            portWrite((byte)(0x40 + 4), (byte)0);
+            //textBox4.Text += "scA3//sdram read\r\n";
+            portWrite((byte)(0xA3));
+            textBox3.Text += receivePage();
+
+            //textBox4.Text += "pr200//addr\r\n";
+            portWrite((byte)(0x40 + 2), (byte)0);
+            //textBox4.Text += "pr300//addr\r\n";
+            portWrite((byte)(0x40 + 3), (byte)2);
+            //textBox4.Text += "pr400//addr\r\n";
+            portWrite((byte)(0x40 + 4), (byte)0);
+            //textBox4.Text += "scA3//sdram read\r\n";
+            portWrite((byte)(0xA3));
+            textBox3.Text += receivePage();
+
+            //textBox4.Text += "pr200//addr\r\n";
+            portWrite((byte)(0x40 + 2), (byte)0);
+            //textBox4.Text += "pr300//addr\r\n";
+            portWrite((byte)(0x40 + 3), (byte)3);
+            //textBox4.Text += "pr400//addr\r\n";
+            portWrite((byte)(0x40 + 4), (byte)0);
+            //textBox4.Text += "scA3//sdram read\r\n";
+            portWrite((byte)(0xA3));
+            textBox3.Text += receivePage();
+
         }
 
         private void button9_Click(object sender, EventArgs e)
         {
-            textBox4.Text = "#initb//FFFFFF\r\n";
-            button4_Click(null, null);
+            initB();
         }
 
         private void button8_Click(object sender, EventArgs e)
@@ -582,8 +626,7 @@ namespace WindowsFormsApplication1
 
         private void button10_Click(object sender, EventArgs e)
         {
-            textBox4.Text = "#inita//FFFFFF\r\n";
-            button4_Click(null, null);
+            initA();
         }
 
         private void button11_Click(object sender, EventArgs e)
