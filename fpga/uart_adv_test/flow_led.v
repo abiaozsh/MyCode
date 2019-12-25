@@ -4,7 +4,7 @@ module flow_led(
   input sys_rst_n,
   
   input [3:0] key,
-  output reg [3:0] led,
+  output [3:0] led,
 
   output [5:0] seg_sel,
   output [7:0] seg_led,
@@ -28,13 +28,30 @@ generate
   end
 endgenerate
 
-always @(posedge sys_clk or negedge sys_rst_n) begin
-  if (!sys_rst_n) begin
-    led<=0;
-  end else begin
-    led<=key_stable;
-  end
-end
+
+
+//reg rled;
+//assign led[0] = rled;
+//always @ (*) begin
+//  if(key[0] && key[1])begin
+//    rled <= 1;
+//  //end else begin//去掉下半边
+//  //  rled <= 0;//rled[0]
+//  end
+//end
+
+//assign led[0] = key[0] && key[1];
+
+
+//reg [3:0] rled;
+//assign led = rled;
+//always @(posedge sys_clk or negedge sys_rst_n) begin
+//  if (!sys_rst_n) begin
+//    rled<=0;
+//  end else begin
+//    rled<=key_stable;
+//  end
+//end
 
   
 reg [7:0] data0;
