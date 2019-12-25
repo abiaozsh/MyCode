@@ -404,8 +404,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     end else if(write_sdram_req && !write_sdram_ack)begin
       if(!write_sdram_req_last) begin
         sdram_wr_addr <= {writeAddressSdram,3'b0};//21bit+3bit
-        sdram_wr_burst <= 8;// 0700 0700 0700 0700 0700 0700 0700 0700 0f00 0f00 0f00 0f00 0f00 0f00 0f00 0f00 
-        //sdram_wr_burst <= 9;//必须这么写？？
+        sdram_wr_burst <= 8;
         sdram_timer8 <= 0;
         sdram_wr_req <= 1;//只需要置高一个周期就可以了
       end else begin

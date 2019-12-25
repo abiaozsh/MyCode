@@ -142,9 +142,9 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 reg command_done;
-reg [8:0] timer;
+reg [9:0] timer;
 reg [7:0] reg_temp;
-reg [31:0] timer2;
+reg [9:0] timer2;
 reg [23:0] read_address;
 reg hibit;
 
@@ -314,7 +314,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       end else if (command == 8'hA3) begin//sdram long read
         timer2<=timer2+1;
         uart_send<=0;
-        if(timer2==3000)begin//25 * 10 +50
+        if(timer2==700)begin//25 * 10 +50
           timer2<=0;
         end
         if(timer2==0)begin
@@ -334,7 +334,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
             sdram_c_read_req<=0;
             uart_send<=1;
             uart_data_w<=(timer[0]==1)?sdram_c_data_out[15:8]:sdram_c_data_out[7:0];
-            if(timer==511)begin
+            if(timer==1023)begin
               timer2<=0;
               timer<=0;
               command_done<=1;

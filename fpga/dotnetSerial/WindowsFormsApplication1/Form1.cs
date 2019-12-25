@@ -83,15 +83,18 @@ namespace WindowsFormsApplication1
             if (count <= 0) return;
             if (port == null) return;
             int pos = 0;
+            DateTime t = DateTime.Now;
             while (true)
             {
-                if (port.BytesToRead > 0)
+                int num = port.BytesToRead;
+                if (num > 0)
                 {
-                    buff[idx + pos] = (byte)port.ReadByte();
-                    pos++;
-                    count--;
+                    count -= num;
+                    port.Read(buff, idx + pos, num);
+                    pos += num;
                     if (count <= 0) return;
                 }
+                if ((DateTime.Now - t).TotalMilliseconds > 500) return;
             }
         }
 
@@ -551,11 +554,11 @@ namespace WindowsFormsApplication1
 
         private string receivePage()
         {
-            byte[] buff = new byte[256 * 2];
-            readFromPort(512, buff, 0);
+            byte[] buff = new byte[512 * 2];
+            readFromPort(1024, buff, 0);
 
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 16; i++)
+            for (int i = 0; i < 32; i++)
             {
                 for (int j = 0; j < 16; j++)
                 {
@@ -584,27 +587,7 @@ namespace WindowsFormsApplication1
             //textBox4.Text += "pr200//addr\r\n";
             portWrite((byte)(0x40 + 2), (byte)0);
             //textBox4.Text += "pr300//addr\r\n";
-            portWrite((byte)(0x40 + 3), (byte)1);
-            //textBox4.Text += "pr400//addr\r\n";
-            portWrite((byte)(0x40 + 4), (byte)0);
-            //textBox4.Text += "scA3//sdram read\r\n";
-            portWrite((byte)(0xA3));
-            textBox3.Text += receivePage();
-
-            //textBox4.Text += "pr200//addr\r\n";
-            portWrite((byte)(0x40 + 2), (byte)0);
-            //textBox4.Text += "pr300//addr\r\n";
             portWrite((byte)(0x40 + 3), (byte)2);
-            //textBox4.Text += "pr400//addr\r\n";
-            portWrite((byte)(0x40 + 4), (byte)0);
-            //textBox4.Text += "scA3//sdram read\r\n";
-            portWrite((byte)(0xA3));
-            textBox3.Text += receivePage();
-
-            //textBox4.Text += "pr200//addr\r\n";
-            portWrite((byte)(0x40 + 2), (byte)0);
-            //textBox4.Text += "pr300//addr\r\n";
-            portWrite((byte)(0x40 + 3), (byte)3);
             //textBox4.Text += "pr400//addr\r\n";
             portWrite((byte)(0x40 + 4), (byte)0);
             //textBox4.Text += "scA3//sdram read\r\n";

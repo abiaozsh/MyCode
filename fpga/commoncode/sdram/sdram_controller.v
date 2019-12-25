@@ -133,11 +133,6 @@ always @ (posedge clk or negedge rst_n) begin
   if(!rst_n) begin
     cnt_refresh <= 11'd0;
   end else begin
-    //if(cnt_refresh < 11'd781) begin // 64ms/8192 =7812ns
-    //  cnt_refresh <= cnt_refresh + 1'b1;
-    //end else begin
-    //  cnt_refresh <= 11'd0;
-    //end
     if(cnt_refresh == 11'd780) begin // 64ms/8192 =7812ns
       cnt_refresh <= 11'd0;
     end else begin
@@ -319,7 +314,7 @@ always @ (posedge clk or negedge rst_n) begin
       W_WRITE: //写操作：跳转到写数据状态
         work_state <= W_WD;
       W_WD: //写数据：等待写数据结束，跳转到写回周期状态
-        work_state <= (cnt_clk == sdram_wr_burst) ? W_TWR:W_WD;                         //突发写结束 //TODO 外面是9 这里减1，调整下，这里不减外面8
+        work_state <= (cnt_clk == sdram_wr_burst) ? W_TWR:W_WD;
       W_TWR: //写回周期：写回周期结束，跳转到预充电状态
         work_state <= (cnt_clk == TWR_CLK ) ? W_PRE:W_TWR;
       W_PRE: //预充电：跳转到预充电等待状态
