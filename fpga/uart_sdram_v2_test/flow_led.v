@@ -44,7 +44,7 @@ module flow_led(
   wire [7:0] seg_data1;
   wire [7:0] seg_data2;
   //数码管动态显示模块
-  seg_led_hex(
+  seg_led_hex ins_seg_led_hex(
     .sys_clk           (sys_clk  ),       // 时钟信号
     .sys_rst_n         (sys_rst_n),       // 复位信号
 
@@ -76,21 +76,21 @@ module flow_led(
   wire [7:0] out_pin5;
   wire [7:0] out_pin6;
   wire [7:0] out_pin7;
-  uart_mcu(
+  uart_mcu ins_uart_mcu(
     .sys_clk    (sys_clk  ),       // 时钟信号
     .sys_rst_n  (sys_rst_n),       // 复位信号
     .uart_rxd  (uart_rxd),
     .uart_txd  (uart_txd),
 
-    .debug_port0 (seg_data0),
-    .debug_port1 (seg_data1),
-    .debug_port2 (seg_data2),
-    .debug_pin0(debug_pin0),
-    .debug_pin1(debug_pin1),
-    .debug_pin2(debug_pin2),
-    .debug_pin3(debug_pin3),
-    .debug_pin6(debug_pin6),
-    .debug_pin7(debug_pin7),
+    //.debug_port0 (seg_data0),
+    //.debug_port1 (seg_data1),
+    //.debug_port2 (seg_data2),
+    //.debug_pin0(debug_pin0),
+    //.debug_pin1(debug_pin1),
+    //.debug_pin2(debug_pin2),
+    //.debug_pin3(debug_pin3),
+    //.debug_pin6(debug_pin6),
+    //.debug_pin7(debug_pin7),
 
     //SDRAM 芯片接口
     .sdram_clk_out     (sdram_clk_out),
