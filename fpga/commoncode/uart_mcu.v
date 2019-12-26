@@ -344,7 +344,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         
       end else if (command == 8'hA4) begin//sdram long write ok
         timer2<=timer2+1;
-        if(timer2==2)begin//32~35xxxxxxxxxxxxxxxxxxxxxx
+        if(timer2==2)begin
           timer2<=0;
         end
         if(timer2==0)begin

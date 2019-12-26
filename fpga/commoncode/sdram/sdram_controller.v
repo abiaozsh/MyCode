@@ -8,16 +8,11 @@ module sdram_controller(
     output        sdram_ras_n,      // SDRAM 行地址选通脉冲
     output        sdram_cas_n,      // SDRAM 列地址选通脉冲
     output        sdram_we_n,       // SDRAM 写允许位
-    //output reg [ 1:0] sdram_ba,         //SDRAM的L-Bank地址线
-    //output reg [12:0] sdram_addr        //SDRAM地址总线
     output reg [ 1:0] sdram_ba,         // SDRAM L-Bank地址线
     output reg [12:0] sdram_addr,       // SDRAM 地址总线
     inout  [15:0] sdram_data,        // SDRAM 数据总线
     
-    
-    
     //TODO 读写地址合并 burst 合并
-    
     
     //SDRAM 控制器写端口  
     input         sdram_wr_req,     //写SDRAM请求信号
@@ -32,6 +27,8 @@ module sdram_controller(
     input  [23:0] sdram_rd_addr,    //SDRAM写操作的地址
     input  [ 9:0] sdram_rd_burst,   //读sdram时数据突发长度
     output [15:0] sdram_dout,       //从SDRAM读出的数据
+    
+    input block_auto_refresh,
     
     output        sdram_init_done  //SDRAM 初始化完成标志
 
@@ -71,23 +68,6 @@ localparam TCL_CLK  = 10'd3; //列潜伏期
 localparam TWR_CLK  = 10'd2; //写入校正//写回周期结束
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// SDRAM 状态控制模块
-//sdram_ctrl u_sdram_ctrl(
-//    .clk                (clk),
-//    .rst_n              (rst_n),
-//
-//    .sdram_wr_req       (sdram_wr_req),
-//    .sdram_rd_req       (sdram_rd_req),
-//    .sdram_wr_ack       (sdram_wr_ack),
-//    .sdram_rd_ack       (sdram_rd_ack),
-//    .sdram_wr_burst     (sdram_wr_burst),
-//    .sdram_rd_burst     (sdram_rd_burst),
-//    .sdram_init_done    (sdram_init_done),
-//    
-//    .init_state         (init_state),
-//    .work_state         (work_state),
-//    .cnt_clk            (cnt_clk),
-//    .sdram_rd_wr        (sdram_rd_wr)
-//    );
 
 wire       sdram_ref_ack;		        //SDRAM自动刷新请求应答信号
 
@@ -100,7 +80,7 @@ assign sdram_ref_ack = (work_state == W_AR);
 
 //写SDRAM响应信号
 assign sdram_wr_ack = 
-  ((work_state == W_TRCD) & ~sdram_rd_wr) | //W_TRCD 行有效等待 && write   sdram_rd_wr:0w,1r
+  ((work_state == W_TRCD) & (sdram_rd_wr==WRITE)) | //W_TRCD 行有效等待 && write 
   (work_state == W_WRITE) |
   ((work_state == W_WD) & (cnt_clk < sdram_wr_burst - 1));
 
@@ -142,14 +122,13 @@ always @ (posedge clk or negedge rst_n) begin
 end
 
 
-//TODO 要改成req/ack模式，否则会丢失
 reg sdram_ref_req; //SDRAM 自动刷新请求信号
 //SDRAM 刷新请求
 always @ (posedge clk or negedge rst_n)begin
   if(!rst_n) begin
     sdram_ref_req <= 1'b0;
   end else begin
-    if(cnt_refresh == 11'd780) begin
+    if(cnt_refresh == 11'd780 && !block_auto_refresh) begin
       sdram_ref_req <= 1'b1;//刷新计数器计时达7812ns时产生刷新请求
     end else if(sdram_ref_ack) begin
       sdram_ref_req <= 1'b0;//收到刷新请求响应信号后取消刷新请求 
@@ -268,10 +247,26 @@ always @ (posedge clk or negedge rst_n) begin
   end
 end
 
-//    output reg [3:0] work_state,	    //SDRAM工作状态
 reg [3:0] work_state;              // SDRAM工作状态
-//    output reg       sdram_rd_wr 		//SDRAM读/写控制信号，低电平为写，高电平为读
 reg       sdram_rd_wr;             // SDRAM读/写控制信号,低电平为写，高电平为读
+localparam READ   = 1'd1;//高电平为读
+localparam WRITE  = 1'd0;//低电平为写
+
+//work_state (sdram_wr_req)
+//W_IDLE -> W_ACTIVE 
+//sdram_rd_wr <= WRITE
+//
+//3+n+7+(9自动刷新？)
+//work_state
+//W_ACTIVE 1 输出行有效指令
+//W_TRCD   1 TRCD_CLK(2)-1 等待
+//W_WRITE  1 输出写操作指令
+//W_WD	 n 写数据
+//W_TWR    2 TWR_CLK(2) 写回周期
+//W_PRE    1 输出预充电指令
+//W_TRP    4 TRP_CLK(4) 预充电等待
+//W_IDLE 
+
 
 //SDRAM的工作状态机,工作包括读、写以及自动刷新操作
 always @ (posedge clk or negedge rst_n) begin
@@ -282,22 +277,22 @@ always @ (posedge clk or negedge rst_n) begin
       W_IDLE: //定时自动刷新请求，跳转到自动刷新状态
         if         (sdram_ref_req && sdram_init_done) begin
           work_state <= W_AR;
-          sdram_rd_wr <= 1'b1;
+          sdram_rd_wr <= READ;
         end else if(sdram_wr_req && sdram_init_done) begin
           work_state <= W_ACTIVE;
-          sdram_rd_wr <= 1'b0;
+          sdram_rd_wr <= WRITE;
         end else if(sdram_rd_req && sdram_init_done) begin
           work_state <= W_ACTIVE;
-          sdram_rd_wr <= 1'b1;
+          sdram_rd_wr <= READ;
         end else begin 
           work_state <= W_IDLE;
-          sdram_rd_wr <= 1'b1;
+          sdram_rd_wr <= READ;
         end
       W_ACTIVE: //行有效，跳转到行有效等待状态
         work_state <= W_TRCD;
-      W_TRCD: //行有效等待结束，判断当前是读还是写
-        if(cnt_clk == TRCD_CLK-1) begin
-          if(sdram_rd_wr) begin
+      W_TRCD: 
+        if(cnt_clk == TRCD_CLK-1) begin//行有效等待结束，判断当前是读还是写
+          if(sdram_rd_wr == READ) begin
             work_state <= W_READ;//读：进入读操作状态
           end else begin          
             work_state <= W_WRITE;//写：进入写操作状态
@@ -335,28 +330,6 @@ end
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// SDRAM 命令控制模块
-//sdram_cmd u_sdram_cmd(
-//    .clk                (clk),
-//    .rst_n              (rst_n),
-//
-//    .sdram_wr_addr         (sdram_wr_addr),
-//    .sdram_rd_addr         (sdram_rd_addr),
-//    .sdram_wr_burst     (sdram_wr_burst),
-//    .sdram_rd_burst     (sdram_rd_burst),
-//    
-//    .init_state         (init_state),
-//    .work_state         (work_state),
-//    .cnt_clk            (cnt_clk),
-//    .sdram_rd_wr        (sdram_rd_wr),
-//    
-//    .sdram_cke          (sdram_cke),
-//    .sdram_cs_n         (sdram_cs_n),
-//    .sdram_ras_n        (sdram_ras_n),
-//    .sdram_cas_n        (sdram_cas_n),
-//    .sdram_we_n         (sdram_we_n),
-//    .sdram_ba           (sdram_ba),
-//    .sdram_addr         (sdram_addr)
-//    );
 
 //reg define
 reg  [ 4:0] sdram_cmd_r;                //SDRAM操作指令
@@ -365,11 +338,11 @@ reg  [ 4:0] sdram_cmd_r;                //SDRAM操作指令
 localparam CMD_INIT    = 5'b01111; // INITIATE
 localparam CMD_A_REF   = 5'b10001; // AOTO REFRESH
 localparam CMD_ACTIVE  = 5'b10011; // ACTIVE COMMAND
-localparam CMD_READ    = 5'b10101; // READ COMMAND
+localparam CMD_READ    = 5'b10101; // READ_COMMAND
 localparam CMD_NOP     = 5'b10111; // NOP COMMAND
 localparam CMD_LMR     = 5'b10000; // LOAD MODE REGISTER
 localparam CMD_PRGE    = 5'b10010; // PRECHARGE
-localparam CMD_WRITE   = 5'b10100; // WRITE COMMAND
+localparam CMD_WRITE   = 5'b10100; // WRITE_COMMAND
 localparam CMD_B_STOP  = 5'b10110; // BURST STOP
 
 //SDRAM 控制信号线赋值
@@ -377,7 +350,7 @@ assign {sdram_cke,sdram_cs_n,sdram_ras_n,sdram_cas_n,sdram_we_n} = sdram_cmd_r;
 
 //SDRAM 读/写地址总线控制
 wire [23:0] sys_addr;                   //SDRAM读写地址 
-assign sys_addr = sdram_rd_wr ? sdram_rd_addr : sdram_wr_addr;
+assign sys_addr = (sdram_rd_wr==READ) ? sdram_rd_addr : sdram_wr_addr;
 
 //SDRAM 操作指令控制
 always @ (posedge clk or negedge rst_n) begin
@@ -432,7 +405,7 @@ always @ (posedge clk or negedge rst_n) begin
                         W_READ: begin  //读操作指令
                                 sdram_cmd_r <= CMD_READ;
                                 sdram_ba    <= sys_addr[23:22];
-                                sdram_addr  <= {4'b0000,sys_addr[8:0]};
+                                sdram_addr  <= {4'b0000,sys_addr[8:0]};//sdram_addr  <= 13'b0100 0000 0000; 高电平 允许自动预充电
                             end
                         W_RD: begin    //突发传输终止指令
                                 if(cnt_clk == sdram_rd_burst-4) 
@@ -446,7 +419,7 @@ always @ (posedge clk or negedge rst_n) begin
                         W_WRITE: begin //写操作指令
                                 sdram_cmd_r <= CMD_WRITE;
                                 sdram_ba    <= sys_addr[23:22];
-                                sdram_addr  <= {4'b0000,sys_addr[8:0]};
+                                sdram_addr  <= {4'b0000,sys_addr[8:0]};//sdram_addr  <= 13'h0400; 高电平 允许自动预充电
                             end     
                         W_WD: begin    //突发传输终止指令
                                 if(cnt_clk == sdram_wr_burst) 
@@ -485,18 +458,6 @@ end
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// SDRAM 命令控制模块 end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// SDRAM 数据读写模块
-//sdram_data u_sdram_data(
-//    .clk                (clk),
-//    .rst_n              (rst_n),
-//    
-//    .sdram_data_in      (sdram_data_in),
-//    .sdram_data_out     (sdram_data_out),
-//    .work_state         (work_state),
-//    .cnt_clk            (cnt_clk),
-//    
-//    .sdram_data         (sdram_data)
-//    );
-    
 
 //reg define
 reg        sdram_out_en;                //SDRAM数据总线输出使能
@@ -511,7 +472,7 @@ assign sdram_data = sdram_out_en ? sdram_din_r : 16'hzzzz;
 assign sdram_dout = sdram_dout_r;
 
 //SDRAM 数据总线输出使能
-always @ (posedge clk or negedge rst_n) begin 
+always @ (posedge clk or negedge rst_n) begin
   if(!rst_n) begin
     sdram_out_en <= 1'b0;
   end else if((work_state == W_WRITE) | (work_state == W_WD)) 

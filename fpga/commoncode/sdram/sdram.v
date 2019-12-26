@@ -160,6 +160,9 @@ sdram_controller(
 	.sdram_rd_addr		(sdram_rd_addr), 	//sdram 读地址
 	.sdram_rd_burst		(sdram_rd_burst),		    //读sdram时数据突发长度
 	.sdram_dout		    (sdram_dout),   	//从sdram中读出的数据
+  
+  .block_auto_refresh (write_en),
+  
 	.sdram_init_done	(sdram_init_done)	//sdram 初始化完成标志
 
 );
@@ -267,7 +270,7 @@ always@(posedge clk or negedge sys_rst_n) begin//地址递增
 end
 
 reg write_sdram_req;
-reg [20:0] writeAddressSdram;//21bit (24-3)
+reg [19:0] writeAddressSdram;//20bit (24-4)
 
 reg [15:0] writeBufferFront0;
 reg [15:0] writeBufferFront1;
@@ -276,7 +279,15 @@ reg [15:0] writeBufferFront3;
 reg [15:0] writeBufferFront4;
 reg [15:0] writeBufferFront5;
 reg [15:0] writeBufferFront6;
-//reg [15:0] writeBufferFront7;
+reg [15:0] writeBufferFront7;
+reg [15:0] writeBufferFront8;
+reg [15:0] writeBufferFront9;
+reg [15:0] writeBufferFrontA;
+reg [15:0] writeBufferFrontB;
+reg [15:0] writeBufferFrontC;
+reg [15:0] writeBufferFrontD;
+reg [15:0] writeBufferFrontE;
+//reg [15:0] writeBufferFrontF;
 
 reg [15:0] writeBufferBack0;
 reg [15:0] writeBufferBack1;
@@ -286,23 +297,39 @@ reg [15:0] writeBufferBack4;
 reg [15:0] writeBufferBack5;
 reg [15:0] writeBufferBack6;
 reg [15:0] writeBufferBack7;
+reg [15:0] writeBufferBack8;
+reg [15:0] writeBufferBack9;
+reg [15:0] writeBufferBackA;
+reg [15:0] writeBufferBackB;
+reg [15:0] writeBufferBackC;
+reg [15:0] writeBufferBackD;
+reg [15:0] writeBufferBackE;
+reg [15:0] writeBufferBackF;
 always@(posedge clk or negedge sys_rst_n) begin // 注入连续写缓存
   if(!sys_rst_n) begin
     write_sdram_req <= 0;
     writeAddressSdram <= 0;
   end else begin
     if(write_en)begin
-      if         (writeAddressDataInCurr[2:0]==0)begin writeBufferFront0 <= data_in;
-      end else if(writeAddressDataInCurr[2:0]==1)begin writeBufferFront1 <= data_in;
-      end else if(writeAddressDataInCurr[2:0]==2)begin writeBufferFront2 <= data_in;
-      end else if(writeAddressDataInCurr[2:0]==3)begin writeBufferFront3 <= data_in;
-      end else if(writeAddressDataInCurr[2:0]==4)begin writeBufferFront4 <= data_in;
-      end else if(writeAddressDataInCurr[2:0]==5)begin writeBufferFront5 <= data_in;
-      end else if(writeAddressDataInCurr[2:0]==6)begin writeBufferFront6 <= data_in;
-      end else if(writeAddressDataInCurr[2:0]==7)begin
+      if         (writeAddressDataInCurr[3:0]== 0)begin writeBufferFront0 <= data_in;
+      end else if(writeAddressDataInCurr[3:0]== 1)begin writeBufferFront1 <= data_in;
+      end else if(writeAddressDataInCurr[3:0]== 2)begin writeBufferFront2 <= data_in;
+      end else if(writeAddressDataInCurr[3:0]== 3)begin writeBufferFront3 <= data_in;
+      end else if(writeAddressDataInCurr[3:0]== 4)begin writeBufferFront4 <= data_in;
+      end else if(writeAddressDataInCurr[3:0]== 5)begin writeBufferFront5 <= data_in;
+      end else if(writeAddressDataInCurr[3:0]== 6)begin writeBufferFront6 <= data_in;
+      end else if(writeAddressDataInCurr[3:0]== 7)begin writeBufferFront7 <= data_in;
+      end else if(writeAddressDataInCurr[3:0]== 8)begin writeBufferFront8 <= data_in;
+      end else if(writeAddressDataInCurr[3:0]== 9)begin writeBufferFront9 <= data_in;
+      end else if(writeAddressDataInCurr[3:0]==10)begin writeBufferFrontA <= data_in;
+      end else if(writeAddressDataInCurr[3:0]==11)begin writeBufferFrontB <= data_in;
+      end else if(writeAddressDataInCurr[3:0]==12)begin writeBufferFrontC <= data_in;
+      end else if(writeAddressDataInCurr[3:0]==13)begin writeBufferFrontD <= data_in;
+      end else if(writeAddressDataInCurr[3:0]==14)begin writeBufferFrontE <= data_in;
+      end else if(writeAddressDataInCurr[3:0]==15)begin
         //发起sdram写入
         write_sdram_req <= 1;
-        writeAddressSdram <= writeAddressDataInCurr[23:3];
+        writeAddressSdram <= writeAddressDataInCurr[23:4];
         writeBufferBack0 <= writeBufferFront0;
         writeBufferBack1 <= writeBufferFront1;
         writeBufferBack2 <= writeBufferFront2;
@@ -310,7 +337,15 @@ always@(posedge clk or negedge sys_rst_n) begin // 注入连续写缓存
         writeBufferBack4 <= writeBufferFront4;
         writeBufferBack5 <= writeBufferFront5;
         writeBufferBack6 <= writeBufferFront6;
-        writeBufferBack7 <= data_in;//writeBufferBack7 <= writeBufferFront7;
+        writeBufferBack7 <= writeBufferFront7;
+        writeBufferBack8 <= writeBufferFront8;
+        writeBufferBack9 <= writeBufferFront9;
+        writeBufferBackA <= writeBufferFrontA;
+        writeBufferBackB <= writeBufferFrontB;
+        writeBufferBackC <= writeBufferFrontC;
+        writeBufferBackD <= writeBufferFrontD;
+        writeBufferBackE <= writeBufferFrontE;
+        writeBufferBackF <= data_in;//writeBufferBack7 <= writeBufferFront7;
       end
     end
     if(write_sdram_ack)begin
@@ -403,22 +438,30 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
       end
     end else if(write_sdram_req && !write_sdram_ack)begin
       if(!write_sdram_req_last) begin
-        sdram_wr_addr <= {writeAddressSdram,3'b0};//21bit+3bit
-        sdram_wr_burst <= 8;
+        sdram_wr_addr <= {writeAddressSdram,4'b0};//20bit+4bit
+        sdram_wr_burst <= 16;//TODO 设置成9试试看
         sdram_timer8 <= 0;
         sdram_wr_req <= 1;//只需要置高一个周期就可以了
       end else begin
         if(sdram_wr_ack)begin
           sdram_timer8 <= sdram_timer8 + 1'b1;
-          if         (sdram_timer8==0)begin sdram_din <= writeBufferBack0;
-          end else if(sdram_timer8==1)begin sdram_din <= writeBufferBack1;
-          end else if(sdram_timer8==2)begin sdram_din <= writeBufferBack2;
-          end else if(sdram_timer8==3)begin sdram_din <= writeBufferBack3;
-          end else if(sdram_timer8==4)begin sdram_din <= writeBufferBack4;
-          end else if(sdram_timer8==5)begin sdram_din <= writeBufferBack5;
-          end else if(sdram_timer8==6)begin sdram_din <= writeBufferBack6;
-          end else if(sdram_timer8==7)begin sdram_din <= writeBufferBack7;
-          end else if(sdram_timer8==8)begin
+          if         (sdram_timer8== 0)begin sdram_din <= writeBufferBack0;
+          end else if(sdram_timer8== 1)begin sdram_din <= writeBufferBack1;
+          end else if(sdram_timer8== 2)begin sdram_din <= writeBufferBack2;
+          end else if(sdram_timer8== 3)begin sdram_din <= writeBufferBack3;
+          end else if(sdram_timer8== 4)begin sdram_din <= writeBufferBack4;
+          end else if(sdram_timer8== 5)begin sdram_din <= writeBufferBack5;
+          end else if(sdram_timer8== 6)begin sdram_din <= writeBufferBack6;
+          end else if(sdram_timer8== 7)begin sdram_din <= writeBufferBack7;
+          end else if(sdram_timer8== 8)begin sdram_din <= writeBufferBack8;
+          end else if(sdram_timer8== 9)begin sdram_din <= writeBufferBack9;
+          end else if(sdram_timer8==10)begin sdram_din <= writeBufferBackA;
+          end else if(sdram_timer8==11)begin sdram_din <= writeBufferBackB;
+          end else if(sdram_timer8==12)begin sdram_din <= writeBufferBackC;
+          end else if(sdram_timer8==13)begin sdram_din <= writeBufferBackD;
+          end else if(sdram_timer8==14)begin sdram_din <= writeBufferBackE;
+          end else if(sdram_timer8==15)begin sdram_din <= writeBufferBackF;
+          end else if(sdram_timer8==16)begin
             probe_timer8 <= sdram_timer8;
             sdram_wr_req <= 0;
             write_sdram_ack <= 1;
