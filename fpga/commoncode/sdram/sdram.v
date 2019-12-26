@@ -24,18 +24,17 @@ module sdram(
     output [12:0] sdram_addr,               //SDRAM 行/列地址
     inout  [15:0] sdram_data,               //SDRAM 数据
     output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
-    output        sdram_prob_refresh,       //SDRAM 刷新指示
     
-    
-    output reg [7:0] debug_port0,
-    output reg [7:0] debug_port1,
-    output reg [7:0] debug_port2,
-    output reg debug_pin0,
-    output reg debug_pin1,
-    output reg debug_pin2,
-    output reg debug_pin3,
-    output reg debug_pin6,
-    output reg debug_pin7,
+    //output        sdram_prob_refresh,       //SDRAM 刷新指示
+    //output reg [7:0] debug_port0,
+    //output reg [7:0] debug_port1,
+    //output reg [7:0] debug_port2,
+    //output reg debug_pin0,
+    //output reg debug_pin1,
+    //output reg debug_pin2,
+    //output reg debug_pin3,
+    //output reg debug_pin6,
+    //output reg debug_pin7,
 
     
     
@@ -60,10 +59,6 @@ module sdram(
     input write_latch_address,
     input write_en,//写入过程中保持高,要从8字前边界开始写，地址0x00,0x08,0x10...,否则会覆盖原有数据
     
-    output reg[7:0] probe_timer8,
-    output reg[7:0] probe_locked_time,
-    output reg[7:0] probe_sdram_init_done_timer,
-    output [7:0] probe_readBuffer0,
     //vga输出端口
     //vga输出优先级最高
     output vga
@@ -88,20 +83,6 @@ pll_clk u_pll_clk(
   .locked             (locked)
 );
 
-//probe_locked_time
-always@(posedge sys_clk or negedge sys_rst_n) begin
-	if(!sys_rst_n) begin
-    probe_locked_time <= 0;
-	end else begin
-    if(!locked && probe_locked_time<255)begin
-    probe_locked_time <= probe_locked_time+1;
-    end
-  end
-end
-
-
-assign probe_readBuffer0 = readBuffer0;
-
 
 wire sdram_clk;
 assign sdram_clk = clk_100m;
@@ -121,21 +102,8 @@ reg [ 9:0] sdram_rd_burst  ;   //读sdram时数据突发长度      input
 wire [15:0] sdram_dout      ;	    //从SDRAM读出的数据            output
 wire	      sdram_init_done ;  //SDRAM 初始化完成标志       output
 
-//probe_sdram_init_done_timer
-always@(posedge sys_clk or negedge sys_rst_n) begin
-	if(!sys_rst_n) begin
-    probe_sdram_init_done_timer <= 0;
-	end else begin
-    if(!sdram_init_done && probe_sdram_init_done_timer<255)begin
-    probe_sdram_init_done_timer <= probe_sdram_init_done_timer+1;
-    end
-  end
-end
-
-//TODO sdram_init_done
-
 //SDRAM控制器
-sdram_controller(
+sdram_controller ins_sdram_controller(
 	.clk				(sdram_clk),			//sdram 控制器时钟
 	.rst_n				(rst_n),			//系统复位
 
@@ -412,7 +380,6 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
           end else if(sdram_timer8==1)begin readBuffer1 <= sdram_dout;
           end else if(sdram_timer8==2)begin readBuffer2 <= sdram_dout;
           end else if(sdram_timer8==3)begin readBuffer3 <= sdram_dout;
-            probe_timer8 <= sdram_timer8;
             sdram_rd_req <= 0;
             read_sdram_ack <= 1;
           end else begin
@@ -430,7 +397,6 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
           sdram_timer8 <= sdram_timer8 + 1'b1;
           if         (sdram_timer8==0)begin sdram_din <= data_in;
           end else if(sdram_timer8==1)begin
-            probe_timer8 <= sdram_timer8;
             sdram_wr_req <= 0;
             write_single_sdram_ack <= 1;
           end
@@ -439,7 +405,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     end else if(write_sdram_req && !write_sdram_ack)begin
       if(!write_sdram_req_last) begin
         sdram_wr_addr <= {writeAddressSdram,4'b0};//20bit+4bit
-        sdram_wr_burst <= 16;//TODO 设置成9试试看
+        sdram_wr_burst <= 16;
         sdram_timer8 <= 0;
         sdram_wr_req <= 1;//只需要置高一个周期就可以了
       end else begin
@@ -462,7 +428,6 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
           end else if(sdram_timer8==14)begin sdram_din <= writeBufferBackE;
           end else if(sdram_timer8==15)begin sdram_din <= writeBufferBackF;
           end else if(sdram_timer8==16)begin
-            probe_timer8 <= sdram_timer8;
             sdram_wr_req <= 0;
             write_sdram_ack <= 1;
           end else begin

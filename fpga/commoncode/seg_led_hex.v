@@ -24,7 +24,7 @@ always @ (posedge sys_clk or negedge sys_rst_n) begin
       timer <= 0;
       flag <= 1'b1;
     end else begin
-      timer <= timer + 1;
+      timer <= timer + 1'b1;
       flag <= 0;
     end
   end

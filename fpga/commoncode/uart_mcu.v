@@ -5,15 +5,15 @@ module uart_mcu(
     input  uart_rxd,
     output uart_txd,
     
-    output [7:0] debug_port0,
-    output [7:0] debug_port1,
-    output [7:0] debug_port2,
-    output debug_pin0,
-    output debug_pin1,
-    output debug_pin2,
-    output debug_pin3,
-    output debug_pin6,
-    output debug_pin7,
+    //output [7:0] debug_port0,
+    //output [7:0] debug_port1,
+    //output [7:0] debug_port2,
+    //output debug_pin0,
+    //output debug_pin1,
+    //output debug_pin2,
+    //output debug_pin3,
+    //output debug_pin6,
+    //output debug_pin7,
 
     /*
   .sdram_clk_out     (sdram_clk_out),
@@ -100,7 +100,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 	end
 end
 ///////////
-uart_hs (
+uart_hs ins_uart_hs(
     .sys_clk        (sys_clk), 
     .sys_rst_n      (sys_rst_n),
     .uart_rxd       (uart_rxd),
@@ -130,7 +130,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         data_index <= 16'hFFFF;
       end else begin
         data_arrive <= 1;
-        data_index <= data_index + 1;
+        data_index <= data_index + 1'b1;
         data <= uart_data_r;
       end
     end else begin
@@ -269,7 +269,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           sdram_c_write_req<=1;
         end else begin
           if(sdram_c_write_ack)begin
-            ur_reg7<=timer;
+            ur_reg7<=timer[7:0];
             timer<=0;
             sdram_c_write_req<=0;
             command_done<=1;
@@ -283,7 +283,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           sdram_c_read_req<=1;
         end else begin
           if(sdram_c_read_ack)begin
-            ur_reg7 <= timer;
+            ur_reg7 <= timer[7:0];
             timer <= 0;
             ur_reg0 <= sdram_c_data_out[7:0];
             ur_reg1 <= sdram_c_data_out[15:8];
@@ -312,7 +312,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         end
 
       end else if (command == 8'hA3) begin//sdram long read
-        timer2<=timer2+1;
+        timer2<=timer2+1'b1;
         uart_send<=0;
         if(timer2==700)begin//25 * 10 +50
           timer2<=0;
@@ -323,14 +323,14 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
             sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
           end else begin
             if(timer[0]==1)begin
-              read_address <= read_address+1;
+              read_address <= read_address+1'b1;
             end
             sdram_c_address <= read_address;
           end
           sdram_c_read_req<=1;
         end else begin
           if(sdram_c_read_req && sdram_c_read_ack)begin
-            timer<=timer+1;
+            timer<=timer+1'b1;
             sdram_c_read_req<=0;
             uart_send<=1;
             uart_data_w<=(timer[0]==1)?sdram_c_data_out[15:8]:sdram_c_data_out[7:0];
@@ -343,13 +343,13 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         end
         
       end else if (command == 8'hA4) begin//sdram long write ok
-        timer2<=timer2+1;
+        timer2<=timer2+1'b1;
         if(timer2==2)begin
           timer2<=0;
         end
         if(timer2==0)begin
-          data_temp <= data_temp+1;
-          count_temp <= count_temp + 1;
+          data_temp <= data_temp+1'b1;
+          count_temp <= count_temp + 1'b1;
 
           if(count_temp==0)begin
             sdram_c_write_en<=1;
@@ -371,8 +371,8 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           sdram_c_write_latch_address<=0;
         end
       end else if (command == 8'hA5) begin//sdram long write3 error
-        data_temp <= data_temp+1;
-        count_temp <= count_temp + 1;
+        data_temp <= data_temp+1'b1;
+        count_temp <= count_temp + 1'b1;
         //debug_port0<=count_temp;
         
         if(count_temp==0)begin
@@ -391,12 +391,6 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           sdram_c_data_in<=data_temp;
         end
 
-      end else if (command == 8'hB0) begin //get probe
-        ur_reg0 <= probe_timer8;
-        ur_reg1 <= probe_locked_time;
-        ur_reg2 <= probe_sdram_init_done_timer;
-        ur_reg3 <= probe_readBuffer0;
-        command_done<=1;
 
       end else begin
         command_done<=1;
@@ -426,12 +420,12 @@ reg  sdram_c_write_req;
 wire  sdram_c_write_ack;
 reg sdram_c_write_en;
 reg sdram_c_write_latch_address;
-wire [7:0] probe_timer8;
-wire [7:0] probe_locked_time;
-wire [7:0] probe_sdram_init_done_timer;
-wire [7:0] probe_readBuffer0;
+//wire [7:0] probe_timer8;
+//wire [7:0] probe_locked_time;
+//wire [7:0] probe_sdram_init_done_timer;
+//wire [7:0] probe_readBuffer0;
 wire sdram_c_vga;
-sdram(
+sdram ins_sdram(
   .sys_clk    (sys_clk  ),       // 时钟信号
   .sys_rst_n  (sys_rst_n),       // 复位信号
 
@@ -446,17 +440,17 @@ sdram(
   .sdram_addr			(sdram_addr),		//SDRAM 行/列地址
   .sdram_data			(sdram_data),		//SDRAM 数据	
   .sdram_dqm		(sdram_dqm),
-  .sdram_prob_refresh  (sdram_prob_refresh),
-
-  .debug_port0(debug_port0),
-  .debug_port1(debug_port1),
-  .debug_port2(debug_port2),
-  .debug_pin0(debug_pin0),
-  .debug_pin1(debug_pin1),
-  .debug_pin2(debug_pin2),
-  .debug_pin3(debug_pin3),
-  .debug_pin6(debug_pin6),
-  .debug_pin7(debug_pin7),
+  
+  //.sdram_prob_refresh  (sdram_prob_refresh),
+  //.debug_port0(debug_port0),
+  //.debug_port1(debug_port1),
+  //.debug_port2(debug_port2),
+  //.debug_pin0(debug_pin0),
+  //.debug_pin1(debug_pin1),
+  //.debug_pin2(debug_pin2),
+  //.debug_pin3(debug_pin3),
+  //.debug_pin6(debug_pin6),
+  //.debug_pin7(debug_pin7),
 
   
   .clk        (sys_clk),//in
@@ -470,10 +464,10 @@ sdram(
   .write_en   (sdram_c_write_en),//in
   .write_latch_address(sdram_c_write_latch_address),//in
 
-  .probe_timer8 (probe_timer8),
-  .probe_locked_time (probe_locked_time),
-  .probe_sdram_init_done_timer (probe_sdram_init_done_timer),
-  .probe_readBuffer0 (probe_readBuffer0),
+  //.probe_timer8 (probe_timer8),
+  //.probe_locked_time (probe_locked_time),
+  //.probe_sdram_init_done_timer (probe_sdram_init_done_timer),
+  //.probe_readBuffer0 (probe_readBuffer0),
   .vga        (sdram_c_vga)//out
 );
 

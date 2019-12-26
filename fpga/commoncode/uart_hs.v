@@ -105,7 +105,7 @@ module uart_hs(
 			reg_uart_txd <= 1'b1;                   //空闲时发送端口为高电平
 	end
 */
-  uart_send_hs(
+  uart_send_hs ins_uart_send_hs(
     .sys_clk (sys_clk),
     .sys_rst_n (sys_rst_n),
 

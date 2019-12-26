@@ -54,7 +54,7 @@ module uart_send_hs(
       clk_cnt <= 0;
     end else begin
       if (tx_flag) begin//处于发送过程
-        clk_cnt <= clk_cnt + 1;
+        clk_cnt <= clk_cnt + 1'b1;
       end else begin
         clk_cnt <= 0;//对系统时钟计数达一个波特率周期后清零
       end
