@@ -184,7 +184,7 @@ always @ (*) begin
           W_RD: //写数据延时计数结束后，清零计数器
             cnt_rst_n <= (cnt_clk == sdram_rd_burst+2)  ? 1'b0 : 1'b1;
           W_WD: //写回周期延时计数结束后，清零计数器
-            cnt_rst_n <= (cnt_clk == sdram_wr_burst) ? 1'b0 : 1'b1;
+            cnt_rst_n <= (cnt_clk == sdram_wr_burst-1) ? 1'b0 : 1'b1;
           W_TWR: //预充电等待延时计数结束后，清零计数器
             cnt_rst_n <= (cnt_clk == TWR_CLK )    ? 1'b0 : 1'b1;
           W_TRP: //自动刷新等待延时计数结束后，清零计数器
@@ -309,7 +309,7 @@ always @ (posedge clk or negedge rst_n) begin
       W_WRITE: //写操作：跳转到写数据状态
         work_state <= W_WD;
       W_WD: //写数据：等待写数据结束，跳转到写回周期状态
-        work_state <= (cnt_clk == sdram_wr_burst) ? W_TWR:W_WD;
+        work_state <= (cnt_clk == sdram_wr_burst-1) ? W_TWR:W_WD;
       W_TWR: //写回周期：写回周期结束，跳转到预充电状态
         work_state <= (cnt_clk == TWR_CLK ) ? W_PRE:W_TWR;
       W_PRE: //预充电：跳转到预充电等待状态
@@ -422,7 +422,7 @@ always @ (posedge clk or negedge rst_n) begin
                                 sdram_addr  <= {4'b0000,sys_addr[8:0]};//sdram_addr  <= 13'h0400; 高电平 允许自动预充电
                             end     
                         W_WD: begin    //突发传输终止指令
-                                if(cnt_clk == sdram_wr_burst) 
+                                if(cnt_clk == sdram_wr_burst-1) 
                                     sdram_cmd_r <= CMD_B_STOP;
                                 else begin
                                     sdram_cmd_r <= CMD_NOP;

@@ -36,6 +36,7 @@ module flow_led(
  
   assign led[0] = !uart_rxd;
   assign led[1] = !uart_txd;
+  assign led[2] = busy;
 
   //assign led = out_pin0[3:0];
   assign in_pin0[3:0] = key;
@@ -57,6 +58,7 @@ module flow_led(
   );
 
 
+  wire busy;
   wire out_clk;
   wire out_rst;
   wire [7:0] in_pin0;
@@ -79,9 +81,11 @@ module flow_led(
   uart_mcu ins_uart_mcu(
     .sys_clk    (sys_clk  ),       // 时钟信号
     .sys_rst_n  (sys_rst_n),       // 复位信号
+    
     .uart_rxd  (uart_rxd),
     .uart_txd  (uart_txd),
 
+    .busy(busy),
     //.debug_port0 (seg_data0),
     //.debug_port1 (seg_data1),
     //.debug_port2 (seg_data2),

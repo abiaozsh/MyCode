@@ -42,25 +42,9 @@ namespace WindowsFormsApplication1
                 //COM4为Arduino使用的串口号，需根据实际情况调整  115200
                 port = new SerialPort(textBox1.Text, 2000000, Parity.None, 8, StopBits.One);
                 port.Open();
-                //port.DataReceived += port_DataReceived;
             }
 
         }
-        //StringBuilder buffer = new StringBuilder();
-        //void port_DataReceived(object sender, SerialDataReceivedEventArgs e)
-        //{
-        //	while (true)
-        //	{
-        //		if (port.BytesToRead > 0)
-        //		{
-        //			buffer.Append(getHex2(port.ReadByte()));
-        //		}
-        //		else
-        //		{
-        //			break;
-        //		}
-        //	}
-        //}
 
         byte[] readFromPort(int count)
         {
@@ -168,6 +152,7 @@ namespace WindowsFormsApplication1
 
 		private void button3_Click(object sender, EventArgs e)
 		{
+			//test uart
 			Random r = new Random();
 			bool err = false;
 			int count = 0;
@@ -203,7 +188,7 @@ namespace WindowsFormsApplication1
             rnd.NextBytes(buff);
 
             //writeall(buff);
-            longwrite(buff);
+            //longwrite(buff);
 
             //byte[] buff2 = readall(size);
             byte[] buff2 = longread();
@@ -249,42 +234,8 @@ namespace WindowsFormsApplication1
             return buff;
         }
 
-        //pr200//addr
-        //pr300//addr
-        //pr400//addr
-        //scA3//sdram read
 
-        //pr200//addr
-        //pr300//addr
-        //pr400//addr
-        //scA1//sdram read
-        //gr0//data
-        //gr1//data
-        //gr7//timer
-        //#br
-        //pr080//data
-        //pr144//data
-        //pr200//addr
-        //pr300//addr
-        //pr400//addr
-        //scA0//sdram write
-        //gr7//timer
-        //#br
-
-        private void testlongwrite()
-        {
-            byte[] buff = new byte[512];
-            for (int i = 0; i < 256; i++)
-            {
-                buff[i * 2] = (byte)i;
-                buff[i * 2 + 1] = (byte)i;
-            }
-            int size = buff.Length / 2;//65536 * 2;//words
-
-            longwrite(buff);
-        }
-
-        private void initA()
+		private void initA(int offset)
         {
             byte[] buff = new byte[512];
             for (int i = 0; i < 256; i++)
@@ -295,106 +246,25 @@ namespace WindowsFormsApplication1
             {
                 buff[i] = (byte)(511 - i);
             }
-            int size = buff.Length / 2;//65536 * 2;//words
-            //byte[] buff = new byte[size * 2];
+            writeFast(buff, offset);
+		}
+		private void initB(int offset)//256 * n
+		{
+			byte[] buff = new byte[512];
+			for (int i = 0; i < 256; i++)
+			{
+				buff[i] = (byte)0xFF;
+			}
+			for (int i = 256; i < 512; i++)
+			{
+				buff[i] = (byte)0xFF;
+			}
+            writeFast(buff, offset);
+		}
 
-            for (int i = size - 1; i >= 0; i--)
-            {
-                MemoryStream s = new MemoryStream();
-
-                int addr0 = (i) & 0xFF;
-                int addr1 = (i >> 8) & 0xFF;
-                int addr2 = (i >> 16) & 0xFF;
-                //if (item.StartsWith("pr"))//put reg
-                portWrite((byte)(0x40 + 2), (byte)addr0, s);
-                portWrite((byte)(0x40 + 3), (byte)addr1, s);
-                portWrite((byte)(0x40 + 4), (byte)addr2, s);
-
-                portWrite((byte)(0x40 + 0), (byte)buff[i * 2 + 0], s);
-                portWrite((byte)(0x40 + 1), (byte)buff[i * 2 + 1], s);
-
-                //if (item.StartsWith("sc"))//special command
-                portWrite((byte)(0xA0), s);
-
-                s.Flush();
-                byte[] buff2 = s.ToArray();
-                sendall(buff2);
-            }
-        }
-
-        private void initB()//FF
+		private void writeFast(byte[] buff, int offset)
         {
-            byte[] buff = new byte[512];
-            for (int i = 0; i < 256; i++)
-            {
-                buff[i] = (byte)0xFF;
-            }
-            for (int i = 256; i < 512; i++)
-            {
-                buff[i] = (byte)0xFF;
-            }
-            int size = buff.Length / 2;//65536 * 2;//words
-            //byte[] buff = new byte[size * 2];
-
-            for (int i = size - 1; i >= 0; i--)
-            {
-                MemoryStream s = new MemoryStream();
-
-                int addr0 = (i) & 0xFF;
-                int addr1 = (i >> 8) & 0xFF;
-                int addr2 = (i >> 16) & 0xFF;
-                //if (item.StartsWith("pr"))//put reg
-                portWrite((byte)(0x40 + 2), (byte)addr0, s);
-                portWrite((byte)(0x40 + 3), (byte)addr1, s);
-                portWrite((byte)(0x40 + 4), (byte)addr2, s);
-
-                portWrite((byte)(0x40 + 0), (byte)buff[i * 2 + 0], s);
-                portWrite((byte)(0x40 + 1), (byte)buff[i * 2 + 1], s);
-
-                //if (item.StartsWith("sc"))//special command
-                portWrite((byte)(0xA0), s);
-
-                s.Flush();
-                byte[] buff2 = s.ToArray();
-                sendall(buff2);
-            }
-        }
-
-
-        private byte[] readall(int size)
-        {
-            //int size = 65536 * 2;//words
-            byte[] buff = new byte[size * 2];
-            MemoryStream s = new MemoryStream();
-            for (int i = 0; i < size; i++)
-            {
-                int addr0 = (i) & 0xFF;
-                int addr1 = (i >> 8) & 0xFF;
-                int addr2 = (i >> 16) & 0xFF;
-
-                //if (item.StartsWith("pr"))//put reg
-                portWrite((byte)(0x40 + 2), (byte)addr0, s);
-                portWrite((byte)(0x40 + 3), (byte)addr1, s);
-                portWrite((byte)(0x40 + 4), (byte)addr2, s);
-
-                //if (item.StartsWith("sc"))//special command
-                portWrite((byte)(0xA1), 0, s);
-
-
-                //if (item.StartsWith("gr"))//get reg
-                portWrite((byte)(0x50 + 0), 0, s);//low first
-                portWrite((byte)(0x50 + 1), 0, s);
-
-            }
-            s.Flush();
-            sendall(s.GetBuffer());
-
-            readFromPort(size * 2, buff, 0);
-            return buff;
-        }
-        private void longwrite(byte[] buff)
-        {
-            int addr = 0;
+			int addr = offset;
             int addr0 = (addr) & 0xFF;
             int addr1 = (addr >> 8) & 0xFF;
             int addr2 = (addr >> 16) & 0xFF;
@@ -406,52 +276,22 @@ namespace WindowsFormsApplication1
             s.Flush();
             byte[] buff2 = s.ToArray();
             sendall(buff2);
-            for (int i = 0; i < 256; i++)
-            {
-                Thread.Sleep(10);
-                portWrite((byte)buff[i * 2 + 0]);
-                Thread.Sleep(10);
-                portWrite((byte)buff[i * 2 + 1]);
-            }
 
+			s = new MemoryStream();
+			for (int i = 0; i < 256; i++)
+			{
+				portWrite((byte)buff[i * 2 + 0], s);
+				portWrite((byte)buff[i * 2 + 1], s);
+			}
+            portWrite(0, 0,s);//end
+			s.Flush();
+			buff2 = s.ToArray();
+			sendall(buff2);
 
-        }
-        private void writeall(byte[] buff)
-        {
-            int size = buff.Length / 2;//65536 * 2;//words
-            //byte[] buff = new byte[size * 2];
-
-            MemoryStream s = new MemoryStream();
-            for (int i = 0; i < size; i++)
-            {
-                int addr0 = (i) & 0xFF;
-                int addr1 = (i >> 8) & 0xFF;
-                int addr2 = (i >> 16) & 0xFF;
-                //if (item.StartsWith("pr"))//put reg
-                portWrite((byte)(0x40 + 2), (byte)addr0, s);
-                portWrite((byte)(0x40 + 3), (byte)addr1, s);
-                portWrite((byte)(0x40 + 4), (byte)addr2, s);
-
-                portWrite((byte)(0x40 + 0), (byte)buff[i * 2 + 0], s);
-                portWrite((byte)(0x40 + 1), (byte)buff[i * 2 + 1], s);
-
-                //if (item.StartsWith("sc"))//special command
-                portWrite((byte)(0xA0), s);
-
-            }
-            s.Flush();
-            byte[] buff2 = s.ToArray();
-            sendall(buff2);
+			byte[] data = readFromPort(1);
+			var aa = data[0];
         }
 
-        /*
-
-
-        scA2//long write
-
-
-
-        */
 
         private void button4_Click(object sender, EventArgs e)
         {
@@ -541,15 +381,15 @@ namespace WindowsFormsApplication1
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (port != null)
-            {
-                StringBuilder sb = new StringBuilder();
-                while (port.BytesToRead > 0)
-                {
-                    sb.Append(getHex2(port.ReadByte()) + " ");
-                }
-                textBox3.Text += sb.ToString();
-            }
+            //if (port != null)
+            //{
+            //    StringBuilder sb = new StringBuilder();
+            //    while (port.BytesToRead > 0)
+            //    {
+            //        sb.Append(getHex2(port.ReadByte()) + " ");
+            //    }
+            //    textBox3.Text += sb.ToString();
+            //}
         }
 
         private string receivePage()
@@ -598,8 +438,11 @@ namespace WindowsFormsApplication1
 
         private void button9_Click(object sender, EventArgs e)
         {
-            initB();
-        }
+            initB(0x0000);
+			initB(0x0100);
+			initB(0x0200);
+			initB(0x0300);
+		}
 
         private void button8_Click(object sender, EventArgs e)
         {
@@ -609,12 +452,34 @@ namespace WindowsFormsApplication1
 
         private void button10_Click(object sender, EventArgs e)
         {
-            initA();
-        }
+			initA(0x0000);
+			initA(0x0100);
+			initA(0x0200);
+			initA(0x0300);
+		}
 
         private void button11_Click(object sender, EventArgs e)
         {
-            testlongwrite();
+            MemoryStream s = new MemoryStream();
+            int addr = 0x30;
+            int addr0 = ((addr)) & 0xFF;
+            int addr1 = ((addr) >> 8) & 0xFF;
+            int addr2 = ((addr) >> 16) & 0xFF;
+            //if (item.StartsWith("pr"))//put reg
+            portWrite((byte)(0x40 + 2), (byte)addr0, s);
+            portWrite((byte)(0x40 + 3), (byte)addr1, s);
+            portWrite((byte)(0x40 + 4), (byte)addr2, s);
+
+            portWrite((byte)(0x40 + 0), (byte)0x55, s);
+            portWrite((byte)(0x40 + 1), (byte)0xAA, s);
+
+            //if (item.StartsWith("sc"))//special command
+            portWrite((byte)(0xA0), s);
+
+            s.Flush();
+            byte[] buff2 = s.ToArray();
+            sendall(buff2);
+
         }
 
     }

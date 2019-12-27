@@ -5,6 +5,7 @@ module uart_mcu(
     input  uart_rxd,
     output uart_txd,
     
+    output busy,
     //output [7:0] debug_port0,
     //output [7:0] debug_port1,
     //output [7:0] debug_port2,
@@ -66,6 +67,9 @@ module uart_mcu(
 
 		);
 
+assign busy = command != 0 && command_done==0;
+    
+    
 wire uart_rec;
 wire [7:0] uart_data_r;
 reg uart_send;
@@ -302,7 +306,10 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
             if         (data_index==1)begin
               sdram_c_write_latch_address <= 1;
               sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
-            end else if(data_index==511)begin
+            end else if(data_index==513)begin
+              sdram_c_write_en <= 0;
+              uart_send<=1;
+              uart_data_w<=8'h41;//'A' 8'h41;
               command_done <= 1;
             end
           end
