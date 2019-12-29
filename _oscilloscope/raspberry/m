@@ -1,0 +1,5 @@
+gcc -Wall ./blink.c -o ./blink
+gcc -Wall ./blink.c -o ./blink -lwiringPi
+chmod 777 blink
+./blink
+
