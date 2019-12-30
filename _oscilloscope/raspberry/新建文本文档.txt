@@ -70,3 +70,7 @@ sudo smbpasswd -a zsh
 sudo mkdir /mnt/tmpfs
 sudo mount tmpfs /mnt/tmpfs -t tmpfs -o size=300m
 
+
+gcc -Wall ./blink.c -o ./blink
+chmod 777 blink
+./blink
