@@ -66,7 +66,9 @@ namespace Uploader
                     //1E910B
                     portWrite("ed");//ed End
                     checkOK();
-                    if (sig != "1E910B")
+                    //ATtiny24A 0x1E 0x91 0x0B
+                    //ATtiny44A 0x1E 0x92 0x07
+                    if (sig != "1E910B" && sig != "1E9207")
                     {
                         Console.WriteLine("Signature error!!!");
                         return;
