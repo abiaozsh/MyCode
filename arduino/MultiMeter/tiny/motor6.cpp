@@ -152,7 +152,7 @@ ISR(ADC_vect){
   }else{
 	val += ADC;
   }
-  if(count>=512){//max +- 512k / 1.1v
+  if(count>=1024){//max +- 512k / 1.1v
     count=0;
     val_req=val;
     val=0;

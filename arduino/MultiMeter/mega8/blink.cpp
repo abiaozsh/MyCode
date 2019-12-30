@@ -95,6 +95,14 @@ volatile uint8_t _sign;
 #define CLK  (PINC & _BV(2))
 //PC3 4 5 衰减等级
 
+//默认高电平
+#define HIGH (PINC & _BV(5))
+#define MID  (PINC & _BV(4))
+#define LOW  (PINC & _BV(3))
+
+//L:G1 H:G20
+#define G20  (PINB & _BV(5))
+
 //电压/电流 通过数据口获得
 
 void wait(uint8_t ticks)
@@ -182,7 +190,7 @@ int main()
         
 //        }else{//low gain 1x
 
-          val = val / (512.0*512.0) * 1.1; //v
+          val = val / (512.0*1024.0) * 1.1; //v
           
           //a1 1/50  max 55V  max 1.1V
           if(false){//PINA|=_BV(1)
