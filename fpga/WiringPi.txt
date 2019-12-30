@@ -1,4 +1,0 @@
-https://github.com/WiringPi/WiringPi/
-http://wiringpi.com/
-https://www.cnblogs.com/lulipro/p/5992172.html
-https://www.cnblogs.com/wuyida/p/6300871.html

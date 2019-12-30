@@ -51,6 +51,7 @@ namespace WindowsFormsApplication1
             if (count <= 0) return null;
             byte[] buff = new byte[count];
             int idx = 0;
+            long t = DateTime.Now.Ticks;
             while (true)
             {
                 if (port.BytesToRead > 0)
@@ -60,25 +61,42 @@ namespace WindowsFormsApplication1
                     count--;
                     if (count <= 0) return buff;
                 }
+                var diff = DateTime.Now.Ticks - t;
+                if (diff > 250000)
+                {
+                    throw new Exception();
+                }
             }
         }
-        void readFromPort(int count, byte[] buff, int idx)
+        bool readFromPort(int count, byte[] buff, int idx)
         {
-            if (count <= 0) return;
-            if (port == null) return;
+            if (count <= 0) return false;
+            if (port == null) return false;
             int pos = 0;
-            DateTime t = DateTime.Now;
+            long t = DateTime.Now.Ticks;
             while (true)
             {
                 int num = port.BytesToRead;
                 if (num > 0)
                 {
-                    count -= num;
+                    if (num > count)
+                    {
+                        num = count;
+                        count = 0;
+                    }
+                    else
+                    {
+                        count -= num;
+                    }
                     port.Read(buff, idx + pos, num);
                     pos += num;
-                    if (count <= 0) return;
+                    if (count <= 0) return true;
                 }
-                if ((DateTime.Now - t).TotalMilliseconds > 500) return;
+                var diff = DateTime.Now.Ticks - t;
+                if (diff > 250000)
+                {
+                    throw new Exception();
+                }
             }
         }
 
@@ -150,29 +168,29 @@ namespace WindowsFormsApplication1
 
 
 
-		private void button3_Click(object sender, EventArgs e)
-		{
-			//test uart
-			Random r = new Random();
-			bool err = false;
-			int count = 0;
-			for (int i = 0; i < 10; i++)
-			{
-				byte[] buff = new byte[1];
-				r.NextBytes(buff);
-				port.Write(buff, 0, 1);
+        private void button3_Click(object sender, EventArgs e)
+        {
+            //test uart
+            Random r = new Random();
+            bool err = false;
+            int count = 0;
+            for (int i = 0; i < 10; i++)
+            {
+                byte[] buff = new byte[1];
+                r.NextBytes(buff);
+                port.Write(buff, 0, 1);
 
-				byte[] buff2 = readFromPort(1);
+                byte[] buff2 = readFromPort(1);
 
-				if (buff[0] != buff2[0])
-				{
-					err = true;
-					count = i;
+                if (buff[0] != buff2[0])
+                {
+                    err = true;
+                    count = i;
                     break;
-				}
-			}
-			this.Text = "error:" + count + "," + err.ToString();
-		}
+                }
+            }
+            this.Text = "error:" + count + "," + err.ToString();
+        }
 
         private void textBox3_TextChanged(object sender, EventArgs e)
         {
@@ -180,62 +198,44 @@ namespace WindowsFormsApplication1
         }
 
 
-        private bool test()
+        private byte[] longread(int addr)
         {
-            int size = 256 * 2;//words
-            byte[] buff = new byte[size * 2];
-            Random rnd = new Random();
-            rnd.NextBytes(buff);
-
-            //writeall(buff);
-            //longwrite(buff);
-
-            //byte[] buff2 = readall(size);
-            byte[] buff2 = longread();
-
-            bool err = false;
-            int idx = 0;
-            for (int i = 0; i < size; i++)
+            try
             {
-                if (buff[i * 2 + 0] != buff2[i * 2 + 0])
+                int addr0 = (addr) & 0xFF;
+                int addr1 = (addr >> 8) & 0xFF;
+                int addr2 = (addr >> 16) & 0xFF;
+
+                //if (item.StartsWith("pr"))//put reg
+                portWrite((byte)(0x40 + 2), (byte)addr0);
+                portWrite((byte)(0x40 + 3), (byte)addr1);
+                portWrite((byte)(0x40 + 4), (byte)addr2);
+
+                portWrite((byte)(0xA3));
+
+                byte[] buff = new byte[512 * 2];
+                readFromPort(1024, buff, 0);
+                byte[] buff2 = readFromPort(1);
+                byte check = buff2[0];
+                byte b = 0;
+                for (int i = 0; i < 1024; i++)
                 {
-                    err = true;
-                    idx = i;
-                    break;
+                    b += buff[i];
                 }
-                if (buff[i * 2 + 1] != buff2[i * 2 + 1])
+                if (b != check)
                 {
-                    err = true;
-                    idx = i;
-                    break;
+                    throw new Exception();
                 }
+                return buff;
             }
-            this.Text = "error:" + err.ToString();
-            return err;
-        }
-
-        private byte[] longread()
-        {
-            int i = 0;
-
-            int addr0 = (i) & 0xFF;
-            int addr1 = (i >> 8) & 0xFF;
-            int addr2 = (i >> 16) & 0xFF;
-
-            //if (item.StartsWith("pr"))//put reg
-            portWrite((byte)(0x40 + 2), (byte)addr0);
-            portWrite((byte)(0x40 + 3), (byte)addr1);
-            portWrite((byte)(0x40 + 4), (byte)addr2);
-
-            portWrite((byte)(0xA3));
-
-            byte[] buff = new byte[256 * 2];
-            readFromPort(512, buff, 0);
-            return buff;
+            catch
+            {
+                return null;
+            }
         }
 
 
-		private void initA(int offset)
+        private void initA(int offset)
         {
             byte[] buff = new byte[512];
             for (int i = 0; i < 256; i++)
@@ -247,24 +247,24 @@ namespace WindowsFormsApplication1
                 buff[i] = (byte)(511 - i);
             }
             writeFast(buff, offset);
-		}
-		private void initB(int offset)//256 * n
-		{
-			byte[] buff = new byte[512];
-			for (int i = 0; i < 256; i++)
-			{
-				buff[i] = (byte)0xFF;
-			}
-			for (int i = 256; i < 512; i++)
-			{
-				buff[i] = (byte)0xFF;
-			}
-            writeFast(buff, offset);
-		}
-
-		private void writeFast(byte[] buff, int offset)
+        }
+        private void initB(int offset)//256 * n
         {
-			int addr = offset;
+            byte[] buff = new byte[512];
+            for (int i = 0; i < 256; i++)
+            {
+                buff[i] = (byte)0xFF;
+            }
+            for (int i = 256; i < 512; i++)
+            {
+                buff[i] = (byte)0xFF;
+            }
+            writeFast(buff, offset);
+        }
+
+        private void writeFast(byte[] buff, int offset)
+        {
+            int addr = offset;
             int addr0 = (addr) & 0xFF;
             int addr1 = (addr >> 8) & 0xFF;
             int addr2 = (addr >> 16) & 0xFF;
@@ -277,19 +277,19 @@ namespace WindowsFormsApplication1
             byte[] buff2 = s.ToArray();
             sendall(buff2);
 
-			s = new MemoryStream();
-			for (int i = 0; i < 256; i++)
-			{
-				portWrite((byte)buff[i * 2 + 0], s);
-				portWrite((byte)buff[i * 2 + 1], s);
-			}
-            portWrite(0, 0,s);//end
-			s.Flush();
-			buff2 = s.ToArray();
-			sendall(buff2);
+            s = new MemoryStream();
+            for (int i = 0; i < 256; i++)
+            {
+                portWrite((byte)buff[i * 2 + 0], s);
+                portWrite((byte)buff[i * 2 + 1], s);
+            }
+            portWrite(0, 0, s);//end
+            s.Flush();
+            buff2 = s.ToArray();
+            sendall(buff2);
 
-			byte[] data = readFromPort(1);
-			var aa = data[0];
+            byte[] data = readFromPort(1);
+            var aa = data[0];
         }
 
 
@@ -376,7 +376,6 @@ namespace WindowsFormsApplication1
 
         private void button6_Click(object sender, EventArgs e)
         {
-            test();
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -392,10 +391,10 @@ namespace WindowsFormsApplication1
             //}
         }
 
-        private string receivePage()
+        private string receivePage(byte[] buff)
         {
-            byte[] buff = new byte[512 * 2];
-            readFromPort(1024, buff, 0);
+            //byte[] buff = new byte[512 * 2];
+            //readFromPort(1024, buff, 0);
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 32; i++)
@@ -413,36 +412,29 @@ namespace WindowsFormsApplication1
         private void button7_Click(object sender, EventArgs e)
         {
             textBox3.Text = "";
-            textBox4.Text = "";
-            //textBox4.Text += "pr200//addr\r\n";
-            portWrite((byte)(0x40 + 2), (byte)0);
-            //textBox4.Text += "pr300//addr\r\n";
-            portWrite((byte)(0x40 + 3), (byte)0);
-            //textBox4.Text += "pr400//addr\r\n";
-            portWrite((byte)(0x40 + 4), (byte)0);
-            //textBox4.Text += "scA3//sdram read\r\n";
-            portWrite((byte)(0xA3));
-            textBox3.Text += receivePage();
-
-            //textBox4.Text += "pr200//addr\r\n";
-            portWrite((byte)(0x40 + 2), (byte)0);
-            //textBox4.Text += "pr300//addr\r\n";
-            portWrite((byte)(0x40 + 3), (byte)2);
-            //textBox4.Text += "pr400//addr\r\n";
-            portWrite((byte)(0x40 + 4), (byte)0);
-            //textBox4.Text += "scA3//sdram read\r\n";
-            portWrite((byte)(0xA3));
-            textBox3.Text += receivePage();
+            StringBuilder sb = new StringBuilder();
+            //max 24bit
+            // 0x1000000
+            for (int addr = 0; addr < 0x10000; addr += 0x0200)
+            {
+                byte[] buff = null;
+                while (buff == null)
+                {
+                    buff = longread(addr);
+                }
+                sb.Append(receivePage(buff));
+            }
+            textBox3.Text += sb.ToString();
 
         }
 
         private void button9_Click(object sender, EventArgs e)
         {
             initB(0x0000);
-			initB(0x0100);
-			initB(0x0200);
-			initB(0x0300);
-		}
+            initB(0x0100);
+            initB(0x0200);
+            initB(0x0300);
+        }
 
         private void button8_Click(object sender, EventArgs e)
         {
@@ -452,34 +444,36 @@ namespace WindowsFormsApplication1
 
         private void button10_Click(object sender, EventArgs e)
         {
-			initA(0x0000);
-			initA(0x0100);
-			initA(0x0200);
-			initA(0x0300);
-		}
+            initA(0x0000);
+            initA(0x0100);
+            initA(0x0200);
+            initA(0x0300);
+        }
 
         private void button11_Click(object sender, EventArgs e)
         {
-            MemoryStream s = new MemoryStream();
-            int addr = 0x30;
-            int addr0 = ((addr)) & 0xFF;
-            int addr1 = ((addr) >> 8) & 0xFF;
-            int addr2 = ((addr) >> 16) & 0xFF;
-            //if (item.StartsWith("pr"))//put reg
-            portWrite((byte)(0x40 + 2), (byte)addr0, s);
-            portWrite((byte)(0x40 + 3), (byte)addr1, s);
-            portWrite((byte)(0x40 + 4), (byte)addr2, s);
-
-            portWrite((byte)(0x40 + 0), (byte)0x55, s);
-            portWrite((byte)(0x40 + 1), (byte)0xAA, s);
-
-            //if (item.StartsWith("sc"))//special command
-            portWrite((byte)(0xA0), s);
-
-            s.Flush();
-            byte[] buff2 = s.ToArray();
-            sendall(buff2);
-
+            FileStream fs = new FileStream("c:\\temp\\a.bin", FileMode.Create, FileAccess.Write);
+            int count = 0;
+            int prog = 0;
+            for (int addr = 0; addr < 0x100000; addr += 0x0200)
+            {
+                byte[] buff = null;
+                while (buff == null)
+                {
+                    buff = longread(addr);
+                }
+                fs.Write(buff,0,1024);
+                fs.Flush();
+                if (count==16)
+                {
+                    count = 0;
+                    this.Text = prog.ToString();
+                }
+                count++;
+                prog++;
+            }
+            fs.Flush();
+            fs.Close();
         }
 
     }

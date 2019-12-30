@@ -146,7 +146,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 reg command_done;
-reg [9:0] timer;
+reg [10:0] timer;
 reg [7:0] reg_temp;
 reg [9:0] timer2;
 reg [23:0] read_address;
@@ -154,6 +154,8 @@ reg hibit;
 
 reg [15:0] data_temp;
 reg [24:0] count_temp;
+
+reg [7:0] sum;
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
@@ -189,6 +191,8 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     sdram_c_write_req <= 0;
     sdram_c_write_en <= 0;
     sdram_c_write_latch_address <=0;
+    
+    sum <= 0;
     
 		data_temp<=0;
     count_temp<=0;
@@ -321,13 +325,14 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       end else if (command == 8'hA3) begin//sdram long read
         timer2<=timer2+1'b1;
         uart_send<=0;
-        if(timer2==700)begin//25 * 10 +50
+        if(timer2==600)begin//25 * 10 +50
           timer2<=0;
         end
         if(timer2==0)begin
           if(timer==0)begin//锁存地址
-            read_address <= {uw_reg4,uw_reg3,uw_reg2};
+            read_address    <= {uw_reg4,uw_reg3,uw_reg2};
             sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
+            sum <= 0;
           end else begin
             if(timer[0]==1)begin
               read_address <= read_address+1'b1;
@@ -339,9 +344,12 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           if(sdram_c_read_req && sdram_c_read_ack)begin
             timer<=timer+1'b1;
             sdram_c_read_req<=0;
+            sum <= sum + ((timer[0]==1)?sdram_c_data_out[15:8]:sdram_c_data_out[7:0]);
             uart_send<=1;
             uart_data_w<=(timer[0]==1)?sdram_c_data_out[15:8]:sdram_c_data_out[7:0];
-            if(timer==1023)begin
+            if(timer==1024)begin
+              uart_send<=1;
+              uart_data_w<=sum;
               timer2<=0;
               timer<=0;
               command_done<=1;
