@@ -2,76 +2,91 @@
 
 #include "wiringPi.h"
 #include "wiringPi.c"
-//wiringSerial.c
-//wiringShift.c
-//piHiPri.c
-//piThread.c
-//wiringPiSPI.c
-//wiringPiI2C.c
-//softPwm.c
-//softTone.c
-//mcp23008.c
-//mcp23016.c
-//mcp23017.c
-//mcp23s08.c
-//mcp23s17.c
-//sr595.c
-//pcf8574.c
-//pcf8591.c
-//mcp3002.c
-//mcp3004.c
-//mcp4802.c
-//mcp3422.c
-//max31855.c
-//max5322.c
-//ads1115.c
-//sn3218.c
-//bmp180.c
-//htu21d.c
-//ds18b20.c
-//rht03.c
-//drcSerial.c
-//drcNet.c
-//pseudoPins.c
-//wpiExtensions.c
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  21, 29
+#define  LED  12
 
-#define	LED	29
+#define  REQ  16
+#define  ACK  20
+#define  DAT  21
+
+
+//  BCM  GPIO
+//   0,  30
+//   1,  31
+//   2,   8
+//   3,   9
+//   4,   7
+//   5,  21
+//   6,  22
+//   7,  11
+//   8,  10
+//   9,  13
+//  10,  12
+//  11,  14
+//  12,  26
+//  13,  23
+//  14,  15
+//  15,  16
+//  16,  27
+//  17,   0
+//  18,   1
+//  19,  24
+//  20,  28
+//  21,  29
+//  22,   3
+//  23,   4
+//  24,   5
+//  25,   6
+//  26,  25
+//  27,   2
+
+//  28, 
+//  29, 
+//  30, 
+//  31, 
 
 int main (void)
 {
-   FILE *fp = NULL;
-   fp = fopen("/mnt/tmpfs/a.bin", "wb+");
-
-   char buff[1024];
-   buff[0] = 0x55;
-   
-   for(int i=0;i<32768;i++){
-	fwrite(&buff,sizeof(char),1024,fp);
-   }
-   //size_t fwrite(const void *ptr, size_t size_of_elements, size_t number_of_elements, FILE *a_file);
-
-   //printf(wiringPiMode);
-   
   wiringPiSetup();
-  int aa = 11;
-  printf("[%d]",aa);
   
-  pinMode(LED, OUTPUT);
+  //pinMode(LED, OUTPUT);
   
-  //mypinMode(LED, OUTPUT);
+  pinMode(REQ, OUTPUT);
+  pinMode(ACK, INPUT);
+  pinMode(DAT, INPUT);
+
+  digitalWrite(REQ, LOW);
+
+
+  char buff[1048576];
+
+  FILE *fp = NULL;
+  fp = fopen("/mnt/tmpfs/a.bin", "wb+");
+
   
-  for (int i=0;i<10;i++)
-  {
-    digitalWrite (LED, HIGH) ;	// On
-    delay (50) ;		// mS
-    digitalWrite (LED, LOW) ;	// Off
-    delay (50) ;
+  for(int i=0;i<1048576;i++){
+    digitalWrite(REQ, HIGH);
+    while(digitalRead(ACK)==LOW);
+    buff[i] = (char)digitalRead(DAT);
+    digitalWrite(REQ, LOW);
+    while(digitalRead(ACK)==HIGH);
   }
-  pinMode(LED, INPUT);
+  //size_t fwrite(const void *ptr, size_t size_of_elements, size_t number_of_elements, FILE *a_file);
+  fwrite(&buff,sizeof(char),1048576,fp);
   fclose(fp);
+
   
-  return 0 ;
+  //for (int i=0;i<10;i++)
+  //{
+  //  digitalWrite (LED, HIGH) ;	// On
+  //  delay (50) ;		// mS
+  //  digitalWrite (LED, LOW) ;	// Off
+  //  delay (50) ;
+  //}
+  //
+  //pinMode(LED, INPUT);
+  pinMode(REQ, INPUT);
+  
+  return 0;
 }

@@ -161,8 +161,6 @@ volatile unsigned int *_wiringPiTimerIrqRaw ;
 // piGpioBase:
 //	The base address of the GPIO memory mapped hardware IO
 
-#define	GPIO_PERI_BASE_OLD	0x20000000
-#define	GPIO_PERI_BASE_NEW	0x3F000000
 
 static volatile unsigned int piGpioBase = 0 ;
 
@@ -257,17 +255,6 @@ int wiringPiReturnCodes = FALSE ;
 
 int wiringPiTryGpioMem  = FALSE ;
 
-// sysFds:
-//	Map a file descriptor from the /sys/class/gpio/gpioX/value
-
-static int sysFds [64] =
-{
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-} ;
-
 // ISR Data
 
 //static void (*isrFunctions [64])(void) ;
@@ -285,22 +272,56 @@ static int *pinToGpio ;
 
 // Revision 1, 1.1:
 
-static int pinToGpioR1 [64] =
-{
-  17, 18, 21, 22, 23, 24, 25, 4,	// From the Original Wiki - GPIO 0 through 7:	wpi  0 -  7
-   0,  1,				// I2C  - SDA1, SCL1				wpi  8 -  9
-   8,  7,				// SPI  - CE1, CE0				wpi 10 - 11
-  10,  9, 11, 				// SPI  - MOSI, MISO, SCLK			wpi 12 - 14
-  14, 15,				// UART - Tx, Rx				wpi 15 - 16
-
-// Padding:
-
-      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,	// ... 31
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,	// ... 47
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,	// ... 63
-} ;
+//static int pinToGpioR1 [64] =
+//{
+//  17, 18, 21, 22, 23, 24, 25, 4,	// From the Original Wiki - GPIO 0 through 7:	wpi  0 -  7
+//   0,  1,				// I2C  - SDA1, SCL1				wpi  8 -  9
+//   8,  7,				// SPI  - CE1, CE0				wpi 10 - 11
+//  10,  9, 11, 				// SPI  - MOSI, MISO, SCLK			wpi 12 - 14
+//  14, 15,				// UART - Tx, Rx				wpi 15 - 16
+//
+//// Padding:
+//
+//      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,	// ... 31
+//  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,	// ... 47
+//  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,	// ... 63
+//} ;
 
 // Revision 2:
+//  BCM  GPIO
+//   0, 30
+//   1, 31
+//   2,  8
+//   3,  9
+//   4,  7
+//   5, 21
+//   6, 22
+//   7, 11
+//   8, 10
+//   9, 13
+//  10, 12
+//  11, 14
+//  12, 26
+//  13, 23
+//  14, 15
+//  15, 16
+//  16, 27
+//  17,  0
+//  18,  1
+//  19, 24
+//  20, 28
+//  21, 29
+//  22,  3
+//  23,  4
+//  24,  5
+//  25,  6
+//  26, 25
+//  27,  2
+
+//  28, 
+//  29, 
+//  30, 
+//  31, 
 
 static int pinToGpioR2 [64] =
 {
@@ -348,35 +369,6 @@ static uint8_t gpioToShift [] =
   0,3,6,9,12,15,18,21,24,27,
   0,3,6,9,12,15,18,21,24,27,
   0,3,6,9,12,15,18,21,24,27,
-} ;
-
-
-// gpioToGPSET:
-//	(Word) offset to the GPIO Set registers for each GPIO pin
-
-static uint8_t gpioToGPSET [] =
-{
-   7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-   8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-} ;
-
-// gpioToGPCLR:
-//	(Word) offset to the GPIO Clear registers for each GPIO pin
-
-static uint8_t gpioToGPCLR [] =
-{
-  10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
-  11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,
-} ;
-
-
-// gpioToGPLEV:
-//	(Word) offset to the GPIO Input level registers for each GPIO pin
-
-static uint8_t gpioToGPLEV [] =
-{
-  13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,
-  14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,
 } ;
 
 
@@ -1228,14 +1220,6 @@ void pinMode (int pin, int mode)
 {
   int    fSel, shift ;//, alt
   
-printf("[%d]",wiringPiMode);
-
-    /**/ if (wiringPiMode == WPI_MODE_PINS)
-      pin = pinToGpio [pin] ;
-    else if (wiringPiMode != WPI_MODE_GPIO)
-      return ;
-
-
     fSel    = gpioToGPFSEL [pin] ;
     shift   = gpioToShift  [pin] ;
 
@@ -1286,69 +1270,51 @@ void pullUpDnControl (int pin, int pud)
 
 int digitalRead (int pin)
 {
+      //pin = pinToGpio [pin] ;
 
-     if (wiringPiMode == WPI_MODE_PINS)
-      pin = pinToGpio [pin] ;
-    else if (wiringPiMode != WPI_MODE_GPIO)
-      return LOW ;
+//static uint8_t gpioToGPLEV [] =
+//{
+//  13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,
+//  14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,
+//} ;
 
-    if ((*(gpio + gpioToGPLEV [pin]) & (1 << (pin & 31))) != 0)
+//13
+    //if ((*(gpio + gpioToGPLEV [pin]) & (1 << (pin & 31))) != 0)
+    //  return HIGH ;
+    //else
+    //  return LOW ;
+  
+    if ((*(gpio + 13) & (1 << (pin & 31))) != 0)
       return HIGH ;
     else
       return LOW ;
 }
 
-
-/*
- * digitalRead8:
- *	Read 8-bits (a byte) from given start pin.
- *********************************************************************************
-
-unsigned int digitalRead8 (int pin)
-{
-  struct wiringPiNodeStruct *node = wiringPiNodes ;
-
-  if ((pin & PI_GPIO_MASK) == 0)		// On-Board Pin
-    return 0 ;
-  else
-  {
-    if ((node = wiringPiFindNode (pin)) == NULL)
-      return LOW ;
-    return node->digitalRead8 (node, pin) ;
-  }
-}
- */
-
-
-/*
- * digitalWrite:
- *	Set an output bit
- *********************************************************************************
- */
-
 void digitalWrite (int pin, int value)
 {
 
-    /**/ if (wiringPiMode == WPI_MODE_GPIO_SYS)	// Sys mode
-    {
-      if (sysFds [pin] != -1)
-      {
-	if (value == LOW)
-	  write (sysFds [pin], "0\n", 2) ;
-	else
-	  write (sysFds [pin], "1\n", 2) ;
-      }
-      return ;
-    }
-    else if (wiringPiMode == WPI_MODE_PINS)
-      pin = pinToGpio [pin] ;
-    else if (wiringPiMode != WPI_MODE_GPIO)
-      return ;
+      //pin = pinToGpio [pin] ;
+//static uint8_t gpioToGPCLR [] =
+//{
+//  10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+//  11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,
+//} ;
+//static uint8_t gpioToGPSET [] =
+//{
+//   7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+//   8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+//} ;
 
+
+    //if (value == LOW)
+    //  *(gpio + gpioToGPCLR [pin]) = 1 << (pin & 31) ;
+    //else
+    //  *(gpio + gpioToGPSET [pin]) = 1 << (pin & 31) ;
+  
     if (value == LOW)
-      *(gpio + gpioToGPCLR [pin]) = 1 << (pin & 31) ;
+      *(gpio + 10) = 1 << (pin & 31) ;
     else
-      *(gpio + gpioToGPSET [pin]) = 1 << (pin & 31) ;
+      *(gpio + 7) = 1 << (pin & 31) ;
 }
 
 
@@ -1512,16 +1478,9 @@ void wiringPiVersion (int *major, int *minor)
 }
 
 
-/*
- * wiringPiSetup:
- *	Must be called once at the start of your program execution.
- *
- * Default setup: Initialises the system into wiringPi Pin mode and uses the
- *	memory mapped hardware directly.
- *
- * Changed now to revert to "gpio" mode if we're running on a Compute Module.
- *********************************************************************************
- */
+ 
+#define	GPIO_PERI_BASE_OLD	0x20000000
+#define	GPIO_PERI_BASE_NEW	0x3F000000
 
 int wiringPiSetup (void)
 {
@@ -1555,19 +1514,20 @@ int wiringPiSetup (void)
   piBoardId (&model, &rev, &mem, &maker, &overVolted) ;
   printf ("model must be 9(pi zero):%d\n",model) ;
 
-  if ((model == PI_MODEL_CM) || (model == PI_MODEL_CM3))
-    wiringPiMode = WPI_MODE_GPIO ;
-  else
-    wiringPiMode = WPI_MODE_PINS ;
+  //if ((model == PI_MODEL_CM) || (model == PI_MODEL_CM3))
+  //  wiringPiMode = WPI_MODE_GPIO ;
+  //else
+    
+  wiringPiMode = WPI_MODE_PINS ;
 
-  /**/ if (piGpioLayout () == 1)	// A, B, Rev 1, 1.1
-  {
-     pinToGpio =  pinToGpioR1 ;
-  }
-  else 					// A2, B2, A+, B+, CM, Pi2, Pi3, Zero
-  {
+  ///**/ if (piGpioLayout () == 1)	// A, B, Rev 1, 1.1
+  //{
+  //   pinToGpio =  pinToGpioR1 ;
+  //}
+  //else 					// A2, B2, A+, B+, CM, Pi2, Pi3, Zero
+  //{
      pinToGpio =  pinToGpioR2 ;
-  }
+  //}
 
 // ...
 
@@ -1661,104 +1621,6 @@ int wiringPiSetup (void)
   _wiringPiTimer = timer ;
 
   initialiseEpoch () ;
-
-  return 0 ;
-}
-
-
-/*
- * wiringPiSetupGpio:
- *	Must be called once at the start of your program execution.
- *
- * GPIO setup: Initialises the system into GPIO Pin mode and uses the
- *	memory mapped hardware directly.
- *********************************************************************************
- */
-
-int wiringPiSetupGpio (void)
-{
-  (void)wiringPiSetup () ;
-
-  if (wiringPiDebug)
-    printf ("wiringPi: wiringPiSetupGpio called\n") ;
-
-  wiringPiMode = WPI_MODE_GPIO ;
-
-  return 0 ;
-}
-
-
-/*
- * wiringPiSetupPhys:
- *	Must be called once at the start of your program execution.
- *
- * Phys setup: Initialises the system into Physical Pin mode and uses the
- *	memory mapped hardware directly.
- *********************************************************************************
- */
-
-int wiringPiSetupPhys (void)
-{
-  (void)wiringPiSetup () ;
-
-  if (wiringPiDebug)
-    printf ("wiringPi: wiringPiSetupPhys called\n") ;
-
-  wiringPiMode = WPI_MODE_PHYS ;
-
-  return 0 ;
-}
-
-
-/*
- * wiringPiSetupSys:
- *	Must be called once at the start of your program execution.
- *
- * Initialisation (again), however this time we are using the /sys/class/gpio
- *	interface to the GPIO systems - slightly slower, but always usable as
- *	a non-root user, assuming the devices are already exported and setup correctly.
- */
-
-int wiringPiSetupSys (void)
-{
-  int pin ;
-  char fName [128] ;
-
-  if (wiringPiSetuped)
-    return 0 ;
-
-  wiringPiSetuped = TRUE ;
-
-  if (getenv (ENV_DEBUG) != NULL)
-    wiringPiDebug = TRUE ;
-
-  if (getenv (ENV_CODES) != NULL)
-    wiringPiReturnCodes = TRUE ;
-
-  if (wiringPiDebug)
-    printf ("wiringPi: wiringPiSetupSys called\n") ;
-
-  if (piGpioLayout () == 1)
-  {
-     pinToGpio =  pinToGpioR1 ;
-  }
-  else
-  {
-     pinToGpio =  pinToGpioR2 ;
-  }
-
-// Open and scan the directory, looking for exported GPIOs, and pre-open
-//	the 'value' interface to speed things up for later
-  
-  for (pin = 0 ; pin < 64 ; ++pin)
-  {
-    sprintf (fName, "/sys/class/gpio/gpio%d/value", pin) ;
-    sysFds [pin] = open (fName, O_RDWR) ;
-  }
-
-  initialiseEpoch () ;
-
-  wiringPiMode = WPI_MODE_GPIO_SYS ;
 
   return 0 ;
 }
