@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
+#include <avr/sleep.h>
 
 //4+8 reset disabled
 //
@@ -36,10 +37,12 @@ volatile int32_t val_req;
 #define DATAH PORTB |= _BV(1)
 #define DATAL PORTB &=~_BV(1)
 
-//L:G1 H:G20
-#define G20 PINA & _BV(7)
-//L:V H:A
-#define V_A PINA & _BV(6)
+//L:G1 H:G20  PINA & _BV(7)
+#define G20 0
+//L:V H:A  PINA & _BV(6)
+#define V_A 0
+//L:normal H:20A   PINA & _BV(5)
+#define A20 0
 
 int main(void) {
   //初始化时钟：1MHz -> 8MHz
@@ -51,8 +54,6 @@ int main(void) {
   TCCR1B = 2;//  1/8	1MHz 1us
 
   
-  // calib? N3 P3  0x24 10 0100*1  0x25 10 0101*20
-  ADMUX = 0x80+0x25;//REFS1 Internal 1.1V voltage reference
   
   DIDR0 |= _BV(2);
   DIDR0 |= _BV(3);
@@ -64,8 +65,9 @@ int main(void) {
   ADCSRA |= _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2);
   ADCSRA |= _BV(ADIE);
   
-  ADCSRB = _BV(BIN);
-  
+  ADCSRB |= _BV(BIN);
+  ADCSRB |= _BV(ADLAR);
+
   //打开输出端口
 
   //初始化输出端口
@@ -77,31 +79,51 @@ int main(void) {
 
   
   //zeroCalib();//offset
-	
-  //N3 P2
-  ADMUX = 0x80+0x10;
+  // calib? N3 P3  0x24 10 0100*1  0x25 10 0101*20
+  //ADMUX = 0x80+0x25;//REFS1 Internal 1.1V voltage reference
 
+
+  uint8_t ADMUXcurr = 0;
+  
+  ADMUX = 0x00+0x00;
+  
   while(true){
     if(send_req){
-	  uint8_t v_a = V_A;
-	  //if(v_a){
-    // A N3 P4
-		//  //0x32 11 0010*1   0x33 11 0011*20
-		//  if(G20){
-		//	ADMUX = 0x80+0x33;
-		//  }else{
-		//	ADMUX = 0x80+0x32;
-		//  }
-	  //}else{
-    // V N3 P2
-		//  // 0x10 01 0000*1  0x11 01 0001*20
-		//  if(G20){
-		//	ADMUX = 0x80+0x11;
-		//  }else{
-		//	ADMUX = 0x80+0x10;
-		//  }
-	  //}
-		
+      uint8_t v_a = V_A;
+      
+//      uint8_t ADMUXset;
+//      if(v_a){
+//        //A
+//        //P1 N3 0x0E 00 1110*1 0x0F 00 1111*20
+//        if(A20){
+//          if(G20){
+//            ADMUXset = 0x80+0x0E;
+//          }else{
+//            ADMUXset = 0x80+0x0F;
+//          }
+//        }else{
+//          //P4 N3  0x32 11 0010*1   0x33 11 0011*20
+//          if(G20){
+//            ADMUXset = 0x80+0x33;
+//          }else{
+//            ADMUXset = 0x80+0x32;
+//          }
+//        }
+//      }else{
+//        //V
+//        //P2 N3  0x10 01 0000*1  0x11 01 0001*20
+//        if(G20){
+//          ADMUXset = 0x80+0x11;
+//        }else{
+//          ADMUXset = 0x80+0x10;
+//        }
+//      }
+//      
+//      if(ADMUXset!=ADMUXcurr){
+//        ADMUXcurr = ADMUXset;
+//        ADMUX = ADMUXset;
+//      }
+      
       ENH;//EN
       uint8_t sign;
       uint32_t sendval;
@@ -118,7 +140,7 @@ int main(void) {
       if(v_a){
         sendval|=0x40000000;
       }
-	  
+
       uint32_t mask = 1;
       for(uint8_t i=0;i<32;i++){
         
@@ -138,6 +160,11 @@ int main(void) {
       send_req = 0;
       ENL;//EN
     }
+    ////////////////////
+    //ADCSRA |= _BV(ADSC);//??
+    //set_sleep_mode(SLEEP_MODE_ADC);
+    //sleep_mode();
+    /////////////////////
   }
 }
 
@@ -147,12 +174,17 @@ int32_t val;
 
 ISR(ADC_vect){
   count++;
-  if(ADC&0x200){
-	val += int16_t(0xFC00 | ADC);//max +- 512
-  }else{
-	val += ADC;
-  }
-  if(count>=1024){//max +- 512k / 1.1v
+  
+  //if(ADC&0x200){
+  //  val += int16_t(0xFC00 | ADC);//max +- 512
+  //}else{
+  //  val += ADC;
+  //}
+  val = ((int16_t)ADC)>>6;
+  //val = ((uint16_t)ADC)>>6;
+ 
+  //1024
+  if(count>=256){//max +- 512k / 1.1v
     count=0;
     val_req=val;
     val=0;
