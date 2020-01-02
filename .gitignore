@@ -9,3 +9,5 @@ obj
 .metadata
 *.ncb
 release
+/fpga/uart_sdram_v2_test/PLLJ_PLLSPE_INFO.txt
+/fpga/uart_sdram_raspberrypi/*.qws

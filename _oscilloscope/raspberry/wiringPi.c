@@ -23,7 +23,6 @@
 //#include "softTone.h"
 
 #include "wiringPi.h"
-#include "version.h"
 
 // Environment Variables
 
@@ -1261,29 +1260,14 @@ void pullUpDnControl (int pin, int pud)
   }
 }
 
-
-/*
- * digitalRead:
- *	Read the value of a given Pin, returning HIGH or LOW
- *********************************************************************************
- */
+short read16(){
+  return (short)(*(gpio + 13));
+  
+}
 
 int digitalRead (int pin)
 {
-      //pin = pinToGpio [pin] ;
 
-//static uint8_t gpioToGPLEV [] =
-//{
-//  13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,
-//  14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,
-//} ;
-
-//13
-    //if ((*(gpio + gpioToGPLEV [pin]) & (1 << (pin & 31))) != 0)
-    //  return HIGH ;
-    //else
-    //  return LOW ;
-  
     if ((*(gpio + 13) & (1 << (pin & 31))) != 0)
       return HIGH ;
     else
@@ -1293,24 +1277,6 @@ int digitalRead (int pin)
 void digitalWrite (int pin, int value)
 {
 
-      //pin = pinToGpio [pin] ;
-//static uint8_t gpioToGPCLR [] =
-//{
-//  10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
-//  11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,
-//} ;
-//static uint8_t gpioToGPSET [] =
-//{
-//   7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-//   8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-//} ;
-
-
-    //if (value == LOW)
-    //  *(gpio + gpioToGPCLR [pin]) = 1 << (pin & 31) ;
-    //else
-    //  *(gpio + gpioToGPSET [pin]) = 1 << (pin & 31) ;
-  
     if (value == LOW)
       *(gpio + 10) = 1 << (pin & 31) ;
     else
@@ -1463,18 +1429,6 @@ unsigned int micros (void)
 
 
   return (uint32_t)(now - epochMicro) ;
-}
-
-/*
- * wiringPiVersion:
- *	Return our current version number
- *********************************************************************************
- */
-
-void wiringPiVersion (int *major, int *minor)
-{
-  *major = VERSION_MAJOR ;
-  *minor = VERSION_MINOR ;
 }
 
 
