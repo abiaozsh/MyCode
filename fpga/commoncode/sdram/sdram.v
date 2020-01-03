@@ -53,12 +53,12 @@ module sdram(
     input  write_req,//单字写
     output reg write_ack,//ack响应之前，address和write_req要保持
 
-    
     //连续写入端口 //2*8字缓存，触及边界后刷入
     //上升沿锁存地址，之后每次加一
     input write_latch_address,
     input write_en,//写入过程中保持高,要从8字前边界开始写，地址0x00,0x08,0x10...,否则会覆盖原有数据
-    
+    output [23:0] write_address,
+
     //vga输出端口
     //vga输出优先级最高
     output vga
@@ -222,6 +222,8 @@ always@(posedge clk or negedge sys_rst_n) begin
     end
   end
 end
+
+assign write_address = writeAddressDataIn;
 
 wire [23:0] writeAddressDataInCurr;//连续写 地址
 assign writeAddressDataInCurr = (write_latch_address) ? address : writeAddressDataIn;
