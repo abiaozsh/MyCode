@@ -131,7 +131,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         end
       end
       if(!rbp_req && rbp_ack)begin
-        ack <= 0;
+        rbp_ack <= 0;
       end
     end
     
@@ -163,15 +163,7 @@ reg [23:0] record_address;
 //rbp_data
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
-    out_pin0<=0;
-    out_pin1<=0;
-    out_pin2<=0;
-    out_pin3<=0;
-    out_pin4<=0;
-    out_pin5<=0;
-    out_pin6<=0;
-    out_pin7<=0;
-    
+
     uw_reg0<=0;
     uw_reg1<=0;
     uw_reg2<=0;
@@ -183,8 +175,6 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     
     uart_send<=0;
     uart_data_w<=0;
-    out_clk<=0;
-    out_rst<=0;
     command_done <= 0;
     timer<=0;
     timer2<=0;

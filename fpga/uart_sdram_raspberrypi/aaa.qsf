@@ -157,6 +157,7 @@ set_location_assignment PIN_R7 -to R7
 set_location_assignment PIN_R8 -to R8
 set_location_assignment PIN_R9 -to R9
 
+set_global_assignment -name VERILOG_FILE ../commoncode/uart_mcu_rbp.v
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_send_hs.v
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_recv_hs.v
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/pll_clk.v
@@ -164,9 +165,6 @@ set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram_controller.v
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram.v
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_hs.v
 set_global_assignment -name VERILOG_FILE ../commoncode/seg_led_hex.v
-set_global_assignment -name VERILOG_FILE ../commoncode/uart_mcu.v
 set_global_assignment -name VERILOG_FILE ../commoncode/key_debounce.v
-set_global_assignment -name VERILOG_FILE ram.v
 set_global_assignment -name VERILOG_FILE flow_led.v
-set_global_assignment -name QIP_FILE ram.qip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

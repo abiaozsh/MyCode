@@ -68,7 +68,6 @@ module flow_led(
 
 
   //assign led = out_pin0[3:0];
-  assign in_pin0[3:0] = key;
 
   wire [7:0] seg_data0;
   wire [7:0] seg_data1;
@@ -107,13 +106,14 @@ module flow_led(
   assign M9  = outdata[15];
   
   
-  assign led[0] = !uart_rxd || rbp_req;
-  assign led[1] = !uart_txd || rbp_ack;
-  assign led[2] = busy;
+  //assign led[0] = !uart_rxd || rbp_req;
+  //assign led[1] = !uart_txd || rbp_ack;
+  //assign led[2] = busy;
+  assign led = rbp_cmd;
 
   wire rbp_req;
   assign rbp_req = R8;//CTL7R8
-  reg rbp_ack;
+  wire rbp_ack;
   assign R9 = rbp_ack;//CTL8R9
   wire rbp_rst;
   assign rbp_rst = R7;//CTL6R7
@@ -153,10 +153,9 @@ module flow_led(
     .sdram_dqm		  (sdram_dqm),
 
     .busy(busy)
+);
 
-  );
-
-endmodule 
+endmodule
 
 
 
