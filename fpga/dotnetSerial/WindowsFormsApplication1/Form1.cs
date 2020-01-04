@@ -380,15 +380,15 @@ namespace WindowsFormsApplication1
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            //if (port != null)
-            //{
-            //    StringBuilder sb = new StringBuilder();
-            //    while (port.BytesToRead > 0)
-            //    {
-            //        sb.Append(getHex2(port.ReadByte()) + " ");
-            //    }
-            //    textBox3.Text += sb.ToString();
-            //}
+            if (port != null)
+            {
+                StringBuilder sb = new StringBuilder();
+                while (port.BytesToRead > 0)
+                {
+                    sb.Append(getHex2(port.ReadByte()) + " ");
+                }
+                textBox3.Text += sb.ToString();
+            }
         }
 
         private string receivePage(byte[] buff)
@@ -423,6 +423,8 @@ namespace WindowsFormsApplication1
                     buff = longread(addr);
                 }
                 sb.Append(receivePage(buff));
+                this.Text = (addr / 512).ToString();
+                Application.DoEvents();
             }
             textBox3.Text += sb.ToString();
 

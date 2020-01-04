@@ -25,19 +25,6 @@ module sdram(
     inout  [15:0] sdram_data,               //SDRAM 数据
     output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
     
-    //output        sdram_prob_refresh,       //SDRAM 刷新指示
-    //output reg [7:0] debug_port0,
-    //output reg [7:0] debug_port1,
-    //output reg [7:0] debug_port2,
-    //output reg debug_pin0,
-    //output reg debug_pin1,
-    //output reg debug_pin2,
-    //output reg debug_pin3,
-    //output reg debug_pin6,
-    //output reg debug_pin7,
-
-    
-    
     //共用
     input clk,//上升沿拉取地址数据
     input  [23:0] address,

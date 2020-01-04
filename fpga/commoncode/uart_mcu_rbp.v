@@ -4,6 +4,10 @@ module uart_mcu_rbp(
     
     input  uart_rxd,
     output uart_txd,
+    
+    input [7:0]adc_in1,
+    input [7:0]adc_in2,
+    output reg adc_clk,
 
     output reg [15:0] rbp_data,
     input  rbp_req,
@@ -38,13 +42,14 @@ module uart_mcu_rbp(
     inout  [15:0] sdram_data,               //SDRAM 数据
     output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
 
-    
+    output [23:0] write_address,
     
     output busy
-		);
+  );
 
 assign busy = command != 0 && command_done==0;
-    
+
+assign write_address = sdram_c_write_address;
     
 wire uart_rec;
 wire [7:0] uart_data_r;
@@ -157,8 +162,7 @@ reg [7:0] sum;
 reg [23:0] read_address;
 
 reg recording;
-reg record_cnt;//[1:0] 
-reg [23:0] record_address;
+reg [23:0]adc_cnt;
 
 //rbp_data
 always @(posedge sys_clk or negedge sys_rst_n) begin
@@ -191,10 +195,35 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     data_temp<=0;
     count_temp<=0;
     
+    recording<=0;
+    adc_cnt<=0;
+    
   end else begin
-
+    uart_send<=0;
+  
+    adc_clk <= !adc_clk;//
+    //if(record_cnt==0)begin
+    if(adc_clk==0)begin
+      if(recording)begin
+        sdram_c_data_in<={adc_in2,adc_in1};
+        sdram_c_write_en <= 1;
+        
+        adc_cnt = adc_cnt + 1;
+        if (command == 8'h00) begin 
+          if(adc_cnt==1000000)begin
+            adc_cnt<=0;
+            uart_send<=1; 
+            uart_data_w<=adc_in1;
+          end
+        end
+      end else begin
+        sdram_c_write_en <= 0;
+      end
+    end else begin
+      sdram_c_write_en <= 0;
+    end
+    
     if(command_done)begin
-      uart_send<=0;
       if          (command == 8'h00) begin 
         command_done<=0;
       end
@@ -274,7 +303,6 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 
       end else if (command == 8'hA3) begin//sdram long read
         timer2<=timer2+1'b1;
-        uart_send<=0;
         if(timer2==600)begin//25 * 10 +50
           timer2<=0;
         end
@@ -333,18 +361,16 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         // stop record
         recording = 0;
         command_done<=1;
+        
+      end else if (command == 8'hD0) begin//getaddress
+        // start record
+        ur_reg0 <= sdram_c_write_address[7:0];
+        ur_reg1 <= sdram_c_write_address[15:8];
+        ur_reg2 <= sdram_c_write_address[23:16];
+        command_done<=1;
 
       end else begin
         command_done<=1;
-        uart_send<=0;
-      end
-    end
-    
-    if(recording)begin
-      record_cnt=record_cnt+1;
-      if(record_cnt==0)begin
-        record_address<=record_address+1;
-        sdram_c_write_en <= 1;
       end
     end
 
@@ -368,6 +394,7 @@ reg  sdram_c_write_req;
 wire  sdram_c_write_ack;
 reg sdram_c_write_en;
 reg sdram_c_write_latch_address;
+wire [23:0] sdram_c_write_address;
 //wire [7:0] probe_timer8;
 //wire [7:0] probe_locked_time;
 //wire [7:0] probe_sdram_init_done_timer;
@@ -411,7 +438,8 @@ sdram ins_sdram(
   .write_ack  (sdram_c_write_ack),//out
   .write_en   (sdram_c_write_en),//in
   .write_latch_address(sdram_c_write_latch_address),//in
-
+  .write_address (sdram_c_write_address),
+  
   //.probe_timer8 (probe_timer8),
   //.probe_locked_time (probe_locked_time),
   //.probe_sdram_init_done_timer (probe_sdram_init_done_timer),
