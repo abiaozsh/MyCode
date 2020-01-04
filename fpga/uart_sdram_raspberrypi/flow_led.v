@@ -20,9 +20,25 @@ module flow_led(
   inout  [15:0] sdram_data,               //SDRAM 数据
   output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
   
-  input [7:0]   adc_in,
-  output        adc_clk,
-  
+  input F3,
+  input F2,
+  input C2,
+  input A2,
+  input A3,
+  input A4,
+  input A5,
+  input A6,
+  input A7,
+  output A8,
+  input A9,
+  input A10,
+  input A11,
+  input A12,
+  input A13,
+  input C3,
+  input D5,
+  input C6,
+
   //raspberrypi
   output T4,
   output T5,
@@ -67,6 +83,28 @@ module flow_led(
 );
 
 
+  
+  wire [7:0]  adc_in1;
+  wire [7:0]  adc_in2;
+  wire        adc_clk;
+  wire        adc_s1;
+  wire        adc_s2;
+  /*
+  ad9280
+  A8 clk
+  A6 d0
+  A5 d1
+  A4 d2
+  A3 d3
+  A2 d4
+  C2 d5
+  F2 d6
+  F3 d7
+  */
+  assign A8 = adc_clk;
+  assign adc_in1 = {F3,F2,C2,A2,A3,A4,A5,A6};
+
+  
   //assign led = out_pin0[3:0];
 
   wire [7:0] seg_data0;
@@ -84,9 +122,16 @@ module flow_led(
     .seg_sel       (seg_sel  ),       // 位选
     .seg_led       (seg_led  )        // 段选
   );
-  assign seg_data0 = outdata[7:0];
-  assign seg_data1 = outdata[15:8];
-
+  //assign seg_data0 = outdata[7:0];
+  //assign seg_data1 = outdata[15:8];
+  //assign seg_data0 = write_address[7:0];
+  //assign seg_data1 = write_address[15:8];
+  //assign seg_data2 = write_address[23:16];
+  
+  assign seg_data0 = adc_in1;
+  
+  assign led[3]=write_address[23];
+  
   wire [15:0]outdata;
   assign T11 = outdata[0];
   assign T7  = outdata[1];
@@ -106,10 +151,10 @@ module flow_led(
   assign M9  = outdata[15];
   
   
-  //assign led[0] = !uart_rxd || rbp_req;
-  //assign led[1] = !uart_txd || rbp_ack;
-  //assign led[2] = busy;
-  assign led = rbp_cmd;
+  assign led[0] = !uart_rxd || rbp_req;
+  assign led[1] = !uart_txd || rbp_ack;
+  assign led[2] = busy;
+  //assign led = rbp_cmd;
 
   wire rbp_req;
   assign rbp_req = R8;//CTL7R8
@@ -124,7 +169,7 @@ module flow_led(
   wire [3:0]rbp_cmd;
   assign rbp_cmd = {R5,R4,R3,P3};//CTL1P3,CTL2R3,CTL3R4,CTL4R5
   
-
+  wire[23:0] write_address;
   wire busy;
   uart_mcu_rbp ins_uart_mcu_rbp(
     .sys_clk    (sys_clk  ),       // 时钟信号
@@ -133,6 +178,10 @@ module flow_led(
     .uart_rxd  (uart_rxd),
     .uart_txd  (uart_txd),
 
+    .adc_in1(adc_in1),
+    .adc_in2(adc_in2),
+    .adc_clk(adc_clk),
+
     .rbp_data(outdata),
     .rbp_req(rbp_req),
     .rbp_ack(rbp_ack),
@@ -140,6 +189,7 @@ module flow_led(
     .rbp_dat(rbp_dat),
     .rbp_cmd(rbp_cmd),
 
+    .write_address(write_address),
     //SDRAM 芯片接口
     .sdram_clk_out  (sdram_clk_out),
     .sdram_cke			(sdram_cke),		//SDRAM 时钟有效
