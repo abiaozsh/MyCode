@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "wiringPi.h"
 #include "wiringPi.c"
 
 #define  CTL1P3  21
@@ -52,14 +51,23 @@ void cmdRead(){
   delay(1);
 }
 
+#define PINACK ((*gpio13) & mask)
+#define REQHIGH *(gpio7) = 1 << (REQ)
+#define REQLOW  *(gpio10) = 1 << (REQ)
 
 int main (void)
 {
-  wiringPiSetup();
   
+  volatile unsigned int* gpio = wiringPiSetup();
+  volatile unsigned int* gpio13 = gpio + 13;
+  volatile unsigned int* gpio10 = gpio + 10;
+  volatile unsigned int* gpio7 = gpio + 7;
+  int mask = 1 << ACK;
+
   for(int i=0;i<32;i++){
     pinMode(i, INPUT);
   }
+  
   pinMode(REQ, OUTPUT);
   pinMode(RST, OUTPUT);
   pinMode(CMD0, OUTPUT);
@@ -85,12 +93,12 @@ int main (void)
    
   for(int j=0;j<page;j++){
     for(int i=0;i<pagesize;i++){
-      digitalWrite(REQ, HIGH);
-      while(digitalRead(ACK)==LOW);
+      REQHIGH;//digitalWrite(REQ, HIGH);
+      while(!PINACK);// digitalRead(ACK)==LOW
       short data = read16();
       buff[j*pagesize+i]=data;
-      digitalWrite(REQ, LOW);
-      while(digitalRead(ACK)==HIGH);
+      REQLOW;//digitalWrite(REQ, LOW);
+      while(PINACK);//digitalRead(ACK)==HIGH
     }
     printf("%d\r\n",j);
   }

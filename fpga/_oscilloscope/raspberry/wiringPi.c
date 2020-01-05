@@ -1,30 +1,51 @@
-
-
-#include <stdio.h>
-#include <stdarg.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <ctype.h>
-#include <poll.h>
-#include <unistd.h>
-#include <errno.h>
 #include <string.h>
 #include <time.h>
 #include <fcntl.h>
-#include <pthread.h>
 #include <sys/time.h>
 #include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <sys/ioctl.h>
-#include <asm/ioctl.h>
 
-//#include "softPwm.h"
-//#include "softTone.h"
+#ifndef	TRUE
+#  define	TRUE	(1==1)
+#  define	FALSE	(!TRUE)
+#endif
 
-#include "wiringPi.h"
+// Pin modes
+#define	INPUT			 0
+#define	OUTPUT			 1
 
-// Environment Variables
+#define	LOW			 0
+#define	HIGH			 1
+
+// Pi model types and version numbers
+//	Intended for the GPIO program Use at your own risk.
+
+#define	PI_MODEL_A		 0
+#define	PI_MODEL_B		 1
+#define	PI_MODEL_AP		 2
+#define	PI_MODEL_BP		 3
+#define	PI_MODEL_2		 4
+#define	PI_ALPHA		 5
+#define	PI_MODEL_CM		 6
+#define	PI_MODEL_07		 7
+#define	PI_MODEL_3		 8
+#define	PI_MODEL_ZERO		 9
+#define	PI_MODEL_CM3		10
+#define	PI_MODEL_ZERO_W		12
+#define	PI_MODEL_3P 		13
+
+#define	PI_VERSION_1		0
+#define	PI_VERSION_1_1		1
+#define	PI_VERSION_1_2		2
+#define	PI_VERSION_2		3
+
+#define	PI_MAKER_SONY		0
+#define	PI_MAKER_EGOMAN		1
+#define	PI_MAKER_EMBEST		2
+#define	PI_MAKER_UNKNOWN	3
+
+
 
 #define	ENV_DEBUG	"WIRINGPI_DEBUG"
 #define	ENV_CODES	"WIRINGPI_CODES"
@@ -236,13 +257,11 @@ static uint64_t epochMilli, epochMicro ;
 
 // Misc
 
-static int wiringPiMode = WPI_MODE_UNINITIALISED ;
 static volatile int    pinPass = -1 ;
 //static pthread_mutex_t pinMutex ;
 
 // Debugging & Return codes
 
-int wiringPiDebug       = FALSE ;
 int wiringPiReturnCodes = FALSE ;
 
 // Use /dev/gpiomem ?
@@ -366,201 +385,6 @@ static uint8_t gpioToShift [] =
 } ;
 
 /*
- * Functions
- *********************************************************************************
- */
-
-
-/*
- * wiringPiFailure:
- *	Fail. Or not.
- *********************************************************************************
- */
-
-int wiringPiFailure (int fatal, const char *message, ...)
-{
-  va_list argp ;
-  char buffer [1024] ;
-
-  if (!fatal && wiringPiReturnCodes)
-    return -1 ;
-
-  va_start (argp, message) ;
-    vsnprintf (buffer, 1023, message, argp) ;
-  va_end (argp) ;
-
-  fprintf (stderr, "%s", buffer) ;
-  exit (EXIT_FAILURE) ;
-
-  return 0 ;
-}
-
-
-
-/*
- * piGpioLayout:
- *	Return a number representing the hardware revision of the board.
- *	This is not strictly the board revision but is used to check the
- *	layout of the GPIO connector - and there are 2 types that we are
- *	really interested in here. The very earliest Pi's and the
- *	ones that came after that which switched some pins ....
- *
- *	Revision 1 really means the early Model A and B's.
- *	Revision 2 is everything else - it covers the B, B+ and CM.
- *		... and the Pi 2 - which is a B+ ++  ...
- *		... and the Pi 0 - which is an A+ ...
- *
- *	The main difference between the revision 1 and 2 system that I use here
- *	is the mapping of the GPIO pins. From revision 2, the Pi Foundation changed
- *	3 GPIO pins on the (original) 26-way header - BCM_GPIO 22 was dropped and
- *	replaced with 27, and 0 + 1 - I2C bus 0 was changed to 2 + 3; I2C bus 1.
- *
- *	Additionally, here we set the piModel2 flag too. This is again, nothing to
- *	do with the actual model, but the major version numbers - the GPIO base
- *	hardware address changed at model 2 and above (not the Zero though)
- *
- *********************************************************************************
- */
-
-static void piGpioLayoutOops (const char *why)
-{
-  fprintf (stderr, "Oops: Unable to determine board revision from /proc/cpuinfo\n") ;
-  fprintf (stderr, " -> %s\n", why) ;
-  fprintf (stderr, " ->  You'd best google the error to find out why.\n") ;
-//fprintf (stderr, " ->  http://www.raspberrypi.org/phpBB3/viewtopic.php?p=184410#p184410\n") ;
-  exit (EXIT_FAILURE) ;
-}
-
-int piGpioLayout (void)
-{
-  FILE *cpuFd ;
-  char line [120] ;
-  char *c ;
-  static int  gpioLayout = -1 ;
-
-  if (gpioLayout != -1)	// No point checking twice
-    return gpioLayout ;
-
-  if ((cpuFd = fopen ("/proc/cpuinfo", "r")) == NULL)
-    piGpioLayoutOops ("Unable to open /proc/cpuinfo") ;
-
-// Start by looking for the Architecture to make sure we're really running
-//	on a Pi. I'm getting fed-up with people whinging at me because
-//	they can't get it to work on weirdFruitPi boards...
-
-  while (fgets (line, 120, cpuFd) != NULL)
-    if (strncmp (line, "Hardware", 8) == 0)
-      break ;
-
-  if (strncmp (line, "Hardware", 8) != 0)
-    piGpioLayoutOops ("No \"Hardware\" line") ;
-
-  if (wiringPiDebug)
-    printf ("piGpioLayout: Hardware: %s\n", line) ;
-
-// See if it's BCM2708 or BCM2709 or the new BCM2835.
-
-// OK. As of Kernel 4.8,  we have BCM2835 only, regardless of model.
-//	However I still want to check because it will trap the cheapskates and rip-
-//	off merchants who want to use wiringPi on non-Raspberry Pi platforms - which
-//	I do not support so don't email me your bleating whinges about anything
-//	other than a genuine Raspberry Pi.
-
-#ifdef	DONT_CARE_ANYMORE
-  if (! (strstr (line, "BCM2708") || strstr (line, "BCM2709") || strstr (line, "BCM2835")))
-  {
-    fprintf (stderr, "Unable to determine hardware version. I see: %s,\n", line) ;
-    fprintf (stderr, " - expecting BCM2708, BCM2709 or BCM2835.\n") ;
-    fprintf (stderr, "If this is a genuine Raspberry Pi then please report this\n") ;
-    fprintf (stderr, "to projects@drogon.net. If this is not a Raspberry Pi then you\n") ;
-    fprintf (stderr, "are on your own as wiringPi is designed to support the\n") ;
-    fprintf (stderr, "Raspberry Pi ONLY.\n") ;
-    exit (EXIT_FAILURE) ;
-  }
-#endif
-
-// Actually... That has caused me more than 10,000 emails so-far. Mosty by
-//	people who think they know better by creating a statically linked
-//	version that will not run with a new 4.9 kernel. I utterly hate and
-//	despise those people.
-//
-//	I also get bleats from people running other than Raspbian with another
-//	distros compiled kernel rather than a foundation compiled kernel, so
-//	this might actually help them. It might not - I only have the capacity
-//	to support Raspbian.
-//
-//	However, I've decided to leave this check out and rely purely on the
-//	Revision: line for now. It will not work on a non-pi hardware or weird
-//	kernels that don't give you a suitable revision line.
-
-// So - we're Probably on a Raspberry Pi. Check the revision field for the real
-//	hardware type
-//	In-future, I ought to use the device tree as there are now Pi entries in
-//	/proc/device-tree/ ...
-//	but I'll leave that for the next revision. Or the next.
-
-// Isolate the Revision line
-
-  rewind (cpuFd) ;
-  while (fgets (line, 120, cpuFd) != NULL)
-    if (strncmp (line, "Revision", 8) == 0)
-      break ;
-
-  fclose (cpuFd) ;
-
-  if (strncmp (line, "Revision", 8) != 0)
-    piGpioLayoutOops ("No \"Revision\" line") ;
-
-// Chomp trailing CR/NL
-
-  for (c = &line [strlen (line) - 1] ; (*c == '\n') || (*c == '\r') ; --c)
-    *c = 0 ;
-  
-  if (wiringPiDebug)
-    printf ("piGpioLayout: Revision string: %s\n", line) ;
-
-// Scan to the first character of the revision number
-
-  for (c = line ; *c ; ++c)
-    if (*c == ':')
-      break ;
-
-  if (*c != ':')
-    piGpioLayoutOops ("Bogus \"Revision\" line (no colon)") ;
-
-// Chomp spaces
-
-  ++c ;
-  while (isspace (*c))
-    ++c ;
-
-  if (!isxdigit (*c))
-    piGpioLayoutOops ("Bogus \"Revision\" line (no hex digit at start of revision)") ;
-
-// Make sure its long enough
-
-  if (strlen (c) < 4)
-    piGpioLayoutOops ("Bogus revision line (too small)") ;
-
-// Isolate  last 4 characters: (in-case of overvolting or new encoding scheme)
-
-  c = c + strlen (c) - 4 ;
-
-  if (wiringPiDebug)
-    printf ("piGpioLayout: last4Chars are: \"%s\"\n", c) ;
-
-  if ( (strcmp (c, "0002") == 0) || (strcmp (c, "0003") == 0))
-    gpioLayout = 1 ;
-  else
-    gpioLayout = 2 ;	// Covers everything else from the B revision 2 to the B+, the Pi v2, v3, zero and CM's.
-
-  if (wiringPiDebug)
-    printf ("piGpioLayoutOops: Returning revision: %d\n", gpioLayout) ;
-
-  return gpioLayout ;
-}
-
-/*
  * piBoardRev:
  *	Deprecated, but does the same as piGpioLayout
  *********************************************************************************
@@ -568,7 +392,7 @@ int piGpioLayout (void)
 
 int piBoardRev (void)
 {
-  return piGpioLayout () ;
+  return 0;//piGpioLayout () ;
 }
 
 
@@ -639,6 +463,11 @@ int piBoardRev (void)
  *   REV          00: 0=REV0 1=REV1 2=REV2
  *********************************************************************************
  */
+static void piGpioLayoutOops (const char *why)
+{
+  fprintf (stderr, " -> %s\n", why) ;
+  exit (EXIT_FAILURE) ;
+}
 
 void piBoardId (int *model, int *rev, int *mem, int *maker, int *warranty)
 {
@@ -646,12 +475,12 @@ void piBoardId (int *model, int *rev, int *mem, int *maker, int *warranty)
   char line [120] ;
   char *c ;
   unsigned int revision ;
-  int bRev, bType, bProc, bMfg, bMem, bWarranty ;
+  int bRev, bType,  bMfg, bMem, bWarranty ;//bProc,
 
 //	Will deal with the properly later on - for now, lets just get it going...
 //  unsigned int modelNum ;
 
-  (void)piGpioLayout () ;	// Call this first to make sure all's OK. Don't care about the result.
+  //(void)piGpioLayout () ;	// Call this first to make sure all's OK. Don't care about the result.
 
   if ((cpuFd = fopen ("/proc/cpuinfo", "r")) == NULL)
     piGpioLayoutOops ("Unable to open /proc/cpuinfo") ;
@@ -670,9 +499,6 @@ void piBoardId (int *model, int *rev, int *mem, int *maker, int *warranty)
   for (c = &line [strlen (line) - 1] ; (*c == '\n') || (*c == '\r') ; --c)
     *c = 0 ;
   
-  if (wiringPiDebug)
-    printf ("piBoardId: Revision string: %s\n", line) ;
-
 // Need to work out if it's using the new or old encoding scheme:
 
 // Scan to the first character of the revision number
@@ -699,12 +525,10 @@ void piBoardId (int *model, int *rev, int *mem, int *maker, int *warranty)
 
   if ((revision &  (1 << 23)) != 0)	// New way
   {
-    if (wiringPiDebug)
-      printf ("piBoardId: New Way: revision is: %08X\n", revision) ;
 
     bRev      = (revision & (0x0F <<  0)) >>  0 ;
     bType     = (revision & (0xFF <<  4)) >>  4 ;
-    bProc     = (revision & (0x0F << 12)) >> 12 ;	// Not used for now.
+    //bProc     = (revision & (0x0F << 12)) >> 12 ;	// Not used for now.
     bMfg      = (revision & (0x0F << 16)) >> 16 ;
     bMem      = (revision & (0x07 << 20)) >> 20 ;
     bWarranty = (revision & (0x03 << 24)) != 0 ;
@@ -715,14 +539,9 @@ void piBoardId (int *model, int *rev, int *mem, int *maker, int *warranty)
     *maker    = bMfg  ;
     *warranty = bWarranty ;
 
-    if (wiringPiDebug)
-      printf ("piBoardId: rev: %d, type: %d, proc: %d, mfg: %d, mem: %d, warranty: %d\n",
-		bRev, bType, bProc, bMfg, bMem, bWarranty) ;
   }
   else					// Old way
   {
-    if (wiringPiDebug)
-      printf ("piBoardId: Old Way: revision is: %s\n", c) ;
 
     if (!isdigit (*c))
       piGpioLayoutOops ("Bogus \"Revision\" line (no digit at start of revision)") ;
@@ -968,7 +787,7 @@ unsigned int micros (void)
 #define	GPIO_PERI_BASE_OLD	0x20000000
 #define	GPIO_PERI_BASE_NEW	0x3F000000
 
-int wiringPiSetup (void)
+volatile unsigned int* wiringPiSetup (void)
 {
   int   fd ;
   int   model, rev, mem, maker, overVolted ;
@@ -982,14 +801,10 @@ int wiringPiSetup (void)
 
   wiringPiSetuped = TRUE ;
 
-  if (getenv (ENV_DEBUG) != NULL)
-    wiringPiDebug = TRUE ;
 
   if (getenv (ENV_CODES) != NULL)
     wiringPiReturnCodes = TRUE ;
 
-  if (wiringPiDebug)
-    printf ("wiringPi: wiringPiSetup called\n") ;
 
 // Get the board ID information. We're not really using the information here,
 //	but it will give us information like the GPIO layout scheme (2 variants
@@ -1004,7 +819,7 @@ int wiringPiSetup (void)
   //  wiringPiMode = WPI_MODE_GPIO ;
   //else
     
-  wiringPiMode = WPI_MODE_PINS ;
+  //wiringPiMode = WPI_MODE_PINS ;
 
   ///**/ if (piGpioLayout () == 1)	// A, B, Rev 1, 1.1
   //{
@@ -1043,11 +858,6 @@ int wiringPiSetup (void)
       piGpioBase   = 0 ;
       usingGpioMem = TRUE ;
     }
-    else
-      return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem or /dev/gpiomem: %s.\n"
-	"  Aborting your program because if it can not access the GPIO\n"
-	"  hardware then it most certianly won't work\n"
-	"  Try running with sudo?\n", strerror (errno)) ;
   }
 
 // Set the offsets into the memory interface.
@@ -1063,32 +873,22 @@ int wiringPiSetup (void)
 //	GPIO:
 
   gpio = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_BASE) ;
-  if (gpio == MAP_FAILED)
-    return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (GPIO) failed: %s\n", strerror (errno)) ;
 
 //	PWM
 
   pwm = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_PWM) ;
-  if (pwm == MAP_FAILED)
-    return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (PWM) failed: %s\n", strerror (errno)) ;
  
 //	Clock control (needed for PWM)
 
   clk = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_CLOCK_BASE) ;
-  if (clk == MAP_FAILED)
-    return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (CLOCK) failed: %s\n", strerror (errno)) ;
  
 //	The drive pads
 
   pads = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_PADS) ;
-  if (pads == MAP_FAILED)
-    return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (PADS) failed: %s\n", strerror (errno)) ;
 
 //	The system timer
 
   timer = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_TIMER) ;
-  if (timer == MAP_FAILED)
-    return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (TIMER) failed: %s\n", strerror (errno)) ;
 
 // Set the timer to free-running, 1MHz.
 //	0xF9 is 249, the timer divide is base clock / (divide+1)
@@ -1103,5 +903,5 @@ int wiringPiSetup (void)
 
   initialiseEpoch () ;
 
-  return 0 ;
+  return gpio;
 }
