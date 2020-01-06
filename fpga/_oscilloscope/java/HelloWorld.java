@@ -2,10 +2,14 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 
-//javac HelloWorld.java
-//javah -jni HelloWorld
+/*
+javac HelloWorld.java
+javah -jni HelloWorld
 
-//java -Djava.library.path=. HelloWorld
+
+java -Djava.library.path=. HelloWorld
+*/
+
 public class HelloWorld {
     static {
         try {
@@ -18,44 +22,39 @@ public class HelloWorld {
     private static native int sayHello(short[] array);
 
     
-    private static native long init();
+    private static native int init();
     
     //return position
-    private static native int dumpData(long gpio,short[] array);
+    private static native int dumpData(short[] array);
     
-    private static native int fetchData(long gpio);
+    private static native int fetchData();
     
-    private static native int startRecord(long gpio);
+    private static native int startRecord();
     
-    private static native int stopRecord(long gpio);
+    private static native int stopRecord();
     
-    private static native int test(long gpio);
+    private static native int test();
     
-    private static native int test0(int val);
-    private static native int test1();
     
     public static void main(String[] args) {
         try {
-            short[] array = new short[100];
-            array[0] = 111;
-            int val = sayHello(array);
-            System.out.println(array[2]);
-            System.out.println(array[3]);
-            System.out.println(val);
+            //short[] array = new short[100];
+            //array[0] = 111;
+            //int val = sayHello(array);
+            //System.out.println(array[2]);
+            //System.out.println(array[3]);
+            //System.out.println(val);
+            //
             
-            long gpio = init();
-            int testv = test(gpio);
+            init();
+            int testv = test();
             System.out.println(testv);
             
             
-            test0(123);
-            int vvv = test1();
-            System.out.println(vvv);
-
         } catch (Throwable t) {
             t.printStackTrace();
         }
-
+/*
         DrawFrame form = new DrawFrame();
         TimerTask task = new TimerTask() {
             @Override
@@ -72,11 +71,13 @@ public class HelloWorld {
         // schedules the task to be run in an interval
         // 安排任务在一段时间内运行
         timer.scheduleAtFixedRate(task, delay, intevalPeriod);
+        
+        */
     }
 
     static int i = 0;
 
-    public static class DrawFrame extends Frame {
+    private static class DrawFrame extends Frame {
         private static final long serialVersionUID = 1L;
 
         public void refresh(){

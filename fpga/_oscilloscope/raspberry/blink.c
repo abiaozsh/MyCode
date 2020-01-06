@@ -21,6 +21,10 @@
 #define  CMD2 CTL3R4
 #define  CMD3 CTL4R5
 
+#define PINACK ((*gpio13) & 1 << ACK)
+#define REQHIGH *(gpio7) = 1 << (REQ)
+#define REQLOW  *(gpio10) = 1 << (REQ)
+
 /*
 sudo mount tmpfs /mnt/tmpfs -t tmpfs -o size=50m
 cd /mnt/tmpfs
@@ -28,32 +32,21 @@ gcc -Wall ./blink.c -o ./blink
 ./blink
 */
 
-//0000
-void cmdClearAddress(){
-  digitalWrite(CMD0, LOW);
-  digitalWrite(CMD1, LOW);
-  digitalWrite(CMD2, LOW);
-  digitalWrite(CMD3, LOW);
+void setCmd(int cmd){
+  digitalWrite(CMD0, (cmd & 0x01)?HIGH:LOW);
+  digitalWrite(CMD1, (cmd & 0x02)?HIGH:LOW);
+  digitalWrite(CMD2, (cmd & 0x04)?HIGH:LOW);
+  digitalWrite(CMD3, (cmd & 0x08)?HIGH:LOW);
   delay(1);
 }
+
 void req(){
   digitalWrite(REQ, HIGH);
   while(digitalRead(ACK)==LOW);
   digitalWrite(REQ, LOW);
   while(digitalRead(ACK)==HIGH);
 }
-//0001
-void cmdRead(){
-  digitalWrite(CMD0, HIGH);
-  digitalWrite(CMD1, LOW);
-  digitalWrite(CMD2, LOW);
-  digitalWrite(CMD3, LOW);
-  delay(1);
-}
 
-#define PINACK ((*gpio13) & mask)
-#define REQHIGH *(gpio7) = 1 << (REQ)
-#define REQLOW  *(gpio10) = 1 << (REQ)
 
 int main (void)
 {
@@ -62,7 +55,6 @@ int main (void)
   volatile unsigned int* gpio13 = gpio + 13;
   volatile unsigned int* gpio10 = gpio + 10;
   volatile unsigned int* gpio7 = gpio + 7;
-  int mask = 1 << ACK;
 
   for(int i=0;i<32;i++){
     pinMode(i, INPUT);
@@ -80,10 +72,10 @@ int main (void)
   delay(1);
   digitalWrite(RST, LOW);
   
-  cmdClearAddress();
+  setCmd(0);//reset address
   req();
 
-  cmdRead();
+  setCmd(1);//read
   int page = 16;
   int pagesize = 1024*1024;
   

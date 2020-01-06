@@ -2,6 +2,29 @@
 #include "HelloWorld.h"
 #include "wiringPi.c"
 
+#define  CTL1P3  21
+#define  CTL2R3  20
+#define  CTL3R4  26
+#define  CTL4R5  19
+#define  CTL5R6  25
+#define  CTL6R7  22
+#define  CTL7R8  27
+#define  CTL8R9  17
+
+#define  REQ CTL7R8
+#define  ACK CTL8R9
+#define  RST CTL6R7
+#define  DAT CTL5R6
+
+#define  CMD0 CTL1P3
+#define  CMD1 CTL2R3
+#define  CMD2 CTL3R4
+#define  CMD3 CTL4R5
+
+#define PINACK ((*gpio13) & 1 << ACK)
+#define REQHIGH *(gpio7) = 1 << (REQ)
+#define REQLOW  *(gpio10) = 1 << (REQ)
+
 //find / -name "jni.h"
 // /usr/lib/jvm/jdk-8-oracle-arm32-vfp-hflt/include/jni.h
 
@@ -30,54 +53,25 @@ JNIEXPORT jint JNICALL Java_HelloWorld_sayHello(JNIEnv* env, jobject obj, jshort
         return val;
 }
 
-static int vvv;
 
-int test0(int val){
-  
-  vvv = val;
+void setCmd(int cmd){
+  digitalWrite(CMD0, (cmd & 0x01)?HIGH:LOW);
+  digitalWrite(CMD1, (cmd & 0x02)?HIGH:LOW);
+  digitalWrite(CMD2, (cmd & 0x04)?HIGH:LOW);
+  digitalWrite(CMD3, (cmd & 0x08)?HIGH:LOW);
 }
 
-int test1(){
-  
-  return vvv;
-}
+static volatile unsigned int* gpio13;
+static volatile unsigned int* gpio10;
+static volatile unsigned int* gpio7;
 
-//JNIEXPORT jint JNICALL Java_HelloWorld_sayHello
-//  (JNIEnv *, jclass, jint);
-
-int mydigitalRead (int pin)
-{
-
-    if ((*(gpio + 13) & (1 << (pin & 31))) != 0)
-      return HIGH ;
-    else
-      return LOW ;
-}
-
-void mydigitalWrite (int pin, int value)
-{
-
-    if (value == LOW)
-      *(gpio + 10) = 1 << (pin & 31) ;
-    else
-      *(gpio + 7) = 1 << (pin & 31) ;
-}
-
-
-void setCmd(volatile unsigned int* gpio,int cmd){
-  mydigitalWrite(gpio, CMD0, (cmd & 0x01)?HIGH:LOW);
-  mydigitalWrite(gpio, CMD1, (cmd & 0x02)?HIGH:LOW);
-  mydigitalWrite(gpio, CMD2, (cmd & 0x04)?HIGH:LOW);
-  mydigitalWrite(gpio, CMD3, (cmd & 0x08)?HIGH:LOW);
-}
-
-int init(){
-  
-  
-  
+JNIEXPORT jint JNICALL Java_HelloWorld_init(JNIEnv* env, jclass elems){
   volatile unsigned int* gpio = wiringPiSetup();
+  gpio13 = gpio + 13;
+  gpio10 = gpio + 10;
+  gpio7 = gpio + 7;
   
-    for(int i=0;i<32;i++){
+  for(int i=0;i<32;i++){
     pinMode(i, INPUT);
   }
   
@@ -92,14 +86,20 @@ int init(){
   digitalWrite(RST, HIGH);
   digitalWrite(RST, LOW);
 
-  return (long)gpio;
+  return 0;
 }
 
-int test(){
+JNIEXPORT jint JNICALL Java_HelloWorld_test(JNIEnv* env, jclass elems){
   
-  setCmd(volatile unsigned int* gpio,int cmd){
+  setCmd(0x0F);
+  REQHIGH;//digitalWrite(REQ, HIGH);
+  while(!PINACK);// digitalRead(ACK)==LOW
+  short data = (short)(*(gpio + 13));//read16();
+  REQLOW;//digitalWrite(REQ, LOW);
+  while(PINACK);//digitalRead(ACK)==HIGH
+  return (jint)data;
 }
-
+/*
 #define PINACK ((*gpio13) & 1 << ACK)
 #define REQHIGH *(gpio7) = 1 << (REQ)
 #define REQLOW  *(gpio10) = 1 << (REQ)
@@ -107,9 +107,6 @@ int test(){
 int dump1(){
   volatile unsigned int* gpio = ??;
   
-  volatile unsigned int* gpio13 = gpio + 13;
-  volatile unsigned int* gpio10 = gpio + 10;
-  volatile unsigned int* gpio7 = gpio + 7;
 
     for(int i=0;i<pagesize;i++){
       REQHIGH;//digitalWrite(REQ, HIGH);
@@ -121,4 +118,4 @@ int dump1(){
     }
     printf("%d\r\n",j);
 
-}
+}*/

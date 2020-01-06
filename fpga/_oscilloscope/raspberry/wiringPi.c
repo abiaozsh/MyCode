@@ -260,99 +260,9 @@ static uint64_t epochMilli, epochMicro ;
 static volatile int    pinPass = -1 ;
 //static pthread_mutex_t pinMutex ;
 
-// Debugging & Return codes
-
-int wiringPiReturnCodes = FALSE ;
-
 // Use /dev/gpiomem ?
 
 int wiringPiTryGpioMem  = FALSE ;
-
-// ISR Data
-
-//static void (*isrFunctions [64])(void) ;
-
-
-// Doing it the Arduino way with lookup tables...
-//	Yes, it's probably more innefficient than all the bit-twidling, but it
-//	does tend to make it all a bit clearer. At least to me!
-
-// pinToGpio:
-//	Take a Wiring pin (0 through X) and re-map it to the BCM_GPIO pin
-//	Cope for 3 different board revisions here.
-
-static int *pinToGpio ;
-
-// Revision 1, 1.1:
-
-//static int pinToGpioR1 [64] =
-//{
-//  17, 18, 21, 22, 23, 24, 25, 4,	// From the Original Wiki - GPIO 0 through 7:	wpi  0 -  7
-//   0,  1,				// I2C  - SDA1, SCL1				wpi  8 -  9
-//   8,  7,				// SPI  - CE1, CE0				wpi 10 - 11
-//  10,  9, 11, 				// SPI  - MOSI, MISO, SCLK			wpi 12 - 14
-//  14, 15,				// UART - Tx, Rx				wpi 15 - 16
-//
-//// Padding:
-//
-//      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,	// ... 31
-//  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,	// ... 47
-//  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,	// ... 63
-//} ;
-
-// Revision 2:
-//  BCM  GPIO
-//   0, 30
-//   1, 31
-//   2,  8
-//   3,  9
-//   4,  7
-//   5, 21
-//   6, 22
-//   7, 11
-//   8, 10
-//   9, 13
-//  10, 12
-//  11, 14
-//  12, 26
-//  13, 23
-//  14, 15
-//  15, 16
-//  16, 27
-//  17,  0
-//  18,  1
-//  19, 24
-//  20, 28
-//  21, 29
-//  22,  3
-//  23,  4
-//  24,  5
-//  25,  6
-//  26, 25
-//  27,  2
-
-//  28, 
-//  29, 
-//  30, 
-//  31, 
-
-static int pinToGpioR2 [64] =
-{
-  17, 18, 27, 22, 23, 24, 25, 4,	// From the Original Wiki - GPIO 0 through 7:	wpi  0 -  7
-   2,  3,				// I2C  - SDA0, SCL0				wpi  8 -  9
-   8,  7,				// SPI  - CE1, CE0				wpi 10 - 11
-  10,  9, 11, 				// SPI  - MOSI, MISO, SCLK			wpi 12 - 14
-  14, 15,				// UART - Tx, Rx				wpi 15 - 16
-  28, 29, 30, 31,			// Rev 2: New GPIOs 8 though 11			wpi 17 - 20
-   5,  6, 13, 19, 26,			// B+						wpi 21, 22, 23, 24, 25
-  12, 16, 20, 21,			// B+						wpi 26, 27, 28, 29
-   0,  1,				// B+						wpi 30, 31
-
-// Padding:
-
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,	// ... 47
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,	// ... 63
-} ;
 
 
 // gpioToGPFSEL:
@@ -383,19 +293,6 @@ static uint8_t gpioToShift [] =
   0,3,6,9,12,15,18,21,24,27,
   0,3,6,9,12,15,18,21,24,27,
 } ;
-
-/*
- * piBoardRev:
- *	Deprecated, but does the same as piGpioLayout
- *********************************************************************************
- */
-
-int piBoardRev (void)
-{
-  return 0;//piGpioLayout () ;
-}
-
-
 
 /*
  * piBoardId:
@@ -466,135 +363,8 @@ int piBoardRev (void)
 static void piGpioLayoutOops (const char *why)
 {
   fprintf (stderr, " -> %s\n", why) ;
-  exit (EXIT_FAILURE) ;
+  //exit (EXIT_FAILURE) ;
 }
-
-void piBoardId (int *model, int *rev, int *mem, int *maker, int *warranty)
-{
-  FILE *cpuFd ;
-  char line [120] ;
-  char *c ;
-  unsigned int revision ;
-  int bRev, bType,  bMfg, bMem, bWarranty ;//bProc,
-
-//	Will deal with the properly later on - for now, lets just get it going...
-//  unsigned int modelNum ;
-
-  //(void)piGpioLayout () ;	// Call this first to make sure all's OK. Don't care about the result.
-
-  if ((cpuFd = fopen ("/proc/cpuinfo", "r")) == NULL)
-    piGpioLayoutOops ("Unable to open /proc/cpuinfo") ;
-
-  while (fgets (line, 120, cpuFd) != NULL)
-    if (strncmp (line, "Revision", 8) == 0)
-      break ;
-
-  fclose (cpuFd) ;
-
-  if (strncmp (line, "Revision", 8) != 0)
-    piGpioLayoutOops ("No \"Revision\" line") ;
-
-// Chomp trailing CR/NL
-
-  for (c = &line [strlen (line) - 1] ; (*c == '\n') || (*c == '\r') ; --c)
-    *c = 0 ;
-  
-// Need to work out if it's using the new or old encoding scheme:
-
-// Scan to the first character of the revision number
-
-  for (c = line ; *c ; ++c)
-    if (*c == ':')
-      break ;
-
-  if (*c != ':')
-    piGpioLayoutOops ("Bogus \"Revision\" line (no colon)") ;
-
-// Chomp spaces
-
-  ++c ;
-  while (isspace (*c))
-    ++c ;
-
-  if (!isxdigit (*c))
-    piGpioLayoutOops ("Bogus \"Revision\" line (no hex digit at start of revision)") ;
-
-  revision = (unsigned int)strtol (c, NULL, 16) ; // Hex number with no leading 0x
-
-// Check for new way:
-
-  if ((revision &  (1 << 23)) != 0)	// New way
-  {
-
-    bRev      = (revision & (0x0F <<  0)) >>  0 ;
-    bType     = (revision & (0xFF <<  4)) >>  4 ;
-    //bProc     = (revision & (0x0F << 12)) >> 12 ;	// Not used for now.
-    bMfg      = (revision & (0x0F << 16)) >> 16 ;
-    bMem      = (revision & (0x07 << 20)) >> 20 ;
-    bWarranty = (revision & (0x03 << 24)) != 0 ;
-    
-    *model    = bType ;
-    *rev      = bRev ;
-    *mem      = bMem ;
-    *maker    = bMfg  ;
-    *warranty = bWarranty ;
-
-  }
-  else					// Old way
-  {
-
-    if (!isdigit (*c))
-      piGpioLayoutOops ("Bogus \"Revision\" line (no digit at start of revision)") ;
-
-// Make sure its long enough
-
-    if (strlen (c) < 4)
-      piGpioLayoutOops ("Bogus \"Revision\" line (not long enough)") ;
-
-// If longer than 4, we'll assume it's been overvolted
-
-    *warranty = strlen (c) > 4 ;
-  
-// Extract last 4 characters:
-
-    c = c + strlen (c) - 4 ;
-
-// Fill out the replys as appropriate
-
-    /**/ if (strcmp (c, "0002") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_1   ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
-    else if (strcmp (c, "0003") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_1_1 ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
-
-    else if (strcmp (c, "0004") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_1_2 ; *mem = 0 ; *maker = PI_MAKER_SONY    ; }
-    else if (strcmp (c, "0005") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_1_2 ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
-    else if (strcmp (c, "0006") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_1_2 ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
-
-    else if (strcmp (c, "0007") == 0) { *model = PI_MODEL_A  ; *rev = PI_VERSION_1_2 ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
-    else if (strcmp (c, "0008") == 0) { *model = PI_MODEL_A  ; *rev = PI_VERSION_1_2 ; *mem = 0 ; *maker = PI_MAKER_SONY ;  ; }
-    else if (strcmp (c, "0009") == 0) { *model = PI_MODEL_A  ; *rev = PI_VERSION_1_2 ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
-
-    else if (strcmp (c, "000d") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_EGOMAN  ; }
-    else if (strcmp (c, "000e") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
-    else if (strcmp (c, "000f") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_EGOMAN  ; }
-
-    else if (strcmp (c, "0010") == 0) { *model = PI_MODEL_BP ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
-    else if (strcmp (c, "0013") == 0) { *model = PI_MODEL_BP ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_EMBEST  ; }
-    else if (strcmp (c, "0016") == 0) { *model = PI_MODEL_BP ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
-    else if (strcmp (c, "0019") == 0) { *model = PI_MODEL_BP ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_EGOMAN  ; }
-
-    else if (strcmp (c, "0011") == 0) { *model = PI_MODEL_CM ; *rev = PI_VERSION_1_1 ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
-    else if (strcmp (c, "0014") == 0) { *model = PI_MODEL_CM ; *rev = PI_VERSION_1_1 ; *mem = 1 ; *maker = PI_MAKER_EMBEST  ; }
-    else if (strcmp (c, "0017") == 0) { *model = PI_MODEL_CM ; *rev = PI_VERSION_1_1 ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
-    else if (strcmp (c, "001a") == 0) { *model = PI_MODEL_CM ; *rev = PI_VERSION_1_1 ; *mem = 1 ; *maker = PI_MAKER_EGOMAN  ; }
-
-    else if (strcmp (c, "0012") == 0) { *model = PI_MODEL_AP ; *rev = PI_VERSION_1_1 ; *mem = 0 ; *maker = PI_MAKER_SONY    ; }
-    else if (strcmp (c, "0015") == 0) { *model = PI_MODEL_AP ; *rev = PI_VERSION_1_1 ; *mem = 1 ; *maker = PI_MAKER_EMBEST  ; }
-    else if (strcmp (c, "0018") == 0) { *model = PI_MODEL_AP ; *rev = PI_VERSION_1_1 ; *mem = 0 ; *maker = PI_MAKER_SONY    ; }
-    else if (strcmp (c, "001b") == 0) { *model = PI_MODEL_AP ; *rev = PI_VERSION_1_1 ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
-
-    else                              { *model = 0           ; *rev = 0              ; *mem =   0 ; *maker = 0 ;               }
-  }
-}
- 
 
 
 void pinMode (int pin, int mode)
@@ -678,24 +448,6 @@ void delay (unsigned int howLong)
 }
 
 
-/*
- * delayMicroseconds:
- *	This is somewhat intersting. It seems that on the Pi, a single call
- *	to nanosleep takes some 80 to 130 microseconds anyway, so while
- *	obeying the standards (may take longer), it's not always what we
- *	want!
- *
- *	So what I'll do now is if the delay is less than 100uS we'll do it
- *	in a hard loop, watching a built-in counter on the ARM chip. This is
- *	somewhat sub-optimal in that it uses 100% CPU, something not an issue
- *	in a microcontroller, but under a multi-tasking, multi-user OS, it's
- *	wastefull, however we've no real choice )-:
- *
- *      Plan B: It seems all might not be well with that plan, so changing it
- *      to use gettimeofday () and poll on that instead...
- *********************************************************************************
- */
-
 void delayMicrosecondsHard (unsigned int howLong)
 {
   struct timeval tNow, tLong, tEnd ;
@@ -727,14 +479,6 @@ void delayMicroseconds (unsigned int howLong)
   }
 }
 
-
-/*
- * millis:
- *	Return a number of milliseconds as an unsigned int.
- *	Wraps at 49 days.
- *********************************************************************************
- */
-
 unsigned int millis (void)
 {
   uint64_t now ;
@@ -755,13 +499,6 @@ unsigned int millis (void)
   return (uint32_t)(now - epochMilli) ;
 }
 
-
-/*
- * micros:
- *	Return a number of microseconds as an unsigned int.
- *	Wraps after 71 minutes.
- *********************************************************************************
- */
 
 unsigned int micros (void)
 {
@@ -790,7 +527,7 @@ unsigned int micros (void)
 volatile unsigned int* wiringPiSetup (void)
 {
   int   fd ;
-  int   model, rev, mem, maker, overVolted ;
+  //int   model, rev, mem, maker, overVolted ;
 
 // It's actually a fatal error to call any of the wiringPiSetup routines more than once,
 //	(you run out of file handles!) but I'm fed-up with the useless twats who email
@@ -802,49 +539,40 @@ volatile unsigned int* wiringPiSetup (void)
   wiringPiSetuped = TRUE ;
 
 
-  if (getenv (ENV_CODES) != NULL)
-    wiringPiReturnCodes = TRUE ;
+  //piBoardId (&model, &rev, &mem, &maker, &overVolted) ;
+  //printf ("model must be 9(pi zero):%d\n",model) ;
+/*
+/proc/cpuinfo
+
+processor       : 0
+model name      : ARMv6-compatible processor rev 7 (v6l)
+BogoMIPS        : 997.08
+Features        : half thumb fastmult vfp edsp java tls
+CPU implementer : 0x41
+CPU architecture: 7
+CPU variant     : 0x0
+CPU part        : 0xb76
+CPU revision    : 7
+
+Hardware        : BCM2835
+Revision        : 900093
+Serial          : 0000000000310186
+*/
 
 
-// Get the board ID information. We're not really using the information here,
-//	but it will give us information like the GPIO layout scheme (2 variants
-//	on the older 26-pin Pi's) and the GPIO peripheral base address.
-//	and if we're running on a compute module, then wiringPi pin numbers
-//	don't really many anything, so force native BCM mode anyway.
-
-  piBoardId (&model, &rev, &mem, &maker, &overVolted) ;
-  printf ("model must be 9(pi zero):%d\n",model) ;
-
-  //if ((model == PI_MODEL_CM) || (model == PI_MODEL_CM3))
-  //  wiringPiMode = WPI_MODE_GPIO ;
-  //else
-    
-  //wiringPiMode = WPI_MODE_PINS ;
-
-  ///**/ if (piGpioLayout () == 1)	// A, B, Rev 1, 1.1
+  //switch (model)
   //{
-  //   pinToGpio =  pinToGpioR1 ;
-  //}
-  //else 					// A2, B2, A+, B+, CM, Pi2, Pi3, Zero
-  //{
-     pinToGpio =  pinToGpioR2 ;
-  //}
-
-// ...
-
-  switch (model)
-  {
-    case PI_MODEL_A:	case PI_MODEL_B:
-    case PI_MODEL_AP:	case PI_MODEL_BP:
-    case PI_ALPHA:	case PI_MODEL_CM:
-    case PI_MODEL_ZERO:	case PI_MODEL_ZERO_W:
+  //  case PI_MODEL_A:	case PI_MODEL_B:
+  //  case PI_MODEL_AP:	case PI_MODEL_BP:
+  //  case PI_ALPHA:	case PI_MODEL_CM:
+  //  case PI_MODEL_ZERO:	case PI_MODEL_ZERO_W:
       piGpioBase = GPIO_PERI_BASE_OLD ;
-      break ;
-
-    default:
-      piGpioBase = GPIO_PERI_BASE_NEW ;
-      break ;
-  }
+  //    break ;
+  //
+  //  default:
+  //    piGpioBase = GPIO_PERI_BASE_NEW ;
+  //    break ;
+  //}
 
 // Open the master /dev/ memory control device
 // Device strategy: December 2016:
