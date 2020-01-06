@@ -227,7 +227,7 @@ void setup() {
     adc.set_data_rate(ADS1115_DATA_RATE_8_SPS);
     adc.set_mode(ADS1115_MODE_CONTINUOUS);
     adc.set_mux(ADS1115_MUX_DIFF_AIN0_AIN1);
-    adc.set_pga(ADS1115_PGA_ONE);
+    adc.set_pga(ADS1115_PGA_TWO);
 Serial.begin(19200);// read at 9600
     if (adc.trigger_sample() != 0){
             Serial.println("adc read trigger failed (ads1115 not connected?)");
@@ -238,9 +238,20 @@ void loop() {
         /* You will be oversampling if the loop takes too short a time */
         int32_t val = 0;
         uint16_t i = 0;
-        for(i=0;i<4;i++){
+        //for(i=0;i<4;i++){
          val += adc.read_sample();
-        Serial.print(adc.is_sample_in_progress());
-        }
-        Serial.println(val);
+        //Serial.print(adc.is_sample_in_progress());
+        //}
+        Serial.print(val);
+        Serial.print(val>>1);
+        Serial.print(val>>2);
+        Serial.print(val>>3);
+        Serial.print(val>>4);
+        Serial.print(val>>5);
+        Serial.print(val>>6);
+        Serial.print(val>>7);
+        Serial.print(val>>8);
+        Serial.print(val>>9);
+        Serial.print(val>>10);
+        Serial.println();
 }
