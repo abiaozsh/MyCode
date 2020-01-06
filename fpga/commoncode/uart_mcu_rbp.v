@@ -126,10 +126,22 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       rbp_ack <= 0;
     end else begin
       if(rbp_req && !rbp_ack)begin
-        if         (rbp_cmd==1'b0000)begin//clear address
+        if         (rbp_cmd==0)begin//reset address
           command<=8'hB0;
-        end else if(rbp_cmd==1'b0001)begin//read
+        end else if(rbp_cmd==1)begin//read
           command<=8'hB1;
+        end else if(rbp_cmd==2)begin//get pos low
+          command<=8'hB2;
+        end else if(rbp_cmd==3)begin//get pos high
+          command<=8'hB3;
+        end else if(rbp_cmd==4)begin//fetch
+          command<=8'hB4;
+        end else if(rbp_cmd==5)begin//start
+          command<=8'hB5;
+        end else if(rbp_cmd==6)begin//stop
+          command<=8'hB6;
+        end else if(rbp_cmd==15)begin//test
+          command<=8'hBF;
         end
         if(command_done)begin
           rbp_ack <= 1;
@@ -153,9 +165,6 @@ reg [10:0] timer;
 reg [7:0] reg_temp;
 reg [9:0] timer2;
 reg hibit;
-
-reg [15:0] data_temp;
-reg [24:0] count_temp;
 
 reg [7:0] sum;
 
@@ -192,9 +201,6 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     
     sum <= 0;
     
-    data_temp<=0;
-    count_temp<=0;
-    
     recording<=0;
     adc_cnt<=0;
     
@@ -208,14 +214,14 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         sdram_c_data_in<={adc_in2,adc_in1};
         sdram_c_write_en <= 1;
         
-        adc_cnt = adc_cnt + 1;
-        if (command == 8'h00) begin 
-          if(adc_cnt==1000000)begin
-            adc_cnt<=0;
-            uart_send<=1; 
-            uart_data_w<=adc_in1;
-          end
-        end
+        //adc_cnt = adc_cnt + 1;
+        //if (command == 8'h00) begin
+        //  if(adc_cnt==1000000)begin
+        //    adc_cnt<=0;
+        //    uart_send<=1; 
+        //    uart_data_w<=adc_in1;
+        //  end
+        //end
       end else begin
         sdram_c_write_en <= 0;
       end
@@ -335,10 +341,10 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           end
         end
 
-      end else if (command == 8'hB0) begin
+      end else if (command == 8'hB0) begin//reset address
         read_address<=0;
         command_done<=1;
-      end else if (command == 8'hB1) begin
+      end else if (command == 8'hB1) begin//reading
         timer<=timer+1'b1;
         if(timer==0)begin
           sdram_c_address <= read_address;
@@ -352,18 +358,36 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
             command_done<=1;
           end
         end
-      
-      end else if (command == 8'hC0) begin
-        // start record
+      end else if (command == 8'hB2) begin//get pos low
+        rbp_data<=sdram_c_write_address[15:0];
+        command_done<=1;
+      end else if (command == 8'hB3) begin//get pos
+        rbp_data<={8'b0,sdram_c_write_address[23:16]};
+        command_done<=1;
+      end else if (command == 8'hB4) begin//fetch
+        rbp_data<={adc_in2,adc_in1};
+        command_done<=1;
+      end else if (command == 8'hB5) begin// start record
         recording = 1;
         command_done<=1;
-      end else if (command == 8'hC1) begin
-        // stop record
+      end else if (command == 8'hB6) begin// stop record
+        recording = 0;
+        command_done<=1;
+      end else if (command == 8'hBF) begin// test
+        rbp_data = 16'h1234;
+        command_done<=1;
+
+
+      end else if (command == 8'hC0) begin// start record
+        
+        recording = 1;
+        command_done<=1;
+      end else if (command == 8'hC1) begin// stop record
+        
         recording = 0;
         command_done<=1;
         
       end else if (command == 8'hD0) begin//getaddress
-        // start record
         ur_reg0 <= sdram_c_write_address[7:0];
         ur_reg1 <= sdram_c_write_address[15:8];
         ur_reg2 <= sdram_c_write_address[23:16];
