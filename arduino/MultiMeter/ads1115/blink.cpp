@@ -1,4 +1,248 @@
-#include <inttypes.h>
+#include <avr/io.h>
+#include <avr/pgmspace.h>
+#include <avr/interrupt.h>
+
+#define TCCR0_Value_9600 2
+#define CNT_Value_9600 104
+#define CNT_1_5_9600 156
+
+#define TCCR0_Value TCCR0_Value_9600
+#define CNT_Value CNT_Value_9600
+#define CNT_1_5 CNT_1_5_9600
+
+//pd0 rxd		usb txd
+//pd1 txd		usb rxd
+#define DDR_Send DDRD
+#define PORT_Send PORTD
+#define BIT_Send _BV(1)
+#define DDR_Recv DDRD
+#define PIN_Recv PIND
+#define BIT_Recv _BV(0)
+
+
+void SerialInit(){
+  DDR_Send |= BIT_Send;
+  DDR_Recv &= ~BIT_Recv;
+  PORT_Send |= BIT_Send;
+}
+
+void TimerInit(){
+  TCCR0 = TCCR0_Value;
+}
+
+void SerialSend(uint8_t val){
+	cli();
+	TCCR0 = TCCR0_Value;
+	TCNT0 = 0;
+	PORT_Send &= ~BIT_Send;
+  while(TCNT0<CNT_Value);TCNT0 = 0;//startbit
+	uint8_t chkbit = 0x01;
+	for(uint8_t i = 8 ; i > 0 ; i--)
+	{
+		if(val&chkbit)
+    {
+      PORT_Send |= BIT_Send;
+    }else{
+      PORT_Send &= ~BIT_Send;
+    }
+    chkbit<<=1;
+    while(TCNT0<CNT_Value);TCNT0 = 0;
+	}
+	PORT_Send |= BIT_Send;
+  while(TCNT0<CNT_Value);TCNT0 = 0;//stopbit
+	sei();
+}
+
+PROGMEM prog_uint32_t num10s[] = {
+1000000000,
+100000000,
+10000000,
+1000000,
+100000,
+10000,
+1000,
+100,
+10,
+1,
+};
+
+void SendUInt(uint32_t val){
+	uint32_t num = val;
+	for(uint8_t idx = 0; idx < 10 ; idx++)
+	{
+		uint8_t outNum = 0;
+		uint32_t CmpNum = pgm_read_dword_near(num10s + idx);
+		for(uint8_t i = 0; i < 10 ; i++)
+		{
+			if(num>=CmpNum)
+			{
+				num -= CmpNum;
+				outNum++;
+			}
+			else
+			{
+				break;
+			}
+		}
+		SerialSend('0' + outNum);
+	}
+}
+
+void SendInt(int32_t val){
+  if(val<0){
+    val=-val;
+    SerialSend('-');
+  }
+  SendUInt(val);
+}
+
+void wait(uint8_t ticks){
+	TCNT0 = 0;//timer reset
+	while(TCNT0<ticks);
+}
+
+
+
+
+
+
+
+#define DDR_SCL  DDRC
+#define PORT_SCL PORTC
+
+#define DDR_SDA  DDRC
+#define PORT_SDA PORTC
+#define PIN_SDA  PINC
+
+#define BIT_SCL _BV(5)
+#define BIT_SDA _BV(4)
+
+
+#define I2C_ACK 1
+#define I2C_NAK 0
+#define i2c_scl_release() DDR_SCL &= ~BIT_SCL
+#define i2c_sda_release() DDR_SDA &= ~BIT_SDA
+// sets SCL low and drives output
+#define i2c_scl_lo() PORT_SCL &= ~BIT_SCL; DDR_SCL |= BIT_SCL;
+// sets SDA low and drives output
+#define i2c_sda_lo() PORT_SDA &= ~BIT_SDA; DDR_SDA |= BIT_SDA;
+// set SCL high and to input (releases pin) (i.e. change to input,turnon pullup)
+#define i2c_scl_hi() DDR_SCL &=~ BIT_SCL;
+// set SDA high and to input (releases pin) (i.e. change to input,turnon pullup)
+#define i2c_sda_hi() DDR_SDA &=~ BIT_SDA;
+
+void dly()
+{
+  for(uint8_t i=0;i<6;i++)//6 is stable
+  {
+    volatile uint8_t v=0;
+    v++;
+  }
+}
+
+void i2c_writebit( uint8_t c )
+{
+  if ( c > 0 ) {
+    i2c_sda_hi();
+  } 
+  else {
+    i2c_sda_lo();
+  }
+  i2c_scl_hi();
+  dly();
+  i2c_scl_lo();
+  dly();
+  if ( c > 0 ) {
+    i2c_sda_lo();
+  }
+  dly();
+}
+uint8_t i2c_readbit()
+{
+  i2c_sda_hi();
+  i2c_scl_hi();
+  dly();
+  uint8_t c = PIN_SDA; // I2C_PIN;
+  i2c_scl_lo();
+  dly();
+  return ( c & BIT_SDA) ? 1 : 0;
+}
+
+uint8_t i2c_write( uint8_t c )
+{
+  for ( uint8_t i=0;i<8;i++) {
+    i2c_writebit( c & 128 );
+    c<<=1;
+  }
+  return i2c_readbit();
+}
+
+// read a byte from the I2C slave device
+//
+uint8_t i2c_read( uint8_t ack )
+{
+  uint8_t res = 0;
+  for ( uint8_t i=0;i<8;i++) {
+    res <<= 1;
+    res |= i2c_readbit();
+  }
+  if ( ack )
+    i2c_writebit( 0 );
+  else
+    i2c_writebit( 1 );
+  dly();
+  return res;
+}
+
+//
+uint8_t i2c_read()
+{
+  return i2c_read( I2C_ACK );
+}
+//
+uint8_t i2c_readLast()
+{
+  return i2c_read( I2C_NAK );
+}
+
+
+void i2c_start(void)
+{
+  // set both to high at the same time
+  i2c_sda_hi();
+  i2c_scl_hi();
+  dly();
+  i2c_sda_lo();
+  dly();
+  i2c_scl_lo();
+  dly();
+}
+
+uint8_t i2c_beginTransmission(uint8_t address)
+{
+  i2c_start();
+  uint8_t rc = i2c_write((address<<1) | 0); // clr read bit
+  return rc;
+}
+
+void i2c_endTransmission()
+{
+  i2c_scl_hi();
+  dly();
+  i2c_sda_hi();
+  dly();
+}
+uint8_t i2c_requestFrom(uint8_t address)
+{
+  i2c_start();
+  uint8_t rc = i2c_write((address<<1) | 1); // set read bit
+  return rc;
+}
+
+
+
+
+
 
 
 #define ADS1115_COMP_QUEUE_SHIFT 0
@@ -139,35 +383,34 @@ ADS1115::ADS1115(uint8_t address)
 
 uint8_t ADS1115::write_register(uint8_t reg, uint16_t val)
 {
-        Wire.beginTransmission(m_address);
-        Wire.write(reg);
-        Wire.write(val>>8);
-        Wire.write(val & 0xFF);
-        return Wire.endTransmission();
+        i2c_beginTransmission(m_address);//Wire.beginTransmission(m_address);
+        i2c_write(reg);//Wire.write(reg);
+        i2c_write(val>>8);//Wire.write(val>>8);
+        i2c_write(val & 0xFF);//Wire.write(val & 0xFF);
+        i2c_endTransmission();//return Wire.endTransmission();
+        return 0;
 }
 
 uint16_t ADS1115::read_register(uint8_t reg)
 {
-        Wire.beginTransmission(m_address);
-        Wire.write(reg);
-        Wire.endTransmission();
+        i2c_beginTransmission(m_address);//Wire.beginTransmission(m_address);
+        i2c_write(reg);//Wire.write(reg);
+        i2c_endTransmission();//Wire.endTransmission();
 
-        uint8_t result = Wire.requestFrom((int)m_address, 2, 1);
-        if (result != 2) {
-                Wire.flush();
-                return 0;
-        }
+        //uint8_t result = Wire.requestFrom((int)m_address, 2, 1);
+        i2c_requestFrom(m_address);
+        //if (result != 2) {
+        //        Wire.flush();
+        //        return 0;
+        //}
 
         uint16_t val;
 
-        val = Wire.read() << 8;
-        val |= Wire.read();
+        //val = Wire.read() << 8;
+        val = i2c_read() << 8;
+        //val |= Wire.read();
+        val |= i2c_readLast();
         return val;
-}
-
-void ADS1115::begin()
-{
-        Wire.begin();
 }
 
 uint8_t ADS1115::trigger_sample()
@@ -177,9 +420,10 @@ uint8_t ADS1115::trigger_sample()
 
 uint8_t ADS1115::reset()
 {
-	Wire.beginTransmission(0);
-	Wire.write(0x6);
-	return Wire.endTransmission();
+	i2c_beginTransmission(0);//Wire.beginTransmission(0);
+	i2c_write(0x6);//Wire.write(0x6);
+	i2c_endTransmission();//return Wire.endTransmission();
+  return 0;
 }
 
 bool ADS1115::is_sample_in_progress()
@@ -208,41 +452,36 @@ float ADS1115::read_sample_float()
 
 
 
-
-
-
 ADS1115 adc;
 
-void setup() {
-    adc.begin();
-    adc.set_data_rate(ADS1115_DATA_RATE_8_SPS);
-    adc.set_mode(ADS1115_MODE_CONTINUOUS);
-    adc.set_mux(ADS1115_MUX_DIFF_AIN0_AIN1);
-    adc.set_pga(ADS1115_PGA_TWO);
-Serial.begin(19200);// read at 9600
-    if (adc.trigger_sample() != 0){
-            Serial.println("adc read trigger failed (ads1115 not connected?)");
-    }
-}
 
-void loop() {
-        /* You will be oversampling if the loop takes too short a time */
-        int32_t val = 0;
-        uint16_t i = 0;
-        //for(i=0;i<4;i++){
-         val += adc.read_sample();
-        //Serial.print(adc.is_sample_in_progress());
-        //}
-        Serial.print(val);
-        Serial.print(val>>1);
-        Serial.print(val>>2);
-        Serial.print(val>>3);
-        Serial.print(val>>4);
-        Serial.print(val>>5);
-        Serial.print(val>>6);
-        Serial.print(val>>7);
-        Serial.print(val>>8);
-        Serial.print(val>>9);
-        Serial.print(val>>10);
-        Serial.println();
+int main()
+{
+  TCCR1A = 0;
+  TCCR1B = 3;
+  TCNT1 = 0;
+  //TIMSK |= _BV(OCIE1A);
+  //OCR1A = 100;
+  SerialInit();
+  TimerInit();
+  sei();
+
+  adc.set_data_rate(ADS1115_DATA_RATE_8_SPS);
+  adc.set_mode(ADS1115_MODE_CONTINUOUS);
+  adc.set_mux(ADS1115_MUX_DIFF_AIN0_AIN1);
+  adc.set_pga(ADS1115_PGA_TWO);
+  adc.trigger_sample();
+  
+  while(true){
+    
+    
+    
+    int16_t val = adc.read_sample();
+    SendInt(val);
+    SerialSend('\r');
+    SerialSend('\n');
+    for(uint16_t i=0;i<100;i++){
+      wait(250);
+    }
+  }
 }
