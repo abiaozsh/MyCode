@@ -5,7 +5,7 @@ import java.util.*;
 /*
 javac HelloWorld.java
 javah -jni HelloWorld
-
+gcc -I/usr/lib/jvm/jdk-8-oracle-arm32-vfp-hflt/include/ -I/usr/lib/jvm/jdk-8-oracle-arm32-vfp-hflt/include/linux -fPIC -shared HelloWorld.c -o libHelloWorld.so
 
 java -Djava.library.path=. HelloWorld
 */
@@ -54,7 +54,7 @@ public class HelloWorld {
         } catch (Throwable t) {
             t.printStackTrace();
         }
-/*
+
         DrawFrame form = new DrawFrame();
         TimerTask task = new TimerTask() {
             @Override
@@ -72,7 +72,7 @@ public class HelloWorld {
         // 安排任务在一段时间内运行
         timer.scheduleAtFixedRate(task, delay, intevalPeriod);
         
-        */
+        
     }
 
     static int i = 0;

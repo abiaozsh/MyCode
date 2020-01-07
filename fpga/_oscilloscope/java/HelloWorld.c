@@ -33,6 +33,11 @@
 
 //gcc -I/usr/lib/jvm/jdk-8-oracle-arm32-vfp-hflt/include/ -I/usr/lib/jvm/jdk-8-oracle-arm32-vfp-hflt/include/linux -fPIC -shared HelloWorld.c -o libHelloWorld.so
 
+/*
+sudo mount tmpfs /mnt/tmpfs -t tmpfs -o size=50m
+cd /mnt/tmpfs
+*/
+
 
 JNIEXPORT jint JNICALL Java_HelloWorld_sayHello(JNIEnv* env, jobject obj, jshortArray arr)
 {
