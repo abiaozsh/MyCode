@@ -36,6 +36,8 @@
 /*
 sudo mount tmpfs /mnt/tmpfs -t tmpfs -o size=50m
 cd /mnt/tmpfs
+
+sudo chmod 777 run.sh
 */
 
 
