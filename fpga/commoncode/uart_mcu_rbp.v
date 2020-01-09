@@ -44,13 +44,19 @@ module uart_mcu_rbp(
 
     output [23:0] write_address,
     
+    output [23:0] dump_address,
+    
+    output reg [15:0] fetch_data,
+    
     output busy
   );
 
 assign busy = command != 0 && command_done==0;
 
 assign write_address = sdram_c_write_address;
-    
+
+assign dump_address = read_address;
+
 wire uart_rec;
 wire [7:0] uart_data_r;
 reg uart_send;
@@ -200,6 +206,8 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     sdram_c_write_latch_address <=0;
     
     sum <= 0;
+    
+    fetch_data<=0;
     
     recording<=0;
     adc_cnt<=0;
@@ -366,6 +374,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         command_done<=1;
       end else if (command == 8'hB4) begin//fetch
         rbp_data<={adc_in2,adc_in1};
+        fetch_data<={adc_in2,adc_in1};
         command_done<=1;
       end else if (command == 8'hB5) begin// start record
         recording = 1;

@@ -176,6 +176,26 @@ set_location_assignment PIN_C3  -to C3
 set_location_assignment PIN_D5  -to D5
 set_location_assignment PIN_C6  -to C6
 
+set_location_assignment PIN_D1  -to D1
+set_location_assignment PIN_F1  -to F1
+set_location_assignment PIN_G1  -to G1
+set_location_assignment PIN_B1  -to B1
+set_location_assignment PIN_B3  -to B3
+set_location_assignment PIN_B4  -to B4
+set_location_assignment PIN_B5  -to B5
+set_location_assignment PIN_B6  -to B6
+set_location_assignment PIN_B7  -to B7
+set_location_assignment PIN_B8  -to B8
+set_location_assignment PIN_B9  -to B9
+set_location_assignment PIN_B10 -to B10
+set_location_assignment PIN_B11 -to B11
+set_location_assignment PIN_B12 -to B12
+set_location_assignment PIN_B13 -to B13
+set_location_assignment PIN_D4  -to D4
+set_location_assignment PIN_E6  -to E6
+set_location_assignment PIN_D6  -to D6
+
+
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_mcu_rbp.v
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_send_hs.v
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_recv_hs.v

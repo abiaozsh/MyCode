@@ -29,7 +29,7 @@ module flow_led(
   input A5,
   input A6,
   input A7,
-  output A8,
+  input A8,
   input A9,
   input A10,
   input A11,
@@ -39,6 +39,25 @@ module flow_led(
   input D5,
   input C6,
 
+  output D1 ,
+  input F1 ,
+  input G1 ,
+  input B1 ,
+  input B3 ,
+  input B4 ,
+  input B5 ,
+  input B6 ,
+  input B7 ,
+  input B8 ,
+  input B9 ,
+  input B10,
+  input B11,
+  input B12,
+  input B13,
+  input D4 ,
+  input E6 ,
+  input D6 ,
+  
   //raspberrypi
   output T4,
   output T5,
@@ -84,11 +103,9 @@ module flow_led(
 
 
   
-  wire [7:0]  adc_in1;
-  wire [7:0]  adc_in2;
-  wire        adc_clk;
-  wire        adc_s1;
-  wire        adc_s2;
+  wire [7:0]  adcA;
+  wire [7:0]  adcB;
+  wire        adcClk;
   /*
   ad9280
   A8 clk
@@ -100,10 +117,17 @@ module flow_led(
   C2 d5
   F2 d6
   F3 d7
+  
+  assign A8 = adcClk;
+  assign adcA = {F3,F2,C2,A2,A3,A4,A5,A6};
   */
-  assign A8 = adc_clk;
-  assign adc_in1 = {F3,F2,C2,A2,A3,A4,A5,A6};
-
+  
+  //ad9288
+assign adcA = {A6,A5,A4,A3,A2,C2,F2,F3};
+assign adcB = {C3,A13,A12,A11,A10,A9,A8,A7};
+assign D1 = adcClk;
+  
+  
   
   //assign led = out_pin0[3:0];
 
@@ -127,11 +151,11 @@ module flow_led(
   //assign seg_data0 = write_address[7:0];
   //assign seg_data1 = write_address[15:8];
   //assign seg_data2 = write_address[23:16];
+  assign seg_data0 = fetch_data[7:0];
+  assign seg_data1 = fetch_data[15:8];
+  assign seg_data2 = dump_address[23:16];
   
-  assign seg_data0 = adc_in1;
-  
-  assign led[3]=write_address[23];
-  
+
   wire [15:0]outdata;
   assign T11 = outdata[0];
   assign T7  = outdata[1];
@@ -154,8 +178,8 @@ module flow_led(
   assign led[0] = !uart_rxd || rbp_req;
   assign led[1] = !uart_txd || rbp_ack;
   assign led[2] = busy;
-  //assign led = rbp_cmd;
-
+  assign led[3] = write_address[23];
+  
   wire rbp_req;
   assign rbp_req = R8;//CTL7R8
   wire rbp_ack;
@@ -170,6 +194,9 @@ module flow_led(
   assign rbp_cmd = {R5,R4,R3,P3};//CTL1P3,CTL2R3,CTL3R4,CTL4R5
   
   wire[23:0] write_address;
+  
+  wire[23:0] dump_address;
+  wire[15:0] fetch_data;
   wire busy;
   uart_mcu_rbp ins_uart_mcu_rbp(
     .sys_clk    (sys_clk  ),       // 时钟信号
@@ -178,9 +205,9 @@ module flow_led(
     .uart_rxd  (uart_rxd),
     .uart_txd  (uart_txd),
 
-    .adc_in1(adc_in1),
-    .adc_in2(adc_in2),
-    .adc_clk(adc_clk),
+    .adc_in1(adcA),
+    .adc_in2(adcB),
+    .adc_clk(adcClk),
 
     .rbp_data(outdata),
     .rbp_req(rbp_req),
@@ -202,6 +229,8 @@ module flow_led(
     .sdram_data			(sdram_data),		//SDRAM 数据	
     .sdram_dqm		  (sdram_dqm),
 
+    .fetch_data(fetch_data),
+    .dump_address(dump_address),
     .busy(busy)
 );
 
