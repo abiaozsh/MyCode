@@ -254,234 +254,220 @@ uint8_t i2c_requestFrom(uint8_t address)
 #define ADS1115_PGA_SHIFT 9
 #define ADS1115_MUX_SHIFT 12
 
-enum ads1115_comp_queue {
-	ADS1115_COMP_QUEUE_AFTER_ONE = 0,
-	ADS1115_COMP_QUEUE_AFTER_TWO = 0x1 << ADS1115_COMP_QUEUE_SHIFT,
-	ADS1115_COMP_QUEUE_AFTER_FOUR = 0x2 << ADS1115_COMP_QUEUE_SHIFT,
-	ADS1115_COMP_QUEUE_DISABLE = 0x3 << ADS1115_COMP_QUEUE_SHIFT,
-	ADS1115_COMP_QUEUE_MASK = 0x3 << ADS1115_COMP_QUEUE_SHIFT,
-};
+#define ADS1115_COMP_QUEUE_AFTER_ONE 0
+#define ADS1115_COMP_QUEUE_AFTER_TWO 0x1 << ADS1115_COMP_QUEUE_SHIFT
+#define ADS1115_COMP_QUEUE_AFTER_FOUR 0x2 << ADS1115_COMP_QUEUE_SHIFT
+#define ADS1115_COMP_QUEUE_DISABLE 0x3 << ADS1115_COMP_QUEUE_SHIFT
+#define ADS1115_COMP_QUEUE_MASK 0x3 << ADS1115_COMP_QUEUE_SHIFT
 
-enum ads1115_comp_latch {
-	ADS1115_COMP_LATCH_NO = 0,
-	ADS1115_COMP_LATCH_YES = 1 << ADS1115_COMP_LATCH_SHIFT,
-	ADS1115_COMP_LATCH_MASK = 1 << ADS1115_COMP_LATCH_SHIFT,
-};
+#define ADS1115_COMP_LATCH_NO 0
+#define ADS1115_COMP_LATCH_YES 1 << ADS1115_COMP_LATCH_SHIFT
+#define ADS1115_COMP_LATCH_MASK 1 << ADS1115_COMP_LATCH_SHIFT
 
-enum ads1115_comp_polarity {
-	ADS1115_COMP_POLARITY_ACTIVE_LOW = 0,
-	ADS1115_COMP_POLARITY_ACTIVE_HIGH = 1 << ADS1115_COMP_POLARITY_SHIFT,
-	ADS1115_COMP_POLARITY_MASK = 1 << ADS1115_COMP_POLARITY_SHIFT,
-};
+#define ADS1115_COMP_POLARITY_ACTIVE_LOW 0
+#define ADS1115_COMP_POLARITY_ACTIVE_HIGH 1 << ADS1115_COMP_POLARITY_SHIFT
+#define ADS1115_COMP_POLARITY_MASK 1 << ADS1115_COMP_POLARITY_SHIFT
 
-enum ads1115_comp_mode {
-	ADS1115_COMP_MODE_WINDOW = 0,
-	ADS1115_COMP_MODE_HYSTERESIS = 1 << ADS1115_COMP_MODE_SHIFT,
-	ADS1115_COMP_MODE_MASK = 1 << ADS1115_COMP_MODE_SHIFT,
-};
+#define ADS1115_COMP_MODE_WINDOW 0
+#define ADS1115_COMP_MODE_HYSTERESIS 1 << ADS1115_COMP_MODE_SHIFT
+#define ADS1115_COMP_MODE_MASK 1 << ADS1115_COMP_MODE_SHIFT
 
-enum ads1115_data_rate {
-	ADS1115_DATA_RATE_8_SPS = 0,
-	ADS1115_DATA_RATE_16_SPS = 0x1 << ADS1115_DATA_RATE_SHIFT,
-	ADS1115_DATA_RATE_32_SPS = 0x2 << ADS1115_DATA_RATE_SHIFT,
-	ADS1115_DATA_RATE_64_SPS = 0x3 << ADS1115_DATA_RATE_SHIFT,
-	ADS1115_DATA_RATE_128_SPS = 0x4 << ADS1115_DATA_RATE_SHIFT,
-	ADS1115_DATA_RATE_250_SPS = 0x5 << ADS1115_DATA_RATE_SHIFT,
-	ADS1115_DATA_RATE_475_SPS = 0x6 << ADS1115_DATA_RATE_SHIFT,
-	ADS1115_DATA_RATE_860_SPS = 0x7 << ADS1115_DATA_RATE_SHIFT,
-	ADS1115_DATA_RATE_MASK = 0x7 << ADS1115_DATA_RATE_SHIFT,
-};
+#define ADS1115_DATA_RATE_8_SPS 0
+#define ADS1115_DATA_RATE_16_SPS 0x1 << ADS1115_DATA_RATE_SHIFT
+#define ADS1115_DATA_RATE_32_SPS 0x2 << ADS1115_DATA_RATE_SHIFT
+#define ADS1115_DATA_RATE_64_SPS 0x3 << ADS1115_DATA_RATE_SHIFT
+#define ADS1115_DATA_RATE_128_SPS 0x4 << ADS1115_DATA_RATE_SHIFT
+#define ADS1115_DATA_RATE_250_SPS 0x5 << ADS1115_DATA_RATE_SHIFT
+#define ADS1115_DATA_RATE_475_SPS 0x6 << ADS1115_DATA_RATE_SHIFT
+#define ADS1115_DATA_RATE_860_SPS 0x7 << ADS1115_DATA_RATE_SHIFT
+#define ADS1115_DATA_RATE_MASK 0x7 << ADS1115_DATA_RATE_SHIFT
 
-enum ads1115_mode {
-	ADS1115_MODE_CONTINUOUS = 0,
-	ADS1115_MODE_SINGLE_SHOT = 1 << ADS1115_MODE_SHIFT,
-	ADS1115_MODE_MASK = 1 << ADS1115_MODE_SHIFT,
-};
+#define ADS1115_MODE_CONTINUOUS 0
+#define ADS1115_MODE_SINGLE_SHOT 1 << ADS1115_MODE_SHIFT
+#define ADS1115_MODE_MASK 1 << ADS1115_MODE_SHIFT
 
-enum ads1115_pga {
-	ADS1115_PGA_TWO_THIRDS = 0,
-	ADS1115_PGA_ONE = 0x1 << ADS1115_PGA_SHIFT,
-	ADS1115_PGA_TWO = 0x2 << ADS1115_PGA_SHIFT,
-	ADS1115_PGA_FOUR = 0x3 << ADS1115_PGA_SHIFT,
-	ADS1115_PGA_EIGHT = 0x4 << ADS1115_PGA_SHIFT,
-	ADS1115_PGA_SIXTEEN = 0x5 << ADS1115_PGA_SHIFT,
-	ADS1115_PGA_MASK = 0x7 << ADS1115_PGA_SHIFT,
-};
+//000 : FSR = ¡À6.144 V(1)
+//001 : FSR = ¡À4.096 V(1)
+//010 : FSR = ¡À2.048 V (default)
+//011 : FSR = ¡À1.024 V
+//100 : FSR = ¡À0.512 V
+//101 : FSR = ¡À0.256 V
+#define ADS1115_PGA_TWO_THIRDS 0
+#define ADS1115_PGA_ONE 0x1 << ADS1115_PGA_SHIFT
+#define ADS1115_PGA_TWO 0x2 << ADS1115_PGA_SHIFT
+#define ADS1115_PGA_FOUR 0x3 << ADS1115_PGA_SHIFT
+#define ADS1115_PGA_EIGHT 0x4 << ADS1115_PGA_SHIFT
+#define ADS1115_PGA_SIXTEEN 0x5 << ADS1115_PGA_SHIFT
+#define ADS1115_PGA_MASK 0x7 << ADS1115_PGA_SHIFT
 
-enum ads1115_mux {
-	ADS1115_MUX_DIFF_AIN0_AIN1 = 0,
-	ADS1115_MUX_DIFF_AIN0_AIN3 = 0x1 << ADS1115_MUX_SHIFT,
-	ADS1115_MUX_DIFF_AIN1_AIN3 = 0x2 << ADS1115_MUX_SHIFT,
-	ADS1115_MUX_DIFF_AIN2_AIN3 = 0x3 << ADS1115_MUX_SHIFT,
-	ADS1115_MUX_GND_AIN0 = 0x4 << ADS1115_MUX_SHIFT,
-	ADS1115_MUX_GND_AIN1 = 0x5 << ADS1115_MUX_SHIFT,
-	ADS1115_MUX_GND_AIN2 = 0x6 << ADS1115_MUX_SHIFT,
-	ADS1115_MUX_GND_AIN3 = 0x7 << ADS1115_MUX_SHIFT,
-	ADS1115_MUX_MASK = 0x7 << ADS1115_MUX_SHIFT,
-};
+#define ADS1115_MUX_DIFF_AIN0_AIN1 0
+#define ADS1115_MUX_DIFF_AIN0_AIN3 0x1 << ADS1115_MUX_SHIFT
+#define ADS1115_MUX_DIFF_AIN1_AIN3 0x2 << ADS1115_MUX_SHIFT
+#define ADS1115_MUX_DIFF_AIN2_AIN3 0x3 << ADS1115_MUX_SHIFT
+#define ADS1115_MUX_GND_AIN0 0x4 << ADS1115_MUX_SHIFT
+#define ADS1115_MUX_GND_AIN1 0x5 << ADS1115_MUX_SHIFT
+#define ADS1115_MUX_GND_AIN2 0x6 << ADS1115_MUX_SHIFT
+#define ADS1115_MUX_GND_AIN3 0x7 << ADS1115_MUX_SHIFT
+#define ADS1115_MUX_MASK 0x7 << ADS1115_MUX_SHIFT
 
-class ADS1115 {
-public:
-	ADS1115(uint8_t address = 0x48);
-
-	void begin();
-	uint8_t trigger_sample();
-	uint8_t reset();
-	bool is_sample_in_progress();
-	int16_t read_sample();
-	float sample_to_float(int16_t val);
-	float read_sample_float();
-
-	void set_comp_queue(enum ads1115_comp_queue val) { set_config(val, ADS1115_COMP_QUEUE_MASK); }
-	void set_comp_latching(enum ads1115_comp_latch val) { set_config(val, ADS1115_COMP_LATCH_MASK); }
-	void set_comp_polarity(enum ads1115_comp_polarity val) { set_config(val, ADS1115_COMP_POLARITY_MASK); }
-	void set_comp_mode(enum ads1115_comp_mode val) { set_config(val, ADS1115_COMP_MODE_MASK); }
-	void set_data_rate(enum ads1115_data_rate val) { set_config(val, ADS1115_DATA_RATE_MASK); }
-	void set_mode(enum ads1115_mode val) { set_config(val, ADS1115_MODE_MASK); }
-	void set_pga(enum ads1115_pga val) { set_config(val, ADS1115_PGA_MASK); m_voltage_range = val >> ADS1115_PGA_SHIFT; }
-	void set_mux(enum ads1115_mux val) { set_config(val, ADS1115_MUX_MASK); }
-
-private:
-	void set_config(uint16_t val, uint16_t mask) {
-		m_config = (m_config & ~mask) | val;
-	}
-
-	uint8_t write_register(uint8_t reg, uint16_t val);
-	uint16_t read_register(uint8_t reg);
-
-	uint8_t m_address;
-	uint16_t m_config;
-	int m_voltage_range;
-};
-
-
+#define ADS1115_DEFAULT_ADDRESS 0x48
 
 #define SAMPLE_BIT (0x8000)
 
-enum ads1115_register {
-	ADS1115_REGISTER_CONVERSION = 0,
-	ADS1115_REGISTER_CONFIG = 1,
-	ADS1115_REGISTER_LOW_THRESH = 2,
-	ADS1115_REGISTER_HIGH_THRESH = 3,
-};
+#define ADS1115_REGISTER_CONVERSION 0
+#define ADS1115_REGISTER_CONFIG 1
+#define ADS1115_REGISTER_LOW_THRESH 2
+#define ADS1115_REGISTER_HIGH_THRESH 3
 
-#define FACTOR 32768.0
-static float ranges[] = { 6.144 / FACTOR, 4.096 / FACTOR, 2.048 / FACTOR, 1.024 / FACTOR, 0.512 / FACTOR, 0.256 / FACTOR};
 
-ADS1115::ADS1115(uint8_t address)
-{
-        m_address = address;
-        m_config = ADS1115_COMP_QUEUE_AFTER_ONE |
-                   ADS1115_COMP_LATCH_NO |
-                   ADS1115_COMP_POLARITY_ACTIVE_LOW |
-                   ADS1115_COMP_MODE_WINDOW |
-                   ADS1115_DATA_RATE_128_SPS |
-                   ADS1115_MODE_SINGLE_SHOT |
-                   ADS1115_MUX_GND_AIN0;
-        set_pga(ADS1115_PGA_ONE);
+uint8_t m_address;
+uint16_t m_config;
+int m_voltage_range;
+
+
+void set_config(uint16_t val, uint16_t mask) {
+  m_config = (m_config & ~mask) | val;
 }
 
-uint8_t ADS1115::write_register(uint8_t reg, uint16_t val)
-{
-        i2c_beginTransmission(m_address);//Wire.beginTransmission(m_address);
-        i2c_write(reg);//Wire.write(reg);
-        i2c_write(val>>8);//Wire.write(val>>8);
-        i2c_write(val & 0xFF);//Wire.write(val & 0xFF);
-        i2c_endTransmission();//return Wire.endTransmission();
-        return 0;
+void ADS1115_set_comp_queue(uint16_t val) {
+  set_config(val, ADS1115_COMP_QUEUE_MASK);
+}
+void ADS1115_set_comp_latching(uint16_t val) {
+  set_config(val, ADS1115_COMP_LATCH_MASK);
+}
+void ADS1115_set_comp_polarity(uint16_t val) {
+  set_config(val, ADS1115_COMP_POLARITY_MASK);
+}
+void ADS1115_set_comp_mode(uint16_t val) {
+  set_config(val, ADS1115_COMP_MODE_MASK);
+}
+void ADS1115_set_data_rate(uint16_t val) {
+  set_config(val, ADS1115_DATA_RATE_MASK);
+}
+void ADS1115_set_mode(uint16_t val) {
+  set_config(val, ADS1115_MODE_MASK);
+}
+void ADS1115_set_pga(uint16_t val) {
+  set_config(val, ADS1115_PGA_MASK); 
+  m_voltage_range = val >> ADS1115_PGA_SHIFT;
+}
+void ADS1115_set_mux(uint16_t val) {
+  set_config(val, ADS1115_MUX_MASK);
 }
 
-uint16_t ADS1115::read_register(uint8_t reg)
+uint8_t write_register(uint8_t reg, uint16_t val)
 {
-        i2c_beginTransmission(m_address);//Wire.beginTransmission(m_address);
-        i2c_write(reg);//Wire.write(reg);
-        i2c_endTransmission();//Wire.endTransmission();
-
-        //uint8_t result = Wire.requestFrom((int)m_address, 2, 1);
-        i2c_requestFrom(m_address);
-        //if (result != 2) {
-        //        Wire.flush();
-        //        return 0;
-        //}
-
-        uint16_t val;
-
-        //val = Wire.read() << 8;
-        val = i2c_read() << 8;
-        //val |= Wire.read();
-        val |= i2c_readLast();
-        return val;
-}
-
-uint8_t ADS1115::trigger_sample()
-{
-        return write_register(ADS1115_REGISTER_CONFIG, m_config | SAMPLE_BIT);
-}
-
-uint8_t ADS1115::reset()
-{
-	i2c_beginTransmission(0);//Wire.beginTransmission(0);
-	i2c_write(0x6);//Wire.write(0x6);
-	i2c_endTransmission();//return Wire.endTransmission();
+  i2c_beginTransmission(m_address);
+  i2c_write(reg);
+  i2c_write(val>>8);
+  i2c_write(val & 0xFF);
+  i2c_endTransmission();
   return 0;
 }
 
-bool ADS1115::is_sample_in_progress()
+uint16_t read_register(uint8_t reg)
+{
+  i2c_beginTransmission(m_address);
+  i2c_write(reg);
+  i2c_endTransmission();
+
+  i2c_requestFrom(m_address);
+
+  uint16_t val;
+
+  val = i2c_read() << 8;
+  val |= i2c_readLast();
+  return val;
+}
+
+uint8_t ADS1115_trigger_sample()
+{
+  return write_register(ADS1115_REGISTER_CONFIG, m_config | SAMPLE_BIT);
+}
+
+uint8_t ADS1115_reset()
+{
+	i2c_beginTransmission(0);
+	i2c_write(0x6);
+	i2c_endTransmission();
+  return 0;
+}
+
+bool ADS1115_is_sample_in_progress()
 {
 	uint16_t val = read_register(ADS1115_REGISTER_CONFIG);
 	return (val & SAMPLE_BIT) == 0;
 }
 
-int16_t ADS1115::read_sample()
+int16_t ADS1115_read_sample()
 {
-        return read_register(ADS1115_REGISTER_CONVERSION);
+  return read_register(ADS1115_REGISTER_CONVERSION);
 }
 
-float ADS1115::sample_to_float(int16_t val)
+void ADS1115(uint8_t address)
 {
-	return val * ranges[m_voltage_range];
+  m_address = address;
+  m_config = ADS1115_COMP_QUEUE_AFTER_ONE |
+             ADS1115_COMP_LATCH_NO |
+             ADS1115_COMP_POLARITY_ACTIVE_LOW |
+             ADS1115_COMP_MODE_WINDOW |
+             ADS1115_DATA_RATE_128_SPS |
+             ADS1115_MODE_SINGLE_SHOT |
+             ADS1115_MUX_GND_AIN0;
+  ADS1115_set_pga(ADS1115_PGA_ONE);
 }
 
-float ADS1115::read_sample_float()
-{
-	return sample_to_float(read_sample());
-}
 
-
-
-
-
-
-ADS1115 adc;
-
+volatile uint8_t doGetData;
 
 int main()
 {
   TCCR1A = 0;
-  TCCR1B = 3;
+//0 0 0 No clock source. (Timer/Counter stopped)
+//0 0 1 clkI/O/1 (No prescaling)
+//0 1 0 clkI/O/8 (From prescaler)
+//0 1 1 clkI/O/64 (From prescaler)
+//1 0 0 clkI/O/256 (From prescaler)
+//1 0 1 clkI/O/1024 (From prescaler)
+  TCCR1B = 3;//1/8 Mhz
   TCNT1 = 0;
-  //TIMSK |= _BV(OCIE1A);
-  //OCR1A = 100;
+  TIMSK |= _BV(OCIE1A);
+  OCR1A = 375;//8us * 375  3ms  333t/s(83.3hz refresh) count 41.6: 8 times/s
+
   SerialInit();
   TimerInit();
   sei();
 
-  adc.set_data_rate(ADS1115_DATA_RATE_8_SPS);
-  adc.set_mode(ADS1115_MODE_CONTINUOUS);
-  adc.set_mux(ADS1115_MUX_DIFF_AIN0_AIN1);
-  adc.set_pga(ADS1115_PGA_TWO);
-  adc.trigger_sample();
+  ADS1115(ADS1115_DEFAULT_ADDRESS);
+  
+  ADS1115_set_data_rate(ADS1115_DATA_RATE_16_SPS);
+  //ADS1115_set_data_rate(ADS1115_DATA_RATE_8_SPS);
+  ADS1115_set_mode(ADS1115_MODE_CONTINUOUS);
+  ADS1115_set_mux(ADS1115_MUX_DIFF_AIN0_AIN1);
+  ADS1115_set_pga(ADS1115_PGA_TWO);
+  ADS1115_trigger_sample();
   
   while(true){
+    //while(!doGetData);
+    //doGetData = 0;
     
     
-    
-    int16_t val = adc.read_sample();
+    int16_t val = ADS1115_read_sample();
     SendInt(val);
     SerialSend('\r');
     SerialSend('\n');
-    for(uint16_t i=0;i<100;i++){
-      wait(250);
-    }
+    //for(uint16_t i=0;i<100;i++){
+    //  wait(250);
+    //}
+  }
+}
+uint8_t count = 0;//41
+
+ISR(TIMER1_COMPA_vect){
+  TCNT1 = 0;
+  count++;
+  if(count==41){//41
+    count==0;
+    doGetData = 1;
   }
 }
