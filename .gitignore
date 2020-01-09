@@ -1,3 +1,4 @@
+*.qws
 *.suo
 bin
 obj
