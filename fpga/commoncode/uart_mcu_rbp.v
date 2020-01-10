@@ -57,6 +57,29 @@ assign write_address = sdram_c_write_address;
 
 assign dump_address = read_address;
 
+//sram framebuffer 1k samples
+reg  [9:0]  sram_address;
+wire    sram_clock;
+reg  [15:0]  sram_datain;
+reg    sram_rden;
+reg    sram_wren;
+wire  [15:0]  sram_dataout;//out
+ram	sram_inst (
+  .address ( sram_address ),
+  .clock ( sram_clock ),
+  .data ( sram_datain ),
+  .rden ( sram_rden ),
+  .wren ( sram_wren ),
+  .q ( sram_dataout )
+);
+
+assign sram_clock = sys_clk;
+
+
+
+
+
+
 wire uart_rec;
 wire [7:0] uart_data_r;
 reg uart_send;
@@ -146,6 +169,17 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           command<=8'hB5;
         end else if(rbp_cmd==6)begin//stop
           command<=8'hB6;
+        end else if(rbp_cmd==7)begin//start fetch frame
+          command<=8'hB7;
+        end else if(rbp_cmd==8)begin//stop fetch frame
+          command<=8'hB8;
+        end else if(rbp_cmd==9)begin//fetch frame
+          command<=8'hB9;
+        end else if(rbp_cmd==10)begin//reset frame rate max
+          command<=8'hBA;
+        end else if(rbp_cmd==11)begin//inc frame rate
+          command<=8'hBB;
+
         end else if(rbp_cmd==15)begin//test
           command<=8'hBF;
         end
@@ -178,6 +212,11 @@ reg [23:0] read_address;
 
 reg recording;
 reg [23:0]adc_cnt;
+
+reg [13:0] frame_rate;
+reg [13:0] frame_count;
+reg fetch_frame;
+reg fetch_delay;
 
 //rbp_data
 always @(posedge sys_clk or negedge sys_rst_n) begin
@@ -212,24 +251,35 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     recording<=0;
     adc_cnt<=0;
     
+    sram_address<=0;
+    sram_datain<=0;
+    sram_rden<=0;
+    sram_wren<=0;
+    fetch_frame<=0;
+    fetch_delay<=0;
+    frame_rate<=1;
+    frame_count<=0;
+    
   end else begin
     uart_send<=0;
-  
-    adc_clk <= !adc_clk;//
-    //if(record_cnt==0)begin
+    sram_rden<=0;
+    sram_wren<=0;
+    
+    adc_clk <= !adc_clk;// 25Mhz
     if(adc_clk==0)begin
       if(recording)begin
-        sdram_c_data_in<={adc_in2,adc_in1};
+        sdram_c_data_in <= {adc_in2,adc_in1};
         sdram_c_write_en <= 1;
         
-        //adc_cnt = adc_cnt + 1;
-        //if (command == 8'h00) begin
-        //  if(adc_cnt==1000000)begin
-        //    adc_cnt<=0;
-        //    uart_send<=1; 
-        //    uart_data_w<=adc_in1;
-        //  end
-        //end
+        if(!fetch_frame)begin
+          frame_count <= frame_count+1;
+          if(frame_count >= frame_rate)begin
+            frame_count <= 0;
+            sram_address <= sram_address+1;
+            sram_datain <= {adc_in2,adc_in1};
+            sram_wren <= 1;
+          end
+        end
       end else begin
         sdram_c_write_en <= 0;
       end
@@ -381,6 +431,31 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         command_done<=1;
       end else if (command == 8'hB6) begin// stop record
         recording = 0;
+        command_done<=1;
+        
+      end else if (command == 8'hB7) begin//start fetch frame
+        fetch_frame <= 1;
+        command_done<=1;
+      end else if (command == 8'hB8) begin//stop fetch frame
+        fetch_frame <= 0;
+        command_done<=1;
+        
+      end else if (command == 8'hB9) begin//fetch frame
+        fetch_delay<=1;
+        sram_address<=sram_address+1;
+        sram_rden<=1;
+        if(fetch_delay==1)begin
+          fetch_delay<=0;
+          sram_rden<=0;
+          rbp_data<=sram_dataout;
+          fetch_data<=sram_dataout;
+          command_done<=1;
+        end
+      end else if (command == 8'hBA) begin//reset frame rate max
+        frame_rate<=1;
+        command_done<=1;
+      end else if (command == 8'hBB) begin//inc frame rate
+        frame_rate<={frame_rate[12:0],1'b0};
         command_done<=1;
       end else if (command == 8'hBF) begin// test
         rbp_data = 16'h1234;

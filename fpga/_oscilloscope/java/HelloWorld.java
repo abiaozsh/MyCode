@@ -8,6 +8,7 @@ import java.util.*;
 javac HelloWorld.java
 javah -jni HelloWorld
 
+gcc -I/usr/lib/jvm/jdk-8-oracle-arm32-vfp-hflt/include/ -I/usr/lib/jvm/jdk-8-oracle-arm32-vfp-hflt/include/linux -fPIC -shared HelloWorld.c -o libHelloWorld.so
 
 java -Djava.library.path=. HelloWorld
 
@@ -29,18 +30,17 @@ public class HelloWorld {
 
     static int fetchDataLastvalA;
     static int fetchDataLastvalB;
-
-    private static native int init();
-    private static native int dumpData(byte[] arrayA, byte[] arrayB);
-    private static native int startRecord();
-    private static native int stopRecord();
-    private static native int fetchData();
-    private static native int setFrame();
-    private static native int dumpFrame(byte[] array);
-    private static native int test();
-
+    
+    private static native int init(); 
+    private static native int dumpData(byte[] arrayA, byte[] arrayB); 
+    private static native int startRecord(); 
+    private static native int stopRecord(); 
+    private static native int fetchData(); 
+    private static native int setFrameRate(int val); 
+    private static native int fetchFrame(byte[] frameA, byte[] frameB); 
+    private static native int test(); 
     // dummy start
-    /*
+/* 
     private static int init() {
         return 0;
     }
@@ -83,7 +83,23 @@ public class HelloWorld {
         return ((iv1 << 8) | iv2);
 
     }
-    */
+
+    private static int setFrameRate(int val) {
+        return 0;
+    }
+
+    private static int fetchFrame(byte[] frameA, byte[] frameB) {
+        for (int i = 0; i < 1024; i++) {
+            cnt++;
+            double v = cnt;
+            double v1 = (Math.sin(v / 10) * 0.2 + Math.sin(v / 1000) * 0.7) * 127 + 127;
+            double v2 = (Math.sin(v / 10 + 2) * 0.2 + Math.sin(v / 100) * 0.7) * 127 + 127;
+            frameA[i] = (byte) v1;
+            frameB[i] = (byte) v2;
+        }
+        return 0;
+    }
+*/
     // dummy end
 
     public static void main(String[] args) {
@@ -181,6 +197,10 @@ public class HelloWorld {
 
     static int pos = 8 * 1024 * 1024;
     static int scale = 14;// 0:buffA, 1.2.3 buffA_T 0 1 2
+    static int framerate = 1;
+    
+    static byte[] frameA = new byte[1024];
+    static byte[] frameB = new byte[1024];
 
     static byte[] buffA = new byte[16 * 1024 * 1024];
     static byte[] buffB = new byte[16 * 1024 * 1024];
@@ -233,14 +253,20 @@ public class HelloWorld {
                         }
                     }
                     if (code == KeyEvent.VK_UP) {
-                        scale++;
-                        if (scale > 14)
-                            scale = 14;
+                        framerate++;
+                        setFrameRate(framerate);
+                        self.setTitle("framerate:"+framerate);
+                        //scale++;
+                        //if (scale > 14)
+                        //    scale = 14;
                     }
                     if (code == KeyEvent.VK_DOWN) {
-                        scale--;
-                        if (scale < 0)
-                            scale = 0;
+                        framerate--;
+                        setFrameRate(framerate);
+                        self.setTitle("framerate:"+framerate);
+                        //scale--;
+                        //if (scale < 0)
+                        //    scale = 0;
                     }
                 }
             };
@@ -288,29 +314,35 @@ public class HelloWorld {
                 public void run() {
                     try {
                         if (recording) {
-                            currPos++;
-                            if (currPos == 1024) {
-                                currPos = 0;
-                            }
-                            int data = fetchData();
-                            if (g == null) {
-                                g = c.getGraphics();
-                            }
-                            g.setColor(cback);
-                            g.drawLine(currPos + basex + 1, basey + 256, currPos + basex + 1, 511 + basey);
-                            g.drawLine(currPos + basex + 1, basey + 0, currPos + basex + 1, 255 + basey);
-                            g.setColor(cline);
+                            if (false) {
+                                currPos++;
+                                if (currPos == 1024) {
+                                    currPos = 0;
+                                }
+                                int data = fetchData();
+                                if (g == null) {
+                                    g = c.getGraphics();
+                                }
+                                g.setColor(cback);
+                                g.drawLine(currPos + basex + 1, basey + 256, currPos + basex + 1, 511 + basey);
+                                g.drawLine(currPos + basex + 1, basey + 0, currPos + basex + 1, 255 + basey);
+                                g.setColor(cline);
 
-                            int valA = data & 0xFF;
-                            int valB = (data >> 8) & 0xFF;
-                            if (currPos > 0) {
-                                g.drawLine(currPos + basex, 255 - valA + basey, currPos - 1 + basex,
-                                        255 - fetchDataLastvalA + basey);
-                                g.drawLine(currPos + basex, 511 - valB + basey, currPos - 1 + basex,
-                                        511 - fetchDataLastvalB + basey);
+                                int valA = data & 0xFF;
+                                int valB = (data >> 8) & 0xFF;
+                                if (currPos > 0) {
+                                    g.drawLine(currPos + basex, 255 - valA + basey, currPos - 1 + basex,
+                                            255 - fetchDataLastvalA + basey);
+                                    g.drawLine(currPos + basex, 511 - valB + basey, currPos - 1 + basex,
+                                            511 - fetchDataLastvalB + basey);
+                                }
+                                fetchDataLastvalA = valA;
+                                fetchDataLastvalB = valB;
+                            } else {
+                                fetchFrame(frameA, frameB);
+                                drawframe(c, gg, img);
                             }
-                            fetchDataLastvalA = valA;
-                            fetchDataLastvalB = valB;
+
                         }
                     } catch (Throwable t) {
                         t.printStackTrace();
@@ -318,7 +350,7 @@ public class HelloWorld {
                 }
             };
             Timer timer = new Timer();
-            timer.scheduleAtFixedRate(task, 100, 1);
+            timer.scheduleAtFixedRate(task, 100, 150);
 
             self.addWindowListener(new WindowAdapter() {
                 public void windowClosing(WindowEvent e) {
@@ -332,9 +364,45 @@ public class HelloWorld {
         // Color cback = new Color(240, 240, 240);
         // Color cbox = new Color(230, 230, 230);
         // Color cline = new Color(255, 220, 220);
-        Color cback = new Color(100, 100, 100);
+        Color cback = new Color(50, 50, 50);
         Color cbox = new Color(0, 0, 0);
         Color cline = new Color(255, 0, 0);
+
+        private void drawframe(Canvas c, Graphics gg, BufferedImage img) {
+            if (g == null) {
+                g = c.getGraphics();
+            }
+            gg.setColor(cback);
+            gg.fillRect(0, 0, 1024, 512);
+            gg.setColor(cbox);
+            gg.drawRect(0, 0, 1024, 256);
+            gg.drawRect(0, 0 + 256, 1024, 256);
+            gg.setColor(cline);
+
+            int last_vbat = 0;
+            int last_vbbt = 0;
+            for (int i = 0; i < 1024; i++) {
+
+                int vbat = frameA[i] & 0xFF;
+                int vbbt = frameB[i] & 0xFF;
+
+                if (i > 0) {
+                    gg.drawLine(i, 255 - vbat, i - 1, 255 - last_vbat);
+                    gg.drawLine(i, 511 - vbbt, i - 1, 511 - last_vbbt);
+                }
+
+                last_vbat = vbat;
+                last_vbbt = vbbt;
+            }
+
+            g.drawImage(img, basex, basey, null);
+
+            g.clearRect(0, 0, 600, 100);
+
+            g.setColor(Color.RED);
+            g.drawString(pos + "," + scale, 60, 50);
+
+        }
 
         private void draw(Canvas c, Graphics gg, BufferedImage img) {
             if (recording)

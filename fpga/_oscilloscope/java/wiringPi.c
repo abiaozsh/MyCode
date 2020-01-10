@@ -360,11 +360,6 @@ static uint8_t gpioToShift [] =
  *   REV          00: 0=REV0 1=REV1 2=REV2
  *********************************************************************************
  */
-static void piGpioLayoutOops (const char *why)
-{
-  fprintf (stderr, " -> %s\n", why) ;
-  //exit (EXIT_FAILURE) ;
-}
 
 
 void pinMode (int pin, int mode)

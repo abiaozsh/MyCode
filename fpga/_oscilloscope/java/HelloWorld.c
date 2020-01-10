@@ -170,6 +170,59 @@ JNIEXPORT jint JNICALL Java_HelloWorld_stopRecord(JNIEnv* env, jclass obj){
 }
 
 
+//    end else if(rbp_cmd==7)begin//start fetch frame
+//    command<=8'hB7;
+//  end else if(rbp_cmd==8)begin//stop fetch frame
+//    command<=8'hB8;
+//  end else if(rbp_cmd==9)begin//fetch frame
+//    command<=8'hB9;
+//  end else if(rbp_cmd==10)begin//reset frame rate max
+//    command<=8'hBA;
+//  end else if(rbp_cmd==11)begin//inc frame rate
+//    command<=8'hBB;
+
+JNIEXPORT jint JNICALL Java_HelloWorld_setFrameRate(JNIEnv* env, jclass obj, jint val){
+
+  setCmd(0x0A);//reset frame rate max
+  exec();
+
+  for(int i=0;i<(int)val;i++){
+    setCmd(0x0B);//inc frame rate
+    exec();
+  }
+}
+
+JNIEXPORT jint JNICALL Java_HelloWorld_fetchFrame(JNIEnv* env, jclass obj, jbyteArray frameA, jbyteArray frameB){
+  //GetIntArrayElements
+  jbyte* arrA = (*env)->GetByteArrayElements(env, frameA, NULL);
+  jbyte* arrB = (*env)->GetByteArrayElements(env, frameB, NULL);
+
+  setCmd(0x07);//start fetch frame
+  exec();
+  setCmd(0x09);//fetch frame
+  for(int i=0;i<1024;i++){
+    REQHIGH;//digitalWrite(REQ, HIGH);
+    while(!PINACK);// digitalRead(ACK)==LOW
+    short data = (short)(*(gpio + 13));//read16();
+    arrA[i]=data&0xFF;
+    arrB[i]=(data>>8)&0xFF;
+    REQLOW;//digitalWrite(REQ, LOW);
+    while(PINACK);//digitalRead(ACK)==HIGH
+  }
+
+  
+  setCmd(0x08);//stop fetch frame
+  exec();
+
+  
+  
+  (*env)->ReleaseByteArrayElements(env, frameA, arrA, JNI_COMMIT);
+  (*env)->ReleaseByteArrayElements(env, frameB, arrB, JNI_COMMIT);
+
+  return 0;
+}
+
+
 //JNIEXPORT jint JNICALL Java_HelloWorld_test(JNIEnv* env, jclass obj);
 JNIEXPORT jint JNICALL Java_HelloWorld_test(JNIEnv* env, jclass obj){
   
