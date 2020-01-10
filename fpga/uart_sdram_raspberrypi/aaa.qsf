@@ -157,43 +157,43 @@ set_location_assignment PIN_R7 -to R7
 set_location_assignment PIN_R8 -to R8
 set_location_assignment PIN_R9 -to R9
 
-set_location_assignment PIN_F3  -to F3
-set_location_assignment PIN_F2  -to F2
-set_location_assignment PIN_C2  -to C2
-set_location_assignment PIN_A2  -to A2
-set_location_assignment PIN_A3  -to A3
-set_location_assignment PIN_A4  -to A4
-set_location_assignment PIN_A5  -to A5
-set_location_assignment PIN_A6  -to A6
-set_location_assignment PIN_A7  -to A7
-set_location_assignment PIN_A8  -to A8
-set_location_assignment PIN_A9  -to A9
+set_location_assignment PIN_F3 -to F3
+set_location_assignment PIN_F2 -to F2
+set_location_assignment PIN_C2 -to C2
+set_location_assignment PIN_A2 -to A2
+set_location_assignment PIN_A3 -to A3
+set_location_assignment PIN_A4 -to A4
+set_location_assignment PIN_A5 -to A5
+set_location_assignment PIN_A6 -to A6
+set_location_assignment PIN_A7 -to A7
+set_location_assignment PIN_A8 -to A8
+set_location_assignment PIN_A9 -to A9
 set_location_assignment PIN_A10 -to A10
 set_location_assignment PIN_A11 -to A11
 set_location_assignment PIN_A12 -to A12
 set_location_assignment PIN_A13 -to A13
-set_location_assignment PIN_C3  -to C3
-set_location_assignment PIN_D5  -to D5
-set_location_assignment PIN_C6  -to C6
+set_location_assignment PIN_C3 -to C3
+set_location_assignment PIN_D5 -to D5
+set_location_assignment PIN_C6 -to C6
 
-set_location_assignment PIN_D1  -to D1
-set_location_assignment PIN_F1  -to F1
-set_location_assignment PIN_G1  -to G1
-set_location_assignment PIN_B1  -to B1
-set_location_assignment PIN_B3  -to B3
-set_location_assignment PIN_B4  -to B4
-set_location_assignment PIN_B5  -to B5
-set_location_assignment PIN_B6  -to B6
-set_location_assignment PIN_B7  -to B7
-set_location_assignment PIN_B8  -to B8
-set_location_assignment PIN_B9  -to B9
+set_location_assignment PIN_D1 -to D1
+set_location_assignment PIN_F1 -to F1
+set_location_assignment PIN_G1 -to G1
+set_location_assignment PIN_B1 -to B1
+set_location_assignment PIN_B3 -to B3
+set_location_assignment PIN_B4 -to B4
+set_location_assignment PIN_B5 -to B5
+set_location_assignment PIN_B6 -to B6
+set_location_assignment PIN_B7 -to B7
+set_location_assignment PIN_B8 -to B8
+set_location_assignment PIN_B9 -to B9
 set_location_assignment PIN_B10 -to B10
 set_location_assignment PIN_B11 -to B11
 set_location_assignment PIN_B12 -to B12
 set_location_assignment PIN_B13 -to B13
-set_location_assignment PIN_D4  -to D4
-set_location_assignment PIN_E6  -to E6
-set_location_assignment PIN_D6  -to D6
+set_location_assignment PIN_D4 -to D4
+set_location_assignment PIN_E6 -to E6
+set_location_assignment PIN_D6 -to D6
 
 
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_mcu_rbp.v
@@ -206,4 +206,5 @@ set_global_assignment -name VERILOG_FILE ../commoncode/uart_hs.v
 set_global_assignment -name VERILOG_FILE ../commoncode/seg_led_hex.v
 set_global_assignment -name VERILOG_FILE ../commoncode/key_debounce.v
 set_global_assignment -name VERILOG_FILE flow_led.v
+set_global_assignment -name QIP_FILE ram.qip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

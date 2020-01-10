@@ -19,7 +19,7 @@ module flow_led(
   output [12:0] sdram_addr,               //SDRAM 行/列地址
   inout  [15:0] sdram_data,               //SDRAM 数据
   output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
-  
+   
   input F3,
   input F2,
   input C2,
@@ -106,20 +106,20 @@ module flow_led(
   wire [7:0]  adcA;
   wire [7:0]  adcB;
   wire        adcClk;
-  /*
-  ad9280
-  A8 clk
-  A6 d0
-  A5 d1
-  A4 d2
-  A3 d3
-  A2 d4
-  C2 d5
-  F2 d6
-  F3 d7
   
-  assign A8 = adcClk;
+  //ad9280
+  //A8 clk
+  //A6 d0
+  //A5 d1
+  //A4 d2
+  //A3 d3
+  //A2 d4
+  //C2 d5
+  //F2 d6
+  //F3 d7
+  /*
   assign adcA = {F3,F2,C2,A2,A3,A4,A5,A6};
+  assign D1 = adcClk;
   */
   
   //ad9288
