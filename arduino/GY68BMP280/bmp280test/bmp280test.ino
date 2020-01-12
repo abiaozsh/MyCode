@@ -1,5 +1,142 @@
 
-#include <Wire.h>
+#define DDR_SCL  DDRC
+#define PORT_SCL PORTC
+
+#define DDR_SDA  DDRC
+#define PORT_SDA PORTC
+#define PIN_SDA  PINC
+
+#define BIT_SCL _BV(5)
+#define BIT_SDA _BV(4)
+
+
+#define I2C_ACK 1
+#define I2C_NAK 0
+#define i2c_scl_release() DDR_SCL &= ~BIT_SCL
+#define i2c_sda_release() DDR_SDA &= ~BIT_SDA
+// sets SCL low and drives output
+#define i2c_scl_lo() PORT_SCL &= ~BIT_SCL; DDR_SCL |= BIT_SCL;
+// sets SDA low and drives output
+#define i2c_sda_lo() PORT_SDA &= ~BIT_SDA; DDR_SDA |= BIT_SDA;
+// set SCL high and to input (releases pin) (i.e. change to input,turnon pullup)
+#define i2c_scl_hi() DDR_SCL &=~ BIT_SCL;
+// set SDA high and to input (releases pin) (i.e. change to input,turnon pullup)
+#define i2c_sda_hi() DDR_SDA &=~ BIT_SDA;
+
+void dly()
+{
+  for(uint8_t i=0;i<16;i++)//6 is stable
+  {
+    volatile uint8_t v=0;
+    v++;
+  }
+}
+
+void i2c_writebit( uint8_t c )
+{
+  if ( c > 0 ) {
+    i2c_sda_hi();
+  } 
+  else {
+    i2c_sda_lo();
+  }
+  i2c_scl_hi();
+  dly();
+  i2c_scl_lo();
+  dly();
+  if ( c > 0 ) {
+    i2c_sda_lo();
+  }
+  dly();
+}
+uint8_t i2c_readbit()
+{
+  i2c_sda_hi();
+  i2c_scl_hi();
+  dly();
+  uint8_t c = PIN_SDA; // I2C_PIN;
+  i2c_scl_lo();
+  dly();
+  return ( c & BIT_SDA) ? 1 : 0;
+}
+
+uint8_t i2c_write( uint8_t c )
+{
+  for ( uint8_t i=0;i<8;i++) {
+    i2c_writebit( c & 128 );
+    c<<=1;
+  }
+  return i2c_readbit();
+}
+
+// read a byte from the I2C slave device
+//
+uint8_t i2c_read( uint8_t ack )
+{
+  uint8_t res = 0;
+  for ( uint8_t i=0;i<8;i++) {
+    res <<= 1;
+    res |= i2c_readbit();
+  }
+  if ( ack )
+    i2c_writebit( 0 );
+  else
+    i2c_writebit( 1 );
+  dly();
+  return res;
+}
+
+//
+uint8_t i2c_read()
+{
+  return i2c_read( I2C_ACK );
+}
+//
+uint8_t i2c_readLast()
+{
+  return i2c_read( I2C_NAK );
+}
+
+
+void i2c_start(void)
+{
+  // set both to high at the same time
+  i2c_sda_hi();
+  i2c_scl_hi();
+  dly();
+  i2c_sda_lo();
+  dly();
+  i2c_scl_lo();
+  dly();
+}
+
+uint8_t i2c_beginTransmission(uint8_t address)
+{
+  i2c_start();
+  uint8_t rc = i2c_write((address<<1) | 0); // clr read bit
+  return rc;
+}
+
+void i2c_endTransmission()
+{
+  i2c_scl_hi();
+  dly();
+  i2c_sda_hi();
+  dly();
+}
+uint8_t i2c_requestFrom(uint8_t address)
+{
+  i2c_start();
+  uint8_t rc = i2c_write((address<<1) | 1); // set read bit
+  return rc;
+}
+
+
+
+
+
+
+
  #include "Arduino.h"
 
 
@@ -146,7 +283,7 @@ bool Adafruit_BMP280::begin(uint8_t a) {
   _i2caddr = a;
 
     // i2c
-    Wire.begin();
+    //Wire.begin();
 
   if (read8(BMP280_REGISTER_CHIPID) != 0x58)
     return false;
@@ -163,10 +300,10 @@ bool Adafruit_BMP280::begin(uint8_t a) {
 /**************************************************************************/
 void Adafruit_BMP280::write8(byte reg, byte value)
 {
-    Wire.beginTransmission((uint8_t)_i2caddr);
-    Wire.write((uint8_t)reg);
-    Wire.write((uint8_t)value);
-    Wire.endTransmission();
+    i2c_beginTransmission((uint8_t)_i2caddr);
+    i2c_write((uint8_t)reg);
+    i2c_write((uint8_t)value);
+    i2c_endTransmission();
 }
 
 /**************************************************************************/
@@ -178,12 +315,12 @@ uint8_t Adafruit_BMP280::read8(byte reg)
 {
   uint8_t value;
   
-    Wire.beginTransmission((uint8_t)_i2caddr);
-    Wire.write((uint8_t)reg);
-    Wire.endTransmission();
-    Wire.requestFrom((uint8_t)_i2caddr, (byte)1);
-    value = Wire.read();
-    Wire.endTransmission();
+    i2c_beginTransmission((uint8_t)_i2caddr);
+    i2c_write((uint8_t)reg);
+    i2c_endTransmission();
+    i2c_requestFrom((uint8_t)_i2caddr);
+    value = i2c_readLast();
+    i2c_endTransmission();
   return value;
 }
 
@@ -196,12 +333,14 @@ uint16_t Adafruit_BMP280::read16(byte reg)
 {
   uint16_t value;
 
-    Wire.beginTransmission((uint8_t)_i2caddr);
-    Wire.write((uint8_t)reg);
-    Wire.endTransmission();
-    Wire.requestFrom((uint8_t)_i2caddr, (byte)2);
-    value = (Wire.read() << 8) | Wire.read();
-    Wire.endTransmission();
+    i2c_beginTransmission((uint8_t)_i2caddr);
+    i2c_write((uint8_t)reg);
+    i2c_endTransmission();
+    i2c_requestFrom((uint8_t)_i2caddr);
+    uint8_t v1 = i2c_read();
+    uint8_t v2 = i2c_readLast();
+    value = (v1 << 8) | v2;
+    i2c_endTransmission();
 
   return value;
 }
@@ -356,7 +495,5 @@ void loop() {
     Serial.print("Pressure = ");
     Serial.print(bme.readPressure());
     Serial.println(" Pa");
-
-    Serial.println();
-    delay(500);
+    delay(100);
 }
