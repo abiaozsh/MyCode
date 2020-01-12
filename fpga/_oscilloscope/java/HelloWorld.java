@@ -7,7 +7,6 @@ import java.util.*;
 /*
 javac HelloWorld.java
 javah -jni HelloWorld
-
 gcc -I/usr/lib/jvm/jdk-8-oracle-arm32-vfp-hflt/include/ -I/usr/lib/jvm/jdk-8-oracle-arm32-vfp-hflt/include/linux -fPIC -shared HelloWorld.c -o libHelloWorld.so
 
 java -Djava.library.path=. HelloWorld
