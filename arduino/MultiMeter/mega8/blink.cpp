@@ -119,8 +119,8 @@ void SendInt(uint32_t val)
 #define PORT_SDA PORTC
 #define PIN_SDA  PINC
 
-#define BIT_SCL _BV(5)
-#define BIT_SDA _BV(4)
+#define BIT_SCL _BV(0)
+#define BIT_SDA _BV(1)
 
 
 #define I2C_ACK 1
@@ -459,20 +459,20 @@ volatile uint8_t _sign;
 //PC3 4 5 衰减等级
 
 //默认高电平，低电平有效
-#define HIGH_RANGE (!(PINC & _BV(3)))
+#define HIGH_RANGE (!(PINC & _BV(5)))
 #define MID_RANGE  (!(PINC & _BV(4)))
-#define LOW_RANGE  (!(PINC & _BV(5)))
+#define LOW_RANGE  (!(PINC & _BV(3)))
 
-#define V_A  (!(PINZ & _BV(Z)))
-#define GHIGH  (!(PINZ & _BV(Z)))
+// 
+#define V_A (!(PINC & _BV(2)))
+// (!(PINZ & _BV(Z)))
+#define GHIGH (!(PINB & _BV(5)))
 //电压/电流 通过数据口获得
 
-#define CAL_V_LOW_RANGE_G20    1.0
+#define CAL_V_LOW_RANGE_GHIGH  1.0
 #define CAL_V_LOW_RANGE_G1     1.0
-#define CAL_V_MID_RANGE_G20    1.0
-#define CAL_V_MID_RANGE_G1     1.0
-#define CAL_V_HIGH_RANGE_G20   1.0
-#define CAL_V_HIGH_RANGE_G1    1.0
+#define CAL_V_MID_RANGE_G1     1.12486
+#define CAL_V_HIGH_RANGE_G1    1.031
 
 #define CAL_A_LOW_RANGE_G20    1.0
 #define CAL_A_LOW_RANGE_G1     1.0
@@ -481,6 +481,7 @@ volatile uint8_t _sign;
 #define CAL_A_HIGH_RANGE_G20   1.0
 #define CAL_A_HIGH_RANGE_G1    1.0
 
+volatile uint8_t doGetData;
 
 
 void wait(uint8_t ticks)
@@ -488,7 +489,6 @@ void wait(uint8_t ticks)
 	TCNT0 = 0;//timer reset
 	while(TCNT0<ticks);
 }
-volatile uint8_t dummy;
 
 int main()
 {
@@ -550,7 +550,7 @@ int main()
 //001 : AINP = AIN0 and AINN = AIN3
 //010 : AINP = AIN1 and AINN = AIN3
 //011 : AINP = AIN2 and AINN = AIN3
-  ADS1115_set_mux(ADS1115_MUX_DIFF_AIN0_AIN1);??
+  //ADS1115_set_mux(ADS1115_MUX_DIFF_AIN2_AIN3);//voltage
 
 
 //000 : FSR = ±6.144 V(1)
@@ -566,30 +566,52 @@ int main()
 //#define ADS1115_PGA_EIGHT 0x4 << ADS1115_PGA_SHIFT
 //#define ADS1115_PGA_SIXTEEN 0x5 << ADS1115_PGA_SHIFT
 //#define ADS1115_PGA_MASK 0x7 << ADS1115_PGA_SHIFT
-  ADS1115_set_pga(ADS1115_PGA_TWO);//±2.048 V (default)
+  //ADS1115_set_pga(ADS1115_PGA_TWO);//±2.048 V (default)
   //ADS1115_set_pga(ADS1115_PGA_SIXTEEN);//±0.256 V
+  
+  
+  uint16_t mux = 0;
+  uint16_t pga = 0;
+  
+  uint16_t oldmux = 0;
+  uint16_t oldpga = 0;
+  
+  uint8_t currentLv = 0;//0.256v
   
   ADS1115_trigger_sample();
   
   while (true) {
     while(!doGetData);
     doGetData = 0;
-    int16_t val_req = ADS1115_read_sample();
+    int32_t val_req = ADS1115_read_sample();
     uint8_t sign = 0;
 
+    uint8_t ovf = 0;
     if(val_req<0){
       val_req = -val_req;
       sign = 1;
+      if(val_req==32768){
+        ovf=1;
+      }
+    }else{
+      if(val_req==32767){
+        ovf=1;
+      }
     }
     
     ///////////////////////////
     SerialSend(sign?'-':'+');
     SendInt(val_req);
-    SerialSend(' ');
-    SerialSend('0'+LOW_RANGE);
-    SerialSend('0'+MID_RANGE);
-    SerialSend('0'+HIGH_RANGE);
-    SerialSend('0'+G20);
+    //SerialSend(' ');
+    //SerialSend('0'+LOW_RANGE);
+    //SerialSend('0'+MID_RANGE);
+    //SerialSend('0'+HIGH_RANGE);
+    //SerialSend('0'+V_A);
+    //SerialSend('0'+GHIGH);
+    //SerialSend('-');
+    //SendInt(mux);
+    //SerialSend('-');
+    //SendInt(pga);
     SerialSend('\r');
     SerialSend('\n');
     
@@ -605,163 +627,129 @@ int main()
     uint8_t digi3Dot=0;
     
     val = val / (32.0*1024.0); //v 1~0~-1
+    
     if(V_A){
       //A
-      /*
       if(LOW_RANGE){
-        if(G20){
-          //10OHM 1.1V to/20*1000  max 5.5mA
-          val = val * 1.024 * CAL_A_LOW_RANGE_G20 * 0.05 * 1000 / 10;
-          //5.5mA
-          if(val>=1){
-            //x.xxx mA
-            digi0Dot = 1;
-          }else{
-            //xxxx uA
-            val = val * 10;
-          }
+        mux = ADS1115_MUX_DIFF_AIN0_AIN3;
+        pga = ADS1115_PGA_SIXTEEN;//±0.256V
+        //10OHM 0.256V  max 25.6mA
+        val = val * 25.6 * CAL_A_LOW_RANGE_G1;
+        //0.110A
+        if(val>=10){
+          //xx.xx mA
+          val = val * 0.1;
+          digi1Dot = 1;
         }else{
-          //10OHM 1.1V  max 0.11A
-          val = val * 1.1 * CAL_V_LOW_RANGE_G1 / 10;
-          //0.110A
-          if(val>=0.1){
-            //xxxx mA
-            val = val * 10;
-          }else{
-            //xxx.x mA
-            val = val * 100;
-            digi2Dot = 1;
-          }
+          //x.xxx mA
+          digi0Dot = 1;
         }
       }else if(MID_RANGE){
-        if(G20){
-          //1 OHM 1.1V to/20*1000  max 55mA
-          val = val * 1.1 * CAL_A_MID_RANGE_G20 * 0.05 * 1000;
-          //55mA
-          if(val>=10){
-            //xx.xx mA
-            val = val * 0.1;
-            digi1Dot = 1;
-          }else{
-            //x.xxx mA
-            digi0Dot = 1;
-          }
+        mux = ADS1115_MUX_DIFF_AIN0_AIN3;
+        pga = ADS1115_PGA_SIXTEEN;//±0.256V
+        //1 OHM 0.256V max 256mA
+        val = val * 2.56 * CAL_A_MID_RANGE_G1;
+        if(val>=1){
+          //xxx.x mA
+          digi2Dot = 1;
         }else{
-          //1 OHM 1.1V max 1.1A
-          val = val * 1.1 * CAL_V_MID_RANGE_G1;
-          //1.1A
-          if(val>=1){
-            //x.xxx A
-            digi0Dot = 1;
-          }else{
-            //xxxx mA
-            val = val * 10;
-          }
+          //xx.xx mA
+          digi1Dot = 1;
+          val = val * 10;
         }
       }else if(HIGH_RANGE){
-        if(G20){
-          //0.05 OHM 1.1V to*20  max 1.1A
-          val = val * 1.1 * CAL_A_HIGH_RANGE_G20 * 0.05 / 0.05;
-          // 1.1A
-          if(val>=1){
-            //x.xxx A
-            digi0Dot = 1;
-          }else{
-            //xxxx mA
-            val = val * 10;
-          }
-        }else{
-          //0.05 OHM 1.1V max 22A
-          val = val * 1.1 * CAL_V_HIGH_RANGE_G1 / 0.05;
-          //22A
-          if(val>=10){
-            //xx.xx A
-            val = val / 10;
-            digi1Dot = 1;
-          }else{
-            //x.xxx A
-            digi0Dot = 1;
-          }
+        mux = ADS1115_MUX_DIFF_AIN1_AIN3;
+        //0.025 OHM 0.256V to*20  max 10.24A
+        float orival = val;
+        if(currentLv==0){
+          val = val * 10.24 * CAL_A_HIGH_RANGE_G1;//±0.256 V 10.24A
+        }else if(currentLv==1){
+          val = val * 20.48 * CAL_A_HIGH_RANGE_G1;//±0.512 V 20.48A
+        }else if(currentLv==2){
+          val = val * 40.96 * CAL_A_HIGH_RANGE_G1;//±1.024 V 40.96A
         }
+
+        // 10A
+        if(val>=10){
+          //xx.xx A
+          val = val * 0.1;
+          digi1Dot = 1;
+        }else{
+          //x.xxx A
+          digi0Dot = 1;
+        }
+
+        if(ovf && currentLv<2){
+          currentLv++;
+        }
+        if(orival<0.1 && currentLv>0){
+          currentLv--;
+        }
+          
+        if(currentLv==0){
+          pga = ADS1115_PGA_SIXTEEN;//±0.256 V 10.24A
+        }else if(currentLv==1){
+          pga = ADS1115_PGA_EIGHT;//±0.512 V 20.48A
+        }else if(currentLv==2){
+          pga = ADS1115_PGA_FOUR;//±1.024 V 40.96A
+        }
+        
       }
-      */
+      
     }else{
       //V
+      mux = ADS1115_MUX_DIFF_AIN2_AIN3;
+      
       if(LOW_RANGE){
         if(GHIGH){
-          //float cal = 1;
-          ////max 0.055V to/20
-          ////max 55mv to *1000
-          //val = val * 1.1 * CAL_V_LOW_RANGE_G20 / 1 * 0.05 * 1000;
-          //if(val>=10){
-          //  //xx.xx mV
-          //  val = val * 0.1;
-          //  digi1Dot = 1;
-          //}else{
-          //  //x.xxx mV
-          //  digi0Dot = 1;
-          //}
+          pga = ADS1115_PGA_SIXTEEN;//±0.256 V
+          val = val * 0.256 * CAL_V_LOW_RANGE_GHIGH;
+          if(val>=0.1){
+            //xxx.x mV
+            val = val * 10;
+            digi2Dot = 1;
+          }else{
+            //xx.xx mV
+            val = val * 100;
+            digi1Dot = 1;
+          }
         }else{
           //max 2.048V   *1
-          val = val * 2.048 * CAL_V_LOW_RANGE_G1 / 1;
+          pga = ADS1115_PGA_TWO;//±2.048 V (default)
+          val = val * 2.048 * CAL_V_LOW_RANGE_G1;
           if(val>=1){
             //x.xxx V
             digi0Dot = 1;
           }else{
-            //xxxx mV
+            //xxx.x mV
             val = val * 10;
-            //digi-1Dot = 1;
+            digi2Dot = 1;
           }
         }
       }else if(MID_RANGE){
-        if(GHIGH){
-          ////max 0.55V  to*10/20
-          //val = val * 1.1 * CAL_V_MID_RANGE_G20 * 10 * 0.05;
-          //if(val>=0.1){
-          //  //xxx.x mV
-          //  val = val * 10;
-          //  digi2Dot = 1;
-          //}else{
-          //  //xx.xx mV
-          //  val = val * 100;
-          //  digi1Dot = 1;
-          //}
+        //max 20.48V to *10
+        pga = ADS1115_PGA_TWO;//±2.048 V (default)
+        val = val * 20.48 * CAL_V_MID_RANGE_G1;
+        if(val>=10){
+          //xx.xx V
+          val = val * 0.1;
+          digi1Dot = 1;
         }else{
-          //max 20.48V to *10
-          val = val * 2.048 * CAL_V_MID_RANGE_G1 * 10;
-          if(val>=10){
-            //xx.xx V
-            val = val * 0.1;
-            digi1Dot = 1;
-          }else{
-            //x.xxx V
-            digi0Dot = 1;
-          }
+          //x.xxx V
+          digi0Dot = 1;
         }
       }else if(HIGH_RANGE){
-        if(G20){
-          ////max 5.5V  to*100/20
-          //val = val * 1.1 * CAL_V_MID_RANGE_G20 * 100 * 0.05;
-          //if(val>=1){
-          //  //x.xxx V
-          //  digi1Dot = 1;
-          //}else{
-          //  //xxxx mV
-          //  val = val * 0.1;
-          //  //digi-1Dot = 1;
-          //}
+        //max 204.8V to *100
+        pga = ADS1115_PGA_TWO;//±2.048 V (default)
+        val = val * 204.8 * CAL_V_HIGH_RANGE_G1;
+        if(val>=100){
+          //xxx.x V
+          val = val * 0.01;
+          digi2Dot = 1;
         }else{
-          //max 204.8V to *100
-          val = val * 2.048 * CAL_V_MID_RANGE_G1 * 100;
-          if(val>=100){
-            //xxx.x V
-            val = val * 0.01;
-            digi2Dot = 1;
-          }else{
-            //xx.xx V
-            val = val * 0.1;
-            digi1Dot = 1;
-          }
+          //xx.xx V
+          val = val * 0.1;
+          digi1Dot = 1;
         }
       }
     }
@@ -784,6 +772,17 @@ int main()
       digi3 = 9;
     }
     
+    if(mux!=oldmux){
+      ADS1115_set_mux(mux);//voltage
+      ADS1115_trigger_sample();
+      oldmux=mux;
+    }
+    if(pga!=oldpga){
+      ADS1115_set_pga(pga);//±2.048 V (default)
+      ADS1115_trigger_sample();
+      oldpga=pga;
+    }
+
     _digi0    = digi0;
     _digi0Dot = digi0Dot;
     _digi1    = digi1;
@@ -797,14 +796,10 @@ int main()
 }
 
 volatile uint8_t cur_digit = 0;
-uint8_t count = 0;//41
-volatile uint8_t doGetData;
 
 ISR(TIMER1_COMPA_vect){
   TCNT1 = 0;
-  count++;
-  if(count==41){
-    count==0;
+  if(cur_digit==0){
     doGetData = 1;
   }
   
