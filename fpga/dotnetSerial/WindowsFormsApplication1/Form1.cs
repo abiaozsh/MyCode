@@ -376,8 +376,14 @@ namespace WindowsFormsApplication1
 
         private void button6_Click(object sender, EventArgs e)
         {
+            portWrite((byte)(49));
+            
         }
 
+        private void button12_Click(object sender, EventArgs e)
+        {
+            portWrite((byte)(50));
+        }
         private void timer1_Tick(object sender, EventArgs e)
         {
             if (port != null)
@@ -477,6 +483,7 @@ namespace WindowsFormsApplication1
             fs.Flush();
             fs.Close();
         }
+
 
     }
 }
