@@ -81,13 +81,12 @@ set_location_assignment PIN_AA20 -to AA20
 
 #3V3
 #GND
-set_location_assignment PIN_R2 -to segled_clk
-set_location_assignment PIN_P2 -to segled_dat
-set_location_assignment PIN_N2 -to segled_str
+set_location_assignment PIN_A18 -to segled_clk
+set_location_assignment PIN_A19 -to segled_str
+set_location_assignment PIN_A20 -to segled_dat
 
-
-set_location_assignment PIN_A19 -to uart_tx_to_pc
-set_location_assignment PIN_A20 -to uart_rx_from_pc
+set_location_assignment PIN_B19 -to uart_rx_from_pc
+set_location_assignment PIN_B20 -to uart_tx_to_pc
 
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_send_hs.v
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_recv_hs.v

@@ -8,7 +8,7 @@ module flow_led(
   output segled_clk,
   output segled_dat,
   output segled_str,
-  
+   
  output AA13,
  output AA14,
  output AA15,
@@ -95,7 +95,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     seg_data3<=0;
   end else begin
     key2_old = key2;
-    
+     
     if(uart_rec)begin// && !uart_rec_last
       seg_data0<=uart_data_out_from_pc;
       seg_data1<=seg_data0;
@@ -103,7 +103,6 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       seg_data3<=seg_data2;
       led <= !led;
     end
-    
     uart_send <= 0;
     if(key2_old && !key2)begin
       uart_send <= 1;     

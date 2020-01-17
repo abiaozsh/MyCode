@@ -2,7 +2,7 @@ module seg_led_hex595(
   input sys_clk,
   input sys_rst_n,
 
-  output clk,
+  output reg clk,
   output reg dat,
   output reg str,
 
@@ -16,8 +16,7 @@ module seg_led_hex595(
 
 //50000000 / 1024 / 8 / 16 / 8 = 47hz
 //2^13
-reg [9:0] timer1;
-assign clk = timer1[9];
+reg [7:0] timer1;
 always @ (posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     timer1 <= 0;
@@ -26,32 +25,24 @@ always @ (posedge sys_clk or negedge sys_rst_n) begin
   end
 end
 
-reg [3:0] timer595;//发送16位
+reg [6:0] timer595;//发送16位
 always @ (posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     timer595 <= 0;
   end else begin
-    if(timer1==10'b1111111111) begin
+    if(timer1==0) begin
       timer595<=timer595+1;
+      if(timer595==33)begin
+        timer595<=0;
+      end
     end
   end
 end
 
-reg [2:0] timer2;//0~7
-always @ (posedge sys_clk or negedge sys_rst_n) begin
-  if (!sys_rst_n) begin
-    timer2 <= 0;
-  end else begin
-    if(timer1==10'b1111111111 && timer595==4'b1111) begin
-      timer2<=timer2+1;
-    end
-  end
-end
-
-assign debug = timer2;
 
 always @ (posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
+    clk <= 0;
     dat <= 0;
     str <= 0;
   end else begin
@@ -60,95 +51,75 @@ always @ (posedge sys_clk or negedge sys_rst_n) begin
     //i = *led_table;
     //LED_OUT(i);			先送数据   先送高位 后送低位
     //LED_OUT(0x01);		后送选字
-    if(timer2==0) begin
-      if         (timer595==0) begin
-        dat<=dig_data[7];
-      end else if(timer595==1) begin
-        dat<=dig_data[6];
-      end else if(timer595==2) begin
-        dat<=dig_data[5];
-      end else if(timer595==3) begin
-        dat<=dig_data[4];
-      end else if(timer595==4) begin
-        dat<=dig_data[3];
-      end else if(timer595==5) begin
-        dat<=dig_data[2];
-      end else if(timer595==6) begin
-        dat<=dig_data[1];
-      end else if(timer595==7) begin
-        dat<=dig_data[0];
-      end else if(timer595==8) begin
-        dat<=dig_select[7];
-      end else if(timer595==9) begin
-        dat<=dig_select[6];
-      end else if(timer595==10) begin
-        dat<=dig_select[5];
-      end else if(timer595==11) begin
-        dat<=dig_select[4];
-      end else if(timer595==12) begin
-        dat<=dig_select[3];
-      end else if(timer595==13) begin
-        dat<=dig_select[2];
-      end else if(timer595==14) begin
-        dat<=dig_select[1];
-      end else if(timer595==15) begin
-        dat<=dig_select[0];
-      end
-    end else begin
-      dat<=0;
-    end
     
-    if(timer595==15) begin
-      str<=1;
-    end else begin
-      str<=0;
+    if         (timer595== 0) begin str<=0; clk<=0; dat<=dig_data[7];
+    end else if(timer595== 1) begin         clk<=1;
+    end else if(timer595== 2) begin         clk<=0; dat<=dig_data[6];
+    end else if(timer595== 3) begin         clk<=1;
+    end else if(timer595== 4) begin         clk<=0; dat<=dig_data[5];
+    end else if(timer595== 5) begin         clk<=1;
+    end else if(timer595== 6) begin         clk<=0; dat<=dig_data[4];
+    end else if(timer595== 7) begin         clk<=1;
+    end else if(timer595== 8) begin         clk<=0; dat<=dig_data[3];
+    end else if(timer595== 9) begin         clk<=1;
+    end else if(timer595==10) begin         clk<=0; dat<=dig_data[2];
+    end else if(timer595==11) begin         clk<=1;
+    end else if(timer595==12) begin         clk<=0; dat<=dig_data[1];
+    end else if(timer595==13) begin         clk<=1;
+    end else if(timer595==14) begin         clk<=0; dat<=dig_data[0];
+    end else if(timer595==15) begin         clk<=1;
+    end else if(timer595==16) begin         clk<=0; dat<=dig_select[7];
+    end else if(timer595==17) begin         clk<=1;
+    end else if(timer595==18) begin         clk<=0; dat<=dig_select[6];
+    end else if(timer595==19) begin         clk<=1;
+    end else if(timer595==20) begin         clk<=0; dat<=dig_select[5];
+    end else if(timer595==21) begin         clk<=1;
+    end else if(timer595==22) begin         clk<=0; dat<=dig_select[4];
+    end else if(timer595==23) begin         clk<=1;
+    end else if(timer595==24) begin         clk<=0; dat<=dig_select[3];
+    end else if(timer595==25) begin         clk<=1;
+    end else if(timer595==26) begin         clk<=0; dat<=dig_select[2];
+    end else if(timer595==27) begin         clk<=1;
+    end else if(timer595==28) begin         clk<=0; dat<=dig_select[1];
+    end else if(timer595==29) begin         clk<=1;
+    end else if(timer595==30) begin         clk<=0; dat<=dig_select[0];
+    end else if(timer595==31) begin         clk<=1;
+    end else if(timer595==32) begin str<=1; clk<=0;
+    end else if(timer595==33) begin str<=0; clk<=0;
     end
   end
 end
 
+reg timer595_old;
 reg  [7:0] dig_select;
 always @ (posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     dig_select <= 1;
+    timer595_old<=0;
   end else begin
-    if(timer1==10'b1111111111 && timer595==4'b1111 && timer2==3'b111) begin
+    timer595_old<=timer595;
+    if(timer595==0 && timer595_old!=0) begin// && timer2==3'b111
       dig_select<={dig_select[6:0],dig_select[7]};
     end
   end
 end
 
+assign debug = num_disp;
+
 reg [3:0] num_disp;
 always @ (posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
-    num_disp <= 4'b0;
+    num_disp <= 0;
   end else begin
-    case (dig_select)
-      8'd00000001 :begin
-          num_disp <= data0[3:0];
-      end
-      8'd00000010 :begin
-          num_disp <= data0[7:4];
-      end
-      8'd00000100 :begin
-          num_disp <= data1[3:0];
-      end
-      8'd00001000 :begin
-          num_disp <= data1[7:4];
-      end
-      8'd00010000 :begin
-          num_disp <= data2[3:0];
-      end
-      8'd00100000 :begin
-          num_disp <= data2[7:4];
-      end
-      8'd01000000 :begin
-          num_disp <= data3[3:0];
-      end
-      8'd10000000 :begin
-          num_disp <= data3[7:4];
-      end
-      default :;
-    endcase
+    if         (dig_select==8'b00000001)begin num_disp <= data0[3:0];
+    end else if(dig_select==8'b00000010)begin num_disp <= data0[7:4];
+    end else if(dig_select==8'b00000100)begin num_disp <= data1[3:0];
+    end else if(dig_select==8'b00001000)begin num_disp <= data1[7:4];
+    end else if(dig_select==8'b00010000)begin num_disp <= data2[3:0];
+    end else if(dig_select==8'b00100000)begin num_disp <= data2[7:4];
+    end else if(dig_select==8'b01000000)begin num_disp <= data3[3:0];
+    end else if(dig_select==8'b10000000)begin num_disp <= data3[7:4];
+    end
   end
 end
 
