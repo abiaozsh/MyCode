@@ -6,8 +6,8 @@
 #define PORT_SDA PORTC
 #define PIN_SDA  PINC
 
-#define BIT_SCL _BV(5)
-#define BIT_SDA _BV(4)
+#define BIT_SCL _BV(2)
+#define BIT_SDA _BV(3)
 
 
 #define I2C_ACK 1
