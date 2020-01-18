@@ -8,11 +8,11 @@ void dly()
 		v++;
 	}
 }
-#define BIT_SCL  _BV(5)
+#define BIT_SCL  _BV(1)
 #define DDR_SCL  DDRC
 #define PORT_SCL PORTC
 
-#define BIT_SDA  _BV(4)
+#define BIT_SDA  _BV(0)
 #define DDR_SDA  DDRC
 #define PORT_SDA PORTC
 #define PIN_SDA  PINC
