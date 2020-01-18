@@ -98,14 +98,11 @@ void TD_Init(void)             // Called once at startup
 void TD_Poll(void)              // Called repeatedly while the device is idle
 {
   WORD i;
-  
   WORD count;
-  
-  BYTE data;
-  
-  BYTE cmd;
+  BYTE dataa;
+  BYTE cmda;
   BYTE bita;
-
+  WORD sendCount;
   
   if(!(EP2468STAT & bmEP2EMPTY))
   { // check EP2 EMPTY(busy) bit in EP2468STAT (SFR), core set's this bit when FIFO is empty
@@ -122,35 +119,46 @@ void TD_Poll(void)              // Called repeatedly while the device is idle
         // loop EP2OUT buffer data to EP6IN
         for( i = 0; i < count; i++ )
         {
+			//EXTAUTODAT1 接收
+			//EXTAUTODAT2 发送
+			
            // setup to transfer EP2OUT buffer to EP6IN buffer using AUTOPOINTER(s)
+           dataa = EXTAUTODAT1;
            EXTAUTODAT2 = (BYTE)count;//EXTAUTODAT1+1;
-           data = EXTAUTODAT1;
            
-           cmd = ((data >> 4) & 0x0F);
-           bita = data & 0x0F;
-           if(cmd==1){
-             if(bita==0){
-               IOA |= 0x01;
-             }
+           cmda = ((dataa >> 4) & 0x0F);
+           bita = dataa & 0x0F;
+           if(cmda==1){
+             IOA |= (0x01<<bita);
            }
-           if(cmd==2){
-             if(bita==0){
-               IOA &= ~0x01;
-             }
+           if(cmda==2){
+             IOA &= ~(0x01<<bita);
            }
-           
+           if(cmda==3){
+             IOB |= (0x01<<bita);
+           }
+           if(cmda==4){
+             IOB &= ~(0x01<<bita);
+           }
+           if(cmda==5){
+             IOD |= (0x01<<bita);
+           }
+           if(cmda==6){
+             IOD &= ~(0x01<<bita);
+           }
+            
            //IOA;
            //IOB=EXTAUTODAT1;
            //IOD=EXTAUTODAT1;
         }
 
-       EXTAUTODAT2 = 12;//EXTAUTODAT1+1;
-       EXTAUTODAT2 = 34;//EXTAUTODAT1+1;
+       //EXTAUTODAT2 = 12;//EXTAUTODAT1+1;
+       //EXTAUTODAT2 = 34;//EXTAUTODAT1+1;
 
-        
-        EP6BCH = 0;  
+        sendCount = 1;
+        EP6BCH = (sendCount>>8)&0xFF;  
         SYNCDELAY;  
-        EP6BCL = 5;        // arm EP6IN
+        EP6BCL =  sendCount&0xFF;       // arm EP6IN
         SYNCDELAY;                    
         EP2BCL = 0x80;          // re(arm) EP2OUT
      }
@@ -169,14 +177,34 @@ void TD_Poll(void)              // Called repeatedly while the device is idle
 
         count = (EP4BCH << 8) + EP4BCL;
 
-        // loop EP4OUT buffer data to EP8IN
+        // loop EP2OUT buffer data to EP6IN
         for( i = 0; i < count; i++ )
         {
-           // setup to transfer EP4OUT buffer to EP8IN buffer using AUTOPOINTER(s)
+			//EXTAUTODAT1 接收
+			//EXTAUTODAT2 发送
+			
+           // setup to transfer EP2OUT buffer to EP6IN buffer using AUTOPOINTER(s)
            EXTAUTODAT2 = (BYTE)count;//EXTAUTODAT1+1;
-           IOB=EXTAUTODAT1;
-           IOD=EXTAUTODAT1;
+           dataa = EXTAUTODAT1;
+           
+           cmda = ((dataa >> 4) & 0x0F);
+           bita = dataa & 0x0F;
+           if(cmda==1){
+             if(bita==1){
+               IOB |= 0x01;
+             }
+           }
+           if(cmda==2){
+             if(bita==1){
+               IOB &= ~0x01;
+             }
+           }
+           
+           //IOA;
+           //IOB=EXTAUTODAT1;
+           //IOD=EXTAUTODAT1;
         }
+
         EP8BCH = EP4BCH;  
         SYNCDELAY;  
         EP8BCL = EP4BCL;        // arm EP8IN
