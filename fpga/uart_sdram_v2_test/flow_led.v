@@ -1,12 +1,13 @@
 
 module flow_led(
     input           sys_clk,          //外部50M时钟
-    input           sys_rst_n,        //外部复位信号，低有效
-    input      [3:0]  key,
-    output     [3:0]  led,         //4个LED灯
-    //seg_led interface
-    output    [5:0]  seg_sel,       // 数码管位选信号
-    output    [7:0]  seg_led,        // 数码管段选信号
+  input key1,
+  input key2,
+  output led,
+
+  output segled_clk,
+  output segled_dat,
+  output segled_str,
 
     //SDRAM 芯片接口
     output        sdram_clk_out,                //SDRAM 芯片时钟
@@ -19,43 +20,42 @@ module flow_led(
     output [12:0] sdram_addr,               //SDRAM 行/列地址
     inout  [15:0] sdram_data,               //SDRAM 数据
     output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
-    
-    output debug_pin0,
-    output debug_pin1,
-    output debug_pin2,
-    output debug_pin3,
-    output debug_pin6,
-    output debug_pin7,
-		
-		
-    //uart接口
-    input           uart_rxd,         //UART接收端口
-    output          uart_txd          //UART发送端口
-  );
- wire sdram_prob_refresh;
- 
-  assign led[0] = !uart_rxd;
-  assign led[1] = !uart_txd;
-  assign led[2] = busy;
+
+
+  //uart接口
+  input uart_rx_from_pc,
+  output uart_tx_to_pc
+);
+wire sdram_prob_refresh;
+
+wire sys_rst_n;
+assign sys_rst_n = key1;
+
+  //assign led[0] = !uart_rxd;
+  //assign led[1] = !uart_txd;
+  //assign led[2] = busy;
+  assign led = busy;
 
   //assign led = out_pin0[3:0];
-  assign in_pin0[3:0] = key;
+  //assign in_pin0[3:0] = key;
 
-  wire [7:0] seg_data0;
-  wire [7:0] seg_data1;
-  wire [7:0] seg_data2;
-  //数码管动态显示模块
-  seg_led_hex ins_seg_led_hex(
-    .sys_clk           (sys_clk  ),       // 时钟信号
-    .sys_rst_n         (sys_rst_n),       // 复位信号
+wire [7:0] seg_data0;
+wire [7:0] seg_data1;
+wire [7:0] seg_data2;
+wire [7:0] seg_data3;
+seg_led_hex595 (
+  .sys_clk(sys_clk), 
+  .sys_rst_n(sys_rst_n),
 
-    .data0          (seg_data0),       // 显示的数值
-    .data1          (seg_data1),       // 显示的数值
-    .data2          (seg_data2),       // 显示的数值
+  .clk(segled_clk),
+  .dat(segled_dat),
+  .str(segled_str),
 
-    .seg_sel       (seg_sel  ),       // 位选
-    .seg_led       (seg_led  )        // 段选
-  );
+  .data0(seg_data0),
+  .data1(seg_data1),
+  .data2(seg_data2),
+  .data3(seg_data3)
+);
 
 
   wire busy;
@@ -82,19 +82,10 @@ module flow_led(
     .sys_clk    (sys_clk  ),       // 时钟信号
     .sys_rst_n  (sys_rst_n),       // 复位信号
     
-    .uart_rxd  (uart_rxd),
-    .uart_txd  (uart_txd),
+    .uart_rxd  (uart_rx_from_pc),
+    .uart_txd  (uart_tx_to_pc),
 
     .busy(busy),
-    //.debug_port0 (seg_data0),
-    //.debug_port1 (seg_data1),
-    //.debug_port2 (seg_data2),
-    //.debug_pin0(debug_pin0),
-    //.debug_pin1(debug_pin1),
-    //.debug_pin2(debug_pin2),
-    //.debug_pin3(debug_pin3),
-    //.debug_pin6(debug_pin6),
-    //.debug_pin7(debug_pin7),
 
     //SDRAM 芯片接口
     .sdram_clk_out     (sdram_clk_out),

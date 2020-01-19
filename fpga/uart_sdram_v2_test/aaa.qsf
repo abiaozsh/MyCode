@@ -37,7 +37,7 @@
 
 
 set_global_assignment -name FAMILY "Cyclone IV E"
-set_global_assignment -name DEVICE EP4CE10F17C8
+set_global_assignment -name DEVICE EP4CE15F23C8
 set_global_assignment -name TOP_LEVEL_ENTITY flow_led
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "13.0 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "12:54:30  NOVEMBER 16, 2019"
@@ -64,91 +64,70 @@ set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
-set_location_assignment PIN_E1 -to sys_clk
-set_location_assignment PIN_M1 -to sys_rst_n
-set_location_assignment PIN_G11 -to sdram_ba[0]
-set_location_assignment PIN_F13 -to sdram_ba[1]
-set_location_assignment PIN_J12 -to sdram_cas_n
-set_location_assignment PIN_F16 -to sdram_cke
-set_location_assignment PIN_K11 -to sdram_ras_n
-set_location_assignment PIN_J13 -to sdram_we_n
-set_location_assignment PIN_K10 -to sdram_cs_n
-set_location_assignment PIN_J14 -to sdram_dqm[0]
-set_location_assignment PIN_G15 -to sdram_dqm[1]
-set_location_assignment PIN_F11 -to sdram_addr[0]
-set_location_assignment PIN_E11 -to sdram_addr[1]
-set_location_assignment PIN_D14 -to sdram_addr[2]
-set_location_assignment PIN_C14 -to sdram_addr[3]
-set_location_assignment PIN_A14 -to sdram_addr[4]
-set_location_assignment PIN_A15 -to sdram_addr[5]
-set_location_assignment PIN_B16 -to sdram_addr[6]
-set_location_assignment PIN_C15 -to sdram_addr[7]
-set_location_assignment PIN_C16 -to sdram_addr[8]
-set_location_assignment PIN_D15 -to sdram_addr[9]
-set_location_assignment PIN_F14 -to sdram_addr[10]
-set_location_assignment PIN_D16 -to sdram_addr[11]
-set_location_assignment PIN_F15 -to sdram_addr[12]
-set_location_assignment PIN_P14 -to sdram_data[0]
-set_location_assignment PIN_M12 -to sdram_data[1]
-set_location_assignment PIN_N14 -to sdram_data[2]
-set_location_assignment PIN_L12 -to sdram_data[3]
-set_location_assignment PIN_L13 -to sdram_data[4]
-set_location_assignment PIN_L14 -to sdram_data[5]
-set_location_assignment PIN_L11 -to sdram_data[6]
-set_location_assignment PIN_K12 -to sdram_data[7]
-set_location_assignment PIN_G16 -to sdram_data[8]
-set_location_assignment PIN_J11 -to sdram_data[9]
-set_location_assignment PIN_J16 -to sdram_data[10]
-set_location_assignment PIN_J15 -to sdram_data[11]
-set_location_assignment PIN_K16 -to sdram_data[12]
-set_location_assignment PIN_K15 -to sdram_data[13]
-set_location_assignment PIN_L16 -to sdram_data[14]
-set_location_assignment PIN_L15 -to sdram_data[15]
-set_location_assignment PIN_B14 -to sdram_clk_out
-set_location_assignment PIN_D11 -to led[0]
-set_location_assignment PIN_C11 -to led[1]
-set_location_assignment PIN_E10 -to led[2]
-set_location_assignment PIN_F9 -to led[3]
-set_location_assignment PIN_M16 -to key[3]
-set_location_assignment PIN_M2 -to key[2]
-set_location_assignment PIN_E15 -to key[1]
-set_location_assignment PIN_E16 -to key[0]
-set_location_assignment PIN_N16 -to seg_sel[0]
-set_location_assignment PIN_N15 -to seg_sel[1]
-set_location_assignment PIN_P16 -to seg_sel[2]
-set_location_assignment PIN_P15 -to seg_sel[3]
-set_location_assignment PIN_R16 -to seg_sel[4]
-set_location_assignment PIN_T15 -to seg_sel[5]
-set_location_assignment PIN_M11 -to seg_led[0]
-set_location_assignment PIN_N12 -to seg_led[1]
-set_location_assignment PIN_C9 -to seg_led[2]
-set_location_assignment PIN_N13 -to seg_led[3]
-set_location_assignment PIN_M10 -to seg_led[4]
-set_location_assignment PIN_N11 -to seg_led[5]
-set_location_assignment PIN_P11 -to seg_led[6]
-set_location_assignment PIN_D9 -to seg_led[7]
-set_location_assignment PIN_N5 -to uart_rxd
-set_location_assignment PIN_M7 -to uart_txd
-set_location_assignment PIN_T3 -to debug_pin0
-set_location_assignment PIN_T4 -to debug_pin1
-set_location_assignment PIN_T5 -to debug_pin2
-set_location_assignment PIN_T6 -to debug_pin3
-set_location_assignment PIN_T10 -to debug_pin6
-set_location_assignment PIN_T11 -to debug_pin7
-set_location_assignment PIN_T12 -to aa
-set_global_assignment -name VERILOG_FILE ../commoncode/uart_send_hs.v
-set_global_assignment -name VERILOG_FILE ../commoncode/uart_recv_hs.v
+
+set_location_assignment PIN_AB4 -to sdram_we_n
+set_location_assignment PIN_AB3 -to sdram_ras_n
+set_location_assignment PIN_AA3 -to sdram_cs_n
+set_location_assignment PIN_AA4 -to sdram_cas_n
+set_location_assignment PIN_W7 -to sdram_dqm[1]
+set_location_assignment PIN_AA5 -to sdram_dqm[0]
+set_location_assignment PIN_Y6 -to sdram_clk_out
+set_location_assignment PIN_W6 -to sdram_cke
+set_location_assignment PIN_AA10 -to sdram_data[0]
+set_location_assignment PIN_AB9 -to sdram_data[1]
+set_location_assignment PIN_AA9 -to sdram_data[2]
+set_location_assignment PIN_AB8 -to sdram_data[3]
+set_location_assignment PIN_AA8 -to sdram_data[4]
+set_location_assignment PIN_AB7 -to sdram_data[5]
+set_location_assignment PIN_AA7 -to sdram_data[6]
+set_location_assignment PIN_AB5 -to sdram_data[7]
+set_location_assignment PIN_Y7 -to sdram_data[8]
+set_location_assignment PIN_W8 -to sdram_data[9]
+set_location_assignment PIN_Y8 -to sdram_data[10]
+set_location_assignment PIN_V9 -to sdram_data[11]
+set_location_assignment PIN_V10 -to sdram_data[12]
+set_location_assignment PIN_Y10 -to sdram_data[13]
+set_location_assignment PIN_W10 -to sdram_data[14]
+set_location_assignment PIN_V11 -to sdram_data[15]
+set_location_assignment PIN_Y1 -to sdram_ba[0]
+set_location_assignment PIN_W2 -to sdram_ba[1]
+set_location_assignment PIN_V2 -to sdram_addr[0]
+set_location_assignment PIN_V1 -to sdram_addr[1]
+set_location_assignment PIN_U2 -to sdram_addr[2]
+set_location_assignment PIN_U1 -to sdram_addr[3]
+set_location_assignment PIN_V3 -to sdram_addr[4]
+set_location_assignment PIN_V4 -to sdram_addr[5]
+set_location_assignment PIN_Y2 -to sdram_addr[6]
+set_location_assignment PIN_AA1 -to sdram_addr[7]
+set_location_assignment PIN_Y3 -to sdram_addr[8]
+set_location_assignment PIN_V5 -to sdram_addr[9]
+set_location_assignment PIN_W1 -to sdram_addr[10]
+set_location_assignment PIN_Y4 -to sdram_addr[11]
+set_location_assignment PIN_V6 -to sdram_addr[12]
+
+
+set_location_assignment PIN_T2 -to sys_clk
+set_location_assignment PIN_E4 -to led
+set_location_assignment PIN_Y13 -to key1
+set_location_assignment PIN_W13 -to key2
+
+#3V3
+#GND
+set_location_assignment PIN_A18 -to segled_clk
+set_location_assignment PIN_A19 -to segled_str
+set_location_assignment PIN_A20 -to segled_dat
+
+set_location_assignment PIN_B19 -to uart_rx_from_pc
+set_location_assignment PIN_B20 -to uart_tx_to_pc
+
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/pll_clk.v
-set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram_para.v
-set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram_data.v
-set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram_ctrl.v
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram_controller.v
-set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram_cmd.v
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram.v
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_hs.v
-set_global_assignment -name VERILOG_FILE ../commoncode/seg_led_hex.v
+set_global_assignment -name VERILOG_FILE ../commoncode/uart_send_hs.v
+set_global_assignment -name VERILOG_FILE ../commoncode/uart_recv_hs.v
+set_global_assignment -name VERILOG_FILE ../commoncode/seg_led_hex595.v
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_mcu.v
-set_global_assignment -name VERILOG_FILE ../commoncode/key_debounce.v
 set_global_assignment -name VERILOG_FILE ram.v
 set_global_assignment -name VERILOG_FILE flow_led.v
 set_global_assignment -name QIP_FILE ram.qip
