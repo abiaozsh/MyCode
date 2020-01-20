@@ -2,24 +2,11 @@
 #include "HelloWorld.h"
 #include "wiringPi.c"
 
-#define  CTL1P3  21
-#define  CTL2R3  20
-#define  CTL3R4  26
-#define  CTL4R5  19
-#define  CTL5R6  25
-#define  CTL6R7  22
-#define  CTL7R8  27
-#define  CTL8R9  17
-
-#define  REQ CTL7R8
-#define  ACK CTL8R9
-#define  RST CTL6R7
-#define  DAT CTL5R6
-
-#define  CMD0 CTL1P3
-#define  CMD1 CTL2R3
-#define  CMD2 CTL3R4
-#define  CMD3 CTL4R5
+#define  REQ 27
+#define  ACK 26
+#define  RST 25
+#define  DAT 24
+//CMD[23:16]
 
 #define PINACK ((*gpio13) & 1 << ACK)
 #define REQHIGH *(gpio7) = 1 << (REQ)
@@ -63,10 +50,14 @@ static volatile unsigned int* gpio10;
 static volatile unsigned int* gpio7;
 
 void setCmd(int cmd){
-  digitalWrite(CMD0, (cmd & 0x01)?HIGH:LOW);
-  digitalWrite(CMD1, (cmd & 0x02)?HIGH:LOW);
-  digitalWrite(CMD2, (cmd & 0x04)?HIGH:LOW);
-  digitalWrite(CMD3, (cmd & 0x08)?HIGH:LOW);
+  digitalWrite(16, (cmd & 0x01)?HIGH:LOW);
+  digitalWrite(17, (cmd & 0x02)?HIGH:LOW);
+  digitalWrite(18, (cmd & 0x04)?HIGH:LOW);
+  digitalWrite(19, (cmd & 0x08)?HIGH:LOW);
+  digitalWrite(20, (cmd & 0x10)?HIGH:LOW);
+  digitalWrite(21, (cmd & 0x20)?HIGH:LOW);
+  digitalWrite(22, (cmd & 0x40)?HIGH:LOW);
+  digitalWrite(23, (cmd & 0x80)?HIGH:LOW);
   delay(1);
 }
 void exec(){
@@ -89,10 +80,10 @@ JNIEXPORT jint JNICALL Java_HelloWorld_init(JNIEnv* env, jclass obj){
   
   pinMode(REQ, OUTPUT);
   pinMode(RST, OUTPUT);
-  pinMode(CMD0, OUTPUT);
-  pinMode(CMD1, OUTPUT);
-  pinMode(CMD2, OUTPUT);
-  pinMode(CMD3, OUTPUT);
+  pinMode(16, OUTPUT);
+  pinMode(17, OUTPUT);
+  pinMode(18, OUTPUT);
+  pinMode(19, OUTPUT);
 
   digitalWrite(REQ, LOW);
   digitalWrite(RST, HIGH);
