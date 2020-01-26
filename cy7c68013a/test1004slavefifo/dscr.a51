@@ -1,16 +1,4 @@
-;;-----------------------------------------------------------------------------
-;;   File:      dscr.a51
-;;   Contents:  This file contains descriptor data tables.
-;;
-;; $Archive: /USB/Examples/Fx2lp/bulkloop/dscr.a51 $
-;; $Date: 9/01/03 8:51p $
-;; $Revision: 3 $
-;;
-;;
-;;-----------------------------------------------------------------------------
-;; Copyright 2003, Cypress Semiconductor Corporation
-;;-----------------------------------------------------------------------------;;-----------------------------------------------------------------------------
-   
+
 DSCR_DEVICE   equ   1   ;; Descriptor type: Device
 DSCR_CONFIG   equ   2   ;; Descriptor type: Configuration
 DSCR_STRING   equ   3   ;; Descriptor type: String
