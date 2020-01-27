@@ -1,14 +1,14 @@
-
+ 
 module flow_led(
   input sys_clk,
   input key1,
   input key2,
-  output reg led,
-
+  output led,
+    
   output segled_clk,
   output segled_dat,
   output segled_str,
-   
+     
     //VGA接口                          
     output          vga_hs,         //行同步信号
     output          vga_vs,         //场同步信号
@@ -69,7 +69,6 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     uart_data_in_to_pc <= 48;//'0'
     uart_send <= 0;
     key2_old <= 0;
-    led = 0;
     seg_data0<=0;
     seg_data1<=0;
     seg_data2<=0;
@@ -82,7 +81,6 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       seg_data1<=seg_data0;
       seg_data2<=seg_data1;
       seg_data3<=seg_data2;
-      led <= !led;
     end
     uart_send <= 0;
     if(key2_old && !key2)begin
@@ -100,13 +98,14 @@ end
 
 
 //wire define
-wire         vga_clk_w;             //PLL分频得到25Mhz时钟
+wire vga_clk_w_25M;
+wire vga_clk_w_65M;
 wire         locked_w;              //PLL输出稳定信号
 wire         rst_n_w;               //内部复位信号
 wire [15:0]  pixel_data_w;          //像素点数据
-wire [ 9:0]  pixel_xpos_w;          //像素点横坐标
-wire [ 9:0]  pixel_ypos_w;          //像素点纵坐标    
-    
+wire [10:0]  pixel_xpos_w;          //像素点横坐标
+wire [10:0]  pixel_ypos_w;          //像素点纵坐标    
+     
 //*****************************************************
 //**                    main code
 //***************************************************** 
@@ -117,35 +116,26 @@ vga_pll	u_vga_pll(                  //时钟分频模块
 	.inclk0         (sys_clk),    
 	.areset         (~sys_rst_n),
     
-	.c0             (vga_clk_w),    //VGA时钟 25M
+	.c0             (vga_clk_w_25M),    //VGA时钟 25M
+	.c1             ( vga_clk_w_65M),//65M 102*768
 	.locked         (locked_w)
 	); 
+    assign led = vga_mode;
 
+	wire vga_mode;
+	assign vga_mode = seg_data0[0];
 vga_driver u_vga_driver(
-    .vga_clk        (vga_clk_w),    
     .sys_rst_n      (rst_n_w),    
+    .vga_clk_25M        (vga_clk_w_25M),    
+    .vga_clk_65M        (vga_clk_w_65M),    
 
+	.vga_mode (vga_mode),
     .vga_hs         (vga_hs),       
     .vga_vs         (vga_vs),       
     .vga_rgb        (vga_rgb),      
     
-    .pixel_data     (pixel_data_w), 
-    .pixel_xpos     (pixel_xpos_w), 
-    .pixel_ypos     (pixel_ypos_w)
     ); 
     
-vga_display u_vga_display(
-    .vga_clk        (vga_clk_w),
-    .sys_rst_n      (rst_n_w),
-    
-    .pixel_xpos     (pixel_xpos_w),
-    .pixel_ypos     (pixel_ypos_w),
-    .pixel_data     (pixel_data_w)
-    );   
-    
-
-
-
 
 endmodule
 

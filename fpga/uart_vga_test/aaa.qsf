@@ -70,6 +70,11 @@ set_location_assignment PIN_E4 -to led
 set_location_assignment PIN_Y13 -to key1
 set_location_assignment PIN_W13 -to key2
 
+set_location_assignment PIN_A18 -to segled_clk
+set_location_assignment PIN_A19 -to segled_str
+set_location_assignment PIN_A20 -to segled_dat
+
+
 #3V3
 #GND里 V H   
 set_location_assignment PIN_R2 -to vga_rgb[15]
