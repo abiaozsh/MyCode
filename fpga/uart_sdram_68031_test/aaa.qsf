@@ -120,6 +120,14 @@ set_location_assignment PIN_A20 -to segled_dat
 set_location_assignment PIN_B19 -to uart_rx_from_pc
 set_location_assignment PIN_B20 -to uart_tx_to_pc
 
+set_location_assignment PIN_AB13 -to debug[0]
+set_location_assignment PIN_AB14 -to debug[1]
+set_location_assignment PIN_AB15 -to debug[2]
+set_location_assignment PIN_AB16 -to debug[3]
+set_location_assignment PIN_AB17 -to debug[4]
+set_location_assignment PIN_AB18 -to debug[5]
+set_location_assignment PIN_AB19 -to debug[6]
+set_location_assignment PIN_AB20 -to debug[7]
 
 
 #cy7c68013a
