@@ -88,7 +88,7 @@ namespace WindowsFormsApplication1
 			{
 				//progDevice.LoadExternalRam(@"D:\MyCode.github\cy7c68013a\Bulkloop.firm.my\bulkloop.hex");
 				//progDevice.LoadExternalRam(@"D:\MyCode.github\cy7c68013a\test1004slavefifo\bulkloop.hex");
-				progDevice.LoadExternalRam(@"D:\MyCode.github\cy7c68013a\test1004slavefifo2\bulkloop.hex");
+				progDevice.LoadExternalRam(@"..\..\..\..\..\cy7c68013a\test1004slavefifo\bulkloop.hex");
 			}
 
 			if (loopDevice != null)
@@ -98,6 +98,9 @@ namespace WindowsFormsApplication1
 				//outCmdEndpoint = loopDevice.EndPointOf(0x01) as CyBulkEndPoint;
 				outEndpoint = loopDevice.EndPointOf(0x02) as CyBulkEndPoint;
 				inEndpoint = loopDevice.EndPointOf(0x86) as CyBulkEndPoint;
+                if (outEndpoint.MaxPktSize != 512) {
+                    MessageBox.Show("MaxPktSize != 512");
+                }
 				outEndpoint.TimeOut = 1000;
 				inEndpoint.TimeOut = 1000;
 				//outCmdEndpoint.TimeOut = 1000;
@@ -557,45 +560,48 @@ namespace WindowsFormsApplication1
 		{
 
 			{
+                int size = 1024;
 				bool bResult;
-				byte[] outData = new byte[512];
-				for (int i = 0; i < 512; i++)
+                byte[] outData = new byte[size];
+                for (int i = 0; i < size; i++)
 				{
 					outData[i] = (byte)i;
 				}
-				int xferLen = 512;
+                int xferLen = size;
+                outEndpoint.BeginDataXfer
 				bResult = outEndpoint.XferData(ref outData, ref xferLen);
 			}
-			{
-				bool bResult;
-				byte[] outData = new byte[512];
-				for (int i = 0; i < 512; i++)
-				{
-					outData[i] = (byte)0x11;
-				}
-				int xferLen = 512;
-				bResult = outEndpoint.XferData(ref outData, ref xferLen);
-			}
-			{
-				bool bResult;
-				byte[] outData = new byte[512];
-				for (int i = 0; i < 512; i++)
-				{
-					outData[i] = (byte)0x22;
-				}
-				int xferLen = 512;
-				bResult = outEndpoint.XferData(ref outData, ref xferLen);
-			}
-			{
-				bool bResult;
-				byte[] outData = new byte[512];
-				for (int i = 0; i < 512; i++)
-				{
-					outData[i] = (byte)0x33;
-				}
-				int xferLen = 512;
-				bResult = outEndpoint.XferData(ref outData, ref xferLen);
-			}
+			//{
+            //    int size = 512;
+            //    bool bResult;
+            //    byte[] outData = new byte[size];
+            //    for (int i = 0; i < size; i++)
+			//	{
+			//		outData[i] = (byte)0x11;
+			//	}
+            //    int xferLen = size;
+			//	bResult = outEndpoint.XferData(ref outData, ref xferLen);
+			//}
+			//{
+			//	bool bResult;
+			//	byte[] outData = new byte[512];
+			//	for (int i = 0; i < 512; i++)
+			//	{
+			//		outData[i] = (byte)0x22;
+			//	}
+			//	int xferLen = 512;
+			//	bResult = outEndpoint.XferData(ref outData, ref xferLen);
+			//}
+			//{
+			//	bool bResult;
+			//	byte[] outData = new byte[512];
+			//	for (int i = 0; i < 512; i++)
+			//	{
+			//		outData[i] = (byte)0x33;
+			//	}
+			//	int xferLen = 512;
+			//	bResult = outEndpoint.XferData(ref outData, ref xferLen);
+			//}
 
 
 			portWrite((byte)(0x40 + 2), (byte)(0));
