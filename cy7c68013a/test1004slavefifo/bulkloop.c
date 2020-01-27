@@ -20,11 +20,6 @@ BYTE   AlternateSetting;   // Alternate settings
 #define EPXCFG_DOUBLE 0x02
 #define EPXCFG_TRIPLE 0x03
 
-//-----------------------------------------------------------------------------
-// Task Dispatcher hooks
-//   The following hooks are called by the task dispatcher.
-//-----------------------------------------------------------------------------
-
 void TD_Init(void)             // Called once at startup
 {
 
@@ -133,11 +128,55 @@ void TD_Init(void)             // Called once at startup
   SYNCDELAY;                    // 
   EP6FIFOCFG = 0x0D;            // AUTOIN=1, ZEROLENIN=1, WORDWIDE=1
   SYNCDELAY;
+  
+  OEA |= 0x01;//A0_INT0;
+  IOA &= ~0x01;
+  OEA &= ~0x02;//A1_INT1
+  //IOA &= ~0x01;
+  OEA |= 0x08;//A3_WU2;
+  IOA &= ~0x08;
 }
 
+#define DATH IOA |= 0x01
+#define DATL IOA &=~0x01
+#define INFF (IOA & 0x02)
+#define CLKH IOA |= 0x08
+#define CLKL IOA &=~0x08
 
 void TD_Poll(void)             // Called repeatedly while the device is idle
 {
+	BYTE a;
+	BYTE b;
+	
+	//if(!(EP1INCS & bmEPBUSY)){	// Is the IN1BUF available,
+		if(!INFF){
+			//EZUSB_ReadI2C(BTN_ADDR,0x01,&buttons);	// Read button states
+			EP1INBUF[0] = 12;
+			EP1INBUF[1] = 34;
+			EP1INBC = 2;
+		}
+	//}
+
+	//if(!(EP1OUTCS & bmEPBUSY))	// Is there something available
+	{
+		a = EP1OUTBUF[0];
+		b = EP1OUTBUF[1];
+		EP1OUTBC = 0;				//Rearm endpoint buffer
+		
+		if(a==1){
+			DATH;
+		}
+		if(a==2){
+			DATL;
+		}
+		if(a==3){
+			CLKH;
+		}
+		if(a==4){
+			CLKL;
+		}
+	}
+	
 }
 
 BOOL TD_Suspend(void)          // Called before the device goes into suspend mode
