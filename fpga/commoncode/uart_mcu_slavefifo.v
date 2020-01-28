@@ -17,14 +17,14 @@ module uart_mcu_slavefifo(
     output reg cy_from_fpga_RDY0_SLRD       ,//output
     output reg cy_from_fpga_A2_SLOE         ,//output
     input cy_A0_INT0                   ,// in from pc
-    input cy_A1_INT1                   ,// out to pc
+    output cy_A1_INT1                   ,// out to pc
     input cy_A3_WU2                    ,
     output reg cy_from_fpga_A4_FIFOADR0     ,//output
     output reg cy_from_fpga_A5_FIFOADR1     ,//output
     output reg cy_from_fpga_A6_PKTEND       ,//output
 
-output reg [7:0] cy_cmd,
-output reg [7:0] cy_dat,
+	output reg [7:0] cy_cmd,
+	output reg [7:0] cy_dat,
 
     output busy,
     //output [7:0] debug_port0,
@@ -90,7 +90,7 @@ output reg [7:0] cy_dat,
 
 assign busy = command != 0 && command_done==0;
     
-
+ 
 reg cy_rec_req;
 reg cy_rec_ack;
 reg cy_snd_req;
@@ -101,35 +101,34 @@ reg [4:0]cy_snd_cnt;
 //reg [7:0] cy_dat;
 always @(posedge cy_A3_WU2 or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
-	cy_cmd<=0;
-	cy_dat<=0;
-	cy_rec_req<=0;
-	cy_snd_ack<=0;
+    cy_cmd<=0;
+    cy_dat<=0;
+    cy_rec_cnt<=0;
+    cy_rec_req<=0;
+    cy_snd_ack<=0;
   end else begin
-	if         (cy_rec_cnt==0)begin
-		if(cy_A0_INT0 && !cy_rec_req)begin
-			cy_rec_cnt<=cy_rec_cnt+1;
-		end
-	end else if(cy_rec_cnt==1 )begin cy_cmd[0] <= cy_A0_INT0;
-	end else if(cy_rec_cnt==2 )begin cy_cmd[1] <= cy_A0_INT0;
-	end else if(cy_rec_cnt==3 )begin cy_cmd[2] <= cy_A0_INT0;
-	end else if(cy_rec_cnt==4 )begin cy_cmd[3] <= cy_A0_INT0;
-	end else if(cy_rec_cnt==5 )begin cy_cmd[4] <= cy_A0_INT0;
-	end else if(cy_rec_cnt==6 )begin cy_cmd[5] <= cy_A0_INT0;
-	end else if(cy_rec_cnt==7 )begin cy_cmd[6] <= cy_A0_INT0;
-	end else if(cy_rec_cnt==8 )begin cy_cmd[7] <= cy_A0_INT0;
-	                                 
-	end else if(cy_rec_cnt==9 )begin cy_dat[0] <= cy_A0_INT0;
-	end else if(cy_rec_cnt==10)begin cy_dat[1] <= cy_A0_INT0;
-	end else if(cy_rec_cnt==11)begin cy_dat[2] <= cy_A0_INT0;
-	end else if(cy_rec_cnt==12)begin cy_dat[3] <= cy_A0_INT0;
-	end else if(cy_rec_cnt==13)begin cy_dat[4] <= cy_A0_INT0;
-	end else if(cy_rec_cnt==14)begin cy_dat[5] <= cy_A0_INT0;
-	end else if(cy_rec_cnt==15)begin cy_dat[6] <= cy_A0_INT0;
-	end else if(cy_rec_cnt==16)begin cy_dat[7] <= cy_A0_INT0;
-		cy_rec_cnt<=0;
-		cy_rec_req<=1;
-	end
+    if         (cy_rec_cnt==0)begin
+      if(cy_A0_INT0)begin// && !cy_rec_req
+        cy_rec_cnt<=1;
+      end
+    end else if(cy_rec_cnt==1 )begin cy_cmd[0] <= cy_A0_INT0;cy_rec_cnt<=2;
+    end else if(cy_rec_cnt==2 )begin cy_cmd[1] <= cy_A0_INT0;cy_rec_cnt<=3;
+    end else if(cy_rec_cnt==3 )begin cy_cmd[2] <= cy_A0_INT0;cy_rec_cnt<=4;
+    end else if(cy_rec_cnt==4 )begin cy_cmd[3] <= cy_A0_INT0;cy_rec_cnt<=5;
+    end else if(cy_rec_cnt==5 )begin cy_cmd[4] <= cy_A0_INT0;cy_rec_cnt<=6;
+    end else if(cy_rec_cnt==6 )begin cy_cmd[5] <= cy_A0_INT0;cy_rec_cnt<=7;
+    end else if(cy_rec_cnt==7 )begin cy_cmd[6] <= cy_A0_INT0;cy_rec_cnt<=8;
+    end else if(cy_rec_cnt==8 )begin cy_cmd[7] <= cy_A0_INT0;cy_rec_cnt<=9;
+
+    end else if(cy_rec_cnt==9 )begin cy_dat[0] <= cy_A0_INT0;cy_rec_cnt<=10;
+    end else if(cy_rec_cnt==10)begin cy_dat[1] <= cy_A0_INT0;cy_rec_cnt<=11;
+    end else if(cy_rec_cnt==11)begin cy_dat[2] <= cy_A0_INT0;cy_rec_cnt<=12;
+    end else if(cy_rec_cnt==12)begin cy_dat[3] <= cy_A0_INT0;cy_rec_cnt<=13;
+    end else if(cy_rec_cnt==13)begin cy_dat[4] <= cy_A0_INT0;cy_rec_cnt<=14;
+    end else if(cy_rec_cnt==14)begin cy_dat[5] <= cy_A0_INT0;cy_rec_cnt<=15;
+    end else if(cy_rec_cnt==15)begin cy_dat[6] <= cy_A0_INT0;cy_rec_cnt<=16;
+    end else if(cy_rec_cnt==16)begin cy_dat[7] <= cy_A0_INT0;cy_rec_cnt<=0;cy_rec_req<=1;
+    end
 	
 	if(cy_rec_req && cy_rec_ack)begin
 		cy_rec_req<=0;
