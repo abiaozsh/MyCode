@@ -157,7 +157,7 @@ void TD_Poll(void)             // Called repeatedly while the device is idle
 	}else{
 		CLKL;
 	
-		/*if(INFF){// in from fpga
+		if(INFF){// in from fpga
 			//EZUSB_ReadI2C(BTN_ADDR,0x01,&buttons);	// Read button states
 			a=0;
 			b=0;
@@ -186,7 +186,7 @@ void TD_Poll(void)             // Called repeatedly while the device is idle
 			EP1INBUF[1] = b;
 			EP1INBC = 2;
 		}
-*/
+
 		if(!(EP1OUTCS & bmEPBUSY))	// Is there something available
 		{
 			a = EP1OUTBUF[0];//cmd
