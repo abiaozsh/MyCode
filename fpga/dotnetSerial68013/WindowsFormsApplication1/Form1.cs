@@ -471,20 +471,6 @@ namespace WindowsFormsApplication1
                 }
                 textBox3.Text += sb.ToString();
             }
-            if (inCmdEndpoint!=null)
-            {
-                int size = 2;
-                bool bResult;
-                byte[] inData = new byte[2];
-                int xferLen = size;
-                bResult = inCmdEndpoint.XferData(ref inData, ref xferLen);
-                if (bResult)
-                {
-                    this.textBox3.Text += getHex2(inData[0]) + " " + getHex2(inData[1]);
-                }
-
-            }
-
         }
 
         private string receivePage(byte[] buff)
@@ -574,23 +560,38 @@ namespace WindowsFormsApplication1
             fs.Close();
         }
 
+        private void sendCmd(int cmd, int dat)
+        {
+            int size = 2;
+            bool bResult;
+            byte[] outData = new byte[2];
+            outData[0] = (byte)cmd;
+            outData[1] = (byte)dat;
+            int xferLen = size;
+            bResult = outCmdEndpoint.XferData(ref outData, ref xferLen);
+        }
+        private int recAck()
+        {
+            int size = 2;
+            bool bResult;
+            byte[] inData = new byte[2];
+            int xferLen = size;
+            bResult = inCmdEndpoint.XferData(ref inData, ref xferLen);
+            if (bResult)
+            {
+                int ret = inData[0] | (((int)inData[1]) << 8);
+                return ret;
+            }
+            return 0;
+        }
 
 
         private void button12_Click(object sender, EventArgs e)
         {
-            {
-                int size = 2;
-                bool bResult;
-                byte[] outData = new byte[2];
-                outData[0] = 0x12;
-                outData[1] = 0x34;
-                int xferLen = size;
-                bResult = outCmdEndpoint.XferData(ref outData, ref xferLen);
-            }
-
-            return;
+            int ret;
             int val = 0;
-            for (int k = 0; k < 0x10000; k += 0x400)//2kword
+            bool first = true;
+            for (int k = 0; k < 0x10000; k += 0x200)//1kword
             {
                 {
                     int size = 1024;
@@ -605,27 +606,24 @@ namespace WindowsFormsApplication1
                     int xferLen = size;
                     bResult = outEndpoint.XferData(ref outData, ref xferLen);
                 }
-                //{
+                if (!first)
                 {
-                    int size = 1024;
-                    bool bResult;
-                    byte[] outData = new byte[size];
-                    for (int i = 0; i < size; i += 2)
+                    ret = recAck();
+                    if (ret != 0x3412)
                     {
-                        outData[i] = (byte)(val & 0xFF);
-                        outData[i + 1] = (byte)(val >> 8);
-                        val++;
+                        MessageBox.Show(ret + "");
                     }
-                    int xferLen = size;
-                    bResult = outEndpoint.XferData(ref outData, ref xferLen);
                 }
-
-                portWrite((byte)(0x40 + 2), (byte)(k & 0xFF));
-                portWrite((byte)(0x40 + 3), (byte)((k >> 8) & 0xFF));
-                portWrite((byte)(0x40 + 4), (byte)((k >> 16) & 0xFF));
-
-                portWrite((byte)(0xA4));
+                else
+                {
+                    first = false;
+                }
+                sendCmd(0x072, k & 0xFF);
+                sendCmd(0x073, (k >> 8) & 0xFF);
+                sendCmd(0x074, (k >> 16) & 0xFF);
+                sendCmd(0x0A4, 0);
             }
+            MessageBox.Show("done");
         }
 
 

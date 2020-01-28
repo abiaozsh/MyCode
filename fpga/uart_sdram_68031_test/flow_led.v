@@ -68,8 +68,8 @@ assign sys_rst_n = key1;
   
   assign seg_data0 = cy_B;
   assign seg_data1 = cy_D;
-  assign seg_data2 = cy_cmd;
-  assign seg_data3 = cy_dat;
+  assign seg_data2 = out_pin2;//cy_snd_data0;//cy_cmd;
+  assign seg_data3 = out_pin3;//cy_snd_data1;//cy_dat;
   
   assign debug[0] = cy_A0_INT0;
   assign debug[1] = cy_A1_INT1;
@@ -125,6 +125,8 @@ seg_led_hex595 (
   
   wire [7:0] cy_cmd;
   wire [7:0] cy_dat;
+  wire [7:0] cy_snd_data0;
+  wire [7:0] cy_snd_data1;
   uart_mcu_slavefifo(
     .sys_clk    (sys_clk  ),       // 时钟信号
     .sys_rst_n  (sys_rst_n),       // 复位信号
@@ -152,6 +154,8 @@ seg_led_hex595 (
 	 
 	 .cy_cmd(cy_cmd),
 	 .cy_dat(cy_dat),
+	 .cy_snd_data0(cy_snd_data0),
+	 .cy_snd_data1(cy_snd_data1),
 
     .busy(busy),
 

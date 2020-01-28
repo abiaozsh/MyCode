@@ -17,7 +17,7 @@ module uart_mcu_slavefifo(
     output reg cy_from_fpga_RDY0_SLRD       ,//output
     output reg cy_from_fpga_A2_SLOE         ,//output
     input cy_A0_INT0                   ,// in from pc
-    output cy_A1_INT1                   ,// out to pc
+    output reg cy_A1_INT1                   ,// out to pc
     input cy_A3_WU2                    ,
     output reg cy_from_fpga_A4_FIFOADR0     ,//output
     output reg cy_from_fpga_A5_FIFOADR1     ,//output
@@ -25,6 +25,8 @@ module uart_mcu_slavefifo(
 
 	output reg [7:0] cy_cmd,
 	output reg [7:0] cy_dat,
+	output reg [7:0] cy_snd_data0,
+	output reg [7:0] cy_snd_data1,
 
     output busy,
     //output [7:0] debug_port0,
@@ -92,13 +94,9 @@ assign busy = command != 0 && command_done==0;
     
  
 reg cy_rec_req;
-reg cy_rec_ack;
-reg cy_snd_req;
 reg cy_snd_ack;
 reg [4:0]cy_rec_cnt;
 reg [4:0]cy_snd_cnt;
-//reg [7:0] cy_cmd;
-//reg [7:0] cy_dat;
 always @(posedge cy_A3_WU2 or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     cy_cmd<=0;
@@ -106,9 +104,10 @@ always @(posedge cy_A3_WU2 or negedge sys_rst_n) begin
     cy_rec_cnt<=0;
     cy_rec_req<=0;
     cy_snd_ack<=0;
+    cy_A1_INT1<=0;
   end else begin
     if         (cy_rec_cnt==0)begin
-      if(cy_A0_INT0)begin// && !cy_rec_req
+      if(cy_A0_INT0 && !cy_rec_req)begin
         cy_rec_cnt<=1;
       end
     end else if(cy_rec_cnt==1 )begin cy_cmd[0] <= cy_A0_INT0;cy_rec_cnt<=2;
@@ -129,13 +128,41 @@ always @(posedge cy_A3_WU2 or negedge sys_rst_n) begin
     end else if(cy_rec_cnt==15)begin cy_dat[6] <= cy_A0_INT0;cy_rec_cnt<=16;
     end else if(cy_rec_cnt==16)begin cy_dat[7] <= cy_A0_INT0;cy_rec_cnt<=0;cy_rec_req<=1;
     end
-	
-	if(cy_rec_req && cy_rec_ack)begin
-		cy_rec_req<=0;
-	end
-	
-//cy_A0_INT0 in from pc
-//cy_A1_INT1 out to pc
+
+    if(cy_snd_req)begin
+      if         (cy_snd_cnt==0 )begin cy_snd_cnt<=1 ;cy_A1_INT1 <= 1;
+      
+      end else if(cy_snd_cnt==1 )begin cy_snd_cnt<=2 ;cy_A1_INT1 <= cy_snd_data0[0];
+      end else if(cy_snd_cnt==2 )begin cy_snd_cnt<=3 ;cy_A1_INT1 <= cy_snd_data0[1];
+      end else if(cy_snd_cnt==3 )begin cy_snd_cnt<=4 ;cy_A1_INT1 <= cy_snd_data0[2];
+      end else if(cy_snd_cnt==4 )begin cy_snd_cnt<=5 ;cy_A1_INT1 <= cy_snd_data0[3];
+      end else if(cy_snd_cnt==5 )begin cy_snd_cnt<=6 ;cy_A1_INT1 <= cy_snd_data0[4];
+      end else if(cy_snd_cnt==6 )begin cy_snd_cnt<=7 ;cy_A1_INT1 <= cy_snd_data0[5];
+      end else if(cy_snd_cnt==7 )begin cy_snd_cnt<=8 ;cy_A1_INT1 <= cy_snd_data0[6];
+      end else if(cy_snd_cnt==8 )begin cy_snd_cnt<=9 ;cy_A1_INT1 <= cy_snd_data0[7];
+
+      end else if(cy_snd_cnt==9 )begin cy_snd_cnt<=10;cy_A1_INT1 <= cy_snd_data0[0];
+      end else if(cy_snd_cnt==10)begin cy_snd_cnt<=11;cy_A1_INT1 <= cy_snd_data1[1];
+      end else if(cy_snd_cnt==11)begin cy_snd_cnt<=12;cy_A1_INT1 <= cy_snd_data1[2];
+      end else if(cy_snd_cnt==12)begin cy_snd_cnt<=13;cy_A1_INT1 <= cy_snd_data1[3];
+      end else if(cy_snd_cnt==13)begin cy_snd_cnt<=14;cy_A1_INT1 <= cy_snd_data1[4];
+      end else if(cy_snd_cnt==14)begin cy_snd_cnt<=15;cy_A1_INT1 <= cy_snd_data1[5];
+      end else if(cy_snd_cnt==15)begin cy_snd_cnt<=16;cy_A1_INT1 <= cy_snd_data1[6];
+      end else if(cy_snd_cnt==16)begin cy_snd_cnt<=17;cy_A1_INT1 <= cy_snd_data1[7];
+      end else if(cy_snd_cnt==17)begin cy_snd_cnt<=18;cy_A1_INT1 <= 0;cy_snd_ack<=1;
+      end
+    end else begin
+      cy_snd_cnt<=0;
+      cy_snd_ack<=0;
+    end
+
+    
+    if(cy_rec_req && cy_rec_ack)begin
+      cy_rec_req<=0;
+    end
+    
+    
+    
   end
 end
 
@@ -194,6 +221,8 @@ uart_hs ins_uart_hs(
     .uart_data_in   (uart_data_w)
   );
 
+  
+reg cy_rec_ack;
 reg [7:0] command;
 reg [7:0] data;
 reg [15:0] data_index;
@@ -204,6 +233,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     data <= 0;
     data_index<=0;
     data_arrive<=0;
+    cy_rec_ack<=0;
   end else begin
     data_arrive <= 0;
     if (uart_rec_rise) begin //串口数据到达
@@ -215,10 +245,18 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         data_index <= data_index + 1'b1;
         data <= uart_data_r;
       end
-    end else begin
-      if(command_done)begin
-        command <= 0;
-      end
+    end
+    
+    if(!cy_rec_req && cy_rec_ack)begin
+      cy_rec_ack <= 0;
+    end
+    
+    if (cy_rec_req) begin //cy数据到达
+      command <= cy_cmd;
+      cy_rec_ack <= 1;
+    end
+    if(command_done)begin
+      command <= 0;
     end
   end
 end
@@ -234,6 +272,7 @@ reg [15:0] timer3;
 
 reg [7:0] sum;
 
+reg cy_snd_req;
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     out_pin0<=8'bzzzzzzzz;
@@ -278,8 +317,15 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     cy_from_fpga_A5_FIFOADR1<=0;
     cy_from_fpga_A6_PKTEND<=1;
 	
+    cy_snd_req<=0;
+    cy_snd_data0 <= 0;
+    cy_snd_data1 <= 0;
+
   end else begin
 
+    if(cy_snd_ack)begin
+      cy_snd_req <= 0;
+    end
     
     if(command_done)begin
       uart_send<=0;
@@ -337,6 +383,15 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       end else if (command == 8'h65) begin out_pin5<=8'bzzzzzzzz; command_done<=1;
       end else if (command == 8'h66) begin out_pin6<=8'bzzzzzzzz; command_done<=1;
       end else if (command == 8'h67) begin out_pin7<=8'bzzzzzzzz; command_done<=1;
+
+      end else if (command == 8'h70) begin uw_reg0<=cy_dat; command_done<=1;
+      end else if (command == 8'h71) begin uw_reg1<=cy_dat; command_done<=1;
+      end else if (command == 8'h72) begin uw_reg2<=cy_dat;out_pin2<=cy_dat; command_done<=1;
+      end else if (command == 8'h73) begin uw_reg3<=cy_dat;out_pin3<=cy_dat; command_done<=1;
+      end else if (command == 8'h74) begin uw_reg4<=cy_dat; command_done<=1;
+      end else if (command == 8'h75) begin uw_reg5<=cy_dat; command_done<=1;
+      end else if (command == 8'h76) begin uw_reg6<=cy_dat; command_done<=1;
+      end else if (command == 8'h77) begin uw_reg7<=cy_dat; command_done<=1;
 
       end else if (command == 8'hA0) begin//sdram write
         timer<=timer+1'b1;
@@ -440,33 +495,39 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 
         if         (timer3==0)begin																	//step0
           cy_from_fpga_A2_SLOE<=0;//on
-			 cy_from_fpga_RDY0_SLRD<=0;//on
+          cy_from_fpga_RDY0_SLRD<=0;//on
           sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
-        end else if(timer3==(1024 * 4 + 1))begin																	//step5  n字*4+1
+        end else if(timer3==(512 * 4 + 1))begin																	//step5  n字*4+1
           cy_from_fpga_A2_SLOE<=1;//off
-			 cy_from_fpga_RDY0_SLRD<=1;//off
-			 timer3<=0;
+          cy_from_fpga_RDY0_SLRD<=1;//off
+          timer3<=0;
           command_done<=1;
+          cy_snd_req <= 1;
+          cy_snd_data0 <= 8'h12;
+          cy_snd_data1 <= 8'h34;
         end else begin
           if         (timer3[1:0]==1)begin																	//step1
-				cy_from_fpga_RDY0_SLRD<=0;//on
+            cy_from_fpga_RDY0_SLRD<=0;//on
           end else if(timer3[1:0]==2)begin																	//step2
             cy_from_fpga_RDY0_SLRD<=1;//off
             //读取 并写入sdram
             sdram_c_write_en<=1;
             if(timer3==2)begin sdram_c_write_latch_address<=1; end
             sdram_c_data_in<={cy_B,cy_D};
-			 
           end else if(timer3[1:0]==3)begin																	//step3
             cy_from_fpga_RDY0_SLRD<=1;//off
-				sdram_c_write_en<=0;
+            sdram_c_write_en<=0;
           end else begin																			//step4
-			 
-				cy_from_fpga_RDY0_SLRD<=0;//on
-				sdram_c_write_en<=0;
+            cy_from_fpga_RDY0_SLRD<=0;//on
+            sdram_c_write_en<=0;
           end
         end
         
+      end else if (command == 8'hB0) begin//sdram long write ok
+        command_done<=1;
+        cy_snd_req <= 1;
+        cy_snd_data0 <= 8'h11;
+        cy_snd_data1 <= cy_dat;
         
         
         
