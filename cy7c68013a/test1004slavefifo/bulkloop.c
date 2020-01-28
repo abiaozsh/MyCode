@@ -23,7 +23,7 @@ BYTE   AlternateSetting;   // Alternate settings
 void TD_Init(void)             // Called once at startup
 {
 
-  CPUCS = 0x10; // CLKSPD[1:0]=10, for 48MHz operation, output CLKOUT
+  CPUCS = 0x10;SYNCDELAY; // CLKSPD[1:0]=10, for 48MHz operation, output CLKOUT
   // set the CPU clock to 48MHz
 //  CPUCS &= ~bmCLKSPD0;SYNCDELAY;
 //  CPUCS |= ~bmCLKSPD1;SYNCDELAY;
@@ -48,8 +48,7 @@ void TD_Init(void)             // Called once at startup
   
   PINFLAGSCD = 0xEA;SYNCDELAY; // FLAGC:A 1 0 1 0 EP6 EF     FLAGD:E 1 1 1 0 EP6 FF
   
-  PORTACFG |= 0x80;
-  SYNCDELAY;
+  PORTACFG |= 0x80;SYNCDELAY;
   //IFCONFIG = 0xE3;   // 11100011         // for async? for sync?
   //1	1	Slave FIFO
 
@@ -75,8 +74,8 @@ void TD_Init(void)             // Called once at startup
   
   
   
-  SYNCDELAY;
-  CPUCS |= 0x02;
+  
+  CPUCS |= 0x02;SYNCDELAY;
 //  CLKOE off
 //  CPUCS &= ~bmCLKOE;SYNCDELAY;
 
@@ -143,40 +142,87 @@ void TD_Init(void)             // Called once at startup
 #define CLKH IOA |= 0x08
 #define CLKL IOA &=~0x08
 
+volatile BYTE clk;
+
 void TD_Poll(void)             // Called repeatedly while the device is idle
 {
 	BYTE a;
 	BYTE b;
+	BYTE i;
+	BYTE mask;
 	
-	//if(!(EP1INCS & bmEPBUSY)){	// Is the IN1BUF available,
-		if(!INFF){
+	clk = !clk;
+	if(clk){
+		CLKH;
+	}else{
+		CLKL;
+	
+		/*if(INFF){// in from fpga
 			//EZUSB_ReadI2C(BTN_ADDR,0x01,&buttons);	// Read button states
-			EP1INBUF[0] = 12;
-			EP1INBUF[1] = 34;
+			a=0;
+			b=0;
+			CLKH;
+			mask = 0x01;
+			CLKL;
+			for(i=0;i<8;i++){
+				if(INFF){
+					a|=mask;
+				}
+				CLKH;
+				mask<<=1;
+				CLKL;
+			}
+			mask = 0x01;
+			for(i=0;i<8;i++){
+				if(INFF){
+					b|=mask;
+				}
+				CLKH;
+				mask<<=1;
+				CLKL;
+			}
+
+			EP1INBUF[0] = a;
+			EP1INBUF[1] = b;
 			EP1INBC = 2;
 		}
-	//}
-
-	//if(!(EP1OUTCS & bmEPBUSY))	// Is there something available
-	{
-		a = EP1OUTBUF[0];
-		b = EP1OUTBUF[1];
-		EP1OUTBC = 0;				//Rearm endpoint buffer
-		
-		if(a==1){
+*/
+		if(!(EP1OUTCS & bmEPBUSY))	// Is there something available
+		{
+			a = EP1OUTBUF[0];//cmd
+			b = EP1OUTBUF[1];//dat
+			EP1OUTBC = 0;				//Rearm endpoint buffer
+			
 			DATH;
-		}
-		if(a==2){
+			CLKH;
+			mask = 0x01;
+			CLKL;
+			for(i=0;i<8;i++){
+				if(a&mask){
+					DATH;
+				}else{
+					DATL;
+				}
+				CLKH;
+				mask<<=1;
+				CLKL;
+			}
+			mask = 0x01;
+			for(i=0;i<8;i++){
+				if(b&mask){
+					DATH;
+				}else{
+					DATL;
+				}
+				CLKH;
+				mask<<=1;
+				CLKL;
+			}
 			DATL;
 		}
-		if(a==3){
-			CLKH;
-		}
-		if(a==4){
-			CLKL;
-		}
+		
 	}
-	
+
 }
 
 BOOL TD_Suspend(void)          // Called before the device goes into suspend mode
