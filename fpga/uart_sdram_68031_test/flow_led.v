@@ -1,25 +1,25 @@
- 
+
 module flow_led(
-  input           sys_clk,          //澶栭儴50M鏃堕挓
+  input           sys_clk,          //外部50M时钟
   input key1,
   input key2,
   output reg led,
-
+ 
   output segled_clk,
   output segled_dat, 
   output segled_str,
  
-  //SDRAM 鑺墖鎺ュ彛
-  output        sdram_clk_out,                //SDRAM 鑺墖鏃堕挓
-  output        sdram_cke,                //SDRAM 鏃堕挓鏈夋晥
-  output        sdram_cs_n,               //SDRAM 鐗囬€
-  output        sdram_ras_n,              //SDRAM 琛屾湁鏁
-  output        sdram_cas_n,              //SDRAM 鍒楁湁鏁
-  output        sdram_we_n,               //SDRAM 鍐欐湁鏁
-  output [ 1:0] sdram_ba,                 //SDRAM Bank鍦板潃
-  output [12:0] sdram_addr,               //SDRAM 琛鍒楀湴鍧€
-  inout  [15:0] sdram_data,               //SDRAM 鏁版嵁
-  output [ 1:0] sdram_dqm,                //SDRAM 鏁版嵁鎺╃爜
+  //SDRAM 芯片接口
+  output        sdram_clk_out,                //SDRAM 芯片时钟
+  output        sdram_cke,                //SDRAM 时钟有效
+  output        sdram_cs_n,               //SDRAM 片选
+  output        sdram_ras_n,              //SDRAM 行有效
+  output        sdram_cas_n,              //SDRAM 列有效
+  output        sdram_we_n,               //SDRAM 写有效
+  output [ 1:0] sdram_ba,                 //SDRAM Bank地址
+  output [12:0] sdram_addr,               //SDRAM 行/列地址
+  inout  [15:0] sdram_data,               //SDRAM 数据
+  output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
 
   output [7:0] debug,
 
@@ -41,7 +41,7 @@ module flow_led(
   output  cy_from_fpga_A6_PKTEND       ,//output
   input cy_to_fpga_A7_FLAGD          ,
 
-  //uart鎺ュ彛
+  //uart接口
   input uart_rx_from_pc,
   output uart_tx_to_pc
 );
@@ -75,7 +75,7 @@ assign sys_rst_n = key1;
   assign debug[1] = cy_A1_INT1;
   assign debug[2] = cy_A3_WU2;
   
-  assign cy_A1_INT1 = key2;
+  //assign cy_A1_INT1 = key2;
   
   assign debug[4] = cy_to_fpga_CTL0_FLAGA;
   assign debug[5] = cy_to_fpga_CTL1_FLAGB;
@@ -122,9 +122,12 @@ seg_led_hex595 (
   wire [7:0] out_pin5;
   wire [7:0] out_pin6;
   wire [7:0] out_pin7;
+  
+  wire [7:0] cy_cmd;
+  wire [7:0] cy_dat;
   uart_mcu_slavefifo(
-    .sys_clk    (sys_clk  ),       // 鏃堕挓淇″彿
-    .sys_rst_n  (sys_rst_n),       // 澶嶄綅淇″彿
+    .sys_clk    (sys_clk  ),       // 时钟信号
+    .sys_rst_n  (sys_rst_n),       // 复位信号
     
     .uart_rxd  (uart_rx_from_pc),
     .uart_txd  (uart_tx_to_pc),
@@ -149,27 +152,27 @@ seg_led_hex595 (
 	 
 	 .cy_cmd(cy_cmd),
 	 .cy_dat(cy_dat),
-	 
+
     .busy(busy),
 
-    //SDRAM 鑺墖鎺ュ彛
+    //SDRAM 芯片接口
     .sdram_clk_out     (sdram_clk_out),
-    .sdram_cke			(sdram_cke),		//SDRAM 鏃堕挓鏈夋晥
-    .sdram_cs_n			(sdram_cs_n),		//SDRAM 鐗囬€
-    .sdram_ras_n		(sdram_ras_n),		//SDRAM 琛屾湁鏁
-    .sdram_cas_n		(sdram_cas_n),		//SDRAM 鍒楁湁鏁
-    .sdram_we_n			(sdram_we_n),		//SDRAM 鍐欐湁鏁
-    .sdram_ba			  (sdram_ba),			//SDRAM Bank鍦板潃
-    .sdram_addr			(sdram_addr),		//SDRAM 琛鍒楀湴鍧€
-    .sdram_data			(sdram_data),		//SDRAM 鏁版嵁	
+    .sdram_cke			(sdram_cke),		//SDRAM 时钟有效
+    .sdram_cs_n			(sdram_cs_n),		//SDRAM 片选
+    .sdram_ras_n		(sdram_ras_n),		//SDRAM 行有效	
+    .sdram_cas_n		(sdram_cas_n),		//SDRAM 列有效
+    .sdram_we_n			(sdram_we_n),		//SDRAM 写有效
+    .sdram_ba			  (sdram_ba),			//SDRAM Bank地址
+    .sdram_addr			(sdram_addr),		//SDRAM 行/列地址
+    .sdram_data			(sdram_data),		//SDRAM 数据	
     .sdram_dqm		(sdram_dqm),
     .sdram_prob_refresh (sdram_prob_refresh),
 
     .out_clk (out_clk),
     .out_rst (out_rst),
 
-    .in_pin0          ( in_pin0 ),//鏁版嵁浣
-    .in_pin1          ( in_pin1 ),//鏁版嵁楂
+    .in_pin0          ( in_pin0 ),//数据低
+    .in_pin1          ( in_pin1 ),//数据高
     .in_pin2          ( in_pin2 ),//sdram_wr_ack,sdram_rd_ack
     .in_pin3          ( in_pin3 ),
     .in_pin4          ( in_pin4 ),
