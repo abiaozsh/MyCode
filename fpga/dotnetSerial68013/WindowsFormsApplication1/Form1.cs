@@ -582,8 +582,8 @@ namespace WindowsFormsApplication1
                 int size = 2;
                 bool bResult;
                 byte[] outData = new byte[2];
-                outData[0] = (byte)int.Parse(textBox4.Text);
-                outData[1] = 0;
+                outData[0] = 0x12;
+                outData[1] = 0x34;
                 int xferLen = size;
                 bResult = outCmdEndpoint.XferData(ref outData, ref xferLen);
             }
