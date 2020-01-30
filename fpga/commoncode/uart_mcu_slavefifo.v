@@ -141,7 +141,7 @@ always @(posedge cy_A3_WU2 or negedge sys_rst_n) begin
       end else if(cy_snd_cnt==7 )begin cy_snd_cnt<=8 ;cy_A1_INT1 <= cy_snd_data0[6];
       end else if(cy_snd_cnt==8 )begin cy_snd_cnt<=9 ;cy_A1_INT1 <= cy_snd_data0[7];
 
-      end else if(cy_snd_cnt==9 )begin cy_snd_cnt<=10;cy_A1_INT1 <= cy_snd_data0[0];
+      end else if(cy_snd_cnt==9 )begin cy_snd_cnt<=10;cy_A1_INT1 <= cy_snd_data1[0];
       end else if(cy_snd_cnt==10)begin cy_snd_cnt<=11;cy_A1_INT1 <= cy_snd_data1[1];
       end else if(cy_snd_cnt==11)begin cy_snd_cnt<=12;cy_A1_INT1 <= cy_snd_data1[2];
       end else if(cy_snd_cnt==12)begin cy_snd_cnt<=13;cy_A1_INT1 <= cy_snd_data1[3];
@@ -251,7 +251,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       cy_rec_ack <= 0;
     end
     
-    if (cy_rec_req) begin //cy数据到达
+    if (cy_rec_req && !cy_rec_ack) begin //cy数据到达
       command <= cy_cmd;
       cy_rec_ack <= 1;
     end
