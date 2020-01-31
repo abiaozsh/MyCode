@@ -5,8 +5,8 @@ module uart_mcu_slavefifo(
     input  uart_rxd,
     output uart_txd,
 
-    input [7:0] cy_B,
-    input [7:0] cy_D,
+    inout [7:0] cy_D,
+    inout [7:0] cy_B,
     input cy_SCL,
     input cy_SDA,
     //input cy_IFCLK                     ,
@@ -93,7 +93,14 @@ module uart_mcu_slavefifo(
 
 assign busy = command != 0 && command_done==0;
     
- 
+assign cy_D = cy_out_to_pc ? cy_D_out : 8'hzz;
+assign cy_B = cy_out_to_pc ? cy_B_out : 8'hzz;
+reg [7:0] cy_D_out;
+reg [7:0] cy_B_out;
+
+reg cy_out_to_pc;
+
+
 reg cy_rec_req;
 reg cy_snd_ack;
 reg [4:0]cy_rec_cnt;
@@ -130,7 +137,7 @@ always @(posedge cy_A3_WU2 or negedge sys_rst_n) begin
     end else if(cy_rec_cnt==16)begin cy_dat[7] <= cy_A0_INT0;cy_rec_cnt<=0;cy_rec_req<=1;
     end
 
-    if(cy_snd_req)begin
+    if(cy_snd_req && !cy_snd_ack)begin
       if         (cy_snd_cnt==0 )begin cy_snd_cnt<=1 ;cy_A1_INT1 <= 1;
       
       end else if(cy_snd_cnt==1 )begin cy_snd_cnt<=2 ;cy_A1_INT1 <= cy_snd_data0[0];
@@ -274,8 +281,11 @@ reg hibit;
 reg [15:0] timer3;
 
 reg [7:0] sum;
+reg [15:0] sum16;
 
 reg cy_snd_req;
+
+reg [16:0] temp_val;
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     out_pin0<=8'bzzzzzzzz;
@@ -311,6 +321,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     sdram_c_write_en <= 0;
     sdram_c_write_latch_address <=0;
     sum <=0;
+	 sum16 <=0;
 
 
     cy_from_fpga_A2_SLOE<=1;
@@ -319,6 +330,8 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     cy_from_fpga_A4_FIFOADR0<=0;
     cy_from_fpga_A5_FIFOADR1<=0;
     cy_from_fpga_A6_PKTEND<=1;
+		
+	 cy_out_to_pc<=0;
 	
     cy_snd_req<=0;
     cy_snd_data0 <= 0;
@@ -492,7 +505,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       //cy_from_fpga_A5_FIFOADR1<=0;
       //cy_from_fpga_A6_PKTEND<=1;
         
-      end else if (command == 8'hA4) begin//sdram long write ok
+      end else if (command == 8'hB0) begin//sdram long write ok
         timer3 <= timer3 + 1'b1;
         sdram_c_write_latch_address<=0;
 
@@ -516,7 +529,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
             //读取 并写入sdram
             sdram_c_write_en<=1;
             if(timer3==2)begin sdram_c_write_latch_address<=1; end
-            sdram_c_data_in<={cy_B,cy_D};
+            sdram_c_data_in<={cy_D,cy_B};
           end else if(timer3[1:0]==3)begin																	//step3
             cy_from_fpga_RDY0_SLRD<=1;//off
             sdram_c_write_en<=0;
@@ -526,11 +539,47 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           end
         end
         
-      end else if (command == 8'hB0) begin//sdram long write ok
-        command_done<=1;
-        cy_snd_req <= 1;
-        cy_snd_data0 <= 8'h11;
-        cy_snd_data1 <= cy_dat;
+
+      end else if (command == 8'hB1) begin//sdram long read
+        timer2<=timer2+1'b1;
+        
+        if(timer2==0)begin
+          if(timer==0)begin//锁存地址
+            sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
+            sum16 <= 0;
+            cy_from_fpga_A4_FIFOADR0<=0;//set channel
+            cy_from_fpga_A5_FIFOADR1<=1;
+            cy_out_to_pc<=1;//set out
+          end else begin
+            sdram_c_address <= sdram_c_address + 1'b1;
+            
+          end
+          sdram_c_read_req<=1;
+        end else if(timer2==30) begin//sdram 响应
+          if(!sdram_c_read_ack)begin
+            //err
+          end
+          timer<=timer+1'b1;
+          sdram_c_read_req<=0;
+          sum16 <= sum16 + sdram_c_data_out;
+          cy_D_out = sdram_c_data_out[15:8];
+          cy_B_out = sdram_c_data_out[7:0];
+          cy_from_fpga_RDY1_SLWR<=0;//set wr
+ 
+        end else if(timer2==60)begin
+			cy_from_fpga_RDY1_SLWR<=1;//set wr
+          if(timer==513)begin
+            cy_from_fpga_A4_FIFOADR0<=0;//set channel
+            cy_from_fpga_A5_FIFOADR1<=0;
+            cy_out_to_pc<=0;//set out
+            timer<=0;
+            command_done<=1;
+            cy_snd_req <= 1;
+            cy_snd_data1 <= sum16[15:8];
+            cy_snd_data0 <= sum16[7:0];
+          end
+          timer2<=0;
+        end
         
         
         

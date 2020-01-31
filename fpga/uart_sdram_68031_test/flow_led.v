@@ -23,8 +23,8 @@ module flow_led(
  
   output [7:0] debug,
 
-  input [7:0] cy_B,
-  input [7:0] cy_D,
+  inout [7:0] cy_D,
+  inout [7:0] cy_B,
   input cy_SCL,
   input cy_SDA,
   input cy_IFCLK                     ,
@@ -67,10 +67,10 @@ assign sys_rst_n = key1;
   reg [16:0] data2;
   reg [16:0] data3;
   
-  assign seg_data0 = cy_B;
-  assign seg_data1 = cy_D;
-  assign seg_data2 = out_pin2;//cy_snd_data0;//cy_cmd;
   assign seg_data3 = out_pin3;//cy_snd_data1;//cy_dat;
+  assign seg_data2 = out_pin2;//cy_snd_data0;//cy_cmd;
+  assign seg_data1 = cy_D;
+  assign seg_data0 = cy_B;
   
   assign debug[0] = cy_A0_INT0;
   assign debug[1] = cy_A1_INT1;
@@ -135,8 +135,8 @@ seg_led_hex595 (
     .uart_rxd  (uart_rx_from_pc),
     .uart_txd  (uart_tx_to_pc),
 
-	 .cy_B(cy_B),
 	 .cy_D(cy_D),
+	 .cy_B(cy_B),
    .cy_SCL(cy_SCL)       ,
    .cy_SDA(cy_SDA)       ,
 	 //input cy_IFCLK                     ,

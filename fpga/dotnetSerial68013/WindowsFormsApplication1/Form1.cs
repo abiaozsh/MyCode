@@ -10,6 +10,7 @@ using System.Threading;
 using System.IO;
 using System.Globalization;
 using CyUSB;
+using System.Runtime.InteropServices;
 
 namespace WindowsFormsApplication1
 {
@@ -456,8 +457,106 @@ namespace WindowsFormsApplication1
             textBox3.Text = "";
         }
 
+        byte[] sendbuff = new byte[1024];
+        private int send(byte[] data, int start)
+        {
+            Array.Copy(data, start, sendbuff, 0, 1024);
+            int xferLen = 1024;
+            bool bResult = outEndpoint.XferData(ref sendbuff, ref xferLen);
+            return xferLen;
+        }
+
+        byte[] receivebuff = new byte[1024];
+        private int receive(byte[] data, int start)
+        {
+            int xferLen = 1024;
+            bool bResult = inEndpoint.XferData(ref receivebuff, ref xferLen);
+            Array.Copy(receivebuff, 0, data, start, 1024);
+            return xferLen;
+        }
+
         private void button6_Click(object sender, EventArgs e)
         {
+            //Marshal.
+            int size = 16 * 1024 * 1024;
+
+            byte[] buff = new byte[size * 2];
+            byte[] buff2 = new byte[size * 2];
+            Random r = new Random();
+            r.NextBytes(buff);
+
+            bool first;
+
+            first = true;
+            for (int k = 0; k < size; k += 0x200)//1kword
+            {
+                send(buff, k << 1);
+
+                if (!first)
+                {
+                    recAck(0x3412);
+                }
+                else
+                {
+                    first = false;
+                }
+                sendCmd(0x072, k & 0xFF);
+                sendCmd(0x073, (k >> 8) & 0xFF);
+                sendCmd(0x074, (k >> 16) & 0xFF);
+                sendCmd(0x0B0, 0);
+                this.Text = "" + (k * 100 / size);
+                Application.DoEvents();
+            }
+            recAck(0x3412);
+
+
+            //recAck(0);
+            first = true;
+            int lastk = 0;
+            for (int k = 0; k < size; k += 0x200)//1kword
+            {
+                if (!first)
+                {
+                    receive(buff2, lastk << 1);
+                }
+                else
+                {
+                    first = false;
+                }
+
+
+                sendCmd(0x072, k & 0xFF);
+                sendCmd(0x073, (k >> 8) & 0xFF);
+                sendCmd(0x074, (k >> 16) & 0xFF);
+                sendCmd(0x0B1, 0);
+
+                recAck(0);
+
+                lastk = k;
+                this.Text = "" + (k * 100 / size);
+                Application.DoEvents();
+            }
+            receive(buff2, lastk << 1);
+
+
+            int pos = 0;
+            for (int i = 0; i < buff.Length; i++)
+            {
+                if (buff[i] != buff2[i])
+                {
+                    pos = i;
+                    break;
+                }
+            }
+
+
+            MessageBox.Show("done" + pos);
+
+
+
+
+
+
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -570,26 +669,65 @@ namespace WindowsFormsApplication1
             int xferLen = size;
             bResult = outCmdEndpoint.XferData(ref outData, ref xferLen);
         }
-        private int recAck()
+        private int recAck(int val)
         {
             int size = 2;
             bool bResult;
             byte[] inData = new byte[2];
             int xferLen = size;
             bResult = inCmdEndpoint.XferData(ref inData, ref xferLen);
+            int ret = 0;
             if (bResult)
             {
-                int ret = inData[0] | (((int)inData[1]) << 8);
-                return ret;
+                ret = inData[0] | (((int)inData[1]) << 8);
             }
-            return 0;
+            if (ret != val)
+            {
+                //this.textBox3.Text += "rec:" + ret + "\r\n";
+                //MessageBox.Show(ret + "");
+            }
+
+            return ret;
         }
 
 
         private void button12_Click(object sender, EventArgs e)
         {
+            int k = 0;
+
+            recAck(0);
+
+            sendCmd(0x072, k & 0xFF);
+            sendCmd(0x073, (k >> 8) & 0xFF);
+            sendCmd(0x074, (k >> 16) & 0xFF);
+            sendCmd(0x0B1, 0);
+
+            recAck(0);
+
+            int size = 1024;
+            bool bResult;
+            byte[] inData = new byte[size];
+            int xferLen = size;
+            bResult = inEndpoint.XferData(ref inData, ref xferLen);
+            string s = receivePage(inData);
+            textBox3.Text += xferLen + "\r\n";
+            textBox3.Text += s;
+
+            MessageBox.Show("done");
+        }
+
+        private byte[] ranArr(int size)
+        {
+            Random r = new Random();
+            byte[] outData = new byte[size];
+            r.NextBytes(outData);
+            return outData;
+        }
+
+        private void button13_Click(object sender, EventArgs e)
+        {
             int ret;
-            for (int a = 0; a < 512; a++)
+            for (int a = 0; a < 1; a++)
             {
                 int val = 0;
                 bool first = true;
@@ -598,7 +736,7 @@ namespace WindowsFormsApplication1
                     {
                         int size = 1024;
                         bool bResult;
-                        byte[] outData = new byte[size];
+                        byte[] outData = ranArr(size);// new byte[size];
                         for (int i = 0; i < size; i += 2)
                         {
                             outData[i] = (byte)(val & 0xFF);
@@ -610,11 +748,7 @@ namespace WindowsFormsApplication1
                     }
                     if (!first)
                     {
-                        ret = recAck();
-                        if (ret != 0x3412)
-                        {
-                            MessageBox.Show(ret + "");
-                        }
+                        recAck(0x3412);
                     }
                     else
                     {
@@ -623,12 +757,15 @@ namespace WindowsFormsApplication1
                     sendCmd(0x072, k & 0xFF);
                     sendCmd(0x073, (k >> 8) & 0xFF);
                     sendCmd(0x074, (k >> 16) & 0xFF);
-                    sendCmd(0x0A4, 0);
+                    sendCmd(0x0B0, 0);
                 }
+                recAck(0x3412);
+
                 this.Text = a + "";
                 Application.DoEvents();
             }
             MessageBox.Show("done");
+
         }
 
 
