@@ -20,12 +20,13 @@ module flow_led(
   output [12:0] sdram_addr,               //SDRAM 行/列地址
   inout  [15:0] sdram_data,               //SDRAM 数据
   output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
-
+ 
   output [7:0] debug,
 
   input [7:0] cy_B,
   input [7:0] cy_D,
-  input cy_CLK                       ,
+  input cy_SCL,
+  input cy_SDA,
   input cy_IFCLK                     ,
   input cy_to_fpga_CTL0_FLAGA        ,
   input cy_to_fpga_CTL2_FLAGC        ,
@@ -136,7 +137,8 @@ seg_led_hex595 (
 
 	 .cy_B(cy_B),
 	 .cy_D(cy_D),
-	 //input cy_CLK                       ,
+   .cy_SCL(cy_SCL)       ,
+   .cy_SDA(cy_SDA)       ,
 	 //input cy_IFCLK                     ,
 	 //input cy_to_fpga_CTL0_FLAGA        ,
 	 //input cy_to_fpga_CTL2_FLAGC        ,

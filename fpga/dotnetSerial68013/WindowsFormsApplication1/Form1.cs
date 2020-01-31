@@ -589,39 +589,44 @@ namespace WindowsFormsApplication1
         private void button12_Click(object sender, EventArgs e)
         {
             int ret;
-            int val = 0;
-            bool first = true;
-            for (int k = 0; k < 0x10000; k += 0x200)//1kword
+            for (int a = 0; a < 512; a++)
             {
+                int val = 0;
+                bool first = true;
+                for (int k = 0; k < 0x10000; k += 0x200)//1kword
                 {
-                    int size = 1024;
-                    bool bResult;
-                    byte[] outData = new byte[size];
-                    for (int i = 0; i < size; i += 2)
                     {
-                        outData[i] = (byte)(val & 0xFF);
-                        outData[i + 1] = (byte)(val >> 8);
-                        val++;
+                        int size = 1024;
+                        bool bResult;
+                        byte[] outData = new byte[size];
+                        for (int i = 0; i < size; i += 2)
+                        {
+                            outData[i] = (byte)(val & 0xFF);
+                            outData[i + 1] = (byte)(val >> 8);
+                            val++;
+                        }
+                        int xferLen = size;
+                        bResult = outEndpoint.XferData(ref outData, ref xferLen);
                     }
-                    int xferLen = size;
-                    bResult = outEndpoint.XferData(ref outData, ref xferLen);
-                }
-                if (!first)
-                {
-                    ret = recAck();
-                    if (ret != 0x3412)
+                    if (!first)
                     {
-                        MessageBox.Show(ret + "");
+                        ret = recAck();
+                        if (ret != 0x3412)
+                        {
+                            MessageBox.Show(ret + "");
+                        }
                     }
+                    else
+                    {
+                        first = false;
+                    }
+                    sendCmd(0x072, k & 0xFF);
+                    sendCmd(0x073, (k >> 8) & 0xFF);
+                    sendCmd(0x074, (k >> 16) & 0xFF);
+                    sendCmd(0x0A4, 0);
                 }
-                else
-                {
-                    first = false;
-                }
-                sendCmd(0x072, k & 0xFF);
-                sendCmd(0x073, (k >> 8) & 0xFF);
-                sendCmd(0x074, (k >> 16) & 0xFF);
-                sendCmd(0x0A4, 0);
+                this.Text = a + "";
+                Application.DoEvents();
             }
             MessageBox.Show("done");
         }

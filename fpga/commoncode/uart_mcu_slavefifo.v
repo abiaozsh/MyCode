@@ -7,7 +7,8 @@ module uart_mcu_slavefifo(
 
     input [7:0] cy_B,
     input [7:0] cy_D,
-    //input cy_CLK                       ,
+    input cy_SCL,
+    input cy_SDA,
     //input cy_IFCLK                     ,
     //input cy_to_fpga_CTL0_FLAGA        ,
     //input cy_to_fpga_CTL2_FLAGC        ,
@@ -227,6 +228,7 @@ reg [7:0] command;
 reg [7:0] data;
 reg [15:0] data_index;
 reg data_arrive;
+reg cy_rec_req_buff;
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     command <= 0;
@@ -235,6 +237,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     data_arrive<=0;
     cy_rec_ack<=0;
   end else begin
+	cy_rec_req_buff<=cy_rec_req;
     data_arrive <= 0;
     if (uart_rec_rise) begin //串口数据到达
       if(command==8'b0) begin
@@ -247,11 +250,11 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       end
     end
     
-    if(!cy_rec_req && cy_rec_ack)begin
+    if(!cy_rec_req_buff && cy_rec_ack)begin
       cy_rec_ack <= 0;
     end
     
-    if (cy_rec_req && !cy_rec_ack) begin //cy数据到达
+    if (cy_rec_req_buff && !cy_rec_ack) begin //cy数据到达
       command <= cy_cmd;
       cy_rec_ack <= 1;
     end
@@ -386,8 +389,8 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 
       end else if (command == 8'h70) begin uw_reg0<=cy_dat; command_done<=1;
       end else if (command == 8'h71) begin uw_reg1<=cy_dat; command_done<=1;
-      end else if (command == 8'h72) begin uw_reg2<=cy_dat;out_pin2<=cy_dat; command_done<=1;
-      end else if (command == 8'h73) begin uw_reg3<=cy_dat;out_pin3<=cy_dat; command_done<=1;
+      end else if (command == 8'h72) begin uw_reg2<=cy_dat; command_done<=1;
+      end else if (command == 8'h73) begin uw_reg3<=cy_dat; command_done<=1;
       end else if (command == 8'h74) begin uw_reg4<=cy_dat; command_done<=1;
       end else if (command == 8'h75) begin uw_reg5<=cy_dat; command_done<=1;
       end else if (command == 8'h76) begin uw_reg6<=cy_dat; command_done<=1;
@@ -497,7 +500,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           cy_from_fpga_A2_SLOE<=0;//on
           cy_from_fpga_RDY0_SLRD<=0;//on
           sdram_c_address <= {uw_reg4,uw_reg3,uw_reg2};
-        end else if(timer3==(512 * 4 + 1))begin																	//step5  n字*4+1
+        end else if(timer3==(512 * 4 + 2))begin																	//step5  n字*4+2
           cy_from_fpga_A2_SLOE<=1;//off
           cy_from_fpga_RDY0_SLRD<=1;//off
           timer3<=0;
