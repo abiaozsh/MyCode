@@ -479,6 +479,10 @@ namespace WindowsFormsApplication1
         {
             //Marshal.
             int size = 16 * 1024 * 1024;
+            if (is2M)
+            {
+                size = 1 * 1024 * 1024;
+            }
 
             byte[] buff = new byte[size * 2];
             byte[] buff2 = new byte[size * 2];
@@ -503,7 +507,14 @@ namespace WindowsFormsApplication1
                 sendCmd(0x072, k & 0xFF);
                 sendCmd(0x073, (k >> 8) & 0xFF);
                 sendCmd(0x074, (k >> 16) & 0xFF);
-                sendCmd(0x0B0, 0);
+                if (is2M)
+                {
+                    sendCmd(0x0C0, 0);
+                }
+                else
+                {
+                    sendCmd(0x0B0, 0);
+                }
                 this.Text = "" + (k * 100 / size);
                 Application.DoEvents();
             }
@@ -528,7 +539,14 @@ namespace WindowsFormsApplication1
                 sendCmd(0x072, k & 0xFF);
                 sendCmd(0x073, (k >> 8) & 0xFF);
                 sendCmd(0x074, (k >> 16) & 0xFF);
-                sendCmd(0x0B1, 0);
+                if (is2M)
+                {
+                    sendCmd(0x0C1, 0);
+                }
+                else
+                {
+                    sendCmd(0x0B1, 0);
+                }
 
                 recAck(0);
 
@@ -551,11 +569,6 @@ namespace WindowsFormsApplication1
 
 
             MessageBox.Show("done" + pos);
-
-
-
-
-
 
         }
 
@@ -690,6 +703,7 @@ namespace WindowsFormsApplication1
             return ret;
         }
 
+        bool is2M = true;
 
         private void button12_Click(object sender, EventArgs e)
         {
@@ -700,7 +714,14 @@ namespace WindowsFormsApplication1
             sendCmd(0x072, k & 0xFF);
             sendCmd(0x073, (k >> 8) & 0xFF);
             sendCmd(0x074, (k >> 16) & 0xFF);
-            sendCmd(0x0B1, 0);
+            if (is2M)
+            {
+                sendCmd(0x0C1, 0);
+            }
+            else
+            {
+                sendCmd(0x0B1, 0);
+            }
 
             recAck(0);
 
@@ -727,45 +748,48 @@ namespace WindowsFormsApplication1
         private void button13_Click(object sender, EventArgs e)
         {
             int ret;
-            for (int a = 0; a < 1; a++)
+            int val = 0;
+            bool first = true;
             {
-                int val = 0;
-                bool first = true;
-                for (int k = 0; k < 0x10000; k += 0x200)//1kword
-                {
-                    {
-                        int size = 1024;
-                        bool bResult;
-                        byte[] outData = ranArr(size);// new byte[size];
-                        for (int i = 0; i < size; i += 2)
-                        {
-                            outData[i] = (byte)(val & 0xFF);
-                            outData[i + 1] = (byte)(val >> 8);
-                            val++;
-                        }
-                        int xferLen = size;
-                        bResult = outEndpoint.XferData(ref outData, ref xferLen);
-                    }
-                    if (!first)
-                    {
-                        recAck(0x3412);
-                    }
-                    else
-                    {
-                        first = false;
-                    }
-                    sendCmd(0x072, k & 0xFF);
-                    sendCmd(0x073, (k >> 8) & 0xFF);
-                    sendCmd(0x074, (k >> 16) & 0xFF);
-                    sendCmd(0x0B0, 0);
-                }
-                recAck(0x3412);
-
-                this.Text = a + "";
-                Application.DoEvents();
+                int size = 1024;
+                bool bResult;
+                byte[] outData = ranArr(size);// new byte[size];
+                string s = receivePage(outData);
+                textBox3.Text += s;
+                int xferLen = size;
+                bResult = outEndpoint.XferData(ref outData, ref xferLen);
             }
+            if (!first)
+            {
+                recAck(0x3412);
+            }
+            else
+            {
+                first = false;
+            }
+            int k = 0;
+            sendCmd(0x072, k & 0xFF);
+            sendCmd(0x073, (k >> 8) & 0xFF);
+            sendCmd(0x074, (k >> 16) & 0xFF);
+            if (is2M)
+            {
+                sendCmd(0x0C0, 0);
+            }
+            else
+            {
+                sendCmd(0x0B0, 0);
+            }
+
+            recAck(0x3412);
+
+
             MessageBox.Show("done");
 
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            this.is2M = this.checkBox1.Checked;
         }
 
 

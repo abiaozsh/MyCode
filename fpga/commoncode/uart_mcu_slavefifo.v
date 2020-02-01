@@ -65,8 +65,18 @@ module uart_mcu_slavefifo(
     output [12:0] sdram_addr,               //SDRAM 行/列地址
     inout  [15:0] sdram_data,               //SDRAM 数据
     output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
-    output        sdram_prob_refresh,
-    
+
+    //SDRAM2m 芯片接口
+    output        sdram2m_clk_out,            //SDRAM 芯片时钟
+    output        sdram2m_cke,                //SDRAM 时钟有效
+    output        sdram2m_cs_n,               //SDRAM 片选
+    output        sdram2m_ras_n,              //SDRAM 行有效
+    output        sdram2m_cas_n,              //SDRAM 列有效
+    output        sdram2m_we_n,               //SDRAM 写有效
+    output        sdram2m_ba,                 //SDRAM Bank地址
+    output [10:0] sdram2m_addr,               //SDRAM 行/列地址
+    inout  [15:0] sdram2m_data,               //SDRAM 数据
+
     
 		output reg out_clk,
 		output reg out_rst,
@@ -498,13 +508,6 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         end
         
  
-      //cy_from_fpga_A2_SLOE<=1;
-      //cy_from_fpga_RDY0_SLRD<=1;
-      //cy_from_fpga_RDY1_SLWR<=1;
-      //cy_from_fpga_A4_FIFOADR0<=0;
-      //cy_from_fpga_A5_FIFOADR1<=0;
-      //cy_from_fpga_A6_PKTEND<=1;
-        
       end else if (command == 8'hB0) begin//sdram long write ok
         timer3 <= timer3 + 1'b1;
         sdram_c_write_latch_address<=0;
@@ -581,7 +584,84 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           timer2<=0;
         end
         
+		  
+
+      end else if (command == 8'hC0) begin//sdram2m long write ok
+        timer3 <= timer3 + 1'b1;
+        sdram2m_c_write_latch_address<=0;
+
+        if         (timer3==0)begin																	//step0
+          cy_from_fpga_A2_SLOE<=0;//on
+          cy_from_fpga_RDY0_SLRD<=0;//on
+          sdram2m_c_address <= {uw_reg4,uw_reg3,uw_reg2};
+        end else if(timer3==(512 * 4 + 2))begin																	//step5  n字*4+2
+          cy_from_fpga_A2_SLOE<=1;//off
+          cy_from_fpga_RDY0_SLRD<=1;//off
+          timer3<=0;
+          command_done<=1;
+          cy_snd_req <= 1;
+          cy_snd_data0 <= 8'h12;
+          cy_snd_data1 <= 8'h34;
+        end else begin
+          if         (timer3[1:0]==1)begin																	//step1
+            cy_from_fpga_RDY0_SLRD<=0;//on
+          end else if(timer3[1:0]==2)begin																	//step2
+            cy_from_fpga_RDY0_SLRD<=1;//off
+            //读取 并写入sdram2m
+            sdram2m_c_write_en<=1;
+            if(timer3==2)begin sdram2m_c_write_latch_address<=1; end
+            sdram2m_c_data_in<={cy_D,cy_B};
+          end else if(timer3[1:0]==3)begin																	//step3
+            cy_from_fpga_RDY0_SLRD<=1;//off
+            sdram2m_c_write_en<=0;
+          end else begin																			//step4
+            cy_from_fpga_RDY0_SLRD<=0;//on
+            sdram2m_c_write_en<=0;
+          end
+        end
         
+
+      end else if (command == 8'hC1) begin//sdram2m long read
+        timer2<=timer2+1'b1;
+        
+        if(timer2==0)begin
+          if(timer==0)begin//锁存地址
+            sdram2m_c_address <= {uw_reg4,uw_reg3,uw_reg2};
+            sum16 <= 0;
+            cy_from_fpga_A4_FIFOADR0<=0;//set channel
+            cy_from_fpga_A5_FIFOADR1<=1;
+            cy_out_to_pc<=1;//set out
+          end else begin
+            sdram2m_c_address <= sdram2m_c_address + 1'b1;
+            
+          end
+          sdram2m_c_read_req<=1;
+        end else if(timer2==30) begin//sdram2m 响应
+          if(!sdram2m_c_read_ack)begin
+            //err
+          end
+          timer<=timer+1'b1;
+          sdram2m_c_read_req<=0;
+          sum16 <= sum16 + sdram2m_c_data_out;
+          cy_D_out = sdram2m_c_data_out[15:8];
+          cy_B_out = sdram2m_c_data_out[7:0];
+          cy_from_fpga_RDY1_SLWR<=0;//set wr
+ 
+        end else if(timer2==60)begin
+			cy_from_fpga_RDY1_SLWR<=1;//set wr
+          if(timer==513)begin
+            cy_from_fpga_A4_FIFOADR0<=0;//set channel
+            cy_from_fpga_A5_FIFOADR1<=0;
+            cy_out_to_pc<=0;//set out
+            timer<=0;
+            command_done<=1;
+            cy_snd_req <= 1;
+            cy_snd_data1 <= sum16[15:8];
+            cy_snd_data0 <= sum16[7:0];
+          end
+          timer2<=0;
+        end
+                
         
       end
     end
@@ -605,11 +685,6 @@ reg  sdram_c_write_req;
 wire  sdram_c_write_ack;
 reg sdram_c_write_en;
 reg sdram_c_write_latch_address;
-//wire [7:0] probe_timer8;
-//wire [7:0] probe_locked_time;
-//wire [7:0] probe_sdram_init_done_timer;
-//wire [7:0] probe_readBuffer0;
-wire sdram_c_vga;
 sdram ins_sdram(
   .sys_clk    (sys_clk  ),       // 时钟信号
   .sys_rst_n  (sys_rst_n),       // 复位信号
@@ -625,19 +700,7 @@ sdram ins_sdram(
   .sdram_addr			(sdram_addr),		//SDRAM 行/列地址
   .sdram_data			(sdram_data),		//SDRAM 数据	
   .sdram_dqm		(sdram_dqm),
-  
-  //.sdram_prob_refresh  (sdram_prob_refresh),
-  //.debug_port0(debug_port0),
-  //.debug_port1(debug_port1),
-  //.debug_port2(debug_port2),
-  //.debug_pin0(debug_pin0),
-  //.debug_pin1(debug_pin1),
-  //.debug_pin2(debug_pin2),
-  //.debug_pin3(debug_pin3),
-  //.debug_pin6(debug_pin6),
-  //.debug_pin7(debug_pin7),
 
-  
   .clk        (sys_clk),//in
   .address    (sdram_c_address),//in
   .data_in    (sdram_c_data_in),//in
@@ -647,15 +710,46 @@ sdram ins_sdram(
   .write_req  (sdram_c_write_req),//in
   .write_ack  (sdram_c_write_ack),//out
   .write_en   (sdram_c_write_en),//in
-  .write_latch_address(sdram_c_write_latch_address),//in
-
-  //.probe_timer8 (probe_timer8),
-  //.probe_locked_time (probe_locked_time),
-  //.probe_sdram_init_done_timer (probe_sdram_init_done_timer),
-  //.probe_readBuffer0 (probe_readBuffer0),
-  .vga        (sdram_c_vga)//out
+  .write_latch_address(sdram_c_write_latch_address)//in
 );
 
+
+reg [19:0] sdram2m_c_address;
+reg [15:0] sdram2m_c_data_in;
+wire [15:0] sdram2m_c_data_out;
+reg  sdram2m_c_read_req;
+wire  sdram2m_c_read_ack;
+reg  sdram2m_c_write_req;
+wire  sdram2m_c_write_ack;
+reg sdram2m_c_write_en;
+reg sdram2m_c_write_latch_address;
+sdram2m(
+  .sys_clk    (sys_clk  ),       // 时钟信号
+  .sys_rst_n  (sys_rst_n),       // 复位信号
+
+  //SDRAM 芯片接口
+  .sdram_clk_out     (sdram2m_clk_out),
+  .sdram_cke			(sdram2m_cke),		//SDRAM 时钟有效
+  .sdram_cs_n			(sdram2m_cs_n),		//SDRAM 片选
+  .sdram_ras_n		(sdram2m_ras_n),		//SDRAM 行有效	
+  .sdram_cas_n		(sdram2m_cas_n),		//SDRAM 列有效
+  .sdram_we_n			(sdram2m_we_n),		//SDRAM 写有效
+  .sdram_ba			  (sdram2m_ba),			//SDRAM Bank地址
+  .sdram_addr			(sdram2m_addr),		//SDRAM 行/列地址
+  .sdram_data			(sdram2m_data),		//SDRAM 数据	
+
+  .clk        (sys_clk),//in
+  .address    (sdram2m_c_address),//in
+  .data_in    (sdram2m_c_data_in),//in
+  .data_out   (sdram2m_c_data_out),//out
+  .read_req   (sdram2m_c_read_req),//in
+  .read_ack   (sdram2m_c_read_ack),//out
+  .write_req  (sdram2m_c_write_req),//in
+  .write_ack  (sdram2m_c_write_ack),//out
+  .write_en   (sdram2m_c_write_en),//in
+  .write_latch_address(sdram2m_c_write_latch_address)//in
+
+);
 
 
 endmodule
