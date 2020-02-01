@@ -77,25 +77,46 @@ set_location_assignment PIN_A20 -to segled_dat
 
 #3V3
 #GND里 V H   
-set_location_assignment PIN_R2 -to vga_rgb[15]
-set_location_assignment PIN_R1 -to vga_rgb[14]
-set_location_assignment PIN_P2 -to vga_rgb[13]
-set_location_assignment PIN_P1 -to vga_rgb[12]
-set_location_assignment PIN_N2 -to vga_rgb[11]
-set_location_assignment PIN_N1 -to vga_rgb[10]
-set_location_assignment PIN_M2 -to vga_rgb[9]
-set_location_assignment PIN_M1 -to vga_rgb[8]
-set_location_assignment PIN_J2 -to vga_rgb[7]
-set_location_assignment PIN_J1 -to vga_rgb[6]
-set_location_assignment PIN_H2 -to vga_rgb[5]
-set_location_assignment PIN_H1 -to vga_rgb[4]
-set_location_assignment PIN_F2 -to vga_rgb[3]
-set_location_assignment PIN_F1 -to vga_rgb[2]
-set_location_assignment PIN_D2 -to vga_rgb[1]
-set_location_assignment PIN_E1 -to vga_rgb[0]
+#set_location_assignment PIN_R2 -to vga_rgb[15]
+#set_location_assignment PIN_R1 -to vga_rgb[14]
+#set_location_assignment PIN_P2 -to vga_rgb[13]
+#set_location_assignment PIN_P1 -to vga_rgb[12]
+#set_location_assignment PIN_N2 -to vga_rgb[11]
+#set_location_assignment PIN_N1 -to vga_rgb[10]
+#set_location_assignment PIN_M2 -to vga_rgb[9]
+#set_location_assignment PIN_M1 -to vga_rgb[8]
+#set_location_assignment PIN_J2 -to vga_rgb[7]
+#set_location_assignment PIN_J1 -to vga_rgb[6]
+#set_location_assignment PIN_H2 -to vga_rgb[5]
+#set_location_assignment PIN_H1 -to vga_rgb[4]
+#set_location_assignment PIN_F2 -to vga_rgb[3]
+#set_location_assignment PIN_F1 -to vga_rgb[2]
+#set_location_assignment PIN_D2 -to vga_rgb[1]
+#set_location_assignment PIN_E1 -to vga_rgb[0]
+#set_location_assignment PIN_C2 -to vga_hs
+#set_location_assignment PIN_C1 -to vga_vs
 
-set_location_assignment PIN_C2 -to vga_hs
-set_location_assignment PIN_C1 -to vga_vs
+#flip
+set_location_assignment PIN_R1 -to vga_hs
+set_location_assignment PIN_P1 -to vga_rgb[1]
+set_location_assignment PIN_N1 -to vga_rgb[3]
+set_location_assignment PIN_M1 -to vga_rgb[5]
+set_location_assignment PIN_J1 -to vga_rgb[7]
+set_location_assignment PIN_H1 -to vga_rgb[9]
+set_location_assignment PIN_F1 -to vga_rgb[11]
+set_location_assignment PIN_E1 -to vga_rgb[13]
+set_location_assignment PIN_C1 -to vga_rgb[15]
+set_location_assignment PIN_R2 -to vga_vs
+set_location_assignment PIN_P2 -to vga_rgb[0]
+set_location_assignment PIN_N2 -to vga_rgb[2]
+set_location_assignment PIN_M2 -to vga_rgb[4]
+set_location_assignment PIN_J2 -to vga_rgb[6]
+set_location_assignment PIN_H2 -to vga_rgb[8]
+set_location_assignment PIN_F2 -to vga_rgb[10]
+set_location_assignment PIN_D2 -to vga_rgb[12]
+set_location_assignment PIN_C2 -to vga_rgb[14]
+
+
 
 set_location_assignment PIN_B19 -to uart_rx_from_pc
 set_location_assignment PIN_B20 -to uart_tx_to_pc
