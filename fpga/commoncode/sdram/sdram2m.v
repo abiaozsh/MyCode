@@ -34,62 +34,61 @@ module sdram2m(
     input write_en,//写入过程中保持高,要从8字前边界开始写，地址0x00,0x08,0x10...,否则会覆盖原有数据
     output [23:0] write_address,
 
-		input        write_buff_req,
-		output reg   write_buff_ack,
-		input [15:0] buff_write_data,
-		input  [9:0] buff_write_addr,
-		input        buff_write_clk,
-		input        buff_write_en,
+    input        write_buff_req,
+    output reg   write_buff_ack,
+    input [15:0] buff_write_data,
+    input  [9:0] buff_write_addr,
+    input        buff_write_clk,
+    input        buff_write_en,
 
-		input         read_buffA_req,
-		input         read_buffB_req,
-		input   [9:0] read_buff_addr,
+    input         read_buffA_req,
+    input         read_buffB_req,
+    input   [9:0] read_buff_addr,
 
-		output [15:0] buff_readA_data,
-		input   [9:0] buff_readA_addr,
-		input         buff_readA_clk,
+    output [15:0] buff_readA_data,
+    input   [9:0] buff_readA_addr,
+    input         buff_readA_clk,
 
-		output [15:0] buff_readB_data,
-		input   [9:0] buff_readB_addr,
-		input         buff_readB_clk,
+    output [15:0] buff_readB_data,
+    input   [9:0] buff_readB_addr,
+    input         buff_readB_clk,
 
-		input dummy
+    input dummy
 );
 
 buff1024x16	buffWrite (
-	.data ( buff_write_data ),
-	.wraddress ( buff_write_addr ),
-	.wrclock ( buff_write_clk ),
-	.wren ( buff_write_en ),
-	
-	.rdaddress ( rdaddress_sig ),
-	.rdclock ( sdram_clk ),
-	.q ( q_sig )
-	);
-	
-buff1024x16	buffReadA (
-	.data ( data_sig ),
-	.wraddress ( wraddress_sig ),
-	.wrclock ( sdram_clk ),
-	.wren ( wren_sig ),
-	
-	.rdaddress ( buff_readA_addr ),
-	.rdclock ( buff_readA_clk ),
-	.q ( buff_readA_data )
-	);
-	
-buff1024x16	buffReadB (
-	.data ( data_sig ),
-	.wraddress ( wraddress_sig ),
-	.wrclock ( sdram_clk ),
-	.wren ( wren_sig ),
-	
-	.rdaddress ( buff_readB_addr ),
-	.rdclock ( buff_readB_clk ),
-	.q ( buff_readB_data )
-	);
+  .data ( buff_write_data ),
+  .wraddress ( buff_write_addr ),
+  .wrclock ( buff_write_clk ),
+  .wren ( buff_write_en ),
 
-	
+  .rdaddress ( rdaddress_sig ),
+  .rdclock ( sdram_clk ),
+  .q ( q_sig )
+);
+
+buff1024x16	buffReadA (
+  .data ( data_sig ),
+  .wraddress ( wraddress_sig ),
+  .wrclock ( sdram_clk ),
+  .wren ( wren_sig ),
+
+  .rdaddress ( buff_readA_addr ),
+  .rdclock ( buff_readA_clk ),
+  .q ( buff_readA_data )
+);
+
+buff1024x16	buffReadB (
+  .data ( data_sig ),
+  .wraddress ( wraddress_sig ),
+  .wrclock ( sdram_clk ),
+  .wren ( wren_sig ),
+
+  .rdaddress ( buff_readB_addr ),
+  .rdclock ( buff_readB_clk ),
+  .q ( buff_readB_data )
+);
+
 wire rst_n;
 wire clk_50m;
 wire clk_100m;
@@ -351,17 +350,20 @@ end
 
 
 
-reg read_vga_sdram_req_last;
-reg read_sdram_req_last;
-reg write_single_sdram_req_last;
-reg write_sdram_req_last;
+reg read_buffA_req_buff;
+reg read_buffB_req_buff;
+reg read_sdram_req_buff;
+reg write_single_sdram_req_buff;
+reg write_sdram_req_buff;
 
-reg read_vga_sdram_ack;
+reg read_buffA_ack;
+reg read_buffB_ack;
 reg read_sdram_ack;
 reg write_single_sdram_ack;
 reg write_sdram_ack;
 
-reg [7:0]  sdram_timer8;
+reg        sdram_timer0;
+reg [4:0]  sdram_timer8;
 reg [15:0] readBuffer0;
 reg [15:0] readBuffer1;
 reg [15:0] readBuffer2;
@@ -371,13 +373,17 @@ reg [15:0] readBuffer3;
 always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
   if(!sys_rst_n) begin
     sdram_timer8 <= 0;
+    sdram_timer0 <= 0;
     
-    read_vga_sdram_req_last <= 0;
-    read_sdram_req_last <= 0;
-    write_single_sdram_req_last <= 0;
-    write_sdram_req_last <= 0;
+		
+    read_buffA_req_buff <= 0;
+		read_buffB_req_buff <= 0;
+    read_sdram_req_buff <= 0;
+    write_single_sdram_req_buff <= 0;
+    write_sdram_req_buff <= 0;
     
-    read_vga_sdram_ack <= 0;
+    read_buffA_ack <= 0;
+    read_buffB_ack <= 0;
     read_sdram_ack <= 0;
     write_single_sdram_ack <= 0;
     write_sdram_ack <= 0;
@@ -386,19 +392,20 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     sdram_rd_burst <= 0;
     
   end else begin
-    read_vga_sdram_req_last <= read_vga_sdram_req;
-    read_sdram_req_last <= read_sdram_req;
-    write_single_sdram_req_last <= write_single_sdram_req;
-    write_sdram_req_last <= write_sdram_req;
+    read_buffA_req_buff <= read_buffA_req;
+    read_buffB_req_buff <= read_buffB_req;
+    read_sdram_req_buff <= read_sdram_req;
+    write_single_sdram_req_buff <= write_single_sdram_req;
+    write_sdram_req_buff <= write_sdram_req;
     
-    if          (read_vga_sdram_req && !read_vga_sdram_ack)begin
-      //read vga
-			//input         read_buffA_req,
-			//input         read_buffB_req,
+    if          (read_buffA_req_buff && !read_buffA_ack)begin
+
 			//input   [9:0] read_buff_addr,
+    end else if (read_buffB_req_buff && !read_buffB_ack)begin
       
-    end else if (read_sdram_req && !read_sdram_ack)begin
-      if(!read_sdram_req_last)begin
+    end else if (read_sdram_req_buff && !read_sdram_ack)begin
+      sdram_timer0 <= 1;
+      if(sdram_timer0 == 0)begin
         sdram_rd_addr <= {address[19:2],2'b0};
         sdram_rd_burst <= 4;
         sdram_timer8 <= 0;
@@ -411,13 +418,15 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
           end else if(sdram_timer8==2)begin readBuffer2 <= sdram_dout;
           end else if(sdram_timer8==3)begin readBuffer3 <= sdram_dout;
             sdram_rd_req <= 0;
+            sdram_timer0 <= 0;
             read_sdram_ack <= 1;
           end else begin
           end
         end
       end
-    end else if (write_single_sdram_req && !write_single_sdram_ack)begin
-      if(!write_single_sdram_req_last)begin
+    end else if (write_single_sdram_req_buff && !write_single_sdram_ack)begin
+      sdram_timer0 <= 1;
+      if(sdram_timer0 == 0)begin
         sdram_wr_addr <= address;
         sdram_wr_burst <= 1;
         sdram_timer8 <= 0;
@@ -428,12 +437,14 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
           if         (sdram_timer8==0)begin sdram_din <= data_in;
           end else if(sdram_timer8==1)begin
             sdram_wr_req <= 0;
+            sdram_timer0 <= 0;
             write_single_sdram_ack <= 1;
           end
         end
       end
-    end else if(write_sdram_req && !write_sdram_ack)begin
-      if(!write_sdram_req_last) begin
+    end else if(write_sdram_req_buff && !write_sdram_ack)begin
+      sdram_timer0 <= 1;
+      if(sdram_timer0 == 0) begin
         sdram_wr_addr <= {writeAddressSdram,4'b0};//16bit+4bit
         sdram_wr_burst <= 16;
         sdram_timer8 <= 0;
@@ -459,6 +470,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
           end else if(sdram_timer8==15)begin sdram_din <= writeBufferBackF;
           end else if(sdram_timer8==16)begin
             sdram_wr_req <= 0;
+            sdram_timer0 <= 0;
             write_sdram_ack <= 1;
           end else begin
           end
@@ -466,16 +478,21 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
       end
       
     end else begin
-      if(!read_vga_sdram_req && read_vga_sdram_ack)begin
-        read_vga_sdram_ack <= 0;
+    
+      if(!read_buffA_req_buff && read_buffA_ack)begin
+        read_buffA_ack <= 0;
       end
-      if(!read_sdram_req && read_sdram_ack)begin
+      if(!read_buffB_req_buff && read_buffB_ack)begin
+        read_buffB_ack <= 0;
+      end
+      
+      if(!read_sdram_req_buff && read_sdram_ack)begin
         read_sdram_ack <= 0;
       end
-      if(!write_single_sdram_req && write_single_sdram_ack)begin
+      if(!write_single_sdram_req_buff && write_single_sdram_ack)begin
         write_single_sdram_ack <= 0;
       end
-      if(!write_sdram_req && write_sdram_ack)begin
+      if(!write_sdram_req_buff && write_sdram_ack)begin
         write_sdram_ack <= 0;
       end
     end
