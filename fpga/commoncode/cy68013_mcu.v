@@ -464,22 +464,22 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           timer2<=0;
         end
                 
-      end else if (command == 8'hF1) begin//srambuff long read
-        sdram2m_read_buff_addr <= {cy_address2,cy_address1,cy_address0};
-        sdram2m_read_buffA_req <= 1;
-        command_done<=1;
-      end else if (command == 8'hF2) begin//srambuff long read
-        sdram2m_read_buffA_req <= 0;
-        command_done<=1;
-      end else if (command == 8'hF3) begin//srambuff long read
-        sdram2m_buff_buff_readA_addr <= {cy_address2,cy_address1,cy_address0};
-        command_done<=1;
-
-      end else if (command == 8'hF4) begin//srambuff long read
-        cy_snd_req <= 1;
-        cy_snd_data1 <= sdram2m_buff_buff_readA_data[15:8];
-        cy_snd_data0 <= sdram2m_buff_buff_readA_data[7:0];
-        command_done<=1;
+//      end else if (command == 8'hF1) begin//srambuff long read
+//        sdram2m_read_buff_addr <= {cy_address2,cy_address1,cy_address0};
+//        sdram2m_read_buffA_req <= 1;
+//        command_done<=1;
+//      end else if (command == 8'hF2) begin//srambuff long read
+//        sdram2m_read_buffA_req <= 0;
+//        command_done<=1;
+//      end else if (command == 8'hF3) begin//srambuff long read
+//        sdram2m_buff_buff_readA_addr <= {cy_address2,cy_address1,cy_address0};
+//        command_done<=1;
+//
+//      end else if (command == 8'hF4) begin//srambuff long read
+//        cy_snd_req <= 1;
+//        cy_snd_data1 <= sdram2m_buff_buff_readA_data[15:8];
+//        cy_snd_data0 <= sdram2m_buff_buff_readA_data[7:0];
+//        command_done<=1;
 
       end
     end
@@ -549,18 +549,16 @@ reg [9:0]  sdram2m_buff_write_addr;//input [9:0]  buff_write_addr,
 reg        sdram2m_buff_write_clk ;//input        buff_write_clk,
 reg        sdram2m_buff_write_en  ;//input        buff_write_en,
 
-reg         sdram2m_read_buffA_req;//input read_buffA_req,
-reg         sdram2m_read_buffB_req;//input read_buffB_req,
-reg   [9:0] sdram2m_read_buff_addr;//input [9:0] read_buff_addr,
-wire [15:0] sdram2m_buff_buff_readA_data;//output [15:0] buff_readA_data,
-reg   [9:0] sdram2m_buff_buff_readA_addr;//input [9:0]   buff_readA_addr,
-wire        sdram2m_buff_buff_readA_clk;//input         buff_readA_clk,
+wire         sdram2m_read_buffA_req;//input read_buffA_req,
+wire         sdram2m_read_buffB_req;//input read_buffB_req,
+wire   [9:0] sdram2m_read_buff_addr;//input [9:0] read_buff_addr,
+wire  [15:0] sdram2m_buff_buff_readA_data;//output [15:0] buff_readA_data,
+wire   [9:0] sdram2m_buff_buff_readA_addr;//input [9:0]   buff_readA_addr,
+wire         sdram2m_buff_buff_readA_clk;//input         buff_readA_clk,
 
-assign sdram2m_buff_buff_readA_clk = sys_clk;
-
-wire [15:0] sdram2m_buff_buff_readB_data;//output [15:0] buff_readB_data,
-reg   [9:0] sdram2m_buff_buff_readB_addr;//input [9:0]   buff_readB_addr,
-reg         sdram2m_buff_buff_readB_clk ;//input         buff_readB_clk,
+wire [15:0]  sdram2m_buff_buff_readB_data;//output [15:0] buff_readB_data,
+wire   [9:0] sdram2m_buff_buff_readB_addr;//input [9:0]   buff_readB_addr,
+wire         sdram2m_buff_buff_readB_clk ;//input         buff_readB_clk,
 
 
 sdram2m(
@@ -622,10 +620,20 @@ vga_driver u_vga_driver(
     .sys_rst_n      (sys_rst_n),    
 
   .vga_mode (vga_mode),
+
+    .read_buffA_req (sdram2m_read_buffA_req      ),
+    .read_buffB_req (sdram2m_read_buffB_req      ),
+    .read_buff_addr (sdram2m_read_buff_addr      ),
+    .buff_readA_data(sdram2m_buff_buff_readA_data),
+    .buff_readA_addr(sdram2m_buff_buff_readA_addr),
+    .buff_readA_clk (sdram2m_buff_buff_readA_clk ),
+    .buff_readB_data(sdram2m_buff_buff_readB_data),
+    .buff_readB_addr(sdram2m_buff_buff_readB_addr),
+    .buff_readB_clk (sdram2m_buff_buff_readB_clk ),
+    
     .vga_hs         (vga_hs),       
     .vga_vs         (vga_vs),       
-    .vga_rgb        (vga_rgb),      
-    
+    .vga_rgb        (vga_rgb)
     ); 
     
 

@@ -106,35 +106,37 @@ always @ (posedge clk or negedge rst_n) begin
   end
 end
 
-//替换成10位 9:0
-reg [11:0] cnt_refresh;//刷新计数寄存器
-//刷新计数器循环计数7812ns (60ms内完成全部8192行刷新操作)
-always @ (posedge clk or negedge rst_n) begin
-  if(!rst_n) begin
-    cnt_refresh <= 12'd0;
-  end else begin
-    if(cnt_refresh == 12'd3125) begin // 64ms/2048 =31250ns
-      cnt_refresh <= 12'd0;
-    end else begin
-      cnt_refresh <= cnt_refresh + 1'b1;
-    end
-  end
-end
+// //替换成10位 9:0
+// reg [11:0] cnt_refresh;//刷新计数寄存器
+// //刷新计数器循环计数7812ns (60ms内完成全部8192行刷新操作)
+// always @ (posedge clk or negedge rst_n) begin
+//   if(!rst_n) begin
+//     cnt_refresh <= 12'd0;
+//   end else begin
+//     if(cnt_refresh == 12'd3125) begin // 64ms/2048 =31250ns
+//       cnt_refresh <= 12'd0;
+//     end else begin
+//       cnt_refresh <= cnt_refresh + 1'b1;
+//     end
+//   end
+// end
+// 
+// reg sdram_ref_req; //SDRAM 自动刷新请求信号
+// //SDRAM 刷新请求
+// always @ (posedge clk or negedge rst_n)begin
+//   if(!rst_n) begin
+//     sdram_ref_req <= 1'b0;
+//   end else begin
+//     if(cnt_refresh == 12'd3125 && !block_auto_refresh) begin
+//       sdram_ref_req <= 1'b1;//刷新计数器计时达7812ns时产生刷新请求
+//     end else if(sdram_ref_ack) begin
+//       sdram_ref_req <= 1'b0;//收到刷新请求响应信号后取消刷新请求 
+//     end
+//   end
+// end
+wire sdram_ref_req;
+assing sdram_ref_req = 0;
 
-
-reg sdram_ref_req; //SDRAM 自动刷新请求信号
-//SDRAM 刷新请求
-always @ (posedge clk or negedge rst_n)begin
-  if(!rst_n) begin
-    sdram_ref_req <= 1'b0;
-  end else begin
-    if(cnt_refresh == 12'd3125 && !block_auto_refresh) begin
-      sdram_ref_req <= 1'b1;//刷新计数器计时达7812ns时产生刷新请求
-    end else if(sdram_ref_ack) begin
-      sdram_ref_req <= 1'b0;//收到刷新请求响应信号后取消刷新请求 
-    end
-  end
-end
 
 //    output reg [9:0] cnt_clk,	        //时钟计数器
 reg [9:0] cnt_clk;                 // 延时计数器

@@ -440,7 +440,6 @@ namespace WindowsFormsApplication1
 
 
             sendCmd((is2M ? 0x0B0 : 0xA0) + 0, 0);
-
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -487,6 +486,38 @@ namespace WindowsFormsApplication1
                 textBox3.Text += getHex4(data) + " ";
             }
 
+        }
+
+        private void button7_Click_1(object sender, EventArgs e)
+        {
+            Bitmap b = new Bitmap("e:\\alaxulwjzxh9736.jpg");
+            for (int x = 0; x < 1024; x++)
+            {
+                for (int y = 0; y < 768; y++)
+                {
+                    var c = b.GetPixel(x, y);
+                    setpixel(x, y, c.R, c.G, c.B);
+                }
+            }
+
+
+        }
+
+
+        private void setpixel(int x, int y, int r, int g, int b)
+        {
+            int addr = y * 1024 + x;
+            sendCmd(0x012, addr & 0xFF);
+            sendCmd(0x013, (addr >> 8) & 0xFF);
+            sendCmd(0x014, (addr >> 16) & 0xFF);
+
+            int val = 0;
+            val += (r >> 3) << (5 + 6);
+            val += (g >> 2) << (5);
+            val += (b >> 3);
+            sendCmd(0x010, val & 0xFF);
+            sendCmd(0x011, (val >> 8) & 0xFF);
+            sendCmd((0x0B0 + 0), 0);
         }
 
 

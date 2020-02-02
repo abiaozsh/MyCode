@@ -81,10 +81,12 @@ buff1024x16	buffReadA (
   .q ( buff_readA_data )
 );
 
-reg buffB_wren;
+reg [15:0] buffB_wrdata;
+reg [9:0]  buffB_wraddress;
+reg        buffB_wren;
 buff1024x16	buffReadB (
-  .data ( data_sig ),
-  .wraddress ( wraddress_sig ),
+  .data ( buffB_wrdata ),
+  .wraddress ( buffB_wraddress ),
   .wrclock ( sdram_clk ),
   .wren ( buffB_wren ),
 
@@ -408,6 +410,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     write_sdram_req_buff <= write_sdram_req;
     
     buffA_wren<=0;
+    buffB_wren<=0;
     if          (read_buffA_req_buff && !read_buffA_ack)begin
       sdram_timer0 <= 1;
       if(sdram_timer0 == 0)begin
@@ -442,9 +445,40 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
         end
       end
 
-			//input   [9:0] read_buff_addr,
     end else if (read_buffB_req_buff && !read_buffB_ack)begin
-      
+      sdram_timer0 <= 1;
+      if(sdram_timer0 == 0)begin
+        if         (sdram_timer1 == 0) begin sdram_add_high <= 0; sdram_timer1 <= 1; sdram_rd_addr <= {read_buff_addr,2'b00,8'b0}; //10+2+8
+        end else if(sdram_timer1 == 1) begin sdram_add_high <= 1; sdram_timer1 <= 2; sdram_rd_addr <= {read_buff_addr,2'b01,8'b0}; //10+2+8
+        end else if(sdram_timer1 == 2) begin sdram_add_high <= 2; sdram_timer1 <= 3; sdram_rd_addr <= {read_buff_addr,2'b10,8'b0}; //10+2+8
+        end else if(sdram_timer1 == 3) begin sdram_add_high <= 3; sdram_timer1 <= 4; sdram_rd_addr <= {read_buff_addr,2'b11,8'b0}; //10+2+8
+        end
+        sdram_rd_burst <= 256;
+        sdram_timer2 <= 0;
+        sdram_page_delay <= 0;
+        sdram_rd_req = 1;//只需要置高一个周期就可以了
+      end else begin
+        if(sdram_rd_ack || sdram_page_delay)begin
+          sdram_timer2 <= sdram_timer2 + 1'b1;
+          if(!sdram_page_delay)begin
+            buffB_wrdata <= sdram_dout;
+            buffB_wraddress <= {sdram_add_high,sdram_timer2[7:0]};
+            buffB_wren <= 1;
+          end
+          if(sdram_timer2==255)begin 
+            sdram_page_delay <= 1;
+            sdram_rd_req <= 0;
+          end else if(sdram_timer2==263)begin 
+            sdram_timer0 <= 0;
+            if(sdram_timer1 == 4)begin
+              sdram_timer1 <= 0;
+              read_buffB_ack <= 1;
+            end
+          end else begin
+          end
+        end
+      end
+
     end else if (read_sdram_req_buff && !read_sdram_ack)begin
       sdram_timer0 <= 1;
       if(sdram_timer0 == 0)begin

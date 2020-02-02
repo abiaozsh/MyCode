@@ -45,6 +45,7 @@
             this.button3 = new System.Windows.Forms.Button();
             this.button4 = new System.Windows.Forms.Button();
             this.doublePage = new System.Windows.Forms.CheckBox();
+            this.button7 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // textBox3
@@ -56,7 +57,7 @@
             this.textBox3.Multiline = true;
             this.textBox3.Name = "textBox3";
             this.textBox3.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox3.Size = new System.Drawing.Size(716, 835);
+            this.textBox3.Size = new System.Drawing.Size(716, 705);
             this.textBox3.TabIndex = 5;
             this.textBox3.Text = "0001 0203 0405 0607 0809 0a0b 0c0d 0e0f 1011 1213 1415 1617 1819 1a1b 1c1d 1e1f ";
             this.textBox3.TextChanged += new System.EventHandler(this.textBox3_TextChanged);
@@ -215,11 +216,22 @@
             this.doublePage.Text = "double page";
             this.doublePage.UseVisualStyleBackColor = true;
             // 
+            // button7
+            // 
+            this.button7.Location = new System.Drawing.Point(609, 39);
+            this.button7.Name = "button7";
+            this.button7.Size = new System.Drawing.Size(75, 23);
+            this.button7.TabIndex = 29;
+            this.button7.Text = "img";
+            this.button7.UseVisualStyleBackColor = true;
+            this.button7.Click += new System.EventHandler(this.button7_Click_1);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(740, 915);
+            this.ClientSize = new System.Drawing.Size(740, 785);
+            this.Controls.Add(this.button7);
             this.Controls.Add(this.doublePage);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.button3);
@@ -264,6 +276,7 @@
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.CheckBox doublePage;
+        private System.Windows.Forms.Button button7;
 
 	}
 }
