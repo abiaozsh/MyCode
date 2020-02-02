@@ -56,7 +56,6 @@ module sdram2m(
 		input dummy
 );
 
-
 buff1024x16	buffWrite (
 	.data ( buff_write_data ),
 	.wraddress ( buff_write_addr ),
@@ -100,7 +99,7 @@ wire locked;
 assign rst_n = sys_rst_n & locked;
 
 //例化PLL, 产生各模块所需要的时钟
-pll_clk u_pll_clk(
+pll_2m(
   .inclk0             (sys_clk),
   .areset             (~sys_rst_n),
   

@@ -1,18 +1,7 @@
 module sdram(
 		input  sys_clk  ,
 		input  sys_rst_n,
-/*
-  .sdram_clk_out     (sdram_clk_out),
-  .sdram_cke			(sdram_cke),		//SDRAM 时钟有效
-  .sdram_cs_n			(sdram_cs_n),		//SDRAM 片选
-  .sdram_ras_n		(sdram_ras_n),		//SDRAM 行有效	
-  .sdram_cas_n		(sdram_cas_n),		//SDRAM 列有效
-  .sdram_we_n			(sdram_we_n),		//SDRAM 写有效
-  .sdram_ba			  (sdram_ba),			//SDRAM Bank地址
-  .sdram_addr			(sdram_addr),		//SDRAM 行/列地址
-  .sdram_data			(sdram_data),		//SDRAM 数据	
-  .sdram_dqm		(sdram_dqm),
-*/
+
     //SDRAM 芯片接口
     output        sdram_clk_out,            //SDRAM 芯片时钟
     output        sdram_cke,                //SDRAM 时钟有效
