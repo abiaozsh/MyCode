@@ -42,6 +42,9 @@
             this.label2 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
+            this.doublePage = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // textBox3
@@ -53,14 +56,14 @@
             this.textBox3.Multiline = true;
             this.textBox3.Name = "textBox3";
             this.textBox3.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox3.Size = new System.Drawing.Size(509, 835);
+            this.textBox3.Size = new System.Drawing.Size(716, 835);
             this.textBox3.TabIndex = 5;
             this.textBox3.Text = "0001 0203 0405 0607 0809 0a0b 0c0d 0e0f 1011 1213 1415 1617 1819 1a1b 1c1d 1e1f ";
             this.textBox3.TextChanged += new System.EventHandler(this.textBox3_TextChanged);
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(459, 12);
+            this.button5.Location = new System.Drawing.Point(609, 12);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(47, 23);
             this.button5.TabIndex = 9;
@@ -182,11 +185,44 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(438, 39);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(75, 23);
+            this.button3.TabIndex = 26;
+            this.button3.Text = "sram";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
+            // button4
+            // 
+            this.button4.Location = new System.Drawing.Point(519, 39);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(75, 23);
+            this.button4.TabIndex = 27;
+            this.button4.Text = "sram2";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
+            // 
+            // doublePage
+            // 
+            this.doublePage.AutoSize = true;
+            this.doublePage.Location = new System.Drawing.Point(459, 12);
+            this.doublePage.Name = "doublePage";
+            this.doublePage.Size = new System.Drawing.Size(90, 16);
+            this.doublePage.TabIndex = 28;
+            this.doublePage.Text = "double page";
+            this.doublePage.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(533, 915);
+            this.ClientSize = new System.Drawing.Size(740, 915);
+            this.Controls.Add(this.doublePage);
+            this.Controls.Add(this.button4);
+            this.Controls.Add(this.button3);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.label2);
@@ -225,6 +261,9 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.CheckBox doublePage;
 
 	}
 }

@@ -67,22 +67,26 @@ buff1024x16	buffWrite (
   .q ( q_sig )
 );
 
+reg [15:0] buffA_wrdata;
+reg [9:0]  buffA_wraddress;
+reg        buffA_wren;
 buff1024x16	buffReadA (
-  .data ( data_sig ),
-  .wraddress ( wraddress_sig ),
+  .data ( buffA_wrdata ),
+  .wraddress ( buffA_wraddress ),
   .wrclock ( sdram_clk ),
-  .wren ( wren_sig ),
+  .wren ( buffA_wren ),
 
   .rdaddress ( buff_readA_addr ),
   .rdclock ( buff_readA_clk ),
   .q ( buff_readA_data )
 );
 
+reg buffB_wren;
 buff1024x16	buffReadB (
   .data ( data_sig ),
   .wraddress ( wraddress_sig ),
   .wrclock ( sdram_clk ),
-  .wren ( wren_sig ),
+  .wren ( buffB_wren ),
 
   .rdaddress ( buff_readB_addr ),
   .rdclock ( buff_readB_clk ),
@@ -98,7 +102,8 @@ wire locked;
 assign rst_n = sys_rst_n & locked;
 
 //例化PLL, 产生各模块所需要的时钟
-pll_2m(
+pll_clk(
+//pll_2m(
   .inclk0             (sys_clk),
   .areset             (~sys_rst_n),
   
@@ -362,6 +367,10 @@ reg read_sdram_ack;
 reg write_single_sdram_ack;
 reg write_sdram_ack;
 
+reg  [2:0] sdram_timer1;
+reg  [1:0] sdram_add_high;
+reg  [8:0] sdram_timer2;
+reg        sdram_page_delay;
 reg        sdram_timer0;
 reg [4:0]  sdram_timer8;
 reg [15:0] readBuffer0;
@@ -398,7 +407,40 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     write_single_sdram_req_buff <= write_single_sdram_req;
     write_sdram_req_buff <= write_sdram_req;
     
+    buffA_wren<=0;
     if          (read_buffA_req_buff && !read_buffA_ack)begin
+      sdram_timer0 <= 1;
+      if(sdram_timer0 == 0)begin
+        if         (sdram_timer1 == 0) begin sdram_add_high <= 0; sdram_timer1 <= 1; sdram_rd_addr <= {read_buff_addr,2'b00,8'b0}; //10+2+8
+        end else if(sdram_timer1 == 1) begin sdram_add_high <= 1; sdram_timer1 <= 2; sdram_rd_addr <= {read_buff_addr,2'b01,8'b0}; //10+2+8
+        end else if(sdram_timer1 == 2) begin sdram_add_high <= 2; sdram_timer1 <= 3; sdram_rd_addr <= {read_buff_addr,2'b10,8'b0}; //10+2+8
+        end else if(sdram_timer1 == 3) begin sdram_add_high <= 3; sdram_timer1 <= 4; sdram_rd_addr <= {read_buff_addr,2'b11,8'b0}; //10+2+8
+        end
+        sdram_rd_burst <= 256;
+        sdram_timer2 <= 0;
+        sdram_page_delay <= 0;
+        sdram_rd_req = 1;//只需要置高一个周期就可以了
+      end else begin
+        if(sdram_rd_ack || sdram_page_delay)begin
+          sdram_timer2 <= sdram_timer2 + 1'b1;
+          if(!sdram_page_delay)begin
+            buffA_wrdata <= sdram_dout;
+            buffA_wraddress <= {sdram_add_high,sdram_timer2[7:0]};
+            buffA_wren <= 1;
+          end
+          if(sdram_timer2==255)begin 
+            sdram_page_delay <= 1;
+            sdram_rd_req <= 0;
+          end else if(sdram_timer2==263)begin 
+            sdram_timer0 <= 0;
+            if(sdram_timer1 == 4)begin
+              sdram_timer1 <= 0;
+              read_buffA_ack <= 1;
+            end
+          end else begin
+          end
+        end
+      end
 
 			//input   [9:0] read_buff_addr,
     end else if (read_buffB_req_buff && !read_buffB_ack)begin
@@ -476,7 +518,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
           end
         end
       end
-      
+
     end else begin
     
       if(!read_buffA_req_buff && read_buffA_ack)begin

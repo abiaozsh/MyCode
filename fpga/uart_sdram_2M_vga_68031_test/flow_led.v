@@ -8,7 +8,7 @@ module flow_led(
   output segled_clk,
   output segled_dat, 
   output segled_str,
-  
+
   //SDRAM 芯片接口
   output        sdram_clk_out,                //SDRAM 芯片时钟
   output        sdram_cke,                //SDRAM 时钟有效
@@ -20,7 +20,7 @@ module flow_led(
   output [12:0] sdram_addr,               //SDRAM 行/列地址
   inout  [15:0] sdram_data,               //SDRAM 数据
   output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
- 
+  
      //SDRAM2m 芯片接口
     output        sdram2m_clk_out,            //SDRAM 芯片时钟
     output        sdram2m_cke,                //SDRAM 时钟有效
@@ -33,7 +33,7 @@ module flow_led(
     inout  [15:0] sdram2m_data,               //SDRAM 数据
 
   output [7:0] debug,
-
+ 
   inout [7:0] cy_D,
   inout [7:0] cy_B,
   input cy_SCL,

@@ -124,10 +124,7 @@ namespace WindowsFormsApplication1
 
         private void button5_Click(object sender, EventArgs e)
         {
-            //buffer.Clear();
             textBox3.Text = "";
-            recAck(0);
-
         }
 
         byte[] sendbuff = new byte[1024];
@@ -358,27 +355,29 @@ namespace WindowsFormsApplication1
         private void button12_Click(object sender, EventArgs e)
         {
             int addr = Convert.ToInt32(textBox1.Text, 16);
-            sendCmd(0x012, addr & 0xFF);
-            sendCmd(0x013, (addr >> 8) & 0xFF);
-            sendCmd(0x014, (addr >> 16) & 0xFF);
+            for (int i = 0; i < (doublePage.Checked ? 2 : 1); i++)
+            {
+                sendCmd(0x012, addr & 0xFF);
+                sendCmd(0x013, (addr >> 8) & 0xFF);
+                sendCmd(0x014, (addr >> 16) & 0xFF);
+                addr += 0x200;
+                sendCmd((is2M ? 0x0B0 : 0xA0) + 3, 0);
 
-            sendCmd((is2M ? 0x0B0 : 0xA0) + 3, 0);
+                recAck(0);
 
-            recAck(0);
-
-            int size = 1024;
-            bool bResult;
-            byte[] inData = new byte[size];
-            int xferLen = size;
-            bResult = inEndpoint.XferData(ref inData, ref xferLen);
-            string s = receivePage(inData);
-            textBox3.Text += xferLen + "\r\n";
-            textBox3.Text += s;
+                int size = 1024;
+                bool bResult;
+                byte[] inData = new byte[size];
+                int xferLen = size;
+                bResult = inEndpoint.XferData(ref inData, ref xferLen);
+                string s = receivePage(inData);
+                textBox3.Text += xferLen + "\r\n";
+                textBox3.Text += s;
+            }
         }
 
-        private byte[] ranArr(int size)
+        private byte[] ranArr(Random r, int size)
         {
-            Random r = new Random();
             byte[] outData = new byte[size];
             r.NextBytes(outData);
             return outData;
@@ -386,34 +385,40 @@ namespace WindowsFormsApplication1
 
         private void button13_Click(object sender, EventArgs e)
         {
-            bool first = true;
+            int addr = Convert.ToInt32(textBox1.Text, 16);
+            Random r = new Random();
+
+            for (int i = 0; i < (doublePage.Checked ? 2 : 1); i++)
             {
-                int size = 1024;
-                bool bResult;
-                byte[] outData = ranArr(size);// new byte[size];
-                string s = receivePage(outData);
-                textBox3.Text += s;
-                int xferLen = size;
-                bResult = outEndpoint.XferData(ref outData, ref xferLen);
-            }
-            if (!first)
-            {
+                bool first = true;
+                {
+                    int size = 1024;
+                    bool bResult;
+                    byte[] outData = ranArr(r, size);// new byte[size];
+                    string s = receivePage(outData);
+                    textBox3.Text += s;
+                    int xferLen = size;
+                    bResult = outEndpoint.XferData(ref outData, ref xferLen);
+                }
+                if (!first)
+                {
+                    recAck(0x3412);
+                }
+                else
+                {
+                    first = false;
+                }
+
+                sendCmd(0x012, addr & 0xFF);
+                sendCmd(0x013, (addr >> 8) & 0xFF);
+                sendCmd(0x014, (addr >> 16) & 0xFF);
+                addr += 0x200;
+
+                sendCmd((is2M ? 0x0B0 : 0xA0) + 2, 0);
+
+
                 recAck(0x3412);
             }
-            else
-            {
-                first = false;
-            }
-
-            int addr = Convert.ToInt32(textBox1.Text, 16);
-            sendCmd(0x012, addr & 0xFF);
-            sendCmd(0x013, (addr >> 8) & 0xFF);
-            sendCmd(0x014, (addr >> 16) & 0xFF);
-
-            sendCmd((is2M ? 0x0B0 : 0xA0) + 2, 0);
-
-
-            recAck(0x3412);
 
         }
 
@@ -449,6 +454,39 @@ namespace WindowsFormsApplication1
 
             int data = recAck(0);
             textBox2.Text = getHex4(data);
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            int addr = Convert.ToInt32(textBox1.Text, 16);
+            sendCmd(0x012, addr & 0xFF);
+            sendCmd(0x013, (addr >> 8) & 0xFF);
+            sendCmd(0x014, (addr >> 16) & 0xFF);
+
+            sendCmd(0x0F1, 0); Thread.Sleep(10);
+            sendCmd(0x0F2, 0); Thread.Sleep(10);
+
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < 1024; i++)
+            {
+                sendCmd(0x012, i & 0xFF);
+                sendCmd(0x013, (i >> 8) & 0xFF);
+                sendCmd(0x014, (i >> 16) & 0xFF);
+
+                sendCmd(0x0F3, 0);
+                sendCmd(0x0F4, 0);
+
+                int data = recAck(0);
+                if ((i & 15) == 0)
+                {
+                    textBox3.Text += "\r\n";
+                }
+                textBox3.Text += getHex4(data) + " ";
+            }
+
         }
 
 
