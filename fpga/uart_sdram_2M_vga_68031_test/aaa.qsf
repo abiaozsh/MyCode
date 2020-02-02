@@ -118,7 +118,7 @@ set_location_assignment PIN_Y22 -to sdram2m_we_n
 set_location_assignment PIN_W22 -to sdram2m_cas_n
 set_location_assignment PIN_V22 -to sdram2m_ras_n
 set_location_assignment PIN_U22 -to sdram2m_cs_n
-set_location_assignment PIN_R22 -to sdram2m_ba[0]
+set_location_assignment PIN_R22 -to sdram2m_ba
 set_location_assignment PIN_P22 -to sdram2m_addr[10]
 set_location_assignment PIN_N22 -to sdram2m_addr[0]
 set_location_assignment PIN_M22 -to sdram2m_addr[1]
@@ -255,17 +255,16 @@ set_location_assignment PIN_D2 -to vga_rgb[12]
 set_location_assignment PIN_C2 -to vga_rgb[14]
 
 
+set_global_assignment -name VERILOG_FILE ../commoncode/vga/vga_driver.v
+set_global_assignment -name VERILOG_FILE ../commoncode/vga/vga_pll.v
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/pll_clk.v
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram_controller.v
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram.v
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram2m_controller.v
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram2m.v
-set_global_assignment -name VERILOG_FILE ../commoncode/uart_hs.v
-set_global_assignment -name VERILOG_FILE ../commoncode/uart_send_hs.v
-set_global_assignment -name VERILOG_FILE ../commoncode/uart_recv_hs.v
 set_global_assignment -name VERILOG_FILE ../commoncode/seg_led_hex595.v
-set_global_assignment -name VERILOG_FILE ../commoncode/uart_mcu_slavefifo.v
+set_global_assignment -name VERILOG_FILE ../commoncode/cy68013_mcu.v
 set_global_assignment -name VERILOG_FILE ram.v
 set_global_assignment -name VERILOG_FILE flow_led.v
-set_global_assignment -name QIP_FILE ram.qip
+set_global_assignment -name QIP_FILE ../commoncode/sdram/buff1024x16.qip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

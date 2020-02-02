@@ -4,11 +4,11 @@ module flow_led(
   input key1,
   input key2,
   output reg led,
-  
+ 
   output segled_clk,
   output segled_dat, 
   output segled_str,
- 
+  
   //SDRAM 芯片接口
   output        sdram_clk_out,                //SDRAM 芯片时钟
   output        sdram_cke,                //SDRAM 时钟有效
@@ -53,9 +53,12 @@ module flow_led(
   output  cy_from_fpga_A6_PKTEND       ,//output
   input cy_to_fpga_A7_FLAGD          ,
 
-  //uart接口
-  input uart_rx_from_pc,
-  output uart_tx_to_pc
+    //VGA接口                          
+    output          vga_hs,         //行同步信号
+    output          vga_vs,         //场同步信号
+    output  [15:0]  vga_rgb         //红绿蓝三原色输出 
+  
+
 );
 
 wire sys_rst_n;
@@ -77,8 +80,8 @@ assign sys_rst_n = key1;
   reg [16:0] data2;
   reg [16:0] data3;
   
-  assign seg_data3 = out_pin3;//cy_snd_data1;//cy_dat;
-  assign seg_data2 = out_pin2;//cy_snd_data0;//cy_cmd;
+  assign seg_data3 = cy_snd_data1;//cy_dat;
+  assign seg_data2 = cy_snd_data0;//cy_cmd;
   assign seg_data1 = cy_D;
   assign seg_data0 = cy_B;
   
@@ -114,37 +117,15 @@ seg_led_hex595 (
 );
 
   wire busy;
-  wire out_clk;
-  wire out_rst;
-  wire [7:0] in_pin0;
-  wire [7:0] in_pin1;
-  wire [7:0] in_pin2;
-  wire [7:0] in_pin3;
-  wire [7:0] in_pin4;
-  wire [7:0] in_pin5;
-  wire [7:0] in_pin6;
-  wire [7:0] in_pin7;
 
-  wire [7:0] out_pin0;
-  wire [7:0] out_pin1;
-  wire [7:0] out_pin2;
-  wire [7:0] out_pin3;
-  wire [7:0] out_pin4;
-  wire [7:0] out_pin5;
-  wire [7:0] out_pin6;
-  wire [7:0] out_pin7;
-  
   wire [7:0] cy_cmd;
   wire [7:0] cy_dat;
   wire [7:0] cy_snd_data0;
   wire [7:0] cy_snd_data1;
-  uart_mcu_slavefifo(
+  cy68013_mcu(
     .sys_clk    (sys_clk  ),       // 时钟信号
     .sys_rst_n  (sys_rst_n),       // 复位信号
-    
-    .uart_rxd  (uart_rx_from_pc),
-    .uart_txd  (uart_tx_to_pc),
-
+ 
 	 .cy_D(cy_D),
 	 .cy_B(cy_B),
    .cy_SCL(cy_SCL)       ,
@@ -169,8 +150,6 @@ seg_led_hex595 (
 	 .cy_snd_data0(cy_snd_data0),
 	 .cy_snd_data1(cy_snd_data1),
 
-    .busy(busy),
-
     //SDRAM 芯片接口
     .sdram_clk_out     (sdram_clk_out),
     .sdram_cke			(sdram_cke),		//SDRAM 时钟有效
@@ -194,26 +173,11 @@ seg_led_hex595 (
   .sdram2m_addr			(sdram2m_addr),		//SDRAM 行/列地址
   .sdram2m_data			(sdram2m_data),		//SDRAM 数据	
 	 
-    .out_clk (out_clk),
-    .out_rst (out_rst),
-
-    .in_pin0          ( in_pin0 ),//数据低
-    .in_pin1          ( in_pin1 ),//数据高
-    .in_pin2          ( in_pin2 ),//sdram_wr_ack,sdram_rd_ack
-    .in_pin3          ( in_pin3 ),
-    .in_pin4          ( in_pin4 ),
-    .in_pin5          ( in_pin5 ),
-    .in_pin6          ( in_pin6 ),
-    .in_pin7          ( in_pin7 ),
-
-    .out_pin0          ( out_pin0  ),
-    .out_pin1          ( out_pin1  ),
-    .out_pin2          ( out_pin2  ),
-    .out_pin3          ( out_pin3  ),
-    .out_pin4          ( out_pin4  ),
-    .out_pin5          ( out_pin5  ),
-    .out_pin6          ( out_pin6  ),
-    .out_pin7          ( out_pin7  )
+    .vga_hs         (vga_hs),       
+    .vga_vs         (vga_vs),       
+    .vga_rgb        (vga_rgb),      
+    	 
+    .busy(busy)
 
   );
 
