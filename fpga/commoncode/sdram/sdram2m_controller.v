@@ -13,7 +13,7 @@ module sdram2m_controller(
     inout  [15:0] sdram_data,        // SDRAM 数据总线
     
     //TODO 读写地址合并 burst 合并
-    
+     
     //SDRAM 控制器写端口  
     input         sdram_wr_req,     //写SDRAM请求信号
     output        sdram_wr_ack,     //写SDRAM响应信号

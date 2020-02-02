@@ -13,7 +13,7 @@ module sdram(
     output [12:0] sdram_addr,               //SDRAM 行/列地址
     inout  [15:0] sdram_data,               //SDRAM 数据
     output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
-    
+     
     //共用
     input clk,//上升沿拉取地址数据
     input  [23:0] address,
