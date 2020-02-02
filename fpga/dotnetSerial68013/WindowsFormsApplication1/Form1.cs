@@ -150,6 +150,13 @@ namespace WindowsFormsApplication1
 
         private void button6_Click(object sender, EventArgs e)
         {
+            for (int i = 0; i < 10; i++)
+            {
+                check();
+            }
+        }
+        private void check()
+        {
             int size = 16 * 1024 * 1024;//16 * 1024
             if (is2M)
             {
@@ -221,16 +228,11 @@ namespace WindowsFormsApplication1
             {
                 Bitmap errmap = new Bitmap(1024, 1024);
                 int err = 0;
-                int pos = -1;
                 for (int i = 0; i < buff.Length; i += 2)
                 {
                     if (buff[i] != buff2[i] || buff[i + 1] != buff2[i + 1])
                     {
                         errmap.SetPixel((i >> 1) & 1023, (i >> 1) >> 10, Color.Red);
-                        if (pos == -1)
-                        {
-                            pos = i;
-                        }
                         err++;
                     }
                     else
@@ -241,7 +243,7 @@ namespace WindowsFormsApplication1
                 Form2 form2 = new Form2();
                 form2.bitmap = errmap;
                 form2.Show();
-                textBox3.Text += ("done [" + err + " " + (err * 0.5 / size) + "] [" + pos + " " + (pos * 0.5 / size) + "] ") + "\r\n";
+                textBox3.Text += ("done [" + err + " " + (err * 1.0 / size) + "] ") + "\r\n";
             }
             else
             {
@@ -271,27 +273,20 @@ namespace WindowsFormsApplication1
 
 
                 int err = 0;
-                int pos = -1;
                 for (int i = 0; i < buff.Length; i++)
                 {
 
                     if (buff[i] != buff2[i])
                     {
-                        if (pos == -1)
-                        {
-                            pos = i;
-                        }
                         err++;
                     }
 
                 }
 
-                textBox3.Text += ("done [" + err + " " + (err * 0.5 / size) + "] [" + pos + " " + (pos * 0.5 / size) + "] ") + "\r\n";
+                textBox3.Text += ("done [" + err + " " + (err * 1.0 / size) + "]  ") + "\r\n";
             }
 
-
         }
-
         private string receivePage(byte[] buff)
         {
             //byte[] buff = new byte[512 * 2];
