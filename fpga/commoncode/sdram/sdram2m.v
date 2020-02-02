@@ -34,11 +34,63 @@ module sdram2m(
     input write_en,//写入过程中保持高,要从8字前边界开始写，地址0x00,0x08,0x10...,否则会覆盖原有数据
     output [23:0] write_address,
 
-    //vga输出端口
-    //vga输出优先级最高
-    output vga
-    );
-    
+		input        write_buff_req,
+		output reg   write_buff_ack,
+		input [15:0] buff_write_data,
+		input  [9:0] buff_write_addr,
+		input        buff_write_clk,
+		input        buff_write_en,
+
+		input         read_buffA_req,
+		input         read_buffB_req,
+		input   [9:0] read_buff_addr,
+
+		output [15:0] buff_readA_data,
+		input   [9:0] buff_readA_addr,
+		input         buff_readA_clk,
+
+		output [15:0] buff_readB_data,
+		input   [9:0] buff_readB_addr,
+		input         buff_readB_clk,
+
+		input dummy
+);
+
+
+buff1024x16	buffWrite (
+	.data ( buff_write_data ),
+	.wraddress ( buff_write_addr ),
+	.wrclock ( buff_write_clk ),
+	.wren ( buff_write_en ),
+	
+	.rdaddress ( rdaddress_sig ),
+	.rdclock ( sdram_clk ),
+	.q ( q_sig )
+	);
+	
+buff1024x16	buffReadA (
+	.data ( data_sig ),
+	.wraddress ( wraddress_sig ),
+	.wrclock ( sdram_clk ),
+	.wren ( wren_sig ),
+	
+	.rdaddress ( buff_readA_addr ),
+	.rdclock ( buff_readA_clk ),
+	.q ( buff_readA_data )
+	);
+	
+buff1024x16	buffReadB (
+	.data ( data_sig ),
+	.wraddress ( wraddress_sig ),
+	.wrclock ( sdram_clk ),
+	.wren ( wren_sig ),
+	
+	.rdaddress ( buff_readB_addr ),
+	.rdclock ( buff_readB_clk ),
+	.q ( buff_readB_data )
+	);
+
+	
 wire rst_n;
 wire clk_50m;
 wire clk_100m;
@@ -342,6 +394,9 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     
     if          (read_vga_sdram_req && !read_vga_sdram_ack)begin
       //read vga
+			//input         read_buffA_req,
+			//input         read_buffB_req,
+			//input   [9:0] read_buff_addr,
       
     end else if (read_sdram_req && !read_sdram_ack)begin
       if(!read_sdram_req_last)begin
