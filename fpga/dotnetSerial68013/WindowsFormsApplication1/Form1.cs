@@ -508,39 +508,32 @@ namespace WindowsFormsApplication1
                 this.Text = "" + y;
                 Application.DoEvents();
                 {
-                    int addr = y * 1024;
-                    sendCmd(0x012, addr & 0xFF);
-                    sendCmd(0x013, (addr >> 8) & 0xFF);
-                    sendCmd(0x014, (addr >> 16) & 0xFF);
-
-                    byte[] outData1 = new byte[size];
-                    byte[] outData2 = new byte[size];
-                    bool bResult;
-                    int xferLen = size;
-
-                    for (int x = 0; x < 512; x++)
+                    for (int col = 0; col < 4; col++)
                     {
-                        var c = b.GetPixel(x, y);
-                        int val = getpixel(c);
-                        outData1[x << 1] = (byte)(val & 0xFF);
-                        outData1[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
+
+                        int xferLen = size;
+
+                        if (y == 0)
+                        {
+                            for (int x = 0; x < 256; x++)
+                            {
+                                var c = b.GetPixel(x + (col << 8), y);
+                                int val = getpixel(c);
+
+                                sendCmd(0x010, (byte)(val & 0xFF));
+                                sendCmd(0x011, (byte)((val >> 8) & 0xFF));
+                                sendCmd(0x0E1, x);
+                            }
+                        }
+
+                        int addr = (y << 2) + col;
+                        sendCmd(0x012, addr & 0xFF);
+                        sendCmd(0x013, (addr >> 8) & 0xFF);
+                        sendCmd(0x014, (addr >> 16) & 0xFF);
+                        sendCmd(0x0E2, 0);
+                        recAck(0x3412);
                     }
 
-
-                    for (int x = 0; x < 512; x++)
-                    {
-                        var c = b.GetPixel(x + 512, y);
-                        int val = getpixel(c);
-                        outData2[x << 1] = (byte)(val & 0xFF);
-                        outData2[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
-                    }
-                    xferLen = size;
-                    bResult = outEndpoint.XferData(ref outData1, ref xferLen);
-                    xferLen = size;
-                    bResult = outEndpoint.XferData(ref outData2, ref xferLen);
-                    sendCmd(0x0BF, 0);
-
-                    recAck(0x3412);
                 }
             }
 
