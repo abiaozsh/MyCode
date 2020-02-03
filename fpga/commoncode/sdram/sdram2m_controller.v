@@ -135,7 +135,7 @@ end
 //   end
 // end
 wire sdram_ref_req;
-assing sdram_ref_req = 0;
+assign sdram_ref_req = 0;
 
 
 //    output reg [9:0] cnt_clk,	        //时钟计数器

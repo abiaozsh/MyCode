@@ -55,6 +55,8 @@ module cy68013_mcu(
     output vga_vs,       //场同步信号
     output [15:0] vga_rgb,      //红绿蓝三原色输出
 
+    output blanking,
+    
     output busy
 
 );
@@ -150,13 +152,15 @@ reg cy_rec_ack;
 reg [7:0] command;
 reg [7:0] data;
 reg cy_rec_req_buff;
+
+
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     command <= 0;
     data <= 0;
     cy_rec_ack<=0;
   end else begin
-  cy_rec_req_buff<=cy_rec_req;
+    cy_rec_req_buff<=cy_rec_req;
 
     if(!cy_rec_req_buff && cy_rec_ack)begin
       cy_rec_ack <= 0;
@@ -189,6 +193,11 @@ reg [15:0] sum16;
 reg cy_snd_req;
 
 reg [16:0] temp_val;
+
+reg start;
+reg blanking_buff;
+reg blanking_last;
+
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     cy_address0 <= 0;
@@ -224,9 +233,13 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     cy_snd_data0 <= 0;
     cy_snd_data1 <= 0;
 
-    vga_mode<=0;
+    blockvga<=0;
+    vga_mode<=1;
+    start<=0;
   end else begin
-
+    blanking_buff <= blanking;
+    blanking_last <= blanking_buff;
+    
     if(cy_snd_ack)begin
       cy_snd_req <= 0;
     end
@@ -251,6 +264,15 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       end else if (command == 8'h22) begin//set mode 1024*768
         vga_mode<=1;
         command_done<=1;
+        
+      end else if (command == 8'h23) begin//vga off
+        blockvga<=1;
+        command_done<=1;
+          
+      end else if (command == 8'h24) begin//vga on
+        blockvga<=0;
+        command_done<=1;
+
      
       end else if (command == 8'hA0) begin//sdram write
         timer<=timer+1'b1;
@@ -344,7 +366,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           cy_from_fpga_RDY1_SLWR<=0;//set wr
  
         end else if(timer2==60)begin
-      cy_from_fpga_RDY1_SLWR<=1;//set wr
+          cy_from_fpga_RDY1_SLWR<=1;//set wr
           if(timer==513)begin
             cy_from_fpga_A4_FIFOADR0<=0;//set channel
             cy_from_fpga_A5_FIFOADR1<=0;
@@ -392,7 +414,6 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       end else if (command == 8'hB2) begin//sdram2m long write ok
         timer3 <= timer3 + 1'b1;
         sdram2m_c_write_latch_address<=0;
-
         if         (timer3==0)begin                                  //step0
           cy_from_fpga_A2_SLOE<=0;//on
           cy_from_fpga_RDY0_SLRD<=0;//on
@@ -422,7 +443,6 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
             sdram2m_c_write_en<=0;
           end
         end
-        
 
       end else if (command == 8'hB3) begin//sdram2m long read
         timer2<=timer2+1'b1;
@@ -480,6 +500,45 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 //        cy_snd_data1 <= sdram2m_buff_buff_readA_data[15:8];
 //        cy_snd_data0 <= sdram2m_buff_buff_readA_data[7:0];
 //        command_done<=1;
+
+      end else if (command == 8'hBF) begin//sdram2m long write ok
+        if(!blanking_last && blanking_buff)begin//
+          start <= 1;
+        end
+        if(start)begin
+          timer3 <= timer3 + 1'b1;
+          sdram2m_c_write_latch_address<=0;
+          if         (timer3==0)begin                                  //step0
+            cy_from_fpga_A2_SLOE<=0;//on
+            cy_from_fpga_RDY0_SLRD<=0;//on
+            sdram2m_c_address <= {cy_address2,cy_address1,cy_address0};
+          end else if(timer3==(512 * 4 + 2))begin                                  //step5  n字*4+2
+            cy_from_fpga_A2_SLOE<=1;//off
+            cy_from_fpga_RDY0_SLRD<=1;//off
+            timer3<=0;
+            start<=0;
+            command_done<=1;
+            cy_snd_req <= 1;
+            cy_snd_data0 <= 8'h12;
+            cy_snd_data1 <= 8'h34;
+          end else begin
+            if         (timer3[1:0]==1)begin                                  //step1
+              cy_from_fpga_RDY0_SLRD<=0;//on
+            end else if(timer3[1:0]==2)begin                                  //step2
+              cy_from_fpga_RDY0_SLRD<=1;//off
+              //读取 并写入sdram2m
+              sdram2m_c_write_en<=1;
+              if(timer3==2)begin sdram2m_c_write_latch_address<=1; end
+              sdram2m_c_data_in<={cy_D,cy_B};
+            end else if(timer3[1:0]==3)begin                                  //step3
+              cy_from_fpga_RDY0_SLRD<=1;//off
+              sdram2m_c_write_en<=0;
+            end else begin                                      //step4
+              cy_from_fpga_RDY0_SLRD<=0;//on
+              sdram2m_c_write_en<=0;
+            end
+          end
+        end
 
       end
     end
@@ -613,14 +672,15 @@ sdram2m(
 
 
 
-
-
+reg blockvga;
 vga_driver u_vga_driver(
     .sys_clk        (sys_clk),    
     .sys_rst_n      (sys_rst_n),    
 
-  .vga_mode (vga_mode),
-
+    .blockvga(blockvga),
+    .vga_mode (vga_mode),
+    .blanking(blanking),
+    
     .read_buffA_req (sdram2m_read_buffA_req      ),
     .read_buffB_req (sdram2m_read_buffB_req      ),
     .read_buff_addr (sdram2m_read_buff_addr      ),

@@ -490,34 +490,180 @@ namespace WindowsFormsApplication1
 
         private void button7_Click_1(object sender, EventArgs e)
         {
-            Bitmap b = new Bitmap("e:\\alaxulwjzxh9736.jpg");
-            for (int x = 0; x < 1024; x++)
-            {
-                for (int y = 0; y < 768; y++)
-                {
-                    var c = b.GetPixel(x, y);
-                    setpixel(x, y, c.R, c.G, c.B);
-                }
-            }
-
-
+            Bitmap b = new Bitmap("e:\\z051.jpg");
+            loadimg(b);
+        }
+        private void button14_Click(object sender, EventArgs e)
+        {
+            Bitmap b = new Bitmap("e:\\z043.jpg");
+            loadimg(b);
         }
 
+        private void loadimg2(Bitmap b)
+        {
 
-        private void setpixel(int x, int y, int r, int g, int b)
+            bool first = true;
+            for (int y = 0; y < 768; y++)
+            {
+                this.Text = "" + y;
+                Application.DoEvents();
+                {
+                    {
+                        int size = 1024;
+                        bool bResult;
+                        byte[] outData = new byte[size];
+                        for (int x = 0; x < 512; x++)
+                        {
+                            var c = b.GetPixel(x, y);
+                            int val = getpixel(c);
+                            outData[x << 1] = (byte)(val & 0xFF);
+                            outData[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
+                        }
+                        int xferLen = size;
+                        bResult = outEndpoint.XferData(ref outData, ref xferLen);
+                    }
+                    if (!first)
+                    {
+                        recAck(0x3412);
+                    }
+                    else
+                    {
+                        first = false;
+                    }
+
+                    int addr = y * 1024;
+                    sendCmd(0x012, addr & 0xFF);
+                    sendCmd(0x013, (addr >> 8) & 0xFF);
+                    sendCmd(0x014, (addr >> 16) & 0xFF);
+
+                    sendCmd(0x0B0 + (this.doublePage.Checked ? 0x0F : 2), 0);
+                }
+                {
+                    {
+                        int size = 1024;
+                        bool bResult;
+                        byte[] outData = new byte[size];
+                        for (int x = 0; x < 512; x++)
+                        {
+                            var c = b.GetPixel(x + 512, y);
+                            int val = getpixel(c);
+                            outData[x << 1] = (byte)(val & 0xFF);
+                            outData[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
+                        }
+                        int xferLen = size;
+                        bResult = outEndpoint.XferData(ref outData, ref xferLen);
+                    }
+                    if (!first)
+                    {
+                        recAck(0x3412);
+                    }
+                    else
+                    {
+                        first = false;
+                    }
+
+                    int addr = y * 1024 + 512;
+                    sendCmd(0x012, addr & 0xFF);
+                    sendCmd(0x013, (addr >> 8) & 0xFF);
+                    sendCmd(0x014, (addr >> 16) & 0xFF);
+
+                    sendCmd(0x0B0 + (this.doublePage.Checked ? 0x0F : 2), 0);
+                }
+            }
+            recAck(0x3412);
+        }
+
+        private void loadimg(Bitmap b)
+        {
+
+            for (int y = 0; y < 768; y++)
+            {
+                this.Text = "" + y;
+                Application.DoEvents();
+                {
+                    {
+                        int size = 1024;
+                        bool bResult;
+                        byte[] outData = new byte[size];
+                        for (int x = 0; x < 512; x++)
+                        {
+                            var c = b.GetPixel(x, y);
+                            int val = getpixel(c);
+                            outData[x << 1] = (byte)(val & 0xFF);
+                            outData[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
+                        }
+                        int xferLen = size;
+                        bResult = outEndpoint.XferData(ref outData, ref xferLen);
+                    }
+
+                    int addr = y * 1024;
+                    sendCmd(0x012, addr & 0xFF);
+                    sendCmd(0x013, (addr >> 8) & 0xFF);
+                    sendCmd(0x014, (addr >> 16) & 0xFF);
+
+                    sendCmd(0x0B0 + (this.doublePage.Checked?0x0F: 2), 0);
+
+                    recAck(0x3412);
+                }
+                {
+                    {
+                        int size = 1024;
+                        bool bResult;
+                        byte[] outData = new byte[size];
+                        for (int x = 0; x < 512; x++)
+                        {
+                            var c = b.GetPixel(x + 512, y);
+                            int val = getpixel(c);
+                            outData[x << 1] = (byte)(val & 0xFF);
+                            outData[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
+                        }
+                        int xferLen = size;
+                        bResult = outEndpoint.XferData(ref outData, ref xferLen);
+                    }
+
+                    int addr = y * 1024 + 512;
+                    sendCmd(0x012, addr & 0xFF);
+                    sendCmd(0x013, (addr >> 8) & 0xFF);
+                    sendCmd(0x014, (addr >> 16) & 0xFF);
+
+                    sendCmd(0x0B0 + (this.doublePage.Checked ? 0x0F : 2), 0);
+
+
+                    recAck(0x3412);
+                }
+            }
+        }
+
+        private void setpixel(int x, int y, Color c)
         {
             int addr = y * 1024 + x;
             sendCmd(0x012, addr & 0xFF);
             sendCmd(0x013, (addr >> 8) & 0xFF);
             sendCmd(0x014, (addr >> 16) & 0xFF);
 
-            int val = 0;
-            val += (r >> 3) << (5 + 6);
-            val += (g >> 2) << (5);
-            val += (b >> 3);
+            int val = getpixel(c);
             sendCmd(0x010, val & 0xFF);
             sendCmd(0x011, (val >> 8) & 0xFF);
             sendCmd((0x0B0 + 0), 0);
+        }
+
+        private int getpixel(Color c)
+        {
+            int val = 0;
+            val += (c.R >> 3) << (5 + 6);
+            val += (c.G >> 2) << (5);
+            val += (c.B >> 3);
+            return val;
+        }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+            sendCmd(0x023, 0);
+        }
+
+        private void button11_Click(object sender, EventArgs e)
+        {
+            sendCmd(0x024, 0);
         }
 
 

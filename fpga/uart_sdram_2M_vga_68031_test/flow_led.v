@@ -3,7 +3,7 @@ module flow_led(
   input           sys_clk,          //外部50M时钟
   input key1,
   input key2,
-  output reg led,
+  output led,
  
   output segled_clk,
   output segled_dat, 
@@ -79,12 +79,12 @@ assign sys_rst_n = key1;
   reg [16:0] data1;
   reg [16:0] data2;
   reg [16:0] data3;
-  
+ 
   assign seg_data3 = cy_snd_data1;//cy_dat;
   assign seg_data2 = cy_snd_data0;//cy_cmd;
   assign seg_data1 = cy_D;
   assign seg_data0 = cy_B;
-  
+ 
   assign debug[0] = cy_A0_INT0;
   assign debug[1] = cy_A1_INT1;
   assign debug[2] = cy_A3_WU2;
@@ -115,9 +115,12 @@ seg_led_hex595 (
   .data2(seg_data2),
   .data3(seg_data3)
 );
-
+ 
   wire busy;
-
+	wire blanking;
+  assign led = !blanking;
+	
+	
   wire [7:0] cy_cmd;
   wire [7:0] cy_dat;
   wire [7:0] cy_snd_data0;
@@ -144,12 +147,12 @@ seg_led_hex595 (
 	 .cy_from_fpga_A4_FIFOADR0(cy_from_fpga_A4_FIFOADR0)     ,//output
 	 .cy_from_fpga_A5_FIFOADR1(cy_from_fpga_A5_FIFOADR1)     ,//output
 	 .cy_from_fpga_A6_PKTEND(cy_from_fpga_A6_PKTEND)       ,//output
-	 
+ 
 	 .cy_cmd(cy_cmd),
 	 .cy_dat(cy_dat),
 	 .cy_snd_data0(cy_snd_data0),
 	 .cy_snd_data1(cy_snd_data1),
-
+ 
     //SDRAM 芯片接口
     .sdram_clk_out     (sdram_clk_out),
     .sdram_cke			(sdram_cke),		//SDRAM 时钟有效
@@ -177,6 +180,7 @@ seg_led_hex595 (
     .vga_vs         (vga_vs),       
     .vga_rgb        (vga_rgb),      
     	 
+			 .blanking(blanking),
     .busy(busy)
 
   );

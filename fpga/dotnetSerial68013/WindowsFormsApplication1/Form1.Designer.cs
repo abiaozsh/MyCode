@@ -46,6 +46,9 @@
             this.button4 = new System.Windows.Forms.Button();
             this.doublePage = new System.Windows.Forms.CheckBox();
             this.button7 = new System.Windows.Forms.Button();
+            this.button8 = new System.Windows.Forms.Button();
+            this.button11 = new System.Windows.Forms.Button();
+            this.button14 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // textBox3
@@ -64,7 +67,7 @@
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(609, 12);
+            this.button5.Location = new System.Drawing.Point(681, 8);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(47, 23);
             this.button5.TabIndex = 9;
@@ -74,7 +77,7 @@
             // 
             // button6
             // 
-            this.button6.Location = new System.Drawing.Point(216, 12);
+            this.button6.Location = new System.Drawing.Point(336, 12);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(75, 23);
             this.button6.TabIndex = 10;
@@ -84,9 +87,9 @@
             // 
             // button9
             // 
-            this.button9.Location = new System.Drawing.Point(135, 12);
+            this.button9.Location = new System.Drawing.Point(103, 12);
             this.button9.Name = "button9";
-            this.button9.Size = new System.Drawing.Size(75, 23);
+            this.button9.Size = new System.Drawing.Size(44, 23);
             this.button9.TabIndex = 13;
             this.button9.Text = "640";
             this.button9.UseVisualStyleBackColor = true;
@@ -96,7 +99,7 @@
             // 
             this.button10.Location = new System.Drawing.Point(54, 12);
             this.button10.Name = "button10";
-            this.button10.Size = new System.Drawing.Size(75, 23);
+            this.button10.Size = new System.Drawing.Size(43, 23);
             this.button10.TabIndex = 14;
             this.button10.Text = "1024";
             this.button10.UseVisualStyleBackColor = true;
@@ -104,7 +107,7 @@
             // 
             // button12
             // 
-            this.button12.Location = new System.Drawing.Point(378, 12);
+            this.button12.Location = new System.Drawing.Point(498, 12);
             this.button12.Name = "button12";
             this.button12.Size = new System.Drawing.Size(75, 23);
             this.button12.TabIndex = 17;
@@ -114,7 +117,7 @@
             // 
             // button13
             // 
-            this.button13.Location = new System.Drawing.Point(297, 12);
+            this.button13.Location = new System.Drawing.Point(417, 12);
             this.button13.Name = "button13";
             this.button13.Size = new System.Drawing.Size(75, 23);
             this.button13.TabIndex = 18;
@@ -209,7 +212,7 @@
             // doublePage
             // 
             this.doublePage.AutoSize = true;
-            this.doublePage.Location = new System.Drawing.Point(459, 12);
+            this.doublePage.Location = new System.Drawing.Point(579, 12);
             this.doublePage.Name = "doublePage";
             this.doublePage.Size = new System.Drawing.Size(90, 16);
             this.doublePage.TabIndex = 28;
@@ -218,19 +221,52 @@
             // 
             // button7
             // 
-            this.button7.Location = new System.Drawing.Point(609, 39);
+            this.button7.Location = new System.Drawing.Point(600, 39);
             this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(75, 23);
+            this.button7.Size = new System.Drawing.Size(38, 23);
             this.button7.TabIndex = 29;
             this.button7.Text = "img";
             this.button7.UseVisualStyleBackColor = true;
             this.button7.Click += new System.EventHandler(this.button7_Click_1);
+            // 
+            // button8
+            // 
+            this.button8.Location = new System.Drawing.Point(153, 12);
+            this.button8.Name = "button8";
+            this.button8.Size = new System.Drawing.Size(75, 23);
+            this.button8.TabIndex = 30;
+            this.button8.Text = "vga off";
+            this.button8.UseVisualStyleBackColor = true;
+            this.button8.Click += new System.EventHandler(this.button8_Click);
+            // 
+            // button11
+            // 
+            this.button11.Location = new System.Drawing.Point(234, 12);
+            this.button11.Name = "button11";
+            this.button11.Size = new System.Drawing.Size(75, 23);
+            this.button11.TabIndex = 31;
+            this.button11.Text = "vga on";
+            this.button11.UseVisualStyleBackColor = true;
+            this.button11.Click += new System.EventHandler(this.button11_Click);
+            // 
+            // button14
+            // 
+            this.button14.Location = new System.Drawing.Point(644, 39);
+            this.button14.Name = "button14";
+            this.button14.Size = new System.Drawing.Size(42, 23);
+            this.button14.TabIndex = 32;
+            this.button14.Text = "img2";
+            this.button14.UseVisualStyleBackColor = true;
+            this.button14.Click += new System.EventHandler(this.button14_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(740, 785);
+            this.Controls.Add(this.button14);
+            this.Controls.Add(this.button11);
+            this.Controls.Add(this.button8);
             this.Controls.Add(this.button7);
             this.Controls.Add(this.doublePage);
             this.Controls.Add(this.button4);
@@ -277,6 +313,9 @@
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.CheckBox doublePage;
         private System.Windows.Forms.Button button7;
+        private System.Windows.Forms.Button button8;
+        private System.Windows.Forms.Button button11;
+        private System.Windows.Forms.Button button14;
 
 	}
 }

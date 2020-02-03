@@ -1,28 +1,29 @@
 
 module vga_driver(
-	input           sys_clk,
+    input           sys_clk,
     input           sys_rst_n,    //复位信号
 
-	input  vga_mode,
-	
-	output reg       read_buffA_req,
-	output reg       read_buffB_req,
-	output     [9:0] read_buff_addr,
-	
-	input [15:0] buff_readA_data,
-	output [9:0] buff_readA_addr,
-	output       buff_readA_clk,
+    input  vga_mode,
+    output reg blanking,
+    input blockvga,
+    output reg       read_buffA_req,
+    output reg       read_buffB_req,
+    output     [9:0] read_buff_addr,
+    
+    input [15:0] buff_readA_data,
+    output [9:0] buff_readA_addr,
+    output       buff_readA_clk,
 
-	input [15:0] buff_readB_data,
-	output [9:0] buff_readB_addr,
-	output       buff_readB_clk,
+    input [15:0] buff_readB_data,
+    output [9:0] buff_readB_addr,
+    output       buff_readB_clk,
 
     //VGA接口                          
     output     reg     vga_hs,       //行同步信号
     output     reg     vga_vs,       //场同步信号
     output  [15:0]  vga_rgb      //红绿蓝三原色输出
     
-    );                             
+  );
 
 
 //wire define
@@ -77,10 +78,10 @@ wire       vga_en;
 //使能RGB565数据输出
 assign vga_en  = h_active && v_active;
                  
-//RGB565数据输出                 
+//RGB565数据输出
 assign vga_rgb = vga_en ?  pixel_data: 16'd0;//16'hffff  pixel_data
 
-//像素点坐标                
+//像素点坐标
 wire [10:0] pixel_xpos;
 wire [10:0] pixel_ypos;
 assign pixel_xpos = cnt_h - h_start;
@@ -94,10 +95,11 @@ assign buff_readB_clk = vga_clk;
 
 reg h_active;
 reg v_active;
+reg v_active_ram;
 
 reg start_load;
 
-//reg define                                     
+//reg define
 reg  [10:0] cnt_h;
 reg  [10:0] cnt_v;
 
@@ -134,6 +136,7 @@ always @(posedge vga_clk or negedge rst_n_w) begin
       v_start <= V25_SYNC + V25_BACK;
       h_end <= H25_SYNC + H25_BACK + H25_DISP;
       v_end <= V25_SYNC + V25_BACK + V25_DISP;
+      blanking <= 0;
     end else begin
       if(vga_mode)begin
         h_total <= H65_TOTAL;
@@ -176,28 +179,44 @@ always @(posedge vga_clk or negedge rst_n_w) begin
 				
 			if(cnt_h == h_start)begin
 				h_active <= 1;
-				if(read_buff_addr[0])begin
-					read_buffA_req<=1;
-				end else begin
-					read_buffB_req<=1;
-				end
-
+        if(v_active_ram && !blockvga)begin
+          if(read_buff_addr[0])begin
+            read_buffA_req<=1;
+          end else begin
+            read_buffB_req<=1;
+          end
+        end
 
 			end
+      if(cnt_h == h_end)begin
+        h_active <= 0;
+        read_buffA_req <= 0;
+        read_buffB_req <= 0;
+      end
 			
-		if(cnt_v == v_start)begin
-			v_active <= 1;
-		end
-		
-		if(cnt_h == h_end)begin
-			h_active <= 0;
-			read_buffA_req <= 0;
-			read_buffB_req <= 0;
-		end
-		
-		if(cnt_v == v_end)begin
-			v_active <= 0;
-		end
+      if(cnt_v == v_start)begin
+        v_active <= 1;
+      end
+
+      if(cnt_v == v_end)begin
+        v_active <= 0;
+      end
+      
+      if(cnt_v == (v_start-1))begin
+        v_active_ram <= 1;
+      end
+
+      if(cnt_v == (v_end-1))begin
+        v_active_ram <= 0;
+      end
+      
+      if(cnt_v == (v_start-11'b11))begin
+        blanking <= 0;
+      end
+      
+      if(cnt_v == (v_end+1'b1))begin
+        blanking <= 1;
+      end
 
     end
 end
