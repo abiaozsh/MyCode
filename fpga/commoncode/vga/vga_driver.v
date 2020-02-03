@@ -181,7 +181,7 @@ always @(posedge vga_clk or negedge rst_n_w) begin
 				h_active <= 1;
         if(v_active_ram && !blockvga)begin
           read_buff_req<=1;
-          read_buff_A_B<=!read_buff_addr[0];
+          read_buff_A_B<=read_buff_addr[0];
         end
 
 			end
