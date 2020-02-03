@@ -513,18 +513,16 @@ namespace WindowsFormsApplication1
 
                         int xferLen = size;
 
-                        if (y == 0)
+                        for (int x = 0; x < 256; x++)
                         {
-                            for (int x = 0; x < 256; x++)
-                            {
-                                var c = b.GetPixel(x + (col << 8), y);
-                                int val = getpixel(c);
+                            var c = b.GetPixel(x + (col << 8), y);
+                            int val = getpixel(c);
 
-                                sendCmd(0x010, (byte)(val & 0xFF));
-                                sendCmd(0x011, (byte)((val >> 8) & 0xFF));
-                                sendCmd(0x0E1, x);
-                            }
+                            sendCmd(0x010, (byte)(val & 0xFF));
+                            sendCmd(0x011, (byte)((val >> 8) & 0xFF));
+                            sendCmd(0x0E1, x);
                         }
+
 
                         int addr = (y << 2) + col;
                         sendCmd(0x012, addr & 0xFF);

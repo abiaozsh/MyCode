@@ -509,10 +509,11 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       end else if (command == 8'hE1) begin//sram buff address write 1word
         timer<=timer+1'b1;
         if(timer==0)begin
-          sdram2m_buffDMAWriteA_addr <= {cy_address2,cy_address1,cy_address0};
+          sdram2m_buffDMAWriteA_addr <= cy_dat;
           sdram2m_buffDMAWriteA_data <= {cy_data1,cy_data0};
           sdram2m_buffDMAWriteA_en<=1;
         end else begin
+					timer<=0;
           sdram2m_buffDMAWriteA_en<=0;
           command_done<=1;
         end
