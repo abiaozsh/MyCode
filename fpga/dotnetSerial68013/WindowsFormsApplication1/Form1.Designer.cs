@@ -253,9 +253,9 @@
             // 
             this.button14.Location = new System.Drawing.Point(644, 39);
             this.button14.Name = "button14";
-            this.button14.Size = new System.Drawing.Size(42, 23);
+            this.button14.Size = new System.Drawing.Size(70, 23);
             this.button14.TabIndex = 32;
-            this.button14.Text = "img2";
+            this.button14.Text = "imgtest";
             this.button14.UseVisualStyleBackColor = true;
             this.button14.Click += new System.EventHandler(this.button14_Click);
             // 

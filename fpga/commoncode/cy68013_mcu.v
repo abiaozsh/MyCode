@@ -233,7 +233,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     cy_snd_data0 <= 0;
     cy_snd_data1 <= 0;
 
-    blockvga<=0;
+    blockvga<=1;
     vga_mode<=1;
     start<=0;
   end else begin
@@ -500,9 +500,8 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 //        cy_snd_data1 <= sdram2m_buff_buff_readA_data[15:8];
 //        cy_snd_data0 <= sdram2m_buff_buff_readA_data[7:0];
 //        command_done<=1;
-
-      end else if (command == 8'hBF) begin//sdram2m long write ok
-        if(!blanking_last && blanking_buff)begin//
+      end else if (command == 8'hBE) begin//sdram2m long write ok
+        if(!blanking_last && blanking_buff)begin
           start <= 1;
         end
         if(start)begin
@@ -540,6 +539,54 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           end
         end
 
+      end else if (command == 8'hBF) begin//test
+        if(!blanking_last && blanking_buff)begin//
+          start <= 1;
+        end
+        if(start)begin
+          timer3 <= timer3 + 1'b1;
+          sdram2m_c_write_latch_address<=0;
+          if         (timer3==0)begin                                  //step0
+            cy_from_fpga_A2_SLOE<=0;//on
+            cy_from_fpga_RDY0_SLRD<=0;//on
+            sdram2m_c_address <= {cy_address2,cy_address1,cy_address0};
+          end else if(timer3==(1024 * 4 + 2))begin                                  //step5  n字*4+2
+            cy_from_fpga_A2_SLOE<=1;//off
+            cy_from_fpga_RDY0_SLRD<=1;//off
+            timer3<=0;
+            start<=0;
+            command_done<=1;
+            cy_snd_req <= 1;
+            cy_snd_data0 <= 8'h12;
+            cy_snd_data1 <= 8'h34;
+          end else begin
+            if         (timer3[1:0]==1)begin                                  //step1
+              cy_from_fpga_RDY0_SLRD<=0;//on
+            end else if(timer3[1:0]==2)begin                                  //step2
+              cy_from_fpga_RDY0_SLRD<=1;//off
+              //读取 并写入sdram2m
+              sdram2m_c_write_en<=1;
+              if(timer3==2)begin sdram2m_c_write_latch_address<=1; end
+              sdram2m_c_data_in<={cy_D,cy_B};
+            end else if(timer3[1:0]==3)begin                                  //step3
+              cy_from_fpga_RDY0_SLRD<=1;//off
+              sdram2m_c_write_en<=0;
+            end else begin                                      //step4
+              cy_from_fpga_RDY0_SLRD<=0;//on
+              sdram2m_c_write_en<=0;
+            end
+          end
+        end
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
       end
     end
   end

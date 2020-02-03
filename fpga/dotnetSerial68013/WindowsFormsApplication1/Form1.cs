@@ -81,10 +81,10 @@ namespace WindowsFormsApplication1
                 {
                     MessageBox.Show("MaxPktSize != 512");
                 }
-                outEndpoint.TimeOut = 100;
-                inEndpoint.TimeOut = 100;
-                outCmdEndpoint.TimeOut = 100;
-                inCmdEndpoint.TimeOut = 100;
+                outEndpoint.TimeOut = 1000;
+                inEndpoint.TimeOut = 1000;
+                outCmdEndpoint.TimeOut = 1000;
+                inCmdEndpoint.TimeOut = 1000;
             }
             else
             {
@@ -496,81 +496,54 @@ namespace WindowsFormsApplication1
         private void button14_Click(object sender, EventArgs e)
         {
             Bitmap b = new Bitmap("e:\\z043.jpg");
-            loadimg(b);
+            loadimg_testBF(b);
         }
 
-        private void loadimg2(Bitmap b)
+        private void loadimg_testBF(Bitmap b)
         {
+            int size = 1024;
 
-            bool first = true;
-            for (int y = 0; y < 768; y++)
+            for (int y = 0; y < 64; y++)
             {
                 this.Text = "" + y;
                 Application.DoEvents();
                 {
-                    {
-                        int size = 1024;
-                        bool bResult;
-                        byte[] outData = new byte[size];
-                        for (int x = 0; x < 512; x++)
-                        {
-                            var c = b.GetPixel(x, y);
-                            int val = getpixel(c);
-                            outData[x << 1] = (byte)(val & 0xFF);
-                            outData[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
-                        }
-                        int xferLen = size;
-                        bResult = outEndpoint.XferData(ref outData, ref xferLen);
-                    }
-                    if (!first)
-                    {
-                        recAck(0x3412);
-                    }
-                    else
-                    {
-                        first = false;
-                    }
-
                     int addr = y * 1024;
                     sendCmd(0x012, addr & 0xFF);
                     sendCmd(0x013, (addr >> 8) & 0xFF);
                     sendCmd(0x014, (addr >> 16) & 0xFF);
 
-                    sendCmd(0x0B0 + (this.doublePage.Checked ? 0x0F : 2), 0);
-                }
-                {
+                    byte[] outData1 = new byte[size];
+                    byte[] outData2 = new byte[size];
+                    bool bResult;
+                    int xferLen = size;
+
+                    for (int x = 0; x < 512; x++)
                     {
-                        int size = 1024;
-                        bool bResult;
-                        byte[] outData = new byte[size];
-                        for (int x = 0; x < 512; x++)
-                        {
-                            var c = b.GetPixel(x + 512, y);
-                            int val = getpixel(c);
-                            outData[x << 1] = (byte)(val & 0xFF);
-                            outData[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
-                        }
-                        int xferLen = size;
-                        bResult = outEndpoint.XferData(ref outData, ref xferLen);
-                    }
-                    if (!first)
-                    {
-                        recAck(0x3412);
-                    }
-                    else
-                    {
-                        first = false;
+                        var c = b.GetPixel(x, y);
+                        int val = getpixel(c);
+                        outData1[x << 1] = (byte)(val & 0xFF);
+                        outData1[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
                     }
 
-                    int addr = y * 1024 + 512;
-                    sendCmd(0x012, addr & 0xFF);
-                    sendCmd(0x013, (addr >> 8) & 0xFF);
-                    sendCmd(0x014, (addr >> 16) & 0xFF);
 
-                    sendCmd(0x0B0 + (this.doublePage.Checked ? 0x0F : 2), 0);
+                    for (int x = 0; x < 512; x++)
+                    {
+                        var c = b.GetPixel(x + 512, y);
+                        int val = getpixel(c);
+                        outData2[x << 1] = (byte)(val & 0xFF);
+                        outData2[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
+                    }
+                    xferLen = size;
+                    bResult = outEndpoint.XferData(ref outData1, ref xferLen);
+                    xferLen = size;
+                    bResult = outEndpoint.XferData(ref outData2, ref xferLen);
+                    sendCmd(0x0BF, 0);
+
+                    recAck(0x3412);
                 }
             }
-            recAck(0x3412);
+
         }
 
         private void loadimg(Bitmap b)
@@ -601,7 +574,7 @@ namespace WindowsFormsApplication1
                     sendCmd(0x013, (addr >> 8) & 0xFF);
                     sendCmd(0x014, (addr >> 16) & 0xFF);
 
-                    sendCmd(0x0B0 + (this.doublePage.Checked?0x0F: 2), 0);
+                    sendCmd(0x0BE, 0);
 
                     recAck(0x3412);
                 }
@@ -626,7 +599,7 @@ namespace WindowsFormsApplication1
                     sendCmd(0x013, (addr >> 8) & 0xFF);
                     sendCmd(0x014, (addr >> 16) & 0xFF);
 
-                    sendCmd(0x0B0 + (this.doublePage.Checked ? 0x0F : 2), 0);
+                    sendCmd(0x0BE, 0);
 
 
                     recAck(0x3412);
