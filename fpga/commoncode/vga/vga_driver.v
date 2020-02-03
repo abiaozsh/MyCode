@@ -6,8 +6,8 @@ module vga_driver(
     input  vga_mode,
     output reg blanking,
     input blockvga,
-    output reg       read_buffA_req,
-    output reg       read_buffB_req,
+    output reg       read_buff_req ,
+    output reg       read_buff_A_B ,
     output     [9:0] read_buff_addr,
     
     input [15:0] buff_readA_data,
@@ -180,18 +180,14 @@ always @(posedge vga_clk or negedge rst_n_w) begin
 			if(cnt_h == h_start)begin
 				h_active <= 1;
         if(v_active_ram && !blockvga)begin
-          if(read_buff_addr[0])begin
-            read_buffA_req<=1;
-          end else begin
-            read_buffB_req<=1;
-          end
+          read_buff_req<=1;
+          read_buff_A_B<=!read_buff_addr[0];
         end
 
 			end
       if(cnt_h == h_end)begin
         h_active <= 0;
-        read_buffA_req <= 0;
-        read_buffB_req <= 0;
+        read_buff_req <= 0;
       end
 			
       if(cnt_v == v_start)begin

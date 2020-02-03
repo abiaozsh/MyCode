@@ -194,7 +194,11 @@ reg cy_snd_req;
 
 reg [16:0] temp_val;
 
+reg [2:0] timer11;
+reg [20:0] timer12;
+
 reg start;
+reg inited;
 reg blanking_buff;
 reg blanking_last;
 
@@ -236,6 +240,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     blockvga<=1;
     vga_mode<=1;
     start<=0;
+    inited<=0;
   end else begin
     blanking_buff <= blanking;
     blanking_last <= blanking_buff;
@@ -483,7 +488,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           end
           timer2<=0;
         end
-                
+
 //      end else if (command == 8'hF1) begin//srambuff long read
 //        sdram2m_read_buff_addr <= {cy_address2,cy_address1,cy_address0};
 //        sdram2m_read_buffA_req <= 1;
@@ -539,53 +544,34 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           end
         end
 
-      end else if (command == 8'hBF) begin//test
-        if(!blanking_last && blanking_buff)begin//
-          start <= 1;
-        end
-        if(start)begin
-          timer3 <= timer3 + 1'b1;
-          sdram2m_c_write_latch_address<=0;
-          if         (timer3==0)begin                                  //step0
-            cy_from_fpga_A2_SLOE<=0;//on
-            cy_from_fpga_RDY0_SLRD<=0;//on
-            sdram2m_c_address <= {cy_address2,cy_address1,cy_address0};
-          end else if(timer3==(1024 * 4 + 2))begin                                  //step5  n字*4+2
-            cy_from_fpga_A2_SLOE<=1;//off
-            cy_from_fpga_RDY0_SLRD<=1;//off
-            timer3<=0;
-            start<=0;
-            command_done<=1;
-            cy_snd_req <= 1;
-            cy_snd_data0 <= 8'h12;
-            cy_snd_data1 <= 8'h34;
-          end else begin
-            if         (timer3[1:0]==1)begin                                  //step1
-              cy_from_fpga_RDY0_SLRD<=0;//on
-            end else if(timer3[1:0]==2)begin                                  //step2
-              cy_from_fpga_RDY0_SLRD<=1;//off
-              //读取 并写入sdram2m
-              sdram2m_c_write_en<=1;
-              if(timer3==2)begin sdram2m_c_write_latch_address<=1; end
-              sdram2m_c_data_in<={cy_D,cy_B};
-            end else if(timer3[1:0]==3)begin                                  //step3
-              cy_from_fpga_RDY0_SLRD<=1;//off
-              sdram2m_c_write_en<=0;
-            end else begin                                      //step4
-              cy_from_fpga_RDY0_SLRD<=0;//on
-              sdram2m_c_write_en<=0;
-            end
-          end
-        end
+//      end else if (command == 8'hBF) begin//memcopy
+//        //先A2指令写入
+//        //先关vga, 等7个周期  等sdram2m空闲后,开始copy ,打开vga
+//        blockvga<=1;
+//        if(timer11==7)begin
+//          if(!sdram2m_busy)begin
+//            start <= 1;
+//          end
+//        end else begin
+//          timer11=timer11+1'b1;
+//        end
+//        
+//        if(start)begin
+//          inited <= 1;
+//            if(!inited)begin
+//              sdram_c_address<=0;
+//              sdram2m_c_address<=0;
+//            end else begin
+//              
+//              timer12<=timer12+1;
+//              if(timer12
+//              sdram_c_address<=
+//            end
+//        end
+     
 
-        
-        
-        
-        
-        
-        
-        
-        
+
+		 
         
       end
     end
@@ -666,6 +652,7 @@ wire [15:0]  sdram2m_buff_buff_readB_data;//output [15:0] buff_readB_data,
 wire   [9:0] sdram2m_buff_buff_readB_addr;//input [9:0]   buff_readB_addr,
 wire         sdram2m_buff_buff_readB_clk ;//input         buff_readB_clk,
 
+wire sdram2m_busy;
 
 sdram2m(
   .sys_clk    (sys_clk  ),       // 时钟信号
@@ -701,8 +688,8 @@ sdram2m(
 .buff_write_clk (sdram2m_buff_write_clk ),//input        buff_write_clk,
 .buff_write_en  (sdram2m_buff_write_en  ),//input        buff_write_en,
 
-.read_buffA_req(sdram2m_read_buffA_req),//input read_buffA_req,
-.read_buffB_req(sdram2m_read_buffB_req),//input read_buffB_req,
+.read_buff_req(sdram2m_read_buff_req),//input read_buffA_req,
+.read_buff_A_B(sdram2m_read_buff_A_B),//input read_buffB_req,
 .read_buff_addr(sdram2m_read_buff_addr),//input [9:0] read_buff_addr,
 
 .buff_readA_data(sdram2m_buff_buff_readA_data),//output [15:0] buff_readA_data,
@@ -713,7 +700,7 @@ sdram2m(
 .buff_readB_addr(sdram2m_buff_buff_readB_addr),//input [9:0]   buff_readB_addr,
 .buff_readB_clk (sdram2m_buff_buff_readB_clk ),//input         buff_readB_clk,
 
-.dummy(dummy)
+.busy(sdram2m_busy)
 );
 
 
@@ -728,8 +715,8 @@ vga_driver u_vga_driver(
     .vga_mode (vga_mode),
     .blanking(blanking),
     
-    .read_buffA_req (sdram2m_read_buffA_req      ),
-    .read_buffB_req (sdram2m_read_buffB_req      ),
+    .read_buff_req  (sdram2m_read_buff_req       ),
+    .read_buff_A_B  (sdram2m_read_buff_A_B       ),
     .read_buff_addr (sdram2m_read_buff_addr      ),
     .buff_readA_data(sdram2m_buff_buff_readA_data),
     .buff_readA_addr(sdram2m_buff_buff_readA_addr),

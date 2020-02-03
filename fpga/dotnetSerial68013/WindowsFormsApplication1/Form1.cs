@@ -548,7 +548,7 @@ namespace WindowsFormsApplication1
 
         private void loadimg(Bitmap b)
         {
-
+            bool isquick = true;
             for (int y = 0; y < 768; y++)
             {
                 this.Text = "" + y;
@@ -574,7 +574,7 @@ namespace WindowsFormsApplication1
                     sendCmd(0x013, (addr >> 8) & 0xFF);
                     sendCmd(0x014, (addr >> 16) & 0xFF);
 
-                    sendCmd(0x0BE, 0);
+                    sendCmd(isquick ? 0xB2 : 0xBE, 0);
 
                     recAck(0x3412);
                 }
@@ -599,7 +599,7 @@ namespace WindowsFormsApplication1
                     sendCmd(0x013, (addr >> 8) & 0xFF);
                     sendCmd(0x014, (addr >> 16) & 0xFF);
 
-                    sendCmd(0x0BE, 0);
+                    sendCmd(isquick ? 0xB2 : 0xBE, 0);
 
 
                     recAck(0x3412);
