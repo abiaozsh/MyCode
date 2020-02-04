@@ -25,7 +25,15 @@ module cy68013_mcu(
   output reg [7:0] cy_dat,
   output reg [7:0] cy_snd_data0,
   output reg [7:0] cy_snd_data1,
-
+  
+  output reg debug0,
+  output reg [31:0] debug1,
+  output debug2,
+  output debug3,
+  output debug4,
+  output debug5,
+  output debug6,
+  output debug7,
     
     //SDRAM 芯片接口
     output        sdram_clk_out,            //SDRAM 芯片时钟
@@ -194,13 +202,15 @@ reg cy_snd_req;
 
 reg [16:0] temp_val;
 
-reg [2:0] timer11;
+reg [10:0] timer11;
 reg [20:0] timer12;
 
 reg start;
 reg inited;
 reg blanking_buff;
 reg blanking_last;
+
+reg [31:0] counttotal;
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
@@ -222,7 +232,8 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     sdram_c_write_latch_address <=0;
     sum <=0;
     sum16 <=0;
-
+    sdram_c_buffDMAread_req <= 0;
+    sdram2m_buffDMAwrite_req <= 0;
 
     cy_from_fpga_A2_SLOE<=1;
     cy_from_fpga_RDY0_SLRD<=1;
@@ -241,6 +252,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     vga_mode<=1;
     start<=0;
     inited<=0;
+    counttotal<=0;
   end else begin
     blanking_buff <= blanking;
     blanking_last <= blanking_buff;
@@ -272,10 +284,12 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         
       end else if (command == 8'h23) begin//vga off
         blockvga<=1;
+        debug0<=1;
         command_done<=1;
           
       end else if (command == 8'h24) begin//vga on
         blockvga<=0;
+        debug0<=0;
         command_done<=1;
 
      
@@ -454,7 +468,6 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         if(timer2==0)begin
           if(timer==0)begin//锁存地址
             sdram2m_c_address <= {cy_address2,cy_address1,cy_address0};
-            sum16 <= 0;
             cy_from_fpga_A4_FIFOADR0<=0;//set channel
             cy_from_fpga_A5_FIFOADR1<=1;
             cy_out_to_pc<=1;//set out
@@ -469,11 +482,9 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           end
           timer<=timer+1'b1;
           sdram2m_c_read_req<=0;
-          sum16 <= sum16 + sdram2m_c_data_out;
           cy_D_out = sdram2m_c_data_out[15:8];
           cy_B_out = sdram2m_c_data_out[7:0];
           cy_from_fpga_RDY1_SLWR<=0;//set wr
- 
         end else if(timer2==60)begin
           cy_from_fpga_RDY1_SLWR<=1;//set wr
           if(timer==513)begin
@@ -482,8 +493,8 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
             cy_out_to_pc<=0;//set out
             timer<=0;
             cy_snd_req <= 1;
-            cy_snd_data1 <= sum16[15:8];
-            cy_snd_data0 <= sum16[7:0];
+            cy_snd_data1 <= 8'h12;
+            cy_snd_data0 <= 8'h34;
             command_done<=1;
           end
           timer2<=0;
@@ -506,34 +517,34 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 //        cy_snd_data0 <= sdram2m_buff_buff_readA_data[7:0];
 //        command_done<=1;
 
-      end else if (command == 8'hE1) begin//sram buff address write 1word
-        timer<=timer+1'b1;
-        if(timer==0)begin
-          sdram2m_buffDMAWriteA_addr <= cy_dat;
-          sdram2m_buffDMAWriteA_data <= {cy_data1,cy_data0};
-          sdram2m_buffDMAWriteA_en<=1;
-        end else begin
-					timer<=0;
-          sdram2m_buffDMAWriteA_en<=0;
-          command_done<=1;
-        end
+//      end else if (command == 8'hE1) begin//sram buff address write 1word
+//        timer<=timer+1'b1;
+//        if(timer==0)begin
+//          sdram2m_buffDMAWriteA_addr <= cy_dat;
+//          sdram2m_buffDMAWriteA_data <= {cy_data1,cy_data0};
+//          sdram2m_buffDMAWriteA_en<=1;
+//        end else begin
+//          timer<=0;
+//          sdram2m_buffDMAWriteA_en<=0;
+//          command_done<=1;
+//        end
 
-      end else if (command == 8'hE2) begin//sram buff buff write
-        timer<=timer+1'b1;
-        if(timer==0)begin
-          sdram2m_buffDMAwrite_addr <= {cy_address2,cy_address1,cy_address0};
-          sdram2m_buffDMAwrite_req<=1;
-          sdram2m_buffDMAwrite_A_B<=1;
-        end else begin
-          if(sdram2m_buffDMAwrite_ack)begin
-            cy_snd_req <= 1;
-            cy_snd_data0 <= sdram2m_c_data_out[7:0];
-            cy_snd_data1 <= sdram2m_c_data_out[15:8];
-            timer <= 0;
-            sdram2m_buffDMAwrite_req<=0;
-            command_done <= 1;
-          end
-        end
+//      end else if (command == 8'hE2) begin//sram buff buff write
+//        timer<=timer+1'b1;
+//        if(timer==0)begin
+//          sdram2m_buffDMAwrite_addr <= {cy_address2,cy_address1,cy_address0};
+//          sdram2m_buffDMAwrite_req<=1;
+//          sdram2m_buffDMAwrite_A_B<=1;
+//        end else begin
+//          if(sdram2m_buffDMAwrite_ack)begin
+//            cy_snd_req <= 1;
+//            cy_snd_data0 <= sdram2m_c_data_out[7:0];
+//            cy_snd_data1 <= sdram2m_c_data_out[15:8];
+//            timer <= 0;
+//            sdram2m_buffDMAwrite_req<=0;
+//            command_done <= 1;
+//          end
+//        end
 
 
       end else if (command == 8'hBE) begin//B2  sdram2m long write ok
@@ -575,30 +586,61 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           end
         end
 
-//      end else if (command == 8'hBF) begin//memcopy
-//        //先A2指令写入
-//        //先关vga, 等7个周期  等sdram2m空闲后,开始copy ,打开vga
-//        blockvga<=1;
-//        if(timer11==7)begin
-//          if(!sdram2m_busy)begin
-//            start <= 1;
-//          end
-//        end else begin
-//          timer11=timer11+1'b1;
-//        end
-//        
-//        if(start)begin
-//          inited <= 1;
-//            if(!inited)begin
-//              sdram_c_address<=0;
-//              sdram2m_c_address<=0;
-//            end else begin
-//              
-//              timer12<=timer12+1;
-//              if(timer12
-//              sdram_c_address<=
-//            end
-//        end
+      end else if (command == 8'hBF) begin//memcopy
+        counttotal<=counttotal+1'b1;
+        //先A2指令写入32M
+        //先关vga, 等7个周期  等sdram2m空闲后,开始copy ,打开vga  参考hE2
+        blockvga<=1;
+        debug0<=1;
+        if(!start)begin
+          if(timer11==300)begin
+            if(!sdram2m_busy)begin
+              start <= 1;
+              debug0 <= 0;
+              sdram_c_buffDMAread_addr <= 0;
+              sdram_c_buffDMAread_A_B <= 0;
+              sdram2m_buffDMAwrite_addr <= 12'b1111_1111_1111;
+              sdram2m_buffDMAwrite_A_B <= 1;
+              timer12 <= 0;
+            end
+          end else begin
+            timer11<=timer11+1'b1;
+          end
+        end
+          
+        if(start)begin
+          inited <= 1;
+          debug0 <= 0;
+          if(!inited)begin
+            sdram_c_buffDMAread_req <= 1;
+            sdram2m_buffDMAwrite_req <= 1;
+          end else begin
+            if(sdram_c_buffDMAread_req && sdram2m_buffDMAwrite_req && sdram_c_buffDMAread_ack && sdram2m_buffDMAwrite_ack)begin
+              sdram_c_buffDMAread_req <= 0;
+              sdram2m_buffDMAwrite_req <= 0;
+              sdram_c_buffDMAread_addr <= sdram_c_buffDMAread_addr + 1'b1;
+              sdram_c_buffDMAread_A_B <= !sdram_c_buffDMAread_A_B;
+              sdram2m_buffDMAwrite_addr <= sdram2m_buffDMAwrite_addr + 1'b1;
+              sdram2m_buffDMAwrite_A_B <= !sdram2m_buffDMAwrite_A_B;
+              timer12<=timer12+1;
+              if(timer12==12'b1111_1111_1111)begin
+                blockvga <= 0;
+                inited <= 0;
+                start <= 0;
+                debug1<=counttotal;
+                counttotal<=0;
+                timer11<=0;
+                command_done <= 1;
+                cy_snd_req <= 1;
+                cy_snd_data0 <= 8'h12;
+                cy_snd_data1 <= 8'h34;
+              end
+            end
+            if(!sdram_c_buffDMAread_req && !sdram2m_buffDMAwrite_req && !sdram_c_buffDMAread_ack && !sdram2m_buffDMAwrite_ack)begin
+              inited <= 0;
+            end
+          end
+        end
      
 
 
@@ -609,23 +651,44 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
   end
 end
 
+assign debug2 = sdram2m_busy;
+assign debug3 = start;
+assign debug4 = sdram_c_buffDMAread_req ;
+assign debug5 = sdram2m_buffDMAwrite_req;
+assign debug6 = sdram_c_buffDMAread_ack;
+assign debug7 = sdram2m_buffDMAwrite_ack;
 
-
-
-
-
-
-
-
-reg [23:0] sdram_c_address;
-reg [15:0] sdram_c_data_in;
+reg  [23:0] sdram_c_address;
+reg  [15:0] sdram_c_data_in;
 wire [15:0] sdram_c_data_out;
-reg  sdram_c_read_req;
-wire  sdram_c_read_ack;
-reg  sdram_c_write_req;
-wire  sdram_c_write_ack;
-reg sdram_c_write_en;
-reg sdram_c_write_latch_address;
+reg         sdram_c_read_req;
+wire        sdram_c_read_ack;
+reg         sdram_c_write_req;
+wire        sdram_c_write_ack;
+reg         sdram_c_write_en;
+reg         sdram_c_write_latch_address;
+
+
+reg         sdram_c_buffDMAread_req;  // input             
+wire        sdram_c_buffDMAread_ack;  // output reg        
+reg  [15:0] sdram_c_buffDMAread_addr;  // input      [15:0] 
+reg         sdram_c_buffDMAread_A_B;  // input             
+
+wire        sdram_c_buffDMAread_clk;  // output            
+wire [15:0] sdram_c_buffDMAread_wrdata;  // output reg [15:0] 
+wire  [7:0] sdram_c_buffDMAread_wraddress;  // output reg  [7:0] 
+wire        sdram_c_buffDMAreadA_wren;  // output reg        
+wire        sdram_c_buffDMAreadB_wren;  // output reg        
+
+//直连
+assign sdram2m_buffDMAWrite_clk = sdram_c_buffDMAread_clk;
+assign sdram2m_buffDMAWriteA_data = sdram_c_buffDMAread_wrdata;
+assign sdram2m_buffDMAWriteA_addr = sdram_c_buffDMAread_wraddress;
+assign sdram2m_buffDMAWriteB_data = sdram_c_buffDMAread_wrdata;
+assign sdram2m_buffDMAWriteB_addr = sdram_c_buffDMAread_wraddress;
+assign sdram2m_buffDMAWriteA_en = sdram_c_buffDMAreadA_wren;
+assign sdram2m_buffDMAWriteB_en = sdram_c_buffDMAreadB_wren;
+
 sdram ins_sdram(
   .sys_clk    (sys_clk  ),       // 时钟信号
   .sys_rst_n  (sys_rst_n),       // 复位信号
@@ -651,7 +714,20 @@ sdram ins_sdram(
   .write_req  (sdram_c_write_req),//in
   .write_ack  (sdram_c_write_ack),//out
   .write_en   (sdram_c_write_en),//in
-  .write_latch_address(sdram_c_write_latch_address)//in
+  .write_latch_address(sdram_c_write_latch_address),//in
+  
+  .buffDMAread_req        (sdram_c_buffDMAread_req        ),  // input             
+  .buffDMAread_ack        (sdram_c_buffDMAread_ack        ),  // output reg        
+  .buffDMAread_addr       (sdram_c_buffDMAread_addr       ),  // input      [15:0] 
+  .buffDMAread_A_B        (sdram_c_buffDMAread_A_B        ),  // input             
+
+  .buffDMAread_clk        (sdram_c_buffDMAread_clk        ),  // output            
+  .buffDMAread_wrdata     (sdram_c_buffDMAread_wrdata     ),  // output reg [15:0] 
+  .buffDMAread_wraddress  (sdram_c_buffDMAread_wraddress  ),  // output reg  [7:0] 
+  .buffDMAreadA_wren      (sdram_c_buffDMAreadA_wren      ),  // output reg        
+  .buffDMAreadB_wren      (sdram_c_buffDMAreadB_wren      )  // output reg        
+  
+  
 );
 
 
@@ -666,18 +742,18 @@ reg sdram2m_c_write_en;
 reg sdram2m_c_write_latch_address;
 
 
-reg        sdram2m_buffDMAwrite_req  ;             //input        
-reg [11:0] sdram2m_buffDMAwrite_addr ;            //input [11:0] 
-reg        sdram2m_buffDMAwrite_A_B  ;             //input        
-wire       sdram2m_buffDMAwrite_ack  ;             //output reg   
-wire       sdram2m_buffDMAWrite_clk  ;         //input        
-assign sdram2m_buffDMAWrite_clk = sys_clk;
-reg [15:0] sdram2m_buffDMAWriteA_data;         //input [15:0] 
-reg  [9:0] sdram2m_buffDMAWriteA_addr;         //input  [9:0] 
-reg        sdram2m_buffDMAWriteA_en  ;         //input        
-reg [15:0] sdram2m_buffDMAWriteB_data;         //input [15:0] 
-reg  [9:0] sdram2m_buffDMAWriteB_addr;         //input  [9:0] 
-reg        sdram2m_buffDMAWriteB_en  ;         //input        
+reg         sdram2m_buffDMAwrite_req  ;             //input        
+reg [11:0]  sdram2m_buffDMAwrite_addr ;            //input [11:0] 
+reg         sdram2m_buffDMAwrite_A_B  ;             //input        
+wire        sdram2m_buffDMAwrite_ack  ;             //output reg   
+
+wire        sdram2m_buffDMAWrite_clk  ;         //input        
+wire [15:0] sdram2m_buffDMAWriteA_data;         //input [15:0] 
+wire  [9:0] sdram2m_buffDMAWriteA_addr;         //input  [9:0] 
+wire        sdram2m_buffDMAWriteA_en  ;         //input        
+wire [15:0] sdram2m_buffDMAWriteB_data;         //input [15:0] 
+wire  [9:0] sdram2m_buffDMAWriteB_addr;         //input  [9:0] 
+wire        sdram2m_buffDMAWriteB_en  ;         //input        
 
 
 wire         sdram2m_read_buffA_req;//input read_buffA_req,
@@ -725,6 +801,7 @@ sdram2m(
 .buffDMAwrite_A_B  (sdram2m_buffDMAwrite_A_B  ),             //input        
 .buffDMAwrite_ack  (sdram2m_buffDMAwrite_ack  ),             //output reg   
 .buffDMAWrite_clk  (sdram2m_buffDMAWrite_clk  ),         //input        
+
 .buffDMAWriteA_data(sdram2m_buffDMAWriteA_data),         //input [15:0] 
 .buffDMAWriteA_addr(sdram2m_buffDMAWriteA_addr),         //input  [9:0] 
 .buffDMAWriteA_en  (sdram2m_buffDMAWriteA_en  ),         //input        

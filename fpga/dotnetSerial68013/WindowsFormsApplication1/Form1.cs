@@ -501,40 +501,71 @@ namespace WindowsFormsApplication1
 
         private void loadimg_testBF(Bitmap b)
         {
+            //BF) begin memcopy
+            sendCmd(0xBF, 0);
+            recAck(0x3412);
+
+            return;
             int size = 1024;
 
-            for (int y = 0; y < 64; y++)
+            for (int y = 0; y < 768; y++)
             {
                 this.Text = "" + y;
                 Application.DoEvents();
                 {
-                    for (int col = 0; col < 4; col++)
                     {
-
-                        int xferLen = size;
-
-                        for (int x = 0; x < 256; x++)
+                        bool bResult;
+                        byte[] outData = new byte[size];
+                        for (int x = 0; x < 512; x++)
                         {
-                            var c = b.GetPixel(x + (col << 8), y);
+                            var c = b.GetPixel(x, y);
                             int val = getpixel(c);
-
-                            sendCmd(0x010, (byte)(val & 0xFF));
-                            sendCmd(0x011, (byte)((val >> 8) & 0xFF));
-                            sendCmd(0x0E1, x);
+                            outData[x << 1] = (byte)(val & 0xFF);
+                            outData[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
                         }
-
-
-                        int addr = (y << 2) + col;
-                        sendCmd(0x012, addr & 0xFF);
-                        sendCmd(0x013, (addr >> 8) & 0xFF);
-                        sendCmd(0x014, (addr >> 16) & 0xFF);
-                        sendCmd(0x0E2, 0);
-                        recAck(0x3412);
+                        int xferLen = size;
+                        bResult = outEndpoint.XferData(ref outData, ref xferLen);
                     }
 
+                    int addr = y * 1024;
+                    sendCmd(0x012, addr & 0xFF);
+                    sendCmd(0x013, (addr >> 8) & 0xFF);
+                    sendCmd(0x014, (addr >> 16) & 0xFF);
+
+                    sendCmd( 0xA2 , 0);
+
+                    recAck(0x3412);
+                }
+                {
+                    {
+                        bool bResult;
+                        byte[] outData = new byte[size];
+                        for (int x = 0; x < 512; x++)
+                        {
+                            var c = b.GetPixel(x + 512, y);
+                            int val = getpixel(c);
+                            outData[x << 1] = (byte)(val & 0xFF);
+                            outData[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
+                        }
+                        int xferLen = size;
+                        bResult = outEndpoint.XferData(ref outData, ref xferLen);
+                    }
+
+                    int addr = y * 1024 + 512;
+                    sendCmd(0x012, addr & 0xFF);
+                    sendCmd(0x013, (addr >> 8) & 0xFF);
+                    sendCmd(0x014, (addr >> 16) & 0xFF);
+
+                    sendCmd( 0xA2 , 0);
+
+
+                    recAck(0x3412);
                 }
             }
 
+            //BF) begin memcopy
+            sendCmd(0xBF, 0);
+            int ack = recAck(0x3412);
         }
 
         private void loadimg(Bitmap b)

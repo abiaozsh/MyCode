@@ -20,7 +20,7 @@ module flow_led(
   output [12:0] sdram_addr,               //SDRAM 行/列地址
   inout  [15:0] sdram_data,               //SDRAM 数据
   output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
-  
+ 
      //SDRAM2m 芯片接口
     output        sdram2m_clk_out,            //SDRAM 芯片时钟
     output        sdram2m_cke,                //SDRAM 时钟有效
@@ -57,7 +57,7 @@ module flow_led(
     output          vga_hs,         //行同步信号
     output          vga_vs,         //场同步信号
     output  [15:0]  vga_rgb         //红绿蓝三原色输出 
-  
+ 
 
 );
 
@@ -69,34 +69,41 @@ assign sys_rst_n = key1;
   //assign led[2] = busy;
   //assign led = busy;
 
-
+ 
   wire readreq;
   reg readack;
   
   reg [7:0] timer;
-  
+ 
   reg [16:0] data0;
   reg [16:0] data1;
   reg [16:0] data2;
   reg [16:0] data3;
  
-  assign seg_data3 = cy_snd_data1;//cy_dat;
-  assign seg_data2 = cy_snd_data0;//cy_cmd;
-  assign seg_data1 = cy_D;
-  assign seg_data0 = cy_B;
+  assign seg_data3 = debug1[31:24];//cy_snd_data1;//cy_dat;
+  assign seg_data2 = debug1[23:16];//cy_snd_data0;//cy_cmd;
+  assign seg_data1 = debug1[15:8];//cy_D;
+  assign seg_data0 = debug1[7:0];//cy_B;
  
-  assign debug[0] = cy_A0_INT0;
-  assign debug[1] = cy_A1_INT1;
-  assign debug[2] = cy_A3_WU2;
-  
-  //assign cy_A1_INT1 = key2;
-  
-  assign debug[4] = cy_to_fpga_CTL0_FLAGA;
-  assign debug[5] = cy_to_fpga_CTL1_FLAGB;
-  assign debug[6] = cy_to_fpga_CTL2_FLAGC;
-  assign debug[7] = cy_to_fpga_A7_FLAGD;
-  
  
+  assign debug[0] = debug0;
+  assign debug[1] = debug2;//cy_A0_INT0;
+  assign debug[2] = debug3;//cy_A1_INT1;
+  assign debug[3] = cy_A3_WU2;
+  
+  assign debug[4] = debug4;//cy_to_fpga_CTL0_FLAGA;
+  assign debug[5] = debug5;//cy_to_fpga_CTL1_FLAGB;
+  assign debug[6] = debug6;//cy_to_fpga_CTL2_FLAGC;
+  assign debug[7] = debug7;//cy_to_fpga_A7_FLAGD  ;
+  
+wire buffok;
+assign buffok = cy_to_fpga_CTL0_FLAGA == 0 &&
+ cy_to_fpga_CTL1_FLAGB == 1 &&
+ cy_to_fpga_CTL2_FLAGC == 0 &&
+ cy_to_fpga_A7_FLAGD   == 1;
+wire bufferr;
+assign bufferr = !buffok;
+assign led = !bufferr;
 
 wire [7:0] seg_data0;
 wire [7:0] seg_data1;
@@ -118,8 +125,9 @@ seg_led_hex595 (
  
   wire busy;
 	wire blanking;
-  assign led = !blanking;
-	
+
+  wire debug0;
+	wire [31:0] debug1;
 	
   wire [7:0] cy_cmd;
   wire [7:0] cy_dat;
@@ -152,6 +160,16 @@ seg_led_hex595 (
 	 .cy_dat(cy_dat),
 	 .cy_snd_data0(cy_snd_data0),
 	 .cy_snd_data1(cy_snd_data1),
+ 
+    .debug0(debug0),
+		.debug1(debug1),
+		.debug2(debug2),
+		.debug3(debug3),
+.debug4(debug4),
+.debug5(debug5),
+.debug6(debug6),
+.debug7(debug7),
+
  
     //SDRAM 芯片接口
     .sdram_clk_out     (sdram_clk_out),

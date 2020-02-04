@@ -33,8 +33,19 @@ module sdram(
     //上升沿锁存地址，之后每次加一
     input write_latch_address,
     input write_en,//写入过程中保持高,要从8字前边界开始写，地址0x00,0x08,0x10...,否则会覆盖原有数据
-    output [23:0] write_address
-    );
+    output [23:0] write_address,
+    
+    input             buffDMAread_req        ,
+    output reg        buffDMAread_ack        ,
+    input      [15:0] buffDMAread_addr       ,
+    output            buffDMAread_clk        ,
+    input             buffDMAread_A_B        ,
+    output reg [15:0] buffDMAread_wrdata     ,
+    output reg  [7:0] buffDMAread_wraddress  ,
+    output reg        buffDMAreadA_wren      ,
+    output reg        buffDMAreadB_wren      
+    
+);
     
 wire rst_n;
 wire clk_50m;
@@ -294,8 +305,10 @@ always@(posedge clk or negedge sys_rst_n) begin // 注入连续写缓存
 end
 
 
+assign buffDMAread_clk = sdram_clk;
 
 reg read_sdram_req_buff;
+reg buffDMAread_req_buff;
 reg write_single_sdram_req_buff;
 reg write_sdram_req_buff;
 
@@ -303,7 +316,9 @@ reg read_sdram_ack;
 reg write_single_sdram_ack;
 reg write_sdram_ack;
 
+reg sdram_page_delay;
 reg        sdram_timer0;
+reg [8:0]  sdram_timer9;
 reg [7:0]  sdram_timer8;
 reg [15:0] readBuffer0;
 reg [15:0] readBuffer1;
@@ -317,10 +332,12 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     sdram_timer0 <= 0;
     
     read_sdram_req_buff <= 0;
+    buffDMAread_req_buff <= 0;
     write_single_sdram_req_buff <= 0;
     write_sdram_req_buff <= 0;
     
     read_sdram_ack <= 0;
+    buffDMAread_ack <= 0;
     write_single_sdram_ack <= 0;
     write_sdram_ack <= 0;
     
@@ -329,9 +346,12 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     
   end else begin
     read_sdram_req_buff <= read_sdram_req;
+    buffDMAread_req_buff <= buffDMAread_req;
     write_single_sdram_req_buff <= write_single_sdram_req;
     write_sdram_req_buff <= write_sdram_req;
     
+    buffDMAreadA_wren<=0;
+    buffDMAreadB_wren<=0;
     if (read_sdram_req_buff && !read_sdram_ack)begin
       sdram_timer0 <= 1;
       if(sdram_timer0 == 0)begin
@@ -350,6 +370,36 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
             sdram_timer0 <= 0;
             read_sdram_ack <= 1;
           end else begin
+          end
+        end
+      end
+
+    end else if (buffDMAread_req_buff && !buffDMAread_ack)begin
+      sdram_timer0 <= 1;
+      if(sdram_timer0 == 0)begin
+        sdram_rd_addr <= {buffDMAread_addr,8'b0}; //16+8
+        sdram_rd_burst <= 256;
+        sdram_timer9 <= 0;
+        sdram_page_delay <= 0;
+        sdram_rd_req = 1;//只需要置高一个周期就可以了
+      end else begin
+        if(sdram_rd_ack || sdram_page_delay)begin
+          sdram_timer9 <= sdram_timer9 + 1'b1;
+          if(!sdram_page_delay)begin
+            buffDMAread_wrdata    <= sdram_dout;
+            buffDMAread_wraddress <= sdram_timer9[7:0];
+            if(buffDMAread_A_B)begin
+              buffDMAreadA_wren <= 1;
+            end else begin
+              buffDMAreadB_wren <= 1;
+            end
+          end
+          if(sdram_timer9==255)begin 
+            sdram_page_delay <= 1;
+            sdram_rd_req <= 0;
+          end else if(sdram_timer9==263)begin 
+            sdram_timer0 <= 0;
+            buffDMAread_ack <= 1;
           end
         end
       end
@@ -409,6 +459,9 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     end else begin
       if(!read_sdram_req_buff && read_sdram_ack)begin
         read_sdram_ack <= 0;
+      end
+      if(!buffDMAread_req_buff && buffDMAread_ack)begin
+        buffDMAread_ack <= 0;
       end
       if(!write_single_sdram_req_buff && write_single_sdram_ack)begin
         write_single_sdram_ack <= 0;
