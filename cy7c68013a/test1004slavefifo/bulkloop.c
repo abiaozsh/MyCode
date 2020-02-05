@@ -49,25 +49,24 @@ void TD_Init(void)             // Called once at startup
   PINFLAGSCD = 0xEA;SYNCDELAY; // FLAGC:A 1 0 1 0 EP6 EF     FLAGD:E 1 1 1 0 EP6 FF
   
   PORTACFG |= 0x80;SYNCDELAY;
-  //IFCONFIG = 0xE3;   // 11100011         // for async? for sync?
-  //1	1	Slave FIFO
 
   //IFCLKSRC：FIFO时钟内部/外部时钟源选择，0--外部时钟源，1--内部时钟源。
-  IFCONFIG |= 0x80;SYNCDELAY;
+  IFCONFIG &=~0x80;SYNCDELAY;
 
   //30/48MHZ：当IFCLKSRC=1时，选择30MHz/48MHz内部时钟频率，0--IFCLK 30MHz，1--IFCLK 48MHz。
-  IFCONFIG |= 0x40;SYNCDELAY;
+  IFCONFIG &=~0x40;SYNCDELAY;
 
   //IFCLKOE：当IFCLKSRC=1时，IFCLK时钟输出使能，0--关闭，1--打开。
-  IFCONFIG |= 0x20;SYNCDELAY;
+  IFCONFIG &=~0x20;SYNCDELAY;
 
   //IFCLKPOL：IFCLK输出反转使能，0--正常，1--反转。
   IFCONFIG &= ~0x10;SYNCDELAY;
 
   //ASYNC：Slave FIFO同步/异步工作方式选择，0同步，1异步。
   //IFCONFIG |= bmASYNC;SYNCDELAY;
-  IFCONFIG  |= 0x08;SYNCDELAY;
+  IFCONFIG  &= ~0x08;SYNCDELAY;
   
+  //11 Slave FIFO Interface (external master)
   IFCONFIG |= 0x02;SYNCDELAY;
   IFCONFIG |= 0x01;SYNCDELAY;
   
