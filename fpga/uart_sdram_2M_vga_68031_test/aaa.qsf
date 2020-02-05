@@ -203,6 +203,7 @@ set_location_assignment PIN_B20 -to cy_D[3]
 set_location_assignment PIN_A4 -to cy_from_fpga_RDY0_SLRD
 set_location_assignment PIN_C3 -to cy_SCL
 set_location_assignment PIN_A5 -to cy_IFCLK
+set_location_assignment PIN_A5 -to cy_IFCLK_out
 set_location_assignment PIN_A6 -to cy_from_fpga_RDY1_SLWR
 set_location_assignment PIN_A7 -to cy_A0_INT0
 set_location_assignment PIN_A8 -to cy_A1_INT1
@@ -277,4 +278,5 @@ set_global_assignment -name VERILOG_FILE ram.v
 set_global_assignment -name VERILOG_FILE flow_led.v
 set_global_assignment -name QIP_FILE ../commoncode/sdram/buff1024x16.qip
 set_global_assignment -name QIP_FILE ../commoncode/sdram/buff256x16.qip
+set_global_assignment -name QIP_FILE pll_cy.qip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

@@ -457,14 +457,24 @@ namespace WindowsFormsApplication1
 
         private void button3_Click(object sender, EventArgs e)
         {
-            int addr = Convert.ToInt32(textBox1.Text, 16);
-            sendCmd(0x012, addr & 0xFF);
-            sendCmd(0x013, (addr >> 8) & 0xFF);
-            sendCmd(0x014, (addr >> 16) & 0xFF);
+            //sendCmd(0x060, 0);
+            sendCmd(0x062, 0);
+            //sendCmd(0x061, 0);
 
-            sendCmd(0x0F1, 0); Thread.Sleep(10);
-            sendCmd(0x0F2, 0); Thread.Sleep(10);
+            bool bResult;
+            int size = 1024;
+            byte[] outData = new byte[size];
+            outData[0] = 1;
+            outData[1023] = 1;
+            int xferLen;
+            //2048 word
+            for (int i = 0; i < 128; i++)
+            {
+                xferLen = size;
+                bResult = outEndpoint.XferData(ref outData, ref xferLen);
+            }
 
+            int ack = recAck(0x3412);
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -496,137 +506,68 @@ namespace WindowsFormsApplication1
         private void button14_Click(object sender, EventArgs e)
         {
             Bitmap b = new Bitmap("e:\\z043.jpg");
-            loadimg_testBF(b);
-        }
-
-        private void loadimg_testBF(Bitmap b)
-        {
-            //BF) begin memcopy
-            sendCmd(0xBF, 0);
-            recAck(0x3412);
-
-            return;
-            int size = 1024;
-
-            for (int y = 0; y < 768; y++)
-            {
-                this.Text = "" + y;
-                Application.DoEvents();
-                {
-                    {
-                        bool bResult;
-                        byte[] outData = new byte[size];
-                        for (int x = 0; x < 512; x++)
-                        {
-                            var c = b.GetPixel(x, y);
-                            int val = getpixel(c);
-                            outData[x << 1] = (byte)(val & 0xFF);
-                            outData[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
-                        }
-                        int xferLen = size;
-                        bResult = outEndpoint.XferData(ref outData, ref xferLen);
-                    }
-
-                    int addr = y * 1024;
-                    sendCmd(0x012, addr & 0xFF);
-                    sendCmd(0x013, (addr >> 8) & 0xFF);
-                    sendCmd(0x014, (addr >> 16) & 0xFF);
-
-                    sendCmd( 0xA2 , 0);
-
-                    recAck(0x3412);
-                }
-                {
-                    {
-                        bool bResult;
-                        byte[] outData = new byte[size];
-                        for (int x = 0; x < 512; x++)
-                        {
-                            var c = b.GetPixel(x + 512, y);
-                            int val = getpixel(c);
-                            outData[x << 1] = (byte)(val & 0xFF);
-                            outData[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
-                        }
-                        int xferLen = size;
-                        bResult = outEndpoint.XferData(ref outData, ref xferLen);
-                    }
-
-                    int addr = y * 1024 + 512;
-                    sendCmd(0x012, addr & 0xFF);
-                    sendCmd(0x013, (addr >> 8) & 0xFF);
-                    sendCmd(0x014, (addr >> 16) & 0xFF);
-
-                    sendCmd( 0xA2 , 0);
-
-
-                    recAck(0x3412);
-                }
-            }
-
-            //BF) begin memcopy
-            sendCmd(0xBF, 0);
-            int ack = recAck(0x3412);
+            loadimg(b);
         }
 
         private void loadimg(Bitmap b)
         {
-            bool isquick = true;
+
+            //set transfer
+            int size = 1024;
+            this.Text = "procimg";
+            Application.DoEvents();
+            byte[][] buffs = new byte[768 * 2][];
+
             for (int y = 0; y < 768; y++)
             {
-                this.Text = "" + y;
-                Application.DoEvents();
                 {
                     {
-                        int size = 1024;
-                        bool bResult;
-                        byte[] outData = new byte[size];
+                        byte[] buff = new byte[size];
                         for (int x = 0; x < 512; x++)
                         {
-                            var c = b.GetPixel(x, y);
+                            var c = b.GetPixel(x + 0, y);
                             int val = getpixel(c);
-                            outData[x << 1] = (byte)(val & 0xFF);
-                            outData[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
+                            buff[(x << 1) + 0] = (byte)(val & 0xFF);
+                            buff[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
                         }
-                        int xferLen = size;
-                        bResult = outEndpoint.XferData(ref outData, ref xferLen);
+                        buffs[(y << 1) + 0] = buff;
                     }
-
-                    int addr = y * 1024;
-                    sendCmd(0x012, addr & 0xFF);
-                    sendCmd(0x013, (addr >> 8) & 0xFF);
-                    sendCmd(0x014, (addr >> 16) & 0xFF);
-
-                    sendCmd(isquick ? 0xB2 : 0xBE, 0);
-
-                    recAck(0x3412);
-                }
-                {
                     {
-                        int size = 1024;
-                        bool bResult;
-                        byte[] outData = new byte[size];
+                        byte[] buff = new byte[size];
                         for (int x = 0; x < 512; x++)
                         {
                             var c = b.GetPixel(x + 512, y);
                             int val = getpixel(c);
-                            outData[x << 1] = (byte)(val & 0xFF);
-                            outData[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
+                            buff[(x << 1) + 0] = (byte)(val & 0xFF);
+                            buff[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
                         }
-                        int xferLen = size;
-                        bResult = outEndpoint.XferData(ref outData, ref xferLen);
+                        buffs[(y << 1) + 1] = buff;
                     }
-
-                    int addr = y * 1024 + 512;
-                    sendCmd(0x012, addr & 0xFF);
-                    sendCmd(0x013, (addr >> 8) & 0xFF);
-                    sendCmd(0x014, (addr >> 16) & 0xFF);
-
-                    sendCmd(isquick ? 0xB2 : 0xBE, 0);
-
-
-                    recAck(0x3412);
                 }
             }
+
+            sendCmd(0x060, 0);
+            sendCmd(0x062, 0);
+            this.Text = "transfer";
+            Application.DoEvents();
+
+            for (int y = 0; y < 768 * 2; y++)
+            {
+                int xferLen = size;
+                bool bResult = outEndpoint.XferData(ref buffs[y], ref xferLen);
+            }
+            int ack;
+            //release transfer
+            sendCmd(0x061, 0);
+            ack = recAck(0x3412);
+
+            //BF) begin memcopy
+            sendCmd(0xBF, 0);
+            ack = recAck(0x3412);
+
+            this.Text = "";
+            Application.DoEvents();
+
         }
 
         private void setpixel(int x, int y, Color c)
@@ -639,7 +580,7 @@ namespace WindowsFormsApplication1
             int val = getpixel(c);
             sendCmd(0x010, val & 0xFF);
             sendCmd(0x011, (val >> 8) & 0xFF);
-            sendCmd((0x0B0 + 0), 0);
+            sendCmd(0x0B0, 0);
         }
 
         private int getpixel(Color c)

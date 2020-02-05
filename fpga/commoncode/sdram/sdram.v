@@ -112,7 +112,7 @@ sdram_controller ins_sdram_controller(
 	.sdram_rd_burst		(sdram_rd_burst),		    //读sdram时数据突发长度
 	.sdram_dout		    (sdram_dout),   	//从sdram中读出的数据
   
-  .block_auto_refresh (write_en),
+  .block_auto_refresh (0),//write_en
   
 	.sdram_init_done	(sdram_init_done)	//sdram 初始化完成标志
 
@@ -215,7 +215,9 @@ always@(posedge clk or negedge sys_rst_n) begin//地址递增
   end else begin
     if(write_en)begin
       writeAddressDataIn <= writeAddressDataInCurr+1'b1;
-    end
+    end else begin
+			writeAddressDataIn <= writeAddressDataInCurr;
+		end
   end
 end
 

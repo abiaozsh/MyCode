@@ -38,7 +38,7 @@ module flow_led(
   inout [7:0] cy_B,
   input cy_SCL,
   input cy_SDA,
-  input cy_IFCLK                     ,
+  output cy_IFCLK_out                     ,
   input cy_to_fpga_CTL0_FLAGA        ,
   input cy_to_fpga_CTL2_FLAGC        ,
   input cy_to_fpga_CTL1_FLAGB        ,
@@ -60,9 +60,34 @@ module flow_led(
  
 
 );
-
 wire sys_rst_n;
 assign sys_rst_n = key1;
+
+
+wire cy_IFCLK_in;
+assign cy_IFCLK_out = clk_cy;
+assign cy_IFCLK_in = clk_cy;
+
+//25Mhz
+reg clk_cy;
+always @(posedge sys_clk or negedge sys_rst_n) begin
+  if (!sys_rst_n) begin
+		clk_cy <= 0;
+	end else begin
+		clk_cy <= !clk_cy;
+	end
+end
+
+//wire clk_cy;
+//pll_cy(
+//  .inclk0             (sys_clk),
+//  .areset             (~sys_rst_n),
+//  .c0                 (clk_cy)
+//);
+//
+//
+//
+
 
   //assign led[0] = !uart_rxd;
   //assign led[1] = !uart_txd;
@@ -80,21 +105,20 @@ assign sys_rst_n = key1;
   reg [16:0] data2;
   reg [16:0] data3;
  
-  assign seg_data3 = debug1[31:24];//cy_snd_data1;//cy_dat;
-  assign seg_data2 = debug1[23:16];//cy_snd_data0;//cy_cmd;
-  assign seg_data1 = debug1[15:8];//cy_D;
-  assign seg_data0 = debug1[7:0];//cy_B;
+  assign seg_data3 = debug9[15:8];//debug1[31:24];//cy_snd_data1;//cy_dat;
+  assign seg_data2 = debug9[7:0];//debug1[23:16];//cy_snd_data0;//cy_cmd;
+  assign seg_data1 = debug8[15:8];//debug1[15:8];//cy_D;
+  assign seg_data0 = debug8[7:0];//debug1[7:0];//cy_B;
  
  
   assign debug[0] = debug0;
-  assign debug[1] = debug2;//cy_A0_INT0;
-  assign debug[2] = debug3;//cy_A1_INT1;
-  assign debug[3] = cy_A3_WU2;
-  
-  assign debug[4] = debug4;//cy_to_fpga_CTL0_FLAGA;
-  assign debug[5] = debug5;//cy_to_fpga_CTL1_FLAGB;
-  assign debug[6] = debug6;//cy_to_fpga_CTL2_FLAGC;
-  assign debug[7] = debug7;//cy_to_fpga_A7_FLAGD  ;
+  assign debug[1] = debug1;//cy_A0_INT0;
+  assign debug[2] = debug2;//debug3;//cy_A1_INT1;
+  assign debug[3] = debug3;//cy_A3_WU2;
+  assign debug[4] = debug4;
+  assign debug[5] = debug5;
+  assign debug[6] = debug6;
+  assign debug[7] = debug7;
   
 wire buffok;
 assign buffok = cy_to_fpga_CTL0_FLAGA == 0 &&
@@ -127,7 +151,9 @@ seg_led_hex595 (
 	wire blanking;
 
   wire debug0;
-	wire [31:0] debug1;
+	wire debug1;
+	wire [15:0] debug8;
+	wire [15:0] debug9;
 	
   wire [7:0] cy_cmd;
   wire [7:0] cy_dat;
@@ -141,11 +167,11 @@ seg_led_hex595 (
 	 .cy_B(cy_B),
    .cy_SCL(cy_SCL)       ,
    .cy_SDA(cy_SDA)       ,
-	 //input cy_IFCLK                     ,
-	 //input cy_to_fpga_CTL0_FLAGA        ,
-	 //input cy_to_fpga_CTL2_FLAGC        ,
-	 //input cy_to_fpga_CTL1_FLAGB        ,
-	 //input cy_to_fpga_A7_FLAGD          ,
+	 .cy_IFCLK(cy_IFCLK_in),
+	 .cy_to_fpga_CTL0_FLAGA(cy_to_fpga_CTL0_FLAGA),
+	 .cy_to_fpga_CTL2_FLAGC(cy_to_fpga_CTL2_FLAGC),
+	 .cy_to_fpga_CTL1_FLAGB(cy_to_fpga_CTL1_FLAGB),
+	 .cy_to_fpga_A7_FLAGD(cy_to_fpga_A7_FLAGD),
 	 .cy_from_fpga_RDY1_SLWR(cy_from_fpga_RDY1_SLWR)       ,//output
 	 .cy_from_fpga_RDY0_SLRD(cy_from_fpga_RDY0_SLRD)       ,//output
 	 .cy_from_fpga_A2_SLOE(cy_from_fpga_A2_SLOE)         ,//output
@@ -169,6 +195,8 @@ seg_led_hex595 (
 .debug5(debug5),
 .debug6(debug6),
 .debug7(debug7),
+.debug8(debug8),
+.debug9(debug9),
 
  
     //SDRAM 芯片接口
