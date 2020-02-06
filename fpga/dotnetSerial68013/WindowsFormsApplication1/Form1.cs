@@ -687,15 +687,23 @@ namespace WindowsFormsApplication1
             int dma_src = trackBar1.Value*4;
             int dma_des = 0;
 
-            sendCmd(0x017, dma_src & 0xFF);
-            sendCmd(0x018, (dma_src >> 8) & 0xFF);
-            sendCmd(0x019, dma_des & 0xFF);
-            sendCmd(0x01A, (dma_des >> 8) & 0xFF);
+            int page_len = 256;//max 4095 // 12'b0011_1111_1111
+            sendCmd(0x01B, page_len & 0xFF);
+            sendCmd(0x01C, (page_len >> 8) & 0xFF);
 
-            //BF) begin memcopy
-            sendCmd(0xBF, 0);
-            ack = recAck(0x3412);
+            for (int i = 0; i < 12; i++)//1024*768
+            {
+                sendCmd(0x017, dma_src & 0xFF);
+                sendCmd(0x018, (dma_src >> 8) & 0xFF);
+                sendCmd(0x019, dma_des & 0xFF);
+                sendCmd(0x01A, (dma_des >> 8) & 0xFF);
+                dma_src += 256;
+                dma_des += 256;
 
+                //BF) begin memcopy
+                sendCmd(0xBF, 0);
+                ack = recAck(0x3412);
+            }
 
         }
 

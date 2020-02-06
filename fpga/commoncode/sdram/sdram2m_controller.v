@@ -67,14 +67,14 @@ localparam TWR_CLK  = 10'd2; //写入校正//写回周期结束
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// SDRAM 状态控制模块
 
-wire       sdram_ref_ack;		        //SDRAM自动刷新请求应答信号
+//wire       sdram_ref_ack;		        //SDRAM自动刷新请求应答信号
 
 
 //SDRAM初始化完成标志 
 assign sdram_init_done = (init_state == I_DONE);
 
 //SDRAM 自动刷新应答信号
-assign sdram_ref_ack = (work_state == W_AR);
+//assign sdram_ref_ack = (work_state == W_AR);
 
 //写SDRAM响应信号
 assign sdram_wr_ack = 

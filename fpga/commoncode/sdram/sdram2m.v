@@ -182,9 +182,6 @@ sdram2m_controller ins_sdram2m_controller(
 
 );
 
-wire read_vga_sdram_req;
-assign read_vga_sdram_req = 0;
-
 reg read_req_last;//用户接口 读请求 上升沿
 always@(posedge clk or negedge sys_rst_n) begin
 	if(!sys_rst_n) begin

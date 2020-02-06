@@ -246,13 +246,11 @@ reg [7:0] cy_data1;
 
 reg cy_rec_ack;
 reg [7:0] command;
-reg [7:0] data;
 reg cy_rec_req_buff;
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     command <= 0;
-    data <= 0;
     cy_rec_ack<=0;
   end else begin
     cy_rec_req_buff<=cy_rec_req;
@@ -305,7 +303,7 @@ reg [7:0] transfer_pages0;
 reg [7:0] transfer_pages1;
 reg [15:0] DMA_src_page;
 reg [11:0] DMA_des_page;
-
+reg [11:0] DMA_page_length;
 
 reg control_by_transfer;
 
@@ -376,8 +374,10 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       end else if (command == 8'h18) begin DMA_src_page[15:8]<=cy_dat; command_done<=1;
 			
       end else if (command == 8'h19) begin DMA_des_page[7:0] <=cy_dat; command_done<=1;
-      end else if (command == 8'h1A) begin DMA_des_page[11:8]<=cy_dat; command_done<=1;
+      end else if (command == 8'h1A) begin DMA_des_page[11:8]<=cy_dat[3:0]; command_done<=1;
 
+      end else if (command == 8'h1B) begin DMA_page_length[7:0] <=cy_dat; command_done<=1;
+      end else if (command == 8'h1C) begin DMA_page_length[11:8]<=cy_dat[3:0]; command_done<=1;
       
       
       
@@ -568,7 +568,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       end else if (command == 8'hB0) begin//sdram2m write
         timer<=timer+1'b1;
         if(timer==0)begin
-          sdram2m_c_address <= {cy_address2,cy_address1,cy_address0};
+          sdram2m_c_address <= {cy_address2[3:0],cy_address1,cy_address0};
           sdram2m_c_data_in <= {cy_data1,cy_data0};
           sdram2m_c_write_req<=1;
         end else begin
@@ -582,7 +582,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       end else if (command == 8'hB1) begin//sdram2m read
         timer<=timer+1'b1;
         if(timer==0)begin
-          sdram2m_c_address <= {cy_address2,cy_address1,cy_address0};
+          sdram2m_c_address <= {cy_address2[3:0],cy_address1,cy_address0};
           sdram2m_c_read_req<=1;
         end else begin
           if(sdram2m_c_read_ack)begin
@@ -754,12 +754,9 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 
       end else if (command == 8'hBF) begin//memcopy
         counttotal<=counttotal+1'b1;
-        //先A2指令写入32M
-        //先关vga, 等7个周期  等sdram2m空闲后,开始copy ,打开vga  参考hE2
-        blockvga<=1;
         if(!start)begin
-          if(timer11==300)begin
-            if(!sdram2m_busy)begin
+            if(blanking_buff && !blanking_last)begin
+							blockvga<=1;
               start <= 1;
               sdram_c_buffDMAread_addr <= DMA_src_page;//65536page 1page=256word
               sdram_c_buffDMAread_A_B <= 0;
@@ -767,11 +764,8 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
               sdram2m_buffDMAwrite_A_B <= 1;
               timer12 <= 0;
             end
-          end else begin
-            timer11<=timer11+1'b1;
-          end
         end
-          
+ 
         if(start)begin
           inited <= 1;
           if(!inited)begin
@@ -785,13 +779,13 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
               sdram_c_buffDMAread_A_B <= !sdram_c_buffDMAread_A_B;
               sdram2m_buffDMAwrite_addr <= sdram2m_buffDMAwrite_addr + 1'b1;
               sdram2m_buffDMAwrite_A_B <= !sdram2m_buffDMAwrite_A_B;
-              timer12<=timer12+1;
-              if(timer12==12'b1111_1111_1111)begin
+              timer12<=timer12+1'b1;
+              if(timer12==DMA_page_length)begin//12'b0011_1111_1111
                 blockvga <= 0;
                 inited <= 0;
                 start <= 0;
                 //counttotal<=0;
-                timer11<=0;
+                //timer11<=0;
                 command_done <= 1;
                 cy_snd_req <= 1;
                 cy_snd_data0 <= 8'h12;
