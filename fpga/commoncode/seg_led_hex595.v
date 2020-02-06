@@ -21,7 +21,7 @@ always @ (posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
     timer1 <= 0;
   end else begin
-    timer1 <= timer1+1;
+    timer1 <= timer1+1'b1;
   end
 end
 
@@ -31,7 +31,7 @@ always @ (posedge sys_clk or negedge sys_rst_n) begin
     timer595 <= 0;
   end else begin
     if(timer1==0) begin
-      timer595<=timer595+1;
+      timer595<=timer595+1'b1;
       if(timer595==33)begin
         timer595<=0;
       end
@@ -90,7 +90,7 @@ always @ (posedge sys_clk or negedge sys_rst_n) begin
   end
 end
 
-reg timer595_old;
+reg [6:0] timer595_old;
 reg  [7:0] dig_select;
 always @ (posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin

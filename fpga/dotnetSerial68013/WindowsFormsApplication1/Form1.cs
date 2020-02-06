@@ -40,6 +40,59 @@ namespace WindowsFormsApplication1
             //The below function sets the device with particular VID and PId and searches for the device with the same VID and PID.
             setDevice();
 
+            //buffs1 = loadimg(new Bitmap("e:\\z051.jpg"),"",out dummy);
+            //buffs2 = loadimg(new Bitmap("e:\\z043.jpg"), "");
+
+            string[] list = System.IO.Directory.GetFiles(@"E:\test\");
+
+            listView1.View = View.LargeIcon;
+            listView1.TileSize = new System.Drawing.Size(160, 160);
+            listView1.LargeImageList = this.imageList1;
+            imageList1.ImageSize = new Size(160, 120);
+            imageList1.ColorDepth = ColorDepth.Depth32Bit;
+            this.listView1.BeginUpdate();
+            int idx = 0;
+            foreach (var item in list)
+            {
+                pack p = new pack();
+                try
+                {
+                    Bitmap b2;
+                    p.buffs = loadimg(new Bitmap(item), item, out b2);
+                    this.imageList1.Images.Add(b2);
+
+                    p.name = item;
+
+                    ListViewItem vi = new ListViewItem();
+                    vi.Tag = p;
+                    vi.Text = item;
+                    vi.ImageIndex = idx;
+                    idx++;
+                    this.listView1.Items.Add(vi);
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+            this.listView1.EndUpdate();
+        }
+
+        public class pack
+        {
+            public byte[][] buffs;
+            public string name;
+            override
+            public string ToString()
+            {
+                return name;
+            }
+        }
+
+
+
+        void textBox3_DragDrop(object sender, DragEventArgs e)
+        {
+            throw new NotImplementedException();
         }
         void usbDevices_DeviceRemoved(object sender, EventArgs e)
         {
@@ -457,63 +510,51 @@ namespace WindowsFormsApplication1
 
         private void button3_Click(object sender, EventArgs e)
         {
-            //sendCmd(0x060, 0);
-            sendCmd(0x062, 0);
-            //sendCmd(0x061, 0);
-
-            bool bResult;
-            int size = 1024;
-            byte[] outData = new byte[size];
-            outData[0] = 1;
-            outData[1023] = 1;
-            int xferLen;
-            //2048 word
-            for (int i = 0; i < 128; i++)
-            {
-                xferLen = size;
-                bResult = outEndpoint.XferData(ref outData, ref xferLen);
-            }
-
-            int ack = recAck(0x3412);
         }
 
         private void button4_Click(object sender, EventArgs e)
         {
-            for (int i = 0; i < 1024; i++)
-            {
-                sendCmd(0x012, i & 0xFF);
-                sendCmd(0x013, (i >> 8) & 0xFF);
-                sendCmd(0x014, (i >> 16) & 0xFF);
+            int ack;
 
-                sendCmd(0x0F3, 0);
-                sendCmd(0x0F4, 0);
+            this.Text = "";
+            Application.DoEvents();
 
-                int data = recAck(0);
-                if ((i & 15) == 0)
-                {
-                    textBox3.Text += "\r\n";
-                }
-                textBox3.Text += getHex4(data) + " ";
-            }
+            int dma_src = 0;
+            int dma_des = 0;
+
+            sendCmd(0x017, dma_src & 0xFF);
+            sendCmd(0x018, (dma_src >> 8) & 0xFF);
+            sendCmd(0x019, dma_des & 0xFF);
+            sendCmd(0x01A, (dma_des >> 8) & 0xFF);
+
+            //BF) begin memcopy
+            sendCmd(0xBF, 0);
+            ack = recAck(0x3412);
+
 
         }
+        byte[][] buffs1;
+        byte[][] buffs2;
 
         private void button7_Click_1(object sender, EventArgs e)
         {
-            Bitmap b = new Bitmap("e:\\z051.jpg");
-            loadimg(b);
+            transfer(0, buffs1);
         }
         private void button14_Click(object sender, EventArgs e)
         {
-            Bitmap b = new Bitmap("e:\\z043.jpg");
-            loadimg(b);
-        }
+            transfer(0, buffs2);
 
-        private void loadimg(Bitmap b)
+        }
+        static readonly int PAGESIZE = 1024;
+
+        private byte[][] loadimg(Bitmap b, string name, out Bitmap b2)
         {
+            b2 = new Bitmap(1024, 768);
+            Graphics g = Graphics.FromImage(b2);
+            g.DrawImage(b, new Rectangle(0, 0, 1024, 768), 0, 0, b.Width, b.Height, GraphicsUnit.Pixel, null);
+            g.Dispose();
 
             //set transfer
-            int size = 1024;
             this.Text = "procimg";
             Application.DoEvents();
             byte[][] buffs = new byte[768 * 2][];
@@ -522,10 +563,10 @@ namespace WindowsFormsApplication1
             {
                 {
                     {
-                        byte[] buff = new byte[size];
+                        byte[] buff = new byte[PAGESIZE];
                         for (int x = 0; x < 512; x++)
                         {
-                            var c = b.GetPixel(x + 0, y);
+                            var c = b2.GetPixel(x + 0, y);
                             int val = getpixel(c);
                             buff[(x << 1) + 0] = (byte)(val & 0xFF);
                             buff[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
@@ -533,10 +574,10 @@ namespace WindowsFormsApplication1
                         buffs[(y << 1) + 0] = buff;
                     }
                     {
-                        byte[] buff = new byte[size];
+                        byte[] buff = new byte[PAGESIZE];
                         for (int x = 0; x < 512; x++)
                         {
-                            var c = b.GetPixel(x + 512, y);
+                            var c = b2.GetPixel(x + 512, y);
                             int val = getpixel(c);
                             buff[(x << 1) + 0] = (byte)(val & 0xFF);
                             buff[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
@@ -546,29 +587,38 @@ namespace WindowsFormsApplication1
                 }
             }
 
+            return buffs;
+        }
+
+        void setaddress(int addr)
+        {
+            sendCmd(0x012, addr & 0xFF);
+            sendCmd(0x013, (addr >> 8) & 0xFF);
+            sendCmd(0x014, (addr >> 16) & 0xFF);
+        }
+
+        void transfer(int addr, byte[][] buffs)
+        {
+            setaddress(addr);
+
+            int pages = buffs.Length;
+            sendCmd(0x015, (pages) & 0xFF);
+            sendCmd(0x016, (pages >> 8) & 0xFF);
+
             sendCmd(0x060, 0);
             sendCmd(0x062, 0);
-            this.Text = "transfer";
-            Application.DoEvents();
 
-            for (int y = 0; y < 768 * 2; y++)
+            for (int y = 0; y < buffs.Length; y++)
             {
-                int xferLen = size;
+                int xferLen = PAGESIZE;
                 bool bResult = outEndpoint.XferData(ref buffs[y], ref xferLen);
             }
             int ack;
+            ack = recAck(0x3412);
             //release transfer
             sendCmd(0x061, 0);
-            ack = recAck(0x3412);
-
-            //BF) begin memcopy
-            sendCmd(0xBF, 0);
-            ack = recAck(0x3412);
-
-            this.Text = "";
-            Application.DoEvents();
-
         }
+
 
         private void setpixel(int x, int y, Color c)
         {
@@ -600,6 +650,53 @@ namespace WindowsFormsApplication1
         private void button11_Click(object sender, EventArgs e)
         {
             sendCmd(0x024, 0);
+        }
+
+        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+
+
+        }
+
+        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count <= 0) return;
+            transfer(0, ((pack)(listView1.SelectedItems)[0].Tag).buffs);
+            int ack;
+
+            this.Text = "";
+            Application.DoEvents();
+
+            setaddress(0);
+
+
+            //BF) begin memcopy
+            sendCmd(0xBF, 0);
+            ack = recAck(0x3412);
+
+        }
+
+        private void trackBar1_Scroll(object sender, EventArgs e)
+        {
+            int ack;
+
+            this.Text = "";
+            Application.DoEvents();
+
+            int dma_src = trackBar1.Value*4;
+            int dma_des = 0;
+
+            sendCmd(0x017, dma_src & 0xFF);
+            sendCmd(0x018, (dma_src >> 8) & 0xFF);
+            sendCmd(0x019, dma_des & 0xFF);
+            sendCmd(0x01A, (dma_des >> 8) & 0xFF);
+
+            //BF) begin memcopy
+            sendCmd(0xBF, 0);
+            ack = recAck(0x3412);
+
+
         }
 
 

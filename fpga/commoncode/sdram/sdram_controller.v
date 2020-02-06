@@ -15,16 +15,15 @@ module sdram_controller(
     //TODO 读写地址合并 burst 合并
     
     //SDRAM 控制器写端口  
+    input  [23:0] sdram_rw_addr,    //SDRAM写操作的地址
     input         sdram_wr_req,     //写SDRAM请求信号
     output        sdram_wr_ack,     //写SDRAM响应信号
-    input  [23:0] sdram_wr_addr,    //SDRAM写操作的地址
     input  [ 9:0] sdram_wr_burst,   //写sdram时数据突发长度
     input  [15:0] sdram_din,        //写入SDRAM的数据
     
     //SDRAM 控制器读端口  
     input         sdram_rd_req,     //读SDRAM请求信号
     output        sdram_rd_ack,     //读SDRAM响应信号
-    input  [23:0] sdram_rd_addr,    //SDRAM写操作的地址
     input  [ 9:0] sdram_rd_burst,   //读sdram时数据突发长度
     output [15:0] sdram_dout,       //从SDRAM读出的数据
     
@@ -350,7 +349,7 @@ assign {sdram_cke,sdram_cs_n,sdram_ras_n,sdram_cas_n,sdram_we_n} = sdram_cmd_r;
 
 //SDRAM 读/写地址总线控制
 wire [23:0] sys_addr;                   //SDRAM读写地址 
-assign sys_addr = (sdram_rd_wr==READ) ? sdram_rd_addr : sdram_wr_addr;
+assign sys_addr = sdram_rw_addr;
 
 //SDRAM 操作指令控制
 always @ (posedge clk or negedge rst_n) begin

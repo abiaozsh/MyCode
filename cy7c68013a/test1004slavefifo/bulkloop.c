@@ -70,10 +70,7 @@ void TD_Init(void)             // Called once at startup
   IFCONFIG |= 0x02;SYNCDELAY;
   IFCONFIG |= 0x01;SYNCDELAY;
   
-  
-  
-  
-  
+
   CPUCS |= 0x02;SYNCDELAY;
 //  CLKOE off
 //  CPUCS &= ~bmCLKOE;SYNCDELAY;
@@ -135,11 +132,25 @@ void TD_Init(void)             // Called once at startup
   IOA &= ~0x08;
 }
 
-#define DATH IOA |= 0x01
-#define DATL IOA &=~0x01
-#define INFF (IOA & 0x02)
-#define CLKH IOA |= 0x08
-#define CLKL IOA &=~0x08
+//PA0
+//PA1
+//PA2
+//PA3
+//PA4
+//PA5
+//PA6
+//PA7
+//#define DATH IOA |= 0x01
+//#define DATL IOA &=~0x01
+//#define INFF (IOA & 0x02)
+//#define CLKH IOA |= 0x08
+//#define CLKL IOA &=~0x08
+
+#define DATH PA0 = 1
+#define DATL PA0 = 0
+#define INFF PA1
+#define CLKH PA3 = 1
+#define CLKL PA3 = 0
 
 volatile BYTE clk;
 

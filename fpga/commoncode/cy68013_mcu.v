@@ -21,22 +21,23 @@ module cy68013_mcu(
     output reg cy_from_fpga_A5_FIFOADR1     ,//output
     output reg cy_from_fpga_A6_PKTEND       ,//output
 
-  output reg [7:0] cy_cmd,
-  output reg [7:0] cy_dat,
-  output reg [7:0] cy_snd_data0,
-  output reg [7:0] cy_snd_data1,
-  
-  output debug0,
-  output debug1,
-  output debug2,
-  output debug3,
-  output debug4,
-  output debug5,
-  output debug6,
-  output debug7,
-    output [15:0] debug8,
-    output [15:0] debug9,
+    output reg [7:0] cy_cmd,
+    output reg [7:0] cy_dat,
+    output reg [7:0] cy_snd_data0,
+    output reg [7:0] cy_snd_data1,
     
+    output debug0,
+    output debug1,
+    output debug2,
+    output debug3,
+    output debug4,
+    output debug5,
+    output debug6,
+    output debug7,
+    output [7:0] debug80,
+    output [7:0] debug81,
+    output [7:0] debug82,
+    output [7:0] debug83,
     
     //SDRAM 芯片接口
     output        sdram_clk_out,            //SDRAM 芯片时钟
@@ -152,50 +153,36 @@ always @(posedge cy_A3_WU2 or negedge sys_rst_n) begin
   end
 end
 
-
-//cy_from_fpga_RDY0_SLRD
-//cy_to_fpga_CTL0_FLAGA        ,
-//cy_to_fpga_CTL2_FLAGC        ,
-//cy_to_fpga_CTL1_FLAGB        ,
-//cy_to_fpga_A7_FLAGD          ,
-// FLAGA:8 1 0 0 0 EP2 EF
-// FLAGB:C 1 1 0 0 EP2 FF
-// FLAGC:A 1 0 1 0 EP6 EF
-// FLAGD:E 1 1 1 0 EP6 FF
-//assign buffok = cy_to_fpga_CTL0_FLAGA == 0 true &&
-// cy_to_fpga_CTL1_FLAGB == 1 false &&
-// cy_to_fpga_CTL2_FLAGC == 0 true &&
-// cy_to_fpga_A7_FLAGD   == 1 false;
-
-wire EP2EF;
-wire EP2FF;
-wire EP6EF;
-wire EP6FF;
+wire EP2EMPTY ;
+wire EP2FULL  ;
+wire EP6EMPTY ;
+wire EP6FULL  ;
 assign EP2EMPTY = !cy_to_fpga_CTL0_FLAGA;
 assign EP2FULL  = !cy_to_fpga_CTL1_FLAGB;
 assign EP6EMPTY = !cy_to_fpga_CTL2_FLAGC;
 assign EP6FULL  = !cy_to_fpga_A7_FLAGD;
 
+assign debug0 = transfer_req_buff;
+assign debug1 = transfer_ack;
+assign debug2 = transfer_req;
+assign debug3 = cy_IFCLK;
 assign debug4 = EP2EMPTY;
 assign debug5 = EP2FULL;
 assign debug6 = EP6EMPTY;
 assign debug7 = EP6FULL;
 
-assign debug0 = transfer_req_buff;
-assign debug1 = transfer_ack;
-assign debug2 = transfer_req;
-assign debug3 = cy_IFCLK;
 
 reg transfer_req_buff;
 reg transfer_ack;
 reg [24:0] transfer_timer;
 reg [15:0] sdram_c_data_in_trans;
 
-reg [15:0] data_accu ;
-reg [15:0] data_count;
-assign debug8 = data_accu;
-assign debug9 = data_count;
 reg init;
+//reg [31:0] success_count;
+//assign debug83 = success_count[31:24];
+//assign debug82 = success_count[23:16];
+//assign debug81 = success_count[15:8];
+//assign debug80 = success_count[7:0];
 
 always @(negedge cy_IFCLK or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
@@ -208,58 +195,45 @@ always @(negedge cy_IFCLK or negedge sys_rst_n) begin
     cy_from_fpga_A4_FIFOADR0<=0;
     cy_from_fpga_A5_FIFOADR1<=0;
     cy_from_fpga_A6_PKTEND<=1;
-
-    data_accu <= 0;
-    data_count <= 0;
-		init <= 0;
-		sdram_c_write_en <= 0;
+    //success_count<=0;
+    init <= 0;
+    sdram_c_write_en <= 0;
   end else begin
     transfer_req_buff <= transfer_req;
     
     if(transfer_req_buff && !transfer_ack)begin
-			init <= 1;
-			if(!init)begin
-				data_count<=0;
-				data_accu<=0;
-				transfer_timer <= 0;
-			end else begin
-				if(transfer_type==1)begin
-				
-					if(transfer_timer == 768*2*512)begin
-						cy_from_fpga_RDY0_SLRD <= 1;//high deActive
-						transfer_timer <= 0;
-						init <= 0;
-						sdram_c_write_en <= 0;
-						transfer_ack <= 1;
-					end else begin
-						if(!EP2EMPTY)begin
-							transfer_timer <= transfer_timer + 1'b1;
-							data_count <= data_count + 1'b1;
-							data_accu <= data_accu + {cy_D,cy_B};
-							sdram_c_data_in_trans <= {cy_D,cy_B};
-							sdram_c_write_en <= 1;
-							cy_from_fpga_RDY0_SLRD <= 0;//low active
-						end else begin
-							sdram_c_write_en <= 0;
-							cy_from_fpga_RDY0_SLRD <= 1;//high deActive
-						end
-					
-					end
-				end else begin
-				
-					transfer_ack <= 1;
-				end
-			end
+      init <= 1;
+      if(!init)begin
+        transfer_timer <= 0;
+      end else begin
+        if(transfer_type==1)begin//pc2sdram
+          if(transfer_timer == {transfer_pages1,transfer_pages0,9'b0})begin//768*2*512
+            cy_from_fpga_RDY0_SLRD <= 1;//high deActive
+            transfer_timer <= 0;
+            init <= 0;
+            sdram_c_write_en <= 0;
+            transfer_ack <= 1;
+          end else begin
+            if(!EP2EMPTY)begin
+              transfer_timer <= transfer_timer + 1'b1;
+              sdram_c_data_in_trans <= {cy_D,cy_B};
+              sdram_c_write_en <= 1;
+              cy_from_fpga_RDY0_SLRD <= 0;//low active
+            end else begin
+              sdram_c_write_en <= 0;
+              cy_from_fpga_RDY0_SLRD <= 1;//high deActive
+            end
+          end
+        end else begin // sdram 2 pc
+          transfer_ack <= 1;
+        end
+      end
     end
-    
-    
+
     if(!transfer_req_buff && transfer_ack)begin
       transfer_ack <= 0;
     end
-
   end
-
-
 end
 
 
@@ -287,8 +261,8 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       cy_rec_ack <= 0;
     end
     if(cy_cmd==8'h62)begin
-		end
-		
+    end
+    
     if (cy_rec_req_buff && !cy_rec_ack) begin //cy数据到达
       command <= cy_cmd;
       cy_rec_ack <= 1;
@@ -310,9 +284,6 @@ reg hibit;
 
 reg [15:0] timer3;
 
-reg [7:0] sum;
-reg [15:0] sum16;
-
 reg cy_snd_req;
 
 reg [16:0] temp_val;
@@ -326,9 +297,16 @@ reg blanking_buff;
 reg blanking_last;
 
 reg [31:0] counttotal;
+//assign {debug83,debug82,debug81,debug80} = counttotal;
 
-reg transfer_req;
-reg transfer_type;
+reg       transfer_req;
+reg       transfer_type;
+reg [7:0] transfer_pages0;
+reg [7:0] transfer_pages1;
+reg [15:0] DMA_src_page;
+reg [11:0] DMA_des_page;
+
+
 reg control_by_transfer;
 
 reg [15:0] sdram_c_data_in_norm;
@@ -348,8 +326,6 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     sdram_c_data_in_norm <= 0;
     sdram_c_read_req <= 0;
     sdram_c_write_req <= 0;
-    sum <=0;
-    sum16 <=0;
     sdram_c_buffDMAread_req <= 0;
     sdram2m_buffDMAwrite_req <= 0;
     
@@ -364,9 +340,15 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     start<=0;
     inited<=0;
     counttotal<=0;
+    
+    transfer_req<= 0;
+    
+		transfer_pages0<=0;
+		transfer_pages1<=0;
 		
-		transfer_req<= 0;
-		
+		DMA_src_page<=0;
+		DMA_des_page<=0;
+
   end else begin
     blanking_buff <= blanking;
     blanking_last <= blanking_buff;
@@ -387,7 +369,18 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       end else if (command == 8'h12) begin cy_address0<=cy_dat; command_done<=1;
       end else if (command == 8'h13) begin cy_address1<=cy_dat; command_done<=1;
       end else if (command == 8'h14) begin cy_address2<=cy_dat; command_done<=1;
+      end else if (command == 8'h15) begin transfer_pages0<=cy_dat; command_done<=1;
+      end else if (command == 8'h16) begin transfer_pages1<=cy_dat; command_done<=1;
+			
+      end else if (command == 8'h17) begin DMA_src_page[7:0] <=cy_dat; command_done<=1;
+      end else if (command == 8'h18) begin DMA_src_page[15:8]<=cy_dat; command_done<=1;
+			
+      end else if (command == 8'h19) begin DMA_des_page[7:0] <=cy_dat; command_done<=1;
+      end else if (command == 8'h1A) begin DMA_des_page[11:8]<=cy_dat; command_done<=1;
 
+      
+      
+      
       end else if (command == 8'h21) begin//set mode 640*480
         vga_mode<=0;
         command_done<=1;
@@ -406,34 +399,66 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 
 
       end else if (command == 8'h60) begin//sdram read
-				control_by_transfer <= 1;
-				command_done <= 1;
-      end else if (command == 8'h61) begin//sdram read
-				control_by_transfer <= 0;
-				command_done <= 1;
-      end else if (command == 8'h62) begin//sdram read
-				inited <= 1;
-				if(!inited)begin
-					transfer_req <= 1;
-					transfer_type <= 1;
-					cy_from_fpga_A2_SLOE<=0;
-					sdram2m_c_address <= {cy_address2,cy_address1,cy_address0};
-					sdram_c_write_latch_address <= 1;
+        inited <= 1;
+        if(!inited)begin
+          sdram_c_address <= {cy_address2,cy_address1,cy_address0};
+          sdram_c_write_latch_address <= 1;
 				end else begin
-					//内存地址初始化
-					sdram_c_write_latch_address <= 0;
-					if(transfer_ack)begin
-						cy_from_fpga_A2_SLOE<=1;
-						transfer_req <= 0;
-						cy_snd_req <= 1;
-						cy_snd_data0 <= 8'h12;
-						cy_snd_data1 <= 8'h34;
-						command_done <= 1;
-					end
-				end
+					inited <= 0;
+          sdram_c_write_latch_address <= 0;
+					control_by_transfer <= 1;
+					command_done <= 1;
+        end
+      end else if (command == 8'h61) begin//sdram read
+        control_by_transfer <= 0;
+        command_done <= 1;
+
+      end else if (command == 8'h62) begin//sdram read
+        inited <= 1;
+        if(!inited)begin
+          transfer_req <= 1;
+          transfer_type <= 1;
+          cy_from_fpga_A2_SLOE <= 0;
+        end else begin
+          //内存地址初始化
+          if(transfer_ack)begin
+            cy_from_fpga_A2_SLOE<=1;
+            inited <= 0;
+            transfer_req <= 0;
+            cy_snd_req <= 1;
+            cy_snd_data0 <= 8'h12;
+            cy_snd_data1 <= 8'h34;
+            
+            command_done <= 1;
+          end
+        end
+        
+      end else if (command == 8'h63) begin//sdram read
+        inited <= 1;
+        if(!inited)begin
+          control_by_transfer <= 1;
+          transfer_req <= 1;
+          transfer_type <= 0;
+          cy_out_to_pc <= 1;
+          sdram_c_address <= {cy_address2,cy_address1,cy_address0};
+          sdram_c_write_latch_address <= 1;
+        end else begin
+          //内存地址初始化
+          sdram_c_write_latch_address <= 0;
+          if(transfer_ack)begin
+            inited <= 0;
+            cy_out_to_pc <= 0;
+            transfer_req <= 0;
+            cy_snd_req <= 1;
+            cy_snd_data0 <= 8'h12;
+            cy_snd_data1 <= 8'h34;
+            control_by_transfer <= 0;
+            command_done <= 1;
+          end
+        end
 
 
-				
+        
       end else if (command == 8'hA0) begin//sdram write
         timer<=timer+1'b1;
         if(timer==0)begin
@@ -736,9 +761,9 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           if(timer11==300)begin
             if(!sdram2m_busy)begin
               start <= 1;
-              sdram_c_buffDMAread_addr <= 0;
+              sdram_c_buffDMAread_addr <= DMA_src_page;//65536page 1page=256word
               sdram_c_buffDMAread_A_B <= 0;
-              sdram2m_buffDMAwrite_addr <= 12'b1111_1111_1111;
+              sdram2m_buffDMAwrite_addr <= DMA_des_page + 12'b1111_1111_1111;//4096 page 1page=256word
               sdram2m_buffDMAwrite_A_B <= 1;
               timer12 <= 0;
             end
@@ -765,7 +790,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
                 blockvga <= 0;
                 inited <= 0;
                 start <= 0;
-                counttotal<=0;
+                //counttotal<=0;
                 timer11<=0;
                 command_done <= 1;
                 cy_snd_req <= 1;
@@ -781,7 +806,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
      
 
 
-		 
+     
         
       end
     end
@@ -857,6 +882,9 @@ sdram ins_sdram(
   .write_en   (sdram_c_write_en),//in
   .write_latch_address(sdram_c_write_latch_address),//in
   
+	
+  .write_address({debug83,debug82,debug81,debug80}),
+
   .buffDMAread_req        (sdram_c_buffDMAread_req        ),  // input             
   .buffDMAread_ack        (sdram_c_buffDMAread_ack        ),  // output reg        
   .buffDMAread_addr       (sdram_c_buffDMAread_addr       ),  // input      [15:0] 
@@ -875,14 +903,15 @@ sdram ins_sdram(
 reg  [19:0] sdram2m_c_address;
 reg  [15:0] sdram2m_c_data_in;
 wire [15:0] sdram2m_c_data_out;
-reg  sdram2m_c_read_req;
-wire  sdram2m_c_read_ack;
-reg  sdram2m_c_write_req;
-wire  sdram2m_c_write_ack;
-reg sdram2m_c_write_en;
-reg sdram2m_c_write_latch_address;
+reg         sdram2m_c_read_req;
+wire        sdram2m_c_read_ack;
+reg         sdram2m_c_write_req;
+wire        sdram2m_c_write_ack;
+reg         sdram2m_c_write_en;
+reg         sdram2m_c_write_latch_address;
 
-
+wire        sdram2m_read_buff_req;
+wire        sdram2m_read_buff_A_B;
 reg         sdram2m_buffDMAwrite_req  ;             //input        
 reg [11:0]  sdram2m_buffDMAwrite_addr ;            //input [11:0] 
 reg         sdram2m_buffDMAwrite_A_B  ;             //input        
@@ -910,7 +939,7 @@ wire         sdram2m_buff_buff_readB_clk ;//input         buff_readB_clk,
 
 wire sdram2m_busy;
 
-sdram2m(
+sdram2m ins_sdram2m(
   .sys_clk    (sys_clk  ),       // 时钟信号
   .sys_rst_n  (sys_rst_n),       // 复位信号
 
@@ -935,7 +964,6 @@ sdram2m(
   .write_ack  (sdram2m_c_write_ack),//out
   .write_en   (sdram2m_c_write_en),//in
   .write_latch_address(sdram2m_c_write_latch_address),//in
-
 
 .buffDMAwrite_req  (sdram2m_buffDMAwrite_req  ),             //input        
 .buffDMAwrite_addr (sdram2m_buffDMAwrite_addr ),            //input [11:0] 

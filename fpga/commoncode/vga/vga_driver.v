@@ -81,12 +81,6 @@ assign vga_en  = h_active && v_active;
 //RGB565数据输出
 assign vga_rgb = vga_en ?  pixel_data: 16'd0;//16'hffff  pixel_data
 
-//像素点坐标
-wire [10:0] pixel_xpos;
-wire [10:0] pixel_ypos;
-assign pixel_xpos = cnt_h - h_start;
-assign pixel_ypos = cnt_v - v_start;
-
 wire vga_clk;
 assign vga_clk = vga_mode ? vga_clk_65M : vga_clk_25M;
 

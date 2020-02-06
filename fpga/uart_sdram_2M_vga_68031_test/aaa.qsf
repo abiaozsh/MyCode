@@ -274,7 +274,6 @@ set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram2m_controller.
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram2m.v
 set_global_assignment -name VERILOG_FILE ../commoncode/seg_led_hex595.v
 set_global_assignment -name VERILOG_FILE ../commoncode/cy68013_mcu.v
-set_global_assignment -name VERILOG_FILE ram.v
 set_global_assignment -name VERILOG_FILE flow_led.v
 set_global_assignment -name QIP_FILE ../commoncode/sdram/buff1024x16.qip
 set_global_assignment -name QIP_FILE ../commoncode/sdram/buff256x16.qip

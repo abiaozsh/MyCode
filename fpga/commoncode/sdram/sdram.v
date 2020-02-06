@@ -75,12 +75,11 @@ assign	sdram_dqm = 2'b00;                  //读写过程中均不屏蔽数据�
 
 reg        sdram_wr_req    ;		//写SDRAM请求信号              input 
 wire        sdram_wr_ack    ;		//写SDRAM响应信号              output
-reg [23:0] sdram_wr_addr   ;	//SDRAM写操作的地址            input 
+reg [23:0] sdram_rw_addr   ;	//SDRAM写操作的地址            input 
 reg [ 9:0] sdram_wr_burst  ;   //写sdram时数据突发长度      input 
 reg [15:0] sdram_din       ;	    //写入SDRAM的数据              input 
 reg        sdram_rd_req    ;		//读SDRAM请求信号              input 
 wire        sdram_rd_ack    ;		//读SDRAM响应信号              output
-reg [23:0] sdram_rd_addr   ;	//SDRAM写操作的地址            input 
 reg [ 9:0] sdram_rd_burst  ;   //读sdram时数据突发长度      input 
 wire [15:0] sdram_dout      ;	    //从SDRAM读出的数据            output
 wire	      sdram_init_done ;  //SDRAM 初始化完成标志       output
@@ -101,14 +100,13 @@ sdram_controller ins_sdram_controller(
 	.sdram_data			(sdram_data),		//SDRAM 数据	
   
 	//SDRAM 控制器端口	
+	.sdram_rw_addr		(sdram_rw_addr), 	//sdram 地址
 	.sdram_wr_req		  (sdram_wr_req), 	//sdram 写请求
 	.sdram_wr_ack		  (sdram_wr_ack), 	//sdram 写响应
-	.sdram_wr_addr		(sdram_wr_addr), 	//sdram 写地址
 	.sdram_wr_burst		(sdram_wr_burst),		    //写sdram时数据突发长度
 	.sdram_din  		  (sdram_din),    	//写入sdram中的数据
 	.sdram_rd_req		  (sdram_rd_req), 	//sdram 读请求
 	.sdram_rd_ack		  (sdram_rd_ack),		//sdram 读响应
-	.sdram_rd_addr		(sdram_rd_addr), 	//sdram 读地址
 	.sdram_rd_burst		(sdram_rd_burst),		    //读sdram时数据突发长度
 	.sdram_dout		    (sdram_dout),   	//从sdram中读出的数据
   
@@ -357,7 +355,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     if (read_sdram_req_buff && !read_sdram_ack)begin
       sdram_timer0 <= 1;
       if(sdram_timer0 == 0)begin
-        sdram_rd_addr <= {address[23:2],2'b0};
+        sdram_rw_addr <= {address[23:2],2'b0};
         sdram_rd_burst <= 4;
         sdram_timer8 <= 0;
         sdram_rd_req = 1;//只需要置高一个周期就可以了
@@ -379,7 +377,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     end else if (buffDMAread_req_buff && !buffDMAread_ack)begin
       sdram_timer0 <= 1;
       if(sdram_timer0 == 0)begin
-        sdram_rd_addr <= {buffDMAread_addr,8'b0}; //16+8
+        sdram_rw_addr <= {buffDMAread_addr,8'b0}; //16+8
         sdram_rd_burst <= 256;
         sdram_timer9 <= 0;
         sdram_page_delay <= 0;
@@ -408,7 +406,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     end else if (write_single_sdram_req && !write_single_sdram_ack)begin
       sdram_timer0 <= 1;
       if(sdram_timer0 == 0)begin
-        sdram_wr_addr <= address;
+        sdram_rw_addr <= address;
         sdram_wr_burst <= 1;
         sdram_timer8 <= 0;
         sdram_wr_req <= 1;//只需要置高一个周期就可以了
@@ -426,7 +424,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     end else if(write_sdram_req && !write_sdram_ack)begin
       sdram_timer0 <= 1;
       if(sdram_timer0 == 0) begin
-        sdram_wr_addr <= {writeAddressSdram,4'b0};//20bit+4bit
+        sdram_rw_addr <= {writeAddressSdram,4'b0};//20bit+4bit
         sdram_wr_burst <= 16;
         sdram_timer8 <= 0;
         sdram_wr_req <= 1;//只需要置高一个周期就可以了
