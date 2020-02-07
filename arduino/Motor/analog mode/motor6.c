@@ -5,6 +5,13 @@
 
 //a6 start signal / restartup signal
 //a7 throttle
+#define CPUFree ;/*DDRB |=  _BV(3)*/ //free¡¡µ∆
+#define CPUBusy ;/*DDRB &= ~_BV(3)*/ //busy∞µµ∆
+#define STAOn   ;/*DDRB |=  _BV(3)*/
+#define STAOff  ;/*DDRB &= ~_BV(3)*/
+#define PWROn   ;/*DDRB |=  _BV(3)*/
+#define PWROff  ;/*DDRB &= ~_BV(3)*/
+#define RPMFlip ;/*DDRB ^=  _BV(3)*/
 
 #define POWER_IN 6
 
