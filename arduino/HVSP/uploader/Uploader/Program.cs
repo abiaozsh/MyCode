@@ -15,7 +15,7 @@ namespace Uploader
         {
             try
             {
-                port = new SerialPort(args[0], 115200, Parity.None, 8, StopBits.One);
+                port = new SerialPort("COM5", 115200, Parity.None, 8, StopBits.One);
                 try
                 {
                     port.Open();
@@ -30,30 +30,30 @@ namespace Uploader
                     }
                     return;
                 }
-                FileStream fs = new FileStream(args[1], FileMode.Open, FileAccess.Read);
-                StreamReader sr = new StreamReader(fs);
+                FileStream fs = null;// new FileStream(args[1], FileMode.Open, FileAccess.Read);
+                StreamReader sr = null; //new StreamReader(fs);
                 StringBuilder sbdata = new StringBuilder();
                 bool verify = false;
                 if (args.Length >= 3)
                 {
                     bool.TryParse(args[2], out verify);
                 }
-                while (true)
-                {
-                    string line = sr.ReadLine();
-                    if (line == null) break;
-
-                    int length = int.Parse(line.Substring(1, 2), NumberStyles.HexNumber);
-
-                    string data = line.Substring(9, length * 2);
-
-                    sbdata.Append(data);
-                }
-                fs.Close();
+                //while (true)
+                //{
+                //    string line = sr.ReadLine();
+                //    if (line == null) break;
+                //
+                //    int length = int.Parse(line.Substring(1, 2), NumberStyles.HexNumber);
+                //
+                //    string data = line.Substring(9, length * 2);
+                //
+                //    sbdata.Append(data);
+                //}
+                //fs.Close();
 
                 string sdata = sbdata.ToString();
 
-                if (sdata.Length == 0) return;
+                //if (sdata.Length == 0) return;
 
                 //check signature
                 {
@@ -74,6 +74,7 @@ namespace Uploader
                         return;
                     }
                 }
+                return;
                 //write
                 {
                     //1. Load Command “Write Flash” (see Table 19-16 on page 171).

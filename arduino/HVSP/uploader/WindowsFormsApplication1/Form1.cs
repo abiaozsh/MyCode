@@ -13,146 +13,197 @@ using System.Globalization;
 namespace WindowsFormsApplication1
 {
 
-	public partial class Form1 : Form
-	{
-		SerialPort port;
-		public Form1()
-		{
-			InitializeComponent();
+    public partial class Form1 : Form
+    {
+        SerialPort port;
+        public Form1()
+        {
+            InitializeComponent();
 
-			this.FormClosed += new FormClosedEventHandler(Form1_FormClosed);
-		}
+            this.FormClosed += new FormClosedEventHandler(Form1_FormClosed);
+        }
 
-		void Form1_FormClosed(object sender, FormClosedEventArgs e)
-		{
-			if (port != null && port.IsOpen)
-			{
-				port.Close();
-			}
-		}
+        void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            if (port != null && port.IsOpen)
+            {
+                port.Close();
+            }
+        }
 
-		private void Form1_Load(object sender, EventArgs e)
-		{
-			this.textBox2.DragDrop += new DragEventHandler(Form1_DragDrop);
-			this.textBox2.DragEnter += new DragEventHandler(Form1_DragEnter);
-		}
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            this.textBox2.DragDrop += new DragEventHandler(Form1_DragDrop);
+            this.textBox2.DragEnter += new DragEventHandler(Form1_DragEnter);
+        }
 
-		private void button1_Click(object sender, EventArgs e)
-		{
-			if (port == null)
-			{
-				//COM4为Arduino使用的串口号，需根据实际情况调整
-				port = new SerialPort(textBox1.Text, 9600, Parity.None, 8, StopBits.One);
-				port.Open();
-			}
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (port == null)
+            {
+                //COM4为Arduino使用的串口号，需根据实际情况调整
+                port = new SerialPort(textBox1.Text, 115200, Parity.None, 8, StopBits.One);
+                port.Open();
+            }
 
-		}
+        }
 
-		private void button2_Click(object sender, EventArgs e)
-		{
-			if (port != null && port.IsOpen)
-			{
-				port.Close();
-				port = null;
-			}
-		}
-		private void button4_Click(object sender, EventArgs e)
-		{
-			StringBuilder sb = new StringBuilder();
-			portWrite("st");//st Start
-			checkOK();
-			portWrite("rf");//rf ReadFlash
-			checkOK();
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (port != null && port.IsOpen)
+            {
+                port.Close();
+                port = null;
+            }
+        }
+        private void button4_Click(object sender, EventArgs e)
+        {
+            //check signature
+            {
+                portWrite("st");//st Start
+                Thread.Sleep(100);
+                checkOK();
+                portWrite("si");
+                string sig = readFromPort(6);
+                textBox2.Text = (sig);
+                //1E910B
+                portWrite("ed");//ed End
+                checkOK();
+                //ATtiny24A 0x1E 0x91 0x0B
+                //ATtiny44A 0x1E 0x92 0x07
+                if (sig != "1E910B" && sig != "1E9207")
+                {
+                    textBox3.Text = ("Signature error!!!");
+                    return;
+                }
+            }
 
-			for (int i = 0; i < 1024; i++)
-			{
-				portWrite("fb" + getHex4(i));
-				sb.Append(readFromPort(4));//先低后高
-			}
+            //read fuse
+            {
+                portWrite("st");//st Start
+                Thread.Sleep(100);
+                checkOK();
+                portWrite("rh");
+                string rh = readFromPort(2);
+                portWrite("rl");
+                string rl = readFromPort(2);
+                textBox2.Text += (rh + rl);
+                //1E910B
+                portWrite("ed");//ed End
+                checkOK();
+            }
 
-			portWrite("ed");//ed End
-			checkOK();
-			textBox2.Text = sb.ToString();
-		}
+            //StringBuilder sb = new StringBuilder();
+            //portWrite("st");//st Start
+            //checkOK();
+            //portWrite("rf");//rf ReadFlash
+            //checkOK();
+            //
+            //for (int i = 0; i < 1024; i++)
+            //{
+            //	portWrite("fb" + getHex4(i));
+            //	sb.Append(readFromPort(4));//先低后高
+            //}
+            //
+            //portWrite("ed");//ed End
+            //checkOK();
+            //textBox2.Text = sb.ToString();
+        }
 
-		private void button3_Click(object sender, EventArgs e)
-		{
-		}
+        private void button3_Click(object sender, EventArgs e)
+        {
+            //5F62
+            //wl WriteLowFuses
+            //wh WriteHighFuses
+            {
+                portWrite("st");//st Start
+                Thread.Sleep(100);
+                checkOK();
+                portWrite("wh5F");
+                checkOK();
+                portWrite("wl62");
+                checkOK();
+                //1E910B
+                portWrite("ed");//ed End
+                checkOK();
+            }
 
-		void checkOK()
-		{
-			if (readFromPort(2) != "OK")
-			{
-				textBox3.Text += "error!!\r\n";
-			}
-		}
+        }
 
-		void portWrite(string val)
-		{
-			if (port != null)
-			{
-				port.Write(val);
-			}
-			textBox3.Text += val + "\r\n";
-		}
+        void checkOK()
+        {
+            if (readFromPort(2) != "OK")
+            {
+                textBox3.Text += "error!!\r\n";
+            }
+        }
 
-		string readFromPort(int count)
-		{
-			if (count <= 0) return "";
-			StringBuilder _sb = new StringBuilder();
-			while (true)
-			{
-				if (port.BytesToRead > 0)
-				{
-					_sb.Append((char)port.ReadChar());
-					count--;
-					if (count <= 0) return _sb.ToString();
-				}
-			}
-		}
+        void portWrite(string val)
+        {
+            if (port != null)
+            {
+                port.Write(val);
+            }
+            textBox3.Text += val + "\r\n";
+        }
+
+        string readFromPort(int count)
+        {
+            if (count <= 0) return "";
+            StringBuilder _sb = new StringBuilder();
+            while (true)
+            {
+                if (port.BytesToRead > 0)
+                {
+                    _sb.Append((char)port.ReadChar());
+                    count--;
+                    if (count <= 0) return _sb.ToString();
+                }
+            }
+        }
 
 
-		string[] convt = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f" };
-		private string getHex4(int val)//"ll"+"hh"
-		{
-			return convt[((val & 0xF0) >> 4)] + convt[((val & 0x0F))] + convt[((val & 0xF000) >> 12)] + convt[((val & 0x0F00) >> 8)];
-		}
-		private string getHex2(int val)//"ll"+"hh"
-		{
-			return convt[((val & 0xF0) >> 4)] + convt[((val & 0x0F))];
-		}
+        string[] convt = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f" };
+        private string getHex4(int val)//"ll"+"hh"
+        {
+            return convt[((val & 0xF0) >> 4)] + convt[((val & 0x0F))] + convt[((val & 0xF000) >> 12)] + convt[((val & 0x0F00) >> 8)];
+        }
+        private string getHex2(int val)//"ll"+"hh"
+        {
+            return convt[((val & 0xF0) >> 4)] + convt[((val & 0x0F))];
+        }
 
-		void Form1_DragEnter(object sender, DragEventArgs e)
-		{
-			e.Effect = DragDropEffects.All;
-		}
-		void Form1_DragDrop(object sender, DragEventArgs e)
-		{
-			string[] files = (string[])e.Data.GetData("FileDrop");
-			FileStream fs = new FileStream(files[0], FileMode.Open, FileAccess.Read);
-			StreamReader sr = new StreamReader(fs);
-			while (true)
-			{
-				string line = sr.ReadLine();
-				if (line == null) return;
+        void Form1_DragEnter(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.All;
+        }
+        void Form1_DragDrop(object sender, DragEventArgs e)
+        {
+            string[] files = (string[])e.Data.GetData("FileDrop");
+            FileStream fs = new FileStream(files[0], FileMode.Open, FileAccess.Read);
+            StreamReader sr = new StreamReader(fs);
+            while (true)
+            {
+                string line = sr.ReadLine();
+                if (line == null) return;
 
-				int length = int.Parse(line.Substring(1, 2), NumberStyles.HexNumber);
+                int length = int.Parse(line.Substring(1, 2), NumberStyles.HexNumber);
 
-				string data = line.Substring(9, length * 2);
+                string data = line.Substring(9, length * 2);
 
-				textBox2.Text += data;
-			}
-		}
-		private void textBox2_TextChanged(object sender, EventArgs e)
-		{
+                textBox2.Text += data;
+            }
+        }
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
 
-		}
+        }
 
-		private void textBox3_TextChanged(object sender, EventArgs e)
-		{
+        private void textBox3_TextChanged(object sender, EventArgs e)
+        {
 
-		}
-	}
+        }
+    }
 }
 
 //ts test
