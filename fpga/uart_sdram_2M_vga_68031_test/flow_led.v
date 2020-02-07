@@ -66,7 +66,7 @@ assign sys_rst_n = key1;
 
 wire cy_IFCLK_in;
 assign cy_IFCLK_out = clk_cy;
-assign cy_IFCLK_in = clk_cy;
+assign cy_IFCLK_in = !clk_cy;
 
 //25Mhz
 reg clk_cy;

@@ -11,6 +11,8 @@ using System.IO;
 using System.Globalization;
 using CyUSB;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
+using System.Drawing.Imaging;
 
 namespace WindowsFormsApplication1
 {
@@ -39,9 +41,6 @@ namespace WindowsFormsApplication1
 
             //The below function sets the device with particular VID and PId and searches for the device with the same VID and PID.
             setDevice();
-
-            //buffs1 = loadimg(new Bitmap("e:\\z051.jpg"),"",out dummy);
-            //buffs2 = loadimg(new Bitmap("e:\\z043.jpg"), "");
 
             string[] list = System.IO.Directory.GetFiles(@"E:\test\");
 
@@ -88,12 +87,6 @@ namespace WindowsFormsApplication1
             }
         }
 
-
-
-        void textBox3_DragDrop(object sender, DragEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
         void usbDevices_DeviceRemoved(object sender, EventArgs e)
         {
             setDevice();
@@ -102,7 +95,6 @@ namespace WindowsFormsApplication1
         {
             setDevice();
         }
-
 
         USBDeviceList usbDevices = null;
         CyUSBDevice loopDevice = null;
@@ -145,8 +137,6 @@ namespace WindowsFormsApplication1
             }
         }
 
-
-
         string[] convt = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f" };
         private string getHex4(int val)//"ll"+"hh"
         {
@@ -167,181 +157,78 @@ namespace WindowsFormsApplication1
             return sb.ToString();
         }
 
-
-
-        private void textBox3_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-
         private void button5_Click(object sender, EventArgs e)
         {
             textBox3.Text = "";
         }
 
-        byte[] sendbuff = new byte[1024];
-        private int send(byte[] data, int start)
-        {
-            Array.Copy(data, start, sendbuff, 0, 1024);
-            int xferLen = 1024;
-            bool bResult = outEndpoint.XferData(ref sendbuff, ref xferLen);
-            return xferLen;
-        }
-
-        byte[] receivebuff = new byte[1024];
-        private int receive(byte[] data, int start)
-        {
-            int xferLen = 1024;
-            bool bResult = inEndpoint.XferData(ref receivebuff, ref xferLen);
-            Array.Copy(receivebuff, 0, data, start, 1024);
-            return xferLen;
-        }
-
         private void button6_Click(object sender, EventArgs e)
         {
-            for (int i = 0; i < 10; i++)
-            {
-                check();
-            }
+            check();
         }
         private void check()
         {
-            int size = 16 * 1024 * 1024;//16 * 1024
-            if (is2M)
+            int pages = 32 * 1024;//16 * 1024 * 1024 words
+
+            int addr = Convert.ToInt32(textBox1.Text, 16);
+
+            byte[][] buffs1 = new byte[pages][];
+            byte[][] buffs2 = new byte[pages][];
+
+            //send
             {
-                size = 1024 * 1024;//* 1024
+                Random r = new Random();
+
+                for (int i = 0; i < pages; i++)
+                {
+                    buffs1[i] = new byte[PAGESIZE];
+                    r.NextBytes(buffs1[i]);
+                }
+
+                transfer(addr, buffs1);
             }
 
-            byte[] buff = new byte[size * 2];
-            byte[] buff2 = new byte[size * 2];
-            Random r = new Random();
-            r.NextBytes(buff);
-
-            bool first;
-
-            first = true;
-            for (int k = 0; k < size; k += 0x200)//1kword
+            //back
             {
-                send(buff, k << 1);
-
-                if (!first)
+                for (int i = 0; i < pages; i++)
                 {
-                    recAck(0x3412);
+                    buffs2[i] = new byte[PAGESIZE];
+                }
+                transferBack(addr, buffs2);
+            }
+
+            int err = 0;
+            Bitmap errmap = new Bitmap(256, 128);
+            for (int i = 0; i < buffs1.Length; i++)
+            {
+                bool gerr = false;
+                for (int j = 0; j < buffs1[i].Length; j++)
+                {
+                    if (buffs1[i][j] != buffs2[i][j])
+                    {
+                        gerr = true;
+                        err++;
+                    }
+                }
+                if (gerr)
+                {
+                    errmap.SetPixel(i & 255, (i >> 8), Color.Red);
                 }
                 else
                 {
-                    first = false;
+                    errmap.SetPixel(i & 255, (i >> 8), Color.LightGreen);
                 }
-                sendCmd(0x012, k & 0xFF);
-                sendCmd(0x013, (k >> 8) & 0xFF);
-                sendCmd(0x014, (k >> 16) & 0xFF);
-
-                sendCmd((is2M ? 0x0B0 : 0xA0) + 2, 0);
-
-                this.Text = "" + (k * 100 / size);
-                Application.DoEvents();
             }
-            recAck(0x3412);
-
-            Thread.Sleep(1000);
-
-            //recAck(0);
-            first = true;
-            int lastk = 0;
-            for (int k = 0; k < size; k += 0x200)//1kword
-            {
-                if (!first)
-                {
-                    receive(buff2, lastk << 1);
-                }
-                else
-                {
-                    first = false;
-                }
+            Form2 form2 = new Form2();
+            form2.bitmap = errmap;
+            form2.Show();
 
 
-                sendCmd(0x012, k & 0xFF);
-                sendCmd(0x013, (k >> 8) & 0xFF);
-                sendCmd(0x014, (k >> 16) & 0xFF);
-                sendCmd((is2M ? 0x0B0 : 0xA0) + 3, 0);
-
-                recAck(0);
-
-                lastk = k;
-                this.Text = "" + (k * 100 / size);
-                Application.DoEvents();
-            }
-            receive(buff2, lastk << 1);
-
-            if (is2M)
-            {
-                Bitmap errmap = new Bitmap(1024, 1024);
-                int err = 0;
-                for (int i = 0; i < buff.Length; i += 2)
-                {
-                    if (buff[i] != buff2[i] || buff[i + 1] != buff2[i + 1])
-                    {
-                        errmap.SetPixel((i >> 1) & 1023, (i >> 1) >> 10, Color.Red);
-                        err++;
-                    }
-                    else
-                    {
-                        errmap.SetPixel((i >> 1) & 1023, (i >> 1) >> 10, Color.LightGreen);
-                    }
-                }
-                Form2 form2 = new Form2();
-                form2.bitmap = errmap;
-                form2.Show();
-                textBox3.Text += ("done [" + err + " " + (err * 1.0 / size) + "] ") + "\r\n";
-            }
-            else
-            {
-                Bitmap errmap = new Bitmap(1024, 1024);
-                for (int i = 0; i < buff.Length; i += 2 * 16)
-                {
-                    bool gerr = false;
-                    for (int j = 0; j < 2 * 16; j += 2)
-                    {
-                        if (buff[i + j] != buff2[i + j] || buff[i + j + 1] != buff2[i + j + 1])
-                        {
-                            gerr = true;
-                        }
-                    }
-                    if (gerr)
-                    {
-                        errmap.SetPixel((i >> 5) & 1023, (i >> 5) >> 10, Color.Red);
-                    }
-                    else
-                    {
-                        errmap.SetPixel((i >> 5) & 1023, (i >> 5) >> 10, Color.LightGreen);
-                    }
-                }
-                Form2 form2 = new Form2();
-                form2.bitmap = errmap;
-                form2.Show();
-
-
-                int err = 0;
-                for (int i = 0; i < buff.Length; i++)
-                {
-
-                    if (buff[i] != buff2[i])
-                    {
-                        err++;
-                    }
-
-                }
-
-                textBox3.Text += ("done [" + err + " " + (err * 1.0 / size) + "]  ") + "\r\n";
-            }
-
+            textBox3.Text += ("done [" + err + " " + (err * 1.0 / (pages * PAGESIZE)) + "]  ") + "\r\n";
         }
-        private string receivePage(byte[] buff)
-        {
-            //byte[] buff = new byte[512 * 2];
-            //readFromPort(1024, buff, 0);
 
+        private string bin2str(byte[] buff)
+        {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 32; i++)
             {
@@ -355,22 +242,25 @@ namespace WindowsFormsApplication1
             return sb.ToString();
         }
 
-        private void button7_Click(object sender, EventArgs e)
-        {
-        }
-
         private void button9_Click(object sender, EventArgs e)
         {
             sendCmd(0x021, 0);
-
         }
 
         private void button10_Click(object sender, EventArgs e)
         {
             sendCmd(0x022, 0);
-
         }
 
+        private void button8_Click(object sender, EventArgs e)
+        {
+            sendCmd(0x023, 0);
+        }
+
+        private void button11_Click(object sender, EventArgs e)
+        {
+            sendCmd(0x024, 0);
+        }
 
         private void sendCmd(int cmd, int dat)
         {
@@ -382,6 +272,7 @@ namespace WindowsFormsApplication1
             int xferLen = size;
             bResult = outCmdEndpoint.XferData(ref outData, ref xferLen);
         }
+
         private int recAck(int val)
         {
             int size = 2;
@@ -403,81 +294,38 @@ namespace WindowsFormsApplication1
             return ret;
         }
 
-        bool is2M = false;
-
         private void button12_Click(object sender, EventArgs e)
         {
             int addr = Convert.ToInt32(textBox1.Text, 16);
-            for (int i = 0; i < (doublePage.Checked ? 2 : 1); i++)
-            {
-                sendCmd(0x012, addr & 0xFF);
-                sendCmd(0x013, (addr >> 8) & 0xFF);
-                sendCmd(0x014, (addr >> 16) & 0xFF);
-                addr += 0x200;
-                sendCmd((is2M ? 0x0B0 : 0xA0) + 3, 0);
 
-                recAck(0);
+            byte[][] buffs = new byte[1][];
+            buffs[0] = new byte[PAGESIZE];
 
-                int size = 1024;
-                bool bResult;
-                byte[] inData = new byte[size];
-                int xferLen = size;
-                bResult = inEndpoint.XferData(ref inData, ref xferLen);
-                string s = receivePage(inData);
-                textBox3.Text += xferLen + "\r\n";
-                textBox3.Text += s;
-            }
+            transferBack(addr, buffs);
+
+            string s = bin2str(buffs[0]);
+            textBox3.Text += s;
+
         }
 
-        private byte[] ranArr(Random r, int size)
-        {
-            byte[] outData = new byte[size];
-            r.NextBytes(outData);
-            return outData;
-        }
 
         private void button13_Click(object sender, EventArgs e)
         {
             int addr = Convert.ToInt32(textBox1.Text, 16);
+
             Random r = new Random();
 
-            for (int i = 0; i < (doublePage.Checked ? 2 : 1); i++)
-            {
-                bool first = true;
-                {
-                    int size = 1024;
-                    bool bResult;
-                    byte[] outData = ranArr(r, size);// new byte[size];
-                    string s = receivePage(outData);
-                    textBox3.Text += s;
-                    int xferLen = size;
-                    bResult = outEndpoint.XferData(ref outData, ref xferLen);
-                }
-                if (!first)
-                {
-                    recAck(0x3412);
-                }
-                else
-                {
-                    first = false;
-                }
+            byte[][] buffs = new byte[1][];
+            buffs[0] = new byte[PAGESIZE];
 
-                sendCmd(0x012, addr & 0xFF);
-                sendCmd(0x013, (addr >> 8) & 0xFF);
-                sendCmd(0x014, (addr >> 16) & 0xFF);
-                addr += 0x200;
+            r.NextBytes(buffs[0]);
 
-                sendCmd((is2M ? 0x0B0 : 0xA0) + 2, 0);
+            string s = bin2str(buffs[0]);
+            textBox3.Text += s;
 
+            transfer(addr, buffs);
 
-                recAck(0x3412);
-            }
-
-        }
-
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
-            this.is2M = this.checkBox1.Checked;
+            dma(trackBar1.Value * 4);
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -491,8 +339,7 @@ namespace WindowsFormsApplication1
             sendCmd(0x010, val & 0xFF);
             sendCmd(0x011, (val >> 8) & 0xFF);
 
-
-            sendCmd((is2M ? 0x0B0 : 0xA0) + 0, 0);
+            sendCmd((checkBox1.Checked ? 0x0B0 : 0xA0) + 0, 0);
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -502,49 +349,13 @@ namespace WindowsFormsApplication1
             sendCmd(0x013, (addr >> 8) & 0xFF);
             sendCmd(0x014, (addr >> 16) & 0xFF);
 
-            sendCmd((is2M ? 0x0B0 : 0xA0) + 1, 0);
+            sendCmd((checkBox1.Checked ? 0x0B0 : 0xA0) + 1, 0);
 
             int data = recAck(0);
             textBox2.Text = getHex4(data);
         }
 
-        private void button3_Click(object sender, EventArgs e)
-        {
-        }
 
-        private void button4_Click(object sender, EventArgs e)
-        {
-            int ack;
-
-            this.Text = "";
-            Application.DoEvents();
-
-            int dma_src = 0;
-            int dma_des = 0;
-
-            sendCmd(0x017, dma_src & 0xFF);
-            sendCmd(0x018, (dma_src >> 8) & 0xFF);
-            sendCmd(0x019, dma_des & 0xFF);
-            sendCmd(0x01A, (dma_des >> 8) & 0xFF);
-
-            //BF) begin memcopy
-            sendCmd(0xBF, 0);
-            ack = recAck(0x3412);
-
-
-        }
-        byte[][] buffs1;
-        byte[][] buffs2;
-
-        private void button7_Click_1(object sender, EventArgs e)
-        {
-            transfer(0, buffs1);
-        }
-        private void button14_Click(object sender, EventArgs e)
-        {
-            transfer(0, buffs2);
-
-        }
         static readonly int PAGESIZE = 1024;
 
         private byte[][] loadimg(Bitmap b, string name, out Bitmap b2)
@@ -554,39 +365,31 @@ namespace WindowsFormsApplication1
             g.DrawImage(b, new Rectangle(0, 0, 1024, 768), 0, 0, b.Width, b.Height, GraphicsUnit.Pixel, null);
             g.Dispose();
 
+
             //set transfer
-            this.Text = "procimg";
+            this.Text = "procimg " + name;
             Application.DoEvents();
             byte[][] buffs = new byte[768 * 2][];
 
-            for (int y = 0; y < 768; y++)
+            try
             {
-                {
-                    {
-                        byte[] buff = new byte[PAGESIZE];
-                        for (int x = 0; x < 512; x++)
-                        {
-                            var c = b2.GetPixel(x + 0, y);
-                            int val = getpixel(c);
-                            buff[(x << 1) + 0] = (byte)(val & 0xFF);
-                            buff[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
-                        }
-                        buffs[(y << 1) + 0] = buff;
-                    }
-                    {
-                        byte[] buff = new byte[PAGESIZE];
-                        for (int x = 0; x < 512; x++)
-                        {
-                            var c = b2.GetPixel(x + 512, y);
-                            int val = getpixel(c);
-                            buff[(x << 1) + 0] = (byte)(val & 0xFF);
-                            buff[(x << 1) + 1] = (byte)((val >> 8) & 0xFF);
-                        }
-                        buffs[(y << 1) + 1] = buff;
-                    }
-                }
-            }
+                BitmapData bmpData = b2.LockBits(new Rectangle(0, 0, 1024, 768), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format16bppRgb565);
+                IntPtr ptr = bmpData.Scan0;
+                byte[] buff = new byte[768 * 2 * PAGESIZE];
+                Marshal.Copy(ptr, buff, 0, 768 * 2 * PAGESIZE);
 
+                for (int y = 0; y < 768 * 2; y++)
+                {
+                    buffs[y] = new byte[PAGESIZE];
+                    Array.Copy(buff, y * PAGESIZE, buffs[y], 0, PAGESIZE);
+
+                }
+                b2.UnlockBits(bmpData);
+            }
+            catch (Exception ex)
+            {
+                ex.ToString();
+            }
             return buffs;
         }
 
@@ -608,6 +411,7 @@ namespace WindowsFormsApplication1
             sendCmd(0x060, 0);
             sendCmd(0x062, 0);
 
+            Stopwatch a;
             for (int y = 0; y < buffs.Length; y++)
             {
                 int xferLen = PAGESIZE;
@@ -619,18 +423,30 @@ namespace WindowsFormsApplication1
             sendCmd(0x061, 0);
         }
 
-
-        private void setpixel(int x, int y, Color c)
+        void transferBack(int addr, byte[][] buffs)
         {
-            int addr = y * 1024 + x;
-            sendCmd(0x012, addr & 0xFF);
-            sendCmd(0x013, (addr >> 8) & 0xFF);
-            sendCmd(0x014, (addr >> 16) & 0xFF);
 
-            int val = getpixel(c);
-            sendCmd(0x010, val & 0xFF);
-            sendCmd(0x011, (val >> 8) & 0xFF);
-            sendCmd(0x0B0, 0);
+            setaddress(addr);
+
+            int pages = buffs.Length;
+            sendCmd(0x015, (pages) & 0xFF);
+            sendCmd(0x016, (pages >> 8) & 0xFF);
+
+            sendCmd(0x060, 0);
+            sendCmd(0x063, 0);
+
+            bool bResult;
+
+            int xferLen;
+            for (int y = 0; y < pages; y++)
+            {
+                xferLen = PAGESIZE;
+                bResult = inEndpoint.XferData(ref buffs[y], ref xferLen);
+            }
+            int ack;
+            ack = recAck(0x3412);
+            //release transfer
+            sendCmd(0x061, 0);
         }
 
         private int getpixel(Color c)
@@ -642,22 +458,6 @@ namespace WindowsFormsApplication1
             return val;
         }
 
-        private void button8_Click(object sender, EventArgs e)
-        {
-            sendCmd(0x023, 0);
-        }
-
-        private void button11_Click(object sender, EventArgs e)
-        {
-            sendCmd(0x024, 0);
-        }
-
-        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-
-
-        }
 
         private void listView1_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -671,21 +471,14 @@ namespace WindowsFormsApplication1
             setaddress(0);
 
 
-            //BF) begin memcopy
-            sendCmd(0xBF, 0);
-            ack = recAck(0x3412);
+            dma(trackBar1.Value * 4);
 
         }
-
-        private void trackBar1_Scroll(object sender, EventArgs e)
+        void dma(int pos)
         {
-            int ack;
-
-            this.Text = "";
-            Application.DoEvents();
-
-            int dma_src = trackBar1.Value*4;
+            int dma_src = pos;
             int dma_des = 0;
+            int ack;
 
             int page_len = 256;//max 4095 // 12'b0011_1111_1111
             sendCmd(0x01B, page_len & 0xFF);
@@ -706,7 +499,10 @@ namespace WindowsFormsApplication1
             }
 
         }
-
+        private void trackBar1_Scroll(object sender, EventArgs e)
+        {
+            dma(trackBar1.Value * 4);
+        }
 
 
     }
