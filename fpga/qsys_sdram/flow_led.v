@@ -85,14 +85,12 @@ assign	sdram_clk_out = clk_100m_shift;//out_clk;                //将相位偏�
 
 
 
-
-
     sys u0 (
-        .clk_clk        (clk_100m),        //     clk.clk
-        .reset_reset_n  (rst_n),  //   reset.reset_n
+        .clk_50_clk       (sys_clk),       //   clk_50.clk
+        .reset_50_reset_n (rst_n),  // reset_50.reset_n
         .pio0out_export (outpin32), // pio0out.export
         .pio1in_export  (inpin8),  //  pio1in.export
-
+        .clk_100_clk      (clk_100m),      //  clk_100.clk
         .sdram_0_addr   (sdram_addr),   // sdram_0.addr
         .sdram_0_ba     (sdram_ba),     //        .ba
         .sdram_0_cas_n  (sdram_cas_n),  //        .cas_n

@@ -67,7 +67,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
   </table>
   <table class="blueBar">
    <tr>
-    <td class="l">2020.02.15.11:07:55</td>
+    <td class="l">2020.02.15.15:43:10</td>
     <td class="r">Datasheet</td>
    </tr>
   </table>
@@ -77,8 +77,14 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
    <div style="display:inline-block ; text-align:left">
     <table class="connectionboxes">
      <tr>
-      <td class="lefthandwire">&#160;&#160;clk_0&#160;</td>
-      <td class="main" rowspan="2">sys</td>
+      <td class="lefthandwire">&#160;&#160;clk_100&#160;</td>
+      <td class="main" rowspan="4">sys</td>
+     </tr>
+     <tr style="height:6px">
+      <td></td>
+     </tr>
+     <tr>
+      <td class="lefthandwire">&#160;&#160;clk_50&#160;</td>
      </tr>
      <tr style="height:6px">
       <td></td>
@@ -203,11 +209,38 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
     <td class="addr"><span style="color:#989898">0x</span>02000000</td>
    </tr>
   </table>
-  <a name="module_clk_0"> </a>
+  <a name="module_clk_100"> </a>
   <div>
    <hr/>
-   <h2>clk_0</h2>clock_source v13.0
+   <h2>clk_100</h2>clock_source v13.0
    <br/>
+   <div class="greydiv">
+    <table class="connectionboxes">
+     <tr>
+      <td class="neighbor" rowspan="2">
+       <a href="#module_clk_50">clk_50</a>
+      </td>
+      <td class="from">clk_reset&#160;&#160;</td>
+      <td class="main" rowspan="4">clk_100</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;clk_in_reset</td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="from">clk&#160;&#160;</td>
+      <td class="neighbor" rowspan="2">
+       <a href="#module_sdram_0">sdram_0</a>
+      </td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="to">&#160;&#160;clk</td>
+     </tr>
+    </table>
+   </div>
    <br/>
    <br/>
    <table class="flowbox">
@@ -217,7 +250,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
       <table>
        <tr>
         <td class="parametername">clockFrequency</td>
-        <td class="parametervalue">50000000</td>
+        <td class="parametervalue">100000000</td>
        </tr>
        <tr>
         <td class="parametername">clockFrequencyKnown</td>
@@ -259,19 +292,19 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
     <table class="connectionboxes">
      <tr>
       <td class="neighbor" rowspan="4">
-       <a href="#module_clk_0">clk_0</a>
+       <a href="#module_clk_50">clk_50</a>
       </td>
-      <td class="from">clk&#160;&#160;</td>
+      <td class="from">clk_reset&#160;&#160;</td>
       <td class="main" rowspan="32">nios2_qsys_0</td>
      </tr>
      <tr>
-      <td class="to">&#160;&#160;clk</td>
-     </tr>
-     <tr>
-      <td class="from">clk_reset&#160;&#160;</td>
-     </tr>
-     <tr>
       <td class="to">&#160;&#160;reset_n</td>
+     </tr>
+     <tr>
+      <td class="from">clk&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;clk</td>
      </tr>
      <tr>
       <td></td>
@@ -547,7 +580,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">muldiv_divider</td>
-        <td class="parametervalue">false</td>
+        <td class="parametervalue">true</td>
        </tr>
        <tr>
         <td class="parametername">mpu_useLimit</td>
@@ -611,7 +644,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">mmu_TLBMissExcOffset</td>
-        <td class="parametervalue">0</td>
+        <td class="parametervalue">768</td>
        </tr>
        <tr>
         <td class="parametername">debug_jtagInstanceID</td>
@@ -647,7 +680,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">mmu_TLBMissExcSlave</td>
-        <td class="parametervalue">None</td>
+        <td class="parametervalue">sdram_0.s1</td>
        </tr>
        <tr>
         <td class="parametername">exceptionSlave</td>
@@ -707,7 +740,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">impl</td>
-        <td class="parametervalue">Tiny</td>
+        <td class="parametervalue">Fast</td>
        </tr>
        <tr>
         <td class="parametername">icache_size</td>
@@ -727,11 +760,11 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">icache_burstType</td>
-        <td class="parametervalue">None</td>
+        <td class="parametervalue">Sequential</td>
        </tr>
        <tr>
         <td class="parametername">dcache_bursts</td>
-        <td class="parametervalue">false</td>
+        <td class="parametervalue">true</td>
        </tr>
        <tr>
         <td class="parametername">dcache_victim_buf_impl</td>
@@ -747,7 +780,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">dcache_size</td>
-        <td class="parametervalue">2048</td>
+        <td class="parametervalue">8192</td>
        </tr>
        <tr>
         <td class="parametername">dcache_tagramBlockType</td>
@@ -807,11 +840,11 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">dcache_bursts_derived</td>
-        <td class="parametervalue">false</td>
+        <td class="parametervalue">true</td>
        </tr>
        <tr>
         <td class="parametername">dcache_size_derived</td>
-        <td class="parametervalue">2048</td>
+        <td class="parametervalue">8192</td>
        </tr>
        <tr>
         <td class="parametername">dcache_lineSize_derived</td>
@@ -964,7 +997,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">CPU_IMPLEMENTATION</td>
-        <td class="parametervalue">"tiny"</td>
+        <td class="parametervalue">"fast"</td>
        </tr>
        <tr>
         <td class="parametername">DATA_ADDR_WIDTH</td>
@@ -972,15 +1005,15 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">DCACHE_LINE_SIZE</td>
-        <td class="parametervalue">0</td>
+        <td class="parametervalue">32</td>
        </tr>
        <tr>
         <td class="parametername">DCACHE_LINE_SIZE_LOG2</td>
-        <td class="parametervalue">0</td>
+        <td class="parametervalue">5</td>
        </tr>
        <tr>
         <td class="parametername">DCACHE_SIZE</td>
-        <td class="parametervalue">0</td>
+        <td class="parametervalue">8192</td>
        </tr>
        <tr>
         <td class="parametername">EXCEPTION_ADDR</td>
@@ -992,11 +1025,11 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">HARDWARE_DIVIDE_PRESENT</td>
-        <td class="parametervalue">0</td>
+        <td class="parametervalue">1</td>
        </tr>
        <tr>
         <td class="parametername">HARDWARE_MULTIPLY_PRESENT</td>
-        <td class="parametervalue">0</td>
+        <td class="parametervalue">1</td>
        </tr>
        <tr>
         <td class="parametername">HARDWARE_MULX_PRESENT</td>
@@ -1016,19 +1049,27 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">ICACHE_LINE_SIZE</td>
-        <td class="parametervalue">0</td>
+        <td class="parametervalue">32</td>
        </tr>
        <tr>
         <td class="parametername">ICACHE_LINE_SIZE_LOG2</td>
-        <td class="parametervalue">0</td>
+        <td class="parametervalue">5</td>
        </tr>
        <tr>
         <td class="parametername">ICACHE_SIZE</td>
-        <td class="parametervalue">0</td>
+        <td class="parametervalue">4096</td>
+       </tr>
+       <tr>
+        <td class="parametername">INITDA_SUPPORTED</td>
+        <td class="parametervalue"></td>
        </tr>
        <tr>
         <td class="parametername">INST_ADDR_WIDTH</td>
         <td class="parametervalue">27</td>
+       </tr>
+       <tr>
+        <td class="parametername">NUM_OF_SHADOW_REG_SETS</td>
+        <td class="parametervalue">0</td>
        </tr>
        <tr>
         <td class="parametername">RESET_ADDR</td>
@@ -1067,18 +1108,18 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
      </tr>
      <tr>
       <td class="neighbor" rowspan="4">
-       <a href="#module_clk_0">clk_0</a>
+       <a href="#module_clk_50">clk_50</a>
       </td>
-      <td class="from">clk&#160;&#160;</td>
-     </tr>
-     <tr>
-      <td class="to">&#160;&#160;clk</td>
-     </tr>
-     <tr>
       <td class="from">clk_reset&#160;&#160;</td>
      </tr>
      <tr>
       <td class="to">&#160;&#160;reset</td>
+     </tr>
+     <tr>
+      <td class="from">clk&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;clk</td>
      </tr>
     </table>
    </div>
@@ -1277,18 +1318,18 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
      </tr>
      <tr>
       <td class="neighbor" rowspan="4">
-       <a href="#module_clk_0">clk_0</a>
+       <a href="#module_clk_50">clk_50</a>
       </td>
-      <td class="from">clk&#160;&#160;</td>
-     </tr>
-     <tr>
-      <td class="to">&#160;&#160;clk</td>
-     </tr>
-     <tr>
       <td class="from">clk_reset&#160;&#160;</td>
      </tr>
      <tr>
       <td class="to">&#160;&#160;reset</td>
+     </tr>
+     <tr>
+      <td class="from">clk&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;clk</td>
      </tr>
     </table>
    </div>
@@ -1461,18 +1502,18 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
      </tr>
      <tr>
       <td class="neighbor" rowspan="4">
-       <a href="#module_clk_0">clk_0</a>
+       <a href="#module_clk_50">clk_50</a>
       </td>
-      <td class="from">clk&#160;&#160;</td>
-     </tr>
-     <tr>
-      <td class="to">&#160;&#160;clk</td>
-     </tr>
-     <tr>
       <td class="from">clk_reset&#160;&#160;</td>
      </tr>
      <tr>
       <td class="to">&#160;&#160;reset</td>
+     </tr>
+     <tr>
+      <td class="from">clk&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;clk</td>
      </tr>
     </table>
    </div>
@@ -1646,28 +1687,10 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
     <table class="connectionboxes">
      <tr>
       <td class="neighbor" rowspan="4">
-       <a href="#module_clk_0">clk_0</a>
-      </td>
-      <td class="from">clk&#160;&#160;</td>
-      <td class="main" rowspan="9">sysid_qsys_0</td>
-     </tr>
-     <tr>
-      <td class="to">&#160;&#160;clk</td>
-     </tr>
-     <tr>
-      <td class="from">clk_reset&#160;&#160;</td>
-     </tr>
-     <tr>
-      <td class="to">&#160;&#160;reset</td>
-     </tr>
-     <tr style="height:6px">
-      <td></td>
-     </tr>
-     <tr>
-      <td class="neighbor" rowspan="4">
        <a href="#module_nios2_qsys_0">nios2_qsys_0</a>
       </td>
       <td class="from">data_master&#160;&#160;</td>
+      <td class="main" rowspan="9">sysid_qsys_0</td>
      </tr>
      <tr>
       <td class="to">&#160;&#160;control_slave</td>
@@ -1677,6 +1700,24 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
      </tr>
      <tr>
       <td class="to">&#160;&#160;reset</td>
+     </tr>
+     <tr style="height:6px">
+      <td></td>
+     </tr>
+     <tr>
+      <td class="neighbor" rowspan="4">
+       <a href="#module_clk_50">clk_50</a>
+      </td>
+      <td class="from">clk_reset&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;reset</td>
+     </tr>
+     <tr>
+      <td class="from">clk&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;clk</td>
      </tr>
     </table>
    </div>
@@ -1693,7 +1734,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">timestamp</td>
-        <td class="parametervalue">1581736075</td>
+        <td class="parametervalue">1581752590</td>
        </tr>
        <tr>
         <td class="parametername">AUTO_CLK_CLOCK_RATE</td>
@@ -1726,7 +1767,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">TIMESTAMP</td>
-        <td class="parametervalue">1581736075</td>
+        <td class="parametervalue">1581752590</td>
        </tr>
       </table>
      </td>
@@ -1741,20 +1782,14 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
    <div class="greydiv">
     <table class="connectionboxes">
      <tr>
-      <td class="neighbor" rowspan="4">
-       <a href="#module_clk_0">clk_0</a>
+      <td class="neighbor" rowspan="2">
+       <a href="#module_clk_100">clk_100</a>
       </td>
       <td class="from">clk&#160;&#160;</td>
-      <td class="main" rowspan="11">sdram_0</td>
+      <td class="main" rowspan="12">sdram_0</td>
      </tr>
      <tr>
       <td class="to">&#160;&#160;clk</td>
-     </tr>
-     <tr>
-      <td class="from">clk_reset&#160;&#160;</td>
-     </tr>
-     <tr>
-      <td class="to">&#160;&#160;reset</td>
      </tr>
      <tr style="height:6px">
       <td></td>
@@ -1776,6 +1811,18 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
      </tr>
      <tr>
       <td class="from">jtag_debug_module_reset&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;reset</td>
+     </tr>
+     <tr style="height:6px">
+      <td></td>
+     </tr>
+     <tr>
+      <td class="neighbor" rowspan="2">
+       <a href="#module_clk_50">clk_50</a>
+      </td>
+      <td class="from">clk_reset&#160;&#160;</td>
      </tr>
      <tr>
       <td class="to">&#160;&#160;reset</td>
@@ -1875,7 +1922,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">clockRate</td>
-        <td class="parametervalue">50000000</td>
+        <td class="parametervalue">100000000</td>
        </tr>
        <tr>
         <td class="parametername">componentName</td>
@@ -2015,10 +2062,57 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
     </tr>
    </table>
   </div>
+  <a name="module_clk_50"> </a>
+  <div>
+   <hr/>
+   <h2>clk_50</h2>clock_source v13.0
+   <br/>
+   <br/>
+   <br/>
+   <table class="flowbox">
+    <tr>
+     <td class="parametersbox">
+      <h2>Parameters</h2>
+      <table>
+       <tr>
+        <td class="parametername">clockFrequency</td>
+        <td class="parametervalue">50000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">clockFrequencyKnown</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">inputClockFrequency</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">resetSynchronousEdges</td>
+        <td class="parametervalue">NONE</td>
+       </tr>
+       <tr>
+        <td class="parametername">deviceFamily</td>
+        <td class="parametervalue">UNKNOWN</td>
+       </tr>
+       <tr>
+        <td class="parametername">generateLegacySim</td>
+        <td class="parametervalue">false</td>
+       </tr>
+      </table>
+     </td>
+    </tr>
+   </table>&#160;&#160;
+   <table class="flowbox">
+    <tr>
+     <td class="parametersbox">
+      <h2>Software Assignments</h2>(none)</td>
+    </tr>
+   </table>
+  </div>
   <table class="blueBar">
    <tr>
-    <td class="l">generation took 0.01 seconds</td>
-    <td class="r">rendering took 0.06 seconds</td>
+    <td class="l">generation took 0.00 seconds</td>
+    <td class="r">rendering took 0.07 seconds</td>
    </tr>
   </table>
  </body>

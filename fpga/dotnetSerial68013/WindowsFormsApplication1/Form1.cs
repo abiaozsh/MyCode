@@ -126,10 +126,10 @@ namespace WindowsFormsApplication1
                 {
                     MessageBox.Show("MaxPktSize != 512");
                 }
-                outEndpoint.TimeOut = 1000;
-                inEndpoint.TimeOut = 1000;
-                outCmdEndpoint.TimeOut = 1000;
-                inCmdEndpoint.TimeOut = 1000;
+                outEndpoint.TimeOut = 100;
+                inEndpoint.TimeOut = 100;
+                outCmdEndpoint.TimeOut = 100;
+                inCmdEndpoint.TimeOut = 100;
             }
             else
             {
@@ -255,11 +255,13 @@ namespace WindowsFormsApplication1
         private void button8_Click(object sender, EventArgs e)
         {
             sendCmd(0x023, 0);
+            //this.timer1.Enabled = false;
         }
 
         private void button11_Click(object sender, EventArgs e)
         {
             sendCmd(0x024, 0);
+            //this.timer1.Enabled = true;
         }
 
         private void sendCmd(int cmd, int dat)
@@ -271,6 +273,10 @@ namespace WindowsFormsApplication1
             outData[1] = (byte)dat;
             int xferLen = size;
             bResult = outCmdEndpoint.XferData(ref outData, ref xferLen);
+            if (!bResult)
+            {
+                throw new Exception();
+            }
         }
 
         private int recAck(int val)
@@ -280,6 +286,10 @@ namespace WindowsFormsApplication1
             byte[] inData = new byte[2];
             int xferLen = size;
             bResult = inCmdEndpoint.XferData(ref inData, ref xferLen);
+            if (!bResult)
+            {
+                throw new Exception();
+            }
             int ret = 0;
             if (bResult)
             {
@@ -369,6 +379,11 @@ namespace WindowsFormsApplication1
             //set transfer
             this.Text = "procimg " + name;
             Application.DoEvents();
+            return img2buff(b2);
+        }
+
+        private byte[][] img2buff(Bitmap b2)
+        {
             byte[][] buffs = new byte[768 * 2][];
 
             try
@@ -391,6 +406,7 @@ namespace WindowsFormsApplication1
                 ex.ToString();
             }
             return buffs;
+
         }
 
         void setaddress(int addr)
@@ -414,8 +430,16 @@ namespace WindowsFormsApplication1
             Stopwatch a;
             for (int y = 0; y < buffs.Length; y++)
             {
+                if (buffs[y].Length != PAGESIZE)
+                {
+                    throw new Exception();
+                }
                 int xferLen = PAGESIZE;
                 bool bResult = outEndpoint.XferData(ref buffs[y], ref xferLen);
+                if (!bResult)
+                {
+                    throw new Exception();
+                }
             }
             int ack;
             ack = recAck(0x3412);
@@ -442,6 +466,10 @@ namespace WindowsFormsApplication1
             {
                 xferLen = PAGESIZE;
                 bResult = inEndpoint.XferData(ref buffs[y], ref xferLen);
+                if (!bResult)
+                {
+                    throw new Exception();
+                }
             }
             int ack;
             ack = recAck(0x3412);
@@ -462,11 +490,13 @@ namespace WindowsFormsApplication1
         private void listView1_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count <= 0) return;
-            transfer(0, ((pack)(listView1.SelectedItems)[0].Tag).buffs);
-            int ack;
+            sendImg(((pack)(listView1.SelectedItems)[0].Tag).buffs);
+        }
 
-            this.Text = "";
-            Application.DoEvents();
+        private void sendImg(byte[][] buffs)
+        {
+            transfer(0, buffs);
+            int ack;
 
             setaddress(0);
 
@@ -474,6 +504,10 @@ namespace WindowsFormsApplication1
             dma(trackBar1.Value * 4);
 
         }
+
+
+
+
         void dma(int pos)
         {
             int dma_src = pos;
@@ -502,6 +536,136 @@ namespace WindowsFormsApplication1
         private void trackBar1_Scroll(object sender, EventArgs e)
         {
             dma(trackBar1.Value * 4);
+        }
+
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            int iWidth = Screen.PrimaryScreen.Bounds.Width;
+            //屏幕高
+            int iHeight = Screen.PrimaryScreen.Bounds.Height;
+            //按照屏幕宽高创建位图
+            Bitmap b2 = new Bitmap(1024, 768);
+            //从一个继承自Image类的对象中创建Graphics对象
+            Graphics gc = Graphics.FromImage(b2);
+            //抓屏并拷贝到myimage里
+            gc.CopyFromScreen(new Point(0, 0), new Point(0, 0), new Size(1024, 768));
+            gc.Flush();
+            gc.Dispose();
+
+
+            byte[][] buffs = img2buff(b2);
+
+            transfer(0, buffs);
+            int ack;
+
+            this.Text = "";
+
+            setaddress(0);
+
+            dma(trackBar1.Value * 4);
+
+        }
+
+
+
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        {
+            //end else if (command == 8'h40) begin switch1<=0; command_done<=1;
+            //end else if (command == 8'h41) begin switch1<=1; command_done<=1;
+            if (!checkBox2.Checked)
+            {
+                sendCmd(0x40, 0);
+            }
+            else
+            {
+                sendCmd(0x41, 0);
+            }
+        }
+
+        private void checkBox3_CheckedChanged(object sender, EventArgs e)
+        {
+            //end else if (command == 8'h44) begin value1<=0; command_done<=1;
+            //end else if (command == 8'h45) begin value1<=1; command_done<=1;
+            if (!checkBox3.Checked)
+            {
+                sendCmd(0x44, 0);
+            }
+            else
+            {
+                sendCmd(0x45, 0);
+            }
+        }
+
+        private void checkBox5_CheckedChanged(object sender, EventArgs e)
+        {
+            //end else if (command == 8'h42) begin switch2<=0; command_done<=1;
+            //end else if (command == 8'h43) begin switch2<=1; command_done<=1;
+            if (!checkBox5.Checked)
+            {
+                sendCmd(0x42, 0);
+            }
+            else
+            {
+                sendCmd(0x43, 0);
+            }
+
+        }
+
+        private void checkBox4_CheckedChanged(object sender, EventArgs e)
+        {
+            //end else if (command == 8'h46) begin value2<=0; command_done<=1;
+            //end else if (command == 8'h47) begin value2<=1; command_done<=1;
+            if (!checkBox4.Checked)
+            {
+                sendCmd(0x46, 0);
+            }
+            else
+            {
+                sendCmd(0x47, 0);
+            }
+
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            Random r = new Random();
+            byte[] b = new byte[1];
+            for (int i = 0; i < 1000000; i++)
+            {
+                r.NextBytes(b);
+                sendCmd(0x30, b[0]);
+                int ack = recAck(0);
+                if (ack != ((b[0] << 8) + 0x12))
+                {
+                    textBox3.Text += ack + "\r\n";
+                }
+            }
+        }
+
+        private void checkBox6_CheckedChanged(object sender, EventArgs e)
+        {
+            this.timer1.Enabled = checkBox6.Checked;
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            int iWidth = Screen.PrimaryScreen.Bounds.Width;
+            //屏幕高
+            int iHeight = Screen.PrimaryScreen.Bounds.Height;
+            //按照屏幕宽高创建位图
+            Bitmap b2 = new Bitmap(1024, 768);
+            //从一个继承自Image类的对象中创建Graphics对象
+            Graphics gc = Graphics.FromImage(b2);
+            //抓屏并拷贝到myimage里
+            gc.CopyFromScreen(new Point(0, 0), new Point(0, 0), new Size(1024, 768));
+            gc.Flush();
+            gc.Dispose();
+
+            byte[][] buffs = img2buff(b2);
+            //
+            sendImg(buffs);
+            //sendImg(((pack)(listView1.SelectedItems)[0].Tag).buffs);
         }
 
 

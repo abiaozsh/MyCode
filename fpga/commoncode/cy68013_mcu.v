@@ -97,7 +97,8 @@ always @(posedge cy_A3_WU2 or negedge sys_rst_n) begin
     cy_A1_INT1<=0;
   end else begin
     if         (cy_rec_cnt==0)begin
-      if(cy_A0_INT0 && !cy_rec_req)begin
+      if(cy_A0_INT0)begin// && !cy_rec_req
+				cy_rec_req <= 0;
         cy_rec_cnt<=1;
       end
     end else if(cy_rec_cnt==1 )begin cy_cmd[0] <= cy_A0_INT0;cy_rec_cnt<=2;
@@ -162,14 +163,14 @@ assign EP2FULL  = !cy_to_fpga_CTL1_FLAGB;
 assign EP6EMPTY = !cy_to_fpga_CTL2_FLAGC;
 assign EP6FULL  = !cy_to_fpga_A7_FLAGD;
 
-assign debug0 = transfer_req_buff;
-assign debug1 = transfer_ack;
-assign debug2 = transfer_req;
-assign debug3 = cy_IFCLK;
-assign debug4 = EP2EMPTY;
-assign debug5 = EP2FULL;
-assign debug6 = EP6EMPTY;
-assign debug7 = EP6FULL;
+assign debug0 = cy_A0_INT0;
+assign debug1 = cy_A1_INT1;
+assign debug2 = command_done;
+assign debug3 = cy_A3_WU2;
+assign debug4 = cy_rec_req;//EP2EMPTY;
+assign debug5 = cy_rec_ack;//EP2FULL;
+assign debug6 = cy_snd_req;//EP6EMPTY;
+assign debug7 = cy_snd_ack;//EP6FULL;
 
 
 reg transfer_req_buff;
@@ -180,10 +181,10 @@ reg [23:0] sdram_c_address_trans;
 reg        sdram_c_read_req_trans;
 reg init;
 //reg [31:0] success_count;
-//assign debug83 = success_count[31:24];
-//assign debug82 = success_count[23:16];
-assign debug81 = sdram_c_data_out[15:8];
-assign debug80 = sdram_c_data_out[7:0];
+assign debug83 = command;
+assign debug82 = cy_rec_cnt;
+assign debug81 = cy_cmd;//transfer_timer[15:8];
+assign debug80 = cy_dat;//transfer_timer[7:0];
 
 always @(posedge cy_IFCLK or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
@@ -293,9 +294,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     if(!cy_rec_req_buff && cy_rec_ack)begin
       cy_rec_ack <= 0;
     end
-    if(cy_cmd==8'h62)begin
-    end
-    
+
     if (cy_rec_req_buff && !cy_rec_ack) begin //cy数据到达
       command <= cy_cmd;
       cy_rec_ack <= 1;
@@ -333,6 +332,7 @@ reg [31:0] counttotal;
 //assign {debug83,debug82,debug81,debug80} = counttotal;
 
 reg       transfer_req;
+reg       transfer_ack_buff;
 reg       transfer_type;
 reg [7:0] transfer_pages0;
 reg [7:0] transfer_pages1;
@@ -341,6 +341,48 @@ reg [11:0] DMA_des_page;
 reg [11:0] DMA_page_length;
 
 reg control_by_transfer;
+
+/*
+wire bus;
+wire val1;
+wire val2;
+
+assign debug0 = bus;
+assign debug1 = val1;
+assign debug2 = val2;
+assign debug3 = 0;
+assign debug4 = switch1;
+assign debug5 = value1;
+assign debug6 = switch2;
+assign debug7 = value2;
+
+reg switch1;
+reg value1;
+test test1(
+    .sys_clk(sys_clk),
+    .sys_rst_n(sys_rst_n),
+
+		.switch(switch1),
+		.value(value1),
+		.bus(bus),
+		.val(val1)
+		);
+
+reg switch2;
+reg value2;
+test test2(
+    .sys_clk(sys_clk),
+    .sys_rst_n(sys_rst_n),
+
+		.switch(switch2),
+		.value(value2),
+		.bus(bus),
+		.val(val2)
+		);
+
+*/
+
+
 
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
@@ -351,7 +393,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     cy_data0 <= 0;
     cy_data1 <= 0;
 
-    command_done <= 0;
+    command_done <= 1;
     timer<=0;
     timer2<=0;
     timer3<=0;
@@ -373,8 +415,9 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     inited<=0;
     counttotal<=0;
     
-    transfer_req<= 0;
-    
+    transfer_req <= 0;
+    transfer_ack_buff <= 0;
+		
 		transfer_pages0<=0;
 		transfer_pages1<=0;
 		
@@ -384,7 +427,8 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
   end else begin
     blanking_buff <= blanking;
     blanking_last <= blanking_buff;
-    
+    transfer_ack_buff <= transfer_ack;
+		
     if(cy_snd_ack)begin
       cy_snd_req <= 0;
     end
@@ -412,8 +456,24 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 
       end else if (command == 8'h1B) begin DMA_page_length[7:0] <=cy_dat; command_done<=1;
       end else if (command == 8'h1C) begin DMA_page_length[11:8]<=cy_dat[3:0]; command_done<=1;
-      
-      
+
+			//ack test
+			end else if (command == 8'h30) begin
+				cy_snd_req <= 1;
+				cy_snd_data0 <= 8'h12;
+				cy_snd_data1 <= cy_dat;
+				command_done<=1;
+
+			//bus test
+      //end else if (command == 8'h40) begin switch1<=0; command_done<=1;
+      //end else if (command == 8'h41) begin switch1<=1; command_done<=1;
+      //end else if (command == 8'h42) begin switch2<=0; command_done<=1;
+      //end else if (command == 8'h43) begin switch2<=1; command_done<=1;
+      //end else if (command == 8'h44) begin value1<=0; command_done<=1;
+      //end else if (command == 8'h45) begin value1<=1; command_done<=1;
+      //end else if (command == 8'h46) begin value2<=0; command_done<=1;
+      //end else if (command == 8'h47) begin value2<=1; command_done<=1;
+
       
       end else if (command == 8'h21) begin//set mode 640*480
         vga_mode<=0;
@@ -454,8 +514,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           transfer_type <= 1;
           cy_from_fpga_A2_SLOE <= 0;
         end else begin
-          //内存地址初始化
-          if(transfer_ack)begin
+          if(transfer_ack_buff)begin
             inited <= 0;
             cy_from_fpga_A2_SLOE<=1;
             transfer_req <= 0;
@@ -473,8 +532,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           transfer_type <= 0;
           cy_out_to_pc <= 1;
         end else begin
-          //内存地址初始化
-          if(transfer_ack)begin
+          if(transfer_ack_buff)begin
             inited <= 0;
             cy_out_to_pc <= 0;
             transfer_req <= 0;
@@ -809,3 +867,80 @@ vga_driver u_vga_driver(
     
 
 endmodule
+
+
+/*
+
+
+module cpu(
+    input  sys_clk  ,
+    input  sys_rst_n,
+
+		output [31:0] bus_address,
+		inout  [15:0] bus_data,
+		output        bus_rw,// 0: device -> cpu     1:cpu -> device
+		input         bus_data_valid,
+		input         bus_write_ack
+);
+
+reg [15:0] cs;
+reg [15:0] pc;
+
+
+
+always @ (*) begin
+end
+
+
+//fetch
+
+always @(posedge sys_clk or negedge sys_rst_n) begin
+  if (!sys_rst_n) begin
+
+  end else begin
+
+  end
+end
+
+
+
+endmodule
+
+
+
+
+module test(
+    input  sys_clk  ,
+    input  sys_rst_n,
+
+		
+		
+		
+		input switch,
+		input value,
+		inout bus,
+		output val
+		);
+
+reg myswitch;
+reg myvalue;
+reg myval;
+assign bus = myswitch ? myvalue : 1'bz;
+
+assign val = myval;
+
+always @(posedge sys_clk or negedge sys_rst_n) begin
+  if (!sys_rst_n) begin
+		myswitch = 0;
+		myvalue = 0;
+		myval = 0;
+  end else begin
+		myswitch = switch;
+		myvalue = value;
+		myval = bus;
+  end
+end
+
+endmodule
+
+*/

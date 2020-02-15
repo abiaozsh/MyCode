@@ -2,19 +2,23 @@ set_global_assignment -entity "sys" -library "sys" -name IP_TOOL_NAME "Qsys"
 set_global_assignment -entity "sys" -library "sys" -name IP_TOOL_VERSION "13.0sp1"
 set_global_assignment -entity "sys" -library "sys" -name IP_TOOL_ENV "Qsys"
 set_global_assignment -library "sys" -name SOPCINFO_FILE [file join $::quartus(qip_path) "../../sys.sopcinfo"]
-set_instance_assignment -entity "sys" -library "sys" -name SLD_INFO "QSYS_NAME sys HAS_SOPCINFO 1 GENERATION_ID 1581736075"
+set_instance_assignment -entity "sys" -library "sys" -name SLD_INFO "QSYS_NAME sys HAS_SOPCINFO 1 GENERATION_ID 1581752590"
 set_global_assignment -library "sys" -name MISC_FILE [file join $::quartus(qip_path) "../../sys.cmp"]
 set_global_assignment -name SYNTHESIS_ONLY_QIP ON
 set_global_assignment -library "sys" -name MISC_FILE [file join $::quartus(qip_path) "../../sys.qsys"]
 
 set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "sys.v"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_irq_mapper.sv"]
+set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/altera_avalon_st_handshake_clock_crosser.v"]
+set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/altera_avalon_st_clock_crosser.v"]
+set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/altera_avalon_st_pipeline_base.v"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/altera_merlin_width_adapter.sv"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/altera_merlin_address_alignment.sv"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/altera_merlin_burst_uncompressor.sv"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/altera_merlin_arbitrator.sv"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_rsp_xbar_mux_001.sv"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_rsp_xbar_mux.sv"]
+set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_rsp_xbar_demux_003.sv"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_rsp_xbar_demux.sv"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_cmd_xbar_mux_003.sv"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_cmd_xbar_demux_001.sv"]
@@ -23,6 +27,7 @@ set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qi
 set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/altera_reset_synchronizer.v"]
 set_global_assignment -library "sys" -name SDC_FILE [file join $::quartus(qip_path) "submodules/altera_reset_controller.sdc"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/altera_merlin_burst_adapter.sv"]
+set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/altera_merlin_traffic_limiter.sv"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_id_router_005.sv"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_id_router_003.sv"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_id_router.sv"]
@@ -38,11 +43,16 @@ set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qi
 set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_pio_1.v"]
 set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_timer_0.v"]
 set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_pio_0.v"]
+set_global_assignment -library "sys" -name SOURCE_FILE [file join $::quartus(qip_path) "submodules/sys_nios2_qsys_0.ocp"]
 set_global_assignment -library "sys" -name SDC_FILE [file join $::quartus(qip_path) "submodules/sys_nios2_qsys_0.sdc"]
 set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_nios2_qsys_0.v"]
+set_global_assignment -library "sys" -name SOURCE_FILE [file join $::quartus(qip_path) "submodules/sys_nios2_qsys_0_bht_ram.mif"]
+set_global_assignment -library "sys" -name SOURCE_FILE [file join $::quartus(qip_path) "submodules/sys_nios2_qsys_0_dc_tag_ram.mif"]
+set_global_assignment -library "sys" -name SOURCE_FILE [file join $::quartus(qip_path) "submodules/sys_nios2_qsys_0_ic_tag_ram.mif"]
 set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_nios2_qsys_0_jtag_debug_module_sysclk.v"]
 set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_nios2_qsys_0_jtag_debug_module_tck.v"]
 set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_nios2_qsys_0_jtag_debug_module_wrapper.v"]
+set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_nios2_qsys_0_mult_cell.v"]
 set_global_assignment -library "sys" -name SOURCE_FILE [file join $::quartus(qip_path) "submodules/sys_nios2_qsys_0_ociram_default_contents.mif"]
 set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_nios2_qsys_0_oci_test_bench.v"]
 set_global_assignment -library "sys" -name SOURCE_FILE [file join $::quartus(qip_path) "submodules/sys_nios2_qsys_0_rf_ram_a.mif"]
@@ -52,6 +62,9 @@ set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qi
 set_global_assignment -entity "sys_irq_mapper" -library "sys" -name IP_TOOL_NAME "altera_irq_mapper"
 set_global_assignment -entity "sys_irq_mapper" -library "sys" -name IP_TOOL_VERSION "13.0"
 set_global_assignment -entity "sys_irq_mapper" -library "sys" -name IP_TOOL_ENV "Qsys"
+set_global_assignment -entity "altera_avalon_st_handshake_clock_crosser" -library "sys" -name IP_TOOL_NAME "altera_avalon_st_handshake_clock_crosser"
+set_global_assignment -entity "altera_avalon_st_handshake_clock_crosser" -library "sys" -name IP_TOOL_VERSION "13.0"
+set_global_assignment -entity "altera_avalon_st_handshake_clock_crosser" -library "sys" -name IP_TOOL_ENV "Qsys"
 set_global_assignment -entity "altera_merlin_width_adapter" -library "sys" -name IP_TOOL_NAME "altera_merlin_width_adapter"
 set_global_assignment -entity "altera_merlin_width_adapter" -library "sys" -name IP_TOOL_VERSION "13.0"
 set_global_assignment -entity "altera_merlin_width_adapter" -library "sys" -name IP_TOOL_ENV "Qsys"
@@ -61,6 +74,9 @@ set_global_assignment -entity "sys_rsp_xbar_mux_001" -library "sys" -name IP_TOO
 set_global_assignment -entity "sys_rsp_xbar_mux" -library "sys" -name IP_TOOL_NAME "altera_merlin_multiplexer"
 set_global_assignment -entity "sys_rsp_xbar_mux" -library "sys" -name IP_TOOL_VERSION "13.0"
 set_global_assignment -entity "sys_rsp_xbar_mux" -library "sys" -name IP_TOOL_ENV "Qsys"
+set_global_assignment -entity "sys_rsp_xbar_demux_003" -library "sys" -name IP_TOOL_NAME "altera_merlin_demultiplexer"
+set_global_assignment -entity "sys_rsp_xbar_demux_003" -library "sys" -name IP_TOOL_VERSION "13.0"
+set_global_assignment -entity "sys_rsp_xbar_demux_003" -library "sys" -name IP_TOOL_ENV "Qsys"
 set_global_assignment -entity "sys_rsp_xbar_demux" -library "sys" -name IP_TOOL_NAME "altera_merlin_demultiplexer"
 set_global_assignment -entity "sys_rsp_xbar_demux" -library "sys" -name IP_TOOL_VERSION "13.0"
 set_global_assignment -entity "sys_rsp_xbar_demux" -library "sys" -name IP_TOOL_ENV "Qsys"
@@ -79,6 +95,9 @@ set_global_assignment -entity "altera_reset_controller" -library "sys" -name IP_
 set_global_assignment -entity "altera_merlin_burst_adapter" -library "sys" -name IP_TOOL_NAME "altera_merlin_burst_adapter"
 set_global_assignment -entity "altera_merlin_burst_adapter" -library "sys" -name IP_TOOL_VERSION "13.0"
 set_global_assignment -entity "altera_merlin_burst_adapter" -library "sys" -name IP_TOOL_ENV "Qsys"
+set_global_assignment -entity "altera_merlin_traffic_limiter" -library "sys" -name IP_TOOL_NAME "altera_merlin_traffic_limiter"
+set_global_assignment -entity "altera_merlin_traffic_limiter" -library "sys" -name IP_TOOL_VERSION "13.0"
+set_global_assignment -entity "altera_merlin_traffic_limiter" -library "sys" -name IP_TOOL_ENV "Qsys"
 set_global_assignment -entity "sys_id_router_005" -library "sys" -name IP_TOOL_NAME "altera_merlin_router"
 set_global_assignment -entity "sys_id_router_005" -library "sys" -name IP_TOOL_VERSION "13.0"
 set_global_assignment -entity "sys_id_router_005" -library "sys" -name IP_TOOL_ENV "Qsys"

@@ -3,7 +3,7 @@
  <debug showDebugMenu="0" />
  <systemtable>
   <columns>
-   <connections preferredWidth="127" />
+   <connections preferredWidth="159" />
    <irq preferredWidth="34" />
    <name preferredWidth="290" />
   </columns>
@@ -17,6 +17,6 @@
  </clocktable>
  <window width="1744" height="1307" x="581" y="61" />
  <library
-   expandedCategories="Library/Memories and Memory Controllers/External Memory Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/DDR2 Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/SDRAM Interfaces,Project,Library/Memories and Memory Controllers/External Memory Interfaces/Memory Models,Library/Memories and Memory Controllers/External Memory Interfaces/DDR3 Interfaces,Library,Library/Memories and Memory Controllers/External Memory Interfaces/DDR Interfaces,Library/Memories and Memory Controllers,Library/Memories and Memory Controllers/External Memory Interfaces/LPDDR2 Interfaces" />
+   expandedCategories="Project,Library/Clock and Reset,Library/Verification,Library,Library/Verification/Simulation" />
  <hdlexample language="VERILOG" />
 </preferences>

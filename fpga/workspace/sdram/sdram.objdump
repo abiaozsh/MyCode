@@ -75,7 +75,7 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
  28 .quartus_project_dir 00000020  00000000  00000000  000101f0  2**0
                   CONTENTS, READONLY
- 29 .sopcinfo     0003544b  00000000  00000000  00010210  2**0
+ 29 .sopcinfo     00037b17  00000000  00000000  00010210  2**0
                   CONTENTS, READONLY
 SYMBOL TABLE:
 02000000 l    d  .entry	00000000 .entry
@@ -2092,7 +2092,7 @@ void altera_nios2_qsys_irq_init(void)
  2000f88:	20000726 	beq	r4,zero,2000fa8 <__call_exitprocs+0x1a0>
  2000f8c:	b9000015 	stw	r4,0(r23)
  2000f90:	8809883a 	mov	r4,r17
- 2000f94:	00000000 	call	0 <__reset-0x2000000>
+ 2000f94:	00000000 	call	0 <__alt_mem_sdram_0-0x2000000>
  2000f98:	bc400017 	ldw	r17,0(r23)
  2000f9c:	883fb71e 	bne	r17,zero,2000e7c <__call_exitprocs+0x74>
  2000fa0:	003fc506 	br	2000eb8 <__call_exitprocs+0xb0>
