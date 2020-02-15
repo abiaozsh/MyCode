@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<preferences>
+ <debug showDebugMenu="0" />
+ <systemtable>
+  <columns>
+   <connections preferredWidth="127" />
+   <irq preferredWidth="34" />
+   <name preferredWidth="290" />
+  </columns>
+ </systemtable>
+ <clocktable>
+  <columns>
+   <clockname preferredWidth="714" />
+   <clocksource preferredWidth="713" />
+   <frequency preferredWidth="696" />
+  </columns>
+ </clocktable>
+ <window width="2560" height="1412" x="0" y="0" />
+ <library
+   expandedCategories="Library/Memories and Memory Controllers/External Memory Interfaces/Memory Interfaces/Flash,Library/Memories and Memory Controllers/External Memory Interfaces/Memory Interfaces,Library,Library/Memories and Memory Controllers/External Memory Interfaces,Library/Memories and Memory Controllers,Project" />
+ <hdlexample language="VERILOG" />
+</preferences>
