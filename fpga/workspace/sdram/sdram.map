@@ -1,0 +1,816 @@
+Archive member included because of file (symbol)
+
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp//obj/HAL/src/crt0.o (alt_load)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp//obj/HAL/src/crt0.o (alt_main)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o) (alt_irq_init)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o) (alt_avalon_timer_sc_init)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o) (close)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dcache_flush_all.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o) (alt_dcache_flush_all)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o) (alt_fd_list)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_ctors.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o) (_do_ctors)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_dtors.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o) (_do_dtors)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_errno.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o) (alt_errno)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_icache_flush_all.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o) (alt_icache_flush_all)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o) (alt_ic_isr_register)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o) (alt_iic_isr_register)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o) (alt_irq_entry)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o) (alt_irq_handler)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_vars.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o) (alt_irq_active)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_release_fd.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o) (alt_release_fd)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o) (_alt_tick_rate)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_nios2_qsys_irq.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o) (altera_nios2_qsys_irq_init)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o) (alt_exception)
+z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o) (atexit)
+z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o) (exit)
+z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-impure.o)
+                              z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o) (_global_impure_ptr)
+z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-int_errno.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o) (errno)
+z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__atexit.o)
+                              z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o) (__register_exitproc)
+z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
+                              z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o) (__call_exitprocs)
+z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a(lib2-mul.o)
+                              E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o) (__mulsi3)
+E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exit.o)
+                              z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o) (_exit)
+
+Allocating common symbols
+Common symbol       size              file
+
+alt_irq             0x100             E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+errno               0x4               z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-int_errno.o)
+_atexit0            0x190             z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+reset            0x02000000         0x00000020
+sdram_0          0x02000020         0x01ffffe0
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD E:/MyCode.github/fpga/workspace/sdram_bsp//obj/HAL/src/crt0.o
+LOAD obj/default/hello_world.o
+LOAD z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libstdc++.a
+LOAD z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libm.a
+LOAD z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a
+START GROUP
+LOAD z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a
+LOAD z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a
+LOAD E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a
+END GROUP
+LOAD z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a
+                0x02000000                __alt_mem_sdram_0 = 0x2000000
+
+.entry          0x02000000       0x20
+ *(.entry)
+ .entry         0x02000000       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp//obj/HAL/src/crt0.o
+                0x02000000                __reset
+
+.exceptions     0x02000020      0x194
+                0x02000020                PROVIDE (__ram_exceptions_start, ABSOLUTE (.))
+                0x02000020                . = ALIGN (0x20)
+ *(.irq)
+ *(.exceptions.entry.label)
+ .exceptions.entry.label
+                0x02000020        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+                0x02000020                alt_irq_entry
+ .exceptions.entry.label
+                0x02000020        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+                0x02000020                alt_exception
+ *(.exceptions.entry.user)
+ *(.exceptions.entry)
+ .exceptions.entry
+                0x02000020       0x54 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+ *(.exceptions.irqtest.user)
+ *(.exceptions.irqtest)
+ .exceptions.irqtest
+                0x02000074       0x10 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+ *(.exceptions.irqhandler.user)
+ *(.exceptions.irqhandler)
+ .exceptions.irqhandler
+                0x02000084        0x4 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+ *(.exceptions.irqreturn.user)
+ *(.exceptions.irqreturn)
+ .exceptions.irqreturn
+                0x02000088        0x4 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+ *(.exceptions.notirq.label)
+ .exceptions.notirq.label
+                0x0200008c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+ *(.exceptions.notirq.user)
+ *(.exceptions.notirq)
+ .exceptions.notirq
+                0x0200008c        0x8 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+ *(.exceptions.soft.user)
+ *(.exceptions.soft)
+ *(.exceptions.unknown.user)
+ *(.exceptions.unknown)
+ .exceptions.unknown
+                0x02000094        0x4 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+ *(.exceptions.exit.label)
+ .exceptions.exit.label
+                0x02000098        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+ .exceptions.exit.label
+                0x02000098        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+ *(.exceptions.exit.user)
+ *(.exceptions.exit)
+ .exceptions.exit
+                0x02000098       0x54 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+ *(.exceptions)
+ .exceptions    0x020000ec       0xc8 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+                0x020000ec                alt_irq_handler
+                0x020001b4                PROVIDE (__ram_exceptions_end, ABSOLUTE (.))
+                0x02000020                PROVIDE (__flash_exceptions_start, LOADADDR (.exceptions))
+
+.text           0x020001b4      0xea0
+                0x020001b4                PROVIDE (stext, ABSOLUTE (.))
+ *(.interp)
+ *(.hash)
+ *(.dynsym)
+ *(.dynstr)
+ *(.gnu.version)
+ *(.gnu.version_d)
+ *(.gnu.version_r)
+ *(.rel.init)
+ *(.rela.init)
+ *(.rel.text .rel.text.* .rel.gnu.linkonce.t.*)
+ *(.rela.text .rela.text.* .rela.gnu.linkonce.t.*)
+ *(.rel.fini)
+ *(.rela.fini)
+ *(.rel.rodata .rel.rodata.* .rel.gnu.linkonce.r.*)
+ *(.rela.rodata .rela.rodata.* .rela.gnu.linkonce.r.*)
+ *(.rel.data .rel.data.* .rel.gnu.linkonce.d.*)
+ *(.rela.data .rela.data.* .rela.gnu.linkonce.d.*)
+ *(.rel.tdata .rel.tdata.* .rel.gnu.linkonce.td.*)
+ *(.rela.tdata .rela.tdata.* .rela.gnu.linkonce.td.*)
+ *(.rel.tbss .rel.tbss.* .rel.gnu.linkonce.tb.*)
+ *(.rela.tbss .rela.tbss.* .rela.gnu.linkonce.tb.*)
+ *(.rel.ctors)
+ *(.rela.ctors)
+ *(.rel.dtors)
+ *(.rela.dtors)
+ *(.rel.got)
+ *(.rela.got)
+ *(.rel.sdata .rel.sdata.* .rel.gnu.linkonce.s.*)
+ *(.rela.sdata .rela.sdata.* .rela.gnu.linkonce.s.*)
+ *(.rel.sbss .rel.sbss.* .rel.gnu.linkonce.sb.*)
+ *(.rela.sbss .rela.sbss.* .rela.gnu.linkonce.sb.*)
+ *(.rel.sdata2 .rel.sdata2.* .rel.gnu.linkonce.s2.*)
+ *(.rela.sdata2 .rela.sdata2.* .rela.gnu.linkonce.s2.*)
+ *(.rel.sbss2 .rel.sbss2.* .rel.gnu.linkonce.sb2.*)
+ *(.rela.sbss2 .rela.sbss2.* .rela.gnu.linkonce.sb2.*)
+ *(.rel.bss .rel.bss.* .rel.gnu.linkonce.b.*)
+ *(.rela.bss .rela.bss.* .rela.gnu.linkonce.b.*)
+ *(.rel.plt)
+ *(.rela.plt)
+ *(.rel.dyn)
+ *(.init)
+ *(.plt)
+ *(.text .stub .text.* .gnu.linkonce.t.*)
+ .text          0x020001b4       0x3c E:/MyCode.github/fpga/workspace/sdram_bsp//obj/HAL/src/crt0.o
+                0x020001b4                _start
+ .text          0x020001f0       0x54 obj/default/hello_world.o
+                0x020001f0                main
+ .text          0x02000244       0xec E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o)
+                0x02000244                alt_load
+ .text          0x02000330       0x50 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o)
+                0x02000330                alt_main
+ .text          0x02000380       0x70 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o)
+                0x02000380                alt_irq_init
+                0x020003b4                alt_sys_init
+ .text          0x020003f0      0x100 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o)
+                0x02000460                alt_avalon_timer_sc_init
+ .text          0x020004f0      0x160 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o)
+                0x020004f0                close
+ .text          0x02000650       0x1c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dcache_flush_all.o)
+                0x02000650                alt_dcache_flush_all
+ .text          0x0200066c       0x2c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+ .text          0x02000698       0x64 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_ctors.o)
+                0x02000698                _do_ctors
+ .text          0x020006fc       0x64 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_dtors.o)
+                0x020006fc                _do_dtors
+ .text          0x02000760        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_errno.o)
+ .text          0x02000760       0x1c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_icache_flush_all.o)
+                0x02000760                alt_icache_flush_all
+ .text          0x0200077c      0x1d4 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o)
+                0x0200077c                alt_ic_isr_register
+                0x020007cc                alt_ic_irq_enable
+                0x02000868                alt_ic_irq_disable
+                0x02000908                alt_ic_irq_enabled
+ .text          0x02000950       0xf8 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o)
+                0x02000950                alt_iic_isr_register
+ .text          0x02000a48        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+ .text          0x02000a48        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+ .text          0x02000a48        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_vars.o)
+ .text          0x02000a48       0x78 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_release_fd.o)
+                0x02000a48                alt_release_fd
+ .text          0x02000ac0      0x1a4 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+                0x02000ac0                alt_alarm_stop
+                0x02000b58                alt_tick
+ .text          0x02000c64       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_nios2_qsys_irq.o)
+                0x02000c64                altera_nios2_qsys_irq_init
+ .text          0x02000c84        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+ .text          0x02000c84       0x14 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+                0x02000c84                atexit
+ .text          0x02000c98       0x38 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o)
+                0x02000c98                exit
+ .text          0x02000cd0        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-impure.o)
+ .text          0x02000cd0        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-int_errno.o)
+ .text          0x02000cd0      0x134 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__atexit.o)
+                0x02000cd0                __register_exitproc
+ .text          0x02000e04      0x1b4 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
+                0x02000e08                __call_exitprocs
+ .text          0x02000fb8       0x38 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a(lib2-mul.o)
+                0x02000fb8                __mulsi3
+ .text          0x02000ff0       0x60 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exit.o)
+                0x02001030                _exit
+ *(.gnu.warning.*)
+ *(.fini)
+                0x02001050                PROVIDE (__etext, ABSOLUTE (.))
+                0x02001050                PROVIDE (_etext, ABSOLUTE (.))
+                0x02001050                PROVIDE (etext, ABSOLUTE (.))
+ *(.eh_frame_hdr)
+                0x02001050                . = ALIGN (0x4)
+                0x02001050                PROVIDE (__preinit_array_start, ABSOLUTE (.))
+ *(.preinit_array)
+                0x02001050                PROVIDE (__preinit_array_end, ABSOLUTE (.))
+                0x02001050                PROVIDE (__init_array_start, ABSOLUTE (.))
+ *(.init_array)
+                0x02001050                PROVIDE (__init_array_end, ABSOLUTE (.))
+                0x02001050                PROVIDE (__fini_array_start, ABSOLUTE (.))
+ *(.fini_array)
+                0x02001050                PROVIDE (__fini_array_end, ABSOLUTE (.))
+ *(.eh_frame)
+ *(.gcc_except_table)
+ *(.dynamic)
+                0x02001050                PROVIDE (__CTOR_LIST__, ABSOLUTE (.))
+ *(.ctors)
+ *(SORT(.ctors.*))
+ .ctors.65535   0x02001050        0x4 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
+                0x02001054                PROVIDE (__CTOR_END__, ABSOLUTE (.))
+                0x02001054                PROVIDE (__DTOR_LIST__, ABSOLUTE (.))
+ *(.dtors)
+ *(SORT(.dtors.*))
+                0x02001054                PROVIDE (__DTOR_END__, ABSOLUTE (.))
+ *(.jcr)
+                0x02001054                . = ALIGN (0x4)
+
+.rodata         0x02001054       0x10
+                0x02001054                PROVIDE (__ram_rodata_start, ABSOLUTE (.))
+                0x02001054                . = ALIGN (0x4)
+ *(.rodata .rodata.* .gnu.linkonce.r.*)
+ .rodata        0x02001054        0xc E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+ .rodata.str1.4
+                0x02001060        0x4 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-impure.o)
+ *(.rodata1)
+                0x02001064                . = ALIGN (0x4)
+                0x02001064                PROVIDE (__ram_rodata_end, ABSOLUTE (.))
+                0x02001054                PROVIDE (__flash_rodata_start, LOADADDR (.rodata))
+
+.rwdata         0x02001064      0x5d4 load address 0x02001638
+                0x02001064                PROVIDE (__ram_rwdata_start, ABSOLUTE (.))
+                0x02001064                . = ALIGN (0x4)
+ *(.got.plt)
+ *(.got)
+ *(.data1)
+ *(.data .data.* .gnu.linkonce.d.*)
+ .data          0x02001064        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp//obj/HAL/src/crt0.o
+ .data          0x02001064        0x0 obj/default/hello_world.o
+ .data          0x02001064        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o)
+ .data          0x02001064        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o)
+ .data          0x02001064        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o)
+ .data          0x02001064        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o)
+ .data          0x02001064        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o)
+ .data          0x02001064        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dcache_flush_all.o)
+ .data          0x02001064      0x1a8 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+                0x02001064                alt_dev_null
+                0x0200108c                alt_fd_list
+ .data          0x0200120c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_ctors.o)
+ .data          0x0200120c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_dtors.o)
+ .data          0x0200120c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_errno.o)
+ .data          0x0200120c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_icache_flush_all.o)
+ .data          0x0200120c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o)
+ .data          0x0200120c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o)
+ .data          0x0200120c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+ .data          0x0200120c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+ .data          0x0200120c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_vars.o)
+ .data          0x0200120c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_release_fd.o)
+ .data          0x0200120c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+ .data          0x0200120c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_nios2_qsys_irq.o)
+ .data          0x0200120c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+ .data          0x0200120c        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+ .data          0x0200120c        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o)
+ .data          0x0200120c      0x400 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-impure.o)
+ .data          0x0200160c        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-int_errno.o)
+ .data          0x0200160c        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__atexit.o)
+ .data          0x0200160c        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
+ .data          0x0200160c        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a(lib2-mul.o)
+ .data          0x0200160c        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exit.o)
+                0x0200960c                _gp = ABSOLUTE ((. + 0x8000))
+                0x0200960c                PROVIDE (gp, _gp)
+ *(.rwdata .rwdata.*)
+ *(.sdata .sdata.* .gnu.linkonce.s.*)
+ .sdata         0x0200160c       0x14 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+                0x0200160c                alt_fs_list
+                0x02001614                alt_dev_list
+                0x0200161c                alt_max_fd
+ .sdata         0x02001620        0x4 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_errno.o)
+                0x02001620                alt_errno
+ .sdata         0x02001624        0x4 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_vars.o)
+                0x02001624                alt_priority_mask
+ .sdata         0x02001628        0x8 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+                0x02001628                alt_alarm_list
+ .sdata         0x02001630        0x8 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-impure.o)
+                0x02001630                _impure_ptr
+                0x02001634                _global_impure_ptr
+ *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
+                0x02001638                . = ALIGN (0x4)
+                0x02001638                _edata = ABSOLUTE (.)
+                0x02001638                PROVIDE (edata, ABSOLUTE (.))
+                0x02001638                PROVIDE (__ram_rwdata_end, ABSOLUTE (.))
+                0x02001638                PROVIDE (__flash_rwdata_start, LOADADDR (.rwdata))
+
+.bss            0x02001c0c      0x2ac
+                0x02001c0c                __bss_start = ABSOLUTE (.)
+                0x02001c0c                PROVIDE (__sbss_start, ABSOLUTE (.))
+                0x02001c0c                PROVIDE (___sbss_start, ABSOLUTE (.))
+ *(.dynsbss)
+ *(.sbss .sbss.* .gnu.linkonce.sb.*)
+ .sbss          0x02001c0c        0xc E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o)
+                0x02001c0c                alt_argc
+                0x02001c10                alt_argv
+                0x02001c14                alt_envp
+ .sbss          0x02001c18        0x4 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_vars.o)
+                0x02001c18                alt_irq_active
+ .sbss          0x02001c1c        0x8 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+                0x02001c1c                _alt_tick_rate
+                0x02001c20                _alt_nticks
+ .sbss          0x02001c24        0x4 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-int_errno.o)
+                0x02001c24                errno
+ *(.sbss2 .sbss2.* .gnu.linkonce.sb2.*)
+ *(.scommon)
+                0x02001c28                PROVIDE (__sbss_end, ABSOLUTE (.))
+                0x02001c28                PROVIDE (___sbss_end, ABSOLUTE (.))
+ *(.dynbss)
+ *(.bss .bss.* .gnu.linkonce.b.*)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp//obj/HAL/src/crt0.o
+ .bss           0x02001c28        0x0 obj/default/hello_world.o
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dcache_flush_all.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_ctors.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_dtors.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_errno.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_icache_flush_all.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_vars.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_release_fd.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_nios2_qsys_irq.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+ .bss           0x02001c28        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+ .bss           0x02001c28        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o)
+ .bss           0x02001c28        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-impure.o)
+ .bss           0x02001c28        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-int_errno.o)
+ .bss           0x02001c28        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__atexit.o)
+ .bss           0x02001c28        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
+ .bss           0x02001c28        0x0 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a(lib2-mul.o)
+ .bss           0x02001c28        0x0 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exit.o)
+ *(COMMON)
+ COMMON         0x02001c28      0x100 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+                0x02001c28                alt_irq
+ COMMON         0x02001d28      0x190 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+                0x02001d28                _atexit0
+                0x02001eb8                . = ALIGN (0x4)
+                0x02001eb8                __bss_end = ABSOLUTE (.)
+
+.sdram_0        0x02001eb8        0x0
+                0x02001eb8                PROVIDE (_alt_partition_sdram_0_start, ABSOLUTE (.))
+ *(.sdram_0. sdram_0.*)
+                0x02001eb8                . = ALIGN (0x4)
+                0x02001eb8                PROVIDE (_alt_partition_sdram_0_end, ABSOLUTE (.))
+                0x02001eb8                _end = ABSOLUTE (.)
+                0x02001eb8                end = ABSOLUTE (.)
+                0x02001eb8                __alt_stack_base = ABSOLUTE (.)
+                0x02001eb8                PROVIDE (_alt_partition_sdram_0_load_addr, LOADADDR (.sdram_0))
+
+.stab
+ *(.stab)
+
+.stabstr
+ *(.stabstr)
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment        0x00000000       0x26
+ *(.comment)
+ .comment       0x00000000       0x26 obj/default/hello_world.o
+                                 0x27 (size before relaxing)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dcache_flush_all.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_ctors.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_dtors.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_errno.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_icache_flush_all.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_vars.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_release_fd.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_nios2_qsys_irq.o)
+ .comment       0x00000000       0x27 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+ .comment       0x00000000       0x27 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o)
+ .comment       0x00000000       0x27 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-impure.o)
+ .comment       0x00000000       0x27 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-int_errno.o)
+ .comment       0x00000000       0x27 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__atexit.o)
+ .comment       0x00000000       0x27 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
+ .comment       0x00000000       0x27 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a(lib2-mul.o)
+ .comment       0x00000000       0x27 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exit.o)
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges  0x00000000      0x378
+ *(.debug_aranges)
+ .debug_aranges
+                0x00000000       0x28 E:/MyCode.github/fpga/workspace/sdram_bsp//obj/HAL/src/crt0.o
+ .debug_aranges
+                0x00000028       0x20 obj/default/hello_world.o
+ .debug_aranges
+                0x00000048       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o)
+ .debug_aranges
+                0x00000068       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o)
+ .debug_aranges
+                0x00000088       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o)
+ .debug_aranges
+                0x000000a8       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o)
+ .debug_aranges
+                0x000000c8       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o)
+ .debug_aranges
+                0x000000e8       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dcache_flush_all.o)
+ .debug_aranges
+                0x00000108       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+ .debug_aranges
+                0x00000128       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_ctors.o)
+ .debug_aranges
+                0x00000148       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_dtors.o)
+ .debug_aranges
+                0x00000168       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_icache_flush_all.o)
+ .debug_aranges
+                0x00000188       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o)
+ .debug_aranges
+                0x000001a8       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o)
+ .debug_aranges
+                0x000001c8       0x30 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+ .debug_aranges
+                0x000001f8       0x28 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+ .debug_aranges
+                0x00000220       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_release_fd.o)
+ .debug_aranges
+                0x00000240       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+ .debug_aranges
+                0x00000260       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_nios2_qsys_irq.o)
+ .debug_aranges
+                0x00000280       0x38 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+ .debug_aranges
+                0x000002b8       0x20 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+ .debug_aranges
+                0x000002d8       0x20 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o)
+ .debug_aranges
+                0x000002f8       0x20 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__atexit.o)
+ .debug_aranges
+                0x00000318       0x20 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
+ .debug_aranges
+                0x00000338       0x20 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a(lib2-mul.o)
+ .debug_aranges
+                0x00000358       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exit.o)
+
+.debug_pubnames
+                0x00000000      0x502
+ *(.debug_pubnames)
+ .debug_pubnames
+                0x00000000       0x1b obj/default/hello_world.o
+ .debug_pubnames
+                0x0000001b       0x1f E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o)
+ .debug_pubnames
+                0x0000003a       0x46 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o)
+ .debug_pubnames
+                0x00000080       0x34 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o)
+ .debug_pubnames
+                0x000000b4       0x2f E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o)
+ .debug_pubnames
+                0x000000e3       0x1c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o)
+ .debug_pubnames
+                0x000000ff       0x2b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dcache_flush_all.o)
+ .debug_pubnames
+                0x0000012a       0x63 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+ .debug_pubnames
+                0x0000018d       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_ctors.o)
+ .debug_pubnames
+                0x000001ad       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_dtors.o)
+ .debug_pubnames
+                0x000001cd       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_errno.o)
+ .debug_pubnames
+                0x000001ed       0x2b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_icache_flush_all.o)
+ .debug_pubnames
+                0x00000218       0x6e E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o)
+ .debug_pubnames
+                0x00000286       0x2b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o)
+ .debug_pubnames
+                0x000002b1       0x32 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+ .debug_pubnames
+                0x000002e3       0x3b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_vars.o)
+ .debug_pubnames
+                0x0000031e       0x25 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_release_fd.o)
+ .debug_pubnames
+                0x00000343       0x68 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+ .debug_pubnames
+                0x000003ab       0x31 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_nios2_qsys_irq.o)
+ .debug_pubnames
+                0x000003dc       0x2a z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+ .debug_pubnames
+                0x00000406       0x1b z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o)
+ .debug_pubnames
+                0x00000421       0x39 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-impure.o)
+ .debug_pubnames
+                0x0000045a       0x1c z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-int_errno.o)
+ .debug_pubnames
+                0x00000476       0x2a z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__atexit.o)
+ .debug_pubnames
+                0x000004a0       0x27 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
+ .debug_pubnames
+                0x000004c7       0x1f z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a(lib2-mul.o)
+ .debug_pubnames
+                0x000004e6       0x1c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exit.o)
+
+.debug_info     0x00000000     0x5b24
+ *(.debug_info .gnu.linkonce.wi.*)
+ .debug_info    0x00000000       0x5b E:/MyCode.github/fpga/workspace/sdram_bsp//obj/HAL/src/crt0.o
+ .debug_info    0x0000005b      0x135 obj/default/hello_world.o
+ .debug_info    0x00000190      0x26d E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o)
+ .debug_info    0x000003fd      0x205 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o)
+ .debug_info    0x00000602      0x24d E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o)
+ .debug_info    0x0000084f      0x36b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o)
+ .debug_info    0x00000bba      0x447 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o)
+ .debug_info    0x00001001      0x13c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dcache_flush_all.o)
+ .debug_info    0x0000113d      0x65f E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+ .debug_info    0x0000179c       0xef E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_ctors.o)
+ .debug_info    0x0000188b       0xee E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_dtors.o)
+ .debug_info    0x00001979      0x144 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_errno.o)
+ .debug_info    0x00001abd      0x13c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_icache_flush_all.o)
+ .debug_info    0x00001bf9      0x473 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o)
+ .debug_info    0x0000206c      0x2f4 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o)
+ .debug_info    0x00002360       0x64 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+ .debug_info    0x000023c4      0x255 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+ .debug_info    0x00002619      0x147 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_vars.o)
+ .debug_info    0x00002760      0x3d2 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_release_fd.o)
+ .debug_info    0x00002b32      0x3de E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+ .debug_info    0x00002f10      0x143 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_nios2_qsys_irq.o)
+ .debug_info    0x00003053       0x6a E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+ .debug_info    0x000030bd      0x181 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+ .debug_info    0x0000323e      0x93f z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o)
+ .debug_info    0x00003b7d      0x93d z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-impure.o)
+ .debug_info    0x000044ba       0x8c z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-int_errno.o)
+ .debug_info    0x00004546      0x99c z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__atexit.o)
+ .debug_info    0x00004ee2      0x9e2 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
+ .debug_info    0x000058c4       0xf3 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a(lib2-mul.o)
+ .debug_info    0x000059b7      0x16d E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exit.o)
+
+.debug_abbrev   0x00000000     0x15a8
+ *(.debug_abbrev)
+ .debug_abbrev  0x00000000       0x12 E:/MyCode.github/fpga/workspace/sdram_bsp//obj/HAL/src/crt0.o
+ .debug_abbrev  0x00000012       0x4e obj/default/hello_world.o
+ .debug_abbrev  0x00000060       0x88 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o)
+ .debug_abbrev  0x000000e8       0xb7 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o)
+ .debug_abbrev  0x0000019f       0xd2 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o)
+ .debug_abbrev  0x00000271      0x137 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o)
+ .debug_abbrev  0x000003a8       0xfb E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o)
+ .debug_abbrev  0x000004a3       0x3f E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dcache_flush_all.o)
+ .debug_abbrev  0x000004e2       0xc7 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+ .debug_abbrev  0x000005a9       0x76 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_ctors.o)
+ .debug_abbrev  0x0000061f       0x76 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_dtors.o)
+ .debug_abbrev  0x00000695       0x5e E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_errno.o)
+ .debug_abbrev  0x000006f3       0x3f E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_icache_flush_all.o)
+ .debug_abbrev  0x00000732      0x134 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o)
+ .debug_abbrev  0x00000866      0x14e E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o)
+ .debug_abbrev  0x000009b4       0x12 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+ .debug_abbrev  0x000009c6      0x10c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+ .debug_abbrev  0x00000ad2       0x44 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_vars.o)
+ .debug_abbrev  0x00000b16       0xc1 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_release_fd.o)
+ .debug_abbrev  0x00000bd7      0x150 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+ .debug_abbrev  0x00000d27       0x3f E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_nios2_qsys_irq.o)
+ .debug_abbrev  0x00000d66       0x12 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+ .debug_abbrev  0x00000d78       0xb7 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+ .debug_abbrev  0x00000e2f      0x16e z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o)
+ .debug_abbrev  0x00000f9d      0x157 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-impure.o)
+ .debug_abbrev  0x000010f4       0x3b z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-int_errno.o)
+ .debug_abbrev  0x0000112f      0x1ae z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__atexit.o)
+ .debug_abbrev  0x000012dd      0x1de z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
+ .debug_abbrev  0x000014bb       0x7b z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a(lib2-mul.o)
+ .debug_abbrev  0x00001536       0x72 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exit.o)
+
+.debug_line     0x00000000     0x3674
+ *(.debug_line)
+ .debug_line    0x00000000       0x66 E:/MyCode.github/fpga/workspace/sdram_bsp//obj/HAL/src/crt0.o
+ .debug_line    0x00000066       0xce obj/default/hello_world.o
+ .debug_line    0x00000134      0x217 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o)
+ .debug_line    0x0000034b      0x2c2 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o)
+ .debug_line    0x0000060d      0x245 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o)
+ .debug_line    0x00000852      0x2b3 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o)
+ .debug_line    0x00000b05      0x299 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o)
+ .debug_line    0x00000d9e      0x1b5 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dcache_flush_all.o)
+ .debug_line    0x00000f53      0x254 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+ .debug_line    0x000011a7       0x83 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_ctors.o)
+ .debug_line    0x0000122a       0x83 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_dtors.o)
+ .debug_line    0x000012ad      0x1aa E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_errno.o)
+ .debug_line    0x00001457      0x1b5 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_icache_flush_all.o)
+ .debug_line    0x0000160c      0x2c8 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o)
+ .debug_line    0x000018d4      0x249 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o)
+ .debug_line    0x00001b1d       0x6b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+ .debug_line    0x00001b88      0x248 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+ .debug_line    0x00001dd0       0x72 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_vars.o)
+ .debug_line    0x00001e42       0xed E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_release_fd.o)
+ .debug_line    0x00001f2f      0x2dc E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+ .debug_line    0x0000220b      0x1ce E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_nios2_qsys_irq.o)
+ .debug_line    0x000023d9       0xab E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+ .debug_line    0x00002484      0x203 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+ .debug_line    0x00002687      0x23b z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o)
+ .debug_line    0x000028c2      0x230 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-impure.o)
+ .debug_line    0x00002af2      0x1e2 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-int_errno.o)
+ .debug_line    0x00002cd4      0x316 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__atexit.o)
+ .debug_line    0x00002fea      0x36a z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
+ .debug_line    0x00003354      0x11a z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a(lib2-mul.o)
+ .debug_line    0x0000346e      0x206 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exit.o)
+
+.debug_frame    0x00000000      0x500
+ *(.debug_frame)
+ .debug_frame   0x00000000       0x2c obj/default/hello_world.o
+ .debug_frame   0x0000002c       0x48 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o)
+ .debug_frame   0x00000074       0x2c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o)
+ .debug_frame   0x000000a0       0x48 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o)
+ .debug_frame   0x000000e8       0x48 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o)
+ .debug_frame   0x00000130       0x48 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o)
+ .debug_frame   0x00000178       0x2c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dcache_flush_all.o)
+ .debug_frame   0x000001a4       0x2c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+ .debug_frame   0x000001d0       0x2c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_ctors.o)
+ .debug_frame   0x000001fc       0x2c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_dtors.o)
+ .debug_frame   0x00000228       0x2c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_icache_flush_all.o)
+ .debug_frame   0x00000254       0x80 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o)
+ .debug_frame   0x000002d4       0x2c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o)
+ .debug_frame   0x00000300       0x2c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+ .debug_frame   0x0000032c       0x30 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_release_fd.o)
+ .debug_frame   0x0000035c       0x48 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+ .debug_frame   0x000003a4       0x2c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_nios2_qsys_irq.o)
+ .debug_frame   0x000003d0       0x20 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+ .debug_frame   0x000003f0       0x28 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o)
+ .debug_frame   0x00000418       0x34 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__atexit.o)
+ .debug_frame   0x0000044c       0x4c z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
+ .debug_frame   0x00000498       0x20 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a(lib2-mul.o)
+ .debug_frame   0x000004b8       0x48 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exit.o)
+
+.debug_str      0x00000000      0x8f9
+ *(.debug_str)
+ .debug_str     0x00000000       0x12 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o)
+ .debug_str     0x00000012       0x12 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o)
+ .debug_str     0x00000024       0x12 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o)
+ .debug_str     0x00000036       0x12 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o)
+ .debug_str     0x00000048       0x12 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o)
+ .debug_str     0x0000005a       0x12 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dcache_flush_all.o)
+ .debug_str     0x0000006c       0x12 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+ .debug_str     0x0000007e       0x12 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_errno.o)
+ .debug_str     0x00000090       0x12 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_icache_flush_all.o)
+ .debug_str     0x000000a2       0x18 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o)
+ .debug_str     0x000000ba       0x1a E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o)
+ .debug_str     0x000000d4       0x12 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+ .debug_str     0x000000e6       0x1a E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+ .debug_str     0x00000100       0x12 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_nios2_qsys_irq.o)
+ .debug_str     0x00000112      0x187 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+                                0x1cd (size before relaxing)
+ .debug_str     0x00000299      0x387 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o)
+                                0x51a (size before relaxing)
+ .debug_str     0x00000620       0xdf z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-impure.o)
+                                0x528 (size before relaxing)
+ .debug_str     0x000006ff       0x40 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-int_errno.o)
+                                0x171 (size before relaxing)
+ .debug_str     0x0000073f       0x54 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__atexit.o)
+                                0x532 (size before relaxing)
+ .debug_str     0x00000793       0x7e z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
+                                0x55c (size before relaxing)
+ .debug_str     0x00000811       0xcc z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a(lib2-mul.o)
+                                0x175 (size before relaxing)
+ .debug_str     0x000008dd       0x1c E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exit.o)
+
+.debug_loc      0x00000000      0x81e
+ *(.debug_loc)
+ .debug_loc     0x00000000       0x2b obj/default/hello_world.o
+ .debug_loc     0x0000002b       0x56 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_load.o)
+ .debug_loc     0x00000081       0x2b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_main.o)
+ .debug_loc     0x000000ac       0x56 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_sys_init.o)
+ .debug_loc     0x00000102       0x56 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_avalon_timer_sc.o)
+ .debug_loc     0x00000158       0x56 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_close.o)
+ .debug_loc     0x000001ae       0x2b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dcache_flush_all.o)
+ .debug_loc     0x000001d9       0x2b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_dev.o)
+ .debug_loc     0x00000204       0x2b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_ctors.o)
+ .debug_loc     0x0000022f       0x2b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_do_dtors.o)
+ .debug_loc     0x0000025a       0x2b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_icache_flush_all.o)
+ .debug_loc     0x00000285       0xac E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic.o)
+ .debug_loc     0x00000331       0x2b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_iic_isr_register.o)
+ .debug_loc     0x0000035c       0x2b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_handler.o)
+ .debug_loc     0x00000387       0x2b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_release_fd.o)
+ .debug_loc     0x000003b2       0x56 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_tick.o)
+ .debug_loc     0x00000408       0x2b E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(altera_nios2_qsys_irq.o)
+ .debug_loc     0x00000433       0x1e z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-atexit.o)
+ .debug_loc     0x00000451       0x3d z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-exit.o)
+ .debug_loc     0x0000048e      0x120 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__atexit.o)
+ .debug_loc     0x000005ae      0x1cb z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
+ .debug_loc     0x00000779       0x4f z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/mno-hw-mul\libgcc.a(lib2-mul.o)
+ .debug_loc     0x000007c8       0x56 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exit.o)
+
+.debug_macinfo
+ *(.debug_macinfo)
+
+.debug_weaknames
+ *(.debug_weaknames)
+
+.debug_funcnames
+ *(.debug_funcnames)
+
+.debug_typenames
+ *(.debug_typenames)
+
+.debug_varnames
+ *(.debug_varnames)
+
+.debug_alt_sim_info
+                0x00000000       0x10
+ *(.debug_alt_sim_info)
+ .debug_alt_sim_info
+                0x00000000       0x10 E:/MyCode.github/fpga/workspace/sdram_bsp//obj/HAL/src/crt0.o
+                0x04000000                __alt_data_end = 0x4000000
+                0x04000000                PROVIDE (__alt_stack_pointer, __alt_data_end)
+                0x02001eb8                PROVIDE (__alt_stack_limit, __alt_stack_base)
+                0x02001eb8                PROVIDE (__alt_heap_start, end)
+                0x04000000                PROVIDE (__alt_heap_limit, 0x4000000)
+OUTPUT(sdram.elf elf32-littlenios2)
+
+.debug_ranges   0x00000000       0x90
+ .debug_ranges  0x00000000       0x20 E:/MyCode.github/fpga/workspace/sdram_bsp//obj/HAL/src/crt0.o
+ .debug_ranges  0x00000020       0x28 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_irq_entry.o)
+ .debug_ranges  0x00000048       0x30 E:/MyCode.github/fpga/workspace/sdram_bsp/\libhal_bsp.a(alt_exception_entry.o)
+ .debug_ranges  0x00000078       0x18 z:/altera/13.0sp1/nios2eds/bin/gnu/h-i686-mingw32/bin/../lib/gcc/nios2-elf/4.1.2/../../../../nios2-elf/lib/mno-hw-mul\libc.a(lib_a-__call_atexit.o)
