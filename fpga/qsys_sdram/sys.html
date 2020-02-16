@@ -67,7 +67,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
   </table>
   <table class="blueBar">
    <tr>
-    <td class="l">2020.02.15.22:32:48</td>
+    <td class="l">2020.02.16.16:49:59</td>
     <td class="r">Datasheet</td>
    </tr>
   </table>
@@ -116,7 +116,10 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
      </a> altera_avalon_new_sdram_controller 13.0.1.99.2
      <br/>&#160;&#160;
      <a href="#module_uart_0"><b>uart_0</b>
-     </a> altera_avalon_uart 13.0.1.99.2</span>
+     </a> altera_avalon_uart 13.0.1.99.2
+     <br/>&#160;&#160;
+     <a href="#module_epcs"><b>epcs</b>
+     </a> altera_avalon_epcs_flash_controller 13.0.1.99.2</span>
    </div>
   </div>
   <div style="width:100% ;  height:10px"> </div>
@@ -143,8 +146,8 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
    </tr>
    <tr>
     <td class="slaveb">jtag_debug_module&#160;</td>
-    <td class="addr"><span style="color:#989898">0x</span>04000800</td>
-    <td class="addr"><span style="color:#989898">0x</span>04000800</td>
+    <td class="addr"><span style="color:#989898">0x</span>04001800</td>
+    <td class="addr"><span style="color:#989898">0x</span>04001800</td>
    </tr>
    <tr>
     <td class="slavemodule">&#160;
@@ -156,7 +159,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
    </tr>
    <tr>
     <td class="slaveb">s1&#160;</td>
-    <td class="addr"><span style="color:#989898">0x</span>04001050</td>
+    <td class="addr"><span style="color:#989898">0x</span>04002050</td>
     <td class="empty"></td>
    </tr>
    <tr>
@@ -169,7 +172,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
    </tr>
    <tr>
     <td class="slaveb">s1&#160;</td>
-    <td class="addr"><span style="color:#989898">0x</span>04001020</td>
+    <td class="addr"><span style="color:#989898">0x</span>04002020</td>
     <td class="empty"></td>
    </tr>
    <tr>
@@ -182,7 +185,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
    </tr>
    <tr>
     <td class="slaveb">s1&#160;</td>
-    <td class="addr"><span style="color:#989898">0x</span>04001040</td>
+    <td class="addr"><span style="color:#989898">0x</span>04002040</td>
     <td class="empty"></td>
    </tr>
    <tr>
@@ -195,7 +198,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
    </tr>
    <tr>
     <td class="slaveb">control_slave&#160;</td>
-    <td class="addr"><span style="color:#989898">0x</span>04001060</td>
+    <td class="addr"><span style="color:#989898">0x</span>04002060</td>
     <td class="empty"></td>
    </tr>
    <tr>
@@ -221,8 +224,21 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
    </tr>
    <tr>
     <td class="slaveb">s1&#160;</td>
-    <td class="addr"><span style="color:#989898">0x</span>04001000</td>
+    <td class="addr"><span style="color:#989898">0x</span>04002000</td>
     <td class="empty"></td>
+   </tr>
+   <tr>
+    <td class="slavemodule">&#160;
+     <a href="#module_epcs"><b>epcs</b>
+     </a>
+    </td>
+    <td class="empty"></td>
+    <td class="empty"></td>
+   </tr>
+   <tr>
+    <td class="slaveb">epcs_control_port&#160;</td>
+    <td class="addr"><span style="color:#989898">0x</span>04001000</td>
+    <td class="addr"><span style="color:#989898">0x</span>04001000</td>
    </tr>
   </table>
   <a name="module_clk_100"> </a>
@@ -311,7 +327,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        <a href="#module_clk_50">clk_50</a>
       </td>
       <td class="from">clk_reset&#160;&#160;</td>
-      <td class="main" rowspan="37">nios2_qsys_0</td>
+      <td class="main" rowspan="48">nios2_qsys_0</td>
      </tr>
      <tr>
       <td class="to">&#160;&#160;reset_n</td>
@@ -476,7 +492,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
       <td></td>
       <td></td>
       <td class="from">data_master&#160;&#160;</td>
-      <td class="neighbor" rowspan="4">
+      <td class="neighbor" rowspan="6">
        <a href="#module_uart_0">uart_0</a>
       </td>
      </tr>
@@ -484,6 +500,62 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
       <td></td>
       <td></td>
       <td class="to">&#160;&#160;s1</td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="from">d_irq&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="to">&#160;&#160;irq</td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="from">jtag_debug_module_reset&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="to">&#160;&#160;reset</td>
+     </tr>
+     <tr style="height:6px">
+      <td></td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="from">data_master&#160;&#160;</td>
+      <td class="neighbor" rowspan="8">
+       <a href="#module_epcs">epcs</a>
+      </td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="to">&#160;&#160;epcs_control_port</td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="from">instruction_master&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="to">&#160;&#160;epcs_control_port</td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="from">jtag_debug_module_reset&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="to">&#160;&#160;reset</td>
      </tr>
      <tr>
       <td></td>
@@ -718,7 +790,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">resetSlave</td>
-        <td class="parametervalue">sdram_0.s1</td>
+        <td class="parametervalue">epcs.epcs_control_port</td>
        </tr>
        <tr>
         <td class="parametername">mmu_TLBMissExcSlave</td>
@@ -866,7 +938,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">resetAbsoluteAddr</td>
-        <td class="parametervalue">33554432</td>
+        <td class="parametervalue">67112960</td>
        </tr>
        <tr>
         <td class="parametername">exceptionAbsoluteAddr</td>
@@ -874,7 +946,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">breakAbsoluteAddr</td>
-        <td class="parametervalue">67110944</td>
+        <td class="parametervalue">67115040</td>
        </tr>
        <tr>
         <td class="parametername">mmu_TLBMissExcAbsAddr</td>
@@ -942,11 +1014,11 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">instSlaveMapParam</td>
-        <td class="parametervalue">&lt;address-map&gt;&lt;slave name='sdram_0.s1' start='0x2000000' end='0x4000000' /&gt;&lt;slave name='nios2_qsys_0.jtag_debug_module' start='0x4000800' end='0x4001000' /&gt;&lt;/address-map&gt;</td>
+        <td class="parametervalue">&lt;address-map&gt;&lt;slave name='sdram_0.s1' start='0x2000000' end='0x4000000' /&gt;&lt;slave name='epcs.epcs_control_port' start='0x4001000' end='0x4001800' /&gt;&lt;slave name='nios2_qsys_0.jtag_debug_module' start='0x4001800' end='0x4002000' /&gt;&lt;/address-map&gt;</td>
        </tr>
        <tr>
         <td class="parametername">dataSlaveMapParam</td>
-        <td class="parametervalue">&lt;address-map&gt;&lt;slave name='sdram_0.s1' start='0x2000000' end='0x4000000' /&gt;&lt;slave name='nios2_qsys_0.jtag_debug_module' start='0x4000800' end='0x4001000' /&gt;&lt;slave name='uart_0.s1' start='0x4001000' end='0x4001020' /&gt;&lt;slave name='timer_0.s1' start='0x4001020' end='0x4001040' /&gt;&lt;slave name='pio_1.s1' start='0x4001040' end='0x4001050' /&gt;&lt;slave name='pio_0.s1' start='0x4001050' end='0x4001060' /&gt;&lt;slave name='sysid_qsys_0.control_slave' start='0x4001060' end='0x4001068' /&gt;&lt;/address-map&gt;</td>
+        <td class="parametervalue">&lt;address-map&gt;&lt;slave name='sdram_0.s1' start='0x2000000' end='0x4000000' /&gt;&lt;slave name='epcs.epcs_control_port' start='0x4001000' end='0x4001800' /&gt;&lt;slave name='nios2_qsys_0.jtag_debug_module' start='0x4001800' end='0x4002000' /&gt;&lt;slave name='uart_0.s1' start='0x4002000' end='0x4002020' /&gt;&lt;slave name='timer_0.s1' start='0x4002020' end='0x4002040' /&gt;&lt;slave name='pio_1.s1' start='0x4002040' end='0x4002050' /&gt;&lt;slave name='pio_0.s1' start='0x4002050' end='0x4002060' /&gt;&lt;slave name='sysid_qsys_0.control_slave' start='0x4002060' end='0x4002068' /&gt;&lt;/address-map&gt;</td>
        </tr>
        <tr>
         <td class="parametername">clockFrequency</td>
@@ -958,7 +1030,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">internalIrqMaskSystemInfo</td>
-        <td class="parametervalue">3</td>
+        <td class="parametervalue">7</td>
        </tr>
        <tr>
         <td class="parametername">customInstSlavesSystemInfo</td>
@@ -1023,7 +1095,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">BREAK_ADDR</td>
-        <td class="parametervalue">0x04000820</td>
+        <td class="parametervalue">0x04001820</td>
        </tr>
        <tr>
         <td class="parametername">CPU_FREQ</td>
@@ -1115,7 +1187,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">RESET_ADDR</td>
-        <td class="parametervalue">0x02000000</td>
+        <td class="parametervalue">0x04001000</td>
        </tr>
       </table>
      </td>
@@ -1776,7 +1848,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">timestamp</td>
-        <td class="parametervalue">1581777168</td>
+        <td class="parametervalue">1581842998</td>
        </tr>
        <tr>
         <td class="parametername">AUTO_CLK_CLOCK_RATE</td>
@@ -1809,7 +1881,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">TIMESTAMP</td>
-        <td class="parametervalue">1581777168</td>
+        <td class="parametervalue">1581842998</td>
        </tr>
       </table>
      </td>
@@ -2163,7 +2235,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        <a href="#module_clk_50">clk_50</a>
       </td>
       <td class="from">clk_reset&#160;&#160;</td>
-      <td class="main" rowspan="9">uart_0</td>
+      <td class="main" rowspan="11">uart_0</td>
      </tr>
      <tr>
       <td class="to">&#160;&#160;reset</td>
@@ -2178,7 +2250,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
       <td></td>
      </tr>
      <tr>
-      <td class="neighbor" rowspan="4">
+      <td class="neighbor" rowspan="6">
        <a href="#module_nios2_qsys_0">nios2_qsys_0</a>
       </td>
       <td class="from">data_master&#160;&#160;</td>
@@ -2191,6 +2263,12 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
      </tr>
      <tr>
       <td class="to">&#160;&#160;irq</td>
+     </tr>
+     <tr>
+      <td class="from">jtag_debug_module_reset&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;reset</td>
      </tr>
     </table>
    </div>
@@ -2331,10 +2409,126 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
     </tr>
    </table>
   </div>
+  <a name="module_epcs"> </a>
+  <div>
+   <hr/>
+   <h2>epcs</h2>altera_avalon_epcs_flash_controller v13.0.1.99.2
+   <br/>
+   <div class="greydiv">
+    <table class="connectionboxes">
+     <tr>
+      <td class="neighbor" rowspan="4">
+       <a href="#module_clk_50">clk_50</a>
+      </td>
+      <td class="from">clk_reset&#160;&#160;</td>
+      <td class="main" rowspan="13">epcs</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;reset</td>
+     </tr>
+     <tr>
+      <td class="from">clk&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;clk</td>
+     </tr>
+     <tr style="height:6px">
+      <td></td>
+     </tr>
+     <tr>
+      <td class="neighbor" rowspan="8">
+       <a href="#module_nios2_qsys_0">nios2_qsys_0</a>
+      </td>
+      <td class="from">data_master&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;epcs_control_port</td>
+     </tr>
+     <tr>
+      <td class="from">instruction_master&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;epcs_control_port</td>
+     </tr>
+     <tr>
+      <td class="from">jtag_debug_module_reset&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;reset</td>
+     </tr>
+     <tr>
+      <td class="from">d_irq&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;irq</td>
+     </tr>
+    </table>
+   </div>
+   <br/>
+   <br/>
+   <table class="flowbox">
+    <tr>
+     <td class="parametersbox">
+      <h2>Parameters</h2>
+      <table>
+       <tr>
+        <td class="parametername">autoSelectASMIAtom</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">useASMIAtom</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">clockRate</td>
+        <td class="parametervalue">50000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">deviceFamilyString</td>
+        <td class="parametervalue">CYCLONEIVE</td>
+       </tr>
+       <tr>
+        <td class="parametername">autoInitializationFileName</td>
+        <td class="parametervalue">sys_epcs</td>
+       </tr>
+       <tr>
+        <td class="parametername">register_offset</td>
+        <td class="parametervalue">1024</td>
+       </tr>
+       <tr>
+        <td class="parametername">iuseASMIAtom</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">deviceFamily</td>
+        <td class="parametervalue">UNKNOWN</td>
+       </tr>
+       <tr>
+        <td class="parametername">generateLegacySim</td>
+        <td class="parametervalue">false</td>
+       </tr>
+      </table>
+     </td>
+    </tr>
+   </table>&#160;&#160;
+   <table class="flowbox">
+    <tr>
+     <td class="parametersbox">
+      <h2>Software Assignments</h2>
+      <table>
+       <tr>
+        <td class="parametername">REGISTER_OFFSET</td>
+        <td class="parametervalue">1024</td>
+       </tr>
+      </table>
+     </td>
+    </tr>
+   </table>
+  </div>
   <table class="blueBar">
    <tr>
     <td class="l">generation took 0.01 seconds</td>
-    <td class="r">rendering took 0.08 seconds</td>
+    <td class="r">rendering took 0.20 seconds</td>
    </tr>
   </table>
  </body>

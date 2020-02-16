@@ -3,7 +3,7 @@
 # Machine generated for CPU 'nios2_qsys_0' in SOPC Builder design 'sys'
 # SOPC Builder design path: E:/MyCode.github/fpga/qsys_sdram/sys.sopcinfo
 #
-# Generated: Sat Feb 15 15:09:49 CST 2020
+# Generated: Sun Feb 16 14:03:56 CST 2020
 
 # DO NOT MODIFY THIS FILE
 #
@@ -48,3 +48,6 @@
 
 # sdram_0
 memory 0x2000000 0x4000000 cache
+
+# epcs
+memory 0x4001000 0x4001800 cache

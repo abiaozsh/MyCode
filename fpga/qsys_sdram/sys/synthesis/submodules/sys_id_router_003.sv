@@ -50,9 +50,9 @@ module sys_id_router_003_default_decode
                DEFAULT_DESTID = 0 
    )
   (output [95 - 93 : 0] default_destination_id,
-   output [7-1 : 0] default_wr_channel,
-   output [7-1 : 0] default_rd_channel,
-   output [7-1 : 0] default_src_channel
+   output [8-1 : 0] default_wr_channel,
+   output [8-1 : 0] default_rd_channel,
+   output [8-1 : 0] default_src_channel
   );
 
   assign default_destination_id = 
@@ -63,7 +63,7 @@ module sys_id_router_003_default_decode
       assign default_src_channel = '0;
     end
     else begin
-      assign default_src_channel = 7'b1 << DEFAULT_CHANNEL;
+      assign default_src_channel = 8'b1 << DEFAULT_CHANNEL;
     end
   end
   endgenerate
@@ -74,8 +74,8 @@ module sys_id_router_003_default_decode
       assign default_rd_channel = '0;
     end
     else begin
-      assign default_wr_channel = 7'b1 << DEFAULT_WR_CHANNEL;
-      assign default_rd_channel = 7'b1 << DEFAULT_RD_CHANNEL;
+      assign default_wr_channel = 8'b1 << DEFAULT_WR_CHANNEL;
+      assign default_rd_channel = 8'b1 << DEFAULT_RD_CHANNEL;
     end
   end
   endgenerate
@@ -105,7 +105,7 @@ module sys_id_router_003
     // -------------------
     output                          src_valid,
     output reg [106-1    : 0] src_data,
-    output reg [7-1 : 0] src_channel,
+    output reg [8-1 : 0] src_channel,
     output                          src_startofpacket,
     output                          src_endofpacket,
     input                           src_ready
@@ -121,7 +121,7 @@ module sys_id_router_003
     localparam PKT_PROTECTION_H = 99;
     localparam PKT_PROTECTION_L = 97;
     localparam ST_DATA_W = 106;
-    localparam ST_CHANNEL_W = 7;
+    localparam ST_CHANNEL_W = 8;
     localparam DECODER_TYPE = 1;
 
     localparam PKT_TRANS_WRITE = 65;
@@ -161,7 +161,7 @@ module sys_id_router_003
     assign src_endofpacket   = sink_endofpacket;
 
     wire [PKT_DEST_ID_W-1:0] default_destid;
-    wire [7-1 : 0] default_src_channel;
+    wire [8-1 : 0] default_src_channel;
 
 
 
@@ -187,11 +187,11 @@ module sys_id_router_003
 
 
         if (destid == 0 ) begin
-            src_channel = 7'b01;
+            src_channel = 8'b01;
         end
 
         if (destid == 1 ) begin
-            src_channel = 7'b10;
+            src_channel = 8'b10;
         end
 
 

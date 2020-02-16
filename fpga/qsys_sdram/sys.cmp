@@ -15,7 +15,11 @@
 			clk_50_clk       : in    std_logic                     := 'X';             -- clk
 			reset_50_reset_n : in    std_logic                     := 'X';             -- reset_n
 			uart0_rxd        : in    std_logic                     := 'X';             -- rxd
-			uart0_txd        : out   std_logic                                         -- txd
+			uart0_txd        : out   std_logic;                                        -- txd
+			epcs_dclk        : out   std_logic;                                        -- dclk
+			epcs_sce         : out   std_logic;                                        -- sce
+			epcs_sdo         : out   std_logic;                                        -- sdo
+			epcs_data0       : in    std_logic                     := 'X'              -- data0
 		);
 	end component sys;
 

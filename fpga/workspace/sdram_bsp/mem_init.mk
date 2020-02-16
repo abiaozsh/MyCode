@@ -161,22 +161,45 @@ RESET_ADDRESS ?= 0x02000000
 # Pre-Initialized Memory Descriptions
 #-------------------------------------
 
-# Memory: sdram_0
-MEM_0 := sdram_0
-$(MEM_0)_NAME := sdram_0
+# Memory: epcs
+MEM_0 := sys_epcs_boot_rom
+$(MEM_0)_NAME := epcs
+$(MEM_0)_MEM_INIT_FILE_PARAM_NAME := INIT_FILE
+HEX_FILES += $(HDL_SIM_DIR)/$(MEM_0).hex
+HDL_SIM_INSTALL_FILES += $(HDL_SIM_INSTALL_DIR)/$(MEM_0).hex
 DAT_FILES += $(HDL_SIM_DIR)/$(MEM_0).dat
 HDL_SIM_INSTALL_FILES += $(HDL_SIM_INSTALL_DIR)/$(MEM_0).dat
 SYM_FILES += $(HDL_SIM_DIR)/$(MEM_0).sym
 HDL_SIM_INSTALL_FILES += $(HDL_SIM_INSTALL_DIR)/$(MEM_0).sym
-$(MEM_0)_START := 0x02000000
-$(MEM_0)_END := 0x03ffffff
-$(MEM_0)_HIERARCHICAL_PATH := sdram_0
-$(MEM_0)_WIDTH := 16
+FLASH_FILES += $(MEM_0).flash
+$(MEM_0)_START := 0x04001000
+$(MEM_0)_END := 0x040017ff
+$(MEM_0)_HIERARCHICAL_PATH := epcs
+$(MEM_0)_WIDTH := 32
 $(MEM_0)_ENDIANNESS := --little-endian-mem
 $(MEM_0)_CREATE_LANES := 0
+$(MEM_0)_EPCS_FLAGS := --epcs
+$(MEM_0)_NO_ZERO_FILL_FLAG := --no-zero-fill
+
+.PHONY: epcs
+epcs: check_elf_exists $(HDL_SIM_DIR)/$(MEM_0).hex $(HDL_SIM_DIR)/$(MEM_0).dat $(HDL_SIM_DIR)/$(MEM_0).sym $(MEM_0).flash
+
+# Memory: sdram_0
+MEM_1 := sdram_0
+$(MEM_1)_NAME := sdram_0
+DAT_FILES += $(HDL_SIM_DIR)/$(MEM_1).dat
+HDL_SIM_INSTALL_FILES += $(HDL_SIM_INSTALL_DIR)/$(MEM_1).dat
+SYM_FILES += $(HDL_SIM_DIR)/$(MEM_1).sym
+HDL_SIM_INSTALL_FILES += $(HDL_SIM_INSTALL_DIR)/$(MEM_1).sym
+$(MEM_1)_START := 0x02000000
+$(MEM_1)_END := 0x03ffffff
+$(MEM_1)_HIERARCHICAL_PATH := sdram_0
+$(MEM_1)_WIDTH := 16
+$(MEM_1)_ENDIANNESS := --little-endian-mem
+$(MEM_1)_CREATE_LANES := 0
 
 .PHONY: sdram_0
-sdram_0: check_elf_exists $(HDL_SIM_DIR)/$(MEM_0).dat $(HDL_SIM_DIR)/$(MEM_0).sym
+sdram_0: check_elf_exists $(HDL_SIM_DIR)/$(MEM_1).dat $(HDL_SIM_DIR)/$(MEM_1).sym
 
 
 #END OF BSP SPECIFIC

@@ -13,24 +13,6 @@
    </object> 
   </void> 
   <void method="put"> 
-   <string>files_table/JViewport0/jScrollPane3/filesPanel/centerPanel/Flash: epcs_flash_controller_0/MainTabbedPane/JPanel0/JSplitPane0/MainWindow/null.contentPane/null.layeredPane/JRootPane0/mainFrame</string> 
-   <object class="org.jdesktop.application.SessionStorage$TableState"> 
-    <void property="columnWidths"> 
-     <array class="int" length="3"> 
-      <void index="0"> 
-       <int>512</int> 
-      </void> 
-      <void index="1"> 
-       <int>188</int> 
-      </void> 
-      <void index="2"> 
-       <int>187</int> 
-      </void> 
-     </array> 
-    </void> 
-   </object> 
-  </void> 
-  <void method="put"> 
    <string>mainFrame</string> 
    <object class="org.jdesktop.application.SessionStorage$WindowState"> 
     <void property="bounds"> 
@@ -51,6 +33,24 @@
     </void> 
     <void property="screenCount"> 
      <int>1</int> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>files_table/JViewport0/jScrollPane3/filesPanel/centerPanel/Flash: epcs/MainTabbedPane/JPanel0/JSplitPane0/MainWindow/null.contentPane/null.layeredPane/JRootPane0/mainFrame</string> 
+   <object class="org.jdesktop.application.SessionStorage$TableState"> 
+    <void property="columnWidths"> 
+     <array class="int" length="3"> 
+      <void index="0"> 
+       <int>512</int> 
+      </void> 
+      <void index="1"> 
+       <int>188</int> 
+      </void> 
+      <void index="2"> 
+       <int>187</int> 
+      </void> 
+     </array> 
     </void> 
    </object> 
   </void> 

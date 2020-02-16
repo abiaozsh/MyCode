@@ -1,0 +1,15 @@
+击菜单【File】→ 【Convert Programming File】
+jic
+EPCQ64
+
+【Advanced…】按钮，将【Advanced Options】红框内的两个Disable……选项都勾上：
+
+点击下图红框中的【Flash Loader】，然后点击右侧红框中的【Add Device】
+
+
+选择需要转换的【SOF Data】，然后选择【Add File…】，点击【Generate】来生成最终的output_file.jic文件：
+
+
+正确产生output_file.jic文件之后，点击菜单栏的【Tools】→【Programmer】，然后点击【Add File…】按钮，并选择前面步骤产生的output_file.jic文件。
+
+勾上【Program/Configure】后，点击【Start】按钮开始烧写外部SPI Flash，烧写进度会通过【Progress】进度条提示：

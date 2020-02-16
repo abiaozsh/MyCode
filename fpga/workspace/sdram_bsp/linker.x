@@ -4,7 +4,7 @@
  * Machine generated for CPU 'nios2_qsys_0' in SOPC Builder design 'sys'
  * SOPC Builder design path: E:/MyCode.github/fpga/qsys_sdram/sys.sopcinfo
  *
- * Generated: Sat Feb 15 15:09:49 CST 2020
+ * Generated: Sun Feb 16 14:03:56 CST 2020
  */
 
 /*
@@ -52,10 +52,12 @@ MEMORY
 {
     reset : ORIGIN = 0x2000000, LENGTH = 32
     sdram_0 : ORIGIN = 0x2000020, LENGTH = 33554400
+    epcs : ORIGIN = 0x4001000, LENGTH = 2048
 }
 
 /* Define symbols for each memory base-address */
 __alt_mem_sdram_0 = 0x2000000;
+__alt_mem_epcs = 0x4001000;
 
 OUTPUT_FORMAT( "elf32-littlenios2",
                "elf32-littlenios2",
@@ -318,6 +320,23 @@ SECTIONS
     } > sdram_0
 
     PROVIDE (_alt_partition_sdram_0_load_addr = LOADADDR(.sdram_0));
+
+    /*
+     *
+     * This section's LMA is set to the .text region.
+     * crt0 will copy to this section's specified mapped region virtual memory address (VMA)
+     *
+     */
+
+    .epcs : AT ( LOADADDR (.sdram_0) + SIZEOF (.sdram_0) )
+    {
+        PROVIDE (_alt_partition_epcs_start = ABSOLUTE(.));
+        *(.epcs. epcs.*)
+        . = ALIGN(4);
+        PROVIDE (_alt_partition_epcs_end = ABSOLUTE(.));
+    } > epcs
+
+    PROVIDE (_alt_partition_epcs_load_addr = LOADADDR(.epcs));
 
     /*
      * Stabs debugging sections.

@@ -2,7 +2,7 @@ set_global_assignment -entity "sys" -library "sys" -name IP_TOOL_NAME "Qsys"
 set_global_assignment -entity "sys" -library "sys" -name IP_TOOL_VERSION "13.0sp1"
 set_global_assignment -entity "sys" -library "sys" -name IP_TOOL_ENV "Qsys"
 set_global_assignment -library "sys" -name SOPCINFO_FILE [file join $::quartus(qip_path) "../../sys.sopcinfo"]
-set_instance_assignment -entity "sys" -library "sys" -name SLD_INFO "QSYS_NAME sys HAS_SOPCINFO 1 GENERATION_ID 1581777168"
+set_instance_assignment -entity "sys" -library "sys" -name SLD_INFO "QSYS_NAME sys HAS_SOPCINFO 1 GENERATION_ID 1581842998"
 set_global_assignment -library "sys" -name MISC_FILE [file join $::quartus(qip_path) "../../sys.cmp"]
 set_global_assignment -name SYNTHESIS_ONLY_QIP ON
 set_global_assignment -library "sys" -name MISC_FILE [file join $::quartus(qip_path) "../../sys.qsys"]
@@ -38,6 +38,8 @@ set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quar
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/altera_merlin_master_agent.sv"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/altera_merlin_slave_translator.sv"]
 set_global_assignment -library "sys" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "submodules/altera_merlin_master_translator.sv"]
+set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_epcs.v"]
+set_global_assignment -library "sys" -name SOURCE_FILE [file join $::quartus(qip_path) "submodules/sys_epcs_boot_rom.hex"]
 set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_uart_0.v"]
 set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_sdram_0.v"]
 set_global_assignment -library "sys" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/sys_sysid_qsys_0.v"]
@@ -129,6 +131,9 @@ set_global_assignment -entity "altera_merlin_slave_translator" -library "sys" -n
 set_global_assignment -entity "altera_merlin_master_translator" -library "sys" -name IP_TOOL_NAME "altera_merlin_master_translator"
 set_global_assignment -entity "altera_merlin_master_translator" -library "sys" -name IP_TOOL_VERSION "13.0"
 set_global_assignment -entity "altera_merlin_master_translator" -library "sys" -name IP_TOOL_ENV "Qsys"
+set_global_assignment -entity "sys_epcs" -library "sys" -name IP_TOOL_NAME "altera_avalon_epcs_flash_controller"
+set_global_assignment -entity "sys_epcs" -library "sys" -name IP_TOOL_VERSION "13.0.1.99.2"
+set_global_assignment -entity "sys_epcs" -library "sys" -name IP_TOOL_ENV "Qsys"
 set_global_assignment -entity "sys_uart_0" -library "sys" -name IP_TOOL_NAME "altera_avalon_uart"
 set_global_assignment -entity "sys_uart_0" -library "sys" -name IP_TOOL_VERSION "13.0.1.99.2"
 set_global_assignment -entity "sys_uart_0" -library "sys" -name IP_TOOL_ENV "Qsys"

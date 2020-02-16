@@ -1,0 +1,43 @@
+Z:\altera\13.0sp1\nios2eds\bin
+
+nios2-flash-override.txt
+
+[EPCS-EF4017]  # EPCS64N (Eon-lead-free)
+sector_size = 65536
+sector_count = 128
+
+
+
+     Altera器件有EPCS系列配置器件，其实，这些配置器件就是我们平时通用的SPIFlash，据AlteraFAE描述：“EPCS器件也是选用某家公司的SPIFlash，只是中间经过Altera公司的严格测试，所以稳定性及耐用性都超过通用的SPIFlash”。就本人看来，半导体的稳定性问题绝大部分都是由本身设计缺陷造成的，而成熟的制造工艺不会造成产品的不稳定；并且，现在Altera的器件在读入配置数据发生错误时，可以重新读取SPIFlash里面的数据，所以在工艺的稳定性以及设计的可靠性双重保证下，通过选用通用的SPIFlash来减少产品的成本压力。
+
+     假设我们正在使用一个普通SPIFlash，打开nios II command shell窗口，使用nios2-flash-programmer命令下载***.flash文件时，会发生如下错误：
+        No EPCS layout data --- looking for section [EPCS-1C2017]
+
+        以为不同公司的SPIFlash有不同的ID，并且不同大小的Flash的Sector大小及个数都不一样，所以需要新建一个文档去说明这些数据：
+
+        1、首先在<nios2_install>/bin文件夹下面新建nios2-flash-override.txt文件；
+
+        2、输入下述代码，下面描述的器件都是Altera的EPCS器件，sector_size表示sector大小，sector_count表示sector个数；
+        [EPCS-202011]  # EPCS1N (lead-free)
+        sector_size = 32768
+        sector_count = 4
+        [EPCS-202013]  # EPCS4N (lead-free)
+        sector_size = 65536
+        sector_count = 8
+        [EPCS-202015]  # EPCS16N (lead-free)
+        sector_size = 65536
+        sector_count = 32
+        [EPCS-202017]  # EPCS64N (lead-free)
+        sector_size = 65536
+        sector_count = 128
+
+        3、在上述代码中添加自己选择的通用SPIFlash，例如：
+        [EPCS-1C2017]  # EPCS64N (Eon-lead-free)
+        sector_size = 65536
+        sector_count = 128
+
+        然后再使用nios2-flash-programmer命令下载***.flash文件，就可以对SPIFlash进行下载了。
+
+        需要注意的是，FPGA使用的配置芯片的每个Sector大小都是定的，现在有些器件专门对Boot那部分代码进行了优化，及最开始的部分Sector会比较一般的Sector要小，从而达到提高Sector利用率的目的，比如Eon 64M的SPIFlash就分为两种，一种是每个Sector大小都是64K*128(EN25P64)，还有一种就是(4+4+8+16)K+64K*127(EN25B64)，而我们选用的是前面那类器件，器件ID为1C2017，器件ID可以通过nios2-flash-programmer --debug ...查询。
+
+        以上我选了一种器件进行做说明，大家可以根据自己的器件修改nios2-flash-override.txt文件，只需要更改ID号就行了，保证sector_size，sector_count与EPCS器件一致。

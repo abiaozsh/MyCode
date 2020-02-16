@@ -4,7 +4,7 @@
  * Machine generated for CPU 'nios2_qsys_0' in SOPC Builder design 'sys'
  * SOPC Builder design path: E:/MyCode.github/fpga/qsys_sdram/sys.sopcinfo
  *
- * Generated: Sat Feb 15 22:15:07 CST 2020
+ * Generated: Sun Feb 16 14:03:56 CST 2020
  */
 
 /*
@@ -59,6 +59,7 @@
  */
 
 #include "altera_nios2_qsys_irq.h"
+#include "altera_avalon_epcs_flash_controller.h"
 #include "altera_avalon_sysid_qsys.h"
 #include "altera_avalon_timer.h"
 #include "altera_avalon_uart.h"
@@ -68,6 +69,7 @@
  */
 
 ALTERA_NIOS2_QSYS_IRQ_INSTANCE ( NIOS2_QSYS_0, nios2_qsys_0);
+ALTERA_AVALON_EPCS_FLASH_CONTROLLER_INSTANCE ( EPCS, epcs);
 ALTERA_AVALON_SYSID_QSYS_INSTANCE ( SYSID_QSYS_0, sysid_qsys_0);
 ALTERA_AVALON_TIMER_INSTANCE ( TIMER_0, timer_0);
 ALTERA_AVALON_UART_INSTANCE ( UART_0, uart_0);
@@ -94,6 +96,7 @@ void alt_irq_init ( const void* base )
 void alt_sys_init( void )
 {
     ALTERA_AVALON_TIMER_INIT ( TIMER_0, timer_0);
+    ALTERA_AVALON_EPCS_FLASH_CONTROLLER_INIT ( EPCS, epcs);
     ALTERA_AVALON_SYSID_QSYS_INIT ( SYSID_QSYS_0, sysid_qsys_0);
     ALTERA_AVALON_UART_INIT ( UART_0, uart_0);
 }

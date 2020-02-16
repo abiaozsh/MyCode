@@ -5,13 +5,13 @@
    <void method="add"> 
     <object class="com.altera.embeddedsw.flash.model.internal.FileModel"> 
      <void property="baseAddress"> 
-      <string>0x3000</string> 
+      <string>0x4001000</string> 
      </void> 
      <void property="cpuResetAddress"> 
-      <string>0x3000</string> 
+      <string>0x4001000</string> 
      </void> 
      <void property="endAddress"> 
-      <string>0x3800</string> 
+      <string>0x4001800</string> 
      </void> 
      <void property="extraArgs"> 
       <string></string> 
@@ -22,23 +22,23 @@
       </object> 
      </void> 
      <void property="filename"> 
-      <string>E:\MyCode.github\fpga\qsys\output_files\aaa.sof</string> 
+      <string>E:\MyCode.github\fpga\qsys_sdram\output_files\aaa.sof</string> 
      </void> 
      <void property="memoryName"> 
-      <string>epcs_flash_controller_0</string> 
+      <string>epcs</string> 
      </void> 
     </object> 
    </void> 
    <void method="add"> 
     <object class="com.altera.embeddedsw.flash.model.internal.FileModel"> 
      <void property="baseAddress"> 
-      <string>0x0000</string> 
+      <string>0x4001000</string> 
      </void> 
      <void property="cpuResetAddress"> 
-      <string>0x3000</string> 
+      <string>0x4001000</string> 
      </void> 
      <void property="endAddress"> 
-      <string>0x0800</string> 
+      <string>0x4001800</string> 
      </void> 
      <void property="extraArgs"> 
       <string></string> 
@@ -49,10 +49,10 @@
       </object> 
      </void> 
      <void property="filename"> 
-      <string>E:\MyCode.github\fpga\qsys\software\helloworld\helloworld.elf</string> 
+      <string>E:\MyCode.github\fpga\workspace\epcs\epcs.elf</string> 
      </void> 
      <void property="memoryName"> 
-      <string>epcs_flash_controller_0</string> 
+      <string>epcs</string> 
      </void> 
     </object> 
    </void> 
@@ -68,7 +68,7 @@
    </void> 
    <void method="put"> 
     <string>sopcinfoFile</string> 
-    <string>E:\MyCode.github\fpga\qsys\sys.sopcinfo</string> 
+    <string>E:\MyCode.github\fpga\qsys_sdram\sys.sopcinfo</string> 
    </void> 
    <void method="put"> 
     <string>physicalCpuName</string> 
@@ -84,15 +84,15 @@
    </void> 
    <void method="put"> 
     <string>bspFile</string> 
-    <string>E:\MyCode.github\fpga\qsys\software\helloworld_bsp\settings.bsp</string> 
+    <string>E:\MyCode.github\fpga\workspace\epcs_bsp\settings.bsp</string> 
    </void> 
    <void method="put"> 
     <string>flashFilesDir</string> 
-    <string>E:\MyCode.github\fpga\qsys\software\helloworld_bsp\flash</string> 
+    <string>E:\MyCode.github\fpga\workspace\epcs_bsp\flash</string> 
    </void> 
    <void method="put"> 
     <string>scriptDir</string> 
-    <string>E:\MyCode.github\fpga\qsys\software\helloworld_bsp\script</string> 
+    <string>E:\MyCode.github\fpga\workspace\epcs_bsp\script</string> 
    </void> 
    <void method="put"> 
     <string>eraseAllEnabled</string> 
@@ -124,7 +124,7 @@
    </void> 
    <void method="put"> 
     <string>userQpfFile</string> 
-    <string>E:\MyCode.github\fpga\qsys\aaa.qpf</string> 
+    <string>E:\MyCode.github\fpga\qsys_sdram\aaa.qpf</string> 
    </void> 
   </void> 
   <void property="map"> 

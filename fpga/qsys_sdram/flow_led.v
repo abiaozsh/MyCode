@@ -6,10 +6,10 @@ module flow_led(
   output led,
  
 	 //flash
-	 //input  flash_data0,
-	 //output flash_sdo,
-	 //output flash_sce,
-	 //output flash_dclk,
+	 input  flash_data0,
+	 output flash_sdo,
+	 output flash_sce,
+	 output flash_dclk,
 /*
 set_location_assignment PIN_K1 -to flash_data0
 set_location_assignment PIN_D1 -to flash_sdo
@@ -101,8 +101,18 @@ assign	sdram_clk_out = clk_100m_shift;//out_clk;                //将相位偏�
         .sdram_0_dqm    (sdram_dqm),    //        .dqm
         .sdram_0_ras_n  (sdram_ras_n),  //        .ras_n
         .sdram_0_we_n   (sdram_we_n),   //        .we_n
+				
+        .epcs_dclk        (flash_dclk),        //     epcs.dclk
+        .epcs_sce         (flash_sce),         //         .sce
+        .epcs_sdo         (flash_sdo),         //         .sdo
+        .epcs_data0       (flash_data0),        //         .data0				
+				
+				
         .uart0_rxd        (rxd),        //    uart0.rxd
         .uart0_txd        (txd)         //         .txd
+				
+				
+				
     );
 
 

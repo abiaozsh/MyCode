@@ -15,8 +15,8 @@
    <frequency preferredWidth="430" />
   </columns>
  </clocktable>
- <window width="1744" height="1307" x="581" y="61" />
+ <window width="1744" height="1307" x="548" y="49" />
  <library
-   expandedCategories="Library,Library/Interface Protocols/Serial,Project,Library/Interface Protocols" />
+   expandedCategories="Library,Library/Memories and Memory Controllers/External Memory Interfaces/Memory Interfaces,Project,Library/Memories and Memory Controllers,Library/Memories and Memory Controllers/External Memory Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/Memory Interfaces/Flash" />
  <hdlexample language="VERILOG" />
 </preferences>

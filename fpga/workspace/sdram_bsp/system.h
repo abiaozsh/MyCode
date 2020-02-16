@@ -4,7 +4,7 @@
  * Machine generated for CPU 'nios2_qsys_0' in SOPC Builder design 'sys'
  * SOPC Builder design path: E:/MyCode.github/fpga/qsys_sdram/sys.sopcinfo
  *
- * Generated: Sat Feb 15 22:34:40 CST 2020
+ * Generated: Sun Feb 16 14:03:56 CST 2020
  */
 
 /*
@@ -62,7 +62,7 @@
 
 #define ALT_CPU_ARCHITECTURE "altera_nios2_qsys"
 #define ALT_CPU_BIG_ENDIAN 0
-#define ALT_CPU_BREAK_ADDR 0x4000820
+#define ALT_CPU_BREAK_ADDR 0x4001820
 #define ALT_CPU_CPU_FREQ 50000000u
 #define ALT_CPU_CPU_ID_SIZE 1
 #define ALT_CPU_CPU_ID_VALUE 0x00000000
@@ -96,7 +96,7 @@
  */
 
 #define NIOS2_BIG_ENDIAN 0
-#define NIOS2_BREAK_ADDR 0x4000820
+#define NIOS2_BREAK_ADDR 0x4001820
 #define NIOS2_CPU_FREQ 50000000u
 #define NIOS2_CPU_ID_SIZE 1
 #define NIOS2_CPU_ID_VALUE 0x00000000
@@ -127,6 +127,7 @@
  *
  */
 
+#define __ALTERA_AVALON_EPCS_FLASH_CONTROLLER
 #define __ALTERA_AVALON_NEW_SDRAM_CONTROLLER
 #define __ALTERA_AVALON_PIO
 #define __ALTERA_AVALON_SYSID_QSYS
@@ -151,24 +152,39 @@
 #define ALT_NUM_INTERNAL_INTERRUPT_CONTROLLERS 1
 #define ALT_NUM_INTERRUPT_CONTROLLERS 1
 #define ALT_STDERR "/dev/uart_0"
-#define ALT_STDERR_BASE 0x4001000
+#define ALT_STDERR_BASE 0x4002000
 #define ALT_STDERR_DEV uart_0
 #define ALT_STDERR_IS_UART
 #define ALT_STDERR_PRESENT
 #define ALT_STDERR_TYPE "altera_avalon_uart"
 #define ALT_STDIN "/dev/uart_0"
-#define ALT_STDIN_BASE 0x4001000
+#define ALT_STDIN_BASE 0x4002000
 #define ALT_STDIN_DEV uart_0
 #define ALT_STDIN_IS_UART
 #define ALT_STDIN_PRESENT
 #define ALT_STDIN_TYPE "altera_avalon_uart"
 #define ALT_STDOUT "/dev/uart_0"
-#define ALT_STDOUT_BASE 0x4001000
+#define ALT_STDOUT_BASE 0x4002000
 #define ALT_STDOUT_DEV uart_0
 #define ALT_STDOUT_IS_UART
 #define ALT_STDOUT_PRESENT
 #define ALT_STDOUT_TYPE "altera_avalon_uart"
 #define ALT_SYSTEM_NAME "sys"
+
+
+/*
+ * epcs configuration
+ *
+ */
+
+#define ALT_MODULE_CLASS_epcs altera_avalon_epcs_flash_controller
+#define EPCS_BASE 0x4001000
+#define EPCS_IRQ 2
+#define EPCS_IRQ_INTERRUPT_CONTROLLER_ID 0
+#define EPCS_NAME "/dev/epcs"
+#define EPCS_REGISTER_OFFSET 1024
+#define EPCS_SPAN 2048
+#define EPCS_TYPE "altera_avalon_epcs_flash_controller"
 
 
 /*
@@ -187,7 +203,7 @@
  */
 
 #define ALT_MODULE_CLASS_pio_0 altera_avalon_pio
-#define PIO_0_BASE 0x4001050
+#define PIO_0_BASE 0x4002050
 #define PIO_0_BIT_CLEARING_EDGE_REGISTER 0
 #define PIO_0_BIT_MODIFYING_OUTPUT_REGISTER 0
 #define PIO_0_CAPTURE 0
@@ -214,7 +230,7 @@
  */
 
 #define ALT_MODULE_CLASS_pio_1 altera_avalon_pio
-#define PIO_1_BASE 0x4001040
+#define PIO_1_BASE 0x4002040
 #define PIO_1_BIT_CLEARING_EDGE_REGISTER 0
 #define PIO_1_BIT_MODIFYING_OUTPUT_REGISTER 0
 #define PIO_1_CAPTURE 0
@@ -280,13 +296,13 @@
  */
 
 #define ALT_MODULE_CLASS_sysid_qsys_0 altera_avalon_sysid_qsys
-#define SYSID_QSYS_0_BASE 0x4001060
+#define SYSID_QSYS_0_BASE 0x4002060
 #define SYSID_QSYS_0_ID 0
 #define SYSID_QSYS_0_IRQ -1
 #define SYSID_QSYS_0_IRQ_INTERRUPT_CONTROLLER_ID -1
 #define SYSID_QSYS_0_NAME "/dev/sysid_qsys_0"
 #define SYSID_QSYS_0_SPAN 8
-#define SYSID_QSYS_0_TIMESTAMP 1581777196
+#define SYSID_QSYS_0_TIMESTAMP 1581832877
 #define SYSID_QSYS_0_TYPE "altera_avalon_sysid_qsys"
 
 
@@ -297,7 +313,7 @@
 
 #define ALT_MODULE_CLASS_timer_0 altera_avalon_timer
 #define TIMER_0_ALWAYS_RUN 0
-#define TIMER_0_BASE 0x4001020
+#define TIMER_0_BASE 0x4002020
 #define TIMER_0_COUNTER_SIZE 32
 #define TIMER_0_FIXED_PERIOD 1
 #define TIMER_0_FREQ 50000000
@@ -322,7 +338,7 @@
  */
 
 #define ALT_MODULE_CLASS_uart_0 altera_avalon_uart
-#define UART_0_BASE 0x4001000
+#define UART_0_BASE 0x4002000
 #define UART_0_BAUD 115200
 #define UART_0_DATA_BITS 8
 #define UART_0_FIXED_BAUD 1
