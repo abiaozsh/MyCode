@@ -152,8 +152,7 @@ set_location_assignment PIN_B21 -to segled_clk
 set_location_assignment PIN_N19 -to segled_str
 set_location_assignment PIN_M19 -to segled_dat
 
-set_location_assignment PIN_D21 -to debug[0]
-
+set_location_assignment PIN_H22 -to debug[0]
 set_location_assignment PIN_F22 -to debug[1]
 set_location_assignment PIN_E22 -to debug[2]
 set_location_assignment PIN_D22 -to debug[3]

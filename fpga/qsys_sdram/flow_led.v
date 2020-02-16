@@ -5,7 +5,6 @@ module flow_led(
   input key2,
   output led,
  
-
 	 //flash
 	 //input  flash_data0,
 	 //output flash_sdo,
@@ -41,7 +40,9 @@ set_global_assignment -name RESERVE_DCLK_AFTER_CONFIGURATION "USE AS REGULAR IO"
   output [12:0] sdram_addr,               //SDRAM 行/列地址
   inout  [15:0] sdram_data,               //SDRAM 数据
   output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
- 	
+	
+ 	input rxd,
+	output txd,
 	
 	input dummy
 );
@@ -62,12 +63,12 @@ wire clk_100m_shift;
 wire locked;
 //待PLL输出稳定之后，停止系统复位
 assign rst_n = sys_rst_n & locked;
-
+ 
 //例化PLL, 产生各模块所需要的时钟
 sdram_pll(
   .inclk0             (sys_clk),
   .areset             (~sys_rst_n),
-  
+ 
   .c0                 (clk_100m),
   .c1                 (clk_100m_shift),
   .locked             (locked)
@@ -99,7 +100,9 @@ assign	sdram_clk_out = clk_100m_shift;//out_clk;                //将相位偏�
         .sdram_0_dq     (sdram_data),     //        .dq
         .sdram_0_dqm    (sdram_dqm),    //        .dqm
         .sdram_0_ras_n  (sdram_ras_n),  //        .ras_n
-        .sdram_0_we_n   (sdram_we_n)   //        .we_n
+        .sdram_0_we_n   (sdram_we_n),   //        .we_n
+        .uart0_rxd        (rxd),        //    uart0.rxd
+        .uart0_txd        (txd)         //         .txd
     );
 
 

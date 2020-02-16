@@ -73,8 +73,7 @@ set_location_assignment PIN_B21 -to segled_clk
 set_location_assignment PIN_N19 -to segled_str
 set_location_assignment PIN_M19 -to segled_dat
 
-set_location_assignment PIN_D21 -to debug[0]
-
+set_location_assignment PIN_H22 -to debug[0]
 set_location_assignment PIN_F22 -to debug[1]
 set_location_assignment PIN_E22 -to debug[2]
 set_location_assignment PIN_D22 -to debug[3]
@@ -82,6 +81,11 @@ set_location_assignment PIN_C22 -to debug[4]
 set_location_assignment PIN_B22 -to debug[5]
 set_location_assignment PIN_N20 -to debug[6]
 set_location_assignment PIN_M20 -to debug[7]
+
+set_location_assignment PIN_H21 -to txd
+set_location_assignment PIN_F21 -to rxd
+
+
 
 set_location_assignment PIN_K1 -to flash_data0
 set_location_assignment PIN_D1 -to flash_sdo
