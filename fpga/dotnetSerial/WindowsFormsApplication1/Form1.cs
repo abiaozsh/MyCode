@@ -30,9 +30,18 @@ namespace WindowsFormsApplication1
                 port.Close();
             }
         }
-
+        string portName;
         private void Form1_Load(object sender, EventArgs e)
         {
+            String[] list = SerialPort.GetPortNames();
+            foreach (String s in list)
+            {
+                this.comboBox1.Items.Add(s);
+            }
+        }
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            portName = (string)this.comboBox1.SelectedItem;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -40,7 +49,7 @@ namespace WindowsFormsApplication1
             if (port == null)
             {
                 //COM4为Arduino使用的串口号，需根据实际情况调整  115200
-                port = new SerialPort(textBox1.Text, 2000000, Parity.None, 8, StopBits.One);
+                port = new SerialPort(portName, 2000000, Parity.None, 8, StopBits.One);
                 port.Open();
             }
 
@@ -174,7 +183,7 @@ namespace WindowsFormsApplication1
             Random r = new Random();
             bool err = false;
             int count = 0;
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 100000; i++)
             {
                 byte[] buff = new byte[1];
                 r.NextBytes(buff);
