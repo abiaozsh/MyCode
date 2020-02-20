@@ -1,73 +1,39 @@
 
 module flow_led(
-  input sys_clk,
-  input sys_rst_n,
-  
-  input [3:0] key,
-  output [3:0] led,
-
-  output [5:0] seg_sel,
-  output [7:0] seg_led,
-
+  input           sys_clk,          //外部50M时钟
+  input key1,
+  input key2,
+  output led,
+ 
+  output segled_clk,
+  output segled_dat, 
+  output segled_str,
+ 
   //uart接口
   input uart_rxd,
   output uart_txd
 );
- 
-wire  [3:0]  key_stable;
-genvar i;
-generate
-  for(i=0; i<4; i=i+1) begin:BLOCK1
-    key_debounce(
-        .sys_clk        (sys_clk),
-        .sys_rst_n      (sys_rst_n),
-  
-        .key            (key[i]),
-        .key_value      (key_stable[i])
-      );
-  end
-endgenerate
+wire sys_rst_n;
+assign sys_rst_n = key1;
 
-
-
-//reg rled;
-//assign led[0] = rled;
-//always @ (*) begin
-//  if(key[0] && key[1])begin
-//    rled <= 1;
-//  //end else begin//去掉下半边
-//  //  rled <= 0;//rled[0]
-//  end
-//end
-
-//assign led[0] = key[0] && key[1];
-
-
-//reg [3:0] rled;
-//assign led = rled;
-//always @(posedge sys_clk or negedge sys_rst_n) begin
-//  if (!sys_rst_n) begin
-//    rled<=0;
-//  end else begin
-//    rled<=key_stable;
-//  end
-//end
-
-  
-reg [7:0] data0;
-reg [7:0] data1;
-reg [7:0] data2;
-seg_led_hex(
-  .sys_clk(sys_clk),
+reg [7:0] seg_data0;
+reg [7:0] seg_data1;
+reg [7:0] seg_data2;
+reg [7:0] seg_data3;
+seg_led_hex595 ins_seg_led_hex595(
+  .sys_clk(sys_clk), 
   .sys_rst_n(sys_rst_n),
 
-  .seg_sel(seg_sel),
-  .seg_led(seg_led),
+  .clk(segled_clk),
+  .dat(segled_dat),
+  .str(segled_str),
 
-  .data0(data0),
-  .data1(data1),
-  .data2(data2)
+  .data0(seg_data0),
+  .data1(seg_data1),
+  .data2(seg_data2),
+  .data3(seg_data3)
 );
+ 
 
 wire uart_rec;
 wire [7:0] uart_data_out;
@@ -87,40 +53,25 @@ uart_hs (
   .uart_data_in(uart_data_in)
 );
 
-//reg uart_rec_last;
-//always @(posedge sys_clk or negedge sys_rst_n) begin
-//  if (!sys_rst_n) begin
-//    uart_rec_last<=0;
-//  end else begin  
-//      uart_rec_last<=uart_rec;
-//  end
-//end
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
-    data0 <= 0;
-    data1 <= 0;
-    data2 <= 0;
+    seg_data0 <= 0;
+    seg_data1 <= 0;
+    seg_data2 <= 0;
+		seg_data3 <= 0;
     uart_send <= 0;
   end else begin  
     if(uart_rec)begin// && !uart_rec_last
-      data0<=uart_data_out;
-      data1<=data0;
-      data2<=data1;
+      seg_data0<=uart_data_out;
+      seg_data1<=seg_data0;
+      seg_data2<=seg_data1;
+      seg_data3<=seg_data2;
     end
     
-    if         (!key_stable[0])begin
+    if         (!key2)begin
       uart_send <= 1;     
       uart_data_in <= 8'h11;
-    end else if(!key_stable[1])begin
-      uart_send <= 1;     
-      uart_data_in <= 8'h22;
-    end else if(!key_stable[2])begin
-      uart_send <= 1;     
-      uart_data_in <= 8'h33;
-    end else if(!key_stable[3])begin
-      uart_send <= 1;     
-      uart_data_in <= 8'h44;
     end else begin
       uart_send<=0;
       if(uart_rec)begin// && !uart_rec_last

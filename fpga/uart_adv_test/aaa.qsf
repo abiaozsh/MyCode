@@ -37,7 +37,7 @@
 
 
 set_global_assignment -name FAMILY "Cyclone IV E"
-set_global_assignment -name DEVICE EP4CE10F17C8
+set_global_assignment -name DEVICE EP4CE15F23C8
 set_global_assignment -name TOP_LEVEL_ENTITY flow_led
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "13.0 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "12:54:30  NOVEMBER 16, 2019"
@@ -64,33 +64,22 @@ set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
-set_location_assignment PIN_E1 -to sys_clk
-set_location_assignment PIN_M1 -to sys_rst_n
-set_location_assignment PIN_D11 -to led[0]
-set_location_assignment PIN_C11 -to led[1]
-set_location_assignment PIN_E10 -to led[2]
-set_location_assignment PIN_F9 -to led[3]
-set_location_assignment PIN_M16 -to key[3]
-set_location_assignment PIN_M2 -to key[2]
-set_location_assignment PIN_E15 -to key[1]
-set_location_assignment PIN_E16 -to key[0]
-set_location_assignment PIN_N5 -to uart_rxd
-set_location_assignment PIN_M7 -to uart_txd
-set_location_assignment PIN_N16 -to seg_sel[0]
-set_location_assignment PIN_N15 -to seg_sel[1]
-set_location_assignment PIN_P16 -to seg_sel[2]
-set_location_assignment PIN_P15 -to seg_sel[3]
-set_location_assignment PIN_R16 -to seg_sel[4]
-set_location_assignment PIN_T15 -to seg_sel[5]
-set_location_assignment PIN_M11 -to seg_led[0]
-set_location_assignment PIN_N12 -to seg_led[1]
-set_location_assignment PIN_C9 -to seg_led[2]
-set_location_assignment PIN_N13 -to seg_led[3]
-set_location_assignment PIN_M10 -to seg_led[4]
-set_location_assignment PIN_N11 -to seg_led[5]
-set_location_assignment PIN_P11 -to seg_led[6]
-set_location_assignment PIN_D9 -to seg_led[7]
-set_global_assignment -name VERILOG_FILE ../commoncode/seg_led_hex.v
+
+set_location_assignment PIN_T2 -to sys_clk
+set_location_assignment PIN_E4 -to led
+set_location_assignment PIN_Y13 -to key1
+set_location_assignment PIN_W13 -to key2
+
+#old set_location_assignment PIN_N5 -to uart_rxd
+#old set_location_assignment PIN_M7 -to uart_txd
+set_location_assignment PIN_H21 -to uart_txd
+set_location_assignment PIN_F21 -to uart_rxd
+
+set_location_assignment PIN_B21 -to segled_clk
+set_location_assignment PIN_N19 -to segled_str
+set_location_assignment PIN_M19 -to segled_dat
+
+set_global_assignment -name VERILOG_FILE ../commoncode/seg_led_hex595.v
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_send_hs.v
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_recv_hs.v
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_hs.v
