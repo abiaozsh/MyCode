@@ -2,8 +2,8 @@
 <sch:Settings xmlns:sch="http://www.altera.com/embeddedsw/bsp/schema">
         <BspType>hal</BspType>
         <BspVersion>default</BspVersion>
-        <BspGeneratedTimeStamp>Feb 15, 2020 3:05:25 PM</BspGeneratedTimeStamp>
-        <BspGeneratedUnixTimeStamp>1581750325010</BspGeneratedUnixTimeStamp>
+        <BspGeneratedTimeStamp>2020-2-23 8:22:43</BspGeneratedTimeStamp>
+        <BspGeneratedUnixTimeStamp>1582417363133</BspGeneratedUnixTimeStamp>
         <BspGeneratedLocation>E:\MyCode.github\fpga\workspace\qsys_bsp</BspGeneratedLocation>
         <BspSettingsFile>settings.bsp</BspSettingsFile>
         <SopcDesignFile>E:\MyCode.github\fpga\qsys\sys.sopcinfo</SopcDesignFile>
@@ -839,32 +839,38 @@
                 <Group>none</Group>
         </Setting>
         <MemoryMap>
+                <slaveDescriptor>mysdram_0</slaveDescriptor>
+                <addressRange>0x00000000 - 0x03FFFFFF</addressRange>
+                <addressSpan>67108864</addressSpan>
+                <attributes/>
+        </MemoryMap>
+        <MemoryMap>
                 <slaveDescriptor>onchip_memory2_0</slaveDescriptor>
-                <addressRange>0x00001000 - 0x00001FFF</addressRange>
+                <addressRange>0x04001000 - 0x04001FFF</addressRange>
                 <addressSpan>4096</addressSpan>
                 <attributes>memory</attributes>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>timer_0</slaveDescriptor>
-                <addressRange>0x00003000 - 0x0000301F</addressRange>
+                <addressRange>0x04003000 - 0x0400301F</addressRange>
                 <addressSpan>32</addressSpan>
                 <attributes>timer</attributes>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_1</slaveDescriptor>
-                <addressRange>0x00003020 - 0x0000302F</addressRange>
+                <addressRange>0x04003020 - 0x0400302F</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_0</slaveDescriptor>
-                <addressRange>0x00003030 - 0x0000303F</addressRange>
+                <addressRange>0x04003030 - 0x0400303F</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>sysid_qsys_0</slaveDescriptor>
-                <addressRange>0x00003040 - 0x00003047</addressRange>
+                <addressRange>0x04003040 - 0x04003047</addressRange>
                 <addressSpan>8</addressSpan>
                 <attributes/>
         </MemoryMap>
