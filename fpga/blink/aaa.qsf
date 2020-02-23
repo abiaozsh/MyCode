@@ -1,0 +1,186 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 1991-2013 Altera Corporation
+# Your use of Altera Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Altera Program License 
+# Subscription Agreement, Altera MegaCore Function License 
+# Agreement, or other applicable license agreement, including, 
+# without limitation, that your use is for the sole purpose of 
+# programming logic devices manufactured by Altera and sold by 
+# Altera or its authorized distributors.  Please refer to the 
+# applicable agreement for further details.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus II 64-Bit
+# Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Full Version
+# Date created = 12:54:30  November 16, 2019
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		aaa_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus II software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE EP4CE15F23C8
+set_global_assignment -name TOP_LEVEL_ENTITY flow_led
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION "13.0 SP1"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "12:54:30  NOVEMBER 16, 2019"
+set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
+set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 8
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (VHDL)"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulation
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
+set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
+set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
+set_location_assignment PIN_T2 -to sys_clk
+set_location_assignment PIN_E4 -to led
+set_location_assignment PIN_Y13 -to key1
+set_location_assignment PIN_W13 -to key2
+
+
+set_location_assignment PIN_R2 -to  R2 
+set_location_assignment PIN_P2 -to  P2 
+set_location_assignment PIN_N2 -to  N2 
+set_location_assignment PIN_M2 -to  M2 
+set_location_assignment PIN_J2 -to  J2 
+set_location_assignment PIN_H2 -to  H2 
+set_location_assignment PIN_F2 -to  F2 
+set_location_assignment PIN_D2 -to  D2 
+set_location_assignment PIN_C2 -to  C2 
+set_location_assignment PIN_B2 -to  B2 
+set_location_assignment PIN_A3 -to  A3 
+set_location_assignment PIN_A4 -to  A4 
+set_location_assignment PIN_C3 -to  C3 
+set_location_assignment PIN_A5 -to  A5 
+set_location_assignment PIN_A6 -to  A6 
+set_location_assignment PIN_A7 -to  A7 
+set_location_assignment PIN_A8 -to  A8 
+set_location_assignment PIN_A9 -to  A9 
+set_location_assignment PIN_A10 -to A10
+set_location_assignment PIN_A13 -to A13
+set_location_assignment PIN_A14 -to A14
+set_location_assignment PIN_A15 -to A15
+set_location_assignment PIN_A16 -to A16
+set_location_assignment PIN_A17 -to A17
+set_location_assignment PIN_A18 -to A18
+set_location_assignment PIN_A19 -to A19
+set_location_assignment PIN_A20 -to A20
+
+set_location_assignment PIN_R1 -to  R1 
+set_location_assignment PIN_P1 -to  P1 
+set_location_assignment PIN_N1 -to  N1 
+set_location_assignment PIN_M1 -to  M1 
+set_location_assignment PIN_J1 -to  J1 
+set_location_assignment PIN_H1 -to  H1 
+set_location_assignment PIN_F1 -to  F1 
+set_location_assignment PIN_E1 -to  E1 
+set_location_assignment PIN_C1 -to  C1 
+set_location_assignment PIN_B1 -to  B1 
+set_location_assignment PIN_B3 -to  B3 
+set_location_assignment PIN_B4 -to  B4 
+set_location_assignment PIN_C4 -to  C4 
+set_location_assignment PIN_B5 -to  B5 
+set_location_assignment PIN_B6 -to  B6 
+set_location_assignment PIN_B7 -to  B7 
+set_location_assignment PIN_B8 -to  B8 
+set_location_assignment PIN_B9 -to  B9 
+set_location_assignment PIN_B10 -to B10
+set_location_assignment PIN_B13 -to B13
+set_location_assignment PIN_B14 -to B14
+set_location_assignment PIN_B15 -to B15
+set_location_assignment PIN_B16 -to B16
+set_location_assignment PIN_B17 -to B17
+set_location_assignment PIN_B18 -to B18
+set_location_assignment PIN_B19 -to B19
+set_location_assignment PIN_B20 -to B20
+
+set_location_assignment PIN_AB13 -to AB13
+set_location_assignment PIN_AB14 -to AB14
+set_location_assignment PIN_AB15 -to AB15
+set_location_assignment PIN_AB16 -to AB16
+set_location_assignment PIN_AB17 -to AB17
+set_location_assignment PIN_AB18 -to AB18
+set_location_assignment PIN_AB19 -to AB19
+set_location_assignment PIN_AB20 -to AB20
+set_location_assignment PIN_Y21 -to  Y21 
+set_location_assignment PIN_W21 -to  W21 
+set_location_assignment PIN_V21 -to  V21 
+set_location_assignment PIN_U21 -to  U21 
+set_location_assignment PIN_R21 -to  R21 
+set_location_assignment PIN_P21 -to  P21 
+set_location_assignment PIN_N21 -to  N21 
+set_location_assignment PIN_M21 -to  M21 
+set_location_assignment PIN_L21 -to  L21 
+set_location_assignment PIN_K21 -to  K21 
+set_location_assignment PIN_J21 -to  J21 
+set_location_assignment PIN_H21 -to  H21 
+set_location_assignment PIN_F21 -to  F21 
+set_location_assignment PIN_E21 -to  E21 
+set_location_assignment PIN_D21 -to  D21 
+set_location_assignment PIN_C21 -to  C21 
+set_location_assignment PIN_B21 -to  B21 
+set_location_assignment PIN_N19 -to  N19 
+set_location_assignment PIN_M19 -to  M19 
+
+set_location_assignment PIN_AA13 -to AA13
+set_location_assignment PIN_AA14 -to AA14
+set_location_assignment PIN_AA15 -to AA15
+set_location_assignment PIN_AA16 -to AA16
+set_location_assignment PIN_AA17 -to AA17
+set_location_assignment PIN_AA18 -to AA18
+set_location_assignment PIN_AA19 -to AA19
+set_location_assignment PIN_AA20 -to AA20
+set_location_assignment PIN_Y22 -to  Y22 
+set_location_assignment PIN_W22 -to  W22 
+set_location_assignment PIN_V22 -to  V22 
+set_location_assignment PIN_U22 -to  U22 
+set_location_assignment PIN_R22 -to  R22 
+set_location_assignment PIN_P22 -to  P22 
+set_location_assignment PIN_N22 -to  N22 
+set_location_assignment PIN_M22 -to  M22 
+set_location_assignment PIN_L22 -to  L22 
+set_location_assignment PIN_K22 -to  K22 
+set_location_assignment PIN_J22 -to  J22 
+set_location_assignment PIN_H22 -to  H22 
+set_location_assignment PIN_F22 -to  F22 
+set_location_assignment PIN_E22 -to  E22 
+set_location_assignment PIN_D22 -to  D22 
+set_location_assignment PIN_C22 -to  C22 
+set_location_assignment PIN_B22 -to  B22 
+set_location_assignment PIN_N20 -to  N20 
+set_location_assignment PIN_M20 -to  M20 
+
+
+set_global_assignment -name VERILOG_FILE flow_led.v
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
