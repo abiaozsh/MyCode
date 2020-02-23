@@ -9,6 +9,8 @@ module flow_led(
   output segled_dat, 
   output segled_str,
  
+	output [7:0]debug,
+ 
   //uart接口
   input uart_rxd,
   output uart_txd
@@ -33,7 +35,29 @@ seg_led_hex595 ins_seg_led_hex595(
   .data2(seg_data2),
   .data3(seg_data3)
 );
- 
+
+reg [1:0] cnt;
+assign debug[0] = aa;
+
+reg aa;
+always @ (*) begin
+	if(cnt[0]==0)begin
+		if(cnt[1]==0)begin
+			aa<=0;
+		end else begin
+			aa<=1;
+		end
+	end else begin
+		if(cnt[1]==0)begin
+			aa<=1;
+		end else begin
+			aa<=0;
+		end
+	end
+end
+
+//wire aa;
+//assign aa = cnt[0] ^ cnt[1];
 
 wire uart_rec;
 wire [7:0] uart_data_out;
@@ -61,6 +85,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     seg_data2 <= 0;
 		seg_data3 <= 0;
     uart_send <= 0;
+		cnt <= 0;
   end else begin  
     if(uart_rec)begin// && !uart_rec_last
       seg_data0<=uart_data_out;
@@ -75,6 +100,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     end else begin
       uart_send<=0;
       if(uart_rec)begin// && !uart_rec_last
+				cnt = cnt + 1'b1;
         uart_data_in <= uart_data_out;
         uart_send <= 1;
       end
