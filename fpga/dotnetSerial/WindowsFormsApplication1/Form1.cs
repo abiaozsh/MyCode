@@ -73,7 +73,8 @@ namespace WindowsFormsApplication1
                 var diff = DateTime.Now.Ticks - t;
                 if (diff > 250000)
                 {
-                    throw new Exception();
+                    return buff;
+                    //throw new Exception();
                 }
             }
         }
@@ -385,13 +386,74 @@ namespace WindowsFormsApplication1
 
         private void button6_Click(object sender, EventArgs e)
         {
-            portWrite((byte)(49));
-            
+            //getdata(0x29);
+            //getdata(0x30);
+            //getdata(0x30/4);
+            //getdata(0x30*4);
+            //getdata(0x10);
+            //getdata(0x20);
+
+            getdata(9);
+            getdata(10);
+            getdata(11);
+            getdata(12);
+            getdata(13);
+            getdata(14);
+            this.textBox4.Text += "\r\n";
         }
 
+        private void getdata(int addr)
+        {
+            int addr0 = (addr) & 0xFF;
+            int addr1 = (addr >> 8) & 0xFF;
+            int addr2 = (addr >> 16) & 0xFF;
+            portWrite((byte)(0x10), (byte)addr0);
+            portWrite((byte)(0x11), (byte)addr1);
+            portWrite((byte)(0x12), (byte)addr2);
+            portWrite((byte)(0x13), (byte)0x00);
+
+            portWrite((byte)(0x30), (byte)0x00);
+
+            portWrite((byte)(0x20), (byte)0x00);
+            this.textBox4.Text += getHex2(readFromPort(1)[0]);
+            portWrite((byte)(0x21), (byte)0x00);
+            this.textBox4.Text += getHex2(readFromPort(1)[0]);
+            portWrite((byte)(0x22), (byte)0x00);
+            this.textBox4.Text += getHex2(readFromPort(1)[0]);
+            portWrite((byte)(0x23), (byte)0x00);
+            this.textBox4.Text += getHex2(readFromPort(1)[0]);
+            this.textBox4.Text += " ";
+        }
+
+        private void writedata(int addr, int data)
+        {
+            //portWrite((byte)(0x10), (byte)(0x30/4));
+            int addr0 = (addr) & 0xFF;
+            int addr1 = (addr >> 8) & 0xFF;
+            int addr2 = (addr >> 16) & 0xFF;
+            portWrite((byte)(0x10), (byte)addr0);
+            portWrite((byte)(0x11), (byte)addr1);
+            portWrite((byte)(0x12), (byte)addr2);
+            portWrite((byte)(0x13), (byte)0x00);
+
+            int data0 = (data) & 0xFF;
+            int data1 = (data >> 8) & 0xFF;
+            int data2 = (data >> 16) & 0xFF;
+            int data3 = (data >> 24) & 0xFF;
+            portWrite((byte)(0x14), (byte)data0);
+            portWrite((byte)(0x15), (byte)data1);
+            portWrite((byte)(0x16), (byte)data2);
+            portWrite((byte)(0x17), (byte)data3);
+
+            portWrite((byte)(0x31), (byte)0x00);
+        }
         private void button12_Click(object sender, EventArgs e)
         {
-            portWrite((byte)(50));
+            writedata(10, 0x00300678);
+            writedata(11, 0x11311678);
+            writedata(12, 0x22322678);
+            writedata(13, 0x33333678);
+            writedata(14, 0x44344678);
         }
         private void timer1_Tick(object sender, EventArgs e)
         {
@@ -479,9 +541,9 @@ namespace WindowsFormsApplication1
                 {
                     buff = longread(addr);
                 }
-                fs.Write(buff,0,1024);
+                fs.Write(buff, 0, 1024);
                 fs.Flush();
-                if (count==16)
+                if (count == 16)
                 {
                     count = 0;
                     this.Text = prog.ToString();
@@ -491,6 +553,30 @@ namespace WindowsFormsApplication1
             }
             fs.Flush();
             fs.Close();
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox1.Checked)
+            {
+                portWrite((byte)(0x40), (byte)0x00);
+            }
+            else
+            {
+                portWrite((byte)(0x41), (byte)0x00);
+            }
+        }
+
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox2.Checked)
+            {
+                portWrite((byte)(0x50), (byte)0x00);
+            }
+            else
+            {
+                portWrite((byte)(0x51), (byte)0x00);
+            }
         }
 
 
