@@ -109,6 +109,10 @@ namespace WindowsFormsApplication1
 		{
 			return "0x" + convt[((val & 0xF000) >> 12)] + convt[((val & 0x0F00) >> 8)] + convt[((val & 0xF0) >> 4)] + convt[((val & 0x0F))];
 		}
+		public static string getHex2(byte val)
+		{
+			return convt[((val & 0xF0) >> 4)] + convt[((val & 0x0F))];
+		}
 
 		private static string Reg(uint val)
 		{
@@ -185,9 +189,8 @@ Available only when the MPU is present. Otherwise reserved.*/
 			}
 		}
 
-		public static string decode(WindowsFormsApplication1.ELF.ProgHead phead)
+        public static string decode(byte[] data,uint baseaddr)
 		{
-			byte[] data = phead.data;
 			/*
 	Register 	Name 	Function 	Register 	Name 	Function
 	r0 	zero 	0x00000000 	r16 	  	Callee-saved register
@@ -210,12 +213,13 @@ Available only when the MPU is present. Otherwise reserved.*/
 	Note: r30 is used as the breakpoint return address (ba) in the normal register set, and as the shadow register set status (sstatus) in each shadow register set. For details about sstatus, refer to The Status Register section.
 	For more information, refer to the Application Binary Interface chapter of the Nios® II Processor Reference Handbook.
 			 */
+            if (data.Length % 4 != 0) return "str";
 			StringBuilder sb = new StringBuilder();
 			int pos = 0;
 			for (int i = 0; i < data.Length; i += 4)
 			{
 				uint ins = (uint)(data[i + 0]) | (uint)(data[i + 1] << 8) | (uint)(data[i + 2] << 16) | (uint)(data[i + 3] << 24);
-
+				string hex = getHex2(data[i + 0]) + getHex2(data[i + 1]) + getHex2(data[i + 2]) + getHex2(data[i + 3]);
 				string sIns = "";
 
 				Instype itype = (Instype)(ins & 0x3F);
@@ -233,6 +237,26 @@ Available only when the MPU is present. Otherwise reserved.*/
 					{
 						sIns += C + " <- " + A + "+" + B;
 					}
+					else if (rtype == Rtype.cmpeq)
+					{
+						sIns += C + " <- (" + A + " == " + B + " ? 1 : 0)";
+					}
+					else if (rtype == Rtype.cmplt)
+					{
+						sIns += C + " <- ((signed)" + A + " < (signed)" + B + " ? 1 : 0)";
+					}
+					else if (rtype == Rtype.cmpge)
+					{
+						sIns += C + " <- ((signed)" + A + " >= (signed)" + B + " ? 1 : 0)";
+					}
+					else if (rtype == Rtype.sll)
+					{
+						sIns += C + " <- " + A + " << " + B + "[4:0]";
+					}
+					else if (rtype == Rtype.callr)
+					{
+						sIns += "PC <- " + A;
+					}
 					else if (rtype == Rtype.jmp)
 					{
 						sIns += "PC <- " + A;
@@ -241,8 +265,13 @@ Available only when the MPU is present. Otherwise reserved.*/
 					{
 						sIns += CR + " <- " + A;
 					}
+					else if (rtype == Rtype.ret)
+					{
+						sIns += "PC <- " + A;
+					}
 					else
 					{
+						sIns += "--------------------------------------";
 					}
 				}
 				else
@@ -265,11 +294,19 @@ Available only when the MPU is present. Otherwise reserved.*/
 					{
 						sIns += B + " <- " + A + (((short)IMM) > 0 ? "+" : "") + ((short)IMM);
 					}
-					else if (itype == Instype.stw)
+					else if (itype == Instype.andi)
+					{
+						sIns += B + " <- " + A + "&" + getHex4((int)IMM);
+					}
+					else if (itype == Instype.cmplti)
+					{
+						sIns += B + " <- ((signed)" + A + "<" + ((short)IMM) + " ? 1 : 0 )";
+					}
+					else if (itype == Instype.stw || itype == Instype.stwio)
 					{
 						sIns += "[" + A + "+" + getHex4((int)IMM) + "] <- " + B;
 					}
-					else if (itype == Instype.ldw)
+					else if (itype == Instype.ldw || itype == Instype.ldwio)
 					{
 						sIns += B + " <- [" + A + "+" + getHex4((int)IMM) + "]";
 					}
@@ -281,20 +318,24 @@ Available only when the MPU is present. Otherwise reserved.*/
 					{
 						sIns += A + "==" + B + "," + ((short)IMM / 4) + "(" + (pos + 1 + ((short)IMM / 4)) + ")";
 					}
+					else if (itype == Instype.bne)
+					{
+						sIns += A + "!=" + B + "," + ((short)IMM / 4) + "(" + (pos + 1 + ((short)IMM / 4)) + ")";
+					}
 					else if (itype == Instype.bltu || itype == Instype.blt)
 					{
 						sIns += A + "<" + B + "," + ((short)IMM / 4) + "(" + (pos + 1 + ((short)IMM / 4)) + ")";
 					}
 					else if (itype == Instype.call || itype == Instype.jmpi)
 					{
-						sIns += ((ins >> 6)) + "(" + (((ins >> 6)) - (phead.p_paddr / 4)) + ")";
+                        sIns += ((ins >> 6)) + "(" + (((ins >> 6)) - (baseaddr / 4)) + ")";
 					}
 					else
 					{
-						sIns += A + "," + B + "," + getHex4((int)IMM);
+						sIns += A + "," + B + "," + getHex4((int)IMM) + "--------------------------------------";
 					}
 				}
-				sb.Append(pos + " : " + sIns + "\r\n");
+				sb.Append(pos + "[" + hex + "]" + " : " + sIns + "\r\n");
 				pos++;
 			}
 			return sb.ToString();
