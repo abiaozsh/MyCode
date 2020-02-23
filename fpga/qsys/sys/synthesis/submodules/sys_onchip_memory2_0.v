@@ -35,7 +35,7 @@ module sys_onchip_memory2_0 (
                             )
 ;
 
-  parameter INIT_FILE = "sys_onchip_memory2_0.hex";
+  parameter INIT_FILE = "sys_onchip_memory2_0";
 
 
   output  [ 31: 0] readdata;
