@@ -65,6 +65,11 @@ set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 
+set_location_assignment PIN_T2 -to sys_clk
+set_location_assignment PIN_E4 -to led
+set_location_assignment PIN_Y13 -to key1
+set_location_assignment PIN_W13 -to key2
+
 set_location_assignment PIN_AB4 -to sdram_we_n
 set_location_assignment PIN_AB3 -to sdram_ras_n
 set_location_assignment PIN_AA3 -to sdram_cs_n
@@ -141,11 +146,6 @@ set_location_assignment PIN_R21 -to sdram2m_addr[7]
 set_location_assignment PIN_P21 -to sdram2m_addr[6]
 set_location_assignment PIN_N21 -to sdram2m_addr[5]
 set_location_assignment PIN_M21 -to sdram2m_addr[4]
-
-set_location_assignment PIN_T2 -to sys_clk
-set_location_assignment PIN_E4 -to led
-set_location_assignment PIN_Y13 -to key1
-set_location_assignment PIN_W13 -to key2
 
 
 set_location_assignment PIN_B21 -to segled_clk
