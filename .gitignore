@@ -12,3 +12,8 @@ obj
 release
 /fpga/uart_sdram_v2_test/PLLJ_PLLSPE_INFO.txt
 /fpga/uart_sdram_raspberrypi/*.qws
+/fpga/qsys_sdram/*.rpt
+/fpga/workspace/qsys/*.elf
+/fpga/workspace/qsys/*.objdump
+/fpga/qsys/*.rpt
+*.rpt
