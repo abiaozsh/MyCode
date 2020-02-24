@@ -37,7 +37,7 @@ module sdram(
     
     input             buffDMAread_req        ,
     output reg        buffDMAread_ack        ,
-    input      [15:0] buffDMAread_addr       ,
+    input      [15:0] buffDMAread_addr       ,//64k sub page * 256word = 16M word
     output            buffDMAread_clk        ,
     input             buffDMAread_A_B        ,
     output reg [15:0] buffDMAread_wrdata     ,

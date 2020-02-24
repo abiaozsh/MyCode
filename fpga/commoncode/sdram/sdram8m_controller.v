@@ -1,21 +1,21 @@
-module sdram2m_controller(
+module sdram8m_controller(
     input         clk,              //SDRAM控制器时钟，100MHz
     input         rst_n,            //系统复位信号，低电平有效
 
     // FPGA与SDRAM硬件接口
-    output        sdram_cke,        // SDRAM 时钟有效信号
-    output        sdram_cs_n,       // SDRAM 片选信号
-    output        sdram_ras_n,      // SDRAM 行地址选通脉冲
-    output        sdram_cas_n,      // SDRAM 列地址选通脉冲
-    output        sdram_we_n,       // SDRAM 写允许位
-    output reg    sdram_ba,         // SDRAM L-Bank地址线
-    output reg [10:0] sdram_addr,       // SDRAM 地址总线
-    inout  [15:0] sdram_data,        // SDRAM 数据总线
+    output            sdram_cke,        // SDRAM 时钟有效信号
+    output            sdram_cs_n,       // SDRAM 片选信号
+    output            sdram_ras_n,      // SDRAM 行地址选通脉冲
+    output            sdram_cas_n,      // SDRAM 列地址选通脉冲
+    output            sdram_we_n,       // SDRAM 写允许位
+    output reg  [1:0] sdram_ba,         // SDRAM L-Bank地址线 **
+    output reg [11:0] sdram_addr,       // SDRAM 地址总线 **
+    inout      [15:0] sdram_data,        // SDRAM 数据总线
     
      
     //SDRAM 控制器写端口  
-    input  [19:0] sdram_rw_addr,    //SDRAM写操作的地址
-    input         sdram_wr_req,     //写SDRAM请求信号
+    input  [21:0] sdram_rw_addr,    //SDRAM写操作的地址 **
+    input         sdram_wr_req,     //写SDRAM请求信号 
     output        sdram_wr_ack,     //写SDRAM响应信号
     input  [ 8:0] sdram_wr_burst,   //写sdram时数据突发长度
     input  [15:0] sdram_din,        //写入SDRAM的数据
@@ -349,107 +349,107 @@ localparam CMD_B_STOP  = 5'b10110; // BURST STOP
 assign {sdram_cke,sdram_cs_n,sdram_ras_n,sdram_cas_n,sdram_we_n} = sdram_cmd_r;
 
 //SDRAM 读/写地址总线控制
-wire [19:0] sys_addr;                   //SDRAM读写地址 
+wire [21:0] sys_addr;                   //SDRAM读写地址  **
 assign sys_addr = sdram_rw_addr;
 
 //SDRAM 操作指令控制
 always @ (posedge clk or negedge rst_n) begin
     if(!rst_n) begin
             sdram_cmd_r <= CMD_INIT;
-            sdram_ba    <= 1'b1;
-            sdram_addr  <= 11'h7ff;
+            sdram_ba    <= 2'b11; // **
+            sdram_addr  <= 12'hfff; // **
     end
     else
         case(init_state)
                                         //初始化过程中,以下状态不执行任何指令
             I_NOP,I_TRP,I_TRF,I_TRSC: begin
                     sdram_cmd_r <= CMD_NOP;
-                    sdram_ba    <= 1'b1;
-                    sdram_addr  <= 11'h7ff;    
+                    sdram_ba    <= 2'b11; // **
+                    sdram_addr  <= 12'hfff; // **
                 end
             I_PRE: begin               //预充电指令
                     sdram_cmd_r <= CMD_PRGE;
-                    sdram_ba    <= 1'b1;
-                    sdram_addr  <= 11'h7ff;
+                    sdram_ba    <= 2'b11; // **
+                    sdram_addr  <= 12'hfff; // **
                 end 
             I_AR: begin
                                         //自动刷新指令
                     sdram_cmd_r <= CMD_A_REF;
-                    sdram_ba    <= 1'b1;
-                    sdram_addr  <= 11'h7ff;
+                    sdram_ba    <= 2'b11; // **
+                    sdram_addr  <= 12'hfff; // **
                 end                 
             I_MRS: begin               //模式寄存器设置指令
                     sdram_cmd_r <= CMD_LMR;
-                    sdram_ba    <= 1'b0;
+                    sdram_ba    <= 2'b00; // **
                     sdram_addr  <= {    //利用地址线设置模式寄存器,可根据实际需要进行修改
-                        1'b0,         //预留
+                        2'b00,         //预留 **
                         1'b0,           //读写方式 A9=0，突发读&突发写
                         2'b00,          //默认，{A8,A7}=00
                         3'b011,         //CAS潜伏期设置，这里设置为3，{A6,A5,A4}=011
                         1'b0,           //突发传输方式，这里设置为顺序，A3=0
-                        3'b111          //突发长度，     页突发3'b111，{A2,A1,A0}=011    ***********************************************************************************************
+                        3'b111          //突发长度，     页突发3'b111，{A2,A1,A0}=011    ///////////////////////////////////////////////////////////////////////////////////////////
                     };
                 end 
             I_DONE:                    //SDRAM初始化完成
                     case(work_state)    //以下工作状态不执行任何指令
                         W_IDLE,W_TRCD,W_CL,W_TWR,W_TRP,W_TRFC: begin
                                 sdram_cmd_r <= CMD_NOP;
-                                sdram_ba    <= 1'b1;
-                                sdram_addr  <= 11'h7ff;
+                                sdram_ba    <= 2'b11; // **
+                                sdram_addr  <= 12'hfff; // **
                             end
                         W_ACTIVE: begin//行有效指令
                                 sdram_cmd_r <= CMD_ACTIVE;
-                                sdram_ba    <= sys_addr[19];
-                                sdram_addr  <= sys_addr[18:8];
+                                sdram_ba    <= sys_addr[21:20];// **
+                                sdram_addr  <= sys_addr[19:8];// **
                             end
                         W_READ: begin  //读操作指令
                                 sdram_cmd_r <= CMD_READ;
-                                sdram_ba    <= sys_addr[19];
-                                sdram_addr  <= {3'b000,sys_addr[7:0]};//sdram_addr  <= 11'b100 0000 0000; 高电平 允许自动预充电
+                                sdram_ba    <= sys_addr[21:20];// **
+                                sdram_addr  <= {4'b0000,sys_addr[7:0]};//sdram_addr  <= 11'b100 0000 0000; 高电平 允许自动预充电 **
                             end
                         W_RD: begin    //突发传输终止指令
-                                if(cnt_clk == sdram_rd_burst-4) 
+                                if(cnt_clk == sdram_rd_burst-4) begin
                                     sdram_cmd_r <= CMD_B_STOP;
-                                else begin
+                                end else begin
                                     sdram_cmd_r <= CMD_NOP;
-                                    sdram_ba    <= 1'b1;
-                                    sdram_addr  <= 11'h7ff;
+                                    sdram_ba    <= 2'b11; // **
+                                    sdram_addr  <= 12'hfff; // **
                                 end
                             end                             
                         W_WRITE: begin //写操作指令
                                 sdram_cmd_r <= CMD_WRITE;
-                                sdram_ba    <= sys_addr[19];
-                                sdram_addr  <= {3'b000,sys_addr[7:0]};//sdram_addr  <= 13'h0400; 高电平 允许自动预充电
+                                sdram_ba    <= sys_addr[21:20]; // **
+                                sdram_addr  <= {4'b0000,sys_addr[7:0]};//sdram_addr  <= 13'h0400; 高电平 允许自动预充电 **
                             end     
                         W_WD: begin    //突发传输终止指令
                                 if(cnt_clk == sdram_wr_burst-1) 
                                     sdram_cmd_r <= CMD_B_STOP;
                                 else begin
                                     sdram_cmd_r <= CMD_NOP;
-                                    sdram_ba    <= 1'b1;
-                                    sdram_addr  <= 11'h7ff;
+                                    sdram_ba    <= 2'b11; // **
+                                    sdram_addr  <= 12'hfff; // **
                                 end
                             end
                         W_PRE:begin    //预充电指令
                                 sdram_cmd_r <= CMD_PRGE;
-                                sdram_ba    <= sys_addr[19];
-                                sdram_addr  <= 11'h000;//sdram_addr  <= 11'h0400; 高电平 允许自动预充电
+                                sdram_ba    <= sys_addr[21:20];// **
+                                sdram_addr  <= 12'h000;//sdram_addr  <= 11'h0400; 高电平 允许自动预充电  **
                             end
                         W_AR: begin    //自动刷新指令
                                 sdram_cmd_r <= CMD_A_REF;
-                                sdram_ba    <= 1'b1;
-                                sdram_addr  <= 11'h7ff;
+                                sdram_ba    <= 2'b11; // **
+                                sdram_addr  <= 12'hfff; // **
                             end
                         default: begin
                                 sdram_cmd_r <= CMD_NOP;
-                                sdram_ba    <= 1'b1;
-                                sdram_addr  <= 11'h7ff;
+                                sdram_ba    <= 2'b11; // **
+                                sdram_addr  <= 12'hfff; // **
                             end
                     endcase
             default: begin
                     sdram_cmd_r <= CMD_NOP;
-                    sdram_ba    <= 1'b1;
-                    sdram_addr  <= 11'h7ff;
+                    sdram_ba    <= 2'b11; // **
+                    sdram_addr  <= 12'hfff; // **
                 end
         endcase
 end
