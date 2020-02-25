@@ -109,7 +109,7 @@ always @(posedge cy_A3_WU2 or negedge sys_rst_n) begin
   end else begin
     if         (cy_rec_cnt==0)begin
       if(cy_A0_INT0)begin// && !cy_rec_req
-				cy_rec_req <= 0;
+        cy_rec_req <= 0;
         cy_rec_cnt<=1;
       end
     end else if(cy_rec_cnt==1 )begin cy_cmd[0] <= cy_A0_INT0;cy_rec_cnt<=2;
@@ -373,11 +373,11 @@ test test1(
     .sys_clk(sys_clk),
     .sys_rst_n(sys_rst_n),
 
-		.switch(switch1),
-		.value(value1),
-		.bus(bus),
-		.val(val1)
-		);
+    .switch(switch1),
+    .value(value1),
+    .bus(bus),
+    .val(val1)
+    );
 
 reg switch2;
 reg value2;
@@ -385,11 +385,11 @@ test test2(
     .sys_clk(sys_clk),
     .sys_rst_n(sys_rst_n),
 
-		.switch(switch2),
-		.value(value2),
-		.bus(bus),
-		.val(val2)
-		);
+    .switch(switch2),
+    .value(value2),
+    .bus(bus),
+    .val(val2)
+    );
 
 */
 
@@ -429,18 +429,18 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     
     transfer_req <= 0;
     transfer_ack_buff <= 0;
-		
-		transfer_pages0<=0;
-		transfer_pages1<=0;
-		
-		DMA_src_page<=0;
-		DMA_des_page<=0;
+    
+    transfer_pages0<=0;
+    transfer_pages1<=0;
+    
+    DMA_src_page<=0;
+    DMA_des_page<=0;
 
   end else begin
     blanking_buff <= blanking;
     blanking_last <= blanking_buff;
     transfer_ack_buff <= transfer_ack;
-		
+    
     if(cy_snd_ack)begin
       cy_snd_req <= 0;
     end
@@ -454,9 +454,11 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 
       end else if (command == 8'h10) begin cy_data0<=cy_dat; command_done<=1;
       end else if (command == 8'h11) begin cy_data1<=cy_dat; command_done<=1;
+      
       end else if (command == 8'h12) begin cy_address0<=cy_dat; command_done<=1;
       end else if (command == 8'h13) begin cy_address1<=cy_dat; command_done<=1;
       end else if (command == 8'h14) begin cy_address2<=cy_dat; command_done<=1;
+      
       end else if (command == 8'h15) begin transfer_pages0<=cy_dat; command_done<=1;
       end else if (command == 8'h16) begin transfer_pages1<=cy_dat; command_done<=1;
 
@@ -469,14 +471,17 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       end else if (command == 8'h1B) begin DMA_page_length[7:0] <=cy_dat; command_done<=1;
       end else if (command == 8'h1C) begin DMA_page_length[11:8]<=cy_dat[3:0]; command_done<=1;
 
-			//ack test
-			end else if (command == 8'h30) begin
-				cy_snd_req <= 1;
-				cy_snd_data0 <= 8'h12;
-				cy_snd_data1 <= cy_dat;
-				command_done<=1;
+      end else if (command == 8'h1D) begin read_line_base_addr[7:0] <=cy_dat; command_done<=1;
+      end else if (command == 8'h1E) begin read_line_base_addr[11:8]<=cy_dat[3:0]; command_done<=1;
 
-			//bus test
+      //ack test
+      end else if (command == 8'h30) begin
+        cy_snd_req <= 1;
+        cy_snd_data0 <= 8'h12;
+        cy_snd_data1 <= cy_dat;
+        command_done<=1;
+
+      //bus test
       //end else if (command == 8'h40) begin switch1<=0; command_done<=1;
       //end else if (command == 8'h41) begin switch1<=1; command_done<=1;
       //end else if (command == 8'h42) begin switch2<=0; command_done<=1;
@@ -955,16 +960,16 @@ wire [15:0] sdram8m_buffDMAWriteB_data;         //input [15:0]
 wire  [7:0] sdram8m_buffDMAWriteB_addr;         //input  [7:0] 
 wire        sdram8m_buffDMAWriteB_en  ;         //input        
 
-wire         sdram8m_read_buffA_req      ;//input read_buffA_req,
-wire         sdram8m_read_buffB_req      ;//input read_buffB_req,
-wire  [11:0] sdram8m_read_buff_addr      ;//input [9:0] read_buff_addr,
 
-wire  [15:0] sdram8m_buff_buff_readA_data;//output [15:0] buff_readA_data,
-wire   [9:0] sdram8m_buff_buff_readA_addr;//input [9:0]   buff_readA_addr,
-wire         sdram8m_buff_buff_readA_clk ;//input         buff_readA_clk,
-wire  [15:0] sdram8m_buff_buff_readB_data;//output [15:0] buff_readB_data,
-wire   [9:0] sdram8m_buff_buff_readB_addr;//input [9:0]   buff_readB_addr,
-wire         sdram8m_buff_buff_readB_clk ;//input         buff_readB_clk,
+
+wire        read_line_req         ;//input read_buffA_req,
+wire        read_line_A_B         ;//input read_buffB_req,
+wire [11:0] read_line_addr        ;//input [9:0] read_buff_addr,
+reg  [11:0] read_line_base_addr   ;//input [9:0] read_buff_addr,
+wire [15:0] read_pixelA_data      ;//output [15:0] buff_readA_data,
+wire [15:0] read_pixelB_data      ;//output [15:0] buff_readB_data,
+wire  [9:0] read_pixel_addr       ;//input [9:0]   buff_readB_addr,
+wire        read_pixel_clk        ;//input         buff_readB_clk,
 
 wire sdram8m_busy;
 
@@ -1007,17 +1012,13 @@ sdram8m ins_sdram8m(
 .buffDMAWriteB_addr(sdram8m_buffDMAWriteB_addr),         //input  [7:0] 
 .buffDMAWriteB_en  (sdram8m_buffDMAWriteB_en  ),         //input        
     
-
-    
-.read_buff_req  (sdram8m_read_buff_req),//input read_buffA_req,
-.read_buff_A_B  (sdram8m_read_buff_A_B),//input read_buffB_req,
-.read_buff_addr (sdram8m_read_buff_addr),//input [9:0] read_buff_addr,
-.buff_readA_data(sdram8m_buff_buff_readA_data),//output [15:0] buff_readA_data,
-.buff_readA_addr(sdram8m_buff_buff_readA_addr),//input [9:0]   buff_readA_addr,
-.buff_readA_clk (sdram8m_buff_buff_readA_clk ),//input         buff_readA_clk,
-.buff_readB_data(sdram8m_buff_buff_readB_data),//output [15:0] buff_readB_data,
-.buff_readB_addr(sdram8m_buff_buff_readB_addr),//input [9:0]   buff_readB_addr,
-.buff_readB_clk (sdram8m_buff_buff_readB_clk ),//input         buff_readB_clk,
+.read_line_req   (read_line_req       ),//input read_buffA_req,
+.read_line_A_B   (read_line_A_B       ),//input read_buffB_req,
+.read_line_addr  (read_line_addr      ),//input [9:0] read_buff_addr,
+.read_pixelA_data(read_pixelA_data    ),//output [15:0] buff_readA_data,
+.read_pixelB_data(read_pixelB_data    ),//output [15:0] buff_readB_data,
+.read_pixel_addr (read_pixel_addr     ),//input [9:0]   buff_readB_addr,
+.read_pixel_clk  (read_pixel_clk      ),//input         buff_readB_clk,
 
 .busy(sdram8m_busy)
 );
@@ -1025,7 +1026,7 @@ sdram8m ins_sdram8m(
 
 
 reg blockvga;
-vga_driver u_vga_driver(
+vga_driver8m u_vga_driver8m(
     .sys_clk        (sys_clk),
     .sys_rst_n      (sys_rst_n),
 
@@ -1033,21 +1034,20 @@ vga_driver u_vga_driver(
     .vga_mode(vga_mode),
     .blanking(blanking),
     
-    .read_buff_req  (sdram8m_read_buff_req       ),
-    .read_buff_A_B  (sdram8m_read_buff_A_B       ),
-    .read_buff_addr (sdram8m_read_buff_addr      ),
-    .buff_readA_data(sdram8m_buff_buff_readA_data),
-    .buff_readA_addr(sdram8m_buff_buff_readA_addr),
-    .buff_readA_clk (sdram8m_buff_buff_readA_clk ),
-    .buff_readB_data(sdram8m_buff_buff_readB_data),
-    .buff_readB_addr(sdram8m_buff_buff_readB_addr),
-    .buff_readB_clk (sdram8m_buff_buff_readB_clk ),
+    .read_line_req       (read_line_req       ),
+    .read_line_A_B       (read_line_A_B       ),
+    .read_line_addr      (read_line_addr      ),
+    .read_line_base_addr (read_line_base_addr ),
+    
+    .read_pixelA_data    (read_pixelA_data    ),
+    .read_pixelB_data    (read_pixelB_data    ),
+    .read_pixel_addr     (read_pixel_addr     ),
+    .read_pixel_clk      (read_pixel_clk      ),
     
     .vga_hs         (vga_hs),
     .vga_vs         (vga_vs),
     .vga_rgb        (vga_rgb)
     ); 
-    
 
 endmodule
 
@@ -1059,11 +1059,11 @@ module cpu(
     input  sys_clk  ,
     input  sys_rst_n,
 
-		output [31:0] bus_address,
-		inout  [15:0] bus_data,
-		output        bus_rw,// 0: device -> cpu     1:cpu -> device
-		input         bus_data_valid,
-		input         bus_write_ack
+    output [31:0] bus_address,
+    inout  [15:0] bus_data,
+    output        bus_rw,// 0: device -> cpu     1:cpu -> device
+    input         bus_data_valid,
+    input         bus_write_ack
 );
 
 reg [15:0] cs;
@@ -1096,14 +1096,14 @@ module test(
     input  sys_clk  ,
     input  sys_rst_n,
 
-		
-		
-		
-		input switch,
-		input value,
-		inout bus,
-		output val
-		);
+    
+    
+    
+    input switch,
+    input value,
+    inout bus,
+    output val
+    );
 
 reg myswitch;
 reg myvalue;
@@ -1114,13 +1114,13 @@ assign val = myval;
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
-		myswitch = 0;
-		myvalue = 0;
-		myval = 0;
+    myswitch = 0;
+    myvalue = 0;
+    myval = 0;
   end else begin
-		myswitch = switch;
-		myvalue = value;
-		myval = bus;
+    myswitch = switch;
+    myvalue = value;
+    myval = bus;
   end
 end
 

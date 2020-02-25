@@ -307,7 +307,7 @@ set_location_assignment PIN_C2 -to vga_rgb[14]
 
 
 set_global_assignment -name QIP_FILE ../commoncode/sdram/pll_2m.qip
-set_global_assignment -name VERILOG_FILE ../commoncode/vga/vga_driver.v
+set_global_assignment -name VERILOG_FILE ../commoncode/vga/vga_driver8m.v
 set_global_assignment -name VERILOG_FILE ../commoncode/vga/vga_pll.v
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/pll_clk.v
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram_controller.v
