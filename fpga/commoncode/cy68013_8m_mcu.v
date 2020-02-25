@@ -960,10 +960,10 @@ wire         sdram8m_read_buffB_req      ;//input read_buffB_req,
 wire  [11:0] sdram8m_read_buff_addr      ;//input [9:0] read_buff_addr,
 
 wire  [15:0] sdram8m_buff_buff_readA_data;//output [15:0] buff_readA_data,
-wire   [7:0] sdram8m_buff_buff_readA_addr;//input [7:0]   buff_readA_addr,
+wire   [9:0] sdram8m_buff_buff_readA_addr;//input [9:0]   buff_readA_addr,
 wire         sdram8m_buff_buff_readA_clk ;//input         buff_readA_clk,
 wire  [15:0] sdram8m_buff_buff_readB_data;//output [15:0] buff_readB_data,
-wire   [7:0] sdram8m_buff_buff_readB_addr;//input [7:0]   buff_readB_addr,
+wire   [9:0] sdram8m_buff_buff_readB_addr;//input [9:0]   buff_readB_addr,
 wire         sdram8m_buff_buff_readB_clk ;//input         buff_readB_clk,
 
 wire sdram8m_busy;
@@ -1013,10 +1013,10 @@ sdram8m ins_sdram8m(
 .read_buff_A_B  (sdram8m_read_buff_A_B),//input read_buffB_req,
 .read_buff_addr (sdram8m_read_buff_addr),//input [9:0] read_buff_addr,
 .buff_readA_data(sdram8m_buff_buff_readA_data),//output [15:0] buff_readA_data,
-.buff_readA_addr(sdram8m_buff_buff_readA_addr),//input [7:0]   buff_readA_addr,
+.buff_readA_addr(sdram8m_buff_buff_readA_addr),//input [9:0]   buff_readA_addr,
 .buff_readA_clk (sdram8m_buff_buff_readA_clk ),//input         buff_readA_clk,
 .buff_readB_data(sdram8m_buff_buff_readB_data),//output [15:0] buff_readB_data,
-.buff_readB_addr(sdram8m_buff_buff_readB_addr),//input [7:0]   buff_readB_addr,
+.buff_readB_addr(sdram8m_buff_buff_readB_addr),//input [9:0]   buff_readB_addr,
 .buff_readB_clk (sdram8m_buff_buff_readB_clk ),//input         buff_readB_clk,
 
 .busy(sdram8m_busy)
