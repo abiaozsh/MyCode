@@ -395,6 +395,7 @@ test test2(
 
 
 
+reg sdram8m_isDMA;
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
@@ -435,7 +436,8 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     
     DMA_src_page<=0;
     DMA_des_page<=0;
-
+    sdram8m_isDMA <= 0;
+    
   end else begin
     blanking_buff <= blanking;
     blanking_last <= blanking_buff;
@@ -704,6 +706,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
               sdram_c_buffDMAread_A_B <= 0;
               sdram8m_buffDMAwrite_addr <= DMA_des_page + 16'hffff;//(page-1) 4096 page 1page=256word
               sdram8m_buffDMAwrite_A_B <= 1;
+              sdram8m_isDMA <= 1;
               timer12 <= 0;
             end
         end
@@ -712,9 +715,11 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
           inited <= 1;
           if(!inited)begin
             sdram_c_buffDMAread_req <= 1;
-            sdram8m_buffDMAwrite_req <= 1;
+						if(timer12!=0)begin
+							sdram8m_buffDMAwrite_req <= 1;
+						end
           end else begin
-            if(sdram_c_buffDMAread_req && sdram8m_buffDMAwrite_req && sdram_c_buffDMAread_ack && sdram8m_buffDMAwrite_ack)begin
+            if(sdram_c_buffDMAread_req && (sdram8m_buffDMAwrite_req || timer12==0) && sdram_c_buffDMAread_ack && (sdram8m_buffDMAwrite_ack || timer12==0) )begin
               sdram_c_buffDMAread_req <= 0;
               sdram8m_buffDMAwrite_req <= 0;
               sdram_c_buffDMAread_addr <= sdram_c_buffDMAread_addr + 1'b1;
@@ -726,13 +731,14 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
                 blockvga <= 0;
                 inited <= 0;
                 start <= 0;
+                sdram8m_isDMA <= 0;
                 command_done <= 1;
                 cy_snd_req <= 1;
                 cy_snd_data0 <= 8'h12;//ack
                 cy_snd_data1 <= 8'h34;
               end
             end
-            if(!sdram_c_buffDMAread_req && !sdram8m_buffDMAwrite_req && !sdram_c_buffDMAread_ack && !sdram8m_buffDMAwrite_ack)begin
+            if(!sdram_c_buffDMAread_req && !(sdram8m_buffDMAwrite_req  || timer12==0) && !sdram_c_buffDMAread_ack && !(sdram8m_buffDMAwrite_ack  || timer12==0) )begin
               inited <= 0;
             end
           end
@@ -778,21 +784,11 @@ wire        sdram_c_buffDMAreadA_wren;  // output reg
 wire        sdram_c_buffDMAreadB_wren;  // output reg        
 
 //直连
-//assign sdram2m_buffDMAWrite_clk = sdram_c_buffDMAread_clk;
-//assign sdram2m_buffDMAWriteA_data = sdram_c_buffDMAread_wrdata;
-//assign sdram2m_buffDMAWriteA_addr = sdram_c_buffDMAread_wraddress;
-//assign sdram2m_buffDMAWriteB_data = sdram_c_buffDMAread_wrdata;
-//assign sdram2m_buffDMAWriteB_addr = sdram_c_buffDMAread_wraddress;
-//assign sdram2m_buffDMAWriteA_en = sdram_c_buffDMAreadA_wren;
-//assign sdram2m_buffDMAWriteB_en = sdram_c_buffDMAreadB_wren;
-
-assign sdram8m_buffDMAWrite_clk   = sdram_c_buffDMAread_clk;
-assign sdram8m_buffDMAWriteA_data = sdram_c_buffDMAread_wrdata;
-assign sdram8m_buffDMAWriteA_addr = sdram_c_buffDMAread_wraddress;
-assign sdram8m_buffDMAWriteB_data = sdram_c_buffDMAread_wrdata;
-assign sdram8m_buffDMAWriteB_addr = sdram_c_buffDMAread_wraddress;
-assign sdram8m_buffDMAWriteA_en   = sdram_c_buffDMAreadA_wren;
-assign sdram8m_buffDMAWriteB_en   = sdram_c_buffDMAreadB_wren;
+assign sdram8m_buffDMAWrite_clk    = sdram_c_buffDMAread_clk;
+assign sdram8m_buffDMAWriteAB_data = sdram_c_buffDMAread_wrdata;
+assign sdram8m_buffDMAWriteAB_addr = sdram_c_buffDMAread_wraddress;
+assign sdram8m_buffDMAWriteA_en    = sdram_c_buffDMAreadA_wren;
+assign sdram8m_buffDMAWriteB_en    = sdram_c_buffDMAreadB_wren;
 
 assign sdram_clk = control_by_transfer ? cy_IFCLK : sys_clk;
 assign sdram_c_data_in = control_by_transfer ? sdram_c_data_in_trans : sdram_c_data_in_norm;
@@ -840,100 +836,6 @@ sdram ins_sdram(
 );
 
 
-//reg  [19:0] sdram2m_c_address;
-//reg  [15:0] sdram2m_c_data_in;
-//wire [15:0] sdram2m_c_data_out;
-//reg         sdram2m_c_read_req;
-//wire        sdram2m_c_read_ack;
-//reg         sdram2m_c_write_req;
-//wire        sdram2m_c_write_ack;
-//reg         sdram2m_c_write_en;
-//reg         sdram2m_c_write_latch_address;
-//
-//wire        sdram2m_read_buff_req;
-//wire        sdram2m_read_buff_A_B;
-//reg         sdram2m_buffDMAwrite_req  ;             //input        
-//reg [11:0]  sdram2m_buffDMAwrite_addr ;            //input [11:0] 
-//reg         sdram2m_buffDMAwrite_A_B  ;             //input        
-//wire        sdram2m_buffDMAwrite_ack  ;             //output reg   
-//
-//wire        sdram2m_buffDMAWrite_clk  ;         //input        
-//wire [15:0] sdram2m_buffDMAWriteA_data;         //input [15:0] 
-//wire  [7:0] sdram2m_buffDMAWriteA_addr;         //input  [7:0] 
-//wire        sdram2m_buffDMAWriteA_en  ;         //input        
-//wire [15:0] sdram2m_buffDMAWriteB_data;         //input [15:0] 
-//wire  [7:0] sdram2m_buffDMAWriteB_addr;         //input  [7:0] 
-//wire        sdram2m_buffDMAWriteB_en  ;         //input        
-//
-//wire         sdram2m_read_buffA_req;//input read_buffA_req,
-//wire         sdram2m_read_buffB_req;//input read_buffB_req,
-//wire   [9:0] sdram2m_read_buff_addr;//input [9:0] read_buff_addr,
-//wire  [15:0] sdram2m_buff_buff_readA_data;//output [15:0] buff_readA_data,
-//wire   [7:0] sdram2m_buff_buff_readA_addr;//input [7:0]   buff_readA_addr,
-//wire         sdram2m_buff_buff_readA_clk;//input         buff_readA_clk,
-//
-//wire [15:0]  sdram2m_buff_buff_readB_data;//output [15:0] buff_readB_data,
-//wire   [7:0] sdram2m_buff_buff_readB_addr;//input [7:0]   buff_readB_addr,
-//wire         sdram2m_buff_buff_readB_clk ;//input         buff_readB_clk,
-//
-//wire sdram2m_busy;
-//
-//sdram2m ins_sdram2m(
-//  .sys_clk    (sys_clk  ),       // 时钟信号
-//  .sys_rst_n  (sys_rst_n),       // 复位信号
-//
-//  //SDRAM 芯片接口
-//  .sdram_clk_out     (sdram2m_clk_out),
-//  .sdram_cke      (sdram2m_cke),    //SDRAM 时钟有效
-//  .sdram_cs_n      (sdram2m_cs_n),    //SDRAM 片选
-//  .sdram_ras_n    (sdram2m_ras_n),    //SDRAM 行有效  
-//  .sdram_cas_n    (sdram2m_cas_n),    //SDRAM 列有效
-//  .sdram_we_n      (sdram2m_we_n),    //SDRAM 写有效
-//  .sdram_ba        (sdram2m_ba),      //SDRAM Bank地址
-//  .sdram_addr      (sdram2m_addr),    //SDRAM 行/列地址
-//  .sdram_data      (sdram2m_data),    //SDRAM 数据  
-//
-//  .clk        (sys_clk),//in
-//  .address    (sdram2m_c_address),//in
-//  .data_in    (sdram2m_c_data_in),//in
-//  .data_out   (sdram2m_c_data_out),//out
-//  .read_req   (sdram2m_c_read_req),//in
-//  .read_ack   (sdram2m_c_read_ack),//out
-//  .write_req  (sdram2m_c_write_req),//in
-//  .write_ack  (sdram2m_c_write_ack),//out
-//  .write_en   (sdram2m_c_write_en),//in
-//  .write_latch_address(sdram2m_c_write_latch_address),//in
-//
-//.buffDMAwrite_req  (sdram2m_buffDMAwrite_req  ),             //input        
-//.buffDMAwrite_addr (sdram2m_buffDMAwrite_addr ),            //input [11:0] 
-//.buffDMAwrite_A_B  (sdram2m_buffDMAwrite_A_B  ),             //input        
-//.buffDMAwrite_ack  (sdram2m_buffDMAwrite_ack  ),             //output reg   
-//.buffDMAWrite_clk  (sdram2m_buffDMAWrite_clk  ),         //input        
-//
-//.buffDMAWriteA_data(sdram2m_buffDMAWriteA_data),         //input [15:0] 
-//.buffDMAWriteA_addr(sdram2m_buffDMAWriteA_addr),         //input  [7:0] 
-//.buffDMAWriteA_en  (sdram2m_buffDMAWriteA_en  ),         //input        
-//.buffDMAWriteB_data(sdram2m_buffDMAWriteB_data),         //input [15:0] 
-//.buffDMAWriteB_addr(sdram2m_buffDMAWriteB_addr),         //input  [7:0] 
-//.buffDMAWriteB_en  (sdram2m_buffDMAWriteB_en  ),         //input        
-//    
-//
-//    
-//.read_buff_req(sdram2m_read_buff_req),//input read_buffA_req,
-//.read_buff_A_B(sdram2m_read_buff_A_B),//input read_buffB_req,
-//.read_buff_addr(sdram2m_read_buff_addr),//input [9:0] read_buff_addr,
-//
-//.buff_readA_data(sdram2m_buff_buff_readA_data),//output [15:0] buff_readA_data,
-//.buff_readA_addr(sdram2m_buff_buff_readA_addr),//input [7:0]   buff_readA_addr,
-//.buff_readA_clk (sdram2m_buff_buff_readA_clk ),//input         buff_readA_clk,
-//
-//.buff_readB_data(sdram2m_buff_buff_readB_data),//output [15:0] buff_readB_data,
-//.buff_readB_addr(sdram2m_buff_buff_readB_addr),//input [7:0]   buff_readB_addr,
-//.buff_readB_clk (sdram2m_buff_buff_readB_clk ),//input         buff_readB_clk,
-//
-//.busy(sdram2m_busy)
-//);
-
 
 reg  [21:0] sdram8m_c_address;
 reg  [15:0] sdram8m_c_data_in;
@@ -947,19 +849,16 @@ reg         sdram8m_c_write_latch_address;
 
 wire        sdram8m_read_buff_req;
 wire        sdram8m_read_buff_A_B;
-reg         sdram8m_buffDMAwrite_req  ;             //input        
-reg  [13:0] sdram8m_buffDMAwrite_addr ;            //input [13:0] 
-reg         sdram8m_buffDMAwrite_A_B  ;             //input        
-wire        sdram8m_buffDMAwrite_ack  ;             //output reg   
+reg         sdram8m_buffDMAwrite_req   ;             //input        
+reg  [13:0] sdram8m_buffDMAwrite_addr  ;            //input [13:0] 
+reg         sdram8m_buffDMAwrite_A_B   ;             //input        
+wire        sdram8m_buffDMAwrite_ack   ;             //output reg   
 
-wire        sdram8m_buffDMAWrite_clk  ;         //input        
-wire [15:0] sdram8m_buffDMAWriteA_data;         //input [15:0] 
-wire  [7:0] sdram8m_buffDMAWriteA_addr;         //input  [7:0] 
-wire        sdram8m_buffDMAWriteA_en  ;         //input        
-wire [15:0] sdram8m_buffDMAWriteB_data;         //input [15:0] 
-wire  [7:0] sdram8m_buffDMAWriteB_addr;         //input  [7:0] 
-wire        sdram8m_buffDMAWriteB_en  ;         //input        
-
+wire        sdram8m_buffDMAWrite_clk   ;         //input        
+wire [15:0] sdram8m_buffDMAWriteAB_data;         //input [15:0] 
+wire  [7:0] sdram8m_buffDMAWriteAB_addr;         //input  [7:0] 
+wire        sdram8m_buffDMAWriteA_en   ;         //input        
+wire        sdram8m_buffDMAWriteB_en   ;         //input        
 
 
 wire        read_line_req         ;//input read_buffA_req,
@@ -999,28 +898,27 @@ sdram8m ins_sdram8m(
   .write_en           (sdram8m_c_write_en),//in
   .write_latch_address(sdram8m_c_write_latch_address),//in
 
-.buffDMAwrite_req  (sdram8m_buffDMAwrite_req  ),             //input        
-.buffDMAwrite_addr (sdram8m_buffDMAwrite_addr ),            //input [11:0] 
-.buffDMAwrite_A_B  (sdram8m_buffDMAwrite_A_B  ),             //input        
-.buffDMAwrite_ack  (sdram8m_buffDMAwrite_ack  ),             //output reg   
-.buffDMAWrite_clk  (sdram8m_buffDMAWrite_clk  ),         //input        
+  .buffDMAwrite_req   (sdram8m_buffDMAwrite_req   ),             //input        
+  .buffDMAwrite_addr  (sdram8m_buffDMAwrite_addr  ),            //input [11:0] 
+  .buffDMAwrite_A_B   (sdram8m_buffDMAwrite_A_B   ),             //input        
+  .buffDMAwrite_ack   (sdram8m_buffDMAwrite_ack   ),             //output reg   
+  .buffDMAWrite_clk   (sdram8m_buffDMAWrite_clk   ),         //input        
+                                                  
+  .buffDMAWriteAB_data(sdram8m_buffDMAWriteAB_data),         //input [15:0] 
+  .buffDMAWriteAB_addr(sdram8m_buffDMAWriteAB_addr),         //input  [7:0] 
+  .buffDMAWriteA_en   (sdram8m_buffDMAWriteA_en   ),         //input        
+  .buffDMAWriteB_en   (sdram8m_buffDMAWriteB_en   ),         //input        
+      
+  .read_line_req   (read_line_req       ),//input read_buffA_req,
+  .read_line_A_B   (read_line_A_B       ),//input read_buffB_req,
+  .read_line_addr  (read_line_addr      ),//input [9:0] read_buff_addr,
+  .read_pixelA_data(read_pixelA_data    ),//output [15:0] buff_readA_data,
+  .read_pixelB_data(read_pixelB_data    ),//output [15:0] buff_readB_data,
+  .read_pixel_addr (read_pixel_addr     ),//input [9:0]   buff_readB_addr,
+  .read_pixel_clk  (read_pixel_clk      ),//input         buff_readB_clk,
 
-.buffDMAWriteA_data(sdram8m_buffDMAWriteA_data),         //input [15:0] 
-.buffDMAWriteA_addr(sdram8m_buffDMAWriteA_addr),         //input  [7:0] 
-.buffDMAWriteA_en  (sdram8m_buffDMAWriteA_en  ),         //input        
-.buffDMAWriteB_data(sdram8m_buffDMAWriteB_data),         //input [15:0] 
-.buffDMAWriteB_addr(sdram8m_buffDMAWriteB_addr),         //input  [7:0] 
-.buffDMAWriteB_en  (sdram8m_buffDMAWriteB_en  ),         //input        
-    
-.read_line_req   (read_line_req       ),//input read_buffA_req,
-.read_line_A_B   (read_line_A_B       ),//input read_buffB_req,
-.read_line_addr  (read_line_addr      ),//input [9:0] read_buff_addr,
-.read_pixelA_data(read_pixelA_data    ),//output [15:0] buff_readA_data,
-.read_pixelB_data(read_pixelB_data    ),//output [15:0] buff_readB_data,
-.read_pixel_addr (read_pixel_addr     ),//input [9:0]   buff_readB_addr,
-.read_pixel_clk  (read_pixel_clk      ),//input         buff_readB_clk,
-
-.busy(sdram8m_busy)
+  .isDMA (sdram8m_isDMA),
+  .busy(sdram8m_busy)
 );
 
 

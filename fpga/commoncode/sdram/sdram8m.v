@@ -33,17 +33,15 @@ module sdram8m(
     input write_latch_address,
     input write_en,//写入过程中保持高,要从8字前边界开始写，地址0x00,0x08,0x10...,否则会覆盖原有数据
 
-    input        buffDMAwrite_req  ,
-    input [13:0] buffDMAwrite_addr ,//14+8 **
-    input        buffDMAwrite_A_B  ,
-    output reg   buffDMAwrite_ack  ,
-    input        buffDMAWrite_clk  ,
-    input [15:0] buffDMAWriteA_data,
-    input  [7:0] buffDMAWriteA_addr,//8bit 256 word sub page
-    input        buffDMAWriteA_en  ,
-    input [15:0] buffDMAWriteB_data,
-    input  [7:0] buffDMAWriteB_addr,//8bit 256 word sub page
-    input        buffDMAWriteB_en  ,
+    input        buffDMAwrite_req   ,
+    input [13:0] buffDMAwrite_addr  ,//14+8 **
+    input        buffDMAwrite_A_B   ,
+    output reg   buffDMAwrite_ack   ,
+    input        buffDMAWrite_clk   ,
+    input [15:0] buffDMAWriteAB_data,
+    input  [7:0] buffDMAWriteAB_addr,//8bit 256 word sub page
+    input        buffDMAWriteA_en   ,
+    input        buffDMAWriteB_en   ,
 
     input         read_line_req  ,
     input         read_line_A_B  ,
@@ -54,61 +52,62 @@ module sdram8m(
     input   [9:0] read_pixel_addr ,//10bit 1024word per line
     input         read_pixel_clk  ,
 
+    input         isDMA,
+    
     output reg busy
 );
 
 
 wire  [7:0] buffDMAWrite_address;
 assign buffDMAWrite_address = sdram_timer2[7:0];
-wire [15:0] buffDMAWriteA_q;
-buff256x16  buffDMAWriteA (
-  .data      ( buffDMAWriteA_data ),
-  .wraddress ( buffDMAWriteA_addr ),
-  .wrclock   ( buffDMAWrite_clk   ),
-  .wren      ( buffDMAWriteA_en   ),
-
-  .rdaddress ( buffDMAWrite_address ),
-  .rdclock   ( sdram_clk ),
-  .q         ( buffDMAWriteA_q )
-);
-
-wire [15:0] buffDMAWriteB_q;
-buff256x16  buffDMAWriteB (
-  .data      ( buffDMAWriteB_data ),
-  .wraddress ( buffDMAWriteB_addr ),
-  .wrclock   ( buffDMAWrite_clk   ),
-  .wren      ( buffDMAWriteB_en   ),
-
-  .rdaddress ( buffDMAWrite_address ),
-  .rdclock   ( sdram_clk ),
-  .q         ( buffDMAWriteB_q )
-);
 
 reg [15:0] buffAB_wrdata;
 reg [9:0]  buffAB_wraddress;
-
 reg        buffA_wren;
-buff1024x16  buffReadA (
-  .data ( buffAB_wrdata ),
-  .wraddress ( buffAB_wraddress ),
-  .wrclock ( sdram_clk ),
-  .wren ( buffA_wren ),
-
-  .rdaddress ( read_pixel_addr ),
-  .rdclock ( read_pixel_clk ),
-  .q ( read_pixelA_data )
-);
-
 reg        buffB_wren;
-buff1024x16  buffReadB (
-  .data ( buffAB_wrdata ),
-  .wraddress ( buffAB_wraddress ),
-  .wrclock ( sdram_clk ),
-  .wren ( buffB_wren ),
 
-  .rdaddress ( read_pixel_addr ),
-  .rdclock ( read_pixel_clk ),
-  .q ( read_pixelB_data )
+wire [15:0] data      ;
+wire  [9:0] wraddress ;
+wire  [9:0] rdaddress ;
+wire        wrclock   ;
+wire        rdclock   ;
+wire        wrenA     ;
+wire        wrenB     ;
+
+assign data       = isDMA ? buffDMAWriteAB_data          : buffAB_wrdata    ;
+assign wraddress  = isDMA ? {2'b00,buffDMAWriteAB_addr}  : buffAB_wraddress ;
+assign rdaddress  = isDMA ? {2'b00,buffDMAWrite_address} : read_pixel_addr  ;
+assign wrclock    = isDMA ? buffDMAWrite_clk             : sdram_clk        ;
+assign rdclock    = isDMA ? sdram_clk                    : read_pixel_clk   ;
+assign wrenA      = isDMA ? buffDMAWriteA_en             : buffA_wren       ;
+assign wrenB      = isDMA ? buffDMAWriteB_en             : buffB_wren       ;
+
+wire [15:0] buffDMAWriteA_q;
+wire [15:0] buffDMAWriteB_q;
+
+assign read_pixelA_data = qA;
+assign buffDMAWriteA_q  = qA;
+wire [15:0] qA;
+buff1024x16  buffReadA (
+  .data      ( data             ),
+  .wraddress ( wraddress        ),
+  .wrclock   ( wrclock          ),
+  .wren      ( wrenA            ),
+  .rdaddress ( rdaddress        ),
+  .rdclock   ( rdclock          ),
+  .q         ( qA               )
+);
+assign read_pixelB_data = qB;
+assign buffDMAWriteB_q  = qB;
+wire [15:0] qB;
+buff1024x16  buffReadB (
+  .data      ( data             ),
+  .wraddress ( wraddress        ),
+  .wrclock   ( wrclock          ),
+  .wren      ( wrenB            ),
+  .rdaddress ( rdaddress        ),
+  .rdclock   ( rdclock          ),
+  .q         ( qB               )
 );
 
 wire rst_n;
@@ -453,7 +452,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
           if(sdram_timer2==255)begin 
             sdram_page_delay <= 1;
             sdram_rd_req <= 0;
-          end else if(sdram_timer2==263)begin //TODO reduce
+          end else if(sdram_timer2==256)begin //263 TODO reduce
             sdram_timer0 <= 0;
             if(sdram_timer1 == 4)begin
               sdram_timer1 <= 0;
@@ -486,7 +485,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
           if(sdram_timer2==255)begin
             sdram_page_delay <= 1;
             sdram_wr_req <= 0;
-          end else if(sdram_timer2==263)begin //TODO reduce
+          end else if(sdram_timer2==256)begin //263 TODO reduce
             sdram_timer0 <= 0;
             buffDMAwrite_ack <= 1;
           end
