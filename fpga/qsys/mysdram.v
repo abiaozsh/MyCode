@@ -12,9 +12,9 @@
 module mysdram (
 		input  wire [23:0] avs_s0_address,     //    s0.address
 		input  wire        avs_s0_read,        //      .read
-		output wire [31:0] avs_s0_readdata,    //      .readdata
+		output wire [15:0] avs_s0_readdata,    //      .readdata
 		input  wire        avs_s0_write,       //      .write
-		input  wire [31:0] avs_s0_writedata,   //      .writedata
+		input  wire [15:0] avs_s0_writedata,   //      .writedata
 		output reg         avs_s0_waitrequest, //      .waitrequest
 		input  wire        clk,                // clock.clk
 		input  wire        reset_n,               // reset.reset
@@ -32,12 +32,12 @@ assign avs_s0_readdata = sramtemp_q;
 
 reg control_by_me;
 reg [24:0] my_address;
-reg [31:0] my_write_data;
+reg [15:0] my_write_data;
 reg 			 my_write;
 
-wire [31:0] sramtemp_q;
+wire [15:0] sramtemp_q;
 wire [10:0] sramtemp_address;
-wire [31:0] sramtemp_data;
+wire [15:0] sramtemp_data;
 wire        sramtemp_wren;
 assign sramtemp_address = control_by_me ? my_address[10:0] : avs_s0_address[10:0];
 assign sramtemp_data =    control_by_me ? my_write_data : avs_s0_writedata;     
@@ -113,9 +113,9 @@ always @(posedge clk or negedge reset_n) begin
   end
 end
 
-reg [31:0] addr_buff;
-reg [31:0] data_buff_to_pc;
-reg [31:0] data_buff_from_pc;
+reg [23:0] addr_buff;
+reg [15:0] data_buff_to_pc;
+reg [15:0] data_buff_from_pc;
 
 assign debug[0] = command!=0;
 assign debug[1] = command_done;
@@ -169,21 +169,12 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h10) begin addr_buff[ 7: 0]<=data; command_done<=1;
       end else if (command == 8'h11) begin addr_buff[15: 8]<=data; command_done<=1;
       end else if (command == 8'h12) begin addr_buff[23:16]<=data; command_done<=1;
-      end else if (command == 8'h13) begin addr_buff[31:24]<=data; command_done<=1;
+
       end else if (command == 8'h14) begin data_buff_from_pc[ 7: 0]<=data; command_done<=1;
       end else if (command == 8'h15) begin data_buff_from_pc[15: 8]<=data; command_done<=1;
-      end else if (command == 8'h16) begin data_buff_from_pc[23:16]<=data; command_done<=1;
-      end else if (command == 8'h17) begin data_buff_from_pc[31:24]<=data; command_done<=1;
 
       end else if (command == 8'h20) begin uart_send<=1; uart_data_in<=data_buff_to_pc[ 7: 0]; command_done<=1;
       end else if (command == 8'h21) begin uart_send<=1; uart_data_in<=data_buff_to_pc[15: 8]; command_done<=1;
-      end else if (command == 8'h22) begin uart_send<=1; uart_data_in<=data_buff_to_pc[23:16]; command_done<=1;
-      end else if (command == 8'h23) begin uart_send<=1; uart_data_in<=data_buff_to_pc[31:24]; command_done<=1;
-			
-      end else if (command == 8'h24) begin uart_send<=1; uart_data_in<=addr_buff[ 7: 0]; command_done<=1;
-      end else if (command == 8'h25) begin uart_send<=1; uart_data_in<=addr_buff[15: 8]; command_done<=1;
-      end else if (command == 8'h26) begin uart_send<=1; uart_data_in<=addr_buff[23:16]; command_done<=1;
-      end else if (command == 8'h27) begin uart_send<=1; uart_data_in<=addr_buff[31:24]; command_done<=1;
 
       end else if (command == 8'h40) begin reset_n_out<=1; command_done<=1;
       end else if (command == 8'h41) begin reset_n_out<=0; command_done<=1;

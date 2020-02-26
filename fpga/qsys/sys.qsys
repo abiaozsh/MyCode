@@ -24,7 +24,7 @@
    {
       datum baseAddress
       {
-         value = "67121216";
+         value = "33566784";
          type = "String";
       }
    }
@@ -32,7 +32,7 @@
    {
       datum baseAddress
       {
-         value = "67119104";
+         value = "33564672";
          type = "String";
       }
    }
@@ -76,11 +76,11 @@
          type = "int";
       }
    }
-   element onchip_memory2_0.s1
+   element mysdram_0.s0
    {
       datum baseAddress
       {
-         value = "67112960";
+         value = "0";
          type = "String";
       }
    }
@@ -93,15 +93,15 @@
       }
       datum baseAddress
       {
-         value = "67121200";
+         value = "33566768";
          type = "String";
       }
    }
-   element pio_1.s1
+   element onchip_memory2_0.s1
    {
       datum baseAddress
       {
-         value = "67121184";
+         value = "33558528";
          type = "String";
       }
    }
@@ -109,7 +109,15 @@
    {
       datum baseAddress
       {
-         value = "67121152";
+         value = "33566720";
+         type = "String";
+      }
+   }
+   element pio_1.s1
+   {
+      datum baseAddress
+      {
+         value = "33566752";
          type = "String";
       }
    }
@@ -144,7 +152,7 @@
  <parameter name="projectName" value="aaa.qpf" />
  <parameter name="sopcBorderPoints" value="false" />
  <parameter name="systemHash" value="1" />
- <parameter name="timeStamp" value="1582416379256" />
+ <parameter name="timeStamp" value="1582725183539" />
  <parameter name="useTestBenchNamingPattern" value="false" />
  <instanceScript></instanceScript>
  <interface name="clk" internal="clk_0.clk_in" type="clock" dir="end" />
@@ -265,8 +273,8 @@
   <parameter name="ocimem_ramBlockType" value="Automatic" />
   <parameter name="mmu_ramBlockType" value="Automatic" />
   <parameter name="bht_ramBlockType" value="Automatic" />
-  <parameter name="instAddrWidth" value="27" />
-  <parameter name="dataAddrWidth" value="27" />
+  <parameter name="instAddrWidth" value="26" />
+  <parameter name="dataAddrWidth" value="26" />
   <parameter name="tightlyCoupledDataMaster0AddrWidth" value="1" />
   <parameter name="tightlyCoupledDataMaster1AddrWidth" value="1" />
   <parameter name="tightlyCoupledDataMaster2AddrWidth" value="1" />
@@ -275,8 +283,8 @@
   <parameter name="tightlyCoupledInstructionMaster1AddrWidth" value="1" />
   <parameter name="tightlyCoupledInstructionMaster2AddrWidth" value="1" />
   <parameter name="tightlyCoupledInstructionMaster3AddrWidth" value="1" />
-  <parameter name="instSlaveMapParam"><![CDATA[<address-map><slave name='onchip_memory2_0.s1' start='0x4001000' end='0x4002000' /><slave name='nios2_qsys_0.jtag_debug_module' start='0x4002800' end='0x4003000' /></address-map>]]></parameter>
-  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='mysdram_0.s0' start='0x0' end='0x4000000' /><slave name='onchip_memory2_0.s1' start='0x4001000' end='0x4002000' /><slave name='nios2_qsys_0.jtag_debug_module' start='0x4002800' end='0x4003000' /><slave name='timer_0.s1' start='0x4003000' end='0x4003020' /><slave name='pio_1.s1' start='0x4003020' end='0x4003030' /><slave name='pio_0.s1' start='0x4003030' end='0x4003040' /><slave name='sysid_qsys_0.control_slave' start='0x4003040' end='0x4003048' /></address-map>]]></parameter>
+  <parameter name="instSlaveMapParam"><![CDATA[<address-map><slave name='onchip_memory2_0.s1' start='0x2001000' end='0x2002000' /><slave name='nios2_qsys_0.jtag_debug_module' start='0x2002800' end='0x2003000' /></address-map>]]></parameter>
+  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='mysdram_0.s0' start='0x0' end='0x2000000' /><slave name='onchip_memory2_0.s1' start='0x2001000' end='0x2002000' /><slave name='nios2_qsys_0.jtag_debug_module' start='0x2002800' end='0x2003000' /><slave name='timer_0.s1' start='0x2003000' end='0x2003020' /><slave name='pio_1.s1' start='0x2003020' end='0x2003030' /><slave name='pio_0.s1' start='0x2003030' end='0x2003040' /><slave name='sysid_qsys_0.control_slave' start='0x2003040' end='0x2003048' /></address-map>]]></parameter>
   <parameter name="clockFrequency" value="50000000" />
   <parameter name="deviceFamilyName" value="Cyclone IV E" />
   <parameter name="internalIrqMaskSystemInfo" value="1" />
@@ -378,7 +386,9 @@
   <parameter name="AUTO_CLK_CLOCK_RATE" value="50000000" />
   <parameter name="AUTO_DEVICE_FAMILY" value="Cyclone IV E" />
  </module>
- <module kind="mysdram" version="1.0" enabled="1" name="mysdram_0" />
+ <module kind="mysdram" version="1.0" enabled="1" name="mysdram_0">
+  <parameter name="AUTO_CLOCK_CLOCK_RATE" value="50000000" />
+ </module>
  <connection
    kind="reset"
    version="13.0"
@@ -396,7 +406,7 @@
    start="nios2_qsys_0.data_master"
    end="pio_0.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x04003030" />
+  <parameter name="baseAddress" value="0x02003030" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -410,7 +420,7 @@
    start="nios2_qsys_0.data_master"
    end="timer_0.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x04003000" />
+  <parameter name="baseAddress" value="0x02003000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection kind="reset" version="13.0" start="clk_0.clk_reset" end="pio_1.reset" />
@@ -420,7 +430,7 @@
    start="nios2_qsys_0.data_master"
    end="pio_1.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x04003020" />
+  <parameter name="baseAddress" value="0x02003020" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection kind="clock" version="13.0" start="clk_0.clk" end="pio_1.clk" />
@@ -444,7 +454,7 @@
    start="nios2_qsys_0.data_master"
    end="sysid_qsys_0.control_slave">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x04003040" />
+  <parameter name="baseAddress" value="0x02003040" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -460,7 +470,7 @@
    start="nios2_qsys_0.instruction_master"
    end="nios2_qsys_0.jtag_debug_module">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x04002800" />
+  <parameter name="baseAddress" value="0x02002800" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -469,7 +479,7 @@
    start="nios2_qsys_0.data_master"
    end="nios2_qsys_0.jtag_debug_module">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x04002800" />
+  <parameter name="baseAddress" value="0x02002800" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -488,7 +498,7 @@
    start="nios2_qsys_0.instruction_master"
    end="onchip_memory2_0.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x04001000" />
+  <parameter name="baseAddress" value="0x02001000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -497,9 +507,15 @@
    start="nios2_qsys_0.data_master"
    end="onchip_memory2_0.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x04001000" />
+  <parameter name="baseAddress" value="0x02001000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
+ <connection kind="clock" version="13.0" start="clk_0.clk" end="mysdram_0.clock" />
+ <connection
+   kind="reset"
+   version="13.0"
+   start="clk_0.clk_reset"
+   end="mysdram_0.reset" />
  <connection
    kind="avalon"
    version="13.0"
@@ -509,12 +525,6 @@
   <parameter name="baseAddress" value="0x0000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
- <connection kind="clock" version="13.0" start="clk_0.clk" end="mysdram_0.clock" />
- <connection
-   kind="reset"
-   version="13.0"
-   start="clk_0.clk_reset"
-   end="mysdram_0.reset" />
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
 </system>
