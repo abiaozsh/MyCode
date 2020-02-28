@@ -35,23 +35,20 @@ reg [24:0] my_address;
 reg [15:0] my_write_data;
 reg 			 my_write;
 
-wire [15:0] sramtemp_q;
-wire [10:0] sramtemp_address;
+wire [13:0] sramtemp_address;
 wire [15:0] sramtemp_data;
+wire [15:0] sramtemp_q;
 wire        sramtemp_wren;
-assign sramtemp_address = control_by_me ? my_address[10:0] : avs_s0_address[10:0];
+assign sramtemp_address = control_by_me ? my_address[13:0] : avs_s0_address[13:0];
 assign sramtemp_data =    control_by_me ? my_write_data : avs_s0_writedata;     
 assign sramtemp_wren =    control_by_me ? my_write : avs_s0_write;              
 
 
 
-
-sramtemp	sramtemp_inst (
+ram1p	ram1p_inst (
+	.address ( sramtemp_address ),
+	.clock ( clk ),
 	.data ( sramtemp_data ),
-	.rdaddress ( sramtemp_address ),
-	.rdclock ( clk ),
-	.wraddress ( sramtemp_address ),
-	.wrclock ( clk ),
 	.wren ( sramtemp_wren ),
 	.q ( sramtemp_q )
 	);

@@ -10,12 +10,13 @@
  </systemtable>
  <clocktable>
   <columns>
-   <clockname preferredWidth="711" />
-   <clocksource preferredWidth="709" />
-   <frequency preferredWidth="695" />
+   <clockname preferredWidth="725" />
+   <clocksource preferredWidth="723" />
+   <frequency preferredWidth="710" />
   </columns>
  </clocktable>
- <window width="2560" height="1412" x="614" y="87" />
- <library expandedCategories="Project,Library" />
+ <window width="2560" height="1412" x="0" y="0" />
+ <library
+   expandedCategories="Library/Memories and Memory Controllers/On-Chip,Library/Memories and Memory Controllers/External Memory Interfaces/RLDRAM II Interfaces,Library/Memories and Memory Controllers,Project/System,Library/Memories and Memory Controllers/External Memory Interfaces/Memory Models,Library/DSP,Project/Memories and Memory Controllers/External Memory Interfaces,Library/Verification,Library/Memories and Memory Controllers/External Memory Interfaces/LPDDR2 Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/QDR II Interfaces,Library/DSP/Video and Image Processing,Library/Memories and Memory Controllers/External Memory Interfaces/DDR Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/DDR3 Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces,Project/Memories and Memory Controllers,Library,Project,Library/Memories and Memory Controllers/External Memory Interfaces/DDR2 Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/RLDRAM 3 Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/SDRAM Interfaces,Library/Verification/Debug &amp; Performance" />
  <hdlexample language="VERILOG" />
 </preferences>
