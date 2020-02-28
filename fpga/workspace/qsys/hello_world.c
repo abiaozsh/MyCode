@@ -9,11 +9,8 @@ int main() {
 	while (1) {
 		int val = IORD(PIO_1_BASE, 0);
 
-		aa = IORD(0x0030, 0);
-
 		if(val != oldval){
 			data++;
-			IOWR(0x0030, 0, data);
 			IOWR(PIO_0_BASE, 0, data);
 		}
 		oldval = val;

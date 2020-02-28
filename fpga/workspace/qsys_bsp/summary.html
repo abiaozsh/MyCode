@@ -22,10 +22,10 @@
 <td width="20%" bgcolor="#77BBFF">BSP Version:</td><td>default</td>
 </tr>
 <tr mode="wrap">
-<td width="20%" bgcolor="#77BBFF">BSP Generated On:</td><td>2020-2-26 21:49:45</td>
+<td width="20%" bgcolor="#77BBFF">BSP Generated On:</td><td>2020-2-28 21:01:27</td>
 </tr>
 <tr mode="wrap">
-<td width="20%" bgcolor="#77BBFF">BSP Generated Timestamp:</td><td>1582724985619</td>
+<td width="20%" bgcolor="#77BBFF">BSP Generated Timestamp:</td><td>1582894887062</td>
 </tr>
 <tr mode="wrap">
 <td width="20%" bgcolor="#77BBFF">BSP Generated Location:</td><td>E:\MyCode.github\fpga\workspace\qsys_bsp</td>
@@ -38,22 +38,19 @@
 <th align="left" width="20%">Slave Descriptor</th><th align="left" width="40%">Address Range</th><th align="left" width="20%">Size</th><th align="left" width="20%">Attributes</th>
 </tr>
 <tr mode="wrap" STYLE="display: 'block'; font-family: 'courier'; color: '#000000'; font-weight: '500'; font-size: '14'; margin-top: '10pt'; text-align: 'left'">
-<td>sysid_qsys_0</td><td>0x02003040 - 0x02003047</td><td>8</td><td class="listing">&nbsp;</td>
+<td>sysid_qsys_0</td><td>0x04001040 - 0x04001047</td><td>8</td><td class="listing">&nbsp;</td>
 </tr>
 <tr mode="wrap" STYLE="display: 'block'; font-family: 'courier'; color: '#000000'; font-weight: '500'; font-size: '14'; margin-top: '10pt'; text-align: 'left'">
-<td>pio_0</td><td>0x02003030 - 0x0200303F</td><td>16</td><td class="listing">&nbsp;</td>
+<td>pio_0</td><td>0x04001030 - 0x0400103F</td><td>16</td><td class="listing">&nbsp;</td>
 </tr>
 <tr mode="wrap" STYLE="display: 'block'; font-family: 'courier'; color: '#000000'; font-weight: '500'; font-size: '14'; margin-top: '10pt'; text-align: 'left'">
-<td>pio_1</td><td>0x02003020 - 0x0200302F</td><td>16</td><td class="listing">&nbsp;</td>
+<td>pio_1</td><td>0x04001020 - 0x0400102F</td><td>16</td><td class="listing">&nbsp;</td>
 </tr>
 <tr mode="wrap" STYLE="display: 'block'; font-family: 'courier'; color: '#000000'; font-weight: '500'; font-size: '14'; margin-top: '10pt'; text-align: 'left'">
-<td>timer_0</td><td>0x02003000 - 0x0200301F</td><td>32</td><td class="listing">timer</td>
+<td>timer_0</td><td>0x04001000 - 0x0400101F</td><td>32</td><td class="listing">timer</td>
 </tr>
 <tr mode="wrap" STYLE="display: 'block'; font-family: 'courier'; color: '#000000'; font-weight: '500'; font-size: '14'; margin-top: '10pt'; text-align: 'left'">
-<td>onchip_memory2_0</td><td>0x02001000 - 0x02001FFF</td><td>4096</td><td class="listing">memory</td>
-</tr>
-<tr mode="wrap" STYLE="display: 'block'; font-family: 'courier'; color: '#000000'; font-weight: '500'; font-size: '14'; margin-top: '10pt'; text-align: 'left'">
-<td>mysdram_0</td><td>0x00000000 - 0x01FFFFFF</td><td>33554432</td><td class="listing">&nbsp;</td>
+<td>mysdram_0</td><td>0x02000000 - 0x02FFFFFF</td><td>16777216</td><td class="listing">memory</td>
 </tr>
 </table>
 <br>
@@ -72,22 +69,22 @@
 <th align="left" width="50%">Section</th><th align="left" width="50%">Region</th>
 </tr>
 <tr mode="wrap" STYLE="display: 'block'; font-family: 'courier'; color: '#000000'; font-weight: '500'; font-size: '14'; margin-top: '10pt'; text-align: 'left'">
-<td>.text</td><td>onchip_memory2_0</td>
+<td>.text</td><td>mysdram_0</td>
 </tr>
 <tr mode="wrap" STYLE="display: 'block'; font-family: 'courier'; color: '#000000'; font-weight: '500'; font-size: '14'; margin-top: '10pt'; text-align: 'left'">
-<td>.rodata</td><td>onchip_memory2_0</td>
+<td>.rodata</td><td>mysdram_0</td>
 </tr>
 <tr mode="wrap" STYLE="display: 'block'; font-family: 'courier'; color: '#000000'; font-weight: '500'; font-size: '14'; margin-top: '10pt'; text-align: 'left'">
-<td>.rwdata</td><td>onchip_memory2_0</td>
+<td>.rwdata</td><td>mysdram_0</td>
 </tr>
 <tr mode="wrap" STYLE="display: 'block'; font-family: 'courier'; color: '#000000'; font-weight: '500'; font-size: '14'; margin-top: '10pt'; text-align: 'left'">
-<td>.bss</td><td>onchip_memory2_0</td>
+<td>.bss</td><td>mysdram_0</td>
 </tr>
 <tr mode="wrap" STYLE="display: 'block'; font-family: 'courier'; color: '#000000'; font-weight: '500'; font-size: '14'; margin-top: '10pt'; text-align: 'left'">
-<td>.heap</td><td>onchip_memory2_0</td>
+<td>.heap</td><td>mysdram_0</td>
 </tr>
 <tr mode="wrap" STYLE="display: 'block'; font-family: 'courier'; color: '#000000'; font-weight: '500'; font-size: '14'; margin-top: '10pt'; text-align: 'left'">
-<td>.stack</td><td>onchip_memory2_0</td>
+<td>.stack</td><td>mysdram_0</td>
 </tr>
 </table>
 <h3>Settings</h3>
@@ -642,7 +639,7 @@
 <td width="20%">Default Value:</td><td>none</td>
 </tr>
 <tr>
-<td width="20%">Value:</td><td>onchip_memory2_0</td>
+<td width="20%">Value:</td><td>mysdram_0</td>
 </tr>
 <tr>
 <td width="20%">Type:</td><td>UnquotedString</td>
@@ -696,7 +693,7 @@
 <td width="20%">Default Value:</td><td>none</td>
 </tr>
 <tr>
-<td width="20%">Value:</td><td>onchip_memory2_0</td>
+<td width="20%">Value:</td><td>mysdram_0</td>
 </tr>
 <tr>
 <td width="20%">Type:</td><td>UnquotedString</td>

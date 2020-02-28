@@ -2,8 +2,8 @@
 <sch:Settings xmlns:sch="http://www.altera.com/embeddedsw/bsp/schema">
         <BspType>hal</BspType>
         <BspVersion>default</BspVersion>
-        <BspGeneratedTimeStamp>2020-2-26 21:49:45</BspGeneratedTimeStamp>
-        <BspGeneratedUnixTimeStamp>1582724985619</BspGeneratedUnixTimeStamp>
+        <BspGeneratedTimeStamp>2020-2-28 21:01:27</BspGeneratedTimeStamp>
+        <BspGeneratedUnixTimeStamp>1582894887062</BspGeneratedUnixTimeStamp>
         <BspGeneratedLocation>E:\MyCode.github\fpga\workspace\qsys_bsp</BspGeneratedLocation>
         <BspSettingsFile>settings.bsp</BspSettingsFile>
         <SopcDesignFile>E:\MyCode.github\fpga\qsys\sys.sopcinfo</SopcDesignFile>
@@ -146,7 +146,7 @@
                 <SettingName>hal.linker.exception_stack_memory_region_name</SettingName>
                 <Identifier>NONE</Identifier>
                 <Type>UnquotedString</Type>
-                <Value>onchip_memory2_0</Value>
+                <Value>mysdram_0</Value>
                 <DefaultValue>none</DefaultValue>
                 <DestinationFile>none</DestinationFile>
                 <Description>Name of the existing memory region that will be divided up to create the 'exception_stack' memory region. The selected region name will be adjusted automatically when the BSP is generated to create the 'exception_stack' memory region.</Description>
@@ -182,7 +182,7 @@
                 <SettingName>hal.linker.interrupt_stack_memory_region_name</SettingName>
                 <Identifier>NONE</Identifier>
                 <Type>UnquotedString</Type>
-                <Value>onchip_memory2_0</Value>
+                <Value>mysdram_0</Value>
                 <DefaultValue>none</DefaultValue>
                 <DestinationFile>none</DestinationFile>
                 <Description>Name of the existing memory region that will be divided up to create the 'interrupt_stack' memory region. The selected region name will be adjusted automatically when the BSP is generated to create the 'interrupt_stack' memory region.</Description>
@@ -840,62 +840,56 @@
         </Setting>
         <MemoryMap>
                 <slaveDescriptor>mysdram_0</slaveDescriptor>
-                <addressRange>0x00000000 - 0x01FFFFFF</addressRange>
-                <addressSpan>33554432</addressSpan>
-                <attributes/>
-        </MemoryMap>
-        <MemoryMap>
-                <slaveDescriptor>onchip_memory2_0</slaveDescriptor>
-                <addressRange>0x02001000 - 0x02001FFF</addressRange>
-                <addressSpan>4096</addressSpan>
+                <addressRange>0x02000000 - 0x02FFFFFF</addressRange>
+                <addressSpan>16777216</addressSpan>
                 <attributes>memory</attributes>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>timer_0</slaveDescriptor>
-                <addressRange>0x02003000 - 0x0200301F</addressRange>
+                <addressRange>0x04001000 - 0x0400101F</addressRange>
                 <addressSpan>32</addressSpan>
                 <attributes>timer</attributes>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_1</slaveDescriptor>
-                <addressRange>0x02003020 - 0x0200302F</addressRange>
+                <addressRange>0x04001020 - 0x0400102F</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_0</slaveDescriptor>
-                <addressRange>0x02003030 - 0x0200303F</addressRange>
+                <addressRange>0x04001030 - 0x0400103F</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>sysid_qsys_0</slaveDescriptor>
-                <addressRange>0x02003040 - 0x02003047</addressRange>
+                <addressRange>0x04001040 - 0x04001047</addressRange>
                 <addressSpan>8</addressSpan>
                 <attributes/>
         </MemoryMap>
         <LinkerSection>
                 <sectionName>.text</sectionName>
-                <regionName>onchip_memory2_0</regionName>
+                <regionName>mysdram_0</regionName>
         </LinkerSection>
         <LinkerSection>
                 <sectionName>.rodata</sectionName>
-                <regionName>onchip_memory2_0</regionName>
+                <regionName>mysdram_0</regionName>
         </LinkerSection>
         <LinkerSection>
                 <sectionName>.rwdata</sectionName>
-                <regionName>onchip_memory2_0</regionName>
+                <regionName>mysdram_0</regionName>
         </LinkerSection>
         <LinkerSection>
                 <sectionName>.bss</sectionName>
-                <regionName>onchip_memory2_0</regionName>
+                <regionName>mysdram_0</regionName>
         </LinkerSection>
         <LinkerSection>
                 <sectionName>.heap</sectionName>
-                <regionName>onchip_memory2_0</regionName>
+                <regionName>mysdram_0</regionName>
         </LinkerSection>
         <LinkerSection>
                 <sectionName>.stack</sectionName>
-                <regionName>onchip_memory2_0</regionName>
+                <regionName>mysdram_0</regionName>
         </LinkerSection>
 </sch:Settings>

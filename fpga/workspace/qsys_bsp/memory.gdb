@@ -3,7 +3,7 @@
 # Machine generated for CPU 'nios2_qsys_0' in SOPC Builder design 'sys'
 # SOPC Builder design path: E:/MyCode.github/fpga/qsys/sys.sopcinfo
 #
-# Generated: Wed Feb 26 21:49:46 CST 2020
+# Generated: Fri Feb 28 21:01:27 CST 2020
 
 # DO NOT MODIFY THIS FILE
 #
@@ -46,5 +46,5 @@
 # The cache attribute is specified which improves GDB performance
 # by allowing GDB to cache memory contents on the host.
 
-# onchip_memory2_0
-memory 0x2001000 0x2002000 cache
+# mysdram_0
+memory 0x2000000 0x3000000 cache
