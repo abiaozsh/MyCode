@@ -216,25 +216,52 @@ namespace WindowsFormsApplication1
 
         private void button3_Click(object sender, EventArgs e)
         {
+            portWrite((byte)(0x41), (byte)0x00);
 
-            writedata(22, 0x2232);
-            writedata(23, 0x3333);
-            writedata(24, 0x4434);
-            writedata(25, 0x5535);
-            writedata(26, 0x6636);
+            //writedata(22, 0x2232);
+            //writedata(23, 0x3333);
+            //writedata(24, 0x4434);
+            //writedata(25, 0x5535);
+            //writedata(26, 0x6636);
+
+            //FileStream fs = new FileStream(@"E:\MyCode.github\fpga\workspace\qsys\obj\default\hello_world.o", FileMode.Open, FileAccess.Read);
+            FileStream fs = new FileStream(@"E:\MyCode.github\fpga\workspace\qsys\qsys.elf", FileMode.Open, FileAccess.Read);
+            BinaryReader br = new BinaryReader(fs);
+            //byte[] buff = new byte[fs.Length];
+            //fs.Read(buff,0,(int)fs.Length);
+            var head = ELF.ReadHead(br);
+            fs.Close();
+
+            int addr = 0;
+            foreach (var item in head.pheads)
+            {
+                for (int i = 0; i < item.data.Length; i += 2)
+                {
+                    int data = item.data[i + 0] | (item.data[i + 1] << 8);
+                    writedata(addr, data);
+                    addr++;
+                }
+            }
+
+
+
+            portWrite((byte)(0x40), (byte)0x00);
 
         }
 
         private void button2_Click_1(object sender, EventArgs e)
         {
+            portWrite((byte)(0x41), (byte)0x00);
+
             string temp = "";
-            temp += getdata(21) + " ";
-            temp += getdata(22) + " ";
-            temp += getdata(23) + " ";
-            temp += getdata(24) + " ";
-            temp += getdata(25) + " ";
-            temp += getdata(26) + " ";
+            for (int i = 0; i < 100; i++)
+            {
+                temp += getdata(i) + " ";
+            }
             this.textBox1.Text = temp;
+
+
+            portWrite((byte)(0x40), (byte)0x00);
         }
 
 

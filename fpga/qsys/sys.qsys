@@ -28,14 +28,6 @@
          type = "String";
       }
    }
-   element nios2_qsys_0.jtag_debug_module
-   {
-      datum baseAddress
-      {
-         value = "67110912";
-         type = "String";
-      }
-   }
    element mysdram_0
    {
       datum _sortIndex
@@ -89,19 +81,19 @@
          type = "String";
       }
    }
-   element timer_0.s1
-   {
-      datum baseAddress
-      {
-         value = "67112960";
-         type = "String";
-      }
-   }
    element pio_1.s1
    {
       datum baseAddress
       {
          value = "67112992";
+         type = "String";
+      }
+   }
+   element timer_0.s1
+   {
+      datum baseAddress
+      {
+         value = "67112960";
          type = "String";
       }
    }
@@ -136,7 +128,7 @@
  <parameter name="projectName" value="aaa.qpf" />
  <parameter name="sopcBorderPoints" value="false" />
  <parameter name="systemHash" value="1" />
- <parameter name="timeStamp" value="1582893459792" />
+ <parameter name="timeStamp" value="1582897375137" />
  <parameter name="useTestBenchNamingPattern" value="false" />
  <instanceScript></instanceScript>
  <interface name="clk" internal="clk_0.clk_in" type="clock" dir="end" />
@@ -223,7 +215,7 @@
   <parameter name="resetSlave" value="mysdram_0.s0" />
   <parameter name="mmu_TLBMissExcSlave" value="None" />
   <parameter name="exceptionSlave" value="mysdram_0.s0" />
-  <parameter name="breakSlave">nios2_qsys_0.jtag_debug_module</parameter>
+  <parameter name="breakSlave" value="mysdram_0.s0" />
   <parameter name="setting_perfCounterWidth" value="32" />
   <parameter name="setting_interruptControllerType" value="Internal" />
   <parameter name="setting_branchPredictionType" value="Automatic" />
@@ -244,7 +236,7 @@
   <parameter name="icache_burstType" value="None" />
   <parameter name="dcache_bursts" value="false" />
   <parameter name="dcache_victim_buf_impl" value="ram" />
-  <parameter name="debug_level" value="Level1" />
+  <parameter name="debug_level" value="NoDebug" />
   <parameter name="debug_OCIOnchipTrace" value="_128" />
   <parameter name="dcache_size" value="2048" />
   <parameter name="dcache_tagramBlockType" value="Automatic" />
@@ -257,7 +249,7 @@
   <parameter name="ocimem_ramBlockType" value="Automatic" />
   <parameter name="mmu_ramBlockType" value="Automatic" />
   <parameter name="bht_ramBlockType" value="Automatic" />
-  <parameter name="instAddrWidth" value="27" />
+  <parameter name="instAddrWidth" value="26" />
   <parameter name="dataAddrWidth" value="27" />
   <parameter name="tightlyCoupledDataMaster0AddrWidth" value="1" />
   <parameter name="tightlyCoupledDataMaster1AddrWidth" value="1" />
@@ -267,8 +259,8 @@
   <parameter name="tightlyCoupledInstructionMaster1AddrWidth" value="1" />
   <parameter name="tightlyCoupledInstructionMaster2AddrWidth" value="1" />
   <parameter name="tightlyCoupledInstructionMaster3AddrWidth" value="1" />
-  <parameter name="instSlaveMapParam"><![CDATA[<address-map><slave name='mysdram_0.s0' start='0x2000000' end='0x4000000' /><slave name='nios2_qsys_0.jtag_debug_module' start='0x4000800' end='0x4001000' /></address-map>]]></parameter>
-  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='mysdram_0.s0' start='0x2000000' end='0x4000000' /><slave name='nios2_qsys_0.jtag_debug_module' start='0x4000800' end='0x4001000' /><slave name='timer_0.s1' start='0x4001000' end='0x4001020' /><slave name='pio_1.s1' start='0x4001020' end='0x4001030' /><slave name='pio_0.s1' start='0x4001030' end='0x4001040' /><slave name='sysid_qsys_0.control_slave' start='0x4001040' end='0x4001048' /></address-map>]]></parameter>
+  <parameter name="instSlaveMapParam"><![CDATA[<address-map><slave name='mysdram_0.s0' start='0x2000000' end='0x4000000' /></address-map>]]></parameter>
+  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='mysdram_0.s0' start='0x2000000' end='0x4000000' /><slave name='timer_0.s1' start='0x4001000' end='0x4001020' /><slave name='pio_1.s1' start='0x4001020' end='0x4001030' /><slave name='pio_0.s1' start='0x4001030' end='0x4001040' /><slave name='sysid_qsys_0.control_slave' start='0x4001040' end='0x4001048' /></address-map>]]></parameter>
   <parameter name="clockFrequency" value="50000000" />
   <parameter name="deviceFamilyName" value="Cyclone IV E" />
   <parameter name="internalIrqMaskSystemInfo" value="1" />
@@ -412,29 +404,6 @@
    end="timer_0.irq">
   <parameter name="irqNumber" value="0" />
  </connection>
- <connection
-   kind="avalon"
-   version="13.0"
-   start="nios2_qsys_0.instruction_master"
-   end="nios2_qsys_0.jtag_debug_module">
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x04000800" />
-  <parameter name="defaultConnection" value="false" />
- </connection>
- <connection
-   kind="avalon"
-   version="13.0"
-   start="nios2_qsys_0.data_master"
-   end="nios2_qsys_0.jtag_debug_module">
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x04000800" />
-  <parameter name="defaultConnection" value="false" />
- </connection>
- <connection
-   kind="reset"
-   version="13.0"
-   start="nios2_qsys_0.jtag_debug_module_reset"
-   end="nios2_qsys_0.reset_n" />
  <connection kind="clock" version="13.0" start="clk_0.clk" end="mysdram_0.clock" />
  <connection
    kind="reset"

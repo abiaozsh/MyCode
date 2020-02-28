@@ -67,7 +67,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
   </table>
   <table class="blueBar">
    <tr>
-    <td class="l">2020.02.28.20:51:50</td>
+    <td class="l">2020.02.28.21:43:22</td>
     <td class="r">Datasheet</td>
    </tr>
   </table>
@@ -90,9 +90,6 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
      <a href="#module_nios2_qsys_0"><b>nios2_qsys_0</b>
      </a> Nios II 13.0
      <br/>All Components
-     <br/>&#160;&#160;
-     <a href="#module_nios2_qsys_0"><b>nios2_qsys_0</b>
-     </a> altera_nios2_qsys 13.0
      <br/>&#160;&#160;
      <a href="#module_pio_0"><b>pio_0</b>
      </a> altera_avalon_pio 13.0.1.99.2
@@ -123,19 +120,6 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
    <tr>
     <td class="masterl">&#160;data_master</td>
     <td class="masterr">&#160;instruction_master</td>
-   </tr>
-   <tr>
-    <td class="slavemodule">&#160;
-     <a href="#module_nios2_qsys_0"><b>nios2_qsys_0</b>
-     </a>
-    </td>
-    <td class="empty"></td>
-    <td class="empty"></td>
-   </tr>
-   <tr>
-    <td class="slaveb">jtag_debug_module&#160;</td>
-    <td class="addr"><span style="color:#989898">0x</span>04000800</td>
-    <td class="addr"><span style="color:#989898">0x</span>04000800</td>
    </tr>
    <tr>
     <td class="slavemodule">&#160;
@@ -617,7 +601,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">breakSlave</td>
-        <td class="parametervalue">nios2_qsys_0.jtag_debug_module</td>
+        <td class="parametervalue">mysdram_0.s0</td>
        </tr>
        <tr>
         <td class="parametername">setting_perfCounterWidth</td>
@@ -701,7 +685,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">debug_level</td>
-        <td class="parametervalue">Level1</td>
+        <td class="parametervalue">NoDebug</td>
        </tr>
        <tr>
         <td class="parametername">debug_OCIOnchipTrace</td>
@@ -761,7 +745,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">breakAbsoluteAddr</td>
-        <td class="parametervalue">67110944</td>
+        <td class="parametervalue">33554464</td>
        </tr>
        <tr>
         <td class="parametername">mmu_TLBMissExcAbsAddr</td>
@@ -789,7 +773,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">instAddrWidth</td>
-        <td class="parametervalue">27</td>
+        <td class="parametervalue">26</td>
        </tr>
        <tr>
         <td class="parametername">dataAddrWidth</td>
@@ -829,11 +813,11 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">instSlaveMapParam</td>
-        <td class="parametervalue">&lt;address-map&gt;&lt;slave name='mysdram_0.s0' start='0x2000000' end='0x4000000' /&gt;&lt;slave name='nios2_qsys_0.jtag_debug_module' start='0x4000800' end='0x4001000' /&gt;&lt;/address-map&gt;</td>
+        <td class="parametervalue">&lt;address-map&gt;&lt;slave name='mysdram_0.s0' start='0x2000000' end='0x4000000' /&gt;&lt;/address-map&gt;</td>
        </tr>
        <tr>
         <td class="parametername">dataSlaveMapParam</td>
-        <td class="parametervalue">&lt;address-map&gt;&lt;slave name='mysdram_0.s0' start='0x2000000' end='0x4000000' /&gt;&lt;slave name='nios2_qsys_0.jtag_debug_module' start='0x4000800' end='0x4001000' /&gt;&lt;slave name='timer_0.s1' start='0x4001000' end='0x4001020' /&gt;&lt;slave name='pio_1.s1' start='0x4001020' end='0x4001030' /&gt;&lt;slave name='pio_0.s1' start='0x4001030' end='0x4001040' /&gt;&lt;slave name='sysid_qsys_0.control_slave' start='0x4001040' end='0x4001048' /&gt;&lt;/address-map&gt;</td>
+        <td class="parametervalue">&lt;address-map&gt;&lt;slave name='mysdram_0.s0' start='0x2000000' end='0x4000000' /&gt;&lt;slave name='timer_0.s1' start='0x4001000' end='0x4001020' /&gt;&lt;slave name='pio_1.s1' start='0x4001020' end='0x4001030' /&gt;&lt;slave name='pio_0.s1' start='0x4001030' end='0x4001040' /&gt;&lt;slave name='sysid_qsys_0.control_slave' start='0x4001040' end='0x4001048' /&gt;&lt;/address-map&gt;</td>
        </tr>
        <tr>
         <td class="parametername">clockFrequency</td>
@@ -910,7 +894,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">BREAK_ADDR</td>
-        <td class="parametervalue">0x04000820</td>
+        <td class="parametervalue">0x02000020</td>
        </tr>
        <tr>
         <td class="parametername">CPU_FREQ</td>
@@ -966,7 +950,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">HAS_DEBUG_CORE</td>
-        <td class="parametervalue">1</td>
+        <td class="parametervalue">0</td>
        </tr>
        <tr>
         <td class="parametername">HAS_DEBUG_STUB</td>
@@ -990,7 +974,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">INST_ADDR_WIDTH</td>
-        <td class="parametervalue">27</td>
+        <td class="parametervalue">26</td>
        </tr>
        <tr>
         <td class="parametername">RESET_ADDR</td>
@@ -1631,7 +1615,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">timestamp</td>
-        <td class="parametervalue">1582894309</td>
+        <td class="parametervalue">1582897401</td>
        </tr>
        <tr>
         <td class="parametername">AUTO_CLK_CLOCK_RATE</td>
@@ -1664,7 +1648,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        </tr>
        <tr>
         <td class="parametername">TIMESTAMP</td>
-        <td class="parametervalue">1582894309</td>
+        <td class="parametervalue">1582897401</td>
        </tr>
       </table>
      </td>
@@ -1760,7 +1744,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
   <table class="blueBar">
    <tr>
     <td class="l">generation took 0.00 seconds</td>
-    <td class="r">rendering took 0.05 seconds</td>
+    <td class="r">rendering took 0.06 seconds</td>
    </tr>
   </table>
  </body>

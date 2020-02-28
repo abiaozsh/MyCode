@@ -35,11 +35,11 @@ reg [24:0] my_address;
 reg [15:0] my_write_data;
 reg 			 my_write;
 
-wire [13:0] sramtemp_address;
+wire [11:0] sramtemp_address;
 wire [15:0] sramtemp_data;
 wire [15:0] sramtemp_q;
 wire        sramtemp_wren;
-assign sramtemp_address = control_by_me ? my_address[13:0] : avs_s0_address[13:0];
+assign sramtemp_address = control_by_me ? my_address[11:0] : avs_s0_address[11:0];
 assign sramtemp_data =    control_by_me ? my_write_data : avs_s0_writedata;     
 assign sramtemp_wren =    control_by_me ? my_write : avs_s0_write;              
 
@@ -173,19 +173,19 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h20) begin uart_send<=1; uart_data_in<=data_buff_to_pc[ 7: 0]; command_done<=1;
       end else if (command == 8'h21) begin uart_send<=1; uart_data_in<=data_buff_to_pc[15: 8]; command_done<=1;
 
-      end else if (command == 8'h40) begin reset_n_out<=1; command_done<=1;
-      end else if (command == 8'h41) begin reset_n_out<=0; command_done<=1;
+      end else if (command == 8'h40) begin reset_n_out<=1;control_by_me <= 0; command_done<=1;
+      end else if (command == 8'h41) begin reset_n_out<=0;control_by_me <= 1; command_done<=1;
 
       end else if (command == 8'h30) begin//bus read
 				timer<=timer+1'b1;
 				if(timer==0)begin
-					control_by_me <= 1;
+					
 					avs_s0_waitrequest <= 1;
 					my_address <= addr_buff;
 				end else if(timer==2)begin
 						data_buff_to_pc <= sramtemp_q;
 						timer<=0;
-						control_by_me <= 0;
+						
 						avs_s0_waitrequest <= 0;
 						command_done<=1;
 				end
@@ -193,14 +193,14 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h31) begin//bus write
 				timer<=timer+1'b1;
 				if(timer==0)begin
-					control_by_me <= 1;
+					//control_by_me <= 1;
 					avs_s0_waitrequest <= 1;
 					my_address <= addr_buff;
 					my_write_data <= data_buff_from_pc;
 					my_write <= 1;
 				end else begin
 						timer<=0;
-						control_by_me <= 0;
+						//control_by_me <= 0;
 						avs_s0_waitrequest <= 0;
 						my_write <= 0;
 						command_done<=1;

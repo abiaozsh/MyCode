@@ -3,7 +3,7 @@
  <debug showDebugMenu="0" />
  <systemtable>
   <columns>
-   <connections preferredWidth="143" />
+   <connections preferredWidth="127" />
    <irq preferredWidth="34" />
    <name preferredWidth="290" />
   </columns>
@@ -17,6 +17,6 @@
  </clocktable>
  <window width="2560" height="1412" x="0" y="0" />
  <library
-   expandedCategories="Library/Memories and Memory Controllers/On-Chip,Library/Memories and Memory Controllers/External Memory Interfaces/RLDRAM II Interfaces,Library/Memories and Memory Controllers,Project/System,Library/Memories and Memory Controllers/External Memory Interfaces/Memory Models,Library/DSP,Project/Memories and Memory Controllers/External Memory Interfaces,Library/Verification,Library/Memories and Memory Controllers/External Memory Interfaces/LPDDR2 Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/QDR II Interfaces,Library/DSP/Video and Image Processing,Library/Memories and Memory Controllers/External Memory Interfaces/DDR Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/DDR3 Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces,Project/Memories and Memory Controllers,Library,Project,Library/Memories and Memory Controllers/External Memory Interfaces/DDR2 Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/RLDRAM 3 Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/SDRAM Interfaces,Library/Verification/Debug &amp; Performance" />
+   expandedCategories="Library/DSP,Library/Memories and Memory Controllers/External Memory Interfaces/DDR2 Interfaces,Project/Memories and Memory Controllers,Library/Memories and Memory Controllers/External Memory Interfaces/RLDRAM 3 Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/DDR3 Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/QDR II Interfaces,Library/Verification,Library/Memories and Memory Controllers/External Memory Interfaces/LPDDR2 Interfaces,Project/Memories and Memory Controllers/External Memory Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces,Project,Library/Verification/Debug &amp; Performance,Library/Memories and Memory Controllers/On-Chip,Library/Memories and Memory Controllers,Library,Library/DSP/Video and Image Processing,Project/System,Library/Memories and Memory Controllers/External Memory Interfaces/Memory Models,Library/Memories and Memory Controllers/External Memory Interfaces/SDRAM Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/RLDRAM II Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/DDR Interfaces" />
  <hdlexample language="VERILOG" />
 </preferences>

@@ -443,7 +443,7 @@ namespace WindowsFormsApplication1
 				{
 					throw new Exception();
 				}
-			}
+			}-
 			int ack;
 			ack = recAck(0x3412);
 			//release transfer
