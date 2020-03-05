@@ -393,6 +393,8 @@ test test2(
 
 */
 
+reg [7:0] data_addr;
+reg [7:0] data [7:0];
 
 
 reg sdram8m_isDMA;
@@ -454,6 +456,14 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     end else begin//command_done==0
       if          (command == 8'h00) begin
 
+      end else if (command == 8'h01) begin data_addr<=cy_dat; command_done<=1;
+      end else if (command == 8'h02) begin data[data_addr]<=cy_dat; command_done<=1;
+      end else if (command == 8'h03) begin
+        cy_snd_req <= 1;
+        cy_snd_data0 <= data[cy_dat];
+        cy_snd_data1 <= 8'h00;
+        command_done <= 1;
+        
       end else if (command == 8'h10) begin cy_data0<=cy_dat; command_done<=1;
       end else if (command == 8'h11) begin cy_data1<=cy_dat; command_done<=1;
       

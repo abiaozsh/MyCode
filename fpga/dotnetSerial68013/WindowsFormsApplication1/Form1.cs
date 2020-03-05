@@ -443,7 +443,7 @@ namespace WindowsFormsApplication1
 				{
 					throw new Exception();
 				}
-			}-
+			}
 			int ack;
 			ack = recAck(0x3412);
 			//release transfer
@@ -635,18 +635,52 @@ namespace WindowsFormsApplication1
 
 		private void button3_Click(object sender, EventArgs e)
 		{
-			Random r = new Random();
-			byte[] b = new byte[1];
-			for (int i = 0; i < 1000000; i++)
-			{
-				r.NextBytes(b);
-				sendCmd(0x30, b[0]);
-				int ack = recAck(0);
-				if (ack != ((b[0] << 8) + 0x12))
-				{
-					textBox3.Text += ack + "\r\n";
-				}
-			}
+			//Random r = new Random();
+			//byte[] b = new byte[1];
+			//for (int i = 0; i < 1000000; i++)
+			//{
+			//	r.NextBytes(b);
+			//	sendCmd(0x30, b[0]);
+			//	int ack = recAck(0);
+			//	if (ack != ((b[0] << 8) + 0x12))
+			//	{
+			//		textBox3.Text += ack + "\r\n";
+			//	}
+			//}
+
+			// end else if (command == 8'h01) begin data_addr<=cy_dat; command_done<=1;
+			// end else if (command == 8'h02) begin data[data_addr]<=cy_dat; command_done<=1;
+			// end else if (command == 8'h03) begin
+			//   cy_snd_req <= 1;
+			//   cy_snd_data0 <= data[data_addr];
+			//   cy_snd_data1 <= 8'h34;
+			//   command_done <= 1;
+			sendCmd(0x01, 0x01);
+			sendCmd(0x02, 12);
+			sendCmd(0x01, 0x02);
+			sendCmd(0x02, 34);
+            sendCmd(0x01, 0x03);
+            sendCmd(0x02, 56);
+            sendCmd(0x01, 0x04);
+            sendCmd(0x02, 78);
+            sendCmd(0x01, 0x05);
+            sendCmd(0x02, 90);
+            sendCmd(0x01, 0x06);
+            sendCmd(0x02, 11);
+
+			sendCmd(0x03, 0x01);
+            int ack1 = recAck(0);
+			sendCmd(0x03, 0x02);
+            int ack2 = recAck(0);
+            sendCmd(0x03, 0x03);
+            int ack3 = recAck(0);
+            sendCmd(0x03, 0x04);
+            int ack4 = recAck(0);
+            sendCmd(0x03, 0x05);
+            int ack5 = recAck(0);
+            sendCmd(0x03, 0x06);
+            int ack6 = recAck(0);
+
 		}
 
 		private void checkBox6_CheckedChanged(object sender, EventArgs e)
