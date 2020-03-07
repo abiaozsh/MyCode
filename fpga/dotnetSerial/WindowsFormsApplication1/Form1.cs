@@ -13,9 +13,8 @@ using System.Globalization;
 namespace WindowsFormsApplication1
 {
 
-    public partial class Form1 : Form
+    public sealed partial class Form1 : Base
     {
-        SerialPort port;
         public Form1()
         {
             InitializeComponent();
@@ -46,69 +45,9 @@ namespace WindowsFormsApplication1
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (port == null)
-            {
-                //COM4为Arduino使用的串口号，需根据实际情况调整  115200
-                port = new SerialPort(portName, 2000000, Parity.None, 8, StopBits.One);
-                port.Open();
-            }
-
+            connect(portName);
         }
 
-        byte[] readFromPort(int count)
-        {
-            if (count <= 0) return null;
-            byte[] buff = new byte[count];
-            int idx = 0;
-            long t = DateTime.Now.Ticks;
-            while (true)
-            {
-                if (port.BytesToRead > 0)
-                {
-                    buff[idx] = (byte)port.ReadByte();
-                    idx++;
-                    count--;
-                    if (count <= 0) return buff;
-                }
-                var diff = DateTime.Now.Ticks - t;
-                if (diff > 250000)
-                {
-                    return buff;
-                    //throw new Exception();
-                }
-            }
-        }
-        bool readFromPort(int count, byte[] buff, int idx)
-        {
-            if (count <= 0) return false;
-            if (port == null) return false;
-            int pos = 0;
-            long t = DateTime.Now.Ticks;
-            while (true)
-            {
-                int num = port.BytesToRead;
-                if (num > 0)
-                {
-                    if (num > count)
-                    {
-                        num = count;
-                        count = 0;
-                    }
-                    else
-                    {
-                        count -= num;
-                    }
-                    port.Read(buff, idx + pos, num);
-                    pos += num;
-                    if (count <= 0) return true;
-                }
-                var diff = DateTime.Now.Ticks - t;
-                if (diff > 250000)
-                {
-                    throw new Exception();
-                }
-            }
-        }
 
 
         private void button2_Click(object sender, EventArgs e)
@@ -119,64 +58,6 @@ namespace WindowsFormsApplication1
                 port = null;
             }
         }
-        void portWrite(byte val1, byte val2)
-        {
-            byte[] buff = new byte[2];
-            buff[0] = val1;
-            buff[1] = val2;
-            if (port != null)
-            {
-                port.Write(buff, 0, 2);
-            }
-        }
-        void portWrite(byte val1)
-        {
-            byte[] buff = new byte[1];
-            buff[0] = val1;
-            if (port != null)
-            {
-                port.Write(buff, 0, 1);
-            }
-        }
-
-        void portWrite(byte val1, byte val2, Stream s)
-        {
-            s.WriteByte(val1);
-            s.WriteByte(val2);
-
-        }
-        void portWrite(byte val1, Stream s)
-        {
-            s.WriteByte(val1);
-        }
-
-        void sendall(byte[] buff)
-        {
-            port.Write(buff, 0, buff.Length);
-        }
-
-
-        string[] convt = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f" };
-        private string getHex4(int val)//"ll"+"hh"
-        {
-            return convt[((val & 0xF0) >> 4)] + convt[((val & 0x0F))] + convt[((val & 0xF000) >> 12)] + convt[((val & 0x0F00) >> 8)];
-        }
-        private string getHex2(int val)//"ll"+"hh"
-        {
-            return convt[((val & 0xF0) >> 4)] + convt[((val & 0x0F))];
-        }
-        private string getHex(byte[] buff, int idx, int len)//"ll"+"hh"
-        {
-            StringBuilder sb = new StringBuilder();
-            for (int i = idx; i < idx + len; i++)
-            {
-                byte val = buff[i];
-                sb.Append(convt[((val & 0xF0) >> 4)] + convt[((val & 0x0F))]);
-            }
-            return sb.ToString();
-        }
-
-
 
         private void button3_Click(object sender, EventArgs e)
         {
@@ -207,100 +88,6 @@ namespace WindowsFormsApplication1
 
         }
 
-
-        private byte[] longread(int addr)
-        {
-            try
-            {
-                int addr0 = (addr) & 0xFF;
-                int addr1 = (addr >> 8) & 0xFF;
-                int addr2 = (addr >> 16) & 0xFF;
-
-                //if (item.StartsWith("pr"))//put reg
-                portWrite((byte)(0x40 + 2), (byte)addr0);
-                portWrite((byte)(0x40 + 3), (byte)addr1);
-                portWrite((byte)(0x40 + 4), (byte)addr2);
-
-                portWrite((byte)(0xA3));
-
-                byte[] buff = new byte[512 * 2];
-                readFromPort(1024, buff, 0);
-                byte[] buff2 = readFromPort(1);
-                byte check = buff2[0];
-                byte b = 0;
-                for (int i = 0; i < 1024; i++)
-                {
-                    b += buff[i];
-                }
-                if (b != check)
-                {
-                    throw new Exception();
-                }
-                return buff;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-
-        private void initA(int offset)
-        {
-            byte[] buff = new byte[512];
-            for (int i = 0; i < 256; i++)
-            {
-                buff[i] = (byte)i;
-            }
-            for (int i = 256; i < 512; i++)
-            {
-                buff[i] = (byte)(511 - i);
-            }
-            writeFast(buff, offset);
-        }
-        private void initB(int offset)//256 * n
-        {
-            byte[] buff = new byte[512];
-            for (int i = 0; i < 256; i++)
-            {
-                buff[i] = (byte)0xFF;
-            }
-            for (int i = 256; i < 512; i++)
-            {
-                buff[i] = (byte)0xFF;
-            }
-            writeFast(buff, offset);
-        }
-
-        private void writeFast(byte[] buff, int offset)
-        {
-            int addr = offset;
-            int addr0 = (addr) & 0xFF;
-            int addr1 = (addr >> 8) & 0xFF;
-            int addr2 = (addr >> 16) & 0xFF;
-            MemoryStream s = new MemoryStream();
-            portWrite((byte)(0x40 + 2), (byte)addr0, s);
-            portWrite((byte)(0x40 + 3), (byte)addr1, s);
-            portWrite((byte)(0x40 + 4), (byte)addr2, s);
-            portWrite((byte)(0xA2), s);
-            s.Flush();
-            byte[] buff2 = s.ToArray();
-            sendall(buff2);
-
-            s = new MemoryStream();
-            for (int i = 0; i < 256; i++)
-            {
-                portWrite((byte)buff[i * 2 + 0], s);
-                portWrite((byte)buff[i * 2 + 1], s);
-            }
-            portWrite(0, 0, s);//end
-            s.Flush();
-            buff2 = s.ToArray();
-            sendall(buff2);
-
-            byte[] data = readFromPort(1);
-            var aa = data[0];
-        }
 
 
         private void button4_Click(object sender, EventArgs e)
@@ -386,74 +173,79 @@ namespace WindowsFormsApplication1
 
         private void button6_Click(object sender, EventArgs e)
         {
-            //getdata(0x29);
-            //getdata(0x30);
-            //getdata(0x30/4);
-            //getdata(0x30*4);
-            //getdata(0x10);
-            //getdata(0x20);
+            StringBuilder sb = new StringBuilder();
+            int cnt = 256;
 
-            getdata(9);
-            getdata(10);
-            getdata(11);
-            getdata(12);
-            getdata(13);
-            getdata(14);
-            this.textBox4.Text += "\r\n";
+            int baseaddr = 0;
+
+            byte[] data = new byte[cnt];
+            Random r = new Random();
+            r.NextBytes(data);
+            for (int i = 0; i < cnt; i += 4)
+            {
+                writeDWord(baseaddr + i, data[i + 0], data[i + 1], data[i + 2], data[i + 3]);
+                if ((i & 15) == 0)
+                {
+                    this.Text = "" + i;
+                    Application.DoEvents();
+                }
+            }
+
+            bool err = false;
+            for (int i = 0; i < cnt; i++)
+            {
+                uint b = readByte(baseaddr + i);
+                if (b != data[i])
+                {
+                    err = true;
+                }
+                if ((i & 63) == 0)
+                {
+                    this.Text = "check " + i;
+                    Application.DoEvents();
+                }
+            }
+
+
+            byte[] d1 = read8Byte(baseaddr);
+
         }
 
-        private void getdata(int addr)
-        {
-            int addr0 = (addr) & 0xFF;
-            int addr1 = (addr >> 8) & 0xFF;
-            int addr2 = (addr >> 16) & 0xFF;
-            portWrite((byte)(0x10), (byte)addr0);
-            portWrite((byte)(0x11), (byte)addr1);
-            portWrite((byte)(0x12), (byte)addr2);
-            portWrite((byte)(0x13), (byte)0x00);
-
-            portWrite((byte)(0x30), (byte)0x00);
-
-            portWrite((byte)(0x20), (byte)0x00);
-            this.textBox4.Text += getHex2(readFromPort(1)[0]);
-            portWrite((byte)(0x21), (byte)0x00);
-            this.textBox4.Text += getHex2(readFromPort(1)[0]);
-            portWrite((byte)(0x22), (byte)0x00);
-            this.textBox4.Text += getHex2(readFromPort(1)[0]);
-            portWrite((byte)(0x23), (byte)0x00);
-            this.textBox4.Text += getHex2(readFromPort(1)[0]);
-            this.textBox4.Text += " ";
-        }
-
-        private void writedata(int addr, int data)
-        {
-            //portWrite((byte)(0x10), (byte)(0x30/4));
-            int addr0 = (addr) & 0xFF;
-            int addr1 = (addr >> 8) & 0xFF;
-            int addr2 = (addr >> 16) & 0xFF;
-            portWrite((byte)(0x10), (byte)addr0);
-            portWrite((byte)(0x11), (byte)addr1);
-            portWrite((byte)(0x12), (byte)addr2);
-            portWrite((byte)(0x13), (byte)0x00);
-
-            int data0 = (data) & 0xFF;
-            int data1 = (data >> 8) & 0xFF;
-            int data2 = (data >> 16) & 0xFF;
-            int data3 = (data >> 24) & 0xFF;
-            portWrite((byte)(0x14), (byte)data0);
-            portWrite((byte)(0x15), (byte)data1);
-            portWrite((byte)(0x16), (byte)data2);
-            portWrite((byte)(0x17), (byte)data3);
-
-            portWrite((byte)(0x31), (byte)0x00);
-        }
         private void button12_Click(object sender, EventArgs e)
         {
-            writedata(10, 0x00300678);
-            writedata(11, 0x11311678);
-            writedata(12, 0x22322678);
-            writedata(13, 0x33333678);
-            writedata(14, 0x44344678);
+            bool r1;
+            bool r2;
+            bool r3;
+            bool r4;
+            Random r = new Random();
+            {
+                byte[] data1 = new byte[8];
+                byte[] data2 = new byte[8];
+                r.NextBytes(data1);
+                r.NextBytes(data2);
+
+                write8Byte(0x100, data1);
+                write8Byte(0x108, data2);
+
+                byte[] d1 = read8Byte(0x100);
+                byte[] d2 = read8Byte(0x108);
+                r1 = compare(data1, d1);
+                r2 = compare(data2, d2);
+            }
+            {
+                byte[] data1 = new byte[16];
+                byte[] data2 = new byte[16];
+                r.NextBytes(data1);
+                r.NextBytes(data2);
+
+                write16Byte(0x100, data1);
+                write16Byte(0x110, data2);
+
+                byte[] d1 = read16Byte(0x100);
+                byte[] d2 = read16Byte(0x110);
+                r3 = compare(data1, d1);
+                r4 = compare(data2, d2);
+            }
         }
         private void timer1_Tick(object sender, EventArgs e)
         {

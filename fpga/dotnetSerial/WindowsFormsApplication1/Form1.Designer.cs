@@ -1,4 +1,5 @@
-﻿namespace WindowsFormsApplication1
+﻿using System.Windows.Forms;
+namespace WindowsFormsApplication1
 {
     partial class Form1
     {
