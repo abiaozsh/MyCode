@@ -80,8 +80,14 @@ always @(posedge clk or negedge reset_n) begin
 end
 
 reg [31:0] addr_buff;
-reg [31:0] data_topc;
-reg [31:0] data_frompc;
+reg [31:0] data_topc0;
+reg [31:0] data_frompc0;
+reg [31:0] data_topc1;
+reg [31:0] data_frompc1;
+reg [31:0] data_topc2;
+reg [31:0] data_frompc2;
+reg [31:0] data_topc3;
+reg [31:0] data_frompc3;
 
 reg [31:0] address      ;
 reg        read         ;
@@ -110,6 +116,7 @@ assign debug[7] = 0;
 
 reg command_done;
 reg [7:0] timer;
+reg [7:0] step;
 reg [7:0] timer_log;
 //avm_m0_address = 32'b00000000000000000000000000000000;
 //avm_m0_writedata = 32'b00000000000000000000000000000000;
@@ -123,12 +130,20 @@ always @(posedge clk or negedge reset_n) begin
     read <= 0;
     
     addr_buff<=0;
-    data_topc<=0;
-		data_frompc<=0;
+    data_topc0<=0;
+		data_frompc0<=0;
+    data_topc1<=0;
+		data_frompc1<=0;
+    data_topc2<=0;
+		data_frompc2<=0;
+    data_topc3<=0;
+		data_frompc3<=0;
 
     command_done <= 0;
     timer<=0;
+		step<=0;
 		timer_log<=0;
+		byteenable<=4'b1111;
 		
   end else begin
     uart_send<=0;
@@ -144,45 +159,216 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h11) begin addr_buff[15: 8]<=data; command_done<=1;
       end else if (command == 8'h12) begin addr_buff[23:16]<=data; command_done<=1;
       end else if (command == 8'h13) begin addr_buff[31:24]<=data; command_done<=1;
-      end else if (command == 8'h14) begin data_frompc[ 7: 0]<=data; command_done<=1;
-      end else if (command == 8'h15) begin data_frompc[15: 8]<=data; command_done<=1;
-      end else if (command == 8'h16) begin data_frompc[23:16]<=data; command_done<=1;
-      end else if (command == 8'h17) begin data_frompc[31:24]<=data; command_done<=1;
-
-			end else if (command == 8'h70) begin read<=0; command_done<=1;
-			end else if (command == 8'h71) begin read<=1; command_done<=1;
 			
-			end else if (command == 8'h80) begin write<=0; command_done<=1;
-			end else if (command == 8'h81) begin write<=1; command_done<=1;
-		
+      end else if (command == 8'h60) begin data_frompc0[ 7: 0]<=data; command_done<=1;
+      end else if (command == 8'h61) begin data_frompc0[15: 8]<=data; command_done<=1;
+      end else if (command == 8'h62) begin data_frompc0[23:16]<=data; command_done<=1;
+      end else if (command == 8'h63) begin data_frompc0[31:24]<=data; command_done<=1;
+      end else if (command == 8'h64) begin data_frompc1[ 7: 0]<=data; command_done<=1;
+      end else if (command == 8'h65) begin data_frompc1[15: 8]<=data; command_done<=1;
+      end else if (command == 8'h66) begin data_frompc1[23:16]<=data; command_done<=1;
+      end else if (command == 8'h67) begin data_frompc1[31:24]<=data; command_done<=1;
+      end else if (command == 8'h68) begin data_frompc2[ 7: 0]<=data; command_done<=1;
+      end else if (command == 8'h69) begin data_frompc2[15: 8]<=data; command_done<=1;
+      end else if (command == 8'h6A) begin data_frompc2[23:16]<=data; command_done<=1;
+      end else if (command == 8'h6B) begin data_frompc2[31:24]<=data; command_done<=1;
+      end else if (command == 8'h6C) begin data_frompc3[ 7: 0]<=data; command_done<=1;
+      end else if (command == 8'h6D) begin data_frompc3[15: 8]<=data; command_done<=1;
+      end else if (command == 8'h6E) begin data_frompc3[23:16]<=data; command_done<=1;
+      end else if (command == 8'h6F) begin data_frompc3[31:24]<=data; command_done<=1;
 
-      end else if (command == 8'h20) begin uart_send<=1; uart_data_in<=data_topc[ 7: 0]; command_done<=1;
-      end else if (command == 8'h21) begin uart_send<=1; uart_data_in<=data_topc[15: 8]; command_done<=1;
-      end else if (command == 8'h22) begin uart_send<=1; uart_data_in<=data_topc[23:16]; command_done<=1;
-      end else if (command == 8'h23) begin uart_send<=1; uart_data_in<=data_topc[31:24]; command_done<=1;
+      end else if (command == 8'h70) begin uart_send<=1; uart_data_in<=data_topc0[ 7: 0]; command_done<=1;
+      end else if (command == 8'h71) begin uart_send<=1; uart_data_in<=data_topc0[15: 8]; command_done<=1;
+      end else if (command == 8'h72) begin uart_send<=1; uart_data_in<=data_topc0[23:16]; command_done<=1;
+      end else if (command == 8'h73) begin uart_send<=1; uart_data_in<=data_topc0[31:24]; command_done<=1;
+      end else if (command == 8'h74) begin uart_send<=1; uart_data_in<=data_topc1[ 7: 0]; command_done<=1;
+      end else if (command == 8'h75) begin uart_send<=1; uart_data_in<=data_topc1[15: 8]; command_done<=1;
+      end else if (command == 8'h76) begin uart_send<=1; uart_data_in<=data_topc1[23:16]; command_done<=1;
+      end else if (command == 8'h77) begin uart_send<=1; uart_data_in<=data_topc1[31:24]; command_done<=1;
+      end else if (command == 8'h78) begin uart_send<=1; uart_data_in<=data_topc2[ 7: 0]; command_done<=1;
+      end else if (command == 8'h79) begin uart_send<=1; uart_data_in<=data_topc2[15: 8]; command_done<=1;
+      end else if (command == 8'h7A) begin uart_send<=1; uart_data_in<=data_topc2[23:16]; command_done<=1;
+      end else if (command == 8'h7B) begin uart_send<=1; uart_data_in<=data_topc2[31:24]; command_done<=1;
+      end else if (command == 8'h7C) begin uart_send<=1; uart_data_in<=data_topc3[ 7: 0]; command_done<=1;
+      end else if (command == 8'h7D) begin uart_send<=1; uart_data_in<=data_topc3[15: 8]; command_done<=1;
+      end else if (command == 8'h7E) begin uart_send<=1; uart_data_in<=data_topc3[23:16]; command_done<=1;
+      end else if (command == 8'h7F) begin uart_send<=1; uart_data_in<=data_topc3[31:24]; command_done<=1;
 
-      end else if (command == 8'h30) begin//bus read
+      end else if (command == 8'h30) begin//byte read
         timer<=timer+1'b1;
         if(timer==0)begin
           read<=1;
-          address <= addr_buff;
+          address <= {addr_buff[31:2],2'b00};
         end else begin
           if(!avm_m0_waitrequest)begin
-            data_topc<=avm_m0_readdata;
+            if         (addr_buff[1:0]==0)begin
+              data_topc0<={24'b0,avm_m0_readdata[7:0]};
+            end else if(addr_buff[1:0]==1)begin
+              data_topc0<={24'b0,avm_m0_readdata[15:8]};
+            end else if(addr_buff[1:0]==2)begin
+              data_topc0<={24'b0,avm_m0_readdata[23:16]};
+            end else if(addr_buff[1:0]==3)begin
+              data_topc0<={24'b0,avm_m0_readdata[31:24]};
+            end
             timer_log<=timer;
             timer <= 0;
             read <= 0;
             command_done<=1;
           end
         end
+				
+      end else if (command == 8'h31) begin//word read
+        timer<=timer+1'b1;
+        if(timer==0)begin
+          read<=1;
+          address <= {addr_buff[31:2],2'b00};
+        end else begin
+          if(!avm_m0_waitrequest)begin
+            if         (addr_buff[1:0]==0)begin
+              data_topc0<={16'b0,avm_m0_readdata[15:0]};
+            end else if(addr_buff[1:0]==2)begin
+              data_topc0<={16'b0,avm_m0_readdata[31:16]};
+            end
+            timer_log<=timer;
+            timer <= 0;
+            read <= 0;
+            command_done<=1;
+          end
+        end
+				
+      end else if (command == 8'h32) begin//dword read
+        timer<=timer+1'b1;
+        if(timer==0)begin
+          read<=1;
+          address <= {addr_buff[31:2],2'b00};
+        end else begin
+          if(!avm_m0_waitrequest)begin
+            data_topc0<=avm_m0_readdata;
+            timer_log<=timer;
+            timer <= 0;
+            read <= 0;
+            command_done<=1;
+          end
+        end
+				
+      end else if (command == 8'h33) begin//qword read
+				timer<=timer+1'b1;
+        if(step==0)begin
+					step<=1;
+          read<=1;
+          address <= {addr_buff[31:2],2'b00};
+        end else if(step==1)begin
+          if(!avm_m0_waitrequest)begin
+						address <= {(addr_buff[31:2]+1),2'b00};
+            data_topc0<=avm_m0_readdata;
+            step <= 2;
+          end
+        end else if(step==2)begin
+          if(!avm_m0_waitrequest)begin
+            data_topc1<=avm_m0_readdata;
+            step <= 0;
+						read <= 0;
+						timer_log<=timer;
+						timer <= 0;
+						command_done<=1;
+          end
+        end
+				
+      end else if (command == 8'h34) begin//16byte read
+				timer<=timer+1'b1;
+        if(step==0)begin
+					step<=1;
+          read<=1;
+          address <= {addr_buff[31:2],2'b00};
+        end else if(step==1)begin
+          if(!avm_m0_waitrequest)begin
+						address <= {(addr_buff[31:2]+1),2'b00};
+            data_topc0<=avm_m0_readdata;
+            step <= 2;
+          end
+        end else if(step==2)begin
+          if(!avm_m0_waitrequest)begin
+						address <= {(addr_buff[31:2]+2),2'b00};
+            data_topc1<=avm_m0_readdata;
+            step <= 3;
+          end
+        end else if(step==3)begin
+          if(!avm_m0_waitrequest)begin
+						address <= {(addr_buff[31:2]+3),2'b00};
+            data_topc2<=avm_m0_readdata;
+            step <= 4;
+          end
+        end else if(step==4)begin
+          if(!avm_m0_waitrequest)begin
+            data_topc3<=avm_m0_readdata;
+            step <= 0;
+						read <= 0;
+						timer_log<=timer;
+						timer <= 0;
+						command_done<=1;
+          end
+        end
 
-      end else if (command == 8'h31) begin//byte write
+				
+				
+      end else if (command == 8'h40) begin//byte write
 				timer<=timer+1'b1;
         if(timer==0)begin
 					timer<=1;
-					address <= addr_buff;
-					writedata <= data_frompc;
-					byteenable <= 4'b0001;
+					address <= {addr_buff[31:2],2'b00};
+          if         (addr_buff[1:0]==0)begin
+            writedata <= {24'b0,data_frompc0[7:0]};
+            byteenable <= 4'b0001;
+          end else if(addr_buff[1:0]==1)begin
+            writedata <= {16'b0,data_frompc0[7:0],8'b0};
+            byteenable <= 4'b0010;
+          end else if(addr_buff[1:0]==2)begin
+            writedata <= {8'b0,data_frompc0[7:0],16'b0};
+            byteenable <= 4'b0100;
+          end else if(addr_buff[1:0]==3)begin
+            writedata <= {data_frompc0[7:0],24'b0};
+            byteenable <= 4'b1000;
+          end
+					write<=1;
+        end else begin
+          if(!avm_m0_waitrequest)begin
+            write <= 0;
+						byteenable <= 4'b1111;
+            timer_log<=timer;
+            timer<=0;
+            command_done<=1;
+          end
+        end
+        
+      end else if (command == 8'h41) begin//word write
+				timer<=timer+1'b1;
+        if(timer==0)begin
+					timer<=1;
+					address <= {addr_buff[31:2],2'b00};
+          if         (addr_buff[1:0]==0)begin
+            writedata <= {16'b0,data_frompc0[15:0]};
+            byteenable <= 4'b0011;
+          end else if(addr_buff[1:0]==2)begin
+            writedata <= {data_frompc0[15:0],16'b0};
+            byteenable <= 4'b1100;
+          end
+					write<=1;
+        end else begin
+          if(!avm_m0_waitrequest)begin
+            write <= 0;
+						byteenable <= 4'b1111;
+            timer_log<=timer;
+            timer<=0;
+            command_done<=1;
+          end
+        end
+        
+      end else if (command == 8'h42) begin//dword write
+				timer<=timer+1'b1;
+        if(timer==0)begin
+					timer<=1;
+					address <= {addr_buff[31:2],2'b00};
+					writedata <= data_frompc0;
 					write<=1;
         end else begin
           if(!avm_m0_waitrequest)begin
@@ -192,42 +378,66 @@ always @(posedge clk or negedge reset_n) begin
             command_done<=1;
           end
         end
-        
-      end else if (command == 8'h32) begin//word write
+				
+      end else if (command == 8'h43) begin//dword write
 				timer<=timer+1'b1;
-        if(timer==0)begin
-					timer<=1;
-					address <= addr_buff;
-					writedata <= data_frompc;
-					byteenable <= 4'b0011;
+        if(step==0)begin
+					step<=1;
 					write<=1;
-        end else begin
+					address <= {addr_buff[31:2],2'b00};
+					writedata <= data_frompc0;
+        end else if(step==1)begin
           if(!avm_m0_waitrequest)begin
+						step<=2;
+						address <= {(addr_buff[31:2]+1),2'b00};
+						writedata <= data_frompc1;
+          end
+        end else if(step==2)begin
+          if(!avm_m0_waitrequest)begin
+						step <= 0;
             write <= 0;
             timer_log<=timer;
             timer<=0;
             command_done<=1;
           end
         end
-        
-      end else if (command == 8'h33) begin//dword write
+				
+      end else if (command == 8'h44) begin//dword write
 				timer<=timer+1'b1;
-        if(timer==0)begin
-					timer<=1;
-					address <= addr_buff;
-					writedata <= data_frompc;
-					byteenable <= 4'b1111;
+        if(step==0)begin
+					step<=1;
 					write<=1;
-        end else begin
+					address <= {addr_buff[31:2],2'b00};
+					writedata <= data_frompc0;
+        end else if(step==1)begin
           if(!avm_m0_waitrequest)begin
+						step<=2;
+						address <= {(addr_buff[31:2]+1),2'b00};
+						writedata <= data_frompc1;
+          end
+        end else if(step==2)begin
+          if(!avm_m0_waitrequest)begin
+						step<=3;
+						address <= {(addr_buff[31:2]+2),2'b00};
+						writedata <= data_frompc2;
+          end
+        end else if(step==3)begin
+          if(!avm_m0_waitrequest)begin
+						step<=4;
+						address <= {(addr_buff[31:2]+3),2'b00};
+						writedata <= data_frompc3;
+          end
+        end else if(step==4)begin
+          if(!avm_m0_waitrequest)begin
+						step <= 0;
             write <= 0;
             timer_log<=timer;
             timer<=0;
             command_done<=1;
           end
         end
-        
-        
+
+				
       end else begin
         command_done<=1;
       end
