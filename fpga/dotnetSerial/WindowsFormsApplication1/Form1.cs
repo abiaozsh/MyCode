@@ -183,7 +183,7 @@ namespace WindowsFormsApplication1
             r.NextBytes(data);
             for (int i = 0; i < cnt; i += 4)
             {
-                writeDWord(baseaddr + i, data[i + 0], data[i + 1], data[i + 2], data[i + 3]);
+                writeDWord(baseaddr + i, data, i);
                 if ((i & 15) == 0)
                 {
                     this.Text = "" + i;
@@ -218,6 +218,26 @@ namespace WindowsFormsApplication1
             bool r3;
             bool r4;
             Random r = new Random();
+            {
+                byte[] data1 = new byte[1];
+                byte[] data2 = new byte[1];
+                byte[] data3 = new byte[1];
+                byte[] data4 = new byte[1];
+                r.NextBytes(data1);
+                r.NextBytes(data2);
+                r.NextBytes(data3);
+                r.NextBytes(data4);
+
+                writeByte(0x100, data1[0]);
+                writeByte(0x101, data2[0]);
+                writeByte(0x102, data3[0]);
+                writeByte(0x103, data4[0]);
+
+                byte[] d1 = read8Byte(0x100);
+                byte[] d2 = read8Byte(0x100);
+                r1 = compare(data1, d1);
+                r2 = compare(data2, d2);
+            }
             {
                 byte[] data1 = new byte[8];
                 byte[] data2 = new byte[8];

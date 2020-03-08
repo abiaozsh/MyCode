@@ -378,7 +378,7 @@ namespace WindowsFormsApplication1
 
             portWrite((byte)(0x41), (byte)0x00);
         }
-        public void writeWord(int addr, byte data0, byte data1)
+        public void writeWord(int addr, byte[] data)
         {
             int addr0 = (addr) & 0xFF;
             int addr1 = (addr >> 8) & 0xFF;
@@ -389,8 +389,8 @@ namespace WindowsFormsApplication1
             portWrite((byte)(0x12), (byte)addr2);
             portWrite((byte)(0x13), (byte)addr3);
 
-            portWrite((byte)(0x60), (byte)data0);
-            portWrite((byte)(0x61), (byte)data1);
+            portWrite((byte)(0x60), (byte)data[0]);
+            portWrite((byte)(0x61), (byte)data[1]);
 
             portWrite((byte)(0x41), (byte)0x00);
         }
@@ -416,7 +416,7 @@ namespace WindowsFormsApplication1
 
             portWrite((byte)(0x42), (byte)0x00);
         }
-        public void writeDWord(int addr, byte data0, byte data1, byte data2, byte data3)
+        public void writeDWord(int addr, byte[] data, int index)
         {
             int addr0 = (addr) & 0xFF;
             int addr1 = (addr >> 8) & 0xFF;
@@ -427,10 +427,10 @@ namespace WindowsFormsApplication1
             portWrite((byte)(0x12), (byte)addr2);
             portWrite((byte)(0x13), (byte)addr3);
 
-            portWrite((byte)(0x60), (byte)data0);
-            portWrite((byte)(0x61), (byte)data1);
-            portWrite((byte)(0x62), (byte)data2);
-            portWrite((byte)(0x63), (byte)data3);
+            portWrite((byte)(0x60), (byte)data[index + 0]);
+            portWrite((byte)(0x61), (byte)data[index + 1]);
+            portWrite((byte)(0x62), (byte)data[index + 2]);
+            portWrite((byte)(0x63), (byte)data[index + 3]);
 
             portWrite((byte)(0x42), (byte)0x00);
         }
