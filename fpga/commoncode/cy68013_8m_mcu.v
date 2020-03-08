@@ -394,7 +394,7 @@ test test2(
 */
 
 reg [7:0] data_addr;
-reg [7:0] data [7:0];
+reg [7:0] data [256];
 
 
 reg sdram8m_isDMA;
