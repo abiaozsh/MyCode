@@ -173,6 +173,9 @@ namespace WindowsFormsApplication1
 
         private void button6_Click(object sender, EventArgs e)
         {
+
+            return;
+            
             StringBuilder sb = new StringBuilder();
             int cnt = 256;
 
@@ -213,6 +216,13 @@ namespace WindowsFormsApplication1
 
         private void button12_Click(object sender, EventArgs e)
         {
+            byte[] a = read16Byte(0x00000000);
+            byte[] b = read16Byte(0x02000000);
+            byte[] c = read16Byte(0x02001000);
+            writeByte(0x02000000,0xFF);
+            byte[] d = read16Byte(0x02000000);
+
+            return;
             bool r1;
             bool r2;
             bool r3;
@@ -383,12 +393,35 @@ namespace WindowsFormsApplication1
         {
             if (checkBox2.Checked)
             {
-                portWrite((byte)(0x50), (byte)0x00);
+                portWrite((byte)(0xE1), (byte)0x00);
             }
             else
             {
-                portWrite((byte)(0x51), (byte)0x00);
+                portWrite((byte)(0xE0), (byte)0x00);
             }
+        }
+
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                portWrite((byte)(0xE2), Convert.ToByte(textBox2.Text, 16));
+            }
+            catch
+            { 
+            }
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                portWrite((byte)(0xE3), Convert.ToByte(textBox1.Text, 16));
+            }
+            catch
+            {
+            }
+
         }
 
 

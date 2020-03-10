@@ -48,6 +48,7 @@ namespace WindowsFormsApplication1
             this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.checkBox2 = new System.Windows.Forms.CheckBox();
+            this.textBox1 = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // button1
@@ -86,12 +87,12 @@ namespace WindowsFormsApplication1
             // 
             // textBox2
             // 
-            this.textBox2.Location = new System.Drawing.Point(293, 11);
-            this.textBox2.Multiline = true;
+            this.textBox2.Location = new System.Drawing.Point(512, 9);
             this.textBox2.Name = "textBox2";
             this.textBox2.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox2.Size = new System.Drawing.Size(93, 22);
+            this.textBox2.Size = new System.Drawing.Size(93, 21);
             this.textBox2.TabIndex = 6;
+            this.textBox2.TextChanged += new System.EventHandler(this.textBox2_TextChanged);
             // 
             // button4
             // 
@@ -226,17 +227,27 @@ namespace WindowsFormsApplication1
             this.checkBox2.AutoSize = true;
             this.checkBox2.Location = new System.Drawing.Point(452, 11);
             this.checkBox2.Name = "checkBox2";
-            this.checkBox2.Size = new System.Drawing.Size(102, 16);
+            this.checkBox2.Size = new System.Drawing.Size(42, 16);
             this.checkBox2.TabIndex = 19;
-            this.checkBox2.Text = "control by me";
+            this.checkBox2.Text = "clk";
             this.checkBox2.UseVisualStyleBackColor = true;
             this.checkBox2.CheckedChanged += new System.EventHandler(this.checkBox2_CheckedChanged);
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(626, 9);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.textBox1.Size = new System.Drawing.Size(93, 21);
+            this.textBox1.TabIndex = 20;
+            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(909, 752);
+            this.Controls.Add(this.textBox1);
             this.Controls.Add(this.checkBox2);
             this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.comboBox1);
@@ -282,6 +293,7 @@ namespace WindowsFormsApplication1
         private System.Windows.Forms.ComboBox comboBox1;
         private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.CheckBox checkBox2;
+        private TextBox textBox1;
 
 	}
 }
