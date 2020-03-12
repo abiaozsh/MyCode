@@ -1,0 +1,1 @@
+用 buscheck 做ram初始化检查

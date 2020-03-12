@@ -83,15 +83,19 @@ assign debug[0] = halt;
 
 reg command_done;
 reg [7:0] timer;
-reg [7:0] step;
 reg [7:0] timer_log;
+
+reg [31:0] debug_address;
+reg        debug_read;
+reg [31:0] debug_data;
+reg  [7:0] debug_step;
 
 always @(posedge clk or negedge reset_n) begin
   if (!reset_n) begin
 
     command_done <= 0;
     timer<=0;
-		step<=0;
+		debug_step<=0;
 		timer_log<=0;
 		//byteenable<=4'b1111;
 		
@@ -104,6 +108,29 @@ always @(posedge clk or negedge reset_n) begin
       end
     end else begin//command_done==0
       if          (command == 8'h00) begin
+      
+      end else if (command == 8'h10) begin uart_send<=1; uart_data_in<=debug_data[ 7: 0]; command_done<=1;
+      end else if (command == 8'h11) begin uart_send<=1; uart_data_in<=debug_data[15: 8]; command_done<=1;
+      end else if (command == 8'h12) begin uart_send<=1; uart_data_in<=debug_data[23:16]; command_done<=1;
+      end else if (command == 8'h13) begin uart_send<=1; uart_data_in<=debug_data[31:24]; command_done<=1;
+
+      end else if (command == 8'h20) begin debug_address[ 7: 0] <= data; command_done<=1;
+      end else if (command == 8'h21) begin debug_address[15: 8] <= data; command_done<=1;
+      end else if (command == 8'h22) begin debug_address[23:16] <= data; command_done<=1;
+      end else if (command == 8'h23) begin debug_address[31:24] <= data; command_done<=1;
+
+      end else if (command == 8'h30) begin
+        if         (debug_step==0)begin
+          debug_step <= 1;
+          debug_read <= 1;
+        end else if(debug_step==1)begin
+          if(!avm_m0_waitrequest)begin
+            debug_data <= avm_m0_readdata;
+            debug_read <= 0;
+            debug_step <= 0;
+            command_done = 1;
+          end
+        end
 
       end else if (command == 8'hA0) begin uart_send<=1; uart_data_in<=regfile[ 0][ 7: 0]; command_done<=1;
       end else if (command == 8'hA1) begin uart_send<=1; uart_data_in<=regfile[ 0][15: 8]; command_done<=1;
@@ -169,7 +196,17 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'hDD) begin uart_send<=1; uart_data_in<=regfile[15][15: 8]; command_done<=1;
       end else if (command == 8'hDE) begin uart_send<=1; uart_data_in<=regfile[15][23:16]; command_done<=1;
       end else if (command == 8'hDF) begin uart_send<=1; uart_data_in<=regfile[15][31:24]; command_done<=1;
-				
+      
+      end else if (command == 8'hE0) begin uart_send<=1; uart_data_in<=status[ 7: 0]; command_done<=1;
+      end else if (command == 8'hE1) begin uart_send<=1; uart_data_in<=status[15: 8]; command_done<=1;
+      end else if (command == 8'hE2) begin uart_send<=1; uart_data_in<=status[23:16]; command_done<=1;
+      end else if (command == 8'hE3) begin uart_send<=1; uart_data_in<=status[31:24]; command_done<=1;
+
+      end else if (command == 8'hE4) begin uart_send<=1; uart_data_in<=pc[ 7: 0]; command_done<=1;
+      end else if (command == 8'hE5) begin uart_send<=1; uart_data_in<=pc[15: 8]; command_done<=1;
+      end else if (command == 8'hE6) begin uart_send<=1; uart_data_in<=pc[23:16]; command_done<=1;
+      end else if (command == 8'hE7) begin uart_send<=1; uart_data_in<=pc[31:24]; command_done<=1;
+
       end else begin
         command_done<=1;
       end
@@ -180,28 +217,14 @@ always @(posedge clk or negedge reset_n) begin
 end
 
 
-
-
 	assign avm_m0_byteenable = byteenable;
 
-	assign avm_m0_address = cycle == 0 ? (fetch_address + cs) : (exec_address + ds);
+	assign avm_m0_address = halt == 1 ? debug_address : (cycle == 0 ? (fetch_address + cs) : (exec_address + ds));
 
 	assign avm_m0_writedata = exec_writedata;
 	assign avm_m0_write = exec_write;
 
-	assign avm_m0_read = cycle == 0 ? fetch_read : (exec_read);
-
-  assign eax    = regfile[0];
-  assign ebx    = regfile[1];
-  assign ecx    = regfile[2];
-  assign edx    = regfile[3];
-  assign ebp    = regfile[4];
-  assign esp    = regfile[5];
-  
-  assign cs     = regfile[12];
-  assign ds     = regfile[13];
-  assign status = regfile[14];
-  assign pc     = regfile[15];
+	assign avm_m0_read = halt == 1 ? debug_read : (cycle == 0 ? fetch_read : (exec_read));
 
   reg [31:0] cmd;
   reg [31:0] ins2;
@@ -221,12 +244,12 @@ end
       ins2<=0;
 
     end else begin
-			if(cycle==0)begin
-				if(!halt)begin
+      if(cycle==0)begin
+        if(!halt)begin
           if         (fetch_step==0)begin
             fetch_step <= 1;
             fetch_read <= 1;
-            fetch_address <= regfile[15];//pc
+            fetch_address <= pc;
           end else if(fetch_step==1)begin
             if(!avm_m0_waitrequest)begin
               cmd <= avm_m0_readdata;
@@ -242,7 +265,7 @@ end
           end else if(fetch_step==2)begin
             fetch_step <= 3;
             fetch_read <= 1;
-            fetch_address <= regfile[15] + 8;//pc
+            fetch_address <= pc + 4;
           end else if(fetch_step==3)begin
             if(!avm_m0_waitrequest)begin
               ins2 <= avm_m0_readdata;
@@ -252,13 +275,13 @@ end
             end
 
           end
-				end
-			end else begin
-				if(cmd_ack)begin
-					cycle <= 0;
-				end
-			end
-      
+        end
+      end else begin
+        if(cmd_ack)begin
+          cycle <= 0;
+        end
+      end
+
     end
   end
   
@@ -271,19 +294,43 @@ end
   wire [31:0] edx;//3
   wire [31:0] ebp;//4
   wire [31:0] esp;//5
+  wire [31:0] esi;//6
+  wire [31:0] edi;//7
+  wire [31:0] r0;//8
   wire [31:0] cs;
   wire [31:0] ds;
-  wire [31:0] status;
-  wire [31:0] pc;
+
+  assign eax    = regfile[0];
+  assign ebx    = regfile[1];
+  assign ecx    = regfile[2];
+  assign edx    = regfile[3];
+  assign ebp    = regfile[4];
+  assign esp    = regfile[5];
+  assign esi    = regfile[6];
+  assign edi    = regfile[7];
+  assign r0     = regfile[8];
+  assign cs     = regfile[14];
+  assign ds     = regfile[15];
+  
+  reg [31:0] status;//          overflow,sign neg,carry,zero
+  wire zf;
+  wire cf;
+  wire sf;
+  wire of;
+  assign zf = status[0];
+
+  reg [31:0] pc;
 
   reg halt;
   wire        prefix;//1
-  wire [6:0]  ins;//7
+  wire [5:0]  ins;//5
   wire [3:0]  reg1;//4
   wire [3:0]  reg2;//4
   wire [15:0] ins1;//16
   assign prefix = cmd[31];
-  assign ins = cmd[30:24];
+  assign pcchange = cmd[30];
+  assign iswrite = cmd[29];
+  assign ins  = cmd[28:24];
   assign reg1 = cmd[23:20];
   assign reg2 = cmd[19:16];
   assign ins1 = cmd[15:0];
@@ -296,6 +343,10 @@ end
   reg [31:0] exec_writedata;
   
   reg [ 2:0] exec_step;
+  
+  reg [32:0] temp1;
+  reg [32:0] temp2;
+  reg [32:0] temp3;
   always @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
       cmd_ack=0;
@@ -311,11 +362,13 @@ end
       regfile[4]<=0;//ebp
       regfile[5]<=0;//esp
       
-      regfile[12]<=0;//cs
-      regfile[13]<=0;//ds
-      regfile[14]<=0;//status
-      regfile[15]<=32'h02000000;//pc
-      
+      regfile[12]<=0;
+      regfile[13]<=0;
+      regfile[14]<=0;//cs
+      regfile[15]<=0;//ds
+       
+      status<=0;
+      pc<=32'h0200_0000;
       byteenable <= 4'b1111;
       exec_step<=0;
       
@@ -323,61 +376,212 @@ end
     end else begin
       if(cycle==1 && cmd_ack==0)begin
         if(prefix==0)begin
+          if(pcchange==0)begin
+            if(iswrite==0)begin
+              //hlt                                       @ 4 @ 0 @   0 @       0 @  0 @ 0,0,0,00 hlt
+              if         (ins==7'h00)begin//ok
+                halt <= 1;
+                cmd_ack = 1;
+              //nop                                       @ 4 @ 0 @   0 @       0 @  1 @ 0,0,0,01 nop
+              end else if(ins==7'h01)begin//ok
+                cmd_ack = 1;
+              //mov !reg, DWORD PTR \[!reg!ins\]          @ 4 @ 0 @   0 @       2 @  2 @ 0,0,0,02 mov	eax, DWORD PTR [esp+20]
+              end else if(ins==7'h02)begin//ok
+                if         (exec_step==0)begin
+                  exec_step <= 1;
+                  exec_address <= regfile[reg2] + ins1;
+                  exec_read <= 1;
+                end else if(exec_step==1)begin
+                  if(!avm_m0_waitrequest)begin
+                    regfile[reg1] <= avm_m0_readdata;
+                    exec_read <= 0;
+                    exec_step <= 0;
+                    cmd_ack = 1;
+                  end
+                end
+              //cmp !reg, DWORD PTR \[!reg!ins\]          @ 4 @ 0 @   0 @       2 @  3 @ 0,0,0,03 cmp	eax, DWORD PTR [esp+12]
+              end else if(ins==7'h03)begin//ok
+                if         (exec_step==0)begin
+                  exec_step <= 1;
+                  exec_address <= regfile[reg2] + ins1;
+                  exec_read <= 1;
+                end else if(exec_step==1)begin
+                  if(!avm_m0_waitrequest)begin
+                    temp1 = {1'b0,regfile[reg1]};
+                    temp2 = {1'b0,avm_m0_readdata};
+                    temp3 = temp1 - temp2;
+                    status[0]<=temp3[31:0]==0;//zf
+                    exec_read <= 0;
+                    exec_step <= 0;
+                    cmd_ack = 1;
+                  end
+                end
+              //mov !reg, !reg                            @ 4 @ 0 @   0 @       5 @  4 @ 0,0,0,05 mov	ebp, esp
+              end else if(ins==7'h04)begin//ok
+                regfile[reg1] <= regfile[reg2];
+                cmd_ack = 1;
+              
+              
+              end
+            end else begin//write == 1
+              //push !reg                                 @ 4 @ 0 @   1 @       4 @  0 @ 0,0,0,00 push	ebp
+              if         (ins==7'h00)begin//ok
+                //ESP <= ESP - 4;
+                //(SS:ESP) <= (SOURCE); (* dword assignment *)          
+                if         (exec_step==0)begin
+                  exec_step <= 1;
+                  exec_address <= regfile[5] - 4;//esp
+                  regfile[5] <= regfile[5] - 4;//esp
+                  exec_writedata <= regfile[reg1];
+                  exec_write <= 1;
+                end else if(exec_step==1)begin
+                  if(!avm_m0_waitrequest)begin
+                    exec_write <= 0;
+                    exec_step <= 0;
+                    cmd_ack = 1;
+                  end
+                end
+              //mov DWORD PTR \[!reg!ins\], !reg          @ 4 @ 0 @   1 @       2 @  1 @ 0,0,1,01 mov DWORD PTR [esp+28], eax
+              end else if(ins==7'h01)begin//ok
+                if         (exec_step==0)begin
+                  exec_step <= 1;
+                  exec_address <= regfile[reg1] + ins1;
+                  exec_writedata <= regfile[reg2];
+                  exec_write <= 1;
+                end else if(exec_step==1)begin
+                  if(!avm_m0_waitrequest)begin
+                    exec_write <= 0;
+                    exec_step <= 0;
+                    cmd_ack = 1;
+                  end
+                end
 
-          //case 0: sIns = "nop"; break;
-          if         (ins==7'h00)begin//halt                                       @ 4 @       0 @  0 @ halt
-            halt <= 1;
-            cmd_ack = 1;
-
-          //case 1: sIns = "mov DWORD PTR [" + sreg1 + " " + sins1 + "], " + sreg2 + ""; break;
-          end else if(ins==7'h01)begin
-            if         (exec_step==0)begin
-              exec_step <= 1;
-              exec_address <= regfile[reg1] + ins1;
-              exec_writedata <= ins2;
-            end else if(exec_step==1)begin
-							if(!avm_m0_waitrequest)begin
-								cmd_ack = 1;
+                
               end
             end
-          //case 2: sIns = "mov " + sreg1 + ", DWORD PTR [" + sreg2 + " " + sins1 + "]"; break;
-          //case 3: sIns = "cmp " + sreg1 + ", DWORD PTR [" + sreg2 + " " + sins1 + "]"; break;
-          //case 4: sIns = "push " + sreg1 + ""; break;
-          //case 5: sIns = "mov " + sreg1 + ", " + sreg2 + ""; break;
-          //case 6: sIns = "call " + relPos; break;
-          //case 7: sIns = "jmp " + relPos; break;
-          //case 8: sIns = "je " + relPos; break;
-          //case 9: sIns = "ret"; break;
-          
-          end
-          
-					if(cmd_ack==1)begin
-					 regfile[15]<=regfile[15]+4;//pc+=4
-					end
-          
-        end else begin
-          //case 0: sIns = "mov DWORD PTR [" + sreg1 + " " + sins1 + "], " + sins2; break;
-          if         (ins==7'h00)begin
-            if         (exec_step==0)begin
-              exec_step <= 1;
-              exec_address <= regfile[reg1] + ins1;
-              exec_writedata <= ins2;
-            end else if(exec_step==1)begin
-              
-							cmd_ack = 1;
+            
+            if(cmd_ack==1)begin
+              pc<=pc+4;//pc+=4
+            end
+            
+          end else begin//pcchange==1
+            if(iswrite==0)begin
+              if         (ins==7'h00)begin
+                
+              //jmp !sym                                  @ 4 @ 1 @   0 @       7 @  1 @ 0,1,0,01 jmp L3
+              end else if(ins==7'h01)begin//ok
+                pc <= pc + ins1;
+                cmd_ack = 1;
+                
+              //je !sym                                   @ 4 @ 1 @   0 @       7 @  2 @ 0,1,0,02 je L3
+              end else if(ins==7'h02)begin//ok
+                if(zf)begin
+                  pc <= pc + ins1;
+                end else begin
+                  pc <= pc + 4;
+                end
+                cmd_ack = 1;
+              //ret                                       @ 4 @ 1 @   0 @       0 @  3 @ 0,1,0,03 ret
+              end else if(ins==7'h03)begin//ok
+                //DEST ← (SS:SP); (* copy a dword *)
+                //SP ← SP + 4;            
+                if         (exec_step==0)begin
+                  exec_step <= 1;
+                  exec_address <= regfile[5];//esp
+                  regfile[5] <= regfile[5] + 4;//esp
+                  exec_read <= 1;
+                end else if(exec_step==1)begin
+                  if(!avm_m0_waitrequest)begin
+                    pc = avm_m0_readdata;
+                    exec_read <= 0;
+                    exec_step <= 0;
+                    cmd_ack = 1;
+                  end
+                end
+
+              end
+            end else begin//iswrite==1
+              //call !sym                                 @ 4 @ 1 @   1 @       7 @  0 @ 0,1,1,00 call ___main
+              if         (ins==7'h00)begin//ok
+                //ESP <= ESP - 4;
+                //(SS:ESP) <= (SOURCE); (* dword assignment *)          
+                if         (exec_step==0)begin
+                  exec_step <= 1;
+                  exec_address <= regfile[5] - 4;//esp
+                  regfile[5] <= regfile[5] - 4;//esp
+                  exec_writedata <= pc + 4;
+                  exec_write <= 1;
+                end else if(exec_step==1)begin
+                  if(!avm_m0_waitrequest)begin
+                    pc <= pc + ins1;//pc+=4
+                    exec_write <= 0;
+                    exec_step <= 0;
+                    cmd_ack = 1;
+                  end
+                end
+                
+              end
               
             end
-          //case 1: sIns = "add DWORD PTR [" + sreg1 + " " + sins1 + "], " + sins2; break;
-          end else if(ins==7'h01)begin//
+            
+            
+          end
+          
+          
+        end else begin//prefix==1
+          if(pcchange==0)begin
+            if(iswrite==0)begin
+              if         (ins==7'h00)begin//ok
+              //add !reg, !ins                            @ 8 @ 0 @   0 @       6 @  1 @ 1,0,0,04 add esp, 32
+              end else if(ins==7'h01)begin//ok
+                temp1 = {1'b0,regfile[reg1]};
+                temp2 = {1'b0,ins2};
+                temp3 = temp1 + temp2;
+                regfile[reg1] <= temp3;
+                status[0]<=temp3[31:0]==0;//zf
+                cmd_ack = 1;
+              //and !reg, !ins                            @ 8 @ 0 @   0 @       6 @  2 @ 1,0,0,03 and esp, -16
+              end else if(ins==7'h02)begin//ok
+                regfile[reg1] <= regfile[reg1] & ins2;
+                status[0]<=temp3[31:0]==0;//zf
+                cmd_ack = 1;
+              //sub !reg, !ins                            @ 8 @ 0 @   0 @       6 @  3 @ 1,0,0,04 sub esp, 32
+              end else if(ins==7'h03)begin//ok
+                temp1 = {1'b0,regfile[reg1]};
+                temp2 = {1'b0,ins2};
+                temp3 = temp1 - temp2;
+                regfile[reg1] <= temp3;
+                status[0]<=temp3[31:0]==0;//zf
+                cmd_ack = 1;
 
-          //case 2: sIns = "and " + sreg1 + ", " + sins2; break;
-          //case 3: sIns = "sub " + sreg1 + ", " + sins2; break;
+
+              end
+            end else begin//write==1
+              //mov DWORD PTR \[!reg!ins\], !ins          @ 8 @ 0 @   1 @       1 @  0 @ 1,0,1,00 mov DWORD PTR [esp+20], 33554448
+              if         (ins==7'h00)begin//ok
+                if         (exec_step==0)begin
+                  exec_step <= 1;
+                  exec_address <= regfile[reg1] + ins1;
+                  exec_writedata <= ins2;
+                  exec_write <= 1;
+                end else if(exec_step==1)begin
+                  if(!avm_m0_waitrequest)begin
+                    exec_write <= 0;
+                    exec_step <= 0;
+                    cmd_ack = 1;
+                  end
+                end
+                
+              end
+            end
+            
+            if(cmd_ack==1)begin
+              pc<=pc+8;//pc+=8
+            end
+          
+          end else begin//pcchange==1
           
           end
-					
-					if(cmd_ack==1)begin
-					  regfile[15]<=regfile[15]+8;//pc+=8
-					end
           
         end
       end
@@ -390,8 +594,61 @@ end
 
 
 
+//MOVS/MOVSB/MOVSW/MOVSD    Move Data from String to String
+
+//The terms "above" and "below" refer to the relation between two
+//unsigned values (neither SF nor OF is tested). The terms "greater" and
+//"less" refer to the relation between two signed values (SF and OF are
+//tested).
+//
+//Bit Name Function
+//0 CF Carry Flag    Set on high-order bit carry or borrow; cleared
+//otherwise.
+//2 PF Parity Flag    Set if low-order eight bits of result contain
+//an even number of 1 bits; cleared otherwise.
+//4 AF Adjust flag    Set on carry from or borrow to the low order
+//four bits of AL; cleared otherwise. Used for decimal
+//arithmetic.
+//6 ZF Zero Flag    Set if result is zero; cleared otherwise.
+//7 SF Sign Flag    Set equal to high-order bit of result (0 is
+//positive, 1 if negative).
+//11 OF Overflow Flag    Set if result is too large a positive number
+//or too small a negative number (excluding sign-bit) to fit in
+//destination operand; cleared otherwise.
 
 
 
+//Instruction           |OF|SF|ZF|AF|PF|CF
+//AAA                   |  |  |  |TM|  | M
+//AAS                   |  |  |  |TM|  | M
+//AAD                   |  | M| M|  | M|  
+//AAM                   |  | M| M|  | M|  
+//DAA                   |  | M| M|TM| M|TM
+//DAS                   |  | M| M|TM| M|TM
+//ADC                   | M| M| M| M| M|TM
+//ADD                   | M| M| M| M| M| M
+//SBB                   | M| M| M| M| M|TM
+//SUB                   | M| M| M| M| M| M
+//CMP                   | M| M| M| M| M| M
+//CMPS                  | M| M| M| M| M| M
+//SCAS                  | M| M| M| M| M| M
+//NEG                   | M| M| M| M| M| M
+//DEC                   | M| M| M| M| M|
+//INC                   | M| M| M| M| M|
+//IMUL                  | M|  |  |  |  | M
+//MUL                   | M|  |  |  |  | M
+//RCL/RCR 1             | M|  |  |  |  |TM
+//RCL/RCR count         |  |  |  |  |  |TM
+//ROL/ROR 1             | M|  |  |  |  | M
+//ROL/ROR count         |  |  |  |  |  | M
+//SAL/SAR/SHL/SHR 1     | M| M| M|  | M| M
+//SAL/SAR/SHL/SHR count |  | M| M|  | M| M
+//SHLD/SHRD             |  | M| M|  | M| M
+//BSF/BSR               |  |  | M|  |  |  
+//BT/BTS/BTR/BTC        |  |  |  |  |  | M
+//AND                   | 0| M| M|  | M| 0
+//OR                    | 0| M| M|  | M| 0
+//TEST                  | 0| M| M|  | M| 0
+//XOR                   | 0| M| M|  | M| 0
 
 endmodule

@@ -60,14 +60,6 @@
          type = "int";
       }
    }
-   element pio_in_key.s1
-   {
-      datum baseAddress
-      {
-         value = "33558528";
-         type = "String";
-      }
-   }
    element pio_out_debug.s1
    {
       datum _lockedAddress
@@ -81,11 +73,11 @@
          type = "String";
       }
    }
-   element sdram.s1
+   element pio_in_key.s1
    {
       datum baseAddress
       {
-         value = "0";
+         value = "33558528";
          type = "String";
       }
    }
@@ -94,6 +86,14 @@
       datum baseAddress
       {
          value = "33554432";
+         type = "String";
+      }
+   }
+   element sdram.s1
+   {
+      datum baseAddress
+      {
+         value = "0";
          type = "String";
       }
    }
@@ -120,7 +120,7 @@
  <parameter name="projectName" value="aaa.qpf" />
  <parameter name="sopcBorderPoints" value="false" />
  <parameter name="systemHash" value="1" />
- <parameter name="timeStamp" value="1583569957783" />
+ <parameter name="timeStamp" value="1584021951923" />
  <parameter name="useTestBenchNamingPattern" value="false" />
  <instanceScript></instanceScript>
  <interface name="clk50" internal="clk50.clk_in" type="clock" dir="end" />
@@ -189,8 +189,8 @@
   <parameter name="blockType" value="AUTO" />
   <parameter name="dataWidth" value="16" />
   <parameter name="dualPort" value="false" />
-  <parameter name="initMemContent" value="false" />
-  <parameter name="initializationFileName" value="onchip_mem.hex" />
+  <parameter name="initMemContent" value="true" />
+  <parameter name="initializationFileName" value="a.hex" />
   <parameter name="instanceID" value="NONE" />
   <parameter name="memorySize" value="4096" />
   <parameter name="readDuringWriteMode" value="DONT_CARE" />
@@ -199,7 +199,7 @@
   <parameter name="singleClockOperation" value="false" />
   <parameter name="slave1Latency" value="1" />
   <parameter name="slave2Latency" value="1" />
-  <parameter name="useNonDefaultInitFile" value="false" />
+  <parameter name="useNonDefaultInitFile" value="true" />
   <parameter name="useShallowMemBlocks" value="false" />
   <parameter name="writable" value="true" />
   <parameter name="autoInitializationFileName">$${FILENAME}_onchip_memory2_0</parameter>
