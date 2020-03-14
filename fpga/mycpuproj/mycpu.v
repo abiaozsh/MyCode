@@ -79,8 +79,6 @@ always @(posedge clk or negedge reset_n) begin
   end
 end
 
-assign debug[0] = halt;
-
 reg command_done;
 reg [7:0] timer;
 reg [7:0] timer_log;
@@ -88,17 +86,18 @@ reg [7:0] timer_log;
 reg [31:0] debug_address;
 reg        debug_read;
 reg [31:0] debug_data;
-reg  [7:0] debug_step;
-
+reg  [3:0] debug_readmem_step;
+reg        debug_step;
+reg halt_uart;
 always @(posedge clk or negedge reset_n) begin
   if (!reset_n) begin
 
     command_done <= 0;
     timer<=0;
 		debug_step<=0;
+    debug_readmem_step<=0;
 		timer_log<=0;
-		//byteenable<=4'b1111;
-		
+    halt_uart<=1;
   end else begin
     uart_send<=0;
     
@@ -108,6 +107,11 @@ always @(posedge clk or negedge reset_n) begin
       end
     end else begin//command_done==0
       if          (command == 8'h00) begin
+
+      end else if (command == 8'h01) begin halt_uart<=1; command_done<=1;
+      end else if (command == 8'h02) begin halt_uart<=0; command_done<=1;
+      
+      end else if (command == 8'h03) begin debug_step<=~debug_step; command_done<=1;
       
       end else if (command == 8'h10) begin uart_send<=1; uart_data_in<=debug_data[ 7: 0]; command_done<=1;
       end else if (command == 8'h11) begin uart_send<=1; uart_data_in<=debug_data[15: 8]; command_done<=1;
@@ -120,58 +124,58 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h23) begin debug_address[31:24] <= data; command_done<=1;
 
       end else if (command == 8'h30) begin
-        if         (debug_step==0)begin
-          debug_step <= 1;
+        if         (debug_readmem_step==0)begin
+          debug_readmem_step <= 1;
           debug_read <= 1;
-        end else if(debug_step==1)begin
+        end else if(debug_readmem_step==1)begin
           if(!avm_m0_waitrequest)begin
             debug_data <= avm_m0_readdata;
             debug_read <= 0;
-            debug_step <= 0;
+            debug_readmem_step <= 0;
             command_done = 1;
           end
         end
 
-      end else if (command == 8'hA0) begin uart_send<=1; uart_data_in<=regfile[ 0][ 7: 0]; command_done<=1;
-      end else if (command == 8'hA1) begin uart_send<=1; uart_data_in<=regfile[ 0][15: 8]; command_done<=1;
-      end else if (command == 8'hA2) begin uart_send<=1; uart_data_in<=regfile[ 0][23:16]; command_done<=1;
-      end else if (command == 8'hA3) begin uart_send<=1; uart_data_in<=regfile[ 0][31:24]; command_done<=1;
-      end else if (command == 8'hA4) begin uart_send<=1; uart_data_in<=regfile[ 1][ 7: 0]; command_done<=1;
-      end else if (command == 8'hA5) begin uart_send<=1; uart_data_in<=regfile[ 1][15: 8]; command_done<=1;
-      end else if (command == 8'hA6) begin uart_send<=1; uart_data_in<=regfile[ 1][23:16]; command_done<=1;
-      end else if (command == 8'hA7) begin uart_send<=1; uart_data_in<=regfile[ 1][31:24]; command_done<=1;
-      end else if (command == 8'hA8) begin uart_send<=1; uart_data_in<=regfile[ 2][ 7: 0]; command_done<=1;
-      end else if (command == 8'hA9) begin uart_send<=1; uart_data_in<=regfile[ 2][15: 8]; command_done<=1;
-      end else if (command == 8'hAA) begin uart_send<=1; uart_data_in<=regfile[ 2][23:16]; command_done<=1;
-      end else if (command == 8'hAB) begin uart_send<=1; uart_data_in<=regfile[ 2][31:24]; command_done<=1;
-      end else if (command == 8'hAC) begin uart_send<=1; uart_data_in<=regfile[ 3][ 7: 0]; command_done<=1;
-      end else if (command == 8'hAD) begin uart_send<=1; uart_data_in<=regfile[ 3][15: 8]; command_done<=1;
-      end else if (command == 8'hAE) begin uart_send<=1; uart_data_in<=regfile[ 3][23:16]; command_done<=1;
-      end else if (command == 8'hAF) begin uart_send<=1; uart_data_in<=regfile[ 3][31:24]; command_done<=1;
-      end else if (command == 8'hB0) begin uart_send<=1; uart_data_in<=regfile[ 4][ 7: 0]; command_done<=1;
-      end else if (command == 8'hB1) begin uart_send<=1; uart_data_in<=regfile[ 4][15: 8]; command_done<=1;
-      end else if (command == 8'hB2) begin uart_send<=1; uart_data_in<=regfile[ 4][23:16]; command_done<=1;
-      end else if (command == 8'hB3) begin uart_send<=1; uart_data_in<=regfile[ 4][31:24]; command_done<=1;
-      end else if (command == 8'hB4) begin uart_send<=1; uart_data_in<=regfile[ 5][ 7: 0]; command_done<=1;
-      end else if (command == 8'hB5) begin uart_send<=1; uart_data_in<=regfile[ 5][15: 8]; command_done<=1;
-      end else if (command == 8'hB6) begin uart_send<=1; uart_data_in<=regfile[ 5][23:16]; command_done<=1;
-      end else if (command == 8'hB7) begin uart_send<=1; uart_data_in<=regfile[ 5][31:24]; command_done<=1;
-      end else if (command == 8'hB8) begin uart_send<=1; uart_data_in<=regfile[ 6][ 7: 0]; command_done<=1;
-      end else if (command == 8'hB9) begin uart_send<=1; uart_data_in<=regfile[ 6][15: 8]; command_done<=1;
-      end else if (command == 8'hBA) begin uart_send<=1; uart_data_in<=regfile[ 6][23:16]; command_done<=1;
-      end else if (command == 8'hBB) begin uart_send<=1; uart_data_in<=regfile[ 6][31:24]; command_done<=1;
-      end else if (command == 8'hBC) begin uart_send<=1; uart_data_in<=regfile[ 7][ 7: 0]; command_done<=1;
-      end else if (command == 8'hBD) begin uart_send<=1; uart_data_in<=regfile[ 7][15: 8]; command_done<=1;
-      end else if (command == 8'hBE) begin uart_send<=1; uart_data_in<=regfile[ 7][23:16]; command_done<=1;
-      end else if (command == 8'hBF) begin uart_send<=1; uart_data_in<=regfile[ 7][31:24]; command_done<=1;
-      end else if (command == 8'hC0) begin uart_send<=1; uart_data_in<=regfile[ 8][ 7: 0]; command_done<=1;
-      end else if (command == 8'hC1) begin uart_send<=1; uart_data_in<=regfile[ 8][15: 8]; command_done<=1;
-      end else if (command == 8'hC2) begin uart_send<=1; uart_data_in<=regfile[ 8][23:16]; command_done<=1;
-      end else if (command == 8'hC3) begin uart_send<=1; uart_data_in<=regfile[ 8][31:24]; command_done<=1;
-      end else if (command == 8'hC4) begin uart_send<=1; uart_data_in<=regfile[ 9][ 7: 0]; command_done<=1;
-      end else if (command == 8'hC5) begin uart_send<=1; uart_data_in<=regfile[ 9][15: 8]; command_done<=1;
-      end else if (command == 8'hC6) begin uart_send<=1; uart_data_in<=regfile[ 9][23:16]; command_done<=1;
-      end else if (command == 8'hC7) begin uart_send<=1; uart_data_in<=regfile[ 9][31:24]; command_done<=1;
+      end else if (command == 8'hA0) begin uart_send<=1; uart_data_in<=eax[ 7: 0]; command_done<=1;
+      end else if (command == 8'hA1) begin uart_send<=1; uart_data_in<=eax[15: 8]; command_done<=1;
+      end else if (command == 8'hA2) begin uart_send<=1; uart_data_in<=eax[23:16]; command_done<=1;
+      end else if (command == 8'hA3) begin uart_send<=1; uart_data_in<=eax[31:24]; command_done<=1;
+      end else if (command == 8'hA4) begin uart_send<=1; uart_data_in<=ebx[ 7: 0]; command_done<=1;
+      end else if (command == 8'hA5) begin uart_send<=1; uart_data_in<=ebx[15: 8]; command_done<=1;
+      end else if (command == 8'hA6) begin uart_send<=1; uart_data_in<=ebx[23:16]; command_done<=1;
+      end else if (command == 8'hA7) begin uart_send<=1; uart_data_in<=ebx[31:24]; command_done<=1;
+      end else if (command == 8'hA8) begin uart_send<=1; uart_data_in<=ecx[ 7: 0]; command_done<=1;
+      end else if (command == 8'hA9) begin uart_send<=1; uart_data_in<=ecx[15: 8]; command_done<=1;
+      end else if (command == 8'hAA) begin uart_send<=1; uart_data_in<=ecx[23:16]; command_done<=1;
+      end else if (command == 8'hAB) begin uart_send<=1; uart_data_in<=ecx[31:24]; command_done<=1;
+      end else if (command == 8'hAC) begin uart_send<=1; uart_data_in<=edx[ 7: 0]; command_done<=1;
+      end else if (command == 8'hAD) begin uart_send<=1; uart_data_in<=edx[15: 8]; command_done<=1;
+      end else if (command == 8'hAE) begin uart_send<=1; uart_data_in<=edx[23:16]; command_done<=1;
+      end else if (command == 8'hAF) begin uart_send<=1; uart_data_in<=edx[31:24]; command_done<=1;
+      end else if (command == 8'hB0) begin uart_send<=1; uart_data_in<=ebp[ 7: 0]; command_done<=1;
+      end else if (command == 8'hB1) begin uart_send<=1; uart_data_in<=ebp[15: 8]; command_done<=1;
+      end else if (command == 8'hB2) begin uart_send<=1; uart_data_in<=ebp[23:16]; command_done<=1;
+      end else if (command == 8'hB3) begin uart_send<=1; uart_data_in<=ebp[31:24]; command_done<=1;
+      end else if (command == 8'hB4) begin uart_send<=1; uart_data_in<=esp[ 7: 0]; command_done<=1;
+      end else if (command == 8'hB5) begin uart_send<=1; uart_data_in<=esp[15: 8]; command_done<=1;
+      end else if (command == 8'hB6) begin uart_send<=1; uart_data_in<=esp[23:16]; command_done<=1;
+      end else if (command == 8'hB7) begin uart_send<=1; uart_data_in<=esp[31:24]; command_done<=1;
+      end else if (command == 8'hB8) begin uart_send<=1; uart_data_in<=esi[ 7: 0]; command_done<=1;
+      end else if (command == 8'hB9) begin uart_send<=1; uart_data_in<=esi[15: 8]; command_done<=1;
+      end else if (command == 8'hBA) begin uart_send<=1; uart_data_in<=esi[23:16]; command_done<=1;
+      end else if (command == 8'hBB) begin uart_send<=1; uart_data_in<=esi[31:24]; command_done<=1;
+      end else if (command == 8'hBC) begin uart_send<=1; uart_data_in<=edi[ 7: 0]; command_done<=1;
+      end else if (command == 8'hBD) begin uart_send<=1; uart_data_in<=edi[15: 8]; command_done<=1;
+      end else if (command == 8'hBE) begin uart_send<=1; uart_data_in<=edi[23:16]; command_done<=1;
+      end else if (command == 8'hBF) begin uart_send<=1; uart_data_in<=edi[31:24]; command_done<=1;
+      end else if (command == 8'hC0) begin uart_send<=1; uart_data_in<=ra[ 7: 0]; command_done<=1;
+      end else if (command == 8'hC1) begin uart_send<=1; uart_data_in<=ra[15: 8]; command_done<=1;
+      end else if (command == 8'hC2) begin uart_send<=1; uart_data_in<=ra[23:16]; command_done<=1;
+      end else if (command == 8'hC3) begin uart_send<=1; uart_data_in<=ra[31:24]; command_done<=1;
+      end else if (command == 8'hC4) begin uart_send<=1; uart_data_in<=rb[ 7: 0]; command_done<=1;
+      end else if (command == 8'hC5) begin uart_send<=1; uart_data_in<=rb[15: 8]; command_done<=1;
+      end else if (command == 8'hC6) begin uart_send<=1; uart_data_in<=rb[23:16]; command_done<=1;
+      end else if (command == 8'hC7) begin uart_send<=1; uart_data_in<=rb[31:24]; command_done<=1;
       end else if (command == 8'hC8) begin uart_send<=1; uart_data_in<=regfile[10][ 7: 0]; command_done<=1;
       end else if (command == 8'hC9) begin uart_send<=1; uart_data_in<=regfile[10][15: 8]; command_done<=1;
       end else if (command == 8'hCA) begin uart_send<=1; uart_data_in<=regfile[10][23:16]; command_done<=1;
@@ -188,14 +192,14 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'hD5) begin uart_send<=1; uart_data_in<=regfile[13][15: 8]; command_done<=1;
       end else if (command == 8'hD6) begin uart_send<=1; uart_data_in<=regfile[13][23:16]; command_done<=1;
       end else if (command == 8'hD7) begin uart_send<=1; uart_data_in<=regfile[13][31:24]; command_done<=1;
-      end else if (command == 8'hD8) begin uart_send<=1; uart_data_in<=regfile[14][ 7: 0]; command_done<=1;
-      end else if (command == 8'hD9) begin uart_send<=1; uart_data_in<=regfile[14][15: 8]; command_done<=1;
-      end else if (command == 8'hDA) begin uart_send<=1; uart_data_in<=regfile[14][23:16]; command_done<=1;
-      end else if (command == 8'hDB) begin uart_send<=1; uart_data_in<=regfile[14][31:24]; command_done<=1;
-      end else if (command == 8'hDC) begin uart_send<=1; uart_data_in<=regfile[15][ 7: 0]; command_done<=1;
-      end else if (command == 8'hDD) begin uart_send<=1; uart_data_in<=regfile[15][15: 8]; command_done<=1;
-      end else if (command == 8'hDE) begin uart_send<=1; uart_data_in<=regfile[15][23:16]; command_done<=1;
-      end else if (command == 8'hDF) begin uart_send<=1; uart_data_in<=regfile[15][31:24]; command_done<=1;
+      end else if (command == 8'hD8) begin uart_send<=1; uart_data_in<=cs[ 7: 0]; command_done<=1;
+      end else if (command == 8'hD9) begin uart_send<=1; uart_data_in<=cs[15: 8]; command_done<=1;
+      end else if (command == 8'hDA) begin uart_send<=1; uart_data_in<=cs[23:16]; command_done<=1;
+      end else if (command == 8'hDB) begin uart_send<=1; uart_data_in<=cs[31:24]; command_done<=1;
+      end else if (command == 8'hDC) begin uart_send<=1; uart_data_in<=ds[ 7: 0]; command_done<=1;
+      end else if (command == 8'hDD) begin uart_send<=1; uart_data_in<=ds[15: 8]; command_done<=1;
+      end else if (command == 8'hDE) begin uart_send<=1; uart_data_in<=ds[23:16]; command_done<=1;
+      end else if (command == 8'hDF) begin uart_send<=1; uart_data_in<=ds[31:24]; command_done<=1;
       
       end else if (command == 8'hE0) begin uart_send<=1; uart_data_in<=status[ 7: 0]; command_done<=1;
       end else if (command == 8'hE1) begin uart_send<=1; uart_data_in<=status[15: 8]; command_done<=1;
@@ -207,6 +211,10 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'hE6) begin uart_send<=1; uart_data_in<=pc[23:16]; command_done<=1;
       end else if (command == 8'hE7) begin uart_send<=1; uart_data_in<=pc[31:24]; command_done<=1;
 
+      end else if (command == 8'hF0) begin uart_send<=1; uart_data_in<=cmd; command_done<=1;
+      end else if (command == 8'hF1) begin uart_send<=1; uart_data_in<=reg1; command_done<=1;
+      end else if (command == 8'hF2) begin uart_send<=1; uart_data_in<=reg2; command_done<=1;
+
       end else begin
         command_done<=1;
       end
@@ -216,6 +224,18 @@ always @(posedge clk or negedge reset_n) begin
   end
 end
 
+assign debug[0] = avm_m0_waitrequest;
+assign debug[1] = avm_m0_read;
+assign debug[2] = avm_m0_write;
+
+assign debug[4] = halt;
+assign debug[5] = cycle;
+assign debug[6] = cmd_ack;
+
+//assign debug0 = cmd;
+//assign debug1 = reg1;
+//assign debug2 = reg2;
+//assign debug3 = ins1;
 
 	assign avm_m0_byteenable = byteenable;
 
@@ -226,13 +246,18 @@ end
 
 	assign avm_m0_read = halt == 1 ? debug_read : (cycle == 0 ? fetch_read : (exec_read));
 
-  reg [31:0] cmd;
+  reg [7:0]  cmd;
+  reg [3:0]  reg1;//4
+  reg [3:0]  reg2;//4
+  reg [31:0] ins10;
+  reg [31:0] ins11;
   reg [31:0] ins2;
 
   reg cycle;//0:fetchCode 1:execCode
   reg [31:0] fetch_address;
   reg        fetch_read;
   reg [ 2:0] fetch_step;
+  reg        debug_step_buff;
   always @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
       cycle<=0;
@@ -242,7 +267,7 @@ end
 
       cmd<=0;
       ins2<=0;
-
+      debug_step_buff <= 0;
     end else begin
       if(cycle==0)begin
         if(!halt)begin
@@ -252,13 +277,18 @@ end
             fetch_address <= pc;
           end else if(fetch_step==1)begin
             if(!avm_m0_waitrequest)begin
-              cmd <= avm_m0_readdata;
+              cmd <= avm_m0_readdata[31:24];
+              reg1 <= avm_m0_readdata[23:20];
+              reg2 <= avm_m0_readdata[19:16];
+              ins10 <= {{16{avm_m0_readdata[15]}},avm_m0_readdata[15:0]};
+              ins11 <= {{8{avm_m0_readdata[23]}},avm_m0_readdata[23:0]};
               fetch_read <= 0;
               if(avm_m0_readdata[31]==1)begin
                 fetch_step<=2;
               end else begin
                 ins2<=0;
                 fetch_step<=0;
+                debug_step_buff <= debug_step;
                 cycle<=1;
               end
             end
@@ -271,6 +301,7 @@ end
               ins2 <= avm_m0_readdata;
               fetch_read <= 0;
               fetch_step<=0;
+              debug_step_buff <= debug_step;
               cycle<=1;
             end
 
@@ -296,7 +327,8 @@ end
   wire [31:0] esp;//5
   wire [31:0] esi;//6
   wire [31:0] edi;//7
-  wire [31:0] r0;//8
+  wire [31:0] ra;//8
+  wire [31:0] rb;//9
   wire [31:0] cs;
   wire [31:0] ds;
 
@@ -308,7 +340,8 @@ end
   assign esp    = regfile[5];
   assign esi    = regfile[6];
   assign edi    = regfile[7];
-  assign r0     = regfile[8];
+  assign ra     = regfile[8];
+  assign rb     = regfile[9];
   assign cs     = regfile[14];
   assign ds     = regfile[15];
   
@@ -318,22 +351,12 @@ end
   wire sf;
   wire of;
   assign zf = status[0];
-
   reg [31:0] pc;
 
-  reg halt;
-  wire        prefix;//1
-  wire [5:0]  ins;//5
-  wire [3:0]  reg1;//4
-  wire [3:0]  reg2;//4
-  wire [15:0] ins1;//16
-  assign prefix = cmd[31];
-  assign pcchange = cmd[30];
-  assign iswrite = cmd[29];
-  assign ins  = cmd[28:24];
-  assign reg1 = cmd[23:20];
-  assign reg2 = cmd[19:16];
-  assign ins1 = cmd[15:0];
+  wire halt;
+  assign halt = (halt_cpu || halt_uart) && (debug_step == debug_step_buff);
+  
+  reg halt_cpu;
 
   reg cmd_ack;
   
@@ -349,7 +372,7 @@ end
   reg [32:0] temp3;
   always @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
-      cmd_ack=0;
+      cmd_ack<=0;
       exec_address<=0;
       exec_read<=0;
       exec_write<=0;
@@ -361,7 +384,11 @@ end
       regfile[3]<=0;//edx
       regfile[4]<=0;//ebp
       regfile[5]<=0;//esp
-      
+      regfile[6]<=0;//esi
+      regfile[7]<=0;//edi
+      regfile[8]<=0;//ra
+      regfile[9]<=0;//rb
+
       regfile[12]<=0;
       regfile[13]<=0;
       regfile[14]<=0;//cs
@@ -372,222 +399,178 @@ end
       byteenable <= 4'b1111;
       exec_step<=0;
       
-      halt<=0;
+      halt_cpu<=0;
     end else begin
       if(cycle==1 && cmd_ack==0)begin
-        if(prefix==0)begin
-          if(pcchange==0)begin
-            if(iswrite==0)begin
-              //hlt                                       @ 4 @ 0 @   0 @       0 @  0 @ 0,0,0,00 hlt
-              if         (ins==7'h00)begin//ok
-                halt <= 1;
-                cmd_ack = 1;
-              //nop                                       @ 4 @ 0 @   0 @       0 @  1 @ 0,0,0,01 nop
-              end else if(ins==7'h01)begin//ok
-                cmd_ack = 1;
-              //mov !reg, DWORD PTR \[!reg!ins\]          @ 4 @ 0 @   0 @       2 @  2 @ 0,0,0,02 mov	eax, DWORD PTR [esp+20]
-              end else if(ins==7'h02)begin//ok
-                if         (exec_step==0)begin
-                  exec_step <= 1;
-                  exec_address <= regfile[reg2] + ins1;
-                  exec_read <= 1;
-                end else if(exec_step==1)begin
-                  if(!avm_m0_waitrequest)begin
-                    regfile[reg1] <= avm_m0_readdata;
-                    exec_read <= 0;
-                    exec_step <= 0;
-                    cmd_ack = 1;
-                  end
-                end
-              //cmp !reg, DWORD PTR \[!reg!ins\]          @ 4 @ 0 @   0 @       2 @  3 @ 0,0,0,03 cmp	eax, DWORD PTR [esp+12]
-              end else if(ins==7'h03)begin//ok
-                if         (exec_step==0)begin
-                  exec_step <= 1;
-                  exec_address <= regfile[reg2] + ins1;
-                  exec_read <= 1;
-                end else if(exec_step==1)begin
-                  if(!avm_m0_waitrequest)begin
-                    temp1 = {1'b0,regfile[reg1]};
-                    temp2 = {1'b0,avm_m0_readdata};
-                    temp3 = temp1 - temp2;
-                    status[0]<=temp3[31:0]==0;//zf
-                    exec_read <= 0;
-                    exec_step <= 0;
-                    cmd_ack = 1;
-                  end
-                end
-              //mov !reg, !reg                            @ 4 @ 0 @   0 @       5 @  4 @ 0,0,0,05 mov	ebp, esp
-              end else if(ins==7'h04)begin//ok
-                regfile[reg1] <= regfile[reg2];
-                cmd_ack = 1;
+        //hlt                                       @     0 @   0 @ hlt
+        if         (cmd==8'd00)begin//ok
+          halt_cpu <= 1;
+          pc <= pc + 4;
+          cmd_ack <= 1;
+        //nop                                       @     0 @   1 @ nop
+        end else if(cmd==8'd01)begin//ok
+          pc <= pc + 4;
+          cmd_ack <= 1;
+        //mov !reg, DWORD PTR \[!reg!ins\]          @     2 @   2 @ mov eax, DWORD PTR [esp+20]
+        end else if(cmd==8'd02)begin//ok
+          if         (exec_step==0)begin
+            exec_step <= 1;
+            exec_address <= regfile[reg2] + ins10;
+            exec_read <= 1;
+          end else if(exec_step==1)begin
+            if(!avm_m0_waitrequest)begin
+              regfile[reg1] <= avm_m0_readdata;
+              exec_read <= 0;
+              exec_step <= 0;
+              pc <= pc + 4;
+              cmd_ack <= 1;
+            end
+          end
+        //mov DWORD PTR \[!reg!ins\], !reg          @     2 @   3 @ mov DWORD PTR [esp+28], eax
+        end else if(cmd==8'd03)begin//ok
+          if         (exec_step==0)begin
+            exec_step <= 1;
+            exec_address <= regfile[reg1] + ins10;
+            exec_writedata <= regfile[reg2];
+            exec_write <= 1;
+          end else if(exec_step==1)begin
+            if(!avm_m0_waitrequest)begin
+              exec_write <= 0;
+              exec_step <= 0;
+              pc <= pc + 4;
+              cmd_ack <= 1;
+            end
+          end
+        //mov !reg, !reg                            @     5 @  10 @ mov ebp, esp
+        end else if(cmd==8'd10)begin//ok
+          regfile[reg1] <= regfile[reg2];
+          pc <= pc + 4;
+          cmd_ack <= 1;
+
+
+
+        //cmp !reg, !reg                            @     5 @  16 @ cmp eax, ra
+        end else if(cmd==8'd16)begin//ok
+          temp1 = {1'b0,regfile[reg1]};
+          temp2 = {1'b0,regfile[reg2]};
+          temp3 = temp1 - temp2;
+          status[0]<=temp3[31:0]==0;//zf
+          exec_read <= 0;
+          exec_step <= 0;
+          pc <= pc + 4;
+          cmd_ack <= 1;
               
               
-              end
-            end else begin//write == 1
-              //push !reg                                 @ 4 @ 0 @   1 @       4 @  0 @ 0,0,0,00 push	ebp
-              if         (ins==7'h00)begin//ok
-                //ESP <= ESP - 4;
-                //(SS:ESP) <= (SOURCE); (* dword assignment *)          
-                if         (exec_step==0)begin
-                  exec_step <= 1;
-                  exec_address <= regfile[5] - 4;//esp
-                  regfile[5] <= regfile[5] - 4;//esp
-                  exec_writedata <= regfile[reg1];
-                  exec_write <= 1;
-                end else if(exec_step==1)begin
-                  if(!avm_m0_waitrequest)begin
-                    exec_write <= 0;
-                    exec_step <= 0;
-                    cmd_ack = 1;
-                  end
-                end
-              //mov DWORD PTR \[!reg!ins\], !reg          @ 4 @ 0 @   1 @       2 @  1 @ 0,0,1,01 mov DWORD PTR [esp+28], eax
-              end else if(ins==7'h01)begin//ok
-                if         (exec_step==0)begin
-                  exec_step <= 1;
-                  exec_address <= regfile[reg1] + ins1;
-                  exec_writedata <= regfile[reg2];
-                  exec_write <= 1;
-                end else if(exec_step==1)begin
-                  if(!avm_m0_waitrequest)begin
-                    exec_write <= 0;
-                    exec_step <= 0;
-                    cmd_ack = 1;
-                  end
-                end
+        //push !reg                                 @     4 @  32 @ push	ebp
+        end else if(cmd==8'd32)begin//ok
+          //ESP <= ESP - 4;
+          //(SS:ESP) <= (SOURCE); (* dword assignment *)          
+          if         (exec_step==0)begin
+            exec_step <= 1;
+            exec_address <= regfile[5] - 4;//esp
+            regfile[5] <= regfile[5] - 4;//esp
+            exec_writedata <= regfile[reg1];
+            exec_write <= 1;
+          end else if(exec_step==1)begin
+            if(!avm_m0_waitrequest)begin
+              exec_write <= 0;
+              exec_step <= 0;
+              pc <= pc + 4;
+              cmd_ack <= 1;
+            end
+          end
 
                 
-              end
-            end
             
-            if(cmd_ack==1)begin
-              pc<=pc+4;//pc+=4
-            end
-            
-          end else begin//pcchange==1
-            if(iswrite==0)begin
-              if         (ins==7'h00)begin
+        //jmp !sym                                  @     7 @  33 @ jmp L3
+        end else if(cmd==8'd33)begin//ok
+          pc <= pc + ins11;
+          cmd_ack <= 1;
                 
-              //jmp !sym                                  @ 4 @ 1 @   0 @       7 @  1 @ 0,1,0,01 jmp L3
-              end else if(ins==7'h01)begin//ok
-                pc <= pc + ins1;
-                cmd_ack = 1;
-                
-              //je !sym                                   @ 4 @ 1 @   0 @       7 @  2 @ 0,1,0,02 je L3
-              end else if(ins==7'h02)begin//ok
-                if(zf)begin
-                  pc <= pc + ins1;
-                end else begin
-                  pc <= pc + 4;
-                end
-                cmd_ack = 1;
-              //ret                                       @ 4 @ 1 @   0 @       0 @  3 @ 0,1,0,03 ret
-              end else if(ins==7'h03)begin//ok
-                //DEST ← (SS:SP); (* copy a dword *)
-                //SP ← SP + 4;            
-                if         (exec_step==0)begin
-                  exec_step <= 1;
-                  exec_address <= regfile[5];//esp
-                  regfile[5] <= regfile[5] + 4;//esp
-                  exec_read <= 1;
-                end else if(exec_step==1)begin
-                  if(!avm_m0_waitrequest)begin
-                    pc = avm_m0_readdata;
-                    exec_read <= 0;
-                    exec_step <= 0;
-                    cmd_ack = 1;
-                  end
-                end
-
-              end
-            end else begin//iswrite==1
-              //call !sym                                 @ 4 @ 1 @   1 @       7 @  0 @ 0,1,1,00 call ___main
-              if         (ins==7'h00)begin//ok
-                //ESP <= ESP - 4;
-                //(SS:ESP) <= (SOURCE); (* dword assignment *)          
-                if         (exec_step==0)begin
-                  exec_step <= 1;
-                  exec_address <= regfile[5] - 4;//esp
-                  regfile[5] <= regfile[5] - 4;//esp
-                  exec_writedata <= pc + 4;
-                  exec_write <= 1;
-                end else if(exec_step==1)begin
-                  if(!avm_m0_waitrequest)begin
-                    pc <= pc + ins1;//pc+=4
-                    exec_write <= 0;
-                    exec_step <= 0;
-                    cmd_ack = 1;
-                  end
-                end
-                
-              end
-              
+        //je !sym                                   @     7 @  34 @ je L3
+        end else if(cmd==8'd34)begin//ok
+          if(zf)begin
+            pc <= pc + ins11;
+          end else begin
+            pc <= pc + 4;
+          end
+          cmd_ack <= 1;
+          
+        //call !sym                                 @     7 @  35 @ call ___main
+        end else if(cmd==8'd35)begin//ok
+          //ESP <= ESP - 4;
+          //(SS:ESP) <= (SOURCE); (* dword assignment *)          
+          if         (exec_step==0)begin
+            exec_step <= 1;
+            exec_address <= regfile[5] - 4;//esp
+            regfile[5] <= regfile[5] - 4;//esp
+            exec_writedata <= pc + 4;
+            exec_write <= 1;
+          end else if(exec_step==1)begin
+            if(!avm_m0_waitrequest)begin
+              exec_write <= 0;
+              exec_step <= 0;
+              pc <= pc + ins11;//pc+=4
+              cmd_ack <= 1;
             end
-            
-            
           end
           
-          
-        end else begin//prefix==1
-          if(pcchange==0)begin
-            if(iswrite==0)begin
-              if         (ins==7'h00)begin//ok
-              //add !reg, !ins                            @ 8 @ 0 @   0 @       6 @  1 @ 1,0,0,04 add esp, 32
-              end else if(ins==7'h01)begin//ok
-                temp1 = {1'b0,regfile[reg1]};
-                temp2 = {1'b0,ins2};
-                temp3 = temp1 + temp2;
-                regfile[reg1] <= temp3;
-                status[0]<=temp3[31:0]==0;//zf
-                cmd_ack = 1;
-              //and !reg, !ins                            @ 8 @ 0 @   0 @       6 @  2 @ 1,0,0,03 and esp, -16
-              end else if(ins==7'h02)begin//ok
-                regfile[reg1] <= regfile[reg1] & ins2;
-                status[0]<=temp3[31:0]==0;//zf
-                cmd_ack = 1;
-              //sub !reg, !ins                            @ 8 @ 0 @   0 @       6 @  3 @ 1,0,0,04 sub esp, 32
-              end else if(ins==7'h03)begin//ok
-                temp1 = {1'b0,regfile[reg1]};
-                temp2 = {1'b0,ins2};
-                temp3 = temp1 - temp2;
-                regfile[reg1] <= temp3;
-                status[0]<=temp3[31:0]==0;//zf
-                cmd_ack = 1;
-
-
-              end
-            end else begin//write==1
-              //mov DWORD PTR \[!reg!ins\], !ins          @ 8 @ 0 @   1 @       1 @  0 @ 1,0,1,00 mov DWORD PTR [esp+20], 33554448
-              if         (ins==7'h00)begin//ok
-                if         (exec_step==0)begin
-                  exec_step <= 1;
-                  exec_address <= regfile[reg1] + ins1;
-                  exec_writedata <= ins2;
-                  exec_write <= 1;
-                end else if(exec_step==1)begin
-                  if(!avm_m0_waitrequest)begin
-                    exec_write <= 0;
-                    exec_step <= 0;
-                    cmd_ack = 1;
-                  end
-                end
-                
-              end
+        //ret                                       @     0 @  36 @ ret
+        end else if(cmd==8'd36)begin//ok
+          //DEST ← (SS:SP); (* copy a dword *)
+          //SP ← SP + 4;            
+          if         (exec_step==0)begin
+            exec_step <= 1;
+            exec_address <= regfile[5];//esp
+            regfile[5] <= regfile[5] + 4;//esp
+            exec_read <= 1;
+          end else if(exec_step==1)begin
+            if(!avm_m0_waitrequest)begin
+              exec_read <= 0;
+              exec_step <= 0;
+              pc = avm_m0_readdata;
+              cmd_ack <= 1;
             end
-            
-            if(cmd_ack==1)begin
-              pc<=pc+8;//pc+=8
-            end
-          
-          end else begin//pcchange==1
-          
           end
-          
+
+    
+        //add !reg, !reg                            @     5 @  17 @ add esp, ra
+        end else if(cmd==8'd17)begin//ok
+          temp1 = {1'b0,regfile[reg1]};
+          temp2 = {1'b0,regfile[reg2]};
+          temp3 = temp1 + temp2;
+          regfile[reg1] <= temp3;
+          status[0]<=temp3[31:0]==0;//zf
+          pc <= pc + 4;
+          cmd_ack <= 1;
+        //and !reg, !reg                            @     5 @  18 @ and esp, ra
+        end else if(cmd==8'd18)begin//ok
+          regfile[reg1] <= regfile[reg1] & regfile[reg2];
+          status[0]<=temp3[31:0]==0;//zf
+          pc <= pc + 4;
+          cmd_ack <= 1;
+        //sub !reg, !reg                            @     5 @  19 @ sub esp, ra
+        end else if(cmd==8'd19)begin//ok
+          temp1 = {1'b0,regfile[reg1]};
+          temp2 = {1'b0,regfile[reg2]};
+          temp3 = temp1 - temp2;
+          regfile[reg1] <= temp3;
+          status[0]<=temp3[31:0]==0;//zf
+          pc <= pc + 4;
+          cmd_ack <= 1;
+
+        //mov !reg, !ins                            @     1 @ 128 @
+        end else if(cmd==8'd128)begin//ok
+          regfile[reg1] <= ins2;
+          pc <= pc + 8;
+          cmd_ack <= 1;
+
+
         end
       end
       
       if(cycle==0 && cmd_ack==1)begin
-        cmd_ack=0;
+        cmd_ack<=0;
       end
     end
   end

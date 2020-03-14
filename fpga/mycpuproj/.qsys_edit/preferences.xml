@@ -10,13 +10,13 @@
  </systemtable>
  <clocktable>
   <columns>
-   <clockname preferredWidth="484" />
-   <clocksource preferredWidth="482" />
-   <frequency preferredWidth="482" />
+   <clockname preferredWidth="431" />
+   <clocksource preferredWidth="429" />
+   <frequency preferredWidth="429" />
   </columns>
  </clocktable>
  <window width="1756" height="1150" x="447" y="64" />
  <library
-   expandedCategories="Library/DSP/Error Detection_Correction,Library/Memories and Memory Controllers/External Memory Interfaces/RLDRAM 3 Interfaces,Library/Verification,Library/Memories and Memory Controllers/External Memory Interfaces/Memory Models,Library/Embedded Processors,Library/Verification/Debug &amp; Performance,Library/Interface Protocols/DisplayPort,Library/Interface Protocols,Library/Memories and Memory Controllers/External Memory Interfaces/Memory Interfaces,Library/Interface Protocols/Ethernet/Example Designs,Library/Memories and Memory Controllers,Library/Memories and Memory Controllers/External Memory Interfaces/Performance Monitors,Library/DSP,Library/Memories and Memory Controllers/External Memory Interfaces/DDR3 Interfaces,Library/Interface Protocols/RapidIO,Library,Library/Memories and Memory Controllers/External Memory Interfaces/Flash Interfaces,Project,Library/Memories and Memory Controllers/External Memory Interfaces/SDRAM Interfaces,Library/Interface Protocols/Ethernet,Library/Configuration &amp; Programming,Library/Interface Protocols/Transceiver PHY,Library/DSP/Video and Image Processing,Library/Interface Protocols/Serial,Library/Interface Protocols/SDI,Library/Interface Protocols/Ethernet/Submodules,Library/Memories and Memory Controllers/External Memory Interfaces/DDR2 Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/LPDDR2 Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/RLDRAM II Interfaces,Library/Clock and Reset,Library/Interface Protocols/Interlaken,Library/DSP/Filters,Library/Interface Protocols/Ethernet/Example,Library/Memories and Memory Controllers/External Memory Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/Memory Interfaces/Flash,Library/Interface Protocols/PCI,Library/Memories and Memory Controllers/External Memory Interfaces/Pattern Generators,Library/Memories and Memory Controllers/External Memory Interfaces/QDR II Interfaces,Library/Memories and Memory Controllers/External Memory Interfaces/DDR Interfaces,Library/Memories and Memory Controllers/On-Chip" />
+   expandedCategories="Library/Peripherals,Library/Peripherals/Microcontroller Peripherals,Project,Library" />
  <hdlexample language="VERILOG" />
 </preferences>

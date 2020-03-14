@@ -84,10 +84,10 @@ seg_led_hex595 ins_seg_led_hex595(
   .data3(seg_data3)
 );
 
-	
-assign seg_data3 = debug3;
-assign seg_data2 = debug2;
-assign seg_data1 = debug1;
+ 
+assign seg_data3 = outpin32[31:24];
+assign seg_data2 = outpin32[23:16];
+assign seg_data1 = outpin32[15:8];
 assign seg_data0 = outpin32[7:0];
 
 wire [31:0] outpin32;
