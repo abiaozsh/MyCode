@@ -40,4 +40,6 @@ int main(){
   int* p2 = (int*)(0x02001010);
   cnt2++;
   test(p1,p2);
+  
+  
 }

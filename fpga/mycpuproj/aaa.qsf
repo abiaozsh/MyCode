@@ -69,12 +69,14 @@ set_location_assignment PIN_E4 -to led
 set_location_assignment PIN_Y13 -to key1
 set_location_assignment PIN_W13 -to key2
 
+set_location_assignment PIN_H21 -to uart3_data
+set_location_assignment PIN_F21 -to uart2_txd
+set_location_assignment PIN_E21 -to uart2_rxd
+set_location_assignment PIN_D21 -to uart_txd
+set_location_assignment PIN_C21 -to uart_rxd
 set_location_assignment PIN_B21 -to segled_clk
 set_location_assignment PIN_N19 -to segled_str
 set_location_assignment PIN_M19 -to segled_dat
-
-set_location_assignment PIN_H21 -to uart_txd
-set_location_assignment PIN_F21 -to uart_rxd
 
 set_location_assignment PIN_H22 -to debug[0]
 set_location_assignment PIN_F22 -to debug[1]
