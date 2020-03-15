@@ -68,16 +68,11 @@
          type = "String";
       }
    }
-   element pio_out_debug.s1
+   element sdram.s1
    {
-      datum _lockedAddress
-      {
-         value = "0";
-         type = "boolean";
-      }
       datum baseAddress
       {
-         value = "33558544";
+         value = "0";
          type = "String";
       }
    }
@@ -89,11 +84,16 @@
          type = "String";
       }
    }
-   element sdram.s1
+   element pio_out_debug.s1
    {
-      datum baseAddress
+      datum _lockedAddress
       {
          value = "0";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "33558544";
          type = "String";
       }
    }
@@ -120,7 +120,7 @@
  <parameter name="projectName" value="aaa.qpf" />
  <parameter name="sopcBorderPoints" value="false" />
  <parameter name="systemHash" value="1" />
- <parameter name="timeStamp" value="1584166295670" />
+ <parameter name="timeStamp" value="1584253300074" />
  <parameter name="useTestBenchNamingPattern" value="false" />
  <instanceScript></instanceScript>
  <interface name="clk50" internal="clk50.clk_in" type="clock" dir="end" />
@@ -190,7 +190,7 @@
   <parameter name="dataWidth" value="32" />
   <parameter name="dualPort" value="false" />
   <parameter name="initMemContent" value="true" />
-  <parameter name="initializationFileName" value="a.hex" />
+  <parameter name="initializationFileName" value="out.hex" />
   <parameter name="instanceID" value="NONE" />
   <parameter name="memorySize" value="4096" />
   <parameter name="readDuringWriteMode" value="DONT_CARE" />

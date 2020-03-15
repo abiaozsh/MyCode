@@ -112,10 +112,55 @@ namespace Assembler
 
         static void Main(string[] args)
         {
-            string[] linesraw = null;
-            List<Config> cfgs = loadConfig(@"..\..\config.txt");
+
+            string filein;
+            string fileout;
+            string filetemp;
+            if (args.Length > 0 && !String.IsNullOrEmpty(args[0]))
             {
-                FileStream fs = new FileStream(@"..\..\..\a.s", FileMode.Open, FileAccess.Read);
+                filein = args[0];
+            }
+            else
+            {
+                filein = "a.s";
+            }
+            if (args.Length > 1 && !String.IsNullOrEmpty(args[1]))
+            {
+                fileout = args[1];
+            }
+            else
+            {
+                fileout = "a.hex";
+            }
+            if (args.Length > 2 && !String.IsNullOrEmpty(args[2]))
+            {
+                filetemp = args[2];
+            }
+            else
+            {
+                filetemp = "a.temp.s";
+            }
+            Console.WriteLine(filein);
+            Console.WriteLine(fileout);
+            Console.WriteLine(filetemp);
+
+            try
+            {
+                compile(filein, fileout, filetemp);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+
+            Console.ReadLine();
+        }
+        public static void compile(string filein, string fileout, string filetemp)
+        {
+            List<Config> cfgs = loadConfig(@"assembler\config.txt");
+            string[] linesraw = null;
+            {
+                FileStream fs = new FileStream(filein, FileMode.Open, FileAccess.Read);
                 StreamReader sr = new StreamReader(fs);
                 var temp = sr.ReadToEnd().Replace('\t', ' ');
                 while (true)
@@ -134,6 +179,12 @@ namespace Assembler
             }
 
             List<string> lines = new List<string>();
+
+            bool standalone = true;
+            if (standalone)
+            {
+                lines.Add("jmp _main");
+            }
             //pre process
             foreach (var item in linesraw)
             {
@@ -212,9 +263,10 @@ namespace Assembler
 
 
             {
-                FileStream fs2 = new FileStream(@"..\..\..\a.temp.s", FileMode.Create, FileAccess.Write);
+                FileStream fs2 = new FileStream(filetemp, FileMode.Create, FileAccess.Write);
                 StreamWriter sw = new StreamWriter(fs2);
-                foreach (var item in lines) {
+                foreach (var item in lines)
+                {
                     sw.WriteLine(item);
                 }
                 sw.Flush();
@@ -278,7 +330,7 @@ namespace Assembler
                         }
                         if (matchCfg == null)
                         {
-                            throw new Exception();
+                            throw new Exception("unknow cmd:" + line);
                         }
                         else
                         {
@@ -357,24 +409,24 @@ namespace Assembler
                             found = sym; break;
                         }
                     }
-                    ins.bitins1 = found.pos - ins.pos;
-                    if (ins.bitins1 > 30000 || ins.bitins1 < -30000)
+                    if (found == null)
                     {
-                        throw new Exception();
+                        throw new Exception("not found:" + ins.sym);
                     }
+                    ins.bitins1 = found.pos - ins.pos;
                 }
             }
 
             {
                 int entry = 0;
                 int len = pos;
-                FileStream fs = new FileStream(@"..\..\..\a.bin", FileMode.Create, FileAccess.Write);
-                FileStream fs2 = new FileStream(@"..\..\..\a.hex", FileMode.Create, FileAccess.Write);
+                //FileStream fs = new FileStream(@"..\..\..\a.bin", FileMode.Create, FileAccess.Write);
+                FileStream fs2 = new FileStream(fileout, FileMode.Create, FileAccess.Write);
 
-                BinaryWriter bw = new BinaryWriter(fs);
+                //BinaryWriter bw = new BinaryWriter(fs);
                 StreamWriter sw = new StreamWriter(fs2);
-                bw.Write(len);
-                bw.Write(entry);
+                //bw.Write(len);
+                //bw.Write(entry);
 
                 int posx = 0;
                 foreach (var ins in insList)
@@ -385,28 +437,34 @@ namespace Assembler
                     //[19:16]4bit:reg2
                     //[15:0]16bit:ins1
                     //[31:0]32bit:ins2
+
+                    if (ins.bitins1 > 30000 || ins.bitins1 < -30000)
+                    {
+                        throw new Exception();
+                    }
+
                     if (ins.format == 0)
                     {
                         int insbin = (ins.bitcmd << 24) | (ins.bitreg1 << 20) | (ins.bitreg2 << 16) | (ins.bitins1 & 0x0000FFFF);
-                        bw.Write(insbin);
+                        //bw.Write(insbin);
                         writehex(insbin, posx++, sw);
                     }
                     else if (ins.format == 1)
                     {
                         int insbin = (ins.bitcmd << 24) | (ins.bitreg1 << 20) | (ins.bitreg2 << 16) | (ins.bitins1 & 0x00FFFFFF);
-                        bw.Write(insbin);
+                        //bw.Write(insbin);
                         writehex(insbin, posx++, sw);
                     }
                     else if (ins.format == 2)
                     {
                         int insbin = (ins.bitcmd << 24) | (ins.bitreg1 << 20) | (ins.bitreg2 << 16) | (ins.bitins1 & 0x0000FFFF);
 
-                        bw.Write(insbin);
+                        //bw.Write(insbin);
                         writehex(insbin, posx++, sw);
 
                         if ((insbin & 0x80000000) != 0)
                         {
-                            bw.Write(ins.bitins2);
+                            //bw.Write(ins.bitins2);
                             writehex(ins.bitins2, posx++, sw);
                         }
                     }
@@ -417,8 +475,8 @@ namespace Assembler
                 sw.Flush();
                 fs2.Close();
 
-                bw.Flush();
-                fs.Close();
+                //bw.Flush();
+                //fs.Close();
 
             }
             //Console.ReadLine();

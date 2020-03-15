@@ -2,6 +2,9 @@
 //变量指针
 //中断向量
 //浮点数
+int __main(){
+  return;
+}
 
 int main(){
   int val = 0;

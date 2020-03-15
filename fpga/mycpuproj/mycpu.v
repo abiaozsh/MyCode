@@ -239,7 +239,7 @@ assign debug[6] = cmd_ack;
 
 	assign avm_m0_byteenable = byteenable;
 
-	assign avm_m0_address = halt == 1 ? debug_address : (cycle == 0 ? (fetch_address + cs) : (exec_address + ds));
+	assign avm_m0_address = halt == 1 ? debug_address : (cycle == 0 ? (fetch_address) : (exec_address));
 
 	assign avm_m0_writedata = exec_writedata;
 	assign avm_m0_write = exec_write;
@@ -383,7 +383,7 @@ assign debug[6] = cmd_ack;
       regfile[2]<=0;//ecx
       regfile[3]<=0;//edx
       regfile[4]<=0;//ebp
-      regfile[5]<=0;//esp
+      regfile[5]<=32'h0200_1000;//esp :sram  // total 0x1000 byte code:0x0000~0x07FF   data:0x0800 ~0x1000
       regfile[6]<=0;//esi
       regfile[7]<=0;//edi
       regfile[8]<=0;//ra
@@ -415,7 +415,7 @@ assign debug[6] = cmd_ack;
         end else if(cmd==8'd02)begin//ok
           if         (exec_step==0)begin
             exec_step <= 1;
-            exec_address <= regfile[reg2] + ins10;
+            exec_address <= ds + regfile[reg2] + ins10;
             exec_read <= 1;
           end else if(exec_step==1)begin
             if(!avm_m0_waitrequest)begin
@@ -430,7 +430,7 @@ assign debug[6] = cmd_ack;
         end else if(cmd==8'd03)begin//ok
           if         (exec_step==0)begin
             exec_step <= 1;
-            exec_address <= regfile[reg1] + ins10;
+            exec_address <= ds + regfile[reg1] + ins10;
             exec_writedata <= regfile[reg2];
             exec_write <= 1;
           end else if(exec_step==1)begin
@@ -467,7 +467,7 @@ assign debug[6] = cmd_ack;
           //(SS:ESP) <= (SOURCE); (* dword assignment *)          
           if         (exec_step==0)begin
             exec_step <= 1;
-            exec_address <= regfile[5] - 4;//esp
+            exec_address <= ds + regfile[5] - 4;//esp
             regfile[5] <= regfile[5] - 4;//esp
             exec_writedata <= regfile[reg1];
             exec_write <= 1;
@@ -502,7 +502,7 @@ assign debug[6] = cmd_ack;
           //(SS:ESP) <= (SOURCE); (* dword assignment *)          
           if         (exec_step==0)begin
             exec_step <= 1;
-            exec_address <= regfile[5] - 4;//esp
+            exec_address <= ds + regfile[5] - 4;//esp
             regfile[5] <= regfile[5] - 4;//esp
             exec_writedata <= pc + 4;
             exec_write <= 1;
@@ -521,7 +521,7 @@ assign debug[6] = cmd_ack;
           //SP ← SP + 4;            
           if         (exec_step==0)begin
             exec_step <= 1;
-            exec_address <= regfile[5];//esp
+            exec_address <= ds + regfile[5];//esp
             regfile[5] <= regfile[5] + 4;//esp
             exec_read <= 1;
           end else if(exec_step==1)begin
@@ -532,6 +532,34 @@ assign debug[6] = cmd_ack;
               cmd_ack <= 1;
             end
           end
+          
+        //pop !reg                                  @          4 @          0 @  37 @ pop ebp
+        end else if(cmd==8'd37)begin//ok
+          //DEST ← (SS:SP); (* copy a dword *)
+          //SP ← SP + 4;            
+          if         (exec_step==0)begin
+            exec_step <= 1;
+            exec_address <= ds + regfile[5];//esp
+            regfile[5] <= regfile[5] + 4;//esp
+            exec_read <= 1;
+          end else if(exec_step==1)begin
+            if(!avm_m0_waitrequest)begin
+              exec_read <= 0;
+              exec_step <= 0;
+              regfile[reg1] = avm_m0_readdata;
+              pc <= pc + 4;
+              cmd_ack <= 1;
+            end
+          end
+          
+        //jne !sym                                  @     7 @  34 @ jne L3
+        end else if(cmd==8'd38)begin//ok
+          if(!zf)begin
+            pc <= pc + ins11;
+          end else begin
+            pc <= pc + 4;
+          end
+          cmd_ack <= 1;
 
     
         //add !reg, !reg                            @     5 @  17 @ add esp, ra
@@ -564,7 +592,12 @@ assign debug[6] = cmd_ack;
           regfile[reg1] <= ins2;
           pc <= pc + 8;
           cmd_ack <= 1;
-
+        
+        //unknow cmd
+        end else begin
+          halt_cpu <= 1;
+          pc <= pc + 4;
+          cmd_ack <= 1;
 
         end
       end

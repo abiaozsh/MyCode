@@ -1,18 +1,20 @@
-#reg                                      @format @ ins format @  cmd@ sample
-hlt                                       @     0 @          0 @   0 @ hlt
-nop                                       @     0 @          0 @   1 @ nop
-mov !reg, DWORD PTR \[!reg!ins\]          @     2 @          0 @   2 @ mov eax, DWORD PTR [esp+20]
-mov !reg, DWORD PTR \[!reg\]              @     2 @          0 @   2 @ mov eax, DWORD PTR [eax]
-mov DWORD PTR \[!reg!ins\], !reg          @     2 @          0 @   3 @ mov DWORD PTR [esp+28], eax
-mov DWORD PTR \[!reg\], !reg              @     2 @          0 @   3 @ mov DWORD PTR [eax], edx
-mov !reg, !reg                            @     5 @          0 @  10 @ mov ebp, esp
-cmp !reg, !reg                            @     5 @          0 @  16 @ cmp eax, ra
-add !reg, !reg                            @     5 @          0 @  17 @ add esp, ra
-and !reg, !reg                            @     5 @          0 @  18 @ and esp, ra
-sub !reg, !reg                            @     5 @          0 @  19 @ sub esp, ra
-push !reg                                 @     4 @          0 @  32 @ push	ebp
-jmp !sym                                  @     7 @          1 @  33 @ jmp L3
-je !sym                                   @     7 @          1 @  34 @ je L3
-call !sym                                 @     7 @          1 @  35 @ call ___main
-ret                                       @     0 @          0 @  36 @ ret
-mov !reg, !ins                            @     1 @          2 @ 128 @
+#reg                                      @text format @ ins format @  cmd@ sample
+hlt                                       @          0 @          0 @   0 @ hlt
+nop                                       @          0 @          0 @   1 @ nop
+mov !reg, DWORD PTR \[!reg!ins\]          @          2 @          0 @   2 @ mov eax, DWORD PTR [esp+20]
+mov !reg, DWORD PTR \[!reg\]              @          2 @          0 @   2 @ mov eax, DWORD PTR [eax]
+mov DWORD PTR \[!reg!ins\], !reg          @          2 @          0 @   3 @ mov DWORD PTR [esp+28], eax
+mov DWORD PTR \[!reg\], !reg              @          2 @          0 @   3 @ mov DWORD PTR [eax], edx
+mov !reg, !reg                            @          5 @          0 @  10 @ mov ebp, esp
+cmp !reg, !reg                            @          5 @          0 @  16 @ cmp eax, ra
+add !reg, !reg                            @          5 @          0 @  17 @ add esp, ra
+and !reg, !reg                            @          5 @          0 @  18 @ and esp, ra
+sub !reg, !reg                            @          5 @          0 @  19 @ sub esp, ra
+push !reg                                 @          4 @          0 @  32 @ push	ebp
+jmp !sym                                  @          7 @          1 @  33 @ jmp L3
+je !sym                                   @          7 @          1 @  34 @ je L3
+call !sym                                 @          7 @          1 @  35 @ call ___main
+ret                                       @          0 @          0 @  36 @ ret
+pop !reg                                  @          4 @          0 @  37 @ pop ebp
+jne !sym                                  @          7 @          1 @  38 @ jne L3
+mov !reg, !ins                            @          1 @          2 @ 128 @
