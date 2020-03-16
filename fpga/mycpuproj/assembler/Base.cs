@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 public class Base
 {
@@ -12,37 +13,311 @@ public class Base
 		public string name;
 		public int pos;
 	}
-	public class Config
+
+	public class Line
 	{
-		public string regex;
-		public int format;
-        public int insformat;
-        public int cmd;
+		public enum LineType
+		{
+			cmd = 1,// mov 指令
+			sym = 2,// _xxx: 符号
+			dot = 3,// .xxx 
+			app = 4,// /APP
+			noapp = 5,// /NO_APP
+			sharp = 6,// # 7 "d.c" 1
+		}
+		public LineType type;
+		public string text;
 		public string ToString()
 		{
-			return regex;
+			return text;
+		}
+		public string sym;
+		public string cmd;
+		public Op op1;
+		public Op op2;
+		public static Line match(string line)
+		{
+			Line l = new Line();
+			l.text = line;
+			if (line.StartsWith("."))
+			{
+				l.type = LineType.dot;
+			}
+			else if (line.StartsWith("/APP"))
+			{
+				l.type = LineType.app;
+			}
+			else if (line.StartsWith("/NO_APP"))
+			{
+				l.type = LineType.noapp;
+			}
+			else if (line.StartsWith("#"))
+			{
+				l.type = LineType.noapp;
+			}
+			else if (line.EndsWith(":"))
+			{
+				l.type = LineType.sym;
+				l.sym = line.TrimEnd(':');
+			}
+			else
+			{
+				string[] temparr;
+				try
+				{
+					l.type = LineType.cmd;
+					int pos1 = line.IndexOf(" ");
+					if (pos1 == -1)
+					{
+						l.cmd = line;
+						temparr = new string[0];
+					}
+					else
+					{
+						l.cmd = line.Substring(0, pos1);
+						string temp = line.Substring(pos1);
+						temparr = temp.Split(',');
+					}
+				}
+				catch (Exception ex)
+				{
+					throw new Exception("err" + line);
+				}
+				if (temparr.Length == 2)
+				{
+					l.op1 = Op.match(temparr[0].Trim());
+					l.op2 = Op.match(temparr[1].Trim());
+				}
+				else if (temparr.Length == 1)
+				{
+					l.op1 = Op.match(temparr[0].Trim());
+				}
+				else if (temparr.Length == 0)
+				{
+				}
+				else
+				{
+					throw new Exception("err temparr.Length" + line);
+				}
+			}
+			return l;
+		}
+	}
+
+	public class Op
+	{
+		public enum OpType
+		{
+			reg = 1,// rax 寄存器
+			ins = 2,// 123 立即数
+			sym = 3,//_xxx 符号引用
+			DWPTRregoff = 4,//DWORD PTR [esp+12] ,DWORD PTR [esp]
+			//OFFSET FLAT
+		}
+		public OpType type;
+		public int? reg;
+		public int? off;
+		public int? ins;
+		public string sym;
+
+		public string text;
+
+		public static string matchreg(string txt)
+		{
+			foreach (var item in regs.Split('|'))
+			{
+				if (txt.StartsWith(item))
+				{
+					if (txt.Length == item.Length)
+					{
+						return item;
+					}
+					else
+					{
+						if (txt[item.Length] >= 'a' && txt[item.Length] <= 'z')
+						{
+						}
+						else
+						{
+							return item;
+						}
+					}
+				}
+			}
+			return null;
+		}
+		public static Op match(string sop)
+		{
+			Op op = new Op();
+			op.text = sop;
+			string tempreg = matchreg(sop);
+			int itemp;
+			if (tempreg != null)
+			{
+				if (sop == tempreg)
+				{
+					op.type = OpType.reg;
+					op.reg = getReg(tempreg);
+				}
+				else
+				{
+					throw new Exception("unknow1 op:" + sop);
+				}
+			}
+			else if (sop.StartsWith("DWORD PTR "))
+			{
+				op.type = OpType.DWPTRregoff;
+				sop = sop.Substring("DWORD PTR ".Length);
+				if (sop.StartsWith("["))
+				{
+					sop = sop.Substring(1);
+					tempreg = matchreg(sop);
+					if (tempreg == null)
+					{
+						throw new Exception("unknow2 op:" + sop);
+					}
+					op.reg = getReg(tempreg);
+					sop = sop.Substring(tempreg.Length);
+					if (sop.EndsWith("]"))
+					{
+						sop = sop.TrimEnd(']');
+						if (sop.Length == 0)
+						{
+							op.ins = 0;
+						}
+						else
+						{
+							op.ins = int.Parse(sop);
+						}
+						return op;
+					}
+					else
+					{
+						throw new Exception("unknow3 op:" + sop);
+					}
+				}
+			}
+			else if (int.TryParse(sop, out itemp))
+			{
+				op.type = OpType.ins;
+				op.ins = itemp;
+			}
+			else
+			{
+				op.type = OpType.sym;
+				op.sym = sop;
+			}
+
+			return op;
+
+		}
+
+	}
+
+
+
+	public class Config
+	{
+		public string text;
+		public string scmd;
+		public string op1;
+		public string op2;
+		public int textformat;
+		public int insformat;
+		public int cmd;
+		public Config(string text)
+		{
+			this.text = text;
+			string[] temparr;
+			int pos1 = text.IndexOf(" ");
+			if (pos1 == -1)
+			{
+				scmd = text;
+				temparr = new string[0];
+			}
+			else
+			{
+				scmd = text.Substring(0, pos1);
+				string temp = text.Substring(pos1);
+				temparr = temp.Split(',');
+			}
+			if (temparr.Length == 2)
+			{
+				op1 = temparr[0].Trim();
+				op2 = temparr[1].Trim();
+			}
+			else if (temparr.Length == 1)
+			{
+				op1 = temparr[0].Trim();
+			}
+		}
+		public bool match(Line line)
+		{
+			if (this.scmd != line.cmd)
+			{
+				return false;
+			}
+			if (this.op1 != null)
+			{
+				if (line.op1 == null)
+				{
+					return false;
+				}
+				if (this.op1 != line.op1.type.ToString())
+				{
+					return false;
+				}
+			}
+			else
+			{
+				if (line.op1 != null)
+				{
+					return false;
+				}
+			}
+
+			if (this.op2 != null)
+			{
+				if (line.op2 == null)
+				{
+					return false;
+				}
+				if (this.op2 != line.op2.type.ToString())
+				{
+					return false;
+				}
+			}
+			else
+			{
+				if (line.op2 != null)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+		public string ToString()
+		{
+			return text;
 		}
 	}
 	public class Ins
 	{
-		public string line;
+		public Line line;
 		public string name;
 		public string sym;
-        public int format;
-		public int code;
-		public int data;
+		public int format;
 
 		public int bitcmd;//[30:24]8bit:cmd
 		public int bitreg1;//[23:20]4bit:reg1
 		public int bitreg2;//[19:15]4bit:reg2
 		public int bitins1;//[15:0]16bit:ins1
-        public int bitins2;
+		public int bitins2;
 		public int pos;
 	}
-	public static string regCmd = @"[a-zA-Z]+";
-	public static string regSym = @"[_a-zA-Z0-9]+";
-	public static string regIns = @"[\+\-0-9]+";
-	public static string regReg = @"(eax|ebx|ecx|edx|ebp|esp|esi|edi|ra|rb)";
+
+	public static string regs = "eax|ebx|ecx|edx|ebp|esp|esi|edi|ra|rb";
 
 	public static int getReg(string reg)
 	{
@@ -86,7 +361,7 @@ public class Base
 		{
 			return 9;
 		}
-		
+
 		throw new Exception("reg not found");
 	}
 	public static string getReg(int? val)
@@ -108,14 +383,6 @@ public class Base
 	}
 
 
-	public static int check(int? val)
-	{
-		if (val == null)
-		{
-			throw new Exception();
-		}
-		return val.Value;
-	}
 	public static string check(string val)
 	{
 		if (val == null)
