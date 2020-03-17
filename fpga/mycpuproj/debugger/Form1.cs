@@ -225,6 +225,22 @@ namespace WindowsFormsApplication1
             portWrite((byte)(0xF2), (byte)0x00); temp = readFromPort(1); pc |= temp[0] << 8; sb.Append(getHex2(temp[0]));
             sb.AppendLine();
 
+            sb.Append("exec_address:");
+            int exec_address = 0;
+            portWrite((byte)(0x53), (byte)0x00); temp = readFromPort(1); exec_address |= temp[0] << 24; sb.Append(getHex2(temp[0]));
+            portWrite((byte)(0x52), (byte)0x00); temp = readFromPort(1); exec_address |= temp[0] << 16; sb.Append(getHex2(temp[0]));
+            portWrite((byte)(0x51), (byte)0x00); temp = readFromPort(1); exec_address |= temp[0] << 8; sb.Append(getHex2(temp[0]));
+            portWrite((byte)(0x50), (byte)0x00); temp = readFromPort(1); exec_address |= temp[0] << 0; sb.Append(getHex2(temp[0]));
+            sb.AppendLine();
+
+            sb.Append("exec_writedata:");
+            int exec_writedata = 0;
+            portWrite((byte)(0x57), (byte)0x00); temp = readFromPort(1); exec_writedata |= temp[0] << 24; sb.Append(getHex2(temp[0]));
+            portWrite((byte)(0x56), (byte)0x00); temp = readFromPort(1); exec_writedata |= temp[0] << 16; sb.Append(getHex2(temp[0]));
+            portWrite((byte)(0x55), (byte)0x00); temp = readFromPort(1); exec_writedata |= temp[0] << 8; sb.Append(getHex2(temp[0]));
+            portWrite((byte)(0x54), (byte)0x00); temp = readFromPort(1); exec_writedata |= temp[0] << 0; sb.Append(getHex2(temp[0]));
+            sb.AppendLine();
+
             this.textBox4.Text = sb.ToString();
 
         }
@@ -251,6 +267,20 @@ namespace WindowsFormsApplication1
             portWrite((byte)(0x10), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 0; s += (getHex2(temp[0]));
             return val;
         }
+        public void setmem(int addr, int data)
+        {
+            portWrite((byte)(0x20), (byte)((addr >> 0) & 0xFF));
+            portWrite((byte)(0x21), (byte)((addr >> 8) & 0xFF));
+            portWrite((byte)(0x22), (byte)((addr >> 16) & 0xFF));
+            portWrite((byte)(0x23), (byte)((addr >> 24) & 0xFF));
+
+            portWrite((byte)(0x24), (byte)((data >> 0) & 0xFF));
+            portWrite((byte)(0x25), (byte)((data >> 8) & 0xFF));
+            portWrite((byte)(0x26), (byte)((data >> 16) & 0xFF));
+            portWrite((byte)(0x27), (byte)((data >> 24) & 0xFF));
+
+            portWrite((byte)(0x31), 0);
+        }
 
         private void button2_Click_1(object sender, EventArgs e)
         {
@@ -260,6 +290,12 @@ namespace WindowsFormsApplication1
             textBox2.Text = s;
 
         }
+        private void button6_Click(object sender, EventArgs e)
+        {
+            int addr = Convert.ToInt32(textBox1.Text, 16);
+            setmem(addr, Convert.ToInt32(textBox2.Text, 16));
+        }
+
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {

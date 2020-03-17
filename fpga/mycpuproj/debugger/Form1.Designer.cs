@@ -39,6 +39,7 @@ namespace WindowsFormsApplication1
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.button3 = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
+            this.button6 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
@@ -94,16 +95,16 @@ namespace WindowsFormsApplication1
             // 
             // textBox2
             // 
-            this.textBox2.Location = new System.Drawing.Point(612, 13);
+            this.textBox2.Location = new System.Drawing.Point(666, 13);
             this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(100, 21);
+            this.textBox2.Size = new System.Drawing.Size(95, 21);
             this.textBox2.TabIndex = 19;
             // 
             // button2
             // 
             this.button2.Location = new System.Drawing.Point(531, 11);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.Size = new System.Drawing.Size(50, 23);
             this.button2.TabIndex = 20;
             this.button2.Text = "getmem";
             this.button2.UseVisualStyleBackColor = true;
@@ -132,19 +133,30 @@ namespace WindowsFormsApplication1
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(743, 12);
+            this.button5.Location = new System.Drawing.Point(767, 12);
             this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(111, 23);
+            this.button5.Size = new System.Drawing.Size(87, 23);
             this.button5.TabIndex = 23;
             this.button5.Text = "clear buffer";
             this.button5.UseVisualStyleBackColor = true;
             this.button5.Click += new System.EventHandler(this.button5_Click);
+            // 
+            // button6
+            // 
+            this.button6.Location = new System.Drawing.Point(587, 11);
+            this.button6.Name = "button6";
+            this.button6.Size = new System.Drawing.Size(50, 23);
+            this.button6.TabIndex = 24;
+            this.button6.Text = "setmem";
+            this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(866, 473);
+            this.Controls.Add(this.button6);
             this.Controls.Add(this.button5);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.checkBox1);
@@ -175,6 +187,7 @@ namespace WindowsFormsApplication1
         private CheckBox checkBox1;
         private Button button3;
         private Button button5;
+        private Button button6;
 
 	}
 }
