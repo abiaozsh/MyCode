@@ -85,7 +85,9 @@ reg [7:0] timer_log;
 
 reg [31:0] debug_address;
 reg        debug_read;
+reg        debug_write;
 reg [31:0] debug_data;
+reg [31:0] debug_writedata;
 reg  [3:0] debug_readmem_step;
 reg        debug_step;
 reg halt_uart;
@@ -98,6 +100,9 @@ always @(posedge clk or negedge reset_n) begin
     debug_readmem_step<=0;
 		timer_log<=0;
     halt_uart<=1;
+    debug_read<=0;
+    debug_write<=0;
+    
   end else begin
     uart_send<=0;
     
@@ -117,11 +122,16 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h11) begin uart_send<=1; uart_data_in<=debug_data[15: 8]; command_done<=1;
       end else if (command == 8'h12) begin uart_send<=1; uart_data_in<=debug_data[23:16]; command_done<=1;
       end else if (command == 8'h13) begin uart_send<=1; uart_data_in<=debug_data[31:24]; command_done<=1;
-
+      
       end else if (command == 8'h20) begin debug_address[ 7: 0] <= data; command_done<=1;
       end else if (command == 8'h21) begin debug_address[15: 8] <= data; command_done<=1;
       end else if (command == 8'h22) begin debug_address[23:16] <= data; command_done<=1;
       end else if (command == 8'h23) begin debug_address[31:24] <= data; command_done<=1;
+
+      end else if (command == 8'h24) begin debug_writedata[ 7: 0] <= data; command_done<=1;
+      end else if (command == 8'h25) begin debug_writedata[15: 8] <= data; command_done<=1;
+      end else if (command == 8'h26) begin debug_writedata[23:16] <= data; command_done<=1;
+      end else if (command == 8'h27) begin debug_writedata[31:24] <= data; command_done<=1;
 
       end else if (command == 8'h30) begin
         if         (debug_readmem_step==0)begin
@@ -135,6 +145,27 @@ always @(posedge clk or negedge reset_n) begin
             command_done = 1;
           end
         end
+        
+      end else if (command == 8'h31) begin
+        if         (debug_readmem_step==0)begin
+          debug_readmem_step <= 1;
+          debug_write <= 1;
+        end else if(debug_readmem_step==1)begin
+          if(!avm_m0_waitrequest)begin
+            debug_write <= 0;
+            debug_readmem_step <= 0;
+            command_done <= 1;
+          end
+        end
+      end else if (command == 8'h50) begin uart_send<=1; uart_data_in<=exec_address[ 7: 0]; command_done<=1;
+      end else if (command == 8'h51) begin uart_send<=1; uart_data_in<=exec_address[15: 8]; command_done<=1;
+      end else if (command == 8'h52) begin uart_send<=1; uart_data_in<=exec_address[23:16]; command_done<=1;
+      end else if (command == 8'h53) begin uart_send<=1; uart_data_in<=exec_address[31:24]; command_done<=1;
+      
+      end else if (command == 8'h54) begin uart_send<=1; uart_data_in<=exec_writedata[ 7: 0]; command_done<=1;
+      end else if (command == 8'h55) begin uart_send<=1; uart_data_in<=exec_writedata[15: 8]; command_done<=1;
+      end else if (command == 8'h56) begin uart_send<=1; uart_data_in<=exec_writedata[23:16]; command_done<=1;
+      end else if (command == 8'h57) begin uart_send<=1; uart_data_in<=exec_writedata[31:24]; command_done<=1;
 
       end else if (command == 8'hA0) begin uart_send<=1; uart_data_in<=eax[ 7: 0]; command_done<=1;
       end else if (command == 8'hA1) begin uart_send<=1; uart_data_in<=eax[15: 8]; command_done<=1;
@@ -241,8 +272,8 @@ assign debug[6] = cmd_ack;
 
 	assign avm_m0_address = halt == 1 ? debug_address : (cycle == 0 ? (fetch_address) : (exec_address));
 
-	assign avm_m0_writedata = exec_writedata;
-	assign avm_m0_write = exec_write;
+	assign avm_m0_writedata = halt == 1 ? debug_writedata : exec_writedata;
+	assign avm_m0_write = halt == 1 ? debug_write : exec_write;
 
 	assign avm_m0_read = halt == 1 ? debug_read : (cycle == 0 ? fetch_read : (exec_read));
 
@@ -288,7 +319,6 @@ assign debug[6] = cmd_ack;
               end else begin
                 ins2<=0;
                 fetch_step<=0;
-                debug_step_buff <= debug_step;
                 cycle<=1;
               end
             end
@@ -301,7 +331,6 @@ assign debug[6] = cmd_ack;
               ins2 <= avm_m0_readdata;
               fetch_read <= 0;
               fetch_step<=0;
-              debug_step_buff <= debug_step;
               cycle<=1;
             end
 
@@ -309,6 +338,7 @@ assign debug[6] = cmd_ack;
         end
       end else begin
         if(cmd_ack)begin
+          debug_step_buff <= debug_step;
           cycle <= 0;
         end
       end
@@ -405,6 +435,11 @@ assign debug[6] = cmd_ack;
         //hlt                                       @     0 @   0 @ hlt
         if         (cmd==8'd00)begin//ok
           halt_cpu <= 1;
+          pc <= pc + 4;
+          cmd_ack <= 1;
+        //release                                   @     0 @   4 @ release
+        end else if(cmd==8'd04)begin//ok
+          halt_cpu <= 0;
           pc <= pc + 4;
           cmd_ack <= 1;
         //nop                                       @     0 @   1 @ nop
@@ -584,6 +619,17 @@ assign debug[6] = cmd_ack;
           temp3 = temp1 - temp2;
           regfile[reg1] <= temp3;
           status[0]<=temp3[31:0]==0;//zf
+          pc <= pc + 4;
+          cmd_ack <= 1;
+          
+        //test reg, reg            @           5 @          0 @  20 @ test eax, ra
+        end else if(cmd==8'd20)begin//ok
+          temp1 = {1'b0,regfile[reg1]};
+          temp2 = {1'b0,regfile[reg2]};
+          temp3 = temp1 & temp2;
+          status[0]<=temp3[31:0]==0;//zf
+          exec_read <= 0;
+          exec_step <= 0;
           pc <= pc + 4;
           cmd_ack <= 1;
 
