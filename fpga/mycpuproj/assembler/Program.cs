@@ -50,7 +50,7 @@ namespace Assembler
 			}
 			else
 			{
-				filein = "a.s";
+				filein = "b.s";
 			}
 			if (args.Length > 1 && !String.IsNullOrEmpty(args[1]))
 			{
@@ -58,7 +58,7 @@ namespace Assembler
 			}
 			else
 			{
-				fileout = "a.hex";
+				fileout = "b.hex";
 			}
 			if (args.Length > 2 && !String.IsNullOrEmpty(args[2]))
 			{
@@ -66,7 +66,7 @@ namespace Assembler
 			}
 			else
 			{
-				filetemp = "a.temp.s";
+				filetemp = "b.temp.s";
 			}
 			Console.WriteLine(filein);
 			Console.WriteLine(fileout);
@@ -108,16 +108,16 @@ namespace Assembler
 
 			List<Line> lines = new List<Line>();
 
-			bool standalone = true;
-			if (standalone)
-			{
-				lines.Add(Line.match("jmp _main"));
-			}
-			else
-			{
-				lines.Add(Line.match("call _main"));
-				lines.Add(Line.match("ret"));
-			}
+			//bool standalone = true;
+			//if (standalone)
+			//{
+			//	lines.Add(Line.match("jmp _main"));
+			//}
+			//else
+			//{
+			//	lines.Add(Line.match("call _main"));
+			//	lines.Add(Line.match("ret"));
+			//}
 
 			foreach (var raw in linesraw)
 			{
@@ -188,7 +188,7 @@ namespace Assembler
 
 				if (line.type == Line.LineType.cmd && !line.cmd.StartsWith("jmp") && line.cmd.StartsWith("j"))
 				{
-					if (last.cmd != ("cmp"))
+					if (last.cmd != "cmp" && last.cmd != "test")
 					{
 						throw new Exception();
 					}
