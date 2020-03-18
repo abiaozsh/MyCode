@@ -11,32 +11,6 @@ namespace Assembler
 {
 	class Program : Base
 	{
-		public static List<Config> loadConfig(string path)
-		{
-			List<Config> cfgs = new List<Config>();
-			{
-				FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read);
-				StreamReader sr = new StreamReader(fs);
-				var temp = sr.ReadToEnd().Split('\n');
-				foreach (var txt in temp)
-				{
-					var item = txt.Trim();
-					if (item.Length == 0 || item.StartsWith("#"))
-					{
-						continue;
-					}
-					var arr = item.Split('@');
-					Config cfg = new Config(arr[0].Trim());
-					cfg.textformat = int.Parse(arr[1]);
-					cfg.insformat = int.Parse(arr[2]);
-					cfg.cmd = int.Parse(arr[3]);
-					cfgs.Add(cfg);
-				}
-
-				fs.Close();
-			}
-			return cfgs;
-		}
 
 		static void Main(string[] args)
 		{
@@ -85,7 +59,7 @@ namespace Assembler
 		}
 		public static void compile(string filein, string fileout, string filetemp)
 		{
-			List<Config> cfgs = loadConfig(@"assembler\config.txt");
+			List<Config> cfgs = Config.loadConfig(@"assembler\config.txt");
 			string[] linesraw = null;
 			{
 				FileStream fs = new FileStream(filein, FileMode.Open, FileAccess.Read);
@@ -108,16 +82,16 @@ namespace Assembler
 
 			List<Line> lines = new List<Line>();
 
-			//bool standalone = true;
-			//if (standalone)
-			//{
-			//	lines.Add(Line.match("jmp _main"));
-			//}
-			//else
-			//{
-			//	lines.Add(Line.match("call _main"));
-			//	lines.Add(Line.match("ret"));
-			//}
+			bool standalone = true;
+			if (standalone)
+			{
+				lines.Add(Line.match("jmp _main"));
+			}
+			else
+			{
+				lines.Add(Line.match("call _main"));
+				lines.Add(Line.match("ret"));
+			}
 
 			foreach (var raw in linesraw)
 			{
@@ -139,7 +113,7 @@ namespace Assembler
 				if ((new Config("leave")).match(line))
 				{
 					//leave :   Set ESP to EBP, then pop EBP
-					linespass2.Add(Line.match("mov ebp, esp"));
+                    linespass2.Add(Line.match("mov esp, ebp"));
 					linespass2.Add(Line.match("pop ebp"));
 				}
 				else if ((new Config("add DWPTRregoff, ins")).match(line))
@@ -319,6 +293,17 @@ namespace Assembler
 					}
 					ins.bitins1 = found.pos - ins.pos;
 				}
+			}
+
+			{
+				FileStream fs2 = new FileStream("temp.sym", FileMode.Create, FileAccess.Write);
+				StreamWriter sw = new StreamWriter(fs2);
+				foreach (var sym in codeSyms)
+				{
+					sw.WriteLine(sym.pos + "," + sym.name);
+				}
+				sw.Flush();
+				fs2.Close();
 			}
 
 			{

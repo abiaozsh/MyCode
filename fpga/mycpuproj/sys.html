@@ -67,7 +67,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
   </table>
   <table class="blueBar">
    <tr>
-    <td class="l">2020.03.15.14:21:55</td>
+    <td class="l">2020.03.18.22:30:09</td>
     <td class="r">Datasheet</td>
    </tr>
   </table>
@@ -104,7 +104,10 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
      </a> altera_avalon_onchip_memory2 13.0.1.99.2
      <br/>&#160;&#160;
      <a href="#module_sdram"><b>sdram</b>
-     </a> altera_avalon_new_sdram_controller 13.0.1.99.2</span>
+     </a> altera_avalon_new_sdram_controller 13.0.1.99.2
+     <br/>&#160;&#160;
+     <a href="#module_myuart_0"><b>myuart_0</b>
+     </a> myuart 1.0</span>
    </div>
   </div>
   <div style="width:100% ;  height:10px"> </div>
@@ -163,6 +166,17 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
    <tr>
     <td class="slaveb">s1&#160;</td>
     <td class="addr"><span style="color:#989898">0x</span>00000000</td>
+   </tr>
+   <tr>
+    <td class="slavemodule">&#160;
+     <a href="#module_myuart_0"><b>myuart_0</b>
+     </a>
+    </td>
+    <td class="empty"></td>
+   </tr>
+   <tr>
+    <td class="slaveb">s0&#160;</td>
+    <td class="addr"><span style="color:#989898">0x</span>02002000</td>
    </tr>
   </table>
   <a name="module_clk50"> </a>
@@ -838,7 +852,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        <a href="#module_clk50">clk50</a>
       </td>
       <td class="from">clk_reset&#160;&#160;</td>
-      <td class="main" rowspan="15">mycpu_0</td>
+      <td class="main" rowspan="18">mycpu_0</td>
      </tr>
      <tr>
       <td class="to">&#160;&#160;reset</td>
@@ -909,6 +923,22 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
       <td></td>
       <td></td>
       <td class="to">&#160;&#160;s1</td>
+     </tr>
+     <tr style="height:6px">
+      <td></td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="from">m0&#160;&#160;</td>
+      <td class="neighbor" rowspan="2">
+       <a href="#module_myuart_0">myuart_0</a>
+      </td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="to">&#160;&#160;s0</td>
      </tr>
     </table>
    </div>
@@ -1292,10 +1322,77 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
     </tr>
    </table>
   </div>
+  <a name="module_myuart_0"> </a>
+  <div>
+   <hr/>
+   <h2>myuart_0</h2>myuart v1.0
+   <br/>
+   <div class="greydiv">
+    <table class="connectionboxes">
+     <tr>
+      <td class="neighbor" rowspan="4">
+       <a href="#module_clk50">clk50</a>
+      </td>
+      <td class="from">clk&#160;&#160;</td>
+      <td class="main" rowspan="7">myuart_0</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;clock</td>
+     </tr>
+     <tr>
+      <td class="from">clk_reset&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;reset</td>
+     </tr>
+     <tr style="height:6px">
+      <td></td>
+     </tr>
+     <tr>
+      <td class="neighbor" rowspan="2">
+       <a href="#module_mycpu_0">mycpu_0</a>
+      </td>
+      <td class="from">m0&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;s0</td>
+     </tr>
+    </table>
+   </div>
+   <br/>
+   <br/>
+   <table class="flowbox">
+    <tr>
+     <td class="parametersbox">
+      <h2>Parameters</h2>
+      <table>
+       <tr>
+        <td class="parametername">AUTO_CLOCK_CLOCK_RATE</td>
+        <td class="parametervalue">50000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">deviceFamily</td>
+        <td class="parametervalue">UNKNOWN</td>
+       </tr>
+       <tr>
+        <td class="parametername">generateLegacySim</td>
+        <td class="parametervalue">false</td>
+       </tr>
+      </table>
+     </td>
+    </tr>
+   </table>&#160;&#160;
+   <table class="flowbox">
+    <tr>
+     <td class="parametersbox">
+      <h2>Software Assignments</h2>(none)</td>
+    </tr>
+   </table>
+  </div>
   <table class="blueBar">
    <tr>
     <td class="l">generation took 0.00 seconds</td>
-    <td class="r">rendering took 0.05 seconds</td>
+    <td class="r">rendering took 0.04 seconds</td>
    </tr>
   </table>
  </body>

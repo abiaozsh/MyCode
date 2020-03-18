@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 public class Base
 {
@@ -251,6 +252,33 @@ public class Base
 				op1 = temparr[0].Trim();
 			}
 		}
+		public static List<Config> loadConfig(string path)
+		{
+			List<Config> cfgs = new List<Config>();
+			{
+				FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+				StreamReader sr = new StreamReader(fs);
+				var temp = sr.ReadToEnd().Split('\n');
+				foreach (var txt in temp)
+				{
+					var item = txt.Trim();
+					if (item.Length == 0 || item.StartsWith("#"))
+					{
+						continue;
+					}
+					var arr = item.Split('@');
+					Config cfg = new Config(arr[0].Trim());
+					cfg.textformat = int.Parse(arr[1]);
+					cfg.insformat = int.Parse(arr[2]);
+					cfg.cmd = int.Parse(arr[3]);
+					cfgs.Add(cfg);
+				}
+
+				fs.Close();
+			}
+			return cfgs;
+		}
+
 		public bool match(Line line)
 		{
 			if (this.scmd != line.cmd)

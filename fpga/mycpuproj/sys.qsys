@@ -36,6 +36,14 @@
          type = "int";
       }
    }
+   element myuart_0
+   {
+      datum _sortIndex
+      {
+         value = "7";
+         type = "int";
+      }
+   }
    element onchip_memory2_0
    {
       datum _sortIndex
@@ -60,19 +68,11 @@
          type = "int";
       }
    }
-   element onchip_memory2_0.s1
+   element myuart_0.s0
    {
       datum baseAddress
       {
-         value = "33554432";
-         type = "String";
-      }
-   }
-   element sdram.s1
-   {
-      datum baseAddress
-      {
-         value = "0";
+         value = "33562624";
          type = "String";
       }
    }
@@ -81,6 +81,14 @@
       datum baseAddress
       {
          value = "33558528";
+         type = "String";
+      }
+   }
+   element onchip_memory2_0.s1
+   {
+      datum baseAddress
+      {
+         value = "33554432";
          type = "String";
       }
    }
@@ -94,6 +102,14 @@
       datum baseAddress
       {
          value = "33558544";
+         type = "String";
+      }
+   }
+   element sdram.s1
+   {
+      datum baseAddress
+      {
+         value = "0";
          type = "String";
       }
    }
@@ -120,7 +136,7 @@
  <parameter name="projectName" value="aaa.qpf" />
  <parameter name="sopcBorderPoints" value="false" />
  <parameter name="systemHash" value="1" />
- <parameter name="timeStamp" value="1584253300074" />
+ <parameter name="timeStamp" value="1584541771018" />
  <parameter name="useTestBenchNamingPattern" value="false" />
  <instanceScript></instanceScript>
  <interface name="clk50" internal="clk50.clk_in" type="clock" dir="end" />
@@ -138,6 +154,11 @@
  <interface name="mycpu" internal="mycpu_0.conduit_end" type="conduit" dir="end" />
  <interface name="clk100" internal="clk100.clk_in" type="clock" dir="end" />
  <interface name="sdram" internal="sdram.wire" type="conduit" dir="end" />
+ <interface
+   name="myuart"
+   internal="myuart_0.conduit_end"
+   type="conduit"
+   dir="end" />
  <module kind="clock_source" version="13.0" enabled="1" name="clk50">
   <parameter name="clockFrequency" value="50000000" />
   <parameter name="clockFrequencyKnown" value="true" />
@@ -244,6 +265,9 @@
   <parameter name="inputClockFrequency" value="0" />
   <parameter name="resetSynchronousEdges" value="NONE" />
  </module>
+ <module kind="myuart" version="1.0" enabled="1" name="myuart_0">
+  <parameter name="AUTO_CLOCK_CLOCK_RATE" value="50000000" />
+ </module>
  <connection
    kind="reset"
    version="13.0"
@@ -305,6 +329,17 @@
  <connection kind="avalon" version="13.0" start="mycpu_0.m0" end="sdram.s1">
   <parameter name="arbitrationPriority" value="1" />
   <parameter name="baseAddress" value="0x0000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection kind="clock" version="13.0" start="clk50.clk" end="myuart_0.clock" />
+ <connection
+   kind="reset"
+   version="13.0"
+   start="clk50.clk_reset"
+   end="myuart_0.reset" />
+ <connection kind="avalon" version="13.0" start="mycpu_0.m0" end="myuart_0.s0">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x02002000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />

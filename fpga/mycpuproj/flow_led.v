@@ -44,8 +44,9 @@ set_global_assignment -name RESERVE_DCLK_AFTER_CONFIGURATION "USE AS REGULAR IO"
   inout  [15:0] sdram_data,               //SDRAM 数据
   output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
 	
-	
-	input dummy
+	output uart2_txd,
+	input uart2_rxd
+
 );
 wire sys_rst_n;
 assign sys_rst_n = key1;
@@ -102,6 +103,8 @@ wire [7:0] debug3;
 
 assign debug = debug8;
 
+wire [7:0] myuart_debug8;
+wire [31:0] myuart_debug32;
 
     sys u0 (
         .clk50_clk      (sys_clk),        //     clk.clk
@@ -127,8 +130,12 @@ assign debug = debug8;
         .sdram_dq     (sdram_data),     //        .dq
         .sdram_dqm    (sdram_dqm),    //        .dqm
         .sdram_ras_n  (sdram_ras_n),  //        .ras_n
-        .sdram_we_n   (sdram_we_n)   //        .we_n
-								
+        .sdram_we_n   (sdram_we_n),   //        .we_n
+				
+				.myuart_uart_rxd     (uart2_rxd),     //  myuart.rxd
+        .myuart_uart_txd     (uart2_txd),      //        .txd
+				.myuart_debug8   (myuart_debug8),   //        .debug8
+        .myuart_debug32  (myuart_debug32)   //        .debug32
     );
 
 

@@ -147,6 +147,7 @@ set_global_assignment -name RESERVE_FLASH_NCE_AFTER_CONFIGURATION "USE AS REGULA
 set_global_assignment -name RESERVE_DCLK_AFTER_CONFIGURATION "USE AS REGULAR IO"
 
 
+set_global_assignment -name VERILOG_FILE myuart.v
 set_global_assignment -name QIP_FILE sdram_pll.qip
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_send_hs.v
 set_global_assignment -name VERILOG_FILE ../commoncode/uart_recv_hs.v
