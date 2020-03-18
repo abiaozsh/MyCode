@@ -4,7 +4,7 @@ module uart_recv_hs(
 
     input uart_rxd,//UART接收端口
     
-    output reg uart_rec,//接收一帧数据完成标志信号 上升沿表示接收到
+    output reg       uart_rec,//接收一帧数据完成标志信号 上升沿表示接收到
     output reg [7:0] uart_data_out//接收的数据
   );
 

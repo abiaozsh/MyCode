@@ -9,7 +9,9 @@ module uart_hs(
     output            uart_rec,                //接收一帧数据完成标志信号 上升沿表示接收到
     output      [7:0] uart_data_out,                 //接收的数据
     input             uart_send,                  //发送使能信号
-    input       [7:0] uart_data_in                 //待发送数据
+    input       [7:0] uart_data_in,                 //待发送数据
+    output            busy
+
 );
 
   uart_send_hs ins_uart_send_hs(
@@ -19,7 +21,8 @@ module uart_hs(
     .uart_txd (uart_txd),
     
     .uart_send (uart_send),
-    .uart_data_in (uart_data_in)
+    .uart_data_in (uart_data_in),
+    .busy (busy)
   );
 
 uart_recv_hs ins_uart_recv_hs(

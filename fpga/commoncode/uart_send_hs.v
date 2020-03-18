@@ -2,10 +2,11 @@ module uart_send_hs(
     input sys_clk,
     input sys_rst_n,
     
-    output reg uart_txd,//UART发送端口
+    output  reg uart_txd,//UART发送端口
 
-    input uart_send,//发送使能信号
-    input [7:0] uart_data_in//待发送数据
+    input       uart_send,//发送使能信号
+    input [7:0] uart_data_in,//待发送数据
+    output      busy
   );
 
 //parameter define
@@ -18,6 +19,7 @@ reg tx_flag;//发送过程标志信号
 reg [7:0] tx_data;//寄存发送数据
 reg [7:0] clk_cnt;//系统时钟计数器
 
+assign busy = tx_flag;
 //根据发送数据计数器来给uart发送端口赋值
 always @(posedge sys_clk or negedge sys_rst_n) begin
   if (!sys_rst_n) begin
