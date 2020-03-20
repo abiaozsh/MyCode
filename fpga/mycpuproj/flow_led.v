@@ -101,6 +101,7 @@ wire [7:0] debug1;
 wire [7:0] debug2;
 wire [7:0] debug3;
 
+assign led = debug[0];
 assign debug = debug8;
 
 wire [7:0] myuart_debug8;

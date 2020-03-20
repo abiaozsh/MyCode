@@ -18,13 +18,14 @@ namespace Assembler
 			string filein;
 			string fileout;
 			string filetemp;
+			string test = "c";
 			if (args.Length > 0 && !String.IsNullOrEmpty(args[0]))
 			{
 				filein = args[0];
 			}
 			else
 			{
-				filein = "b.s";
+				filein = test+".s";
 			}
 			if (args.Length > 1 && !String.IsNullOrEmpty(args[1]))
 			{
@@ -32,7 +33,7 @@ namespace Assembler
 			}
 			else
 			{
-				fileout = "b.hex";
+				fileout = test + ".hex";
 			}
 			if (args.Length > 2 && !String.IsNullOrEmpty(args[2]))
 			{
@@ -40,7 +41,7 @@ namespace Assembler
 			}
 			else
 			{
-				filetemp = "b.temp.s";
+				filetemp = test + ".temp.s";
 			}
 			Console.WriteLine(filein);
 			Console.WriteLine(fileout);
@@ -148,7 +149,17 @@ namespace Assembler
 					linespass2.Add(Line.match("mov ra, " + line.op2.text));
 					linespass2.Add(Line.match("sub " + line.op1.text + ", ra"));
 				}
-
+				else if ((new Config("movsx reg, BYTEPTRregoff")).match(line))
+				{
+					linespass2.Add(Line.match("mov ra, " + line.op2.text.Replace("BYTE PTR", "DWORD PTR")));
+					linespass2.Add(Line.match("movsx " + line.op1.text + ", ralowbyte"));
+				}
+				else if ((new Config("cmp BYTEPTRregoff, ins")).match(line))
+				{
+					linespass2.Add(Line.match("mov ra, " + line.op1.text.Replace("BYTE PTR", "DWORD PTR")));
+					linespass2.Add(Line.match("mov rb, " + line.op2.text));
+					linespass2.Add(Line.match("cmp ralowbyte, rblowbyte"));
+				}
 				else
 				{
 					linespass2.Add(line);
@@ -234,8 +245,13 @@ namespace Assembler
 										ins.bitins1 = line.op2.ins.Value;
 										break;
 									case 3://mov DWORD PTR [esp+28], eax
-										ins.bitreg1 = line.op1.reg.Value;
-										ins.bitreg2 = line.op2.reg.Value;
+										ins.bitreg1 = line.op2.reg.Value;
+										ins.bitreg2 = line.op1.reg.Value;
+										ins.bitins1 = line.op1.ins.Value;
+										break;
+									case 8://mov BYTE PTR [eax], dl
+										ins.bitreg1 = line.op2.reg.Value;
+										ins.bitreg2 = line.op1.reg.Value;
 										ins.bitins1 = line.op1.ins.Value;
 										break;
 									case 4://push	ebp
@@ -245,11 +261,29 @@ namespace Assembler
 										ins.bitreg1 = line.op1.reg.Value;
 										ins.bitreg2 = line.op2.reg.Value;
 										break;
-									case 6:
+									case 6://movzx	ebp, al
+										ins.bitreg1 = line.op1.reg.Value;
+										ins.bitreg2 = line.op2.reg.Value;
 										break;
 									case 7://call ___main
 										ins.sym = check(line.op1.sym);
 										break;
+									case 9://lea eax, [ebp+12]
+										ins.bitreg1 = line.op1.reg.Value;
+										ins.bitreg2 = line.op2.reg.Value;
+										ins.bitins1 = line.op2.ins.Value;
+										break;
+									case 10://cmp al, bl
+										ins.bitreg1 = line.op1.reg.Value;
+										ins.bitreg2 = line.op2.reg.Value;
+										break;
+									case 11://movzx eax, BYTE PTR [esp+28]
+										ins.bitreg1 = line.op1.reg.Value;
+										ins.bitreg2 = line.op2.reg.Value;
+										ins.bitins1 = line.op2.ins.Value;
+										break;
+									default:
+									throw new Exception("unknown text format");
 								}
 							}
 							catch (Exception ex)

@@ -110,9 +110,12 @@ public class Base
 		public enum OpType
 		{
 			reg = 1,// rax 寄存器
-			ins = 2,// 123 立即数
-			sym = 3,//_xxx 符号引用
-			DWPTRregoff = 4,//DWORD PTR [esp+12] ,DWORD PTR [esp]
+			reg8 = 2,// rax 寄存器
+			ins = 3,// 123 立即数
+			sym = 4,//_xxx 符号引用
+			DWPTRregoff = 5,//DWORD PTR [esp+12] ,DWORD PTR [esp]
+			BYTEPTRregoff = 6,//BYTE PTR [eax+12] ,BYTE PTR [eax]
+			addr = 7,//[eax+12]
 			//OFFSET FLAT
 		}
 		public OpType type;
@@ -123,80 +126,67 @@ public class Base
 
 		public string text;
 
-		public static string matchreg(string txt)
+		public static string matchWord(string s)
 		{
-			foreach (var item in regs.Split('|'))
+			string word = "";
+			for (int i = 0; i < s.Length; i++)
 			{
-				if (txt.StartsWith(item))
+				if (s[i] >= 'a' && s[i] <= 'z' || s[i] >= 'A' && s[i] <= 'Z')
 				{
-					if (txt.Length == item.Length)
-					{
-						return item;
-					}
-					else
-					{
-						if (txt[item.Length] >= 'a' && txt[item.Length] <= 'z')
-						{
-						}
-						else
-						{
-							return item;
-						}
-					}
+					word += s[i];
+				}
+				else
+				{
+					break;
 				}
 			}
-			return null;
+			return word;
 		}
+
 		public static Op match(string sop)
 		{
 			Op op = new Op();
 			op.text = sop;
-			string tempreg = matchreg(sop);
+			int tempreg = getReg(sop, true);
 			int itemp;
-			if (tempreg != null)
+			if (tempreg >= 0)
 			{
-				if (sop == tempreg)
-				{
-					op.type = OpType.reg;
-					op.reg = getReg(tempreg);
-				}
-				else
-				{
-					throw new Exception("unknow1 op:" + sop);
-				}
+				op.type = OpType.reg;
+				op.reg = tempreg;
+				return op;
 			}
-			else if (sop.StartsWith("DWORD PTR "))
+			int tempreg8 = getReg8(sop, true);
+			if (tempreg8 >= 0)
+			{
+				op.type = OpType.reg8;
+				op.reg = tempreg8;
+				return op;
+			}
+			if (sop.StartsWith("DWORD PTR "))
 			{
 				op.type = OpType.DWPTRregoff;
 				sop = sop.Substring("DWORD PTR ".Length);
 				if (sop.StartsWith("["))
 				{
-					sop = sop.Substring(1);
-					tempreg = matchreg(sop);
-					if (tempreg == null)
-					{
-						throw new Exception("unknow2 op:" + sop);
-					}
-					op.reg = getReg(tempreg);
-					sop = sop.Substring(tempreg.Length);
-					if (sop.EndsWith("]"))
-					{
-						sop = sop.TrimEnd(']');
-						if (sop.Length == 0)
-						{
-							op.ins = 0;
-						}
-						else
-						{
-							op.ins = int.Parse(sop);
-						}
-						return op;
-					}
-					else
-					{
-						throw new Exception("unknow3 op:" + sop);
-					}
+					procaddr(ref sop, ref op);
+					return op;
 				}
+			}
+			if (sop.StartsWith("BYTE PTR "))
+			{
+				op.type = OpType.BYTEPTRregoff;
+				sop = sop.Substring("BYTE PTR ".Length);
+				if (sop.StartsWith("["))
+				{
+					procaddr(ref sop, ref op);
+					return op;
+				}
+			}
+			if (sop.StartsWith("["))
+			{
+				op.type = OpType.addr;
+				procaddr(ref sop, ref op);
+				return op;
 			}
 			else if (int.TryParse(sop, out itemp))
 			{
@@ -210,6 +200,31 @@ public class Base
 			}
 
 			return op;
+
+		}
+
+		private static void procaddr(ref string sop, ref Op op)
+		{
+			sop = sop.Substring(1);
+			string word = matchWord(sop);
+			op.reg = getReg(word, true);
+			sop = sop.Substring(word.Length);
+			if (sop.EndsWith("]"))
+			{
+				sop = sop.TrimEnd(']');
+				if (sop.Length == 0)
+				{
+					op.ins = 0;
+				}
+				else
+				{
+					op.ins = int.Parse(sop);
+				}
+			}
+			else
+			{
+				throw new Exception("unknow3 op:" + sop);
+			}
 
 		}
 
@@ -345,9 +360,7 @@ public class Base
 		public int pos;
 	}
 
-	public static string regs = "eax|ebx|ecx|edx|ebp|esp|esi|edi|ra|rb";
-
-	public static int getReg(string reg)
+	public static int getReg(string reg, bool noerr)
 	{
 		if (reg == "eax")//assign eax = regfile[0];
 		{
@@ -389,25 +402,51 @@ public class Base
 		{
 			return 9;
 		}
-
-		throw new Exception("reg not found");
-	}
-	public static string getReg(int? val)
-	{
-		switch (val)
+		if (noerr)
 		{
-			case 0: return "eax";
-			case 1: return "ebx";
-			case 2: return "ecx";
-			case 3: return "edx";
-			case 4: return "ebp";
-			case 5: return "esp";
-			case 6: return "esi";
-			case 7: return "edi";
-			case 8: return "ra";
-			case 9: return "rb";
+			return -1;
 		}
-		throw new Exception("wrong reg");
+		else
+		{
+			throw new Exception("reg not found");
+		}
+	}
+
+	public static int getReg8(string reg, bool noerr)
+	{
+		if (reg == "al")
+		{
+			return 0;
+		}
+		else if (reg == "bl")
+		{
+			return 1;
+		}
+		else if (reg == "cl")
+		{
+			return 2;
+		}
+		else if (reg == "dl")
+		{
+			return 3;
+		}
+		else if (reg == "ralowbyte")//assign ra = regfile[8];
+		{
+			return 8;
+		}
+		else if (reg == "rblowbyte")//assign rb = regfile[9];
+		{
+			return 9;
+		}
+
+		if (noerr)
+		{
+			return -1;
+		}
+		else
+		{
+			throw new Exception("reg not found");
+		}
 	}
 
 
