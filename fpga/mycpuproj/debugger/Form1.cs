@@ -49,13 +49,13 @@ namespace WindowsFormsApplication1
 				fs.Close();
 				foreach (var line in s.Split('\n'))
 				{
-                    if (line != "")
-                    {
-                        CodeSym sym = new CodeSym();
-                        sym.pos = int.Parse(line.Split(',')[0]);
-                        sym.name = line.Split(',')[1];
-                        codeSyms.Add(sym);
-                    }
+					if (line != "")
+					{
+						CodeSym sym = new CodeSym();
+						sym.pos = int.Parse(line.Split(',')[0]);
+						sym.name = line.Split(',')[1];
+						codeSyms.Add(sym);
+					}
 				}
 			}
 			cfgs = Config.loadConfig(@"assembler\config.txt");
@@ -118,100 +118,62 @@ namespace WindowsFormsApplication1
 		{
 			StringBuilder sb = new StringBuilder();
 			sb.Append("eax:");
-			portWrite((byte)(0xA3), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xA2), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xA1), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xA0), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
+			getreg(0x47, 0x00, sb);
 			sb.AppendLine();
 
 			sb.Append("ebx:");
-			portWrite((byte)(0xA7), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xA6), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xA5), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xA4), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
+			getreg(0x47, 0x01, sb);
 			sb.AppendLine();
 
 			sb.Append("ecx:");
-			portWrite((byte)(0xAB), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xAA), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xA9), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xA8), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
+			getreg(0x47, 0x02, sb);
 			sb.AppendLine();
 
 			sb.Append("edx:");
-			portWrite((byte)(0xAF), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xAE), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xAD), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xAC), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
+			getreg(0x47, 0x03, sb);
 			sb.AppendLine();
 
 			sb.Append("ebp:");
-			portWrite((byte)(0xB3), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xB2), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xB1), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xB0), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
+			getreg(0x47, 0x04, sb);
 			sb.AppendLine();
 
 			sb.Append("esp:");
 			byte[] temp;
-			int esp = 0;
-			portWrite((byte)(0xB7), (byte)0x00); temp = readFromPort(1); esp |= temp[0] << 24; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0xB6), (byte)0x00); temp = readFromPort(1); esp |= temp[0] << 16; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0xB5), (byte)0x00); temp = readFromPort(1); esp |= temp[0] << 8; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0xB4), (byte)0x00); temp = readFromPort(1); esp |= temp[0] << 0; sb.Append(getHex2(temp[0]));
+			int esp = getreg(0x47, 0x05, sb);
 			sb.AppendLine();
 
 			sb.Append("esi:");
-			portWrite((byte)(0xBB), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xBA), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xB9), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xB8), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
+			getreg(0x47, 0x06, sb);
 			sb.AppendLine();
 
 			sb.Append("edi:");
-			portWrite((byte)(0xBF), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xBE), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xBD), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xBC), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
+			getreg(0x47, 0x07, sb);
 			sb.AppendLine();
 
 			sb.Append("ra:");
-			portWrite((byte)(0xC3), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xC2), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xC1), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xC0), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
+			getreg(0x47, 0x08, sb);
 			sb.AppendLine();
 
 			sb.Append("rb:");
-			portWrite((byte)(0xC7), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xC6), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xC5), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
-			portWrite((byte)(0xC4), (byte)0x00); sb.Append(getHex2(readFromPort(1)[0]));
+			getreg(0x47, 0x09, sb);
 			sb.AppendLine();
 
 
 			sb.Append("cs:");
-			int cs = 0;
-			portWrite((byte)(0xDB), (byte)0x00); temp = readFromPort(1); cs |= temp[0] << 24; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0xDA), (byte)0x00); temp = readFromPort(1); cs |= temp[0] << 16; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0xD9), (byte)0x00); temp = readFromPort(1); cs |= temp[0] << 8; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0xD8), (byte)0x00); temp = readFromPort(1); cs |= temp[0] << 0; sb.Append(getHex2(temp[0]));
+			int cs = getreg(0x47, 0x0E, sb);
+
 			sb.AppendLine();
 
 			sb.Append("ds:");
-			int ds = 0;
-			portWrite((byte)(0xDF), (byte)0x00); temp = readFromPort(1); ds |= temp[0] << 24; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0xDE), (byte)0x00); temp = readFromPort(1); ds |= temp[0] << 16; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0xDD), (byte)0x00); temp = readFromPort(1); ds |= temp[0] << 8; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0xDC), (byte)0x00); temp = readFromPort(1); ds |= temp[0] << 0; sb.Append(getHex2(temp[0]));
+			int ds = getreg(0x47, 0x0F, sb);
+
 			sb.AppendLine();
 
 
 			sb.Append("status: ");
 			//...
-			byte statusbyte0;
-			portWrite((byte)(0xE0), (byte)0x00); statusbyte0 = (readFromPort(1)[0]);
-
+			int statusbyte0 = getreg(0x42, 0x00, sb);
+			sb.AppendLine();
 			sb.Append(((statusbyte0 & 0x08) != 0) ? "overflow," : "no overflow,");
 			sb.Append(((statusbyte0 & 0x04) != 0) ? "sign neg," : "sign pos,");
 			sb.Append(((statusbyte0 & 0x02) != 0) ? "carry," : "no carry,");
@@ -219,24 +181,19 @@ namespace WindowsFormsApplication1
 			sb.AppendLine();
 
 			sb.Append("pc:");
-			int pc = 0;
-			portWrite((byte)(0xE7), (byte)0x00); temp = readFromPort(1); pc |= temp[0] << 24; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0xE6), (byte)0x00); temp = readFromPort(1); pc |= temp[0] << 16; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0xE5), (byte)0x00); temp = readFromPort(1); pc |= temp[0] << 8; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0xE4), (byte)0x00); temp = readFromPort(1); pc |= temp[0] << 0; sb.Append(getHex2(temp[0]));
+			int pc = getreg(0x43, 0x00, sb);
 			sb.AppendLine();
 
 			sb.AppendLine("stack: ");
-			string s;
 			int idx = 0;
-			getmem(esp + ds + idx, out s); sb.AppendLine(" " + idx + ":" + s); idx += 4;
-			getmem(esp + ds + idx, out s); sb.AppendLine(" " + idx + ":" + s); idx += 4;
-			getmem(esp + ds + idx, out s); sb.AppendLine(" " + idx + ":" + s); idx += 4;
-			getmem(esp + ds + idx, out s); sb.AppendLine("" + idx + ":" + s); idx += 4;
-			getmem(esp + ds + idx, out s); sb.AppendLine("" + idx + ":" + s); idx += 4;
-			getmem(esp + ds + idx, out s); sb.AppendLine("" + idx + ":" + s); idx += 4;
-			getmem(esp + ds + idx, out s); sb.AppendLine("" + idx + ":" + s); idx += 4;
-			getmem(esp + ds + idx, out s); sb.AppendLine("" + idx + ":" + s); idx += 4;
+			sb.Append(" " + idx + ":"); getmem(esp + ds + idx, sb); idx += 4; sb.AppendLine();
+			sb.Append(" " + idx + ":"); getmem(esp + ds + idx, sb); idx += 4; sb.AppendLine();
+			sb.Append(" " + idx + ":"); getmem(esp + ds + idx, sb); idx += 4; sb.AppendLine();
+			sb.Append("" + idx + ":"); getmem(esp + ds + idx, sb); idx += 4; sb.AppendLine();
+			sb.Append("" + idx + ":"); getmem(esp + ds + idx, sb); idx += 4; sb.AppendLine();
+			sb.Append("" + idx + ":"); getmem(esp + ds + idx, sb); idx += 4; sb.AppendLine();
+			sb.Append("" + idx + ":"); getmem(esp + ds + idx, sb); idx += 4; sb.AppendLine();
+			sb.Append("" + idx + ":"); getmem(esp + ds + idx, sb); idx += 4; sb.AppendLine();
 
 			List<DataSym> datasyms = null;
 			sb.AppendLine("code: ");
@@ -246,41 +203,21 @@ namespace WindowsFormsApplication1
 			int dummy = 0;
 			for (int i = 0; i < 16; i++)
 			{
-				int code = getmem(pc + cs + idx, out s);
-                int target = pc + cs + idx;
-                string foundsym = "";
-                foreach (var csym in codeSyms)
-                {
-                    if (csym.pos + basepos == target)
-                    {
-                        foundsym += csym.name + ",";
-                    }
-                }
+				StringBuilder sb2 = new StringBuilder();
+				int code = getmem(pc + cs + idx, sb2);
+				int target = pc + cs + idx;
+				string foundsym = "";
+				foreach (var csym in codeSyms)
+				{
+					if (csym.pos + basepos == target)
+					{
+						foundsym += csym.name + ",";
+					}
+				}
 				string scode = Config.dasm(cfgs, codeSyms, datasyms, code, pc + cs + idx, basepos, ref  extend);
-                sb.AppendLine(getHex8(pc + cs + idx, ref dummy) + ":(" + foundsym + ":):" + s + "," + scode); idx += 4;
+				sb.AppendLine(getHex8(pc + cs + idx, ref dummy) + ":(" + sb2.ToString() + "," + foundsym + "):" + scode); idx += 4;
 
 			}
-			sb.Append("cmd reg reg:");
-			portWrite((byte)(0xF0), (byte)0x00); temp = readFromPort(1); pc |= temp[0] << 24; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0xF1), (byte)0x00); temp = readFromPort(1); pc |= temp[0] << 16; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0xF2), (byte)0x00); temp = readFromPort(1); pc |= temp[0] << 8; sb.Append(getHex2(temp[0]));
-			sb.AppendLine();
-
-			sb.Append("exec_address:");
-			int exec_address = 0;
-			portWrite((byte)(0x53), (byte)0x00); temp = readFromPort(1); exec_address |= temp[0] << 24; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0x52), (byte)0x00); temp = readFromPort(1); exec_address |= temp[0] << 16; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0x51), (byte)0x00); temp = readFromPort(1); exec_address |= temp[0] << 8; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0x50), (byte)0x00); temp = readFromPort(1); exec_address |= temp[0] << 0; sb.Append(getHex2(temp[0]));
-			sb.AppendLine();
-
-			sb.Append("exec_writedata:");
-			int exec_writedata = 0;
-			portWrite((byte)(0x57), (byte)0x00); temp = readFromPort(1); exec_writedata |= temp[0] << 24; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0x56), (byte)0x00); temp = readFromPort(1); exec_writedata |= temp[0] << 16; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0x55), (byte)0x00); temp = readFromPort(1); exec_writedata |= temp[0] << 8; sb.Append(getHex2(temp[0]));
-			portWrite((byte)(0x54), (byte)0x00); temp = readFromPort(1); exec_writedata |= temp[0] << 0; sb.Append(getHex2(temp[0]));
-			sb.AppendLine();
 
 			this.textBox4.Text = sb.ToString();
 
@@ -290,8 +227,19 @@ namespace WindowsFormsApplication1
 		{
 
 		}
+		public int getreg(byte cmd, byte reg, StringBuilder sb)
+		{
+			portWrite(cmd, reg);
+			byte[] temp;
+			int val = 0;
+			portWrite((byte)(0x13), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 24; sb.Append(getHex2(temp[0]));
+			portWrite((byte)(0x12), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 16; sb.Append(getHex2(temp[0]));
+			portWrite((byte)(0x11), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 8; sb.Append(getHex2(temp[0]));
+			portWrite((byte)(0x10), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 0; sb.Append(getHex2(temp[0]));
+			return val;
+		}
 
-		public int getmem(int addr, out string s)
+		public int getmem(int addr, StringBuilder sb)
 		{
 			portWrite((byte)(0x20), (byte)((addr >> 0) & 0xFF));
 			portWrite((byte)(0x21), (byte)((addr >> 8) & 0xFF));
@@ -300,12 +248,11 @@ namespace WindowsFormsApplication1
 
 			portWrite((byte)(0x30), 0);
 			byte[] temp;
-			s = "";
 			int val = 0;
-			portWrite((byte)(0x13), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 24; s += (getHex2(temp[0]));
-			portWrite((byte)(0x12), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 16; s += (getHex2(temp[0]));
-			portWrite((byte)(0x11), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 8; s += (getHex2(temp[0]));
-			portWrite((byte)(0x10), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 0; s += (getHex2(temp[0]));
+			portWrite((byte)(0x13), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 24; sb.Append(getHex2(temp[0]));
+			portWrite((byte)(0x12), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 16; sb.Append(getHex2(temp[0]));
+			portWrite((byte)(0x11), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 8; sb.Append(getHex2(temp[0]));
+			portWrite((byte)(0x10), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 0; sb.Append(getHex2(temp[0]));
 			return val;
 		}
 		public void setmem(int addr, int data)
@@ -326,9 +273,9 @@ namespace WindowsFormsApplication1
 		private void button2_Click_1(object sender, EventArgs e)
 		{
 			int addr = Convert.ToInt32(textBox1.Text, 16);
-			string s;
-			getmem(addr, out s);
-			textBox2.Text = s;
+			StringBuilder sb = new StringBuilder();
+			getmem(addr, sb);
+			textBox2.Text = sb.ToString();
 
 		}
 		private void button6_Click(object sender, EventArgs e)

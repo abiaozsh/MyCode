@@ -158,97 +158,11 @@ always @(posedge clk or negedge reset_n) begin
           end
         end
         
-      end else if (command == 8'h50) begin uart_send<=1; uart_data_in<=exec_address[ 7: 0]; command_done<=1;
-      end else if (command == 8'h51) begin uart_send<=1; uart_data_in<=exec_address[15: 8]; command_done<=1;
-      end else if (command == 8'h52) begin uart_send<=1; uart_data_in<=exec_address[23:16]; command_done<=1;
-      end else if (command == 8'h53) begin uart_send<=1; uart_data_in<=exec_address[31:24]; command_done<=1;
-      
-      end else if (command == 8'h54) begin uart_send<=1; uart_data_in<=exec_writedata[ 7: 0]; command_done<=1;
-      end else if (command == 8'h55) begin uart_send<=1; uart_data_in<=exec_writedata[15: 8]; command_done<=1;
-      end else if (command == 8'h56) begin uart_send<=1; uart_data_in<=exec_writedata[23:16]; command_done<=1;
-      end else if (command == 8'h57) begin uart_send<=1; uart_data_in<=exec_writedata[31:24]; command_done<=1;
 
-      end else if (command == 8'hD8) begin uart_send<=1; uart_data_in<=cs[ 7: 0]; command_done<=1;
-      end else if (command == 8'hD9) begin uart_send<=1; uart_data_in<=cs[15: 8]; command_done<=1;
-      end else if (command == 8'hDA) begin uart_send<=1; uart_data_in<=cs[23:16]; command_done<=1;
-      end else if (command == 8'hDB) begin uart_send<=1; uart_data_in<=cs[31:24]; command_done<=1;
-      
-      end else if (command == 8'hDC) begin uart_send<=1; uart_data_in<=ds[ 7: 0]; command_done<=1;
-      end else if (command == 8'hDD) begin uart_send<=1; uart_data_in<=ds[15: 8]; command_done<=1;
-      end else if (command == 8'hDE) begin uart_send<=1; uart_data_in<=ds[23:16]; command_done<=1;
-      end else if (command == 8'hDF) begin uart_send<=1; uart_data_in<=ds[31:24]; command_done<=1;
-      
-      end else if (command == 8'hE0) begin uart_send<=1; uart_data_in<=status[ 7: 0]; command_done<=1;
-      end else if (command == 8'hE1) begin uart_send<=1; uart_data_in<=status[15: 8]; command_done<=1;
-      end else if (command == 8'hE2) begin uart_send<=1; uart_data_in<=status[23:16]; command_done<=1;
-      end else if (command == 8'hE3) begin uart_send<=1; uart_data_in<=status[31:24]; command_done<=1;
+      end else if (command == 8'h42) begin debug_data<=status; command_done<=1;
+      end else if (command == 8'h43) begin debug_data<=pc; command_done<=1;
+      end else if (command == 8'h47) begin debug_data<=regfile[data[3:0]]; command_done<=1;
 
-      end else if (command == 8'hE4) begin uart_send<=1; uart_data_in<=pc[ 7: 0]; command_done<=1;
-      end else if (command == 8'hE5) begin uart_send<=1; uart_data_in<=pc[15: 8]; command_done<=1;
-      end else if (command == 8'hE6) begin uart_send<=1; uart_data_in<=pc[23:16]; command_done<=1;
-      end else if (command == 8'hE7) begin uart_send<=1; uart_data_in<=pc[31:24]; command_done<=1;
-
-      end else if (command == 8'hF0) begin uart_send<=1; uart_data_in<=cmd; command_done<=1;
-      end else if (command == 8'hF1) begin uart_send<=1; uart_data_in<=reg1; command_done<=1;
-      end else if (command == 8'hF2) begin uart_send<=1; uart_data_in<=reg2; command_done<=1;
-
-      end else if (command == 8'hA0) begin uart_send<=1; uart_data_in<=eax[ 7: 0]; command_done<=1;
-      end else if (command == 8'hA1) begin uart_send<=1; uart_data_in<=eax[15: 8]; command_done<=1;
-      end else if (command == 8'hA2) begin uart_send<=1; uart_data_in<=eax[23:16]; command_done<=1;
-      end else if (command == 8'hA3) begin uart_send<=1; uart_data_in<=eax[31:24]; command_done<=1;
-      end else if (command == 8'hA4) begin uart_send<=1; uart_data_in<=ebx[ 7: 0]; command_done<=1;
-      end else if (command == 8'hA5) begin uart_send<=1; uart_data_in<=ebx[15: 8]; command_done<=1;
-      end else if (command == 8'hA6) begin uart_send<=1; uart_data_in<=ebx[23:16]; command_done<=1;
-      end else if (command == 8'hA7) begin uart_send<=1; uart_data_in<=ebx[31:24]; command_done<=1;
-      end else if (command == 8'hA8) begin uart_send<=1; uart_data_in<=ecx[ 7: 0]; command_done<=1;
-      end else if (command == 8'hA9) begin uart_send<=1; uart_data_in<=ecx[15: 8]; command_done<=1;
-      end else if (command == 8'hAA) begin uart_send<=1; uart_data_in<=ecx[23:16]; command_done<=1;
-      end else if (command == 8'hAB) begin uart_send<=1; uart_data_in<=ecx[31:24]; command_done<=1;
-      end else if (command == 8'hAC) begin uart_send<=1; uart_data_in<=edx[ 7: 0]; command_done<=1;
-      end else if (command == 8'hAD) begin uart_send<=1; uart_data_in<=edx[15: 8]; command_done<=1;
-      end else if (command == 8'hAE) begin uart_send<=1; uart_data_in<=edx[23:16]; command_done<=1;
-      end else if (command == 8'hAF) begin uart_send<=1; uart_data_in<=edx[31:24]; command_done<=1;
-      end else if (command == 8'hB0) begin uart_send<=1; uart_data_in<=ebp[ 7: 0]; command_done<=1;
-      end else if (command == 8'hB1) begin uart_send<=1; uart_data_in<=ebp[15: 8]; command_done<=1;
-      end else if (command == 8'hB2) begin uart_send<=1; uart_data_in<=ebp[23:16]; command_done<=1;
-      end else if (command == 8'hB3) begin uart_send<=1; uart_data_in<=ebp[31:24]; command_done<=1;
-      end else if (command == 8'hB4) begin uart_send<=1; uart_data_in<=esp[ 7: 0]; command_done<=1;
-      end else if (command == 8'hB5) begin uart_send<=1; uart_data_in<=esp[15: 8]; command_done<=1;
-      end else if (command == 8'hB6) begin uart_send<=1; uart_data_in<=esp[23:16]; command_done<=1;
-      end else if (command == 8'hB7) begin uart_send<=1; uart_data_in<=esp[31:24]; command_done<=1;
-      end else if (command == 8'hB8) begin uart_send<=1; uart_data_in<=esi[ 7: 0]; command_done<=1;
-      end else if (command == 8'hB9) begin uart_send<=1; uart_data_in<=esi[15: 8]; command_done<=1;
-      end else if (command == 8'hBA) begin uart_send<=1; uart_data_in<=esi[23:16]; command_done<=1;
-      end else if (command == 8'hBB) begin uart_send<=1; uart_data_in<=esi[31:24]; command_done<=1;
-      end else if (command == 8'hBC) begin uart_send<=1; uart_data_in<=edi[ 7: 0]; command_done<=1;
-      end else if (command == 8'hBD) begin uart_send<=1; uart_data_in<=edi[15: 8]; command_done<=1;
-      end else if (command == 8'hBE) begin uart_send<=1; uart_data_in<=edi[23:16]; command_done<=1;
-      end else if (command == 8'hBF) begin uart_send<=1; uart_data_in<=edi[31:24]; command_done<=1;
-      end else if (command == 8'hC0) begin uart_send<=1; uart_data_in<=ra[ 7: 0]; command_done<=1;
-      end else if (command == 8'hC1) begin uart_send<=1; uart_data_in<=ra[15: 8]; command_done<=1;
-      end else if (command == 8'hC2) begin uart_send<=1; uart_data_in<=ra[23:16]; command_done<=1;
-      end else if (command == 8'hC3) begin uart_send<=1; uart_data_in<=ra[31:24]; command_done<=1;
-      end else if (command == 8'hC4) begin uart_send<=1; uart_data_in<=rb[ 7: 0]; command_done<=1;
-      end else if (command == 8'hC5) begin uart_send<=1; uart_data_in<=rb[15: 8]; command_done<=1;
-      end else if (command == 8'hC6) begin uart_send<=1; uart_data_in<=rb[23:16]; command_done<=1;
-      end else if (command == 8'hC7) begin uart_send<=1; uart_data_in<=rb[31:24]; command_done<=1;
-      end else if (command == 8'hC8) begin uart_send<=1; uart_data_in<=regfile[10][ 7: 0]; command_done<=1;
-      end else if (command == 8'hC9) begin uart_send<=1; uart_data_in<=regfile[10][15: 8]; command_done<=1;
-      end else if (command == 8'hCA) begin uart_send<=1; uart_data_in<=regfile[10][23:16]; command_done<=1;
-      end else if (command == 8'hCB) begin uart_send<=1; uart_data_in<=regfile[10][31:24]; command_done<=1;
-      end else if (command == 8'hCC) begin uart_send<=1; uart_data_in<=regfile[11][ 7: 0]; command_done<=1;
-      end else if (command == 8'hCD) begin uart_send<=1; uart_data_in<=regfile[11][15: 8]; command_done<=1;
-      end else if (command == 8'hCE) begin uart_send<=1; uart_data_in<=regfile[11][23:16]; command_done<=1;
-      end else if (command == 8'hCF) begin uart_send<=1; uart_data_in<=regfile[11][31:24]; command_done<=1;
-      end else if (command == 8'hD0) begin uart_send<=1; uart_data_in<=regfile[12][ 7: 0]; command_done<=1;
-      end else if (command == 8'hD1) begin uart_send<=1; uart_data_in<=regfile[12][15: 8]; command_done<=1;
-      end else if (command == 8'hD2) begin uart_send<=1; uart_data_in<=regfile[12][23:16]; command_done<=1;
-      end else if (command == 8'hD3) begin uart_send<=1; uart_data_in<=regfile[12][31:24]; command_done<=1;
-      end else if (command == 8'hD4) begin uart_send<=1; uart_data_in<=regfile[13][ 7: 0]; command_done<=1;
-      end else if (command == 8'hD5) begin uart_send<=1; uart_data_in<=regfile[13][15: 8]; command_done<=1;
-      end else if (command == 8'hD6) begin uart_send<=1; uart_data_in<=regfile[13][23:16]; command_done<=1;
-      end else if (command == 8'hD7) begin uart_send<=1; uart_data_in<=regfile[13][31:24]; command_done<=1;
-      
       end else begin
         command_done<=1;
       end
