@@ -17,3 +17,4 @@ release
 /fpga/workspace/qsys/*.objdump
 /fpga/qsys/*.rpt
 *.rpt
+*.sopcinfo
