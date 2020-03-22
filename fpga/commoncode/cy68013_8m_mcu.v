@@ -2,10 +2,13 @@ module cy68013_mcu(
     input  sys_clk  ,
     input  sys_rst_n,
     
+    //input cy_SCL,
+    //input cy_SDA,
+    //output reg cy_from_fpga_A6_PKTEND       ,//output
+    //output reg cy_from_fpga_A4_FIFOADR0     ,//output
+    
     inout [7:0] cy_D,
     inout [7:0] cy_B,
-    input cy_SCL,
-    input cy_SDA,
     input cy_IFCLK                     ,
     input cy_to_fpga_CTL0_FLAGA        ,
     input cy_to_fpga_CTL2_FLAGC        ,
@@ -17,10 +20,9 @@ module cy68013_mcu(
     input cy_A0_INT0                   ,// in from pc
     output reg cy_A1_INT1                   ,// out to pc
     input cy_A3_WU2                    ,
-    output reg cy_from_fpga_A4_FIFOADR0     ,//output
     output reg cy_from_fpga_A5_FIFOADR1     ,//output
-    output reg cy_from_fpga_A6_PKTEND       ,//output
 
+		output cyok,
     output reg [7:0] cy_cmd,
     output reg [7:0] cy_dat,
     output reg [7:0] cy_snd_data0,
@@ -174,14 +176,16 @@ assign EP2FULL  = !cy_to_fpga_CTL1_FLAGB;
 assign EP6EMPTY = !cy_to_fpga_CTL2_FLAGC;
 assign EP6FULL  = !cy_to_fpga_A7_FLAGD;
 
+assign cyok = EP2EMPTY && !EP2FULL && EP6EMPTY && !EP6FULL;
+
 assign debug0 = cy_A0_INT0;
 assign debug1 = cy_A1_INT1;
 assign debug2 = command_done;
 assign debug3 = cy_A3_WU2;
-assign debug4 = cy_rec_req;//EP2EMPTY;
-assign debug5 = cy_rec_ack;//EP2FULL;
-assign debug6 = cy_snd_req;//EP6EMPTY;
-assign debug7 = cy_snd_ack;//EP6FULL;
+assign debug4 = cy_rec_req;//EP2EMPTY;//
+assign debug5 = cy_rec_ack;//EP2FULL; //
+assign debug6 = cy_snd_req;//EP6EMPTY;//
+assign debug7 = cy_snd_ack;//EP6FULL; //
 
 
 reg transfer_req_buff;
@@ -206,9 +210,9 @@ always @(posedge cy_IFCLK or negedge sys_rst_n) begin
 
     cy_from_fpga_RDY0_SLRD<=1;
     cy_from_fpga_RDY1_SLWR<=1;
-    cy_from_fpga_A4_FIFOADR0<=0;
+    //cy_from_fpga_A4_FIFOADR0<=0;
     cy_from_fpga_A5_FIFOADR1<=0;
-    cy_from_fpga_A6_PKTEND<=1;
+    //cy_from_fpga_A6_PKTEND<=1;
     
     init <= 0;
     sdram_c_write_en <= 0;
@@ -220,10 +224,10 @@ always @(posedge cy_IFCLK or negedge sys_rst_n) begin
       if(!init)begin
         transfer_timer <= 0;
         if(transfer_type==1)begin
-          cy_from_fpga_A4_FIFOADR0<=0;
+          //cy_from_fpga_A4_FIFOADR0<=0;
           cy_from_fpga_A5_FIFOADR1<=0;
         end else begin
-          cy_from_fpga_A4_FIFOADR0<=0;
+          //cy_from_fpga_A4_FIFOADR0<=0;
           cy_from_fpga_A5_FIFOADR1<=1;
         end
         sdram_c_address_trans <= {cy_address2,cy_address1,cy_address0};
@@ -252,7 +256,7 @@ always @(posedge cy_IFCLK or negedge sys_rst_n) begin
           if(transfer_timer == {transfer_pages1,transfer_pages0,9'b0})begin
             transfer_timer <= 0;
             init <= 0;
-            cy_from_fpga_A4_FIFOADR0<=0;
+            //cy_from_fpga_A4_FIFOADR0<=0;
             cy_from_fpga_A5_FIFOADR1<=0;
             transfer_ack <= 1;
           end else begin
