@@ -45,24 +45,24 @@ module flow_led(
 
   output [7:0] debug,
  
+  //input cy_SCL,
+  //input cy_SDA,
   inout [7:0] cy_D,
   inout [7:0] cy_B,
-  input cy_SCL,
-  input cy_SDA,
   output cy_IFCLK_out                     ,
   input cy_to_fpga_CTL0_FLAGA        ,
   input cy_to_fpga_CTL2_FLAGC        ,
   input cy_to_fpga_CTL1_FLAGB        ,
+  input cy_to_fpga_A7_FLAGD          ,
   output  cy_from_fpga_RDY1_SLWR       ,//output
   output  cy_from_fpga_RDY0_SLRD       ,//output
   input cy_A0_INT0                   ,
   output cy_A1_INT1                   ,
   output  cy_from_fpga_A2_SLOE         ,//output
   input cy_A3_WU2                    ,
-  output  cy_from_fpga_A4_FIFOADR0     ,//output
+  //output  cy_from_fpga_A4_FIFOADR0     ,//output
   output  cy_from_fpga_A5_FIFOADR1     ,//output
-  output  cy_from_fpga_A6_PKTEND       ,//output
-  input cy_to_fpga_A7_FLAGD          ,
+  //output  cy_from_fpga_A6_PKTEND       ,//output
 
     //VGA接口                          
     output          vga_hs,         //行同步信号
@@ -131,15 +131,9 @@ end
   assign debug[6] = debug6;
   assign debug[7] = debug7;
   
-wire buffok;
-assign buffok = cy_to_fpga_CTL0_FLAGA == 0 &&
- cy_to_fpga_CTL1_FLAGB == 1 &&
- cy_to_fpga_CTL2_FLAGC == 0 &&
- cy_to_fpga_A7_FLAGD   == 1;
-wire bufferr;
-assign bufferr = !buffok;
-assign led = !bufferr;
+assign led = cyok;
 
+wire cyok;
 wire [7:0] seg_data0;
 wire [7:0] seg_data1;
 wire [7:0] seg_data2;
@@ -184,8 +178,8 @@ cy68013_mcu ins_cy68013_mcu(
  
    .cy_D(cy_D),
    .cy_B(cy_B),
-   .cy_SCL(cy_SCL)       ,
-   .cy_SDA(cy_SDA)       ,
+   //.cy_SCL(cy_SCL)       ,
+   //.cy_SDA(cy_SDA)       ,
    .cy_IFCLK(cy_IFCLK_in),
    .cy_to_fpga_CTL0_FLAGA(cy_to_fpga_CTL0_FLAGA),
    .cy_to_fpga_CTL2_FLAGC(cy_to_fpga_CTL2_FLAGC),
@@ -197,10 +191,11 @@ cy68013_mcu ins_cy68013_mcu(
    .cy_A0_INT0(cy_A0_INT0)                   ,
    .cy_A1_INT1(cy_A1_INT1)                   ,
    .cy_A3_WU2(cy_A3_WU2)                    ,
-   .cy_from_fpga_A4_FIFOADR0(cy_from_fpga_A4_FIFOADR0)     ,//output
+   //.cy_from_fpga_A4_FIFOADR0(cy_from_fpga_A4_FIFOADR0)     ,//output
    .cy_from_fpga_A5_FIFOADR1(cy_from_fpga_A5_FIFOADR1)     ,//output
-   .cy_from_fpga_A6_PKTEND(cy_from_fpga_A6_PKTEND)       ,//output
+   //.cy_from_fpga_A6_PKTEND(cy_from_fpga_A6_PKTEND)       ,//output
 
+	 .cyok(cyok),
    .cy_cmd(cy_cmd),
    .cy_dat(cy_dat),
    .cy_snd_data0(cy_snd_data0),
