@@ -1,6 +1,5 @@
 #pattern                     @ text format @ ins format @  cmd@ sample
-hlt                          @           0 @          0 @   0 @ hlt
-nop                          @           0 @          0 @   1 @ nop
+hlt ins                      @          14 @          0 @   0 @ hlt 1/0   nop=hlt 0
 mov reg, DWPTRregoff         @           2 @          0 @   2 @ mov eax, DWORD PTR [esp+20]
 mov DWPTRregoff, reg         @           3 @          0 @   3 @ mov DWORD PTR [esp+28], eax
 mov BYTEPTRregoff, reg8      @           8 @          0 @   4 @ mov BYTE PTR [eax], dl
@@ -15,12 +14,38 @@ and reg, reg                 @           5 @          0 @  18 @ and esp, ra
 sub reg, reg                 @           5 @          0 @  19 @ sub esp, ra
 test reg, reg                @           5 @          0 @  20 @ test eax, ra
 cmp reg8, reg8               @          10 @          0 @  21 @ cmp al, bl
+test reg8, reg8              @          10 @          0 @  22 @ test al, bl
+in32 reg, reg                @           5 @          0 @  28 @ in32 ra, rb
+out32 reg, reg               @           5 @          0 @  29 @ out32 ra, rb
 push reg                     @           4 @          0 @  32 @ push	ebp
 jmp sym                      @           7 @          1 @  33 @ jmp L3
 je sym                       @           7 @          1 @  34 @ je L3
-call sym                     @           7 @          1 @  35 @ call ___main
+call sym                     @           7 @          1 @  35 @ call ___main rel
 ret                          @           0 @          0 @  36 @ ret
 pop reg                      @           4 @          0 @  37 @ pop ebp
 jne sym                      @           7 @          1 @  38 @ jne L3
-release                      @           0 @          0 @ 127 @ release
 mov reg, ins                 @           1 @          2 @ 128 @ mov eax,123
+mov reg, dsym                @          12 @          2 @ 128 @ mov eax,123
+mov reg, DWPTRdsym           @          13 @          2 @ 128 @ mov eax,123
+mov reg, BYTEPTRdsym         @          15 @          2 @ 128 @ mov eax,123
+
+
+#call reg
+#longcall ra, rb
+#longjmp ra, rb
+#longret ra
+
+
+#cs£¬csvalid
+#mov ra, 123
+#mov rb, 1000
+#push cs
+#longcall ra, rb #pc=ra,cs=rb,push pc+4
+#mov ra, 4
+#sub esp, ra
+
+#...
+#proc
+#mov ra, DWORD PTR [esp+4]
+#longret ra #pop pc, cs=ra
+#...

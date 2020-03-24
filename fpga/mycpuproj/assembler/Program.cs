@@ -14,18 +14,17 @@ namespace Assembler
 
 		static void Main(string[] args)
 		{
-
 			string filein;
 			string fileout;
 			string filetemp;
-			string test = "c";
+			string test = "b";
 			if (args.Length > 0 && !String.IsNullOrEmpty(args[0]))
 			{
 				filein = args[0];
 			}
 			else
 			{
-				filein = test+".s";
+				filein = test + ".s";
 			}
 			if (args.Length > 1 && !String.IsNullOrEmpty(args[1]))
 			{
@@ -83,6 +82,7 @@ namespace Assembler
 
 			List<Line> lines = new List<Line>();
 
+			lines.Add(Line.match(".text"));
 			bool standalone = true;
 			if (standalone)
 			{
@@ -111,10 +111,14 @@ namespace Assembler
 			foreach (var line in lines)
 			{
 
-				if ((new Config("leave")).match(line))
+				if ((new Config("nop")).match(line))
+				{
+					linespass2.Add(Line.match("hlt 0"));
+				}
+				else if ((new Config("leave")).match(line))
 				{
 					//leave :   Set ESP to EBP, then pop EBP
-                    linespass2.Add(Line.match("mov esp, ebp"));
+					linespass2.Add(Line.match("mov esp, ebp"));
 					linespass2.Add(Line.match("pop ebp"));
 				}
 				else if ((new Config("add DWPTRregoff, ins")).match(line))
@@ -139,6 +143,11 @@ namespace Assembler
 					linespass2.Add(Line.match("mov ra, " + line.op2.text));
 					linespass2.Add(Line.match("add " + line.op1.text + ", ra"));
 				}
+				else if ((new Config("add reg, DWPTRregoff")).match(line))//add eax, DWORD PTR [ebp+8]
+				{
+					linespass2.Add(Line.match("mov ra, " + line.op2.text + ""));
+					linespass2.Add(Line.match("add " + line.op1.text + ", ra"));
+				}
 				else if ((new Config("and reg, ins")).match(line))
 				{
 					linespass2.Add(Line.match("mov ra, " + line.op2.text));
@@ -151,15 +160,44 @@ namespace Assembler
 				}
 				else if ((new Config("movsx reg, BYTEPTRregoff")).match(line))
 				{
-					linespass2.Add(Line.match("mov ra, " + line.op2.text.Replace("BYTE PTR", "DWORD PTR")));
+					linespass2.Add(Line.match("movzx ra, " + line.op2.text));
 					linespass2.Add(Line.match("movsx " + line.op1.text + ", ralowbyte"));
 				}
 				else if ((new Config("cmp BYTEPTRregoff, ins")).match(line))
 				{
-					linespass2.Add(Line.match("mov ra, " + line.op1.text.Replace("BYTE PTR", "DWORD PTR")));
+					linespass2.Add(Line.match("movzx ra, " + line.op1.text));
 					linespass2.Add(Line.match("mov rb, " + line.op2.text));
 					linespass2.Add(Line.match("cmp ralowbyte, rblowbyte"));
 				}
+				else if ((new Config("mov BYTEPTRregoff, ins")).match(line))
+				{
+					linespass2.Add(Line.match("mov ra, " + line.op2.text));
+					linespass2.Add(Line.match("mov " + line.op1.text + ", ralowbyte"));
+				}
+				else if ((new Config("mov DWPTRregoff, dsym")).match(line))//mov DWORD PTR [esp], OFFSET FLAT:_gbuff
+				{
+					linespass2.Add(Line.match("mov ra, " + line.op2.text));
+					linespass2.Add(Line.match("mov " + line.op1.text + ", ra"));
+				}
+				else if ((new Config("mov DWPTRdsym, dsym")).match(line))//mov DWORD PTR _tempstr, OFFSET FLAT:LC0
+				{
+					linespass2.Add(Line.match("mov ra, " + line.op1.text));//addr
+					linespass2.Add(Line.match("mov rb, " + line.op2.text));//val
+					linespass2.Add(Line.match("mov DWORD PTR [ra], rb"));
+				}
+				else if ((new Config("movzx reg, BYTEPTRdsym")).match(line))//movzx eax, BYTE PTR _a2
+				{
+					linespass2.Add(Line.match("mov ra, " + line.op2.text));//addr
+					linespass2.Add(Line.match("mov rb, DWORD PTR [ra]"));
+					linespass2.Add(Line.match("movzx " + line.op1.text + ", rblowbyte"));//val
+				}
+				else if ((new Config("mov reg, DWPTRdsym")).match(line))//mov	eax, DWORD PTR _bb
+				{
+					linespass2.Add(Line.match("mov ra, " + line.op2.text));//addr
+					linespass2.Add(Line.match("mov " + line.op1.text + ", DWORD PTR [ra]"));
+				}
+				
+
 				else
 				{
 					linespass2.Add(line);
@@ -192,18 +230,33 @@ namespace Assembler
 				fs2.Close();
 			}
 
-			List<DataSym> datasyms = new List<DataSym>();
-			int pos = 0;
+			int pos;
+			bool iscode;
 
 
 			List<Ins> insList = new List<Ins>();
 			pos = 0;
+			iscode = false;
 			List<CodeSym> codeSyms = new List<CodeSym>();
 			{
 				foreach (var item in lines)
 				{
 					var line = item;
-
+					if (line.type == Line.LineType.dot)
+					{
+						if (line.isCodeSeg())
+						{
+							iscode = true;
+						}
+						if (line.isDataSeg())
+						{
+							iscode = false;
+						}
+					}
+					if (!iscode)
+					{
+						continue;
+					}
 					if (line.type == Line.LineType.sym)
 					{
 						CodeSym codeSym = new CodeSym();
@@ -233,7 +286,7 @@ namespace Assembler
 							{
 								switch (matchCfg.textformat)
 								{
-									case 0://nop
+									case 0://ret
 										break;
 									case 1://mov reg, ins
 										ins.bitreg1 = line.op1.reg.Value;
@@ -282,8 +335,25 @@ namespace Assembler
 										ins.bitreg2 = line.op2.reg.Value;
 										ins.bitins1 = line.op2.ins.Value;
 										break;
+									case 12://mov reg, dsym                @          12 @          2 @ 128 @ mov eax,123
+										ins.bitreg1 = line.op1.reg.Value;
+										ins.dsym = line.op2.dsym;
+										break;
+									case 13://mov reg, DWPTRdsym           @          13 @          2 @ 128 @ mov eax,123
+										ins.bitreg1 = line.op1.reg.Value;
+										ins.dsym = line.op2.dsym;
+										break;
+									case 14://hlt ins
+										ins.bitins1 = line.op1.ins.Value;
+										break;
+									case 15://mov reg, BYTEPTRdsym         @          15 @          2 @ 128 @ mov eax,123
+										ins.bitreg1 = line.op1.reg.Value;
+										ins.dsym = line.op2.dsym;
+										break;
+
+
 									default:
-									throw new Exception("unknown text format");
+										throw new Exception("unknown text format");
 								}
 							}
 							catch (Exception ex)
@@ -309,6 +379,118 @@ namespace Assembler
 				}
 			}
 
+			List<Data> dataList = new List<Data>();
+			List<DataSym> dataSyms = new List<DataSym>();
+			iscode = true;
+			{
+				foreach (var item in lines)
+				{
+					var line = item;
+					if (line.type == Line.LineType.dot)
+					{
+						if (line.isCodeSeg())
+						{
+							iscode = true;
+						}
+						if (line.isDataSeg())
+						{
+							iscode = false;
+						}
+					}
+					if (iscode && !line.text.Trim().StartsWith(".comm"))
+					{
+						continue;
+					}
+
+					//.comm	_gbuff, 64	 # 51
+					//.comm	_tempstr, 16	 # 4
+					if (line.text.Trim().StartsWith(".comm "))
+					{
+						string txt = line.text.Trim().Substring(".comm ".Length);
+						int idx = txt.IndexOf(",");
+						DataSym dataSym = new DataSym();
+						dataSym.name = txt.Substring(0, idx);
+						dataSym.pos = pos;
+						dataSyms.Add(dataSym);
+
+						idx = txt.IndexOf('#');
+						int len = align4(int.Parse(txt.Substring(idx + 1).Trim()));
+						Data data = new Data();
+						data.data = new byte[len];
+						data.len = len;
+						dataList.Add(data);
+						pos += len;
+					}
+					else
+					{
+						if (line.type == Line.LineType.sym)
+						{
+							DataSym dataSym = new DataSym();
+							dataSym.name = line.sym;
+							dataSym.pos = pos;
+							dataSyms.Add(dataSym);
+						}
+
+						if (line.text.StartsWith(".ascii \""))
+						{
+							Data data = new Data();
+							string txt = line.text.Substring(".ascii \"".Length, line.text.Length - 1 - ".ascii \"".Length);
+							txt = System.Text.RegularExpressions.Regex.Unescape(txt);
+							data.data = System.Text.Encoding.Default.GetBytes(txt);
+							dataList.Add(data);
+							data.len = align4(data.data.Length);
+							pos += data.len;
+						}
+						if (line.text.StartsWith(".long"))
+						{
+							Data data = new Data();
+							string txt = line.text.Substring(".long ".Length);
+							int val;
+							if (int.TryParse(txt, out val))
+							{
+								byte[] src = new byte[4];
+								src[3] = (byte)((val >> 24) & 0xFF);
+								src[2] = (byte)((val >> 16) & 0xFF);
+								src[1] = (byte)((val >> 8) & 0xFF);//高8位
+								src[0] = (byte)(val & 0xFF);//低位
+								data.data = src;
+							}
+							else
+							{
+								data.sym = txt;
+							}
+							data.len = 4;
+							pos += data.len;
+							dataList.Add(data);
+
+						}
+						if (line.text.StartsWith(".byte"))
+						{
+							Data data = new Data();
+							string txt = line.text.Substring(".byte ".Length);
+							int val;
+							if (int.TryParse(txt, out val))
+							{
+								byte[] src = new byte[4];
+								src[3] = 0;
+								src[2] = 0;
+								src[1] = 0;//高8位
+								src[0] = (byte)(val & 0xFF);//低位
+								data.data = src;
+							}
+							else
+							{
+								throw new Exception("byte:" + txt);
+							}
+							data.len = 4;
+							pos += data.len;
+							dataList.Add(data);
+						}
+						//word??
+					}
+				}
+			}
+
 			foreach (var ins in insList)
 			{
 				if (ins.sym != null)
@@ -327,12 +509,70 @@ namespace Assembler
 					}
 					ins.bitins1 = found.pos - ins.pos;
 				}
+				if (ins.dsym != null)
+				{
+					DataSym found = null;
+					foreach (var dsym in dataSyms)
+					{
+						if (ins.dsym == dsym.name)
+						{
+							found = dsym; break;
+						}
+					}
+					if (found == null)
+					{
+						throw new Exception("not found:" + ins.dsym);
+					}
+					ins.bitins2 = found.pos;
+				}
+			}
+
+			foreach (var data in dataList)
+			{
+				if (data.sym != null)
+				{
+					CodeSym found = null;
+					int val = 0;
+					foreach (var sym in codeSyms)
+					{
+						if (data.sym == sym.name)
+						{
+							found = sym;
+							val = found.pos;
+							break;
+						}
+					}
+					DataSym found2 = null;
+					foreach (var dsym in dataSyms)
+					{
+						if (data.sym == dsym.name)
+						{
+							found2 = dsym;
+							val = found2.pos;
+							break;
+						}
+					}
+					if (found == null && found2 == null)
+					{
+						throw new Exception("not found:" + data.sym);
+					}
+					byte[] src = new byte[4];
+					src[3] = (byte)((val >> 24) & 0xFF);
+					src[2] = (byte)((val >> 16) & 0xFF);
+					src[1] = (byte)((val >> 8) & 0xFF);//高8位
+					src[0] = (byte)(val & 0xFF);//低位
+					data.data = src;
+				}
 			}
 
 			{
 				FileStream fs2 = new FileStream("temp.sym", FileMode.Create, FileAccess.Write);
 				StreamWriter sw = new StreamWriter(fs2);
 				foreach (var sym in codeSyms)
+				{
+					sw.WriteLine(sym.pos + "," + sym.name);
+				}
+				foreach (var sym in dataSyms)
 				{
 					sw.WriteLine(sym.pos + "," + sym.name);
 				}
@@ -390,6 +630,31 @@ namespace Assembler
 							//bw.Write(ins.bitins2);
 							writehex(ins.bitins2, posx++, sw);
 						}
+					}
+				}
+				foreach (var data in dataList)
+				{
+					for (int i = 0; i < data.len; i += 4)
+					{
+						int val = 0;
+						if (i + 0 < data.data.Length)
+						{
+							val |= (data.data[i + 0]);
+						}
+						if (i + 1 < data.data.Length)
+						{
+							val |= (data.data[i + 1] << 8);
+						}
+						if (i + 2 < data.data.Length)
+						{
+							val |= (data.data[i + 2] << 16);
+						}
+						if (i + 3 < data.data.Length)
+						{
+							val |= (data.data[i + 3] << 24);
+						}
+						//bw.Write(ins.bitins2);
+						writehex(val, posx++, sw);
 					}
 				}
 

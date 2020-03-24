@@ -41,7 +41,7 @@ namespace WindowsFormsApplication1
 			}
 
 			{
-				codeSyms = new List<CodeSym>();
+				syms = new List<CodeSym>();
 				FileStream fs = new FileStream("temp.sym", FileMode.Open, FileAccess.Read);
 				StreamReader sw = new StreamReader(fs);
 				string s = sw.ReadToEnd();
@@ -54,7 +54,7 @@ namespace WindowsFormsApplication1
 						CodeSym sym = new CodeSym();
 						sym.pos = int.Parse(line.Split(',')[0]);
 						sym.name = line.Split(',')[1];
-						codeSyms.Add(sym);
+						syms.Add(sym);
 					}
 				}
 			}
@@ -72,7 +72,7 @@ namespace WindowsFormsApplication1
 			connect(portName);
 		}
 
-		List<CodeSym> codeSyms;
+		List<CodeSym> syms;
 		List<Config> cfgs;
 
 		private void button2_Click(object sender, EventArgs e)
@@ -119,52 +119,40 @@ namespace WindowsFormsApplication1
 			StringBuilder sb = new StringBuilder();
 			sb.Append("eax:");
 			getreg(0x47, 0x00, sb);
-			sb.AppendLine();
 
-			sb.Append("ebx:");
+			sb.Append("  ebx:");
 			getreg(0x47, 0x01, sb);
-			sb.AppendLine();
 
-			sb.Append("ecx:");
+			sb.Append("  ecx:");
 			getreg(0x47, 0x02, sb);
-			sb.AppendLine();
 
-			sb.Append("edx:");
+			sb.Append("  edx:");
 			getreg(0x47, 0x03, sb);
-			sb.AppendLine();
 
-			sb.Append("ebp:");
+			sb.Append("  ebp:");
 			getreg(0x47, 0x04, sb);
-			sb.AppendLine();
 
-			sb.Append("esp:");
+			sb.Append("  esp:");
 			byte[] temp;
 			int esp = getreg(0x47, 0x05, sb);
-			sb.AppendLine();
 
-			sb.Append("esi:");
+			sb.Append("  esi:");
 			getreg(0x47, 0x06, sb);
-			sb.AppendLine();
 
-			sb.Append("edi:");
+			sb.Append("  edi:");
 			getreg(0x47, 0x07, sb);
 			sb.AppendLine();
 
-			sb.Append("ra:");
+			sb.Append(" ra:");
 			getreg(0x47, 0x08, sb);
-			sb.AppendLine();
 
-			sb.Append("rb:");
+			sb.Append("   rb:");
 			getreg(0x47, 0x09, sb);
-			sb.AppendLine();
 
-
-			sb.Append("cs:");
+			sb.Append("   cs:");
 			int cs = getreg(0x47, 0x0E, sb);
 
-			sb.AppendLine();
-
-			sb.Append("ds:");
+			sb.Append("   ds:");
 			int ds = getreg(0x47, 0x0F, sb);
 
 			sb.AppendLine();
@@ -195,27 +183,17 @@ namespace WindowsFormsApplication1
 			sb.Append("" + idx + ":"); getmem(esp + ds + idx, sb); idx += 4; sb.AppendLine();
 			sb.Append("" + idx + ":"); getmem(esp + ds + idx, sb); idx += 4; sb.AppendLine();
 
-			List<DataSym> datasyms = null;
 			sb.AppendLine("code: ");
-			idx = 0;
 			bool extend = false;
-			int basepos = 0x2000000;
 			int dummy = 0;
-			for (int i = 0; i < 16; i++)
+			for (int i = -32; i < 32; i += 4)
 			{
 				StringBuilder sb2 = new StringBuilder();
-				int code = getmem(pc + cs + idx, sb2);
-				int target = pc + cs + idx;
-				string foundsym = "";
-				foreach (var csym in codeSyms)
-				{
-					if (csym.pos + basepos == target)
-					{
-						foundsym += csym.name + ",";
-					}
-				}
-				string scode = Config.dasm(cfgs, codeSyms, datasyms, code, pc + cs + idx, basepos, ref  extend);
-				sb.AppendLine(getHex8(pc + cs + idx, ref dummy) + ":(" + sb2.ToString() + "," + foundsym + "):" + scode); idx += 4;
+				int code = getmem(pc + cs + i, sb2);
+				int target = pc + i;
+				string foundsym = Config.getSym(target, syms);
+				string scode = Config.dasm(cfgs, syms, code, pc + i, ref  extend);
+				sb.AppendLine((i == 0 ? "*" : " ") + getHex8(pc + cs + i, ref dummy) + ":(" + sb2.ToString() + "," + foundsym + "):" + scode);
 
 			}
 

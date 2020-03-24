@@ -96,10 +96,10 @@ always @(posedge clk or negedge reset_n) begin
 
     command_done <= 0;
     timer<=0;
-		debug_step<=0;
+    debug_step<=0;
     debug_readmem_step<=0;
-		timer_log<=0;
-    halt_uart<=1;
+    timer_log<=0;
+    halt_uart<=0;
     debug_read<=0;
     debug_write<=0;
     
@@ -222,7 +222,7 @@ assign debug[6] = cmd_ack;
           if         (fetch_step==0)begin
             fetch_step <= 1;
             fetch_read <= 1;
-            fetch_address <= pc;
+            fetch_address <= cs + pc;
           end else if(fetch_step==1)begin
             if(!avm_m0_waitrequest)begin
               cmd <= avm_m0_readdata[31:24];
@@ -242,7 +242,7 @@ assign debug[6] = cmd_ack;
           end else if(fetch_step==2)begin
             fetch_step <= 3;
             fetch_read <= 1;
-            fetch_address <= nextpc;
+            fetch_address <= cs + nextpc;
           end else if(fetch_step==3)begin
             if(!avm_m0_waitrequest)begin
               ins2 <= avm_m0_readdata;
@@ -349,7 +349,7 @@ assign debug[6] = cmd_ack;
       regfile[2]<=0;//ecx
       regfile[3]<=0;//edx
       regfile[4]<=0;//ebp
-      regfile[5]<=32'h0200_1000;//esp :sram  // total 0x1000 byte code:0x0000~0x07FF   data:0x0800 ~0x1000
+      regfile[5]<=32'h0000_1000;//esp :sram  // total 0x1000 byte code:0x0000~0x07FF   data:0x0800 ~0x1000
       regfile[6]<=0;//esi
       regfile[7]<=0;//edi
       regfile[8]<=0;//ra
@@ -357,11 +357,11 @@ assign debug[6] = cmd_ack;
 
       regfile[12]<=0;
       regfile[13]<=0;
-      regfile[14]<=0;//cs
-      regfile[15]<=0;//ds
+      regfile[14]<=32'h0200_0000;//cs
+      regfile[15]<=32'h0200_0000;//ds
        
       status<=0;
-      pc<=32'h0200_0000;
+      pc<=32'h0000_0000;
       byteenable <= 4'b1111;
       exec_step<=0;
       
@@ -370,11 +370,7 @@ assign debug[6] = cmd_ack;
       if(cycle==1 && cmd_ack==0)begin
         //hlt                                       @     0 @   0 @ hlt
         if         (cmd==8'd00)begin//ok
-          halt_cpu <= 1;
-          pc <= nextpc;
-          cmd_ack <= 1;
-        //nop                                       @     0 @   1 @ nop
-        end else if(cmd==8'd01)begin//ok
+          halt_cpu <= ins10[0];
           pc <= nextpc;
           cmd_ack <= 1;
         //mov !reg, DWORD PTR \[!reg!ins\]          @     2 @   2 @ mov eax, DWORD PTR [esp+20]
@@ -408,7 +404,39 @@ assign debug[6] = cmd_ack;
             end
           end
           
-        
+        //in32 reg, reg                @           5 @          0 @  28 @ in32 ra,rb
+        end else if(cmd==8'd28)begin//ok
+          if         (exec_step==0)begin
+            exec_step <= 1;
+            exec_address <= regfile[reg2];
+            exec_read <= 1;
+          end else if(exec_step==1)begin
+            if(!avm_m0_waitrequest)begin
+              regfile[reg1] <= avm_m0_readdata;
+              exec_read <= 0;
+              exec_step <= 0;
+              pc <= nextpc;
+              cmd_ack <= 1;
+            end
+          end
+          
+        //out32 reg, reg               @           5 @          0 @  29 @ out32 ra,rb
+        end else if(cmd==8'd29)begin//ok
+          if         (exec_step==0)begin
+            exec_step <= 1;
+            exec_address <= regfile[reg2];
+            exec_writedata <= regfile[reg1];
+            exec_write <= 1;
+          end else if(exec_step==1)begin
+            if(!avm_m0_waitrequest)begin
+              exec_write <= 0;
+              exec_step <= 0;
+              pc <= nextpc;
+              cmd_ack <= 1;
+            end
+          end
+
+          
         //mov BYTE PTR [eax], dl
         end else if(cmd==8'd04)begin//ok
           if         (exec_step==0)begin
@@ -626,14 +654,16 @@ assign debug[6] = cmd_ack;
         end else if(cmd==8'd21)begin//ok
           temp81 = {1'b0,regfile[reg1][7:0]};
           temp82 = {1'b0,regfile[reg2][7:0]};
-          temp83 = temp1 - temp2;
-          status[0]<=temp3[7:0]==0;//zf
+          temp83 = temp81 - temp82;
+          status[0]<=temp83[7:0]==0;//zf
           pc <= nextpc;
           cmd_ack <= 1;
-
-        //release                                   @     0 @   4 @ release
-        end else if(cmd==8'd127)begin//ok
-          halt_cpu <= 0;
+        //test reg8, reg8              @          10 @          0 @  22 @ test al, bl
+        end else if(cmd==8'd22)begin//ok
+          temp81 = {1'b0,regfile[reg1][7:0]};
+          temp82 = {1'b0,regfile[reg2][7:0]};
+          temp83 = temp81 & temp82;
+          status[0]<=temp83[7:0]==0;//zf
           pc <= nextpc;
           cmd_ack <= 1;
 

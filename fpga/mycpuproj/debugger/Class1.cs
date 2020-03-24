@@ -79,7 +79,7 @@ namespace debugger
 			return cfgs;
 		}
 
-		public static string dasm(List<Config> cfgs, List<CodeSym> codeSyms, List<DataSym> datasyms, int code, int pc, int basepos, ref bool extend)
+		public static string dasm(List<Config> cfgs, List<CodeSym> syms, int code, int pc, ref bool extend)
 		{
 			if (extend)
 			{
@@ -108,6 +108,7 @@ namespace debugger
 				if (cfg.cmd == cmd)
 				{
 					found = cfg;
+					break;
 				}
 			}
 			string ret = "";
@@ -155,21 +156,31 @@ namespace debugger
 						break;
 					case 7://call ___main
 						int target = pc + ins11;
-						string foundsym = "";
-						foreach (var csym in codeSyms)
-						{
-							if (csym.pos + basepos == target)
-							{
-								foundsym += csym.name + ",";
-							}
-						}
+						string foundsym = getSym(target, syms);
 						ret += ins11 + "(" + foundsym + ")";
+						break;
+					case 14://hlt ins
+						ret += ins10;
 						break;
 				}
 
 			}
 			return ret;
 		}
+
+		public static string getSym(int pos, List<CodeSym> syms)
+		{
+			string foundsym = "";
+			foreach (var sym in syms)
+			{
+				if (sym.pos == pos)
+				{
+					foundsym += sym.name + ",";
+				}
+			}
+			return foundsym;
+		}
+
 		public static string getReg(int? val)
 		{
 			switch (val)

@@ -24,7 +24,11 @@
 			myuart_uart_rxd : in    std_logic                     := 'X';             -- uart_rxd
 			myuart_uart_txd : out   std_logic;                                        -- uart_txd
 			myuart_debug8   : out   std_logic_vector(7 downto 0);                     -- debug8
-			myuart_debug32  : out   std_logic_vector(31 downto 0)                     -- debug32
+			myuart_debug32  : out   std_logic_vector(31 downto 0);                    -- debug32
+			spi_MISO        : in    std_logic                     := 'X';             -- MISO
+			spi_MOSI        : out   std_logic;                                        -- MOSI
+			spi_SCLK        : out   std_logic;                                        -- SCLK
+			spi_SS_n        : out   std_logic                                         -- SS_n
 		);
 	end component sys;
 

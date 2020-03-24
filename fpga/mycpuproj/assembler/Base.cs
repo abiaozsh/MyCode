@@ -13,6 +13,7 @@ public class Base
 	{
 		public string name;
 		public int pos;
+		public string sym;
 	}
 
 	public class Line
@@ -25,6 +26,14 @@ public class Base
 			app = 4,// /APP
 			noapp = 5,// /NO_APP
 			sharp = 6,// # 7 "d.c" 1
+		}
+		public bool isCodeSeg()
+		{
+			return ".text" == text.Trim();
+		}
+		public bool isDataSeg()
+		{
+			return text.Trim().StartsWith(".data") || text.Trim().StartsWith(".section");
 		}
 		public LineType type;
 		public string text;
@@ -113,9 +122,12 @@ public class Base
 			reg8 = 2,// rax 寄存器
 			ins = 3,// 123 立即数
 			sym = 4,//_xxx 符号引用
-			DWPTRregoff = 5,//DWORD PTR [esp+12] ,DWORD PTR [esp]
-			BYTEPTRregoff = 6,//BYTE PTR [eax+12] ,BYTE PTR [eax]
-			addr = 7,//[eax+12]
+			dsym = 5,//OFFSET FLAT:_gbuff
+			DWPTRregoff = 6,//DWORD PTR [esp+12] ,DWORD PTR [esp]
+			DWPTRdsym = 7,//DWORD PTR _aaa
+			BYTEPTRregoff = 8,//BYTE PTR [eax+12] ,BYTE PTR [eax]
+			BYTEPTRdsym = 9,//BYTE PTR _a2
+			addr = 10,//[eax+12]
 			//OFFSET FLAT
 		}
 		public OpType type;
@@ -123,10 +135,11 @@ public class Base
 		public int? off;
 		public int? ins;
 		public string sym;
+		public string dsym;
 
 		public string text;
 
-		public static string matchWord(string s)
+		public static string matchReg(string s)
 		{
 			string word = "";
 			for (int i = 0; i < s.Length; i++)
@@ -140,6 +153,38 @@ public class Base
 					break;
 				}
 			}
+			return word;
+		}
+		public static string matchSym(string s, out string s2)
+		{
+			string word = "";
+			for (int i = 0; i < s.Length; i++)
+			{
+				bool match = false;
+				if (i == 0)
+				{
+					if (s[i] == '_' || s[i] >= 'a' && s[i] <= 'z' || s[i] >= 'A' && s[i] <= 'Z')
+					{
+						match = true;
+					}
+				}
+				else
+				{
+					if (s[i] == '_' || s[i] >= 'a' && s[i] <= 'z' || s[i] >= 'A' && s[i] <= 'Z' || s[i] >= '0' && s[i] <= '9')
+					{
+						match = true;
+					}
+				}
+				if (match)
+				{
+					word += s[i];
+				}
+				else
+				{
+					break;
+				}
+			}
+			s2 = s.Substring(word.Length);
 			return word;
 		}
 
@@ -162,24 +207,60 @@ public class Base
 				op.reg = tempreg8;
 				return op;
 			}
+
+			if (int.TryParse(sop, out itemp))
+			{
+				op.type = OpType.ins;
+				op.ins = itemp;
+				return op;
+			}
+
 			if (sop.StartsWith("DWORD PTR "))
 			{
-				op.type = OpType.DWPTRregoff;
 				sop = sop.Substring("DWORD PTR ".Length);
 				if (sop.StartsWith("["))
 				{
+					op.type = OpType.DWPTRregoff;
 					procaddr(ref sop, ref op);
 					return op;
+				}
+				else
+				{
+					string temp = matchSym(sop, out sop);
+					if (sop.Length == 0)
+					{
+						op.type = OpType.DWPTRdsym;
+						op.dsym = temp;
+						return op;
+					}
+					else
+					{
+						throw new Exception("");
+					}
 				}
 			}
 			if (sop.StartsWith("BYTE PTR "))
 			{
-				op.type = OpType.BYTEPTRregoff;
 				sop = sop.Substring("BYTE PTR ".Length);
 				if (sop.StartsWith("["))
 				{
+					op.type = OpType.BYTEPTRregoff;
 					procaddr(ref sop, ref op);
 					return op;
+				}
+				else
+				{
+					string temp = matchSym(sop, out sop);
+					if (sop.Length == 0)
+					{
+						op.type = OpType.BYTEPTRdsym;
+						op.dsym = temp;
+						return op;
+					}
+					else
+					{
+						throw new Exception("");
+					}
 				}
 			}
 			if (sop.StartsWith("["))
@@ -188,25 +269,37 @@ public class Base
 				procaddr(ref sop, ref op);
 				return op;
 			}
-			else if (int.TryParse(sop, out itemp))
+			if (sop.StartsWith("OFFSET FLAT:"))
 			{
-				op.type = OpType.ins;
-				op.ins = itemp;
+				sop = sop.Substring("OFFSET FLAT:".Length);
+				string temp = matchSym(sop, out sop);
+				if (sop.Length == 0)
+				{
+					op.type = OpType.dsym;
+					op.dsym = temp;
+					return op;
+				}
+				else
+				{
+					throw new Exception("");
+				}
 			}
-			else
+
+			string temp2 = matchSym(sop, out sop);
+			if (sop.Length == 0)
 			{
 				op.type = OpType.sym;
-				op.sym = sop;
+				op.sym = temp2;
+				return op;
 			}
 
-			return op;
-
+			throw new Exception("unknown op");
 		}
 
 		private static void procaddr(ref string sop, ref Op op)
 		{
 			sop = sop.Substring(1);
-			string word = matchWord(sop);
+			string word = matchReg(sop);
 			op.reg = getReg(word, true);
 			sop = sop.Substring(word.Length);
 			if (sop.EndsWith("]"))
@@ -350,6 +443,7 @@ public class Base
 		public Line line;
 		public string name;
 		public string sym;
+		public string dsym;
 		public int format;
 
 		public int bitcmd;//[30:24]8bit:cmd
@@ -358,6 +452,22 @@ public class Base
 		public int bitins1;//[15:0]16bit:ins1
 		public int bitins2;
 		public int pos;
+	}
+
+	public class Data
+	{
+		public byte[] data;
+		public string sym;
+		public int len;
+	}
+
+	public static int align4(int val)
+	{
+		if ((val & 0x03) != 0)
+		{
+			return (int)((val & 0xFFFFFFFC) + 4);
+		}
+		return val;
 	}
 
 	public static int getReg(string reg, bool noerr)
