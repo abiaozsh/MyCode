@@ -298,6 +298,9 @@ assign debug[6] = cmd_ack;
   wire sf;
   wire of;
   assign zf = status[0];
+  assign cf = status[1];
+  assign sf = status[2];
+  assign of = status[3];
   reg [31:0] pc;
 
   wire [31:0] nextpc;
@@ -541,7 +544,24 @@ assign debug[6] = cmd_ack;
             pc <= nextpc;
           end
           cmd_ack <= 1;
+        //jne !sym                                  @     7 @  34 @ jne L3
+        end else if(cmd==8'd38)begin//ok
+          if(!zf)begin
+            pc <= pc + ins11;
+          end else begin
+            pc <= nextpc;
+          end
+          cmd_ack <= 1;
           
+        //JL/JNGE (SF xor OF) = 1 less/not greater nor equal          
+        end else if(cmd==8'd39)begin//ok
+          if(sf ^ of)begin
+            pc <= pc + ins11;
+          end else begin
+            pc <= nextpc;
+          end
+          cmd_ack <= 1;
+
         //call !sym                                 @     7 @  35 @ call ___main
         end else if(cmd==8'd35)begin//ok
           //ESP <= ESP - 4;
@@ -598,23 +618,7 @@ assign debug[6] = cmd_ack;
             end
           end
           
-        //jne !sym                                  @     7 @  34 @ jne L3
-        end else if(cmd==8'd38)begin//ok
-          if(!zf)begin
-            pc <= pc + ins11;
-          end else begin
-            pc <= nextpc;
-          end
-          cmd_ack <= 1;
 
-        //cmp !reg, !reg                            @     5 @  16 @ cmp eax, ra
-        end else if(cmd==8'd16)begin//ok
-          temp1 = {1'b0,regfile[reg1]};
-          temp2 = {1'b0,regfile[reg2]};
-          temp3 = temp1 - temp2;
-          status[0]<=temp3[31:0]==0;//zf
-          pc <= nextpc;
-          cmd_ack <= 1;
 
         //add !reg, !reg                            @     5 @  17 @ add esp, ra
         end else if(cmd==8'd17)begin//ok
@@ -622,22 +626,46 @@ assign debug[6] = cmd_ack;
           temp2 = {1'b0,regfile[reg2]};
           temp3 = temp1 + temp2;
           regfile[reg1] <= temp3;
-          status[0]<=temp3[31:0]==0;//zf
           pc <= nextpc;
           cmd_ack <= 1;
+          
         //and !reg, !reg                            @     5 @  18 @ and esp, ra
         end else if(cmd==8'd18)begin//ok
           regfile[reg1] <= regfile[reg1] & regfile[reg2];
-          status[0]<=temp3[31:0]==0;//zf
           pc <= nextpc;
           cmd_ack <= 1;
+          
         //sub !reg, !reg                            @     5 @  19 @ sub esp, ra
         end else if(cmd==8'd19)begin//ok
           temp1 = {1'b0,regfile[reg1]};
           temp2 = {1'b0,regfile[reg2]};
           temp3 = temp1 - temp2;
           regfile[reg1] <= temp3;
+          pc <= nextpc;
+          cmd_ack <= 1;
+          
+        //cmp !reg, !reg                            @     5 @  16 @ cmp eax, ra
+        end else if(cmd==8'd16)begin//ok
+          temp1 = {1'b0,regfile[reg1]};
+          temp2 = {1'b0,regfile[reg2]};
+          temp3 = temp1 - temp2;
           status[0]<=temp3[31:0]==0;//zf
+          status[1]<=temp3[32];//cf
+          status[2]<=temp3[31];//sf
+          status[3]<=temp3[32]^temp3[31]^regfile[reg1][31]^regfile[reg2][31];//of
+          
+          pc <= nextpc;
+          cmd_ack <= 1;
+        //cmp reg8, reg8            @           5 @          0 @  20 @ cmp eax, ra
+        end else if(cmd==8'd21)begin//ok
+          temp81 = {1'b0,regfile[reg1][7:0]};
+          temp82 = {1'b0,regfile[reg2][7:0]};
+          temp83 = temp81 - temp82;
+          status[0]<=temp83[7:0]==0;//zf
+          status[1]<=temp83[8];//cf
+          status[2]<=temp83[7];//sf
+          status[3]<=temp83[8]^temp83[7]^regfile[reg1][7]^regfile[reg2][7];//of
+          
           pc <= nextpc;
           cmd_ack <= 1;
           
@@ -650,14 +678,6 @@ assign debug[6] = cmd_ack;
           pc <= nextpc;
           cmd_ack <= 1;
 
-        //cmp reg8, reg8            @           5 @          0 @  20 @ test eax, ra
-        end else if(cmd==8'd21)begin//ok
-          temp81 = {1'b0,regfile[reg1][7:0]};
-          temp82 = {1'b0,regfile[reg2][7:0]};
-          temp83 = temp81 - temp82;
-          status[0]<=temp83[7:0]==0;//zf
-          pc <= nextpc;
-          cmd_ack <= 1;
         //test reg8, reg8              @          10 @          0 @  22 @ test al, bl
         end else if(cmd==8'd22)begin//ok
           temp81 = {1'b0,regfile[reg1][7:0]};

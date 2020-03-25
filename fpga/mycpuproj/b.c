@@ -41,21 +41,31 @@ int myprintf(char* str){
   }
 }
 
-char* bb = "bbbb";
+int myprintf2(char* str, int len){
+  int idx = 0;
+  int i;
+  for(i=0;i<len;i++){
+    char tmp = str[i];
+    if(tmp=='\0')break;
+    uart_write(tmp);
+  }
+}
+
+char* bb = "bbbbaaaaa";
 
 int main(){
   while(1){
+
     char buff[5];
     buff[0] = (char)uart_read();
     buff[1] = (char)uart_read();
     buff[2] = (char)uart_read();
     buff[3] = (char)uart_read();
     buff[4] = 0;
-
+    
     
     myprintf(buff);
     myprintf("fdsa");
-    //asm("hlt 1");
-    myprintf(bb);
+    myprintf2(bb, 5);
   }
 }

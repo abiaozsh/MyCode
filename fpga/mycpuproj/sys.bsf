@@ -215,9 +215,9 @@ applicable agreement for further details.
 	(port
 		(pt 0 712)
 		(output)
-		(text "spi_SS_n" (rect 0 0 38 12)(font "Arial" (font_size 8)))
-		(text "spi_SS_n" (rect 4 701 52 712)(font "Arial" (font_size 8)))
-		(line (pt 0 712)(pt 128 712)(line_width 1))
+		(text "spi_SS_n[2..0]" (rect 0 0 59 12)(font "Arial" (font_size 8)))
+		(text "spi_SS_n[2..0]" (rect 4 701 88 712)(font "Arial" (font_size 8)))
+		(line (pt 0 712)(pt 128 712)(line_width 3))
 	)
 	(port
 		(pt 0 488)

@@ -28,7 +28,7 @@
 			spi_MISO        : in    std_logic                     := 'X';             -- MISO
 			spi_MOSI        : out   std_logic;                                        -- MOSI
 			spi_SCLK        : out   std_logic;                                        -- SCLK
-			spi_SS_n        : out   std_logic                                         -- SS_n
+			spi_SS_n        : out   std_logic_vector(2 downto 0)                      -- SS_n
 		);
 	end component sys;
 

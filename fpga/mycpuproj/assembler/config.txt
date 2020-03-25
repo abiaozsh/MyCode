@@ -20,10 +20,11 @@ out32 reg, reg               @           5 @          0 @  29 @ out32 ra, rb
 push reg                     @           4 @          0 @  32 @ push	ebp
 jmp sym                      @           7 @          1 @  33 @ jmp L3
 je sym                       @           7 @          1 @  34 @ je L3
+jne sym                      @           7 @          1 @  38 @ jne L3
+jl sym                       @           7 @          1 @  39 @ jl sym
 call sym                     @           7 @          1 @  35 @ call ___main rel
 ret                          @           0 @          0 @  36 @ ret
 pop reg                      @           4 @          0 @  37 @ pop ebp
-jne sym                      @           7 @          1 @  38 @ jne L3
 mov reg, ins                 @           1 @          2 @ 128 @ mov eax,123
 mov reg, dsym                @          12 @          2 @ 128 @ mov eax,123
 mov reg, DWPTRdsym           @          13 @          2 @ 128 @ mov eax,123

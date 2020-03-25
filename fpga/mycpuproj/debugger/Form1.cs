@@ -166,6 +166,11 @@ namespace WindowsFormsApplication1
 			sb.Append(((statusbyte0 & 0x04) != 0) ? "sign neg," : "sign pos,");
 			sb.Append(((statusbyte0 & 0x02) != 0) ? "carry," : "no carry,");
 			sb.Append(((statusbyte0 & 0x01) != 0) ? "zero," : "no zero,");
+			int of = (statusbyte0 & 0x08);
+			int sf = (statusbyte0 & 0x04);
+			int cf = (statusbyte0 & 0x02);
+			int zf = (statusbyte0 & 0x01);
+			sb.Append("       cf:" + cf + "  zf:" + zf + "  sf:" + sf + "  of:" + of + ",");
 			sb.AppendLine();
 
 			sb.Append("pc:");

@@ -15,7 +15,7 @@
    <frequency preferredWidth="468" />
   </columns>
  </clocktable>
- <window width="1936" height="1035" x="-8" y="-8" />
+ <window width="1920" height="1019" x="783" y="75" />
  <library
    expandedCategories="Project,Library/Interface Protocols/Serial,Library/Interface Protocols,Library" />
  <hdlexample language="VERILOG" />

@@ -76,11 +76,11 @@
          type = "String";
       }
    }
-   element sdram.s1
+   element onchip_memory2_0.s1
    {
       datum baseAddress
       {
-         value = "0";
+         value = "33554432";
          type = "String";
       }
    }
@@ -89,14 +89,6 @@
       datum baseAddress
       {
          value = "33558528";
-         type = "String";
-      }
-   }
-   element onchip_memory2_0.s1
-   {
-      datum baseAddress
-      {
-         value = "33554432";
          type = "String";
       }
    }
@@ -110,6 +102,14 @@
       datum baseAddress
       {
          value = "33558544";
+         type = "String";
+      }
+   }
+   element sdram.s1
+   {
+      datum baseAddress
+      {
+         value = "0";
          type = "String";
       }
    }
@@ -152,7 +152,7 @@
  <parameter name="projectName" value="aaa.qpf" />
  <parameter name="sopcBorderPoints" value="false" />
  <parameter name="systemHash" value="1" />
- <parameter name="timeStamp" value="1584692470619" />
+ <parameter name="timeStamp" value="1585119321601" />
  <parameter name="useTestBenchNamingPattern" value="false" />
  <instanceScript></instanceScript>
  <interface name="clk50" internal="clk50.clk_in" type="clock" dir="end" />
@@ -298,7 +298,7 @@
   <parameter name="insertSync" value="false" />
   <parameter name="lsbOrderedFirst" value="false" />
   <parameter name="masterSPI" value="true" />
-  <parameter name="numberOfSlaves" value="1" />
+  <parameter name="numberOfSlaves" value="3" />
   <parameter name="syncRegDepth" value="2" />
   <parameter name="targetClockRate" value="1000000" />
   <parameter name="targetSlaveSelectToSClkDelay" value="0.0" />

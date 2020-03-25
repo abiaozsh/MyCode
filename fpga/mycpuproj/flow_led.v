@@ -45,7 +45,12 @@ set_global_assignment -name RESERVE_DCLK_AFTER_CONFIGURATION "USE AS REGULAR IO"
   output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
 	
 	output uart2_txd,
-	input uart2_rxd
+	input uart2_rxd,
+	
+		input  wire        spi_MISO,        //     spi.MISO
+		output wire        spi_MOSI,        //        .MOSI
+		output wire        spi_SCLK,        //        .SCLK
+		output wire [2:0]  spi_SS_n         //        .SS_n
 
 );
 wire sys_rst_n;
@@ -136,8 +141,13 @@ wire [31:0] myuart_debug32;
 				.myuart_uart_rxd     (uart2_rxd),     //  myuart.rxd
         .myuart_uart_txd     (uart2_txd),      //        .txd
 				.myuart_debug8   (myuart_debug8),   //        .debug8
-        .myuart_debug32  (myuart_debug32)   //        .debug32
-    );
+        .myuart_debug32  (myuart_debug32),   //        .debug32
+		  
+        .spi_MISO        (spi_MISO),        //     spi.MISO
+        .spi_MOSI        (spi_MOSI),        //        .MOSI
+        .spi_SCLK        (spi_SCLK),        //        .SCLK
+        .spi_SS_n        (spi_SS_n)         //        .SS_n    
+		 );
 
 
 endmodule
