@@ -27,10 +27,13 @@ int uart_write(int val){
   while((IORD(0x02002004, 0)) & 0x100);
   IOWR(0x02002004, 0 ,val);
 }
-
+int test(){
+  return;
+}
 int main(){
   //asm("hlt 1");
   //asm("hlt 0");
+  test();
   while(1){
     int val1 = uart_read();
     uart_write(val1);

@@ -88,8 +88,9 @@ reg        debug_read;
 reg        debug_write;
 reg [31:0] debug_data;
 reg [31:0] debug_writedata;
-reg  [3:0] debug_readmem_step;
+reg  [2:0] debug_readmem_step;
 reg        debug_step;
+reg  [4:0] debug_reg;
 reg halt_uart;
 always @(posedge clk or negedge reset_n) begin
   if (!reset_n) begin
@@ -163,8 +164,17 @@ always @(posedge clk or negedge reset_n) begin
         
 
       end else if (command == 8'h43) begin debug_data<=pc; command_done<=1;
-      end else if (command == 8'h47) begin debug_data<=regfile[data[4:0]]; command_done<=1;
-
+      end else if (command == 8'h47) begin 
+        if         (debug_readmem_step==0)begin
+          debug_readmem_step <= 1;
+					debug_reg <= data[4:0];
+        end else if(debug_readmem_step==1)begin
+          debug_readmem_step <= 2;
+        end else if(debug_readmem_step==2)begin
+          debug_data <= regDataOut;
+					debug_readmem_step <= 0;
+					command_done <= 1;
+        end
       end else begin
         command_done<=1;
       end
@@ -214,8 +224,27 @@ assign debug[6] = cmd_ack;
   wire [31:0] fetch_address;
   assign fetch_address = cs + pc;
   
+	
+	reg [4:0] regAddr;
+	wire [4:0] reg_addr;
+	assign reg_addr = (halt == 1 && regWrite == 0) ? debug_reg : regAddr;
+	reg  [31:0] regDataIn;
+	wire [31:0] regDataOut;
+	reg regWrite;
+	//用m9k实现可以省1K逻辑单元
+	regfile	regfile_inst (
+		.address ( reg_addr ),
+		.clock ( clk ),
+		.data ( regDataIn ),
+		.wren ( regWrite ),
+		.q ( regDataOut )
+	);
+
+	reg [31:0] regfileA;
+	reg [31:0] regfileB;
+
   reg        fetch_read;
-  reg [ 1:0] fetch_step;
+  reg [ 2:0] fetch_step;
   reg        debug_step_buff;
   always @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
@@ -223,9 +252,10 @@ assign debug[6] = cmd_ack;
       //fetch_address<=0;
       fetch_read<=0;
       fetch_step<=0;
-
+       
       debug_step_buff <= 0;
     end else begin
+			regWrite <= 0;
       if(cycle==0)begin
         if(!halt)begin
           if         (fetch_step==0)begin
@@ -235,16 +265,40 @@ assign debug[6] = cmd_ack;
           end else if(fetch_step==1)begin
             if(!avm_m0_waitrequest)begin
               latch_readdata <= avm_m0_readdata;
-              fetch_read <= 0;
-              fetch_step <= 0;
-              cycle<=1;
+							regAddr <= avm_m0_readdata[31:27];//regA
+							fetch_read <= 0;
+              fetch_step <= 2;
             end
-
+          end else if(fetch_step==2)begin
+						regAddr <= regB;
+						fetch_step <= 3;
+          end else if(fetch_step==3)begin
+						regfileA <= regDataOut;
+						fetch_step <= 4;
+          end else if(fetch_step==4)begin
+						regfileB <= regDataOut;
+						fetch_step <= 0;
+						cycle<=1;
           end
         end
       end else begin
         if(cmd_ack)begin
           debug_step_buff <= debug_step;
+					if(regResultB && regB!=0)begin
+						regAddr <= regB;
+						regDataIn <= regResult;
+						regWrite <= 1;
+					end
+					if(regResultC && regC!=0)begin
+						regAddr <= regC;
+						regDataIn <= regResult;
+						regWrite <= 1;
+					end
+					if(regResultRA)begin
+						regAddr <= 31;
+						regDataIn <= regResult;
+						regWrite <= 1;
+					end
           cycle <= 0;
         end
       end
@@ -254,22 +308,14 @@ assign debug[6] = cmd_ack;
   
 
 	reg [3:0] byteenable;
-  reg [31:0] regfile [32];
-  
 
-  wire [31:0] tempa;
-  assign tempa     = regfile[24];//r24 et Exception temporary
-  wire [31:0] tempb;
-  assign tempb     = regfile[25];//r25 bt Break temporary
-  //r1 at
-  wire [31:0] tempc;
-  assign tempc     = regfile[1];//r1 at temporary
+	reg [31:0] regResult;
+	reg        regResultB;
+	reg        regResultC;
+	reg        regResultRA;
 
-  wire [31:0] cs;
-  assign cs     = regfile[29];//r29 ea Exception return address
-  wire [31:0] ds;
-  assign ds     = regfile[30];//r30 ba • Normal register set: Break return address • Shadow register sets: SSTATUS register
-
+  reg [31:0] cs;
+  reg [31:0] ds;
   reg [31:0] pc;
 
   wire [31:0] nextpc;
@@ -291,7 +337,7 @@ assign debug[6] = cmd_ack;
   
 
   wire comp_eq;
-  assign comp_eq  = regfile[regA]==regfile[regB];
+  assign comp_eq  = regfileA==regfileB;
   
   always @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
@@ -300,12 +346,9 @@ assign debug[6] = cmd_ack;
       exec_read<=0;
       exec_write<=0;
       exec_writedata<=0;
-      
-      regfile[0]<=0;//r0
-      regfile[27]<=32'h0200_1000;//sp :sram  // total 0x1000 byte code:0x0000~0x07FF   data:0x0800 ~0x1000
-      regfile[29]<=32'h0000_0000;//cs
-      regfile[30]<=32'h0000_0000;//ds
        
+		  cs<=32'h0000_0000;
+		  ds<=32'h0000_0000;
       pc<=32'h0200_0000;
       byteenable <= 4'b1111;
       exec_step<=0;
@@ -313,15 +356,19 @@ assign debug[6] = cmd_ack;
       halt_cpu<=0;
     end else begin
       if(cycle==1 && cmd_ack==0)begin
+				regResultB <= 0;
+				regResultC <= 0;
+				regResultRA <= 0;
         if(Rtype==0)begin
           //longcall
           //longjmp
           //unknow cmd
-
           //call sym                     @          20 @                      2 @   0 @ 0x00
           if         (cmd==6'd0)begin//ok
             pc <= {IMM26,2'b00};
-            regfile[31] <= nextpc;
+            //regfile[31] <= nextpc; code is 31
+						regResult <= nextpc;
+						regResultRA <= 1;
             cmd_ack <= 1;
           //jmpi sym                     @          20 @                      2 @   1 @ 0x01
           end else if(cmd==6'd1)begin//ok
@@ -347,17 +394,20 @@ assign debug[6] = cmd_ack;
 
           //andi reg, reg, ins           @          10 @                      0 @  12 @ 0x0c
           end else if(cmd==6'd12)begin//ok
-            regfile[regB] <= {16'b0,(regfile[regA][15:0] & IMM16)};//rB ← rA & (0x0000 : IMM16)
+            regResult <= {16'b0,(regfileA[15:0] & IMM16)};//rB ← rA & (0x0000 : IMM16)
+						regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
           //addi reg, reg, ins           @          10 @                      0 @   4 @ 0x04
           end else if(cmd==6'd4)begin//ok
-            regfile[regB] <= regfile[regA] + IMM16sx;//rB ← rA + σ(IMM16)
+            regResult <= regfileA + IMM16sx;//rB ← rA + σ(IMM16)
+						regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
           //orhi reg, reg, ins           @          10 @                      0 @  52 @ 0x34
           end else if(cmd==6'd52)begin//ok
-            regfile[regB] <= {(regfile[regA][31:16] | IMM16),regfile[regA][15:0]};//rB ← rA | (IMM16 : 0x0000)
+            regResult <= {(regfileA[31:16] | IMM16),regfileA[15:0]};//rB ← rA | (IMM16 : 0x0000)
+						regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
 
@@ -365,11 +415,12 @@ assign debug[6] = cmd_ack;
           end else if(cmd==6'd23)begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
-              exec_address <= ds + regfile[regA] + IMM16sx;//rB ← Mem32[rA + σ(IMM16)]
+              exec_address <= ds + regfileA + IMM16sx;//rB ← Mem32[rA + σ(IMM16)]
               exec_read <= 1;
             end else if(exec_step==1)begin
               if(!avm_m0_waitrequest)begin
-                regfile[regB] <= avm_m0_readdata;
+                regResult <= avm_m0_readdata;
+								regResultB <= 1;
                 exec_read <= 0;
                 exec_step <= 0;
                 pc <= nextpc;
@@ -380,8 +431,8 @@ assign debug[6] = cmd_ack;
           end else if(cmd==6'd21)begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
-              exec_address <= ds + regfile[regA] + IMM16sx;//Mem32[rA + σ(IMM16)] ← rB
-              exec_writedata <= regfile[regB];
+              exec_address <= ds + regfileA + IMM16sx;//Mem32[rA + σ(IMM16)] ← rB
+              exec_writedata <= regfileB;
               exec_write <= 1;
             end else if(exec_step==1)begin
               if(!avm_m0_waitrequest)begin
@@ -395,11 +446,12 @@ assign debug[6] = cmd_ack;
           end else if(cmd==6'd55)begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
-              exec_address <= regfile[regA] + IMM16sx;//rB ← Mem32[rA + σ(IMM16)]
+              exec_address <= regfileA + IMM16sx;//rB ← Mem32[rA + σ(IMM16)]
               exec_read <= 1;
             end else if(exec_step==1)begin
               if(!avm_m0_waitrequest)begin
-                regfile[regB] <= avm_m0_readdata;
+                regResult <= avm_m0_readdata;
+								regResultB <= 1;
                 exec_read <= 0;
                 exec_step <= 0;
                 pc <= nextpc;
@@ -410,8 +462,8 @@ assign debug[6] = cmd_ack;
           end else if(cmd==6'd53)begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
-              exec_address <= regfile[regA] + IMM16sx;//Mem32[rA + σ(IMM16)] ← rB
-              exec_writedata <= regfile[regB];
+              exec_address <= regfileA + IMM16sx;//Mem32[rA + σ(IMM16)] ← rB
+              exec_writedata <= regfileB;
               exec_write <= 1;
             end else if(exec_step==1)begin
               if(!avm_m0_waitrequest)begin
@@ -433,24 +485,26 @@ assign debug[6] = cmd_ack;
           
           //ret                          @           0 @                      1 @   5 @ 0x3A,0x05
           if         (cmd==6'd5)begin
-            pc <= regfile[31];
+            pc <= regfileA;//regA == 31
             cmd_ack <= 1;
-
           //add reg, reg, reg            @          30 @                      1 @  49 @ 0x3A,0x31
           end else if(cmd==6'd49)begin
-            regfile[regC] <= regfile[regA] + regfile[regB];//rC ← rA + rB
+            regResult <= regfileA + regfileB;//rC ← rA + rB
+						regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
           //cmpeq reg, reg, reg          @          30 @                      1 @  32 @ 0x3A,0x20
           end else if(cmd==6'd32)begin
             //if (rA == rB) then rC ← 1 else rC ← 0
-            regfile[regC] <= {31'b0,comp_eq};
+            regResult <= {31'b0,comp_eq};
+						regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
           //cmpne reg, reg, reg          @          30 @                      1 @  24 @ 0x3A,0x18
           end else if(cmd==6'd24)begin
             //if (rA != rB) then rC ← 1 else rC ← 0
-            regfile[regC] <= {31'b0,(~comp_eq)};
+            regResult <= {31'b0,(~comp_eq)};
+						regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
 

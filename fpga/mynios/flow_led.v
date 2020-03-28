@@ -83,7 +83,7 @@ seg_led_hex595 ins_seg_led_hex595(
   .clk(segled_clk),
   .dat(segled_dat),
   .str(segled_str),
-
+ 
   .data0(seg_data0),
   .data1(seg_data1),
   .data2(seg_data2),
