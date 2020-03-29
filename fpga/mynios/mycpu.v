@@ -342,6 +342,12 @@ assign debug[6] = cmd_ack;
   wire comp_ge;
   assign comp_ge  = $signed(regfileA)>=$signed(regfileB);
   
+  wire comp_lt;
+  assign comp_lt  = $signed(regfileA)<$signed(regfileB);
+
+	wire [31:0] dsAddr;
+	assign dsAddr = ds + regfileA + IMM16sx;
+	
   always @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
       cmd_ack<=0;
@@ -404,7 +410,14 @@ assign debug[6] = cmd_ack;
             end
             cmd_ack <= 1;
 
-
+					//blt reg, reg, sym            @          15 @                      0 @  22 @ 0x16
+          end else if(cmd==6'd22)begin//ok
+            if(comp_lt) begin//if ((signed) rA < (signed) rB)
+              pc <= nextpc + IMM16sx;//then PC ← PC + 4 + σ(IMM16)
+            end else begin
+              pc <= nextpc;//else PC ← PC + 4
+            end
+            cmd_ack <= 1;
 
 
 
@@ -427,11 +440,26 @@ assign debug[6] = cmd_ack;
             pc <= nextpc;
             cmd_ack <= 1;
 
+					//cmpeqi reg, reg, ins         @          10 @                      0 @  32 @ 0x20
+          end else if(cmd==6'd32)begin//ok
+            regResult <= {31'b0,(regfileA == IMM16sx)};//if (rA == σ(IMM16)) then rB ← 1 else rB ← 0
+						regResultB <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+
+					//cmplti reg, reg, ins         @          10 @                      0 @  16 @ 0x10
+          end else if(cmd==6'd16)begin//ok
+            regResult <= {31'b0,($signed(regfileA) < $signed(IMM16sx))};//if ((signed) rA < (signed) σ(IMM16))
+						regResultB <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+
+						
           //ldw reg, regins              @          11 @                      0 @  23 @ 0x17
           end else if(cmd==6'd23)begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
-              exec_address <= ds + regfileA + IMM16sx;//rB ← Mem32[rA + σ(IMM16)]
+              exec_address <= dsAddr;//rB ← Mem32[rA + σ(IMM16)]
               exec_read <= 1;
             end else if(exec_step==1)begin
               if(!avm_m0_waitrequest)begin
@@ -447,7 +475,7 @@ assign debug[6] = cmd_ack;
           end else if(cmd==6'd21)begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
-              exec_address <= ds + regfileA + IMM16sx;//Mem32[rA + σ(IMM16)] ← rB
+              exec_address <= dsAddr;//Mem32[rA + σ(IMM16)] ← rB
               exec_writedata <= regfileB;
               exec_write <= 1;
             end else if(exec_step==1)begin
@@ -490,6 +518,73 @@ assign debug[6] = cmd_ack;
               end
             end
 
+
+					
+					
+          //ldbu reg, regins             @          11 @                      0 @   3 @ 0x03
+          end else if(cmd==6'd3)begin//ok
+            if         (exec_step==0)begin
+              exec_step <= 1;
+              exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x000000 : Mem8[rA + σ(IMM16)]
+              exec_read <= 1;
+            end else if(exec_step==1)begin
+              if(!avm_m0_waitrequest)begin
+								case(dsAddr[1:0])
+									0:begin regResult <= {24'b0,avm_m0_readdata[ 7: 0]};end
+									1:begin regResult <= {24'b0,avm_m0_readdata[15: 8]};end
+									2:begin regResult <= {24'b0,avm_m0_readdata[23:16]};end
+									3:begin regResult <= {24'b0,avm_m0_readdata[31:24]};end
+								endcase
+								regResultB <= 1;
+                exec_read <= 0;
+                exec_step <= 0;
+                pc <= nextpc;
+                cmd_ack <= 1;
+              end
+            end
+					//ldb reg, regins              @          11 @                      0 @   7 @ 0x07						
+          end else if(cmd==6'd7)begin//ok
+            if         (exec_step==0)begin
+              exec_step <= 1;
+              exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x000000 : Mem8[rA + σ(IMM16)]
+              exec_read <= 1;
+            end else if(exec_step==1)begin
+              if(!avm_m0_waitrequest)begin
+								case(dsAddr[1:0])
+									0:begin regResult <= {{24{avm_m0_readdata[ 7]}},avm_m0_readdata[ 7: 0]};end
+									1:begin regResult <= {{24{avm_m0_readdata[15]}},avm_m0_readdata[15: 8]};end
+									2:begin regResult <= {{24{avm_m0_readdata[23]}},avm_m0_readdata[23:16]};end
+									3:begin regResult <= {{24{avm_m0_readdata[31]}},avm_m0_readdata[31:24]};end
+								endcase
+								regResultB <= 1;
+                exec_read <= 0;
+                exec_step <= 0;
+                pc <= nextpc;
+                cmd_ack <= 1;
+              end
+            end
+					//stb reg, regins              @          11 @                      0 @   5 @ 0x05
+          end else if(cmd==6'd5)begin//ok
+            if         (exec_step==0)begin
+              exec_step <= 1;
+              exec_address <= {dsAddr[31:2],2'b0};//Mem8[rA + σ(IMM16)] ← rB7..0
+							case(dsAddr[1:0])
+								0:begin byteenable <= 4'b0001; exec_writedata <= {24'b0,regfileB[7:0]};end
+								1:begin byteenable <= 4'b0010; exec_writedata <= {16'b0,regfileB[7:0],8'b0};end
+								2:begin byteenable <= 4'b0100; exec_writedata <= {8'b0,regfileB[7:0],16'b0};end
+								3:begin byteenable <= 4'b1000; exec_writedata <= {regfileB[7:0],24'b0};end
+							endcase
+              exec_write <= 1;
+            end else if(exec_step==1)begin
+              if(!avm_m0_waitrequest)begin
+								byteenable <= 4'b1111;
+                exec_write <= 0;
+                exec_step <= 0;
+                pc <= nextpc;
+                cmd_ack <= 1;
+              end
+            end
+					
           end else begin
             halt_cpu <= 1;
             pc <= nextpc;
@@ -509,21 +604,34 @@ assign debug[6] = cmd_ack;
 						regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
+					//sub reg, reg, reg            @          30 @                      1 @  57 @ 0x3A,0x39
+          end else if(cmd==6'd57)begin
+            regResult <= regfileA - regfileB;// rC ← rA – rB
+						regResultC <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
           //cmpeq reg, reg, reg          @          30 @                      1 @  32 @ 0x3A,0x20
           end else if(cmd==6'd32)begin
-            //if (rA == rB) then rC ← 1 else rC ← 0
-            regResult <= {31'b0,comp_eq};
+            regResult <= {31'b0,comp_eq};//if (rA == rB) then rC ← 1 else rC ← 0
 						regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
           //cmpne reg, reg, reg          @          30 @                      1 @  24 @ 0x3A,0x18
           end else if(cmd==6'd24)begin
-            //if (rA != rB) then rC ← 1 else rC ← 0
-            regResult <= {31'b0,(~comp_eq)};
+            regResult <= {31'b0,(~comp_eq)};//if (rA != rB) then rC ← 1 else rC ← 0
 						regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
 
+					//cmpge reg, reg, reg          @          30 @                      1 @   8 @ 0x3A,0x08
+          end else if(cmd==6'd8)begin
+            // if ((signed) rA >= (signed) rB) then rC ← 1  else rC ← 0
+            regResult <= {31'b0,(~comp_ge)};
+						regResultC <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+					
+					
           end else begin
             halt_cpu <= 1;
             pc <= nextpc;

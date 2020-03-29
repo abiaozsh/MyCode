@@ -1,32 +1,22 @@
-ï»¿//å‡½æ•°æŒ‡é’ˆ
-//å˜é‡æŒ‡é’ˆ
-//ä¸­æ–­å‘é‡
-//æµ®ç‚¹æ•°
+//º¯ÊýÖ¸Õë
+//±äÁ¿Ö¸Õë
+//ÖÐ¶ÏÏòÁ¿
+//¸¡µãÊý
+#include "inc/io.h"
+#include "inc/system.h"
 
-//void interruptCall(){
-//  push all reg
-//  xor rc, rc
-//  
-//  pop all reg
-//}
-
-int __main(){
-  return;
-}
-
-int out32(int addr,int val){
-  asm("mov rb, DWORD PTR [ebp+8]");//addr
-  asm("mov ra, DWORD PTR [ebp+12]");//val
-  asm("out32 ra, rb");
-}
-int in32(int addr){
-  asm("mov rb, DWORD PTR [ebp+8]");//addr
-  asm("in32 eax, rb");
-}
-
-int uart_read(){
+int uart_read(int timeout){
+  if(timeout!=-1){
+    IOWR(MYTIMER, 0 ,0);
+  }
   while(1){
-    int tmp = in32(0x02002000);
+    if(timeout!=-1){
+      int timer = IORD(MYTIMER, 0);
+      if(timer>1000000){
+        return 0;
+      }
+    }
+    int tmp = IORD(MYUART, 0);
     if(tmp&0x100){
       return tmp;
     }
@@ -34,8 +24,8 @@ int uart_read(){
 }
 
 int uart_write(int val){
-  while((in32(0x02002004)) & 0x100);
-  out32(0x02002004,val);
+  while((IORD(MYUART, 1)) & 0x100);
+  IOWR(MYUART, 1 ,val);
 }
 
 int myprintf(char* str){
@@ -103,19 +93,19 @@ void printInt(int val)
 }
 
 
-int b[1000000];
+//int b[1000000];
 char* bb = "bbbbaaaaa";
 
 int main(){
   while(1){
 
     char buff[5];
-    buff[0] = (char)uart_read();
-    buff[1] = (char)uart_read();
-    buff[2] = (char)uart_read();
-    buff[3] = (char)uart_read();
+    buff[0] = (char)uart_read(-1);
+    buff[1] = (char)uart_read(-1);
+    buff[2] = (char)uart_read(-1);
+    buff[3] = (char)uart_read(-1);
     buff[4] = 0;
-    b[999999] = 1;
+    //b[999999] = 1;
     //printInt(buff[0]);
     
     myprintf(buff);

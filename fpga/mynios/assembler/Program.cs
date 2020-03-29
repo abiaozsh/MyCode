@@ -17,7 +17,7 @@ namespace Assembler
             string filein;
             string fileout;
             string filetemp;
-            string test = "a";
+            string test = "b";
             if (args.Length > 0 && !String.IsNullOrEmpty(args[0]))
             {
                 filein = args[0];

@@ -191,6 +191,7 @@ public class Base
 				sop = sop.Substring("%gprel".Length);
 				if (sop.EndsWith("(gp)"))
 				{
+					sop = sop.Substring(0, "(gp)".Length);
 					setop(op, sop);
 					return op;
 				}
