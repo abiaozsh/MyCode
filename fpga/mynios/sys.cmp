@@ -4,13 +4,6 @@
 			pio0out_export : out   std_logic_vector(31 downto 0);                    -- export
 			pio1in_export  : in    std_logic_vector(7 downto 0)  := (others => 'X'); -- export
 			reset_reset_n  : in    std_logic                     := 'X';             -- reset_n
-			mycpu_uart_txd : out   std_logic;                                        -- uart_txd
-			mycpu_debug    : out   std_logic_vector(7 downto 0);                     -- debug
-			mycpu_debug0   : out   std_logic_vector(7 downto 0);                     -- debug0
-			mycpu_debug1   : out   std_logic_vector(7 downto 0);                     -- debug1
-			mycpu_debug2   : out   std_logic_vector(7 downto 0);                     -- debug2
-			mycpu_debug3   : out   std_logic_vector(7 downto 0);                     -- debug3
-			mycpu_uart_rxd : in    std_logic                     := 'X';             -- uart_rxd
 			clk100_clk     : in    std_logic                     := 'X';             -- clk
 			sdram_addr     : out   std_logic_vector(12 downto 0);                    -- addr
 			sdram_ba       : out   std_logic_vector(1 downto 0);                     -- ba
@@ -26,7 +19,11 @@
 			softspi_SCLK   : out   std_logic;                                        -- SCLK
 			softspi_SS_n   : out   std_logic_vector(2 downto 0);                     -- SS_n
 			myuart_rxd     : in    std_logic                     := 'X';             -- rxd
-			myuart_txd     : out   std_logic                                         -- txd
+			myuart_txd     : out   std_logic;                                        -- txd
+			mycpu_uart_txd : out   std_logic;                                        -- uart_txd
+			mycpu_uart_rxd : in    std_logic                     := 'X';             -- uart_rxd
+			mycpu_debug8   : out   std_logic_vector(7 downto 0);                     -- debug8
+			mycpu_debug32  : out   std_logic_vector(31 downto 0)                     -- debug32
 		);
 	end component sys;
 

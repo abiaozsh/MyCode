@@ -5,9 +5,13 @@ hlt ins                      @           5 @                      0 @   2 @ exte
 andi reg, reg, ins           @          10 @                      0 @  12 @ 0x0c andhi rB, rA, IMM16
 addi reg, reg, ins           @          10 @                      0 @   4 @ 0x04
 orhi reg, reg, ins           @          10 @                      0 @  52 @ 0x34
+muli reg, reg, ins           @          10 @                      0 @  36 @ 0x24
+ori  reg, reg, ins           @          10 @                      0 @  20 @ 0x14
 xori reg, reg, ins           @          10 @                      0 @  28 @ 0x1c
 cmpeqi reg, reg, ins         @          10 @                      0 @  32 @ 0x20
 cmplti reg, reg, ins         @          10 @                      0 @  16 @ 0x10
+cmpgei reg, reg, ins         @          10 @                      0 @   8 @ 0x08
+cmpnei reg, reg, ins         @          10 @                      0 @  24 @ 0x18
 
 ldw reg, regins              @          11 @                      0 @  23 @ 0x17 ldw rB, byte_offset(rA)
 stw reg, regins              @          11 @                      0 @  21 @ 0x15 stw rB, byte_offset(rA)
@@ -18,6 +22,7 @@ ldbu reg, regins             @          11 @                      0 @   3 @ 0x03
 stb reg, regins              @          11 @                      0 @   5 @ 0x05
 
 bne reg, reg, sym            @          15 @                      0 @  30 @ 0x1e bne rA, rB, label
+beq reg, reg, sym            @          15 @                      0 @  38 @ 0x26
 bge reg, reg, sym            @          15 @                      0 @  14 @ 0x0e
 blt reg, reg, sym            @          15 @                      0 @  22 @ 0x16
 br sym                       @          20 @                      0 @   6 @ 0x06
@@ -26,9 +31,14 @@ call sym                     @          22 @                      2 @   0 @ 0x00
 
 add reg, reg, reg            @          30 @                      1 @  49 @ 0x3A,0x31 add rC, rA, rB
 sub reg, reg, reg            @          30 @                      1 @  57 @ 0x3A,0x39
+nor reg, reg, reg            @          30 @                      1 @   6 @ 0x3A,0x06
+sll reg, reg, reg            @          30 @                      1 @  19 @ 0x3A,0x13
+sra reg, reg, reg            @          30 @                      1 @  59 @ 0x3A,0x3b
 cmpeq reg, reg, reg          @          30 @                      1 @  32 @ 0x3A,0x20
 cmpne reg, reg, reg          @          30 @                      1 @  24 @ 0x3A,0x18
 cmpge reg, reg, reg          @          30 @                      1 @   8 @ 0x3A,0x08
+
+slli reg, reg, ins           @          40 @                      1 @  18 @ 0x3A,0x12
 
 xxx                          @           0 @                      1 @  99 @ xxx
 

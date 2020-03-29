@@ -21,7 +21,7 @@ set_global_assignment -name RESERVE_DATA1_AFTER_CONFIGURATION "USE AS REGULAR IO
 set_global_assignment -name RESERVE_FLASH_NCE_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_DCLK_AFTER_CONFIGURATION "USE AS REGULAR IO"
 */
-   //uart接口
+  //uart接口
   input uart_rxd,
   output uart_txd,
  
@@ -43,10 +43,10 @@ set_global_assignment -name RESERVE_DCLK_AFTER_CONFIGURATION "USE AS REGULAR IO"
   output [12:0] sdram_addr,               //SDRAM 行/列地址
   inout  [15:0] sdram_data,               //SDRAM 数据
   output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
-	
+ 
 	output uart2_txd,
 	input uart2_rxd,
-	
+ 
 		input  wire        spi_MISO,        //     spi.MISO
 		output wire        spi_MOSI,        //        .MOSI
 		output wire        spi_SCLK,        //        .SCLK
@@ -91,21 +91,18 @@ seg_led_hex595 ins_seg_led_hex595(
 );
 
  
-assign seg_data3 = outpin32[31:24];
-assign seg_data2 = outpin32[23:16];
-assign seg_data1 = outpin32[15:8];
-assign seg_data0 = outpin32[7:0];
+assign seg_data3 = debug32[31:24];//outpin32
+assign seg_data2 = debug32[23:16];//outpin32
+assign seg_data1 = debug32[15:8]; //outpin32
+assign seg_data0 = debug32[7:0];  //outpin32
 
 wire [31:0] outpin32;
 wire [7:0] inpin8;
 assign inpin8[0] = key2;
 
 wire [7:0] debug8;
-wire [7:0] debug0;
-wire [7:0] debug1;
-wire [7:0] debug2;
-wire [7:0] debug3;
-   
+wire [31:0] debug32;
+
 assign led = debug[0];
 assign debug = debug8;
 
@@ -122,12 +119,9 @@ wire [31:0] myuart_debug32;
 
         .mycpu_uart_rxd (uart_rxd), //        .uart_rxd
         .mycpu_uart_txd (uart_txd), //   mycpu.uart_txd
-        .mycpu_debug    (debug8),    //        .debug
-        .mycpu_debug0   (debug0),   //        .debug0
-        .mycpu_debug1   (debug1),   //        .debug1
-        .mycpu_debug2   (debug2),   //        .debug2
-        .mycpu_debug3   (debug3),   //        .debug3
-				
+        .mycpu_debug8   (debug8),    //        .debug
+        .mycpu_debug32  (debug0),   //        .debug0
+
         .sdram_addr   (sdram_addr),   // sdram_0.addr
         .sdram_ba     (sdram_ba),     //        .ba
         .sdram_cas_n  (sdram_cas_n),  //        .cas_n
@@ -148,7 +142,7 @@ wire [31:0] myuart_debug32;
 		 );
 
 
-
 endmodule
+            
 
-
+  

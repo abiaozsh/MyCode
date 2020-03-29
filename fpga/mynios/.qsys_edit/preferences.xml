@@ -17,6 +17,6 @@
  </clocktable>
  <window width="1920" height="1273" x="640" y="41" />
  <library
-   expandedCategories="Library/Interface Protocols,Library,Library/Interface Protocols/Serial,Project" />
+   expandedCategories="Library/Interface Protocols,Library/Interface Protocols/Serial,Library,Project" />
  <hdlexample language="VERILOG" />
 </preferences>

@@ -24,11 +24,8 @@ module mycpu (
     
 		input wire 			   uart_rxd,
 		output wire			   uart_txd,
-    output [7:0]   debug,
-    output [7:0]   debug0,
-    output [7:0]   debug1,
-    output [7:0]   debug2,
-    output [7:0]   debug3
+    output [7:0]    debug8,
+    output [31:0]   debug32
 
 	);
 
@@ -184,13 +181,13 @@ always @(posedge clk or negedge reset_n) begin
   end
 end
 
-assign debug[0] = avm_m0_waitrequest;
-assign debug[1] = avm_m0_read;
-assign debug[2] = avm_m0_write;
+assign debug8[0] = avm_m0_waitrequest;
+assign debug8[1] = avm_m0_read;
+assign debug8[2] = avm_m0_write;
 
-assign debug[4] = halt;
-assign debug[5] = cycle;
-assign debug[6] = cmd_ack;
+assign debug8[4] = halt;
+assign debug8[5] = cycle;
+assign debug8[6] = cmd_ack;
 
 
 	assign avm_m0_byteenable = byteenable;
@@ -208,12 +205,14 @@ assign debug[6] = cmd_ack;
   wire [4:0]  regA;
   wire [4:0]  regB;
   wire [4:0]  regC;
+  wire [4:0]  IMM5;
   wire [15:0] IMM16;
   wire [31:0] IMM16sx;
   wire [25:0] IMM26;
   assign regA = latch_readdata[31:27];
   assign regB = latch_readdata[26:22];
   assign regC = latch_readdata[21:17];
+	assign IMM5 = latch_readdata[10:6];
   assign IMM26 = latch_readdata[31:6];
   assign IMM16 = latch_readdata[21:6];
   assign IMM16sx = {{16{IMM16[15]}},IMM16};
@@ -347,6 +346,36 @@ assign debug[6] = cmd_ack;
 
 	wire [31:0] dsAddr;
 	assign dsAddr = ds + regfileA + IMM16sx;
+
+	wire [31:0] shiftDataIn;
+	assign shiftDataIn = regfileA;
+	reg        shiftDirection;
+	reg	[4:0]  shiftDistance;
+	wire	[31:0]  shiftResultLogical;
+	wire	[31:0]  shiftResultArithmetic;
+
+	shiftLogical shiftLogical_inst (
+		.data ( shiftDataIn ),
+		.direction ( shiftDirection ),
+		.distance ( shiftDistance ),
+		.result ( shiftResultLogical )
+	);
+	shiftArithmetic shiftArithmetic_inst (
+		.data ( shiftDataIn ),
+		.direction ( shiftDirection ),
+		.distance ( shiftDistance ),
+		.result ( shiftResultArithmetic )
+	);
+
+	wire [31:0] mulDataA;
+	assign mulDataA = regfileA;
+	reg [31:0] mulDataB;
+	wire [31:0] mulResultSigned;
+	mulSigned	mulSigned_inst (
+		.dataa ( mulDataA ),
+		.datab ( mulDataB ),
+		.result ( mulResultSigned )
+	);
 	
   always @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
@@ -372,6 +401,7 @@ assign debug[6] = cmd_ack;
           //longcall
           //longjmp
           //unknow cmd
+					
           //call sym                     @          20 @                      2 @   0 @ 0x00
           if         (cmd==6'd0)begin//ok
             pc <= {IMM26,2'b00};
@@ -400,7 +430,16 @@ assign debug[6] = cmd_ack;
               pc <= nextpc + IMM16sx;
             end
             cmd_ack <= 1;
-						
+					// beq reg, reg, sym            @          15 @                      0 @  38 @ 0x26
+					end else if(cmd==6'd30)begin//ok
+            if(comp_eq) begin
+              pc <= nextpc + IMM16sx;
+            end else begin
+              pc <= nextpc;
+            end
+            cmd_ack <= 1;
+					
+					
 					//bge reg, reg, sym            @          15 @                      0 @  14 @ 0x0e
           end else if(cmd==6'd14)begin//ok
             if(comp_ge) begin//if ((signed) rA >= (signed) rB)
@@ -439,6 +478,27 @@ assign debug[6] = cmd_ack;
 						regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
+					//ori  reg, reg, ins           @          10 @                      0 @  20 @ 0x14
+          end else if(cmd==6'd20)begin//ok
+            regResult <= {regfileA[31:16],(regfileA[15:0] | IMM16)};//rB ← rA | (0x0000 : IMM16)
+						regResultB <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+						
+					//muli reg, reg, ins           @          10 @                      0 @  36 @ 0x24
+          end else if(cmd==6'd36)begin//ok
+            if         (exec_step==0)begin
+							mulDataB <= IMM16sx;
+              exec_step <= 1;
+            end else if(exec_step==1)begin
+							// shift left logical immediate
+							regResult <= mulResultSigned;
+							regResultB <= 1;
+							exec_step <= 0;
+							pc <= nextpc;
+							cmd_ack <= 1;
+            end
+
 					//xori reg, reg, ins           @          10 @                      0 @  28 @ 0x1c
           end else if(cmd==6'd28)begin//ok
             regResult <= {regfileA[31:16], (regfileA[15:0] ^ IMM16)};//rB ← rA ^ (0x0000 : IMM16)
@@ -456,6 +516,18 @@ assign debug[6] = cmd_ack;
 					//cmplti reg, reg, ins         @          10 @                      0 @  16 @ 0x10
           end else if(cmd==6'd16)begin//ok
             regResult <= {31'b0,($signed(regfileA) < $signed(IMM16sx))};//if ((signed) rA < (signed) σ(IMM16))
+						regResultB <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+					//cmpgei reg, reg, ins         @          10 @                      0 @   8 @ 0x08
+          end else if(cmd==6'd8)begin//ok
+            regResult <= {31'b0,($signed(regfileA) >= $signed(IMM16sx))};//if ((signed) rA >= (signed) σ(IMM16)) then rB ← 1 else rB ← 0
+						regResultB <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+					//cmpnei reg, reg, ins         @          10 @                      0 @  24 @ 0x18
+          end else if(cmd==6'd24)begin//ok
+            regResult <= {31'b0,(regfileA != IMM16sx)};//if (rA != σ(IMM16)) then rB ← 1 else rB ← 0
 						regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
@@ -616,7 +688,51 @@ assign debug[6] = cmd_ack;
 						regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-          //cmpeq reg, reg, reg          @          30 @                      1 @  32 @ 0x3A,0x20
+					//nor reg, reg, reg            @          30 @                      1 @   6 @ 0x3A,0x06
+          end else if(cmd==6'd6)begin
+            regResult <= ~(regfileA | regfileB);// rC ← ~(rA | rB)
+						regResultC <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+
+					//sll reg, reg, reg            @          30 @                      1 @  19 @ 0x3A,0x13
+          end else if(cmd==6'd19)begin
+						// rC ← rA << IMM5
+            if         (exec_step==0)begin
+							shiftDirection <= 0;//0:left 1:right
+							shiftDistance <= regfileB[4:0];//rC ← rA << (rB4..0)
+              exec_step <= 1;
+            end else if(exec_step==1)begin
+							// shift left logical
+							regResult <= shiftResultLogical;
+							regResultC <= 1;
+							exec_step <= 0;
+							pc <= nextpc;
+							cmd_ack <= 1;
+            end
+					//sra reg, reg, reg            @          30 @                      1 @  59 @ 0x3A,0x3b
+          end else if(cmd==6'd59)begin
+						// rC ← rA << IMM5
+            if         (exec_step==0)begin
+							shiftDirection <= 1;//0:left 1:right
+							shiftDistance <= regfileB[4:0];//rC ← (signed) rA >> ((unsigned) rB4..0)
+              exec_step <= 1;
+            end else if(exec_step==1)begin
+							// shift right arithmetic
+							regResult <= shiftResultArithmetic;
+							regResultC <= 1;
+							exec_step <= 0;
+							pc <= nextpc;
+							cmd_ack <= 1;
+            end
+
+
+
+
+
+
+					
+					//cmpeq reg, reg, reg          @          30 @                      1 @  32 @ 0x3A,0x20
           end else if(cmd==6'd32)begin
             regResult <= {31'b0,comp_eq};//if (rA == rB) then rC ← 1 else rC ← 0
 						regResultC <= 1;
@@ -637,6 +753,21 @@ assign debug[6] = cmd_ack;
             pc <= nextpc;
             cmd_ack <= 1;
 					
+					//slli reg, reg, ins           @          40 @                      1 @  18 @ 0x3A,0x12
+          end else if(cmd==6'd18)begin
+						// rC ← rA << IMM5
+            if         (exec_step==0)begin
+							shiftDirection <= 0;//0:left 1:right
+							shiftDistance <= IMM5;
+              exec_step <= 1;
+            end else if(exec_step==1)begin
+							// shift left logical immediate
+							regResult <= shiftResultLogical;
+							regResultC <= 1;
+							exec_step <= 0;
+							pc <= nextpc;
+							cmd_ack <= 1;
+            end
 					
           end else begin
             halt_cpu <= 1;

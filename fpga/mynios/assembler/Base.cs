@@ -9,12 +9,28 @@ public class Base
 	{
 		public string name;
 		public int pos;
+		public string ToString()
+		{
+			return name + "," + pos;
+		}
 	}
 	public class Data
 	{
+		private Data()
+		{
+		}
+		public Data(Line line)
+		{
+			this.line = line;
+		}
+		public Line line;
 		public byte[] data;
 		public string sym;
 		public int len;
+		public string ToString()
+		{
+			return line.ToString() + "," + sym + "," + len;
+		}
 	}
 
 	public class Line
@@ -28,11 +44,43 @@ public class Base
 		}
 		public bool isCodeSeg()
 		{
-			return ".section .text" == text.Trim();
+			string temp = text.Trim();
+			if (temp.StartsWith(".section"))
+			{
+				if (temp == ".section .text")
+				{
+					return true;
+				}
+				else if (temp == ".section .sdata" || temp == ".section .rodata" || temp == ".section .data" || temp == ".section .sbss,\"aws\",@nobits" || temp == ".section .sdata,\"aws\",@progbits")
+				{
+					return false;
+				}
+				else
+				{
+					throw new Exception("unknown section:" + text);
+				}
+			}
+			return false;
 		}
 		public bool isDataSeg()
 		{
-			return text.Trim().StartsWith(".section .sdata") || text.Trim().StartsWith(".section .rodata") || text.Trim().StartsWith(".section .data");
+			string temp = text.Trim();
+			if (temp.StartsWith(".section"))
+			{
+				if (temp == ".section .text")
+				{
+					return false;
+				}
+				else if (temp == ".section .sdata" || temp == ".section .rodata" || temp == ".section .data" || temp == ".section .sbss,\"aws\",@nobits" || temp == ".section .sdata,\"aws\",@progbits")
+				{
+					return true;
+				}
+				else
+				{
+					throw new Exception("unknown section:" + text);
+				}
+			}
+			return false;
 		}
 		public LineType type;
 		public string text;
@@ -191,7 +239,7 @@ public class Base
 				sop = sop.Substring("%gprel".Length);
 				if (sop.EndsWith("(gp)"))
 				{
-					sop = sop.Substring(0, "(gp)".Length);
+					sop = sop.Substring(0, (sop.Length - "(gp)".Length));
 					setop(op, sop);
 					return op;
 				}
@@ -414,7 +462,9 @@ public class Base
 		public int bitregA;
 		public int bitregB;
 		public int bitregC;
-		public int bitins1;//16/26bit
+		public int IMM16;//16/26bit
+		public int IMM26;//16/26bit
+		public int IMM5;
 		public int pos;
 	}
 
