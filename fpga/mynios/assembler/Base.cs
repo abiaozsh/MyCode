@@ -32,7 +32,7 @@ public class Base
 		}
 		public bool isDataSeg()
 		{
-			return text.Trim().StartsWith(".section .sdata") || text.Trim().StartsWith(".section .rodata");
+			return text.Trim().StartsWith(".section .sdata") || text.Trim().StartsWith(".section .rodata") || text.Trim().StartsWith(".section .data");
 		}
 		public LineType type;
 		public string text;

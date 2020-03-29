@@ -100,7 +100,7 @@ always @(posedge clk or negedge reset_n) begin
     debug_step<=0;
     debug_readmem_step<=0;
     timer_log<=0;
-    halt_uart<=1;
+    halt_uart<=0;
     debug_read<=0;
     debug_write<=0;
     
@@ -436,6 +436,12 @@ assign debug[6] = cmd_ack;
           //orhi reg, reg, ins           @          10 @                      0 @  52 @ 0x34
           end else if(cmd==6'd52)begin//ok
             regResult <= {(regfileA[31:16] | IMM16),regfileA[15:0]};//rB ← rA | (IMM16 : 0x0000)
+						regResultB <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+					//xori reg, reg, ins           @          10 @                      0 @  28 @ 0x1c
+          end else if(cmd==6'd28)begin//ok
+            regResult <= {regfileA[31:16], (regfileA[15:0] ^ IMM16)};//rB ← rA ^ (0x0000 : IMM16)
 						regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;

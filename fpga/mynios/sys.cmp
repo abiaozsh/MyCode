@@ -21,10 +21,6 @@
 			sdram_dqm      : out   std_logic_vector(1 downto 0);                     -- dqm
 			sdram_ras_n    : out   std_logic;                                        -- ras_n
 			sdram_we_n     : out   std_logic;                                        -- we_n
-			spi_MISO       : in    std_logic                     := 'X';             -- MISO
-			spi_MOSI       : out   std_logic;                                        -- MOSI
-			spi_SCLK       : out   std_logic;                                        -- SCLK
-			spi_SS_n       : out   std_logic_vector(2 downto 0);                     -- SS_n
 			softspi_MISO   : in    std_logic                     := 'X';             -- MISO
 			softspi_MOSI   : out   std_logic;                                        -- MOSI
 			softspi_SCLK   : out   std_logic;                                        -- SCLK

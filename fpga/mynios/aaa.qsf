@@ -88,6 +88,12 @@ set_location_assignment PIN_N20 -to debug[6]
 set_location_assignment PIN_M20 -to debug[7]
 
 
+set_location_assignment PIN_E1 -to spi_SS_n[2]
+set_location_assignment PIN_C1 -to spi_SS_n[1]
+set_location_assignment PIN_B1 -to spi_SS_n[0]
+set_location_assignment PIN_B3 -to spi_MOSI
+set_location_assignment PIN_B4 -to spi_SCLK
+set_location_assignment PIN_C4 -to spi_MISO
 
 
 

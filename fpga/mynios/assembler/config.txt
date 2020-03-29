@@ -5,6 +5,7 @@ hlt ins                      @           5 @                      0 @   2 @ exte
 andi reg, reg, ins           @          10 @                      0 @  12 @ 0x0c andhi rB, rA, IMM16
 addi reg, reg, ins           @          10 @                      0 @   4 @ 0x04
 orhi reg, reg, ins           @          10 @                      0 @  52 @ 0x34
+xori reg, reg, ins           @          10 @                      0 @  28 @ 0x1c
 cmpeqi reg, reg, ins         @          10 @                      0 @  32 @ 0x20
 cmplti reg, reg, ins         @          10 @                      0 @  16 @ 0x10
 

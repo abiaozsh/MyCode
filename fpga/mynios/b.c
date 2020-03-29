@@ -66,15 +66,19 @@ void printInt(int val)
 {
   int idx;
   int i;
+  int num;
   if(val<0){
+    num = val;
     uart_write('+');
   }else{
+    num = -val;
     uart_write('-');
   }
-	int num = val;
+	
+	int outNum;
 	for(idx = 0; idx < 10 ; idx++)
 	{
-		int outNum = 0;
+		outNum = 0;
 		int CmpNum = num10s[idx];
 		for(i = 0; i < 10 ; i++)
 		{
@@ -106,10 +110,16 @@ int main(){
     buff[3] = (char)uart_read(-1);
     buff[4] = 0;
     //b[999999] = 1;
-    //printInt(buff[0]);
-    
+    printInt(123);
+    myprintf("\r\n");
+    printInt(buff[0]);
+    myprintf("\r\n");
+
     myprintf(buff);
+    myprintf("\r\n");
     myprintf("fdsa");
+    myprintf("\r\n");
     myprintf2(bb, 5);
+    myprintf("\r\n");
   }
 }
