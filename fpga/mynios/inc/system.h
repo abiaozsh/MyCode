@@ -1,0 +1,2 @@
+#define MYUART 0x02002000
+#define MYTIMER 0x02001000

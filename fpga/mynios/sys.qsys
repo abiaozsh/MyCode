@@ -16,7 +16,7 @@
    {
       datum _sortIndex
       {
-         value = "6";
+         value = "2";
          type = "int";
       }
    }
@@ -36,31 +36,7 @@
          type = "int";
       }
    }
-   element myuart_0
-   {
-      datum _sortIndex
-      {
-         value = "7";
-         type = "int";
-      }
-   }
-   element onchip_memory2_0
-   {
-      datum _sortIndex
-      {
-         value = "3";
-         type = "int";
-      }
-   }
-   element pio_in_key
-   {
-      datum _sortIndex
-      {
-         value = "4";
-         type = "int";
-      }
-   }
-   element pio_out_debug
+   element mytimer_0
    {
       datum _sortIndex
       {
@@ -68,19 +44,69 @@
          type = "int";
       }
    }
+   element myuart_0
+   {
+      datum _sortIndex
+      {
+         value = "6";
+         type = "int";
+      }
+   }
+   element onchip_memory2_0
+   {
+      datum _sortIndex
+      {
+         value = "4";
+         type = "int";
+      }
+   }
+   element pio_in_key
+   {
+      datum _sortIndex
+      {
+         value = "7";
+         type = "int";
+      }
+   }
+   element pio_out_debug
+   {
+      datum _sortIndex
+      {
+         value = "8";
+         type = "int";
+      }
+   }
+   element mytimer_0.s0
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "33558528";
+         type = "String";
+      }
+   }
    element myuart_0.s0
    {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
       datum baseAddress
       {
          value = "33562624";
          type = "String";
       }
    }
-   element onchip_memory2_0.s1
+   element softspi_0.s0
    {
       datum baseAddress
       {
-         value = "33554432";
+         value = "33558560";
          type = "String";
       }
    }
@@ -88,7 +114,20 @@
    {
       datum baseAddress
       {
-         value = "33558528";
+         value = "33558544";
+         type = "String";
+      }
+   }
+   element sdram.s1
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "0";
          type = "String";
       }
    }
@@ -101,15 +140,20 @@
       }
       datum baseAddress
       {
-         value = "33558544";
+         value = "33558624";
          type = "String";
       }
    }
-   element sdram.s1
+   element onchip_memory2_0.s1
    {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
       datum baseAddress
       {
-         value = "0";
+         value = "33554432";
          type = "String";
       }
    }
@@ -117,7 +161,15 @@
    {
       datum _sortIndex
       {
-         value = "2";
+         value = "3";
+         type = "int";
+      }
+   }
+   element softspi_0
+   {
+      datum _sortIndex
+      {
+         value = "10";
          type = "int";
       }
    }
@@ -125,7 +177,7 @@
    {
       datum _sortIndex
       {
-         value = "8";
+         value = "9";
          type = "int";
       }
    }
@@ -133,7 +185,7 @@
    {
       datum baseAddress
       {
-         value = "33566720";
+         value = "33558592";
          type = "String";
       }
    }
@@ -152,7 +204,7 @@
  <parameter name="projectName" value="aaa.qpf" />
  <parameter name="sopcBorderPoints" value="false" />
  <parameter name="systemHash" value="1" />
- <parameter name="timeStamp" value="1585119321601" />
+ <parameter name="timeStamp" value="1585441454032" />
  <parameter name="useTestBenchNamingPattern" value="false" />
  <instanceScript></instanceScript>
  <interface name="clk50" internal="clk50.clk_in" type="clock" dir="end" />
@@ -170,12 +222,17 @@
  <interface name="mycpu" internal="mycpu_0.conduit_end" type="conduit" dir="end" />
  <interface name="clk100" internal="clk100.clk_in" type="clock" dir="end" />
  <interface name="sdram" internal="sdram.wire" type="conduit" dir="end" />
+ <interface name="spi" internal="spi_0.external" type="conduit" dir="end" />
+ <interface
+   name="softspi"
+   internal="softspi_0.conduit_end"
+   type="conduit"
+   dir="end" />
  <interface
    name="myuart"
    internal="myuart_0.conduit_end"
    type="conduit"
    dir="end" />
- <interface name="spi" internal="spi_0.external" type="conduit" dir="end" />
  <module kind="clock_source" version="13.0" enabled="1" name="clk50">
   <parameter name="clockFrequency" value="50000000" />
   <parameter name="clockFrequencyKnown" value="true" />
@@ -282,9 +339,6 @@
   <parameter name="inputClockFrequency" value="0" />
   <parameter name="resetSynchronousEdges" value="NONE" />
  </module>
- <module kind="myuart" version="1.0" enabled="1" name="myuart_0">
-  <parameter name="AUTO_CLOCK_CLOCK_RATE" value="50000000" />
- </module>
  <module
    kind="altera_avalon_spi"
    version="13.0.1.99.2"
@@ -304,6 +358,15 @@
   <parameter name="targetSlaveSelectToSClkDelay" value="0.0" />
   <parameter name="avalonSpec" value="2.0" />
   <parameter name="inputClockRate" value="50000000" />
+ </module>
+ <module kind="mytimer" version="1.0" enabled="1" name="mytimer_0">
+  <parameter name="AUTO_CLOCK_CLOCK_RATE" value="50000000" />
+ </module>
+ <module kind="softspi" version="1.0" enabled="1" name="softspi_0">
+  <parameter name="AUTO_CLOCK_CLOCK_RATE" value="50000000" />
+ </module>
+ <module kind="myuart" version="1.0" enabled="1" name="myuart_0">
+  <parameter name="AUTO_CLOCK_CLOCK_RATE" value="50000000" />
  </module>
  <connection
    kind="reset"
@@ -339,12 +402,12 @@
    start="mycpu_0.m0"
    end="pio_out_debug.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x02001010" />
+  <parameter name="baseAddress" value="0x02001060" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection kind="avalon" version="13.0" start="mycpu_0.m0" end="pio_in_key.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x02001000" />
+  <parameter name="baseAddress" value="0x02001010" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -368,6 +431,39 @@
   <parameter name="baseAddress" value="0x0000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
+ <connection kind="reset" version="13.0" start="clk50.clk_reset" end="spi_0.reset" />
+ <connection kind="clock" version="13.0" start="clk50.clk" end="spi_0.clk" />
+ <connection
+   kind="avalon"
+   version="13.0"
+   start="mycpu_0.m0"
+   end="spi_0.spi_control_port">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x02001040" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection kind="clock" version="13.0" start="clk50.clk" end="mytimer_0.clock" />
+ <connection kind="clock" version="13.0" start="clk50.clk" end="softspi_0.clock" />
+ <connection
+   kind="reset"
+   version="13.0"
+   start="clk50.clk_reset"
+   end="mytimer_0.reset" />
+ <connection
+   kind="reset"
+   version="13.0"
+   start="clk50.clk_reset"
+   end="softspi_0.reset" />
+ <connection kind="avalon" version="13.0" start="mycpu_0.m0" end="mytimer_0.s0">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x02001000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection kind="avalon" version="13.0" start="mycpu_0.m0" end="softspi_0.s0">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x02001020" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
  <connection kind="clock" version="13.0" start="clk50.clk" end="myuart_0.clock" />
  <connection
    kind="reset"
@@ -377,17 +473,6 @@
  <connection kind="avalon" version="13.0" start="mycpu_0.m0" end="myuart_0.s0">
   <parameter name="arbitrationPriority" value="1" />
   <parameter name="baseAddress" value="0x02002000" />
-  <parameter name="defaultConnection" value="false" />
- </connection>
- <connection kind="reset" version="13.0" start="clk50.clk_reset" end="spi_0.reset" />
- <connection kind="clock" version="13.0" start="clk50.clk" end="spi_0.clk" />
- <connection
-   kind="avalon"
-   version="13.0"
-   start="mycpu_0.m0"
-   end="spi_0.spi_control_port">
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x02003000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />

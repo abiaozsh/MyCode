@@ -8,10 +8,17 @@ stw reg, regins              @          11 @                      0 @  21 @ 0x15
 ldwio reg, regins            @          11 @                      0 @  55 @ 0x37
 stwio reg, regins            @          11 @                      0 @  53 @ 0x35
 bne reg, reg, sym            @          15 @                      0 @  30 @ 0x1e bne rA, rB, label
+bge reg, reg, sym            @          15 @                      0 @  14 @ 0x0e
 br sym                       @          20 @                      0 @   6 @ 0x06
 jmpi sym                     @          21 @                      2 @   1 @ 0x01
 call sym                     @          22 @                      2 @   0 @ 0x00
 add reg, reg, reg            @          30 @                      1 @  49 @ 0x3A,0x31 add rC, rA, rB
 cmpeq reg, reg, reg          @          30 @                      1 @  32 @ 0x3A,0x20
 cmpne reg, reg, reg          @          30 @                      1 @  24 @ 0x3A,0x18
-ret                          @           0 @                      1 @   5 @ 0x3A,0x05
+xxx                          @           0 @                      1 @  99 @ xxx
+ret                          @           1 @                      1 @   5 @ 0x3A,0x05 ret
+
+#stds
+#ldds
+#longcall
+#longjmp

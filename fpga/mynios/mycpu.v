@@ -338,6 +338,9 @@ assign debug[6] = cmd_ack;
 
   wire comp_eq;
   assign comp_eq  = regfileA==regfileB;
+	
+  wire comp_ge;
+  assign comp_ge  = $signed(regfileA)>=$signed(regfileB);
   
   always @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
@@ -391,6 +394,19 @@ assign debug[6] = cmd_ack;
               pc <= nextpc + IMM16sx;
             end
             cmd_ack <= 1;
+						
+					//bge reg, reg, sym            @          15 @                      0 @  14 @ 0x0e
+          end else if(cmd==6'd14)begin//ok
+            if(comp_ge) begin//if ((signed) rA >= (signed) rB)
+              pc <= nextpc + IMM16sx;//then PC ← PC + 4 + σ(IMM16)
+            end else begin
+              pc <= nextpc;//else PC ← PC + 4
+            end
+            cmd_ack <= 1;
+
+
+
+
 
           //andi reg, reg, ins           @          10 @                      0 @  12 @ 0x0c
           end else if(cmd==6'd12)begin//ok

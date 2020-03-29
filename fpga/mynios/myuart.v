@@ -21,10 +21,8 @@ module myuart (
 		output wire        avs_s0_waitrequest, //      .waitrequest
 		output wire        ins_irq0_irq,       //  irq0.irq
 		input wire 			   uart_rxd,
-		output wire			   uart_txd,
-		output [7:0] debug8,
-		output [31:0] debug32
-		
+		output wire			   uart_txd
+
 	);
 
 	// TODO: Auto-generated HDL template
@@ -59,10 +57,6 @@ module myuart (
     end
   end
 
-	assign debug8[0] = uart_rec;
-	assign debug8[1] = uart_rxd;	
-  assign debug32[7:0] = uart_data_out;
-	
 	wire uart_rec;
 	wire [7:0] uart_data_out;
 	reg uart_send;

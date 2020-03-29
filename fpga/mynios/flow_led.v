@@ -105,13 +105,13 @@ wire [7:0] debug0;
 wire [7:0] debug1;
 wire [7:0] debug2;
 wire [7:0] debug3;
-
+   
 assign led = debug[0];
 assign debug = debug8;
 
 wire [7:0] myuart_debug8;
 wire [31:0] myuart_debug32;
-
+ 
     sys u0 (
         .clk50_clk      (sys_clk),        //     clk.clk
         .reset_reset_n  (rst_n),  //   reset.reset_n
@@ -138,16 +138,15 @@ wire [31:0] myuart_debug32;
         .sdram_ras_n  (sdram_ras_n),  //        .ras_n
         .sdram_we_n   (sdram_we_n),   //        .we_n
 				
-				.myuart_uart_rxd     (uart2_rxd),     //  myuart.rxd
-        .myuart_uart_txd     (uart2_txd),      //        .txd
-				.myuart_debug8   (myuart_debug8),   //        .debug8
-        .myuart_debug32  (myuart_debug32),   //        .debug32
-		  
-        .spi_MISO        (spi_MISO),        //     spi.MISO
-        .spi_MOSI        (spi_MOSI),        //        .MOSI
-        .spi_SCLK        (spi_SCLK),        //        .SCLK
-        .spi_SS_n        (spi_SS_n)         //        .SS_n    
+				.myuart_rxd     (uart2_rxd),     //  myuart.rxd
+        .myuart_txd     (uart2_txd),      //        .txd
+
+        .softspi_MISO        (spi_MISO),        //     spi.MISO
+        .softspi_MOSI        (spi_MOSI),        //        .MOSI
+        .softspi_SCLK        (spi_SCLK),        //        .SCLK
+        .softspi_SS_n        (spi_SS_n)         //        .SS_n    
 		 );
+
 
 
 endmodule

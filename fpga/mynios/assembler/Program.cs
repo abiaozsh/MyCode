@@ -130,7 +130,6 @@ namespace Assembler
                 //cmpleu rC, rA, rB cmpgeu rC, rB, rA
                 //cmpleui rB, rA, IMMED cmpltui rB, rA, (IMMED+1)
 
-                //movi rB, IMMED addi, rB, r0, IMMED
                 //movia rB, label orhi rB, r0, %hiadj(label)
                 //addi, rB, r0, %lo(label)
                 //movui rB, IMMED ori rB, r0, IMMED
@@ -139,6 +138,10 @@ namespace Assembler
                 if ((new Config("nop")).match(line))//nop add r0, r0, r0
                 {
                     linespass2.Add(Line.match("add r0, r0, r0"));
+                }
+                else if ((new Config("movi reg, ins")).match(line))//movi rB, IMMED addi, rB, r0, IMMED
+                {
+                    linespass2.Add(Line.match("addi " + line.op1.text + ", r0, " + line.op2.text));
                 }
                 else if ((new Config("mov reg, reg")).match(line))//mov rC, rA add rC, rA, r0
                 {
@@ -222,7 +225,10 @@ namespace Assembler
                             {
                                 switch (matchCfg.textformat)
                                 {
-                                    case 0://ret
+                                    case 0://xxx
+                                        break;
+                                    case 1://ret
+                                        ins.bitregA = 31;
                                         break;
                                     case 5://hlt ins
                                         ins.bitins1 = line.op1.ins.Value;
@@ -247,7 +253,6 @@ namespace Assembler
                                         break;
                                     case 21://call sym
                                         ins.op = line.op1;
-                                        ins.bitregB = 31;
                                         break;
                                     case 22://br sym
                                         ins.op = line.op1;
