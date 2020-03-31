@@ -36,6 +36,7 @@ namespace WindowsFormsApplication1
 			this.timer1 = new System.Windows.Forms.Timer(this.components);
 			this.comboBox1 = new System.Windows.Forms.ComboBox();
 			this.textBox1 = new System.Windows.Forms.TextBox();
+			this.button2 = new System.Windows.Forms.Button();
 			this.SuspendLayout();
 			// 
 			// button1
@@ -90,15 +91,25 @@ namespace WindowsFormsApplication1
 			// 
 			this.textBox1.Location = new System.Drawing.Point(172, 12);
 			this.textBox1.Name = "textBox1";
-			this.textBox1.Size = new System.Drawing.Size(731, 21);
+			this.textBox1.Size = new System.Drawing.Size(630, 21);
 			this.textBox1.TabIndex = 18;
-			this.textBox1.KeyDown += textBox1_KeyDown;
+			// 
+			// button2
+			// 
+			this.button2.Location = new System.Drawing.Point(828, 10);
+			this.button2.Name = "button2";
+			this.button2.Size = new System.Drawing.Size(75, 23);
+			this.button2.TabIndex = 19;
+			this.button2.Text = "clear";
+			this.button2.UseVisualStyleBackColor = true;
+			this.button2.Click += new System.EventHandler(this.button2_Click);
 			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(915, 752);
+			this.Controls.Add(this.button2);
 			this.Controls.Add(this.textBox1);
 			this.Controls.Add(this.comboBox1);
 			this.Controls.Add(this.textBox4);
@@ -120,6 +131,7 @@ namespace WindowsFormsApplication1
 		private System.Windows.Forms.Timer timer1;
 		private System.Windows.Forms.ComboBox comboBox1;
 		private TextBox textBox1;
+		private Button button2;
 
 	}
 }

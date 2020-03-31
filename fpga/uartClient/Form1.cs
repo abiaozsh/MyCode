@@ -37,6 +37,7 @@ namespace WindowsFormsApplication1
 			{
 				this.comboBox1.Items.Add(s);
 			}
+			this.textBox1.KeyDown += textBox1_KeyDown;
 		}
 		private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
 		{
@@ -48,15 +49,18 @@ namespace WindowsFormsApplication1
 			connect(portName);
 		}
 
-
+		StringBuilder sb1 = new StringBuilder();
+		StringBuilder sb2 = new StringBuilder();
 		private void timer1_Tick(object sender, EventArgs e)
 		{
 			while (fifo.Count > 0)
 			{
 				char c = fifo.Dequeue();
-				textBox4.Text += c;
-				textBox3.Text += " " + getHex2((byte)c);
+				sb1.Append(c);
+				sb2.Append(" " + getHex2((byte)c));
 			}
+			textBox4.Text = sb1.ToString().Replace('\0', ' ');
+			textBox3.Text = sb2.ToString().Replace('\0', ' ');
 		}
 
 		void textBox1_KeyDown(object sender, KeyEventArgs e)
@@ -67,6 +71,13 @@ namespace WindowsFormsApplication1
 				textBox1.Text = "";
 			}
 		}
+
+		private void button2_Click(object sender, EventArgs e)
+		{
+			sb1 = new StringBuilder();
+			sb2 = new StringBuilder();
+		}
+
 
 	}
 }
