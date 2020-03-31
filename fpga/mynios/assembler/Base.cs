@@ -42,47 +42,31 @@ public class Base
 			dot,// .xxx 
 			sharp// # 7 "d.c" 1
 		}
+		public enum DotType
+		{
+			codeSection,
+			dataSection,
+			other
+		}
+
 		public bool isCodeSeg()
 		{
-			string temp = text.Trim();
-			if (temp.StartsWith(".section"))
+			if (dotType == DotType.codeSection)
 			{
-				if (temp == ".section .text")
-				{
-					return true;
-				}
-				else if (temp == ".section .sdata" || temp == ".section .rodata" || temp == ".section .data" || temp == ".section .sbss,\"aws\",@nobits" || temp == ".section .sdata,\"aws\",@progbits")
-				{
-					return false;
-				}
-				else
-				{
-					throw new Exception("unknown section:" + text);
-				}
+				return true;
 			}
 			return false;
 		}
 		public bool isDataSeg()
 		{
-			string temp = text.Trim();
-			if (temp.StartsWith(".section"))
+			if (dotType == DotType.dataSection)
 			{
-				if (temp == ".section .text")
-				{
-					return false;
-				}
-				else if (temp == ".section .sdata" || temp == ".section .rodata" || temp == ".section .data" || temp == ".section .sbss,\"aws\",@nobits" || temp == ".section .sdata,\"aws\",@progbits")
-				{
-					return true;
-				}
-				else
-				{
-					throw new Exception("unknown section:" + text);
-				}
+				return true;
 			}
 			return false;
 		}
 		public LineType type;
+		public DotType dotType;
 		public string text;
 		public string ToString()
 		{
@@ -105,6 +89,31 @@ public class Base
 			else if (line.StartsWith("."))
 			{
 				l.type = LineType.dot;
+				if (line.StartsWith(".file"))
+				{
+					l.dotType = DotType.other;
+				}
+				else if (line == ".section .text")
+				{
+					l.dotType = DotType.codeSection;
+				}
+				else if (line == ".section .sdata" || line == ".section .rodata" || line == ".section .data" || line == ".section .sbss,\"aws\",@nobits" || line == ".section .sdata,\"aws\",@progbits")
+				{
+					l.dotType = DotType.dataSection;
+				}
+				else if (line.StartsWith(".align") || line.StartsWith(".global") || line.StartsWith(".type") || line.StartsWith(".size") || line.StartsWith(".ident"))
+				{
+					l.dotType = DotType.other;
+				}
+				else if (line.StartsWith(".long") || line.StartsWith(".string") || line.StartsWith(".comm") || line.StartsWith(".zero 4"))
+				{
+					l.dotType = DotType.other;
+				}
+
+				else
+				{
+					throw new Exception("unknown dot type:" + line);
+				}
 			}
 			else if (line.StartsWith("#"))
 			{

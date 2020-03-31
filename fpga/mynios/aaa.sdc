@@ -45,9 +45,6 @@ create_clock -name {sys_clk} -period 20.000 -waveform { 0.000 10.000 } [get_port
 # Create Generated Clock
 #**************************************************************
 
-create_generated_clock -name {comb_6|altpll_component|auto_generated|pll1|clk[0]} -source [get_pins {comb_6|altpll_component|auto_generated|pll1|inclk[0]}] -duty_cycle 50.000 -multiply_by 2 -master_clock {sys_clk} [get_pins {comb_6|altpll_component|auto_generated|pll1|clk[0]}] 
-create_generated_clock -name {comb_6|altpll_component|auto_generated|pll1|clk[1]} -source [get_pins {comb_6|altpll_component|auto_generated|pll1|inclk[0]}] -duty_cycle 50.000 -multiply_by 2 -phase -75.000 -master_clock {sys_clk} [get_pins {comb_6|altpll_component|auto_generated|pll1|clk[1]}] 
-
 
 #**************************************************************
 # Set Clock Latency
@@ -81,9 +78,6 @@ create_generated_clock -name {comb_6|altpll_component|auto_generated|pll1|clk[1]
 #**************************************************************
 # Set False Path
 #**************************************************************
-
-set_false_path -from [get_registers {*altera_avalon_st_clock_crosser:*|in_data_buffer*}] -to [get_registers {*altera_avalon_st_clock_crosser:*|out_data_buffer*}]
-set_false_path -to [get_keepers {*altera_std_synchronizer:*|din_s1}]
 
 
 #**************************************************************

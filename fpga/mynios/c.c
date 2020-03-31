@@ -49,6 +49,15 @@ int myprintf2(char* str, int len){
   }
 }
 
+char* chardata = "0123456789ABCDEF";
+int printChar(int val, char s){
+  uart_write('[');
+  uart_write(s);
+  int i = 4;
+  uart_write(chardata[(val>>i)&0x0F]);
+  uart_write(chardata[(val)&0x0F]);
+  uart_write(']');
+}
 
 int num10s[] = {
 1000000000,
@@ -187,16 +196,18 @@ int spiRec(void) {
   }
   // enable interrupts
   //sei();
+  printChar(data,'r');
   return data;
 }
 //------------------------------------------------------------------------------
 void spiSend(int data) {
+  printChar(data,'s');
   // no interrupts during byte send - about 8 us
   //cli();
   int i;
   for (i = 0; i < 8; i++) {
     SPI_SCK_LOW();
-    if(data & 0X80)
+    if(data & 0x80)
     {
       SPI_MOSI_HIGH();
     }
@@ -225,7 +236,7 @@ int Sd2Card_waitNotBusy(int timeoutMillis) {
 
   while(1)
   {
-	  if (spiRec() == 0XFF) return 1;
+	  if (spiRec() == 0xFF) return 1;
 
 	  int time = IORD(MYTIMER, 0);
 	  if(time > timeoutMillis){
@@ -242,20 +253,20 @@ int Sd2Card_cardCommand(int cmd, int arg) {
   SPI_CHIP_SELECT_LOW(0);
   // wait up to 300 ms if busy
   myprintf("W");
-  Sd2Card_waitNotBusy(300);
+  Sd2Card_waitNotBusy(3000000);
   // send command
   spiSend(cmd | 0x40);
   // send argument
   int s;
   for (s = 24; s >= 0; s -= 8) spiSend(arg >> s);
   // send CRC
-  int crc = 0XFF;
-  if (cmd == CMD0) crc = 0X95;  // correct crc for CMD0 with arg 0
-  if (cmd == CMD8) crc = 0X87;  // correct crc for CMD8 with arg 0X1AA
+  int crc = 0xFF;
+  if (cmd == CMD0) crc = 0x95;  // correct crc for CMD0 with arg 0
+  if (cmd == CMD8) crc = 0x87;  // correct crc for CMD8 with arg 0X1AA
   spiSend(crc);
   // wait for response
   int i;
-  for (i = 0; ((Sd2Card_status_ = spiRec()) & 0X80) && i != 0XFF; i++);
+  for (i = 0; ((Sd2Card_status_ = spiRec()) & 0x80) && i != 0xFF; i++);
   return Sd2Card_status_;
 }
 
@@ -274,7 +285,7 @@ int MMCCard_cardinit() {
 
   // must supply min of 74 clock cycles with CS high.
   int i;
-  for (i = 0; i < 100; i++) spiSend(0XFF);
+  for (i = 0; i < 20; i++) spiSend(0XFF);
 
   SPI_CHIP_SELECT_LOW(0);
 
@@ -283,17 +294,18 @@ int MMCCard_cardinit() {
   for(i=0;i<10;i++){//SD_INIT_TIMEOUT*1000
     if((Sd2Card_status_ = Sd2Card_cardCommand(CMD0, 0)) == R1_IDLE_STATE)
     {
+      myprintf("ok");
       ok=1;
       break;
     }
-    myprintf("Sd2Card_status_:");
+    myprintf("s:");
     printInt(Sd2Card_status_);
+    myprintf("\r\n");
   }
   if (!ok) {
     errCode = 1;
     goto fail;
   }
-  myprintf("O");
 
   ok=0;
   for(i=0;i<100;i++){//SD_INIT_TIMEOUT*1000
@@ -354,9 +366,11 @@ int Sd2Card_readData(int block) {
   //myprintf("s1\r\n");
  // use address if not SDHC card
   if (Sd2Card_type_ != SD_CARD_TYPE_SDHC) block <<= 9;
-  asm("hlt 1");
-  asm("hlt 0");
-   if (Sd2Card_cardCommand(CMD17, block)) {
+  int result = Sd2Card_cardCommand(CMD17, block);
+  printInt(result);
+  //asm("hlt 1");
+  //asm("hlt 0");
+   if (result) {
     //myprintf("s2\r\n");
     //asm("hlt 1");
     //asm("hlt 0");
@@ -413,11 +427,13 @@ int main()
 	while(1){
     char buff[2];
     buff[0] = (char)uart_read(-1);
+    int s;
 
+    
 		if(buff[0]=='i'){
 			myprintf("init start!\r\n");
 			MMCCard_cardinit();
-			myprintf("init ok!\r\n");
+			myprintf("init end!\r\n");
 		}
 
     if(buff[0]=='r'){
