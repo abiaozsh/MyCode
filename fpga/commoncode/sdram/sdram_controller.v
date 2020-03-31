@@ -3,14 +3,15 @@ module sdram_controller(
     input         rst_n,            //系统复位信号，低电平有效
 
     // FPGA与SDRAM硬件接口
-    output        sdram_cke,        // SDRAM 时钟有效信号
-    output        sdram_cs_n,       // SDRAM 片选信号
-    output        sdram_ras_n,      // SDRAM 行地址选通脉冲
-    output        sdram_cas_n,      // SDRAM 列地址选通脉冲
-    output        sdram_we_n,       // SDRAM 写允许位
+    output            sdram_cke,        // SDRAM 时钟有效信号
+    output            sdram_cs_n,       // SDRAM 片选信号
+    output            sdram_ras_n,      // SDRAM 行地址选通脉冲
+    output            sdram_cas_n,      // SDRAM 列地址选通脉冲
+    output            sdram_we_n,       // SDRAM 写允许位
     output reg [ 1:0] sdram_ba,         // SDRAM L-Bank地址线
     output reg [12:0] sdram_addr,       // SDRAM 地址总线
-    inout  [15:0] sdram_data,        // SDRAM 数据总线
+    inout  [15:0]     sdram_data,        // SDRAM 数据总线
+    output  [ 1:0]    sdram_dqm,
     
     //TODO 读写地址合并 burst 合并
     
@@ -20,6 +21,7 @@ module sdram_controller(
     output        sdram_wr_ack,     //写SDRAM响应信号
     input  [ 9:0] sdram_wr_burst,   //写sdram时数据突发长度
     input  [15:0] sdram_din,        //写入SDRAM的数据
+    input  [ 1:0] sdram_mask,
     
     //SDRAM 控制器读端口  
     input         sdram_rd_req,     //读SDRAM请求信号
@@ -461,11 +463,13 @@ end
 //reg define
 reg        sdram_out_en;                //SDRAM数据总线输出使能
 reg [15:0] sdram_din_r;                 //寄存写入SDRAM中的数据
+reg  [1:0] sdram_mask_r;
 reg [15:0] sdram_dout_r;                //寄存从SDRAM中读取的数据
 
 
 //SDRAM 双向数据线作为输入时保持高阻态
 assign sdram_data = sdram_out_en ? sdram_din_r : 16'hzzzz;
+assign sdram_dqm = sdram_out_en ? sdram_mask_r : 2'b00;
 
 //输出SDRAM中读取的数据
 assign sdram_dout = sdram_dout_r;
@@ -482,10 +486,13 @@ end
 
 //将待写入数据送到SDRAM数据总线上
 always @ (posedge clk or negedge rst_n) begin
-  if(!rst_n) 
+  if(!rst_n) begin
     sdram_din_r <= 16'd0;
-  else if((work_state == W_WRITE) | (work_state == W_WD))
+    sdram_mask_r <= 0;
+  end else if((work_state == W_WRITE) | (work_state == W_WD))begin
     sdram_din_r <= sdram_din;   //寄存写入SDRAM中的数据
+    sdram_mask_r <= sdram_mask;
+  end
 end
 
 //读数据时,寄存SDRAM数据线上的数据

@@ -38,7 +38,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 
     
     if(rx_flag) begin //系统处于接收过程
-      clk_cnt <= clk_cnt + 1;
+      clk_cnt <= clk_cnt + 1'b1;
       case ( clk_cnt )
         (1*BPS_CNT+BPS_CNT_HALF) : uart_data_out[0] <= uart_rxd_last2; //寄存数据位最低位
         (2*BPS_CNT+BPS_CNT_HALF) : uart_data_out[1] <= uart_rxd_last2;
