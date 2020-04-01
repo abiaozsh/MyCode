@@ -93,15 +93,15 @@ public class Base
 				{
 					l.dotType = DotType.other;
 				}
-				else if (line == ".section .text")
+				else if (line.StartsWith(".section .text"))
 				{
 					l.dotType = DotType.codeSection;
 				}
-				else if (line == ".section .sdata" || line == ".section .rodata" || line == ".section .data" || line == ".section .sbss,\"aws\",@nobits" || line == ".section .sdata,\"aws\",@progbits")
+				else if (line == ".section .sdata" || line == ".section .rodata" || line == ".section .data" || line.StartsWith(".section .sbss") || line == ".section .sdata,\"aws\",@progbits")
 				{
 					l.dotType = DotType.dataSection;
 				}
-				else if (line.StartsWith(".align") || line.StartsWith(".global") || line.StartsWith(".type") || line.StartsWith(".size") || line.StartsWith(".ident"))
+				else if (line.StartsWith(".align") || line.StartsWith(".global") || line.StartsWith(".type") || line.StartsWith(".size") || line.StartsWith(".ident") || line.StartsWith(".weak"))
 				{
 					l.dotType = DotType.other;
 				}
@@ -216,6 +216,15 @@ public class Base
 			{
 				op.type = OpType.reg;
 				op.reg = tempreg;
+				return op;
+			}
+
+			if (sop.StartsWith("0x"))
+			{
+				string temp = sop.Substring(2);
+				itemp = Convert.ToInt32(temp, 16);
+				op.type = OpType.ins;
+				op.ins = itemp;
 				return op;
 			}
 

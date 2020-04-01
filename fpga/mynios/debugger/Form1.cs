@@ -112,6 +112,8 @@ namespace WindowsFormsApplication1
 		}
 		public void getstatus()
 		{
+			int baseaddr = 0;
+
 			StringBuilder sb = new StringBuilder();
 			sb.Append("r0:");
 			getreg(0x47, 0x00, sb);
@@ -164,24 +166,20 @@ namespace WindowsFormsApplication1
 
 			sb.Append("pc:");
 			int pc = getreg(0x43, 0x00, sb);
-			sb.Append("  last cmd:");
-			portWrite((byte)(0x18), (byte)0x00); byte[] temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
-			sb.Append("  Rtype:");
-			portWrite((byte)(0x19), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
+			//sb.Append("  last cmd:");
+			//portWrite((byte)(0x18), (byte)0x00); byte[] temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
+			//sb.Append("  Rtype:");
+			//portWrite((byte)(0x19), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
 			sb.AppendLine();
 
 			sb.AppendLine("stack: ");
-			int idx = -16;
-			sb.Append("" + idx + ":"); getmem(sp + ds + idx, sb); idx += 4; sb.AppendLine();
-			sb.Append("" + idx + ":"); getmem(sp + ds + idx, sb); idx += 4; sb.AppendLine();
-			sb.Append(" " + idx + ":"); getmem(sp + ds + idx, sb); idx += 4; sb.AppendLine();
-			sb.Append(" " + idx + ":"); getmem(sp + ds + idx, sb); idx += 4; sb.AppendLine();
-			sb.Append("  " + idx + ":"); getmem(sp + ds + idx, sb); idx += 4; sb.AppendLine();
-			sb.Append("  " + idx + ":"); getmem(sp + ds + idx, sb); idx += 4; sb.AppendLine();
-			sb.Append("  " + idx + ":"); getmem(sp + ds + idx, sb); idx += 4; sb.AppendLine();
-			sb.Append(" " + idx + ":"); getmem(sp + ds + idx, sb); idx += 4; sb.AppendLine();
+			baseaddr = sp + ds;
+			for (int i = -Convert.ToInt32(this.comboBox2.Text) * 4; i < Convert.ToInt32(this.comboBox2.Text) * 4; i += 4)
+			{
+				sb.Append((i == 0 ? "*" : " ") + Util.getHex8((uint)(i + baseaddr)) + ":"); getmem(i + baseaddr, sb); sb.AppendLine();
+			}
 
-			int baseaddr = 0;
+			baseaddr = 0;
 			sb.AppendLine("code: ");
 			for (int i = -32; i < 32; i += 4)
 			{
@@ -313,6 +311,9 @@ namespace WindowsFormsApplication1
 			portWrite((byte)(0x01), 1);//halt_uart
 
 			int baseAddr = 0x02000000;
+			//setmem(0x02000000, 0);
+
+
 
 			FileStream fs = new FileStream("out.hex", FileMode.Open, FileAccess.Read);
 			StreamReader sr = new StreamReader(fs);

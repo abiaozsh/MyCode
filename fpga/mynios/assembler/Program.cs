@@ -88,11 +88,11 @@ namespace Assembler
 			bool standalone = true;
 			if (standalone)
 			{
-				//0200C000
-				lines.Add(Line.match("movhi sp, %hiadj(33603584)"));
-				lines.Add(Line.match("addi sp, sp, %lo(33603584)"));
-				lines.Add(Line.match("jmpi main"));
+				int sp = 0x0200C000;
 				basePos = 0x02000000;
+				lines.Add(Line.match("movhi sp, %hiadj(" + sp + ")"));
+				lines.Add(Line.match("addi sp, sp, %lo(" + sp + ")"));
+				lines.Add(Line.match("jmpi main"));
 			}
 			else
 			{

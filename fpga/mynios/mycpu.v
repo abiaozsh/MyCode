@@ -747,12 +747,18 @@ wire cpu_reset_n = reset_n && debug_reset_n;
 
           //cmpge reg, reg, reg          @          30 @                      1 @   8 @ 0x3A,0x08
           end else if(cmd==6'd8)begin
-            // if ((signed) rA >= (signed) rB) then rC ← 1  else rC ← 0
-            regResult <= {31'b0,(comp_ge)};
+            regResult <= {31'b0,(comp_ge)};// if ((signed) rA >= (signed) rB) then rC ← 1  else rC ← 0
             regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-          
+
+          //cmplt reg, reg, reg          @          30 @                      1 @  16 @ 0x3A,0x10
+          end else if(cmd==6'd16)begin
+            regResult <= {31'b0,(~comp_ge)};//if ((signed) rA < (signed) rB) then rC ← 1 else rC ← 0
+            regResultC <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+
           //slli reg, reg, ins           @          40 @                      1 @  18 @ 0x3A,0x12
           end else if(cmd==6'd18)begin
             // rC ← rA << IMM5
@@ -768,6 +774,22 @@ wire cpu_reset_n = reset_n && debug_reset_n;
               pc <= nextpc;
               cmd_ack <= 1;
             end
+          //srai reg, reg, ins           @          40 @                      1 @  58 @ 0x3A,0x3a
+          end else if(cmd==6'd58)begin
+            // rC ← (signed) rA >> ((unsigned) IMM5)
+            if         (exec_step==0)begin
+              shiftDirection <= 1;//0:left 1:right
+              shiftDistance <= IMM5;
+              exec_step <= 1;
+            end else if(exec_step==1)begin
+              // shift left logical immediate
+              regResult <= shiftResultArithmetic;
+              regResultC <= 1;
+              exec_step <= 0;
+              pc <= nextpc;
+              cmd_ack <= 1;
+            end
+
           
           end else begin
             halt_cpu <= 1;
