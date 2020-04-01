@@ -38,6 +38,8 @@ namespace WindowsFormsApplication1
 				this.comboBox1.Items.Add(s);
 			}
 			this.textBox1.KeyDown += textBox1_KeyDown;
+
+			this.comboBox2.SelectedIndex = 0;
 		}
 		private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
 		{
@@ -68,6 +70,26 @@ namespace WindowsFormsApplication1
 			if (e.KeyCode == Keys.Enter)
 			{
 				port.Write(textBox1.Text);
+				if (this.comboBox2.Text == "\\0")
+				{
+					port.Write(new byte[] { (byte)0 }, 0, 1);
+				}
+				if (this.comboBox2.Text == "\\n")
+				{
+					port.Write(new byte[] { (byte)'\n' }, 0, 1);
+				}
+				if (this.comboBox2.Text == "\\r\\n")
+				{
+					port.Write(new byte[] { (byte)'\r', (byte)'\n' }, 0, 2);
+				}
+				if (this.comboBox2.Text == "\\n\\0")
+				{
+					port.Write(new byte[] { (byte)'\n', (byte)0 }, 0, 2);
+				}
+				if (this.comboBox2.Text == "\\r\\n\\0")
+				{
+					port.Write(new byte[] { (byte)'\r', (byte)'\n', (byte)0 }, 0, 3);
+				}
 				textBox1.Text = "";
 			}
 		}

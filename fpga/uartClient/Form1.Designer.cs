@@ -37,6 +37,8 @@ namespace WindowsFormsApplication1
 			this.comboBox1 = new System.Windows.Forms.ComboBox();
 			this.textBox1 = new System.Windows.Forms.TextBox();
 			this.button2 = new System.Windows.Forms.Button();
+			this.comboBox2 = new System.Windows.Forms.ComboBox();
+			this.label1 = new System.Windows.Forms.Label();
 			this.SuspendLayout();
 			// 
 			// button1
@@ -91,7 +93,7 @@ namespace WindowsFormsApplication1
 			// 
 			this.textBox1.Location = new System.Drawing.Point(172, 12);
 			this.textBox1.Name = "textBox1";
-			this.textBox1.Size = new System.Drawing.Size(630, 21);
+			this.textBox1.Size = new System.Drawing.Size(504, 21);
 			this.textBox1.TabIndex = 18;
 			// 
 			// button2
@@ -104,11 +106,37 @@ namespace WindowsFormsApplication1
 			this.button2.UseVisualStyleBackColor = true;
 			this.button2.Click += new System.EventHandler(this.button2_Click);
 			// 
+			// comboBox2
+			// 
+			this.comboBox2.FormattingEnabled = true;
+			this.comboBox2.Items.AddRange(new object[] {
+            "none",
+            "\\0",
+            "\\n",
+            "\\r\\n",
+            "\\n\\0",
+            "\\r\\n\\0"});
+			this.comboBox2.Location = new System.Drawing.Point(737, 10);
+			this.comboBox2.Name = "comboBox2";
+			this.comboBox2.Size = new System.Drawing.Size(85, 20);
+			this.comboBox2.TabIndex = 20;
+			// 
+			// label1
+			// 
+			this.label1.AutoSize = true;
+			this.label1.Location = new System.Drawing.Point(682, 13);
+			this.label1.Name = "label1";
+			this.label1.Size = new System.Drawing.Size(47, 12);
+			this.label1.TabIndex = 21;
+			this.label1.Text = "endwith";
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(915, 752);
+			this.Controls.Add(this.label1);
+			this.Controls.Add(this.comboBox2);
 			this.Controls.Add(this.button2);
 			this.Controls.Add(this.textBox1);
 			this.Controls.Add(this.comboBox1);
@@ -132,6 +160,8 @@ namespace WindowsFormsApplication1
 		private System.Windows.Forms.ComboBox comboBox1;
 		private TextBox textBox1;
 		private Button button2;
+		private ComboBox comboBox2;
+		private Label label1;
 
 	}
 }
