@@ -112,6 +112,24 @@ namespace WindowsFormsApplication1
             port.Write(buff, 0, buff.Length);
         }
 
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+            // 
+            // Base
+            // 
+            this.ClientSize = new System.Drawing.Size(292, 273);
+            this.Name = "Base";
+            this.Load += new System.EventHandler(this.Base_Load);
+            this.ResumeLayout(false);
+
+        }
+
+        private void Base_Load(object sender, EventArgs e)
+        {
+
+        }
+
 
 
 

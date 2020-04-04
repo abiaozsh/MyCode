@@ -53,9 +53,9 @@ namespace Assembler
 			catch (Exception ex)
 			{
 				Console.WriteLine(ex);
+				Console.ReadLine();
 			}
 
-			Console.ReadLine();
 		}
 		public static void compile(string filein, string fileout, string filetemp)
 		{
@@ -132,7 +132,7 @@ namespace Assembler
 
 				//movia rB, label orhi rB, r0, %hiadj(label)
 				//addi, rB, r0, %lo(label)
-				//movui rB, IMMED ori rB, r0, IMMED
+				
 				//subi rB, rA, IMMED addi rB, rA, (-IMMED)
 
 				if ((new Config("nop")).match(line))//nop add r0, r0, r0
@@ -142,6 +142,10 @@ namespace Assembler
 				else if ((new Config("movi reg, ins")).match(line))//movi rB, IMMED addi, rB, r0, IMMED
 				{
 					linespass2.Add(Line.match("addi " + line.op1.text + ", r0, " + line.op2.text));
+				}
+				else if ((new Config("movui reg, ins")).match(line))//movui rB, IMMED ori rB, r0, IMMED
+				{
+					linespass2.Add(Line.match("ori " + line.op1.text + ", r0, " + line.op2.text));
 				}
 				else if ((new Config("mov reg, reg")).match(line))//mov rC, rA add rC, rA, r0
 				{

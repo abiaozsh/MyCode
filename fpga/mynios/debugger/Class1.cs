@@ -18,11 +18,11 @@ namespace debugger
 	}
 	public enum Instype
 	{
-		call = 0x00,
-		jmpi = 0x01,
+        call = 0x1A,
+        jmpi = 0x0A,
 		hlt = 0x02,
-        ldbu = 0x03,
-        addi = 0x04,
+		ldbu = 0x03,
+		addi = 0x04,
 		stb = 0x05,
 		br = 0x06,
 		ldb = 0x07,
@@ -266,7 +266,7 @@ namespace debugger
 				}
 				else
 				{
-					sIns += "--------------------------------------";
+					sIns += "C:" + C + " A:" + A + " B:" + B + "--------------------------------------";
 				}
 			}
 			else
@@ -281,7 +281,7 @@ namespace debugger
 				{
 					sIns += B + " <- " + A + " | " + Util.getHex4((int)IMM);
 				}
-                else if (itype == Instype.hlt)
+				else if (itype == Instype.hlt)
 				{
 					sIns += IMM;
 				}
@@ -345,11 +345,14 @@ namespace debugger
 		public static string getSym(int pos, List<CodeSym> syms)
 		{
 			string foundsym = "";
-			foreach (var sym in syms)
+			if (syms != null)
 			{
-				if (sym.pos == pos)
+				foreach (var sym in syms)
 				{
-					foundsym += sym.name + ",";
+					if (sym.pos == pos)
+					{
+						foundsym += sym.name + ",";
+					}
 				}
 			}
 			return foundsym;

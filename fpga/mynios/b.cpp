@@ -11,18 +11,16 @@
 //int b[1000000];
 char* bb = "bbbbaaaaa";
 
-char* sdrambuff;
-
 int main(){
-  sdrambuff = (char*)(0);
+  //sdrambuff = (char*)(0);
   print("Hello from Nios II! demo b\r\n");
   while(1){
-    scan(sdrambuff,-1,-1);
-    print(sdrambuff);
-    continue;
+    print("input:\r\n");
     char buff[5];
     scan(buff,4,-1);
     print(buff);
+    printInt(equal(buff,"abcd",1));
+    printInt(equal(buff,"abcd",2));
     
     //b[999999] = 1;
     print("\r\n");
@@ -43,5 +41,11 @@ int main(){
     print("\r\n");
     print(bb, 5);
     print("\r\n");
+    
+    if(equal(buff,"test",3)){
+      print("input int:");
+      int val = scanInt();
+      printInt(val);
+    }
   }
 }

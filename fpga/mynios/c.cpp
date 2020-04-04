@@ -14,27 +14,28 @@
 
 
 
-char* SDdata;
-
-
-
 int main()
 {
-  SDdata = (char*)(0);//at sdram [512]
   
-	char buff[4];
+  SDcard* sdcard;
+
+  sdcard = (SDcard*)(0);//at sdram [512]
+  sdcard->chip_select = 0;
+  
+	char sbuff[10];
 
 	print("Hello from Nios II!\r\n");
 
 	while(1){
-    char buff[2];
-    buff[0] = (char)uart_read(-1);
-    int s;
+    scan(sbuff,-1,-1);
 
-    
-		if(buff[0]=='i'){
+		if(equal(sbuff,"i",-1)){
+      print("which sd?:\r\n");
+      
+      sdcard->chip_select = scanInt();
+      
 			print("init start!\r\n");
-			int result = MMCCard_cardinit();
+			int result = MMCCard_cardinit(sdcard);
       if(result){
         print("init success!\r\n");
       }else{
@@ -42,25 +43,20 @@ int main()
       }
 		}
 
-    if(buff[0]=='r'){
+    if(equal(sbuff,"r",-1)){
       int block;
-      
-      buff[0] = (char)uart_read(-1);
-      if(buff[0]=='0'){
-        block = 0;
-      }else{
-        block = 1;
-      }
-      
-      
+      print("block?:\r\n");
+      block = scanInt();
+      printInt(block);
+
       print("[");
-      if (Sd2Card_readData(block, SDdata)) {
+      if (Sd2Card_readData(sdcard, block)) {
       int i;
         for(i=0;i<512;i++){
           if((i&15)==0 && i!=0){
             print("\n");
           }
-          char data = SDdata[i];
+          char data = sdcard->buff.data[i];
           printByte(data);
           //uart_write(data);
         }
@@ -68,7 +64,7 @@ int main()
       }
       else {
         print("err:");
-        printInt(errCode);
+        printInt(sdcard->errCode);
       }
 
     }

@@ -1,5 +1,5 @@
 
-int print(char* str){
+int print(const char* str){
   int idx = 0;
   while(1){
     char tmp = str[idx];
@@ -9,14 +9,36 @@ int print(char* str){
   }
 }
 
-int print(char* str, int len){
+int print(const char* str, int len){
   int idx = 0;
   int i;
   for(i=0;i<len;i++){
     char tmp = str[i];
-    if(tmp=='\0')break;
     uart_write(tmp);
   }
+}
+
+int equal(const char* a,const  char* b, int maxlen){
+  int i = 0;
+  while(1){
+    if(a[i]!=b[i]){
+      return 0;
+    }
+    if(a[i]=='\0' && b[i]=='\0'){
+      break;
+    }
+    if(a[i]=='\0' || b[i]=='\0'){
+      return 0;
+    }
+    
+    i++;
+    if(maxlen>0){
+      if(i>=maxlen){
+        break;
+      }
+    }
+  }
+  return 1;
 }
 
 int scan(char* buff, int maxlen, int timeout){
@@ -40,7 +62,6 @@ int scan(char* buff, int maxlen, int timeout){
   }
   
 }
-
 
 int num10s[] = {
 1000000000,
@@ -68,6 +89,7 @@ void printInt(int val)
     uart_write('-');
   }
   
+  uart_write('0');
   int outNum;
   int flg = 0;
   for(idx = 0; idx < 10 ; idx++)
@@ -95,6 +117,40 @@ void printInt(int val)
       }
     }
   }
+}
+
+int scanInt(){
+  char buff[10];
+  int i;
+  int j;
+  int idx = 0;
+  int neg = 0;
+  for(i = 0; i < 10 ; i++)
+  {
+    char v = uart_read();
+    if(i==0 && v=='-'){
+      neg = 1;
+    }else{
+      if(v<'0'||v>'9'){
+        break;
+      }
+      buff[idx++] = v;
+    }
+  }
+  
+  int val = 0;
+  
+  for(i = 0; i < idx ; i++)
+  {
+    for(j = 0; j < (int)(buff[i]-'0') ; j++)
+    {
+      val+=num10s[10-idx+i];
+    }
+  }
+  if(neg){
+    val=-val;
+  }
+  return val;
 }
 
 int printByte(int val){
