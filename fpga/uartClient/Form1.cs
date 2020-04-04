@@ -39,7 +39,7 @@ namespace WindowsFormsApplication1
 			}
 			this.textBox1.KeyDown += textBox1_KeyDown;
 
-			this.comboBox2.SelectedIndex = 0;
+			this.comboBox2.SelectedIndex = 1;
 		}
 		private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
 		{
@@ -69,7 +69,12 @@ namespace WindowsFormsApplication1
 		{
 			if (e.KeyCode == Keys.Enter)
 			{
-				port.Write(textBox1.Text);
+
+				foreach (var item in textBox1.Text)
+				{
+					port.Write(new byte[] { (byte)item }, 0, 1);
+				}
+
 				if (this.comboBox2.Text == "\\0")
 				{
 					port.Write(new byte[] { (byte)0 }, 0, 1);
@@ -80,15 +85,19 @@ namespace WindowsFormsApplication1
 				}
 				if (this.comboBox2.Text == "\\r\\n")
 				{
-					port.Write(new byte[] { (byte)'\r', (byte)'\n' }, 0, 2);
+					port.Write(new byte[] { (byte)'\r' }, 0, 1);
+					port.Write(new byte[] { (byte)'\n' }, 0, 1);
 				}
 				if (this.comboBox2.Text == "\\n\\0")
 				{
-					port.Write(new byte[] { (byte)'\n', (byte)0 }, 0, 2);
+					port.Write(new byte[] { (byte)'\n' }, 0, 1);
+					port.Write(new byte[] { (byte)0 }, 0, 1);
 				}
 				if (this.comboBox2.Text == "\\r\\n\\0")
 				{
-					port.Write(new byte[] { (byte)'\r', (byte)'\n', (byte)0 }, 0, 3);
+					port.Write(new byte[] { (byte)'\r' }, 0, 1);
+					port.Write(new byte[] { (byte)'\n' }, 0, 1);
+					port.Write(new byte[] { (byte)0 }, 0, 1);
 				}
 				textBox1.Text = "";
 			}
