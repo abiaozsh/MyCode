@@ -155,7 +155,8 @@ end
 
 	wire mainSRAM_write = mainSRAM_cs ? avm_m0_write : 1'b0;
   
-  wire [12:0] mainSRAM_address = avm_m0_address[14:2];//~[12:0]
+  //wire [12:0] mainSRAM_address = avm_m0_address[14:2];//~[12:0]
+  wire [8:0] mainSRAM_address = avm_m0_address[10:2];//~[8:0]
   
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 

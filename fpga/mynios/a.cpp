@@ -7,6 +7,11 @@
 #include "inc/uart.cpp"
 
 int main(){
+  uart_write('t');
+  uart_write('e');
+  uart_write('s');
+  uart_write('t');
+  uart_write('A');
   while(1){
     int val1 = uart_read(1000000);
     if(val1=='a'){
@@ -17,7 +22,7 @@ int main(){
     }else{
       uart_write('*');
     }
-    if(val1==0){
+    if(val1==-1){
       uart_write('-');
     }else{
       uart_write(val1);

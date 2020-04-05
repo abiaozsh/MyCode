@@ -337,7 +337,7 @@ namespace debugger
 
 			string sym = getSym(pos, syms);
 
-			sb.Append(pos + "(" + sym + ") [" + hex + "]" + " : " + sIns);
+			sb.Append("(" + sym + ") [" + hex + "]" + " : " + sIns);
 
 			return sb.ToString();
 		}

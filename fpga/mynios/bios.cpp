@@ -11,28 +11,6 @@
 #include "inc/io.h"
 #include "inc/system.h"
 
-int uart_read(int timeout){
-  if(timeout!=-1){
-    IOWR(MYTIMER, 0 ,0);
-  }
-  while(1){
-    if(timeout!=-1){
-      int timer = IORD(MYTIMER, 0);
-      if(timer>timeout){
-        return -1;
-      }
-    }
-    int tmp = IORD(MYUART, 0);
-    if(tmp&0x100){
-      return tmp & 0xFF;
-    }
-  }
-}
-
-int uart_read(){
-  uart_read(-1);
-}
-
 int uart_write(int val){
   while((IORD(MYUART, 1)) & 0x100);
   IOWR(MYUART, 1 ,val);
@@ -56,29 +34,6 @@ int print(const char* str, int len){
     char tmp = str[i];
     uart_write(tmp);
   }
-}
-
-int equal(const char* a,const  char* b, int maxlen){
-  int i = 0;
-  while(1){
-    if(a[i]!=b[i]){
-      return 0;
-    }
-    if(a[i]=='\0' && b[i]=='\0'){
-      break;
-    }
-    if(a[i]=='\0' || b[i]=='\0'){
-      return 0;
-    }
-    
-    i++;
-    if(maxlen>0){
-      if(i>=maxlen){
-        break;
-      }
-    }
-  }
-  return 1;
 }
 
 int printByte(int val){
@@ -356,7 +311,6 @@ struct SDcard{//partitionTable
   int block;
   int inBlock;
   int offset;
-  int status;
   int type;
 };
 
@@ -384,7 +338,6 @@ struct SdVolume{
 struct Root{
   SdVolume* sdvolume;
   char volumeLabel[11];
-  int type;
   int firstCluster;
   int fileSize;
   int curCluster;
@@ -409,10 +362,6 @@ struct File{
 
 int combineInt(char v0, char v1, char v2, char v3){
   return (v0&0x0FF) | ((v1<<8)&0x0FF00) | ((v2<<16)&0x0FF0000) | ((v3<<24)&0x0FF000000);
-}
-
-short combineShort(char v0, char v1){
-  return (v0&0x0FF) | ((v1<<8)&0x0FF00);
 }
 
 int Sd2Card_waitNotBusy(int timeoutMillis) {
@@ -453,23 +402,23 @@ int Sd2Card_cardCommand(SDcard* sdcard, int cmd, int arg) {
 }
 
 int MMCCard_cardinit(SDcard* sdcard) {
-  sdcard->type = 0;
+  //sdcard->type = 0;
   // 16-bit init start time allows over a minute
-  int arg;
+  //int arg;
 
   // set pin modes
-  SPI_CHIP_SELECT_HIGH();
+  //SPI_CHIP_SELECT_HIGH();
 
 
   // must supply min of 74 clock cycles with CS high.
   for (int i = 0; i < 20; i++) spiSend(0XFF);
 
-  SPI_CHIP_SELECT_LOW(sdcard->chip_select);
+  //SPI_CHIP_SELECT_LOW(sdcard->chip_select);
 
   // command to go idle in SPI mode
   int ok = 0;
   for(int i=0;i<10;i++){//SD_INIT_TIMEOUT*1000
-    if((sdcard->status = Sd2Card_cardCommand(sdcard, CMD0, 0)) == R1_IDLE_STATE)
+    if(Sd2Card_cardCommand(sdcard, CMD0, 0) == R1_IDLE_STATE)
     {
       ok=1;
       break;
@@ -477,7 +426,7 @@ int MMCCard_cardinit(SDcard* sdcard) {
   }
   if (!ok) {
     //print("err1\r\n");
-    goto fail;
+    return 0;
   }
 
   ok=0;
@@ -489,24 +438,18 @@ int MMCCard_cardinit(SDcard* sdcard) {
   }
   if (!ok) {
       //print("err2\r\n");
-      goto fail;
+    return 0;
   }
-
-  SPI_CHIP_SELECT_HIGH();
-
   return 1;
-
- fail:
-  SPI_CHIP_SELECT_HIGH();
-  return 0;
 }
 
 
 int Sd2Card_waitStartBlock(SDcard* sdcard) {
   int ok=0;
   int i;
+  int status;
   for(i=0;i<SD_READ_TIMEOUT*1000;i++){
-    if((sdcard->status = spiRec()) == 0XFF) {
+    if((status = spiRec()) == 0XFF) {
     }
     else
     {
@@ -516,39 +459,28 @@ int Sd2Card_waitStartBlock(SDcard* sdcard) {
   }
   if (!ok) {
     //print("err3\r\n");
-    goto fail;
+    return 0;
   }
 
-  if (sdcard->status != DATA_START_BLOCK) {
+  if (status != DATA_START_BLOCK) {
     //print("err4\r\n");
-    goto fail;
+    return 0;
   }
   return 1;
-
- fail:
-  SPI_CHIP_SELECT_HIGH();
-  return 0;
 }
 
-void Sd2Card_readEnd(SDcard* sdcard) {
-  if (sdcard->inBlock) {
-      // skip data and crc
-    while (sdcard->offset++ < 514) spiRec();
-    SPI_CHIP_SELECT_HIGH();
-    sdcard->inBlock = 0;
-  }
-}
 int Sd2Card_readData(SDcard* sdcard, int block) {
  // use address if not SDHC card
-  if (sdcard->type != SD_CARD_TYPE_SDHC) block <<= 9;
+  //if (sdcard->type != SD_CARD_TYPE_SDHC) 
+  block <<= 9;
   int result = Sd2Card_cardCommand(sdcard, CMD17, block);
    if (result) {
     //print("err5\r\n");
-    goto fail;
+    return 0;
   }
 
   if (!Sd2Card_waitStartBlock(sdcard)) {
-    goto fail;
+    return 0;
   }
   // transfer data
   int i;
@@ -559,74 +491,6 @@ int Sd2Card_readData(SDcard* sdcard, int block) {
   spiRec();//CRC
   spiRec();
 
-  SPI_CHIP_SELECT_HIGH();
-
-
-  return 1;
-
- fail:
-  SPI_CHIP_SELECT_HIGH();
-  return 0;
-}
-
-int Sd2Card_readData(SDcard* sdcard, int block, int offset, int count, char* dst) {
-  if (count == 0) return 1;
-  if ((count + offset) > 512) {
-    goto fail;
-  }
-  if (!sdcard->inBlock || block != sdcard->block || offset < sdcard->offset) {
-    sdcard->block = block;
-    // use address if not SDHC card
-    if (sdcard->type != SD_CARD_TYPE_SDHC) block <<= 9;
-    if (Sd2Card_cardCommand(sdcard, CMD17, block)) {
-      //print("err6\r\n");
-      goto fail;
-    }
-    if (!Sd2Card_waitStartBlock(sdcard)) {
-      goto fail;
-    }
-    sdcard->offset = 0;
-    sdcard->inBlock = 1;
-  }
-
-
-  // skip data before offset
-  for (;sdcard->offset < offset; sdcard->offset++) {
-    spiRec();
-  }
-  // transfer data
-  for (int i = 0; i < count; i++) {
-    dst[i] = spiRec();
-  }
-
-  sdcard->offset += count;
-  Sd2Card_readEnd(sdcard);
-  return 1;
-
- fail:
-  SPI_CHIP_SELECT_HIGH();
-  return 0;
-}
-
-
-int Sd2Card_readBlock(SDcard* sdcard, int block, char* dst) {
-  return Sd2Card_readData(sdcard, block, 0, 512, dst);
-}
-
-int Sd2Card_writeData(SDcard* sdcard, char token) {
-  spiSend(token);
-  for (int i = 0; i < 512; i++) {
-    spiSend(sdcard->buff.data[i]);
-  }
-  spiSend(0xff);  // dummy crc
-  spiSend(0xff);  // dummy crc
-
-  sdcard->status = spiRec();
-  if ((sdcard->status & DATA_RES_MASK) != DATA_RES_ACCEPTED) {
-    //print("err7\r\n");
-    SPI_CHIP_SELECT_HIGH();
-    return 0;
-  }
   return 1;
 }
 
@@ -636,420 +500,50 @@ int Sd2Card_writeData(SDcard* sdcard, char token) {
 
 
 
-
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//ok
-int SdVolume_cacheRawBlock(SdVolume* sdvolume, int blockNumber) {
-  if (sdvolume->cacheBlockNumber != blockNumber) {
-    if (!Sd2Card_readData(sdvolume->sdcard, blockNumber)) return 0;
-    sdvolume->cacheBlockNumber = blockNumber;
-  }
-  return 1;
-}
-
-// Fetch a FAT entry
-int SdVolume_fatGet(SdVolume* sdvolume, int cluster, int* value) {
-  if (cluster > (sdvolume->clusterCount + 1)) return 0;
-  int lba = sdvolume->fatStartBlock;
-  lba += cluster >> 8;
-  if (lba != sdvolume->cacheBlockNumber) {
-    if (!SdVolume_cacheRawBlock(sdvolume, lba)) return 0;
-  }
-  *value = sdvolume->sdcard->buff.fat16[cluster & 0XFF];
-  return 1;
-}
-
-
-// if part == 0 assume super floppy with FAT boot sector in block zero
-// if part > 0 assume mbr volume with partition table
-int SdVolume_volumeinit(SdVolume* sdvolume, SDcard* sdcard) {
-  sdvolume->sdcard = sdcard;
-  sdvolume->cacheBlockNumber = 0XFFFFFFFF;
-  sdvolume->cacheMirrorBlock = 0;
-  sdvolume->allocSearchStart = 2;
-  //sdvolume->fatType = 0;
-
-  int volumeStartBlock = 0;
-  if (!SdVolume_cacheRawBlock(sdvolume, volumeStartBlock)) {
-    //print("err17\r\n");
-    return 0;
-    }
-  part_t* p = &(sdvolume->sdcard->buff.mbr.part[0]);
-  int totalSectors = combineInt(p->totalSectors_0, p->totalSectors_1, p->totalSectors_2, p->totalSectors_3);
-  int firstSector = combineInt(p->firstSector_0, p->firstSector_1, p->firstSector_2, p->firstSector_3);
-  //print("boot=");printInt(p->boot);print("\r\n");
-  //print("totalSectors=");printInt(totalSectors);print("\r\n");
-  //print("firstSector=");printInt(firstSector);print("\r\n");
-  if ((p->boot & 0X7F) !=0 || totalSectors < 100 || firstSector == 0) {
-    // not a valid partition
-    {
-      //print("err18\r\n");
-      return 0;
-    }
-  }
-  volumeStartBlock = firstSector;
-  
-  
-  if (!SdVolume_cacheRawBlock(sdvolume, volumeStartBlock)) {
-    //print("err19\r\n");
-    return 0;
-  }
-
-  bpb_t* bpb = &(sdvolume->sdcard->buff.fbs.bpb);
-  
-  int bytesPerSector = combineShort(bpb->bytesPerSector_0, bpb->bytesPerSector_1);
-  int reservedSectorCount = combineShort(bpb->reservedSectorCount_0, bpb->reservedSectorCount_1);
-  if (bytesPerSector != 512 || bpb->fatCount == 0 || reservedSectorCount == 0 || bpb->sectorsPerCluster == 0) {
-       // not valid FAT volume
-      //print("bytesPerSector=");printInt(bytesPerSector);print("\r\n");
-      //print("fatCount=");printInt(bpb->fatCount);print("\r\n");
-      //print("reservedSectorCount=");printInt(reservedSectorCount);print("\r\n");
-      //print("sectorsPerCluster=");printInt(bpb->sectorsPerCluster);print("\r\n");
-      {
-        //print("err20\r\n");
-        return 0;
-      }
-  }
-  sdvolume->fatCount = bpb->fatCount;
-  sdvolume->blocksPerCluster = bpb->sectorsPerCluster;
-
-  // determine shift that is same as multiply by SdVolume_blocksPerCluster_
-  sdvolume->clusterSizeShift = 0;
-  while (sdvolume->blocksPerCluster != (1 << sdvolume->clusterSizeShift)) {
-    // error if not power of 2
-    if (sdvolume->clusterSizeShift++ > 7) {
-      //print("err21\r\n");
-      return 0;
-    }
-  }
-  
-  int sectorsPerFat16 = combineShort(bpb->sectorsPerFat16_0, bpb->sectorsPerFat16_1);
-  int sectorsPerFat32 = combineInt(bpb->sectorsPerFat32_0, bpb->sectorsPerFat32_1, bpb->sectorsPerFat32_2, bpb->sectorsPerFat32_3);
-  sdvolume->blocksPerFat = sectorsPerFat16 ? sectorsPerFat16 : sectorsPerFat32;
-
-  sdvolume->fatStartBlock = volumeStartBlock + reservedSectorCount;
-
-  // count for FAT16 zero for FAT32
-  int rootDirEntryCount = combineShort(bpb->rootDirEntryCount_0, bpb->rootDirEntryCount_1);
-  sdvolume->rootDirEntryCount = rootDirEntryCount;
-
-  // directory start for FAT16 dataStart for FAT32
-  sdvolume->rootDirStart = sdvolume->fatStartBlock + bpb->fatCount * sdvolume->blocksPerFat;
-
-  // data start for FAT16 and FAT32
-  //sdvolume->dataStartBlock = sdvolume->rootDirStart + ((32 * bpb->rootDirEntryCount + 511)/512);
-  sdvolume->dataStartBlock = sdvolume->rootDirStart + (((rootDirEntryCount<<5) + 511)>>9);
-
-  // total blocks for FAT16 or FAT32
-  int totalSectors16 = combineShort(bpb->totalSectors16_0, bpb->totalSectors16_1);
-  int totalSectors32 = combineInt(bpb->totalSectors32_0, bpb->totalSectors32_1, bpb->totalSectors32_2, bpb->totalSectors32_3);
-  int totalBlocks = totalSectors16 ? totalSectors16 : totalSectors32;
-  // total data blocks
-  sdvolume->clusterCount = totalBlocks - (sdvolume->dataStartBlock - volumeStartBlock);
-
-  // divide by cluster size to get cluster count
-  sdvolume->clusterCount >>= sdvolume->clusterSizeShift;
-
-  // FAT type is determined by cluster count
-  if (sdvolume->clusterCount < 4085) {
-    return 0;
-  } else if (sdvolume->clusterCount < 65525) {
-    //sdvolume->fatType = 16;
-  } else {
-    return 0;
-  }
-  return 1;
-}
-
-int SdVolume_clusterStartBlock(SdVolume* sdvolume, int cluster) {
-  return sdvolume->dataStartBlock + ((cluster - 2) << sdvolume->clusterSizeShift);
-}
-int  SdVolume_blockOfCluster(SdVolume* sdvolume, int position)  {
-  return (position >> 9) & (sdvolume->blocksPerCluster - 1);
-}
-
-//------------------------------------------------------------------------------
-// open a cached directory entry. Assumes vol_ is initializes
-int File_openCachedEntry(File* file, int dirIndex) {
-  // location of entry in cache
-  dir_t* p = file->root->sdvolume->sdcard->buff.dir + dirIndex;
-
-  // remember location of directory entry on SD
-  file->dirIndex = dirIndex;
-  file->dirBlock = file->root->sdvolume->cacheBlockNumber;
-
-  // copy first cluster number for directory fields
-  //file->firstCluster = (int)(p->firstClusterHigh) << 16;
-  //file->firstCluster |= p->firstClusterLow;
-  file->firstCluster = combineInt(p->firstClusterLow_0, p->firstClusterLow_1, p->firstClusterHigh_0, p->firstClusterHigh_1);
-
-  // make sure it is a normal file or subdirectory
-  //file->fileSize = p->fileSize;
-  file->fileSize = combineInt(p->fileSize_0, p->fileSize_1, p->fileSize_2, p->fileSize_3);
-  file->type = FAT_FILE_TYPE_NORMAL;
-
-  // set to start of file
-  file->curCluster = 0;
-  file->curPosition = 0;
-  return 1;
-}
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-void Root_rewind(Root* root) {
-  root->curPosition = root->curCluster = 0;
-}
-
-
-int Root_Load(Root* root) {
-
-  //Root_fileSize_:16384,Root_curPosition_:0
-  // max bytes left in file
-  if (0 == (root->fileSize - root->curPosition)) return 0;
-
-  // amount left to read
-  int block;  // raw device block number
-  int offset = root->curPosition & 0X1FF;  // offset in block
-  if (root->type == FAT_FILE_TYPE_ROOT16) {
-    block = root->sdvolume->rootDirStart + (root->curPosition >> 9);
-  } else {
-    int blockOfCluster = SdVolume_blockOfCluster(root->sdvolume, root->curPosition);
-    if (offset == 0 && blockOfCluster == 0) {
-      // start of new cluster
-      if (root->curPosition == 0) {
-        // use first cluster in file
-        root->curCluster = root->firstCluster;
-      } else {
-        // get next cluster from FAT
-        if (!SdVolume_fatGet(root->sdvolume, root->curCluster, &(root->curCluster))) return -1;
-      }
-    }
-    block = SdVolume_clusterStartBlock(root->sdvolume, root->curCluster) + blockOfCluster;
-  }
-
-  // read block to cache and copy data to caller
-  if (!SdVolume_cacheRawBlock(root->sdvolume, block)) return -1;
-
-  return 1;
-}
-
-
-
-//------------------------------------------------------------------------------
-// Read next directory entry into the cache
-// Assumes file is correctly positioned
-dir_t* Root_readDirCache(Root* root) {
-  // error if not directory
-  //if (!isDir()) return NULL;
-
-  // index of entry in cache
-  int i = (root->curPosition >> 5) & 0XF;
-
-  // use read to locate and cache block
-  if (Root_Load(root) < 0){
-    //print("error12\r\n");
-    return 0;
-  } 
-
-  // advance to next entry
-  root->curPosition += 32;
-
-  // return pointer to entry
-  return &(root->sdvolume->sdcard->buff.dir[i]);
-}
-
-
-
-int Root_openRoot(Root* root, SdVolume* sdvolume) {
-  root->sdvolume = sdvolume;
-  // error if file is already open
-  //if (isOpen()) return false;
-
-  root->type = FAT_FILE_TYPE_ROOT16;
-  root->firstCluster = 0;
-  //root->fileSize = 32 * SdVolume_rootDirEntryCount_;
-  root->fileSize = root->sdvolume->rootDirEntryCount<<5;
-  
-  
-  // set to start of file
-  root->curCluster = 0;
-  root->curPosition = 0;
-
-  // root has no directory entry
-  root->dirBlock = 0;
-  root->dirIndex = 0;
-  
-  
-  dir_t* p;
-  Root_rewind(root);
-  // bool for empty entry found
-  int emptyFound = 0;
-  // search for file
-  while (root->curPosition < root->fileSize) {
-    int index = 0XF & (root->curPosition >> 5);
-    p = Root_readDirCache(root);
-    if (p == 0){
-      //print("err22\r\n");
-      return 0;
-    }
-
-    if(p->attributes == DIR_ATT_VOLUME_ID){
-      for(int i=0;i<11;i++){
-        root->volumeLabel[i] = p->name[i];
-      }
-      break;
-    }
-  }
-  
-  return 1;
-}
-
-
-
-int File_open(Root* root, File* file, const char* dname) {
-  file->root = root;
-  file->type = FAT_FILE_TYPE_CLOSED;          // type of file see above for values
-
-  dir_t* p;
-
-  Root_rewind(root);
-
-
-  // search for file
-  while (root->curPosition < root->fileSize) {
-    int index = 0XF & (root->curPosition >> 5);
-    p = Root_readDirCache(root);
-    if (p == 0){
-      //print("err23\r\n");
-      return 0;
-    }
-    
-    //print(dname, 11);
-    //print(p->name, 11);
-    //print("\r\n");
-    if (p->name[0] == DIR_NAME_FREE) break;
-    int eq = equal(dname, p->name, 11);
-    if(eq) {
-      // open found file
-      //print("found \r\n");
-      return File_openCachedEntry(file, 0XF & index);
-    }
-  }
-  //print("notfound \r\n");
-  return 0;
-}
-
-
-int File_read(File* file, char* buf, int nbyte) {
-  char* dst = buf;
-  
-  // max bytes left in file
-  if (nbyte > (file->fileSize - file->curPosition)){
-    nbyte = file->fileSize - file->curPosition;
-  }
-  
-  // amount left to read
-  int toRead = nbyte;
-  while (toRead > 0) {
-    int block;  // raw device block number
-    int offset = file->curPosition & 0X1FF;  // offset in block
-    if (file->type == FAT_FILE_TYPE_ROOT16) {
-      block = file->root->sdvolume->rootDirStart + (file->curPosition >> 9);
-    } else {
-      int blockOfCluster = SdVolume_blockOfCluster(file->root->sdvolume, file->curPosition);
-      if (offset == 0 && blockOfCluster == 0) {
-        // start of new cluster
-        if (file->curPosition == 0) {
-          // use first cluster in file
-          file->curCluster = file->firstCluster;
-        } else {
-          // get next cluster from FAT
-          if (!SdVolume_fatGet(file->root->sdvolume, file->curCluster, &(file->curCluster))) return -1;
-        }
-      }
-      block = SdVolume_clusterStartBlock(file->root->sdvolume, file->curCluster) + blockOfCluster;
-    }
-    int n = toRead;
-
-    // amount to be read from current block
-    if (n > (512 - offset)) n = 512 - offset;
-
-    // no buffering needed if n == 512 or user requests no buffering
-    if ((n == 512) && block != file->root->sdvolume->cacheBlockNumber) {
-      if (!Sd2Card_readData(file->root->sdvolume->sdcard, block, offset, n, dst)) return -1;
-      dst += n;
-    } else {
-      // read block to cache and copy data to caller
-      if (!SdVolume_cacheRawBlock(file->root->sdvolume, block)) return -1;
-      char* src = file->root->sdvolume->sdcard->buff.data + offset;
-      char* end = src + n;
-      while (src != end) *dst++ = *src++;
-    }
-    file->curPosition += n;
-    toRead -= n;
-  }
-  return nbyte;
-}
-
-int File_read(File* file) {
-  char b;
-  return File_read(file, &b, 1) == 1 ? b : -1;
-}
 
 
 
 int main()
 {
-  
   SDcard* sdcard;
-  SdVolume* sdvolume;
-  Root* root;
-  File* file;
   
-  sdcard = (SDcard*)(0x1000);//at sdram [512]
-  sdvolume = (SdVolume*)(0x2000);
-  root = (Root*)(0x3000);
-  file = (File*)(0x4000);
+  sdcard = (SDcard*)(0x100000);//at 1M
+  char* zero = (char*)(0);
   
 	print("INIT\r\n");
   sdcard->chip_select = 2;
   int result = MMCCard_cardinit(sdcard);
   if(result){
     print("SD ok\r\n");
-    result = SdVolume_volumeinit(sdvolume, sdcard);
-    if(result){
-      print("vol ok!\r\n");
-      if(result){
-        Root_openRoot(root, sdvolume);
-        print("root ok!\r\n");
-        print(root->volumeLabel,11);
-        int result = File_open(root, file, "BOOT    BIN");
-        if(result){
-          print("[");
-          int i;
-          while(1){
-            int data = File_read(file);
-            if(data==-1){
-              break;
-            }
-            printByte(data);
-          }
-          print("]");
+    Sd2Card_readData(sdcard, 0);
+    part_t* p = &(sdcard->buff.mbr.part[0]);
+    int firstSector = combineInt(p->firstSector_0, p->firstSector_1, p->firstSector_2, p->firstSector_3);
+    
+    Sd2Card_readData(sdcard, firstSector);
+    int sign = combineInt(sdcard->buff.fbs.bootCode[0], sdcard->buff.fbs.bootCode[1], sdcard->buff.fbs.bootCode[2], sdcard->buff.fbs.bootCode[3]);
+    if(sign==0x78563412){
+      print("sign ok\r\n");
+      int firstBlock = combineInt(sdcard->buff.fbs.bootCode[4], sdcard->buff.fbs.bootCode[5], sdcard->buff.fbs.bootCode[6], sdcard->buff.fbs.bootCode[7]);
+      int blockCount = combineInt(sdcard->buff.fbs.bootCode[8], sdcard->buff.fbs.bootCode[9], sdcard->buff.fbs.bootCode[10], sdcard->buff.fbs.bootCode[11]);
+      firstBlock = firstBlock + firstSector;
+      for(int b = 0;b<blockCount;b++){
+        Sd2Card_readData(sdcard, firstBlock + b);
+        for(int i=0;i<512;i++){
+          char data = sdcard->buff.data[i];
+          //printByte(data);
+          zero[(b<<9)+i] = data;
         }
       }
+      SPI_CHIP_SELECT_HIGH();
+      asm volatile("jmpi 0");
     }
+    SPI_CHIP_SELECT_HIGH();
+    while(1);
   }
 
 
 
-  
-	while(1){
-	}
+  SPI_CHIP_SELECT_HIGH();
+	while(1);
   return 0;
 }

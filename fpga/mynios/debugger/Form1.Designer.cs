@@ -44,6 +44,8 @@ namespace WindowsFormsApplication1
             this.button8 = new System.Windows.Forms.Button();
             this.comboBox2 = new System.Windows.Forms.ComboBox();
             this.button9 = new System.Windows.Forms.Button();
+            this.button10 = new System.Windows.Forms.Button();
+            this.button11 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
@@ -167,11 +169,11 @@ namespace WindowsFormsApplication1
             // 
             // button8
             // 
-            this.button8.Location = new System.Drawing.Point(105, 42);
+            this.button8.Location = new System.Drawing.Point(94, 42);
             this.button8.Name = "button8";
-            this.button8.Size = new System.Drawing.Size(75, 23);
+            this.button8.Size = new System.Drawing.Size(86, 23);
             this.button8.TabIndex = 26;
-            this.button8.Text = "upload";
+            this.button8.Text = "upload bios";
             this.button8.UseVisualStyleBackColor = true;
             this.button8.Click += new System.EventHandler(this.button8_Click);
             // 
@@ -195,7 +197,7 @@ namespace WindowsFormsApplication1
             // 
             // button9
             // 
-            this.button9.Location = new System.Drawing.Point(186, 42);
+            this.button9.Location = new System.Drawing.Point(267, 42);
             this.button9.Name = "button9";
             this.button9.Size = new System.Drawing.Size(75, 23);
             this.button9.TabIndex = 28;
@@ -203,11 +205,33 @@ namespace WindowsFormsApplication1
             this.button9.UseVisualStyleBackColor = true;
             this.button9.Click += new System.EventHandler(this.button9_Click);
             // 
+            // button10
+            // 
+            this.button10.Location = new System.Drawing.Point(779, 38);
+            this.button10.Name = "button10";
+            this.button10.Size = new System.Drawing.Size(75, 27);
+            this.button10.TabIndex = 29;
+            this.button10.Text = "MAKE BOOT";
+            this.button10.UseVisualStyleBackColor = true;
+            this.button10.Click += new System.EventHandler(this.button10_Click);
+            // 
+            // button11
+            // 
+            this.button11.Location = new System.Drawing.Point(186, 42);
+            this.button11.Name = "button11";
+            this.button11.Size = new System.Drawing.Size(75, 23);
+            this.button11.TabIndex = 30;
+            this.button11.Text = "upload dos";
+            this.button11.UseVisualStyleBackColor = true;
+            this.button11.Click += new System.EventHandler(this.button11_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(866, 473);
+            this.Controls.Add(this.button11);
+            this.Controls.Add(this.button10);
             this.Controls.Add(this.button9);
             this.Controls.Add(this.comboBox2);
             this.Controls.Add(this.button8);
@@ -248,6 +272,8 @@ namespace WindowsFormsApplication1
 		private Button button8;
 		private ComboBox comboBox2;
         private Button button9;
+        private Button button10;
+        private Button button11;
 
 	}
 }

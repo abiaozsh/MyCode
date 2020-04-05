@@ -2,6 +2,7 @@
 																		                        
 hlt ins                      @           5 @                      0 @   2 @          000010      0x02*
 jmpi sym                     @          21 @                      2 @  10 @          001010      0x0A*
+jmpi ins                     @          23 @                      2 @  10 @          001010      0x0A*
 call sym                     @          22 @                      2 @  26 @          011010      0x1A*
 bne reg, reg, sym            @          15 @                      0 @  30 @          011110      0x1e bne rA, rB, label
 beq reg, reg, sym            @          15 @                      0 @  38 @          100110      0x26

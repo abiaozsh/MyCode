@@ -17,7 +17,9 @@ namespace Assembler
             string filein;
             string fileout;
             string filetemp;
-            string test = "bios";
+            string test = "b";
+            string type = "bios";
+            string fileoutBin;
             if (args.Length > 0 && !String.IsNullOrEmpty(args[0]))
             {
                 filein = args[0];
@@ -42,13 +44,25 @@ namespace Assembler
             {
                 filetemp = test + ".temp.s";
             }
+            if (args.Length > 3 && !String.IsNullOrEmpty(args[3]))
+            {
+                type = args[3];
+            }
+            if (args.Length > 4 && !String.IsNullOrEmpty(args[4]))
+            {
+                fileoutBin = args[4];
+            }
+            else
+            {
+                fileoutBin = test + ".bin";
+            }
             Console.WriteLine(filein);
             Console.WriteLine(fileout);
             Console.WriteLine(filetemp);
 
             try
             {
-                compile(filein, fileout, filetemp);
+                compile(filein, fileout, fileoutBin, filetemp, type);
             }
             catch (Exception ex)
             {
@@ -57,7 +71,7 @@ namespace Assembler
             }
 
         }
-        public static void compile(string filein, string fileout, string filetemp)
+        public static void compile(string filein, string fileout, string fileoutBin, string filetemp, string type)
         {
             List<Config> cfgs = Config.loadConfig(@"assembler\config.txt");
             string[] linesraw = null;
@@ -74,17 +88,27 @@ namespace Assembler
             List<Line> lines = new List<Line>();
 
             lines.Add(Line.match(".section .text"));
-            bool standalone = true;
-            if (standalone)
+            if (type == "bios")
             {
-                int sp = 0x0200C000;
+                Console.WriteLine("type=bios");
+                int sp = 0x02000000;//0x0200C000
                 basePos = 0x02000000;
+                lines.Add(Line.match("movhi sp, %hiadj(" + sp + ")"));
+                lines.Add(Line.match("addi sp, sp, %lo(" + sp + ")"));
+                lines.Add(Line.match("jmpi main"));
+            }
+            else if (type == "dos")
+            {
+                Console.WriteLine("type=dos");
+                int sp = 0x02000000;//0x0200C000
+                basePos = 0x00000000;
                 lines.Add(Line.match("movhi sp, %hiadj(" + sp + ")"));
                 lines.Add(Line.match("addi sp, sp, %lo(" + sp + ")"));
                 lines.Add(Line.match("jmpi main"));
             }
             else
             {
+                Console.WriteLine("type=normal");
                 basePos = 0x00000000;
                 lines.Add(Line.match("call main"));
                 lines.Add(Line.match("ret"));
@@ -285,6 +309,9 @@ namespace Assembler
                                         break;
                                     case 22://br sym
                                         ins.op = line.op1;
+                                        break;
+                                    case 23://jmp ins
+                                        ins.IMM26 = line.op1.ins.Value;
                                         break;
                                     case 30://add rC, rA, rB
                                         ins.bitregC = line.op1.reg.Value;
@@ -574,11 +601,11 @@ namespace Assembler
             {
                 int entry = 0;
                 int len = pos;
-                //FileStream fs = new FileStream(@"..\..\..\a.bin", FileMode.Create, FileAccess.Write);
+                FileStream fs = new FileStream(fileoutBin, FileMode.Create, FileAccess.Write);
                 FileStream fs2 = new FileStream(fileout, FileMode.Create, FileAccess.Write);
                 FileStream fs3 = new FileStream(filetemp, FileMode.Create, FileAccess.Write);
 
-                //BinaryWriter bw = new BinaryWriter(fs);
+                BinaryWriter bw = new BinaryWriter(fs);
                 StreamWriter sw = new StreamWriter(fs2);
                 StreamWriter sw3 = new StreamWriter(fs3);
                 //bw.Write(len);
@@ -606,7 +633,7 @@ namespace Assembler
                     {
                         insbin = (ins.IMM26 << 6) | (ins.bitcmd);
                     }
-                    //bw.Write(insbin);
+                    bw.Write(insbin);
                     writehex(insbin, posx++, sw);
 
                     sw3.WriteLine(((posx - 1) * 4) + " [" + getHex8(insbin) + "] " + ins.line.text);
@@ -633,7 +660,7 @@ namespace Assembler
                         {
                             val |= (data.data[i + 3] << 24);
                         }
-                        //bw.Write(ins.bitins2);
+                        bw.Write(val);
                         writehex(val, posx++, sw);
                         sw3.WriteLine(((posx - 1) * 4) + " [" + getHex8(val) + "] ");
                     }
@@ -648,8 +675,8 @@ namespace Assembler
                 sw3.Flush();
                 fs3.Close();
 
-                //bw.Flush();
-                //fs.Close();
+                bw.Flush();
+                fs.Close();
 
             }
             //Console.ReadLine();

@@ -10,6 +10,7 @@ using System.Threading;
 using System.IO;
 using System.Globalization;
 using debugger;
+using SDcard;
 
 namespace WindowsFormsApplication1
 {
@@ -47,6 +48,7 @@ namespace WindowsFormsApplication1
             }
             this.comboBox1.Enabled = true;
             this.button1.Enabled = true;
+            this.button10.Enabled = true;
 
             loadSym();
         }
@@ -199,7 +201,7 @@ namespace WindowsFormsApplication1
                     {
                         sb.AppendLine("----------------------------------------------------------------------------------");
                     }
-                    sb.AppendLine((i == 0 ? "*" : " ") + Util.getHex8((uint)(pc + cs + i)) + ":(" + sb2.ToString() + "," + foundsym + "):" + scode);
+                    sb.AppendLine((i == 0 ? "*" : " ") + Util.getHex8((uint)(pc + cs + i)) + ":" + scode);
                     if (i == 0)
                     {
                         sb.AppendLine("----------------------------------------------------------------------------------");
@@ -378,6 +380,256 @@ namespace WindowsFormsApplication1
             portWrite((byte)(0x02), 0);
             portWrite((byte)(0x02), 1);
 
+        }
+
+        private void button10_Click(object sender, EventArgs e)
+        {
+            /*
+struct bpb_t {//biosParmBlock
+  char bytesPerSector_0;
+  char bytesPerSector_1;
+  char sectorsPerCluster;
+  char reservedSectorCount_0;
+  char reservedSectorCount_1;
+  char fatCount; 
+  char rootDirEntryCount_0;
+  char rootDirEntryCount_1;
+  char totalSectors16_0;
+  char totalSectors16_1;
+
+  char mediaType;
+
+  char sectorsPerFat16_0;
+  char sectorsPerFat16_1;
+  char sectorsPerTrtack_0;
+  char sectorsPerTrtack_1;
+  char headCount_0;
+  char headCount_1;
+  char hidddenSectors_0;
+  char hidddenSectors_1;
+  char hidddenSectors_2;
+  char hidddenSectors_3;
+
+  char totalSectors32_0;
+  char totalSectors32_1;
+  char totalSectors32_2;
+  char totalSectors32_3;
+  char sectorsPerFat32_0;
+  char sectorsPerFat32_1;
+  char sectorsPerFat32_2;
+  char sectorsPerFat32_3;
+  char fat32Flags_0;
+  char fat32Flags_1;
+
+  char fat32Version_0;
+  char fat32Version_1;
+  char fat32RootCluster_0;
+  char fat32RootCluster_1;
+  char fat32RootCluster_2;
+  char fat32RootCluster_3;
+  char fat32FSInfo_0;
+  char fat32FSInfo_1;
+  char fat32BackBootBlock_0;
+  char fat32BackBootBlock_1;
+
+  char fat32Reserved[12];
+};41+12
+
+struct fbs_t {//fat32BootSector
+  char jmpToBootCode[3]; 3
+  char oemName[8]; 8 
+  bpb_t bpb; 41+12
+
+  char driveNumber;
+  char reserved1;
+  char bootSignature;
+  char volumeSerialNumber_0;
+  char volumeSerialNumber_1;
+  char volumeSerialNumber_2;
+  char volumeSerialNumber_3;  7
+
+  char volumeLabel[11]; 11 
+  char fileSystemType[8]; 8
+  char bootCode[420];
+  char bootSectorSig0;
+  char bootSectorSig1;
+};
+struct dir_t {//directoryEntry
+  char name[11];
+  char attributes;
+  char reservedNT;
+  char creationTimeTenths;
+  char creationTime_0;
+  char creationTime_1;
+
+  char creationDate_0;
+  char creationDate_1;
+  char lastAccessDate_0;
+  char lastAccessDate_1;
+  char firstClusterHigh_0; 20
+  char firstClusterHigh_1;
+  char lastWriteTime_0;
+  char lastWriteTime_1;
+  char lastWriteDate_0;
+  char lastWriteDate_1;
+  char firstClusterLow_0; 26
+  char firstClusterLow_1;
+  char fileSize_0;
+  char fileSize_1;
+  char fileSize_2;
+  char fileSize_3;
+};
+
+             */
+            SDUtils sd = new SDUtils("j:");
+            byte[] fbs = sd.ReadSector(0);
+            int volumeStartBlock = 0;
+            int reservedSectorCount = fbs[3 + 8 + 3 + 0] | (fbs[3 + 8 + 3 + 1] << 8);
+            int fatStartBlock = volumeStartBlock + reservedSectorCount;
+
+            int fatCount = fbs[3 + 8 + 5];
+            int blocksPerFat = fbs[3 + 8 + 11 + 0] | (fbs[3 + 8 + 11 + 1] << 8);
+            int rootDirStart = fatStartBlock + fatCount * blocksPerFat;
+
+            int rootDirEntryCount = fbs[3 + 8 + 6 + 0] | (fbs[3 + 8 + 6 + 1] << 8);
+
+            int dataStartBlock = rootDirStart + (((rootDirEntryCount << 5) + 511) >> 9);
+
+
+            byte[] root = sd.ReadSector(rootDirStart);
+            string name = "BOOT    BIN";
+            //string name = "TEST1   TXT";
+            int index = -1;
+            for (int i = 0; i < 512; i += 32)
+            {
+                int match = 1;
+                for (int j = 0; j < 11; j++)
+                {
+                    if (root[i + j] != (byte)name[j])
+                    {
+                        match = 0;
+                        break;
+                    }
+                }
+                if (match == 1)
+                {
+                    index = i;
+                }
+            }
+
+            int firstCluster;
+            int fileSize;
+            if (index >= 0)
+            {
+                firstCluster = root[index + 26 + 0] | (root[index + 26 + 1] << 8) | (root[index + 20 + 0] << 16) | (root[index + 20 + 1] << 24);
+                fileSize = root[index + 28 + 0] | (root[index + 28 + 1] << 8) | (root[index + 28 + 2] << 16) | (root[index + 28 + 3] << 24);
+            }
+            else
+            {
+                throw new Exception("not found boot.bin");
+            }
+
+            short[] fat = new short[blocksPerFat * 256];
+            for (int i = 0; i < blocksPerFat; i++)
+            {
+                byte[] fattemp = sd.ReadSector(fatStartBlock + i);
+                for (int j = 0; j < 256; j++)
+                {
+                    fat[i * 256 + j] = (short)(fattemp[j * 2] + (fattemp[j * 2 + 1] << 8));
+                }
+            }
+
+            int blocks = 0;
+            int start = firstCluster;
+            while (true)
+            {
+                int oldStart = start;
+                start = fat[start];
+                blocks++;
+                if (start == -1)
+                {
+                    break;
+                }
+                if (start != oldStart + 1)
+                {
+                    throw new Exception("not continue block");
+                }
+
+            }
+
+            int sectorsPerCluster = fbs[3 + 8 + 2];
+
+            int blockOfCluster = 0;
+            int firstBlock = dataStartBlock + (firstCluster - 2) * sectorsPerCluster + blockOfCluster;
+
+            byte[] data = sd.ReadSector(firstBlock);
+
+
+            int bootrec = 3 + 8 + 41 + 12 + 7 + 11 + 8;
+            fbs[bootrec + 0] = 0x12;
+            fbs[bootrec + 1] = 0x34;
+            fbs[bootrec + 2] = 0x56;
+            fbs[bootrec + 3] = 0x78;
+
+            fbs[bootrec + 4] = (byte)((firstBlock >> 0) & 0xFF);
+            fbs[bootrec + 5] = (byte)((firstBlock >> 8) & 0xFF);
+            fbs[bootrec + 6] = (byte)((firstBlock >> 16) & 0xFF);
+            fbs[bootrec + 7] = (byte)((firstBlock >> 24) & 0xFF);
+
+            fbs[bootrec + 8] = (byte)((blocks >> 0) & 0xFF);
+            fbs[bootrec + 9] = (byte)((blocks >> 8) & 0xFF);
+            fbs[bootrec + 10] = (byte)((blocks >> 16) & 0xFF);
+            fbs[bootrec + 11] = (byte)((blocks >> 24) & 0xFF);
+
+            sd.WriteSector(fbs, 0);
+            MessageBox.Show("ok");
+            sd.Close();
+        }
+
+        private void button11_Click(object sender, EventArgs e)
+        {
+
+
+            loadSym();
+
+            int baseAddr = 0x02000000;
+
+            portWrite((byte)(0x01), 1);//halt_uart
+
+            {
+                setmem(0x02000000, Convert.ToInt32("0000000A", 16));
+            }
+
+             baseAddr = 0x00000000;
+
+            {
+                FileStream fs = new FileStream("out.hex", FileMode.Open, FileAccess.Read);
+                StreamReader sr = new StreamReader(fs);
+                String s = sr.ReadToEnd();
+                sr.Close();
+                fs.Close();
+
+                int index = 0;
+                foreach (var item in s.Split('\n'))
+                {
+                    if (item.Length == ":040016001005003a97".Length + 1)
+                    {
+                        //:04001600 1005003a 97
+                        String data = item.Substring(9, 8);
+                        setmem(baseAddr + index, Convert.ToInt32(data, 16));
+                        index += 4;
+                        this.Text = index.ToString();
+                        Application.DoEvents();
+                    }
+                }
+            }
+
+
+            //      end else if (command == 8'h02) begin debug_reset_n<=data[0]; command_done<=1;
+
+            portWrite((byte)(0x02), 0);
+            portWrite((byte)(0x02), 1);
+            portWrite((byte)(0x01), 0);//halt_uart
         }
 
 

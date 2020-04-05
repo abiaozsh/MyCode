@@ -160,13 +160,22 @@ public class Base
                         string sop = temparr[0].Trim();
                         Op op = new Op();
                         op.text = sop;
-                        string temp2 = Util.matchSym(sop, out sop);
-                        if (sop.Length == 0)
+                        int ins;
+                        if (int.TryParse(sop, out ins))
                         {
-                            op.type = Op.OpType.sym;
-                            op.sym = temp2;
-                            l.op1 = op;
+                            op.type = Op.OpType.ins;
+                            op.ins = ins;
                         }
+                        else
+                        {
+                            string temp2 = Util.matchSym(sop, out sop);
+                            if (sop.Length == 0)
+                            {
+                                op.type = Op.OpType.sym;
+                                op.sym = temp2;
+                            }
+                        }
+                        l.op1 = op;
                     }
                     else
                     {
