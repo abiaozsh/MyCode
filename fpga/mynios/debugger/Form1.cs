@@ -373,6 +373,13 @@ namespace WindowsFormsApplication1
             portWrite((byte)(0x01), 0);//halt_uart
         }
 
+        private void button9_Click(object sender, EventArgs e)
+        {
+            portWrite((byte)(0x02), 0);
+            portWrite((byte)(0x02), 1);
+
+        }
+
 
     }
 }

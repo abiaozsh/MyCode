@@ -348,7 +348,8 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   wire comp_eq = regfileA==regfileB;
   wire comp_ge = $signed(regfileA)>=$signed(regfileB);
   wire comp_lt = $signed(regfileA)<$signed(regfileB);
-
+  wire comp_ltu = regfileA < regfileB;
+  
   wire [31:0] dsAddr = ds + regfileA + IMM16sx;
 
   wire [31:0] shiftDataIn;
@@ -357,6 +358,7 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   reg  [4:0]  shiftDistance;
   wire  [31:0]  shiftResultLogical;
   wire  [31:0]  shiftResultArithmetic;
+  wire  [31:0]  shiftResultRotate;
 
   shiftLogical shiftLogical_inst (
     .data ( shiftDataIn ),
@@ -370,6 +372,12 @@ wire cpu_reset_n = reset_n && debug_reset_n;
     .distance ( shiftDistance ),
     .result ( shiftResultArithmetic )
   );
+  shiftRotate	shiftRotate_inst (
+    .data ( shiftDataIn ),
+    .direction ( shiftDirection ),
+    .distance ( shiftDistance ),
+    .result ( shiftResultRotate )
+    );
 
   wire [31:0] mulDataA;
   assign mulDataA = regfileA;
@@ -461,7 +469,14 @@ wire cpu_reset_n = reset_n && debug_reset_n;
               pc <= nextpc;//else PC ← PC + 4
             end
             cmd_ack <= 1;
-
+          //bltu reg, reg, sym           @          15 @                      0 @  54 @          110110      0x36
+          end else if(cmd==6'h36)begin//ok
+            if(comp_ltu) begin//if ((unsigned) rA < (unsigned) rB) 
+              pc <= nextpc + IMM16sx;//then PC ← PC + 4 + σ(IMM16)
+            end else begin
+              pc <= nextpc;//else PC ← PC + 4
+            end
+            cmd_ack <= 1;
 
 
           //andi reg, reg, ins           @          10 @                      0 @  12 @ 0x0c
@@ -720,6 +735,27 @@ wire cpu_reset_n = reset_n && debug_reset_n;
                 cmd_ack <= 1;
               end
             end
+          //ldh reg, regins              @          11 @                      0 @  15 @          001111      0x0f
+          end else if(cmd==6'h0f)begin//ok
+            if         (exec_step==0)begin
+              exec_step <= 1;
+              exec_address <= {dsAddr[31:2],2'b0};//rB ← σ(Mem16[rA + σ(IMM16)])
+              exec_read <= 1;
+            end else if(exec_step==1)begin
+              if(!avm_m0_waitrequest)begin
+                case(dsAddr[1])
+                  0:begin regResult <= {{16{avm_m0_readdata[15]}},avm_m0_readdata[15: 0]};end
+                  1:begin regResult <= {{16{avm_m0_readdata[31]}},avm_m0_readdata[31:16]};end
+                endcase
+                regResultB <= 1;
+                exec_read <= 0;
+                exec_step <= 0;
+                pc <= nextpc;
+                cmd_ack <= 1;
+              end
+            end
+
+          
           
           end else begin
             halt_cpu <= 1;
@@ -782,7 +818,6 @@ wire cpu_reset_n = reset_n && debug_reset_n;
 
           //sll reg, reg, reg            @          30 @                      1 @  19 @ 0x3A,0x13
           end else if(cmd==6'd19)begin
-            // rC ← rA << IMM5
             if         (exec_step==0)begin
               shiftDirection <= 0;//0:left 1:right
               shiftDistance <= regfileB[4:0];//rC ← rA << (rB4..0)
@@ -797,7 +832,6 @@ wire cpu_reset_n = reset_n && debug_reset_n;
             end
           //sra reg, reg, reg            @          30 @                      1 @  59 @ 0x3A,0x3b
           end else if(cmd==6'd59)begin
-            // rC ← rA << IMM5
             if         (exec_step==0)begin
               shiftDirection <= 1;//0:left 1:right
               shiftDistance <= regfileB[4:0];//rC ← (signed) rA >> ((unsigned) rB4..0)
@@ -810,8 +844,20 @@ wire cpu_reset_n = reset_n && debug_reset_n;
               pc <= nextpc;
               cmd_ack <= 1;
             end
-
-
+          //rol reg, reg, reg            @          30 @                      1 @   3 @          000011      0x3A,0x03
+          end else if(cmd==6'h03)begin
+            if         (exec_step==0)begin
+              shiftDirection <= 0;//0:left 1:right
+              shiftDistance <= regfileB[4:0];//rC ← rA rotated left rB4..0 bit positions
+              exec_step <= 1;
+            end else if(exec_step==1)begin
+              // rotate left
+              regResult <= shiftResultRotate;
+              regResultC <= 1;
+              exec_step <= 0;
+              pc <= nextpc;
+              cmd_ack <= 1;
+            end
 
 
 
