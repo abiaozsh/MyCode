@@ -26,22 +26,22 @@ int print(const char* str){
     idx++;
   }
 }
-
-int print(const char* str, int len){
-  int idx = 0;
-  int i;
-  for(i=0;i<len;i++){
-    char tmp = str[i];
-    uart_write(tmp);
-  }
-}
-
-int printByte(int val){
-  char* chardata = "0123456789ABCDEF";
-  uart_write(chardata[(val>>4)&0x0F]);
-  uart_write(chardata[(val)&0x0F]);
-}
-
+//
+//int print(const char* str, int len){
+//  int idx = 0;
+//  int i;
+//  for(i=0;i<len;i++){
+//    char tmp = str[i];
+//    uart_write(tmp);
+//  }
+//}
+//
+//int printByte(int val){
+//  char* chardata = "0123456789ABCDEF";
+//  uart_write(chardata[(val>>4)&0x0F]);
+//  uart_write(chardata[(val)&0x0F]);
+//}
+//
 
 
 inline void _dly()
@@ -58,7 +58,6 @@ inline void _dly()
 
 
 void SPI_CHIP_SELECT_HIGH(){IOWR(SOFTISP, SOFTISP_CS, 0x07);}
-void SPI_CHIP_SELECT_LOW(int chip){IOWR(SOFTISP, SOFTISP_CS, ~(1<<chip));}
 
 //------------------------------------------------------------------------------
 int spiRec(void) {
@@ -155,24 +154,6 @@ void spiSend(int data) {
 #define SD_CARD_TYPE_SD2  2
 #define SD_CARD_TYPE_SDHC 3
 
-// End Of Chain values for FAT entries
-#define FAT16EOC      0XFFFF
-#define FAT16EOC_MIN  0XFFF8
-#define FAT32EOC      0X0FFFFFFF
-#define FAT32EOC_MIN  0X0FFFFFF8
-#define FAT32MASK     0X0FFFFFFF
-
-#define DIR_NAME_DELETED        '\xe5'
-#define DIR_NAME_FREE           '\0'
-#define DIR_ATT_READ_ONLY       0X01
-#define DIR_ATT_HIDDEN          0X02
-#define DIR_ATT_SYSTEM          0X04
-#define DIR_ATT_VOLUME_ID       0X08
-#define DIR_ATT_DIRECTORY       0X10
-#define DIR_ATT_ARCHIVE         0X20
-#define DIR_ATT_LONG_NAME_MASK  0X3F
-#define DIR_ATT_DEFINED_BITS    0X3F
-#define DIR_ATT_FILE_TYPE_MASK  (DIR_ATT_VOLUME_ID | DIR_ATT_DIRECTORY)
 
 #define FAT_FILE_TYPE_CLOSED  0
 #define FAT_FILE_TYPE_NORMAL  1
@@ -271,35 +252,12 @@ struct fbs_t {//fat32BootSector
   char bootSectorSig0;
   char bootSectorSig1;
 };
-struct dir_t {//directoryEntry
-  char name[11];
-  char attributes;
-  char reservedNT;
-  char creationTimeTenths;
-  char creationTime_0;
-  char creationTime_1;
-  char creationDate_0;
-  char creationDate_1;
-  char lastAccessDate_0;
-  char lastAccessDate_1;
-  char firstClusterHigh_0;
-  char firstClusterHigh_1;
-  char lastWriteTime_0;
-  char lastWriteTime_1;
-  char lastWriteDate_0;
-  char lastWriteDate_1;
-  char firstClusterLow_0;
-  char firstClusterLow_1;
-  char fileSize_0;
-  char fileSize_1;
-  char fileSize_2;
-  char fileSize_3;
-};
+
 union cache_t {
   char  data[512];
   short fat16[256];
   int fat32[128];
-  dir_t    dir[16];
+  //dir_t    dir[16];
   mbr_t    mbr;
   fbs_t    fbs;
 };
@@ -381,14 +339,14 @@ int Sd2Card_waitNotBusy(int timeoutMillis) {
 
 int Sd2Card_cardCommand(SDcard* sdcard, int cmd, int arg) {
   // select card
-  SPI_CHIP_SELECT_LOW(sdcard->chip_select);
+  //SPI_CHIP_SELECT_LOW(sdcard->chip_select);
+  IOWR(SOFTISP, SOFTISP_CS, ~(1<<sdcard->chip_select));
   // wait up to 300 ms if busy
   Sd2Card_waitNotBusy(3000000);
   // send command
   spiSend(cmd | 0x40);
   // send argument
-  int s;
-  for (s = 24; s >= 0; s -= 8) spiSend(arg >> s);
+  for (int s = 24; s >= 0; s -= 8) spiSend(arg >> s);
   // send CRC
   int crc = 0xFF;
   if (cmd == CMD0) crc = 0x95;  // correct crc for CMD0 with arg 0
@@ -412,8 +370,6 @@ int MMCCard_cardinit(SDcard* sdcard) {
 
   // must supply min of 74 clock cycles with CS high.
   for (int i = 0; i < 20; i++) spiSend(0XFF);
-
-  //SPI_CHIP_SELECT_LOW(sdcard->chip_select);
 
   // command to go idle in SPI mode
   int ok = 0;
