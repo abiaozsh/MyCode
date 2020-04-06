@@ -13,7 +13,7 @@ char* bb = "bbbbaaaaa";
 
 int main(){
   //sdrambuff = (char*)(0);
-  print("Hello from Nios II! demo b\r\n");
+  print("Hello from My DOS\r\n");
   while(1){
     print("input:\r\n");
     char buff[5];
