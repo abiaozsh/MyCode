@@ -6,11 +6,11 @@
 _Z10combineIntcccc:
 	slli	r5,r5,8
 	slli	r6,r6,16
-	andi	r2, r4, 0xff
-	andi	r5, r5, 65280
+andi	r2, r4, 0xff
+andi	r5, r5, 65280
 	slli	r7,r7,24
 	or	r2, r2, r5
-	andhi	r6, r6, 255
+andhi	r6, r6, 255
 	or	r2, r2, r6
 	or	r2, r2, r7
 	ret	
@@ -374,10 +374,6 @@ main:
 	addi	sp, sp, -16
 	movhi	r4, %hiadj(.LC0)
 	addi	r4, r4, %lo(.LC0)
-	stw	r16, 0(sp)
-	stw	ra, 12(sp)
-	stw	r18, 8(sp)
-	stw	r17, 4(sp)
 	call	_Z5printPKc
 	movhi	r16, 16
 	movi	r2, 2
@@ -391,19 +387,19 @@ main:
 	mov	r5, zero
 	mov	r4, r16
 	call	_Z16Sd2Card_readDataP6SDcardi
-	ldb	r6, 456(r16)
-	ldb	r7, 457(r16)
-	ldb	r4, 454(r16)
-	ldb	r5, 455(r16)
+	ldbu	r4, 454(r16)
+	ldbu	r5, 455(r16)
+	ldbu	r6, 456(r16)
+	ldbu	r7, 457(r16)
 	call	_Z10combineIntcccc
 	mov	r5, r2
 	mov	r4, r16
 	mov	r18, r2
 	call	_Z16Sd2Card_readDataP6SDcardi
-	ldb	r4, 90(r16)
-	ldb	r5, 91(r16)
-	ldb	r6, 92(r16)
-	ldb	r7, 93(r16)
+	ldbu	r4, 90(r16)
+	ldbu	r5, 91(r16)
+	ldbu	r6, 92(r16)
+	ldbu	r7, 93(r16)
 	call	_Z10combineIntcccc
 	movhi	r3, %hiadj(2018915346)
 	addi	r3, r3, %lo(2018915346)
@@ -411,16 +407,16 @@ main:
 	movhi	r4, %hiadj(.LC2)
 	addi	r4, r4, %lo(.LC2)
 	call	_Z5printPKc
-	ldb	r4, 94(r16)
-	ldb	r5, 95(r16)
-	ldb	r6, 96(r16)
-	ldb	r7, 97(r16)
+	ldbu	r4, 94(r16)
+	ldbu	r5, 95(r16)
+	ldbu	r6, 96(r16)
+	ldbu	r7, 97(r16)
 	mov	r17, zero
 	call	_Z10combineIntcccc
-	ldb	r7, 101(r16)
-	ldb	r4, 98(r16)
-	ldb	r5, 99(r16)
-	ldb	r6, 100(r16)
+	ldbu	r4, 98(r16)
+	ldbu	r5, 99(r16)
+	ldbu	r6, 100(r16)
+	ldbu	r7, 101(r16)
 	add	r18, r2, r18
 	call	_Z10combineIntcccc
 	mov	r16, r2
