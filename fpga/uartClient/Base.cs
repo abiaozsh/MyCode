@@ -22,7 +22,7 @@ namespace WindowsFormsApplication1
 				port.DataReceived += port_DataReceived;
             }
         }
-		public Queue<char> fifo = new Queue<char>();
+		public Queue<char> fifo = new Queue<char>(1024*1024);
 		void port_DataReceived(object sender, SerialDataReceivedEventArgs e)
 		{
 			while (port.BytesToRead > 0)
