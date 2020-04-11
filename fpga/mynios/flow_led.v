@@ -14,7 +14,7 @@
   output segled_dat, 
   output segled_str,
   output [7:0] debug,
-
+ 
   //SDRAM 芯片接口
   output        sdram_clk_out,                //SDRAM 芯片时钟
   output        sdram_cke,                //SDRAM 时钟有效

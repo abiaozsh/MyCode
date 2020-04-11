@@ -33,9 +33,9 @@ int main(){
       res = sdcard->init(cs);
       if(res){
         print("sd ok\r\n");
-        sdcard->printCID(cid);
-        sdcard->printCSD(csd);
-        print("size:");printInt(sdcard->cardSize());print("\r\n");
+        //sdcard->printCID(cid);
+        //sdcard->printCSD(csd);
+        //print("size:");printInt(sdcard->cardSize());print("\r\n");
         
         sdcard->printType();
         print("which partition?\r\n");
@@ -51,7 +51,13 @@ int main(){
           }
         }else{
           print("volume ng\r\n");
-          printInt(sdvolume->error);
+          printInt(sdvolume->error);print(",");
+          printInt(sdvolume->cacheBlockNumber_);
+          print("[");
+          for(int i=0;i<512;i++){
+            printByte(sdvolume->cacheBuffer_.data[i]);
+          }
+          print("]");
         }
       }else{
         print("sd ng\r\n");

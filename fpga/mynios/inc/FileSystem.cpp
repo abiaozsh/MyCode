@@ -541,7 +541,8 @@ class SdVolume {
     return  cluster >= (fatType_ == 16 ? FAT16EOC_MIN : FAT32EOC_MIN);
   }
   uint8_t readBlock(uint32_t block, char* dst) {
-    return sdCard_->readBlock(block, dst);}
+    return sdCard_->readBlock(block, dst);
+  }
   uint8_t readData(uint32_t block, uint16_t offset,
     uint16_t count, char* dst) {
       return sdCard_->readData(block, offset, count, dst);
