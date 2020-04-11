@@ -2,7 +2,7 @@ module mytimer (
 		input          clk,                // clock.clk
 		input          reset_n,               // reset.reset
     
-		input          avs_s0_address,     //    s0.address
+		input    [1:0] avs_s0_address,     //    s0.address
 		input          avs_s0_read,        //      .read
 		input          avs_s0_write,       //      .write
 		output  [31:0] avs_s0_readdata,    //      .readdata
@@ -16,9 +16,9 @@ module mytimer (
 
 	assign avs_s0_waitrequest = 1'b0;
 	
-	reg [31:0] timer;
+	reg [31:0] timer[4];
 	
-	assign avs_s0_readdata = timer;
+	assign avs_s0_readdata = timer[avs_s0_address];
 	
 	reg [5:0] tick;
 	reg flg;
@@ -35,13 +35,19 @@ module mytimer (
 
 	always @ (posedge clk or negedge reset_n) begin
 		if (!reset_n) begin
-			timer <= 0;
+			timer[0] <= 0;
+			timer[1] <= 0;
+			timer[2] <= 0;
+			timer[3] <= 0;
 		end else begin
 			if(avs_s0_write) begin
-				timer<=avs_s0_writedata;
+				timer[avs_s0_address]<=avs_s0_writedata;
 			end else begin
 				if(tick==0)begin
-					timer<=timer+1'b1;
+					timer[0]<=timer[0]+1'b1;
+					timer[1]<=timer[1]+1'b1;
+					timer[2]<=timer[2]+1'b1;
+					timer[3]<=timer[3]+1'b1;
 				end
 			end
 		end

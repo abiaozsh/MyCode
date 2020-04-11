@@ -64,7 +64,6 @@ int main()
       }
       else {
         print("err:");
-        printInt(sdcard->errCode);
       }
 
     }

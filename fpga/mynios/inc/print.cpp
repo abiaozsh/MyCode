@@ -119,6 +119,12 @@ void printInt(int val)
   }
 }
 
+void printInt(int val, int newline){
+  printInt(val);
+  uart_write('\r');
+  uart_write('\n');
+}
+
 int scanInt(){
   char buff[10];
   int i;
@@ -158,3 +164,12 @@ int printByte(int val){
   uart_write(chardata[(val>>4)&0x0F]);
   uart_write(chardata[(val)&0x0F]);
 }
+
+
+
+void memcpy(void *dst, const void *src, int len){
+  for(int i=0;i<len;i++){
+    ((char*)(dst))[i] = ((char*)(src))[i];
+  }
+}
+

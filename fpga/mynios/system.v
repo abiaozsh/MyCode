@@ -179,8 +179,8 @@ end
     .dummy(dummy)
   );
   
-  wire        mytimer_address;
-  assign mytimer_address = avm_m0_address[2];//~[0]
+  wire    [1:0]  mytimer_address;
+  assign mytimer_address = avm_m0_address[3:2];//~[0]
   
   wire mytimer_read;
   assign mytimer_read = mytimer_cs ? avm_m0_read : 1'b0;

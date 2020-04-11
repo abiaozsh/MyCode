@@ -4,15 +4,8 @@
 	.global	_Z10combineIntcccc
 	.type	_Z10combineIntcccc, @function
 _Z10combineIntcccc:
-	slli	r5,r5,8
 	slli	r6,r6,16
-andi	r2, r4, 0xff
-andi	r5, r5, 65280
-	slli	r7,r7,24
-	or	r2, r2, r5
-andhi	r6, r6, 255
-	or	r2, r2, r6
-	or	r2, r2, r7
+	or	r2, r4, r6
 	ret	
 	.size	_Z10combineIntcccc, .-_Z10combineIntcccc
 	.align	2
@@ -359,65 +352,50 @@ _Z5printPKc:
 	.section	.rodata.str1.4,"aMS",@progbits,1
 	.align	2
 .LC0:
-	.string	"INIT\r\n"
-	.align	2
-.LC1:
-	.string	"SD ok\r\n"
-	.align	2
-.LC2:
-	.string	"sign ok\r\n"
+	.string	"INIT\r\n\0SD ok\r\n\0sign ok\r\n"
 	.section	.text
 	.align	2
 	.global	main
 	.type	main, @function
 main:
 	addi	sp, sp, -16
-	movhi	r4, %hiadj(.LC0)
-	addi	r4, r4, %lo(.LC0)
+	movhi	r1, %hiadj(.LC0)
+	addi	r1, r1, %lo(.LC0)
+  addi r4, r1, 0
 	call	_Z5printPKc
 	movhi	r16, 16
-	movi	r2, 2
+	movi	r2, 0
 	mov	r4, r16
 	stw	r2, 512(r16)
 	call	_Z16MMCCard_cardinitP6SDcard
 	beq	r2, zero, .L99
-	movhi	r4, %hiadj(.LC1)
-	addi	r4, r4, %lo(.LC1)
+	addi r4, r1, 7
 	call	_Z5printPKc
 	mov	r5, zero
 	mov	r4, r16
 	call	_Z16Sd2Card_readDataP6SDcardi
-	ldbu	r4, 454(r16)
-	ldbu	r5, 455(r16)
-	ldbu	r6, 456(r16)
-	ldbu	r7, 457(r16)
+	ldhu	r4, 454(r16)
+	ldhu	r6, 456(r16)
 	call	_Z10combineIntcccc
 	mov	r5, r2
 	mov	r4, r16
 	mov	r18, r2
 	call	_Z16Sd2Card_readDataP6SDcardi
-	ldbu	r4, 90(r16)
-	ldbu	r5, 91(r16)
-	ldbu	r6, 92(r16)
-	ldbu	r7, 93(r16)
+	ldhu	r4, 90(r16)
+	ldhu	r6, 92(r16)
 	call	_Z10combineIntcccc
 	movhi	r3, %hiadj(2018915346)
 	addi	r3, r3, %lo(2018915346)
-	bne	r2, r3, .L101
-	movhi	r4, %hiadj(.LC2)
-	addi	r4, r4, %lo(.LC2)
+	bne	r2, r3, .L99
+	addi r4, r1, 15
 	call	_Z5printPKc
-	ldbu	r4, 94(r16)
-	ldbu	r5, 95(r16)
-	ldbu	r6, 96(r16)
-	ldbu	r7, 97(r16)
+	ldhu	r4, 94(r16)
+	ldhu	r6, 96(r16)
 	mov	r17, zero
 	call	_Z10combineIntcccc
-	ldbu	r4, 98(r16)
-	ldbu	r5, 99(r16)
-	ldbu	r6, 100(r16)
-	ldbu	r7, 101(r16)
 	add	r18, r2, r18
+	ldhu	r4, 98(r16)
+	ldhu	r6, 100(r16)
 	call	_Z10combineIntcccc
 	mov	r16, r2
 	br	.L103
@@ -443,10 +421,6 @@ main:
 #APP
 	jmpi 0
 #NO_APP
-.L101:
-	call	_Z20SPI_CHIP_SELECT_HIGHv
-.L108:
-	br	.L108
 .L99:
 	call	_Z20SPI_CHIP_SELECT_HIGHv
 .L109:

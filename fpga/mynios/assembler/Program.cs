@@ -17,8 +17,8 @@ namespace Assembler
             string filein;
             string fileout;
             string filetemp;
-            string test = "b";
-            string type = "bios";
+            string test = "dos";
+            string type = "dos";
             string fileoutBin;
             if (args.Length > 0 && !String.IsNullOrEmpty(args[0]))
             {

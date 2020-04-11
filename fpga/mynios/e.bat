@@ -1,3 +1,4 @@
-"gcc\bin\gcc" -S -static-libgcc -msoft-float -masm=intel e.c -o e.s
-compile e.s out.hex e.temp.s
+call setpath.bat
+"nios2-elf-gcc" -S e.cpp -o e.s
+compile e.s out.hex e.temp.s dos e.bin
 pause
