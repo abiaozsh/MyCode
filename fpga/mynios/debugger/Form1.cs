@@ -109,6 +109,7 @@ namespace WindowsFormsApplication1
 		}
 		public void getstatus()
 		{
+			portWrite((byte)(0x00), (byte)(0x00));
 			int baseaddr = 0;
 
 			StringBuilder sb = new StringBuilder();
@@ -246,10 +247,22 @@ namespace WindowsFormsApplication1
 			portWrite((byte)(0x30), 0);
 			byte[] temp;
 			int val = 0;
-			portWrite((byte)(0x13), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 24; sb.Append(Util.getHex2(temp[0]));
-			portWrite((byte)(0x12), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 16; sb.Append(Util.getHex2(temp[0]));
-			portWrite((byte)(0x11), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 8; sb.Append(Util.getHex2(temp[0]));
-			portWrite((byte)(0x10), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 0; sb.Append(Util.getHex2(temp[0]));
+			portWrite((byte)(0x13), (byte)0x00);
+			portWrite((byte)(0x12), (byte)0x00);
+			portWrite((byte)(0x11), (byte)0x00);
+			portWrite((byte)(0x10), (byte)0x00);
+			temp = readFromPort(4);
+			val |= temp[0] << 24;
+			val |= temp[1] << 16;
+			val |= temp[2] << 8;
+			val |= temp[3] << 0;
+			if (sb != null)
+			{
+				sb.Append(Util.getHex2(temp[0]));
+				sb.Append(Util.getHex2(temp[1]));
+				sb.Append(Util.getHex2(temp[2]));
+				sb.Append(Util.getHex2(temp[3]));
+			}
 			return val;
 		}
 		public void setmem(int addr, int data)
@@ -269,6 +282,7 @@ namespace WindowsFormsApplication1
 
 		private void button2_Click_1(object sender, EventArgs e)
 		{
+			portWrite((byte)(0x00), (byte)(0x00));
 			int addr = Convert.ToInt32(textBox1.Text, 16);
 			StringBuilder sb = new StringBuilder();
 			getmem(addr, sb);
@@ -277,6 +291,7 @@ namespace WindowsFormsApplication1
 		}
 		private void button6_Click(object sender, EventArgs e)
 		{
+			portWrite((byte)(0x00), (byte)(0x00));
 			int addr = Convert.ToInt32(textBox1.Text, 16);
 			setmem(addr, Convert.ToInt32(textBox2.Text, 16));
 		}
@@ -337,6 +352,7 @@ namespace WindowsFormsApplication1
 
 		private void button8_Click(object sender, EventArgs e)
 		{
+			portWrite((byte)(0x00), (byte)(0x00));
 
 
 			loadSym();
@@ -377,6 +393,8 @@ namespace WindowsFormsApplication1
 
 		private void button9_Click(object sender, EventArgs e)
 		{
+			portWrite((byte)(0x00), (byte)(0x00));
+			
 			portWrite((byte)(0x02), 0);
 			portWrite((byte)(0x02), 1);
 
@@ -588,6 +606,7 @@ struct dir_t {//directoryEntry
 
 		private void button11_Click(object sender, EventArgs e)
 		{
+			portWrite((byte)(0x00), (byte)(0x00));
 
 
 			loadSym();
@@ -618,8 +637,33 @@ struct dir_t {//directoryEntry
 						String data = item.Substring(9, 8);
 						setmem(baseAddr + index, Convert.ToInt32(data, 16));
 						index += 4;
-						this.Text = index.ToString();
-						Application.DoEvents();
+						if ((index & 0x0FF) == 0)
+						{
+							this.Text = index.ToString();
+							Application.DoEvents();
+						}
+					}
+				}
+				index = 0;
+				foreach (var item in s.Split('\n'))
+				{
+					if (item.Length == ":040016001005003a97".Length + 1)
+					{
+						//:04001600 1005003a 97
+						String data = item.Substring(9, 8);
+						int a = Convert.ToInt32(data, 16);
+						int b = getmem(baseAddr + index, null);
+						if (a != b)
+						{
+							MessageBox.Show("err," + a + "," + b);
+							return;
+						}
+						index += 4;
+						if ((index & 0x0FF) == 0)
+						{
+							this.Text = index.ToString();
+							Application.DoEvents();
+						}
 					}
 				}
 			}
