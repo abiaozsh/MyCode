@@ -619,6 +619,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       //      command_done<=1;
       //    end
       //  end
+/*
       end else if (command == 8'hB0) begin//sdram8m write
         timer<=timer+1'b1;
         if(timer==0)begin
@@ -632,7 +633,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
             command_done<=1;
           end
         end
-
+*/
       //end else if (command == 8'hB1) begin//sdram2m read
       //  timer<=timer+1'b1;
       //  if(timer==0)begin
@@ -648,6 +649,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
       //      command_done <= 1;
       //    end
       //  end
+/*
       end else if (command == 8'hB1) begin//sdram8m read
         timer<=timer+1'b1;
         if(timer==0)begin
@@ -663,7 +665,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
             command_done <= 1;
           end
         end
-
+*/
       //end else if (command == 8'hBF) begin//memcopy
       //  counttotal<=counttotal+1'b1;
       //  if(!start)begin
@@ -886,7 +888,7 @@ wire        read_pixel_clk        ;//input         buff_readB_clk,
 
 wire sdram8m_busy;
 
-sdram8m ins_sdram8m(
+sdram8mvga ins_sdram8mvga(
   .sys_clk    (sys_clk  ),       // 时钟信号
   .sys_rst_n  (sys_rst_n),       // 复位信号
 
@@ -900,7 +902,7 @@ sdram8m ins_sdram8m(
   .sdram_ba        (sdram8m_ba),      //SDRAM Bank地址
   .sdram_addr      (sdram8m_addr),    //SDRAM 行/列地址
   .sdram_data      (sdram8m_data),    //SDRAM 数据  
-
+/*
   .clk                (sys_clk),//in
   .address            (sdram8m_c_address),//in
   .data_in            (sdram8m_c_data_in),//in
@@ -911,7 +913,7 @@ sdram8m ins_sdram8m(
   .write_ack          (sdram8m_c_write_ack),//out
   .write_en           (sdram8m_c_write_en),//in
   .write_latch_address(sdram8m_c_write_latch_address),//in
-
+*/
   .buffDMAwrite_req   (sdram8m_buffDMAwrite_req   ),             //input        
   .buffDMAwrite_addr  (sdram8m_buffDMAwrite_addr  ),            //input [11:0] 
   .buffDMAwrite_A_B   (sdram8m_buffDMAwrite_A_B   ),             //input        
