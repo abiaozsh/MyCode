@@ -21,7 +21,7 @@ module softspi (
 
 	assign avs_s0_waitrequest = 1'b0;
 	
-	assign avs_s0_readdata[0] = MISO;
+	assign avs_s0_readdata = {31'b0,MISO};
 	
 	always @ (posedge clk or negedge reset_n) begin
 		if (!reset_n) begin

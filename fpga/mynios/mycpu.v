@@ -91,6 +91,25 @@ reg  [4:0] debug_reg;
 reg        debug_reset_n;
 
 reg halt_uart;
+
+
+
+//////////////////////////////////////////////////
+
+//ram36{
+//	.address(ram36_address),//input	[7:0]  
+//	.byteena(ram36_byteena);//input	[3:0]  
+//	.clock(ram36_clock);//input	  
+//	.data(ram36_data);//input	[35:0]  
+//	.wren(ram36_wren);//input	  
+//	.q(ram36_q);//output	[35:0]  
+//};
+
+
+
+
+//////////////////////////////////////////////
+
 always @(posedge clk or negedge reset_n) begin
   if (!reset_n) begin
 

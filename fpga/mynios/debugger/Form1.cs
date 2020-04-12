@@ -394,7 +394,7 @@ namespace WindowsFormsApplication1
 		private void button9_Click(object sender, EventArgs e)
 		{
 			portWrite((byte)(0x00), (byte)(0x00));
-			
+
 			portWrite((byte)(0x02), 0);
 			portWrite((byte)(0x02), 1);
 
@@ -629,43 +629,58 @@ struct dir_t {//directoryEntry
 				fs.Close();
 
 				int index = 0;
+				int[] data = new int[s.Split('\n').Length];
 				foreach (var item in s.Split('\n'))
 				{
 					if (item.Length == ":040016001005003a97".Length + 1)
 					{
 						//:04001600 1005003a 97
-						String data = item.Substring(9, 8);
-						setmem(baseAddr + index, Convert.ToInt32(data, 16));
-						index += 4;
-						if ((index & 0x0FF) == 0)
-						{
-							this.Text = index.ToString();
-							Application.DoEvents();
-						}
+						String str = item.Substring(9, 8);
+						data[index] = Convert.ToInt32(str, 16);
+						index++;
 					}
 				}
-				index = 0;
-				foreach (var item in s.Split('\n'))
+				for (int i = 0; i < data.Length; i += 64)
 				{
-					if (item.Length == ":040016001005003a97".Length + 1)
+					bool error = false;
+					string sretry = "";
+					for (int retry = 0; retry < 5; retry++)
 					{
+						error = false;
 						//:04001600 1005003a 97
-						String data = item.Substring(9, 8);
-						int a = Convert.ToInt32(data, 16);
-						int b = getmem(baseAddr + index, null);
-						if (a != b)
+						for (int j = i; j < i + 64 && j < data.Length; j++)
 						{
-							MessageBox.Show("err," + a + "," + b);
-							return;
+							setmem(baseAddr + j * 4, data[j]);
 						}
-						index += 4;
-						if ((index & 0x0FF) == 0)
+						for (int j = i; j < i + 64 && j < data.Length; j++)
 						{
-							this.Text = index.ToString();
-							Application.DoEvents();
+							int b = getmem(baseAddr + j * 4, null);
+							if (data[j] != b)
+							{
+								error = true;
+								break;
+							}
+						}
+						if (!error)
+						{
+							break;
+						}
+						else
+						{
+							sretry = "retry";
 						}
 					}
+					if (error)
+					{
+						MessageBox.Show("err");
+						break;
+					}
+					this.Text = (i * 4).ToString() + sretry;
+					Application.DoEvents();
+
 				}
+
+
 			}
 
 
