@@ -109,7 +109,8 @@ assign read_line_addr = cnt_v+curr_read_line_base_addr-v_start+1'b1;
 wire [15:0]  pixel_data;
 assign pixel_data = read_line_addr[0]?read_pixelB_data:read_pixelA_data;
 
-assign read_pixel_addr = cnt_h-h_start;
+wire [10:0]temp_read_pixel_addr = (cnt_h-h_start);
+assign read_pixel_addr = temp_read_pixel_addr[9:0];
 
 //行计数器对像素时钟计数
 always @(posedge vga_clk or negedge rst_n_w) begin

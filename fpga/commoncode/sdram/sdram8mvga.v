@@ -154,7 +154,7 @@ sdram8m_controller ins_sdram8m_controller(
   .sdram_rd_burst    (sdram_rd_burst),        //读sdram时数据突发长度
   .sdram_dout        (sdram_dout),     //从sdram中读出的数据
   
-  .block_auto_refresh (write_en),
+  .block_auto_refresh (0),
   
   .sdram_init_done  (sdram_init_done)  //sdram 初始化完成标志
 
@@ -170,11 +170,9 @@ reg  [1:0] sram_add_high;
 reg  [8:0] sdram_timer2;
 reg        sdram_page_delay;
 reg        sdram_timer0;
-reg [7:0]  sdram_timer8;
 //sdram_rd_req sdram_rd_burst sdram_rd_addr
 always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
   if(!sys_rst_n) begin
-    sdram_timer8 <= 0;
     sdram_timer0 <= 0;
     
     read_line_req_buff <= 0;
