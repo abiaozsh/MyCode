@@ -57,7 +57,7 @@ inline void _dly()
 }
 
 
-void SPI_CHIP_SELECT_HIGH(){IOWR(SOFTISP, SOFTISP_CS, 0x07);}
+void SPI_CHIP_SELECT_HIGH(){IOWR(SOFTSPI, SOFTSPI_CS, 0x07);}
 
 //------------------------------------------------------------------------------
 int spiRec(void) {
@@ -65,16 +65,16 @@ int spiRec(void) {
   // no interrupts during byte receive - about 8 us
   //cli();
   // output pin high - like sending 0XFF
-  IOWR(SOFTISP, SOFTISP_MOSI, 1);
+  IOWR(SOFTSPI, SOFTSPI_MOSI, 1);
   int i;
   for (i = 0; i < 8; i++) {
-    IOWR(SOFTISP, SOFTISP_SCK, 1);
+    IOWR(SOFTSPI, SOFTSPI_SCK, 1);
     _dly();
     data <<= 1;
     
-    if (IORD(SOFTISP, SOFTISP_MISO)) data |= 1;
+    if (IORD(SOFTSPI, SOFTSPI_MISO)) data |= 1;
 
-    IOWR(SOFTISP, SOFTISP_SCK, 0);
+    IOWR(SOFTSPI, SOFTSPI_SCK, 0);
     _dly();
   }
   // enable interrupts
@@ -99,21 +99,21 @@ void spiSend(int data) {
   //cli();
   int i;
   for (i = 0; i < 8; i++) {
-    IOWR(SOFTISP, SOFTISP_SCK, 0);
+    IOWR(SOFTSPI, SOFTSPI_SCK, 0);
     _dly();
     if(data & 0x80)
     {
-      IOWR(SOFTISP, SOFTISP_MOSI, 1);
+      IOWR(SOFTSPI, SOFTSPI_MOSI, 1);
     }
     else
     {
-      IOWR(SOFTISP, SOFTISP_MOSI, 0);
+      IOWR(SOFTSPI, SOFTSPI_MOSI, 0);
     }
     data <<= 1;
-    IOWR(SOFTISP, SOFTISP_SCK, 1);
+    IOWR(SOFTSPI, SOFTSPI_SCK, 1);
     _dly();
   }
-  IOWR(SOFTISP, SOFTISP_SCK, 0);
+  IOWR(SOFTSPI, SOFTSPI_SCK, 0);
   // enable interrupts
   //sei();
 }
@@ -340,7 +340,7 @@ int Sd2Card_waitNotBusy(int timeoutMillis) {
 int Sd2Card_cardCommand(SDcard* sdcard, int cmd, int arg) {
   // select card
   //SPI_CHIP_SELECT_LOW(sdcard->chip_select);
-  IOWR(SOFTISP, SOFTISP_CS, ~(1<<sdcard->chip_select));
+  IOWR(SOFTSPI, SOFTSPI_CS, ~(1<<sdcard->chip_select));
   // wait up to 300 ms if busy
   Sd2Card_waitNotBusy(3000000);
   // send command
@@ -623,8 +623,8 @@ inline void _dly()
 }
 
 
-void SPI_CHIP_SELECT_HIGH(){IOWR(SOFTISP, SOFTISP_CS, 0x07);}
-void SPI_CHIP_SELECT_LOW(int chip){IOWR(SOFTISP, SOFTISP_CS, ~(1<<chip));}
+void SPI_CHIP_SELECT_HIGH(){IOWR(SOFTSPI, SOFTSPI_CS, 0x07);}
+void SPI_CHIP_SELECT_LOW(int chip){IOWR(SOFTSPI, SOFTSPI_CS, ~(1<<chip));}
 
 //------------------------------------------------------------------------------
 int spiRec(void) {
@@ -632,16 +632,16 @@ int spiRec(void) {
   // no interrupts during byte receive - about 8 us
   //cli();
   // output pin high - like sending 0XFF
-  IOWR(SOFTISP, SOFTISP_MOSI, 1);
+  IOWR(SOFTSPI, SOFTSPI_MOSI, 1);
   int i;
   for (i = 0; i < 8; i++) {
-    IOWR(SOFTISP, SOFTISP_SCK, 1);
+    IOWR(SOFTSPI, SOFTSPI_SCK, 1);
     _dly();
     data <<= 1;
     
-    if (IORD(SOFTISP, SOFTISP_MISO)) data |= 1;
+    if (IORD(SOFTSPI, SOFTSPI_MISO)) data |= 1;
 
-    IOWR(SOFTISP, SOFTISP_SCK, 0);
+    IOWR(SOFTSPI, SOFTSPI_SCK, 0);
     _dly();
   }
   // enable interrupts
@@ -666,21 +666,21 @@ void spiSend(int data) {
   //cli();
   int i;
   for (i = 0; i < 8; i++) {
-    IOWR(SOFTISP, SOFTISP_SCK, 0);
+    IOWR(SOFTSPI, SOFTSPI_SCK, 0);
     _dly();
     if(data & 0x80)
     {
-      IOWR(SOFTISP, SOFTISP_MOSI, 1);
+      IOWR(SOFTSPI, SOFTSPI_MOSI, 1);
     }
     else
     {
-      IOWR(SOFTISP, SOFTISP_MOSI, 0);
+      IOWR(SOFTSPI, SOFTSPI_MOSI, 0);
     }
     data <<= 1;
-    IOWR(SOFTISP, SOFTISP_SCK, 1);
+    IOWR(SOFTSPI, SOFTSPI_SCK, 1);
     _dly();
   }
-  IOWR(SOFTISP, SOFTISP_SCK, 0);
+  IOWR(SOFTSPI, SOFTSPI_SCK, 0);
   // enable interrupts
   //sei();
 }

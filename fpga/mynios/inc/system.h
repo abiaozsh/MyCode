@@ -1,8 +1,15 @@
 #define MYTIMER 0x02010000
 #define MYUART  0x02020000
-#define SOFTISP 0x02030000
-#define SOFTISP_MISO 0
-#define SOFTISP_MOSI 1
-#define SOFTISP_SCK  2
-#define SOFTISP_CS   3
-
+#define SOFTSPI 0x02030000
+#define SOFTSPI_MISO 0
+#define SOFTSPI_MOSI 1
+#define SOFTSPI_SCK  2
+#define SOFTSPI_CS   3
+#define VGA     0x02040000
+#define VGA_MODE     0
+#define VGA_BASE     1
+#define DMA     0x02050000
+#define DMA_SRC_PAGE 0
+#define DMA_DES_PAGE 1
+#define DMA_PAGE_LEN 2
+#define DMA_REQ      3

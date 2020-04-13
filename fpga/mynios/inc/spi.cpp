@@ -12,25 +12,25 @@ inline void _dly()
 
 
 void SPI_CHIP_SELECT_HIGH(){
-  IOWR(SOFTISP, SOFTISP_CS, 0x07);
+  IOWR(SOFTSPI, SOFTSPI_CS, 0x07);
 }
 void SPI_CHIP_SELECT_LOW(int chip){
-  IOWR(SOFTISP, SOFTISP_CS, ~(1<<chip));
+  IOWR(SOFTSPI, SOFTSPI_CS, ~(1<<chip));
 }
 
 //------------------------------------------------------------------------------
 int spiRec() {
   int data = 0;
-  IOWR(SOFTISP, SOFTISP_MOSI, 1);
+  IOWR(SOFTSPI, SOFTSPI_MOSI, 1);
   int i;
   for (i = 0; i < 8; i++) {
-    IOWR(SOFTISP, SOFTISP_SCK, 1);
+    IOWR(SOFTSPI, SOFTSPI_SCK, 1);
     _dly();
     data <<= 1;
     
-    if (IORD(SOFTISP, SOFTISP_MISO)) data |= 1;
+    if (IORD(SOFTSPI, SOFTSPI_MISO)) data |= 1;
 
-    IOWR(SOFTISP, SOFTISP_SCK, 0);
+    IOWR(SOFTSPI, SOFTSPI_SCK, 0);
     _dly();
   }
   return data;
@@ -39,19 +39,19 @@ int spiRec() {
 void spiSend(int data) {
   int i;
   for (i = 0; i < 8; i++) {
-    IOWR(SOFTISP, SOFTISP_SCK, 0);
+    IOWR(SOFTSPI, SOFTSPI_SCK, 0);
     _dly();
     if(data & 0x80)
     {
-      IOWR(SOFTISP, SOFTISP_MOSI, 1);
+      IOWR(SOFTSPI, SOFTSPI_MOSI, 1);
     }
     else
     {
-      IOWR(SOFTISP, SOFTISP_MOSI, 0);
+      IOWR(SOFTSPI, SOFTSPI_MOSI, 0);
     }
     data <<= 1;
-    IOWR(SOFTISP, SOFTISP_SCK, 1);
+    IOWR(SOFTSPI, SOFTSPI_SCK, 1);
     _dly();
   }
-  IOWR(SOFTISP, SOFTISP_SCK, 0);
+  IOWR(SOFTSPI, SOFTSPI_SCK, 0);
 }
