@@ -3,7 +3,10 @@ module vga_driver8m(
     input           sys_clk,
     input           sys_rst_n,    //复位信号
 
-    input  vga_mode,
+    //00 640*480 txt
+    //01 640*480 img
+    //1x 1024*768 img
+    input [1:0] vga_mode,
     output reg blanking,
     input blockvga,
     
@@ -24,6 +27,7 @@ module vga_driver8m(
     
   );
 
+`include "config.v"
 
 //wire define
 wire vga_clk_25M;
@@ -36,15 +40,17 @@ wire         rst_n_w;               //内部复位信号
 //***************************************************** 
 //待PLL输出稳定之后，停止复位
 assign rst_n_w = sys_rst_n && locked_w;
-   
-vga_pll	u_vga_pll(                  //时钟分频模块
-	.inclk0         (sys_clk),    
-	.areset         (~sys_rst_n),
+
+`ifdef IS_ALTERA
+vga_pll  u_vga_pll(                  //时钟分频模块
+  .inclk0         (sys_clk),    
+  .areset         (~sys_rst_n),
     
-	.c0             (vga_clk_25M), //VGA时钟 25M
-	.c1             (vga_clk_65M), //65M 102*768
-	.locked         (locked_w)
-	); 
+  .c0             (vga_clk_25M), //VGA时钟 25M
+  .c1             (vga_clk_65M), //65M 102*768
+  .locked         (locked_w)
+  ); 
+`endif
 
 //parameter define  
 parameter  H25_SYNC   =  11'd96;    //行同步
@@ -71,17 +77,15 @@ parameter  V65_TOTAL  =  11'd806;   //场扫描周期
 
 
 //wire define
-wire       vga_en;
-
 
 //使能RGB565数据输出
-assign vga_en  = h_active && v_active;
+wire vga_en  = h_active && v_active;
                  
 //RGB565数据输出
 assign vga_rgb = vga_en ?  pixel_data: 16'd0;//16'hffff  pixel_data
 
 wire vga_clk;
-assign vga_clk = vga_mode ? vga_clk_65M : vga_clk_25M;
+assign vga_clk = vga_mode[1] ? vga_clk_65M : vga_clk_25M;
 
 assign read_pixel_clk = vga_clk;
 
@@ -112,6 +116,15 @@ assign pixel_data = read_line_addr[0]?read_pixelB_data:read_pixelA_data;
 wire [10:0]temp_read_pixel_addr = (cnt_h-h_start);
 assign read_pixel_addr = temp_read_pixel_addr[9:0];
 
+//字符模式：
+//80*30
+//128*32:4096byte //BUFFA BUFFB
+//8*16 char table 
+//16byte per char
+//128char = 2048byte
+//提前2周期取字符，提前1周期取像素，8周期显示像素
+
+
 //行计数器对像素时钟计数
 always @(posedge vga_clk or negedge rst_n_w) begin
     if (!rst_n_w)begin
@@ -132,7 +145,7 @@ always @(posedge vga_clk or negedge rst_n_w) begin
       blanking <= 0;
       curr_read_line_base_addr <= 0;
     end else begin
-      if(vga_mode)begin
+      if(vga_mode[1])begin
         h_total <= H65_TOTAL;
         v_total <= V65_TOTAL;
         h_sync <= H65_SYNC;
@@ -162,28 +175,28 @@ always @(posedge vga_clk or negedge rst_n_w) begin
           vga_vs <= 1;
         end
       end
-		
-			if(cnt_h == h_sync)begin
-				vga_hs <= 0;
-			end
-			if(cnt_v == v_sync)begin
-				vga_vs <= 0;
-			end
-			
-				
-			if(cnt_h == h_start)begin
-				h_active <= 1;
+    
+      if(cnt_h == h_sync)begin
+        vga_hs <= 0;
+      end
+      if(cnt_v == v_sync)begin
+        vga_vs <= 0;
+      end
+      
+        
+      if(cnt_h == h_start)begin
+        h_active <= 1;
         if(v_active_ram && !blockvga)begin
           read_line_req<=1;
           read_line_A_B<=read_line_addr[0];
         end
 
-			end
+      end
       if(cnt_h == h_end)begin
         h_active <= 0;
         read_line_req <= 0;
       end
-			
+      
       if(cnt_v == v_start)begin
         v_active <= 1;
       end

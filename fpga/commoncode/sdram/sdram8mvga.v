@@ -37,6 +37,7 @@ module sdram8mvga(
     output reg busy
 );
 
+`include "config.v"
 
 wire  [7:0] buffDMAWrite_address;
 assign buffDMAWrite_address = sdram_timer2[7:0];
@@ -68,6 +69,7 @@ wire [15:0] buffDMAWriteB_q;
 assign read_pixelA_data = qA;
 assign buffDMAWriteA_q  = qA;
 wire [15:0] qA;
+`ifdef IS_ALTERA
 buff1024x16  buffReadA (
   .data      ( data             ),
   .wraddress ( wraddress        ),
@@ -77,9 +79,11 @@ buff1024x16  buffReadA (
   .rdclock   ( rdclock          ),
   .q         ( qA               )
 );
+`endif
 assign read_pixelB_data = qB;
 assign buffDMAWriteB_q  = qB;
 wire [15:0] qB;
+`ifdef IS_ALTERA
 buff1024x16  buffReadB (
   .data      ( data             ),
   .wraddress ( wraddress        ),
@@ -89,6 +93,7 @@ buff1024x16  buffReadB (
   .rdclock   ( rdclock          ),
   .q         ( qB               )
 );
+`endif
 
 wire rst_n;
 wire clk_50m;

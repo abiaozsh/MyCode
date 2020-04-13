@@ -26,8 +26,9 @@ module sdrambus(
     input             buffDMAread_req        ,
     output reg        buffDMAread_ack        ,
     input      [15:0] buffDMAread_addr       ,//64k sub page * 256word = 16M word
-    output            buffDMAread_clk        ,
     input             buffDMAread_A_B        ,
+
+    output            buffDMAread_clk        ,
     output reg [15:0] buffDMAread_wrdata     ,
     output reg  [7:0] buffDMAread_wraddress  ,
     output reg        buffDMAreadA_wren      ,
@@ -188,7 +189,6 @@ always@(posedge clk or negedge sys_rst_n) begin
     
   end
 end
-
 
 
 
