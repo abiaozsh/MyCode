@@ -367,6 +367,7 @@ set_location_assignment PIN_C3 -to vga_rgb[15]
 
 
 
+set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram8mvga.v
 set_global_assignment -name SDC_FILE aaa.sdc
 set_global_assignment -name QIP_FILE ../commoncode/sdram/pll_2m.qip
 set_global_assignment -name VERILOG_FILE ../commoncode/vga/vga_driver8m.v
@@ -375,7 +376,6 @@ set_global_assignment -name VERILOG_FILE ../commoncode/sdram/pll_clk.v
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram_controller.v
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram.v
 set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram8m_controller.v
-set_global_assignment -name VERILOG_FILE ../commoncode/sdram/sdram8m.v
 set_global_assignment -name VERILOG_FILE ../commoncode/seg_led_hex595.v
 set_global_assignment -name VERILOG_FILE ../commoncode/cy68013_8m_mcu.v
 set_global_assignment -name VERILOG_FILE flow_led.v
