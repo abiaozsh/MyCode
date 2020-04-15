@@ -205,7 +205,7 @@ reg write_sdram_ack;
 
 reg sdram_page_delay;
 reg        sdram_timer0;
-reg [8:0]  sdram_timer9;
+reg [9:0]  sdram_timer9;
 
 reg [1:0]  sdram_step;
 
@@ -290,6 +290,21 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     end
     
     if (buffDMAread_req_buff && !buffDMAread_ack)begin
+    
+      //sdram_timer9<=sdram_timer9+1'b1;
+      //buffDMAread_wraddress <= sdram_timer9[7:0];
+      //buffDMAread_wrdata    <= sdram_timer9[0] ? 16'hFFFF : 16'h0000;
+      //if(buffDMAread_A_B)begin
+      //  buffDMAreadA_wren <= 1;
+      //end else begin
+      //  buffDMAreadB_wren <= 1;
+      //end
+      //if(sdram_timer9==600)begin
+      //  sdram_timer9 <= 0;
+      //  buffDMAread_ack <= 1;
+      //end
+    
+    
       sdram_timer0 <= 1;
       if(sdram_timer0 == 0)begin
         sdram_rw_addr <= {buffDMAread_addr,8'b0}; //16+8
@@ -301,8 +316,8 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
         if(sdram_rd_ack || sdram_page_delay)begin
           sdram_timer9 <= sdram_timer9 + 1'b1;
           if(!sdram_page_delay)begin
-            buffDMAread_wrdata    <= sdram_dout;
             buffDMAread_wraddress <= sdram_timer9[7:0];
+            buffDMAread_wrdata    <= sdram_dout;
             if(buffDMAread_A_B)begin
               buffDMAreadA_wren <= 1;
             end else begin

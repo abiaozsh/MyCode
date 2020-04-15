@@ -111,7 +111,7 @@ reg [10:0]v_end;
 reg [11:0] curr_read_line_base_addr;
 assign read_line_addr = cnt_v+curr_read_line_base_addr-v_start+1'b1;
 wire [15:0]  pixel_data;
-assign pixel_data = read_line_addr[0]?read_pixelB_data:read_pixelA_data;
+assign pixel_data = blockvga ? 16'b0 : (read_line_addr[0]?read_pixelB_data:read_pixelA_data);
 
 wire [10:0]temp_read_pixel_addr = (cnt_h-h_start);
 assign read_pixel_addr = temp_read_pixel_addr[9:0];
