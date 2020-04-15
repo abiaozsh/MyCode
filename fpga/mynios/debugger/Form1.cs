@@ -11,6 +11,8 @@ using System.IO;
 using System.Globalization;
 using debugger;
 using SDcard;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
 namespace WindowsFormsApplication1
 {
@@ -50,6 +52,7 @@ namespace WindowsFormsApplication1
 			this.button1.Enabled = true;
 			this.button10.Enabled = true;
 			this.textBox3.Enabled = true;
+			this.button7.Enabled = true;
 			loadSym();
 		}
 		private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -265,17 +268,38 @@ namespace WindowsFormsApplication1
 			}
 			return val;
 		}
-		public void setmem(int addr, int data)
-		{
-			portWrite((byte)(0x20), (byte)((addr >> 0) & 0xFF));
-			portWrite((byte)(0x21), (byte)((addr >> 8) & 0xFF));
-			portWrite((byte)(0x22), (byte)((addr >> 16) & 0xFF));
-			portWrite((byte)(0x23), (byte)((addr >> 24) & 0xFF));
 
-			portWrite((byte)(0x24), (byte)((data >> 0) & 0xFF));
-			portWrite((byte)(0x25), (byte)((data >> 8) & 0xFF));
-			portWrite((byte)(0x26), (byte)((data >> 16) & 0xFF));
-			portWrite((byte)(0x27), (byte)((data >> 24) & 0xFF));
+		byte? buff_a0;
+		byte? buff_a1;
+		byte? buff_a2;
+		byte? buff_a3;
+
+		byte? buff_d0;
+		byte? buff_d1;
+		byte? buff_d2;
+		byte? buff_d3;
+
+		public void setmem(uint addr, uint data)
+		{
+			byte a0 = (byte)((addr >> 0) & 0xFF);
+			byte a1 = (byte)((addr >> 8) & 0xFF);
+			byte a2 = (byte)((addr >> 16) & 0xFF);
+			byte a3 = (byte)((addr >> 24) & 0xFF);
+
+			byte d0 = (byte)((data >> 0) & 0xFF);
+			byte d1 = (byte)((data >> 8) & 0xFF);
+			byte d2 = (byte)((data >> 16) & 0xFF);
+			byte d3 = (byte)((data >> 24) & 0xFF);
+
+			if (buff_a0 == null || buff_a0 != a0) { buff_a0 = a0; portWrite((byte)(0x20), buff_a0.Value); }
+			if (buff_a1 == null || buff_a1 != a1) { buff_a1 = a1; portWrite((byte)(0x21), buff_a1.Value); }
+			if (buff_a2 == null || buff_a2 != a2) { buff_a2 = a2; portWrite((byte)(0x22), buff_a2.Value); }
+			if (buff_a3 == null || buff_a3 != a3) { buff_a3 = a3; portWrite((byte)(0x23), buff_a3.Value); }
+
+			if (buff_d0 == null || buff_d0 != d0) { buff_d0 = d0; portWrite((byte)(0x24), buff_d0.Value); }
+			if (buff_d1 == null || buff_d1 != d1) { buff_d1 = d1; portWrite((byte)(0x25), buff_d1.Value); }
+			if (buff_d2 == null || buff_d2 != d2) { buff_d2 = d2; portWrite((byte)(0x26), buff_d2.Value); }
+			if (buff_d3 == null || buff_d3 != d3) { buff_d3 = d3; portWrite((byte)(0x27), buff_d3.Value); }
 
 			portWrite((byte)(0x31), 0);
 		}
@@ -292,8 +316,8 @@ namespace WindowsFormsApplication1
 		private void button6_Click(object sender, EventArgs e)
 		{
 			portWrite((byte)(0x00), (byte)(0x00));
-			int addr = Convert.ToInt32(textBox1.Text, 16);
-			setmem(addr, Convert.ToInt32(textBox2.Text, 16));
+			uint addr = Convert.ToUInt32(textBox1.Text, 16);
+			setmem(addr, Convert.ToUInt32(textBox2.Text, 16));
 		}
 
 
@@ -318,16 +342,158 @@ namespace WindowsFormsApplication1
 
 		private void button5_Click(object sender, EventArgs e)
 		{
+			buff_a0 = null;
+			buff_a1 = null;
+			buff_a2 = null;
+			buff_a3 = null;
+
+			buff_d0 = null;
+			buff_d1 = null;
+			buff_d2 = null;
+			buff_d3 = null;
+			portWrite((byte)(0x00), 0);
 			readFromPort(10);
 		}
+		private void button12_Click(object sender, EventArgs e)
+		{
+			setmem(0x02050000, 4096);
+			setmem(0x02050004, 0);
+			setmem(0x02050008, 256 * 12);
+			setmem(0x0205000C, 1);
+
+			//setmem(0x02040004, 0);
+		}
+
+		private void button13_Click(object sender, EventArgs e)
+		{
+
+			setmem(0x02050000, 4096 + 4096);
+			setmem(0x02050004, 0);
+			setmem(0x02050008, 256 * 12);
+			setmem(0x0205000C, 1);
+
+			//setmem(0x02040004, 256);
+
+		}
+		private uint getpixel(Color c)
+		{
+			uint val = 0;
+			val += ((uint)(c.R) >> 3) << (5 + 6);
+			val += ((uint)(c.G) >> 2) << (5);
+			val += ((uint)(c.B) >> 3);
+			return val;
+		}
+
+		private void setpixel(int x, int y)
+		{
+			if ((x & 1) == 0)
+			{
+				setmem((uint)(0x00200000 + x * 2 + y * 2048), 0x0000FFFF);
+			}
+			else
+			{
+				setmem((uint)(0x00200000 + x * 2 + y * 2048), (uint)(0x0000FFFF) << 16);
+			}
+		}
+		private void clearpixel(int x, int y)
+		{
+			if ((x & 1) == 0)
+			{
+				setmem((uint)(0x00200000 + x * 2 + y * 2048), 0x00000000);
+			}
+			else
+			{
+				setmem((uint)(0x00200000 + x * 2 + y * 2048), 0x00000000);
+			}
+		}
+
 
 		private void button7_Click(object sender, EventArgs e)
 		{
-			portWrite((byte)(0x16), (byte)0x00); var temp = readFromPort(1);
-			textBox2.Text += temp[0];
-			portWrite((byte)(0x17), (byte)0x00); temp = readFromPort(1);
-			textBox2.Text += temp[0];
+			portWrite((byte)(0x01), 1);
+
+
+			//portWrite((byte)(0x16), (byte)0x00); var temp = readFromPort(1);
+			//textBox2.Text += temp[0];
+			//portWrite((byte)(0x17), (byte)0x00); temp = readFromPort(1);
+			//textBox2.Text += temp[0];
+			Bitmap b2 = new Bitmap(1024, 768);
+			if (true)
+			{
+				Bitmap b = new Bitmap("d:\\test.bmp");
+				Graphics g = Graphics.FromImage(b2);
+				g.DrawImage(b, new Rectangle(0, 0, 1024, 768), 0, 0, b.Width, b.Height, GraphicsUnit.Pixel, null);
+				g.Dispose();
+			}
+			else
+			{
+				//按照屏幕宽高创建位图
+				//从一个继承自Image类的对象中创建Graphics对象
+				Graphics gc = Graphics.FromImage(b2);
+				//抓屏并拷贝到myimage里
+				gc.CopyFromScreen(new Point(0, 0), new Point(0, 0), new Size(1024, 768));
+				gc.Flush();
+				gc.Dispose();
+			}
+			if (true)
+			{
+
+				draw(b2);
+
+				for (int j = 0; j < 768; j++)
+				{
+					for (int i = 0; i < 1024; i += 2)
+					{
+						uint v1 = getpixel(b2.GetPixel(i, j));
+						uint v2 = getpixel(b2.GetPixel(i + 1, j));
+						setmem((uint)(0x00200000 + i * 2 + j * 2048), (v2 << 16) | v1);//
+					}
+					this.Text = "" + j;
+				}
+
+				//				setmem(0x02040008, 1);
+				//				for (int j = 0; j < 20; j++)
+				//				{
+				//					for (int i = 0; i < 1024; i++)
+				//					{
+				//						uint v1 = getpixel(b2.GetPixel(i, j));
+				//						//setmem((uint)(0x00200000 + i * 2 + j * 2048), (v2 << 16) | v1);//
+				//						setmem((uint)(0x80000000 + (i + j * 1024) * 4), v1);
+				//						setmem((uint)(0x80000000 + (i + j * 1024) * 4), v1);
+				//
+				//					}
+				//					this.Text = "" + j;
+				//				}
+				//				setmem(0x02040008, 0);
+
+			}
+			else
+			{
+				try
+				{
+					BitmapData bmpData = b2.LockBits(new Rectangle(0, 0, 1024, 768), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format16bppRgb565);
+					IntPtr ptr = bmpData.Scan0;
+
+					byte[] buff = new byte[768 * 2 * 1024];
+					Marshal.Copy(ptr, buff, 0, 768 * 2 * 1024);
+
+					FileStream fs = new FileStream("d:\\test.img", FileMode.Create, FileAccess.Write);
+					for (int y = 0; y < buff.Length; y++)
+					{
+						fs.WriteByte(buff[y]);
+					}
+					fs.Flush();
+					fs.Close();
+
+					b2.UnlockBits(bmpData);
+				}
+				catch (Exception ex)
+				{
+					ex.ToString();
+				}
+			}
 		}
+
 
 		private void loadSym()
 		{
@@ -357,7 +523,7 @@ namespace WindowsFormsApplication1
 
 			loadSym();
 
-			int baseAddr = 0x02000000;
+			uint baseAddr = 0x02000000;
 
 			portWrite((byte)(0x01), 1);//halt_uart
 
@@ -368,14 +534,14 @@ namespace WindowsFormsApplication1
 				sr.Close();
 				fs.Close();
 
-				int index = 0;
+				uint index = 0;
 				foreach (var item in s.Split('\n'))
 				{
 					if (item.Length == ":040016001005003a97".Length + 1)
 					{
 						//:04001600 1005003a 97
 						String data = item.Substring(9, 8);
-						setmem(baseAddr + index, Convert.ToInt32(data, 16));
+						setmem(baseAddr + index, Convert.ToUInt32(data, 16));
 						index += 4;
 						this.Text = index.ToString();
 						Application.DoEvents();
@@ -616,7 +782,7 @@ struct dir_t {//directoryEntry
 			portWrite((byte)(0x01), 1);//halt_uart
 
 			{
-				setmem(0x02000000, Convert.ToInt32("0000000A", 16));
+				setmem(0x02000000, Convert.ToUInt32("0000000A", 16));
 			}
 
 			baseAddr = 0x00000000;
@@ -629,14 +795,14 @@ struct dir_t {//directoryEntry
 				fs.Close();
 
 				int index = 0;
-				int[] data = new int[s.Split('\n').Length];
+				uint[] data = new uint[s.Split('\n').Length];
 				foreach (var item in s.Split('\n'))
 				{
 					if (item.Length == ":040016001005003a97".Length + 1)
 					{
 						//:04001600 1005003a 97
 						String str = item.Substring(9, 8);
-						data[index] = Convert.ToInt32(str, 16);
+						data[index] = Convert.ToUInt32(str, 16);
 						index++;
 					}
 				}
@@ -650,7 +816,7 @@ struct dir_t {//directoryEntry
 						//:04001600 1005003a 97
 						for (int j = i; j < i + 64 && j < data.Length; j++)
 						{
-							setmem(baseAddr + j * 4, data[j]);
+							setmem((uint)(baseAddr + j * 4), data[j]);
 						}
 						for (int j = i; j < i + 64 && j < data.Length; j++)
 						{
@@ -691,6 +857,189 @@ struct dir_t {//directoryEntry
 			portWrite((byte)(0x01), 0);//halt_uart
 		}
 
+		private void trackBar1_Scroll(object sender, EventArgs e)
+		{
+			//setmem(0x02040004, (uint)(trackBar1.Value));
+			//setmem(0x02040008, 1);
+			setmem((uint)(0x80000000 + (uint)(trackBar1.Value * 4)), 0x0FFFF);
+
+			//setmem(0x02040008, 0);
+
+
+		}
+
+		private void checkBox2_CheckedChanged(object sender, EventArgs e)
+		{
+			if (checkBox2.Checked)
+			{
+				setmem(0x02040008, 1);
+			}
+			else
+			{
+				setmem(0x02040008, 0);
+			}
+
+		}
+
+		private void checkBox3_CheckedChanged(object sender, EventArgs e)
+		{
+			setmem(0x02040008, 1);
+			if (checkBox3.Checked)
+			{
+				setmem((uint)(0x80000000), 0x00000);
+				setmem((uint)(0x80000004), 0x0FFFF);
+			}
+			else
+			{
+				setmem((uint)(0x80000000), 0x0FFFF);
+				setmem((uint)(0x80000004), 0x00000);
+			}
+
+			setmem(0x02040008, 0);
+
+		}
+
+		private void button15_Click(object sender, EventArgs e)
+		{
+			portWrite((byte)(0x01), 1);
+			for (int j = 0; j < 768; j++)
+			{
+				for (int i = 0; i < 1024; i += 2)
+				{
+					setmem((uint)(0x00200000 + i * 2 + j * 2048), 0);//
+				}
+				this.Text = "" + j;
+			}
+
+		}
+
+		private void button14_Click(object sender, EventArgs e)
+		{
+			portWrite((byte)(0x01), 1);
+			for (int j = 0; j < 768; j++)
+			{
+				for (int i = 0; i < 1024; i += 2)
+				{
+					setmem((uint)(0x00400000 + i * 2 + j * 2048), 0);//
+				}
+				this.Text = "" + j;
+			}
+
+		}
+
+		private void button16_Click(object sender, EventArgs e)
+		{
+			portWrite((byte)(0x01), 1);
+
+
+			//portWrite((byte)(0x16), (byte)0x00); var temp = readFromPort(1);
+			//textBox2.Text += temp[0];
+			//portWrite((byte)(0x17), (byte)0x00); temp = readFromPort(1);
+			//textBox2.Text += temp[0];
+			Bitmap b2 = new Bitmap(1024, 768);
+			if (true)
+			{
+				Bitmap b = new Bitmap("d:\\test.bmp");
+				Graphics g = Graphics.FromImage(b2);
+				g.DrawImage(b, new Rectangle(0, 0, 1024, 768), 0, 0, b.Width, b.Height, GraphicsUnit.Pixel, null);
+				g.Dispose();
+			}
+			else
+			{
+				//按照屏幕宽高创建位图
+				//从一个继承自Image类的对象中创建Graphics对象
+				Graphics gc = Graphics.FromImage(b2);
+				//抓屏并拷贝到myimage里
+				gc.CopyFromScreen(new Point(0, 0), new Point(0, 0), new Size(1024, 768));
+				gc.Flush();
+				gc.Dispose();
+			}
+			draw(b2);
+
+			//setmem(0x02040008, 1);
+			for (int j = 0; j < 768; j++)
+			{
+				for (int i = 0; i < 1024; i++)
+				{
+					uint v1 = getpixel(b2.GetPixel(i, j));
+					//setmem((uint)(0x00200000 + i * 2 + j * 2048), (v2 << 16) | v1);//
+					setmem((uint)(0x80000000 + (i + j * 1024) * 4), v1);
+					//setmem((uint)(0x80000000 + (i + j * 1024) * 4), v1);
+
+				}
+				this.Text = "" + j;
+			}
+			//setmem(0x02040008, 0);
+
+		}
+
+		void draw(Bitmap b2)
+		{
+
+			//setpixel(10, 256);
+			//setpixel(256, 10);
+			//setpixel(10, 255);
+			//setpixel(255, 10);
+			for (int j = 0; j < 768; j++)
+			{
+				//if ((j & 1) == 0)
+				//{
+				//	setmem(0x00200000 + j * 2 + j * 2048, 0x0000FFFF);
+				//}
+				//else
+				//{
+				//	setmem(0x00200000 + j * 2 + j * 2048, 0x0000FFFF << 16);
+				//}
+				b2.SetPixel(j, j, Color.White);
+			}
+			for (int j = 0; j < 768; j++)
+			{
+				//if ((j & 1) == 0)
+				//{
+				//	setmem(0x00200000 + j * 2 + j * 2048, 0x0000FFFF);
+				//}
+				//else
+				//{
+				//	setmem(0x00200000 + j * 2 + j * 2048, 0x0000FFFF << 16);
+				//}
+				b2.SetPixel(j + 30, j, Color.White);
+			}
+
+			for (int j = 30; j < 768; j++)
+			{
+				//if ((j & 1) == 0)
+				//{
+				//	setmem(0x00200000 + j * 2 + j * 2048, 0x0000FFFF);
+				//}
+				//else
+				//{
+				//	setmem(0x00200000 + j * 2 + j * 2048, 0x0000FFFF << 16);
+				//}
+				b2.SetPixel(j - 30, j, Color.White);
+			}
+
+			for (int j = 0; j < 768; j++)
+			{
+				//if ((j & 1) == 0)
+				//{
+				//	setmem(0x00200000 + j * 2 + j * 2048, 0x0000FFFF);
+				//}
+				//else
+				//{
+				//	setmem(0x00200000 + j * 2 + j * 2048, 0x0000FFFF << 16);
+				//}
+				b2.SetPixel(j + 250, j, Color.White);
+			}
+
+			for (int j = 0; j < 50; j++)
+			{
+				b2.SetPixel(254, j, Color.White);
+				b2.SetPixel(255, j, Color.Black);
+				b2.SetPixel(256, j, Color.Red);
+				b2.SetPixel(257, j, Color.Green);
+				b2.SetPixel(258, j, Color.Blue);
+			}
+		}
 
 	}
 }

@@ -11,6 +11,20 @@
 #include "inc/FileSystem.cpp"
 
 
+void dma(){
+  int src = 0;
+  int des = 0;
+  for(int i=0;i<12;i++){
+    // - 256
+    IOWR(DMA, DMA_SRC_PAGE, 4096 + src);//at 2Mbyte //4page per line  512byte per page //   int dma_src = trackBar1.Value * 4;//4page per line
+    IOWR(DMA, DMA_DES_PAGE, 0 + des);//4page per line  512byte per page //   int dma_src = trackBar1.Value * 4;//4page per line
+    IOWR(DMA, DMA_PAGE_LEN, 256);//int page_len = 256;   256page per time       total 12times  256*12=3072page / 4 = 768line
+    IOWR(DMA, DMA_REQ, 1);
+    src+=256;
+    des+=256;
+  }
+}
+
 int main(){
   Sd2Card* sdcard = (Sd2Card*)(0x800000);//at8M
   SdVolume* sdvolume = (SdVolume*)(0x810000);//at8M~
@@ -82,22 +96,33 @@ int main(){
 
     }
     
-    if(equal(str,"o",-1)){
+    if(equal(str,"load",-1)){
       print("which file?\r\n");
       char filename[12];
       scan(filename,-1,-1);
       res = file->open(root, filename, O_READ);
       if(res){
         print("open ok\r\n");
-        printInt(file->fileSize_);print("\r\n");
-        for(int i=0;i<file->fileSize_;i++){
+        for(int i=0;i<0x200000;i++){
           int val = file->read();
-          uart_write(val);
+          ((char*)(0x200000))[i] = val;//at 1Mbyte
+          if((i&0x3FF)==0){
+            printInt(i);print("\r\n");
+          }
         }
+        dma();
       }else{
         print("open ng\r\n");
         printInt(file->fileError);print("\r\n");
       }
+    }
+    
+    if(equal(str,"clr",-1)){
+      for(int i=0;i<0x80000;i++){
+        ((int*)(0x200000))[i] = 0;//at 2Mbyte
+      }
+      dma();
+      print("done\r\n");
     }
 
   }

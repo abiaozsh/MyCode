@@ -47,6 +47,15 @@ namespace WindowsFormsApplication1
 			this.button10 = new System.Windows.Forms.Button();
 			this.button11 = new System.Windows.Forms.Button();
 			this.textBox3 = new System.Windows.Forms.TextBox();
+			this.button12 = new System.Windows.Forms.Button();
+			this.button13 = new System.Windows.Forms.Button();
+			this.trackBar1 = new System.Windows.Forms.TrackBar();
+			this.checkBox2 = new System.Windows.Forms.CheckBox();
+			this.checkBox3 = new System.Windows.Forms.CheckBox();
+			this.button14 = new System.Windows.Forms.Button();
+			this.button15 = new System.Windows.Forms.Button();
+			this.button16 = new System.Windows.Forms.Button();
+			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// button1
@@ -78,7 +87,7 @@ namespace WindowsFormsApplication1
 			this.textBox4.Multiline = true;
 			this.textBox4.Name = "textBox4";
 			this.textBox4.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.textBox4.Size = new System.Drawing.Size(842, 390);
+			this.textBox4.Size = new System.Drawing.Size(1083, 453);
 			this.textBox4.TabIndex = 8;
 			this.textBox4.TextChanged += new System.EventHandler(this.textBox4_TextChanged);
 			// 
@@ -160,9 +169,9 @@ namespace WindowsFormsApplication1
 			// 
 			// button7
 			// 
-			this.button7.Location = new System.Drawing.Point(13, 42);
+			this.button7.Location = new System.Drawing.Point(958, 35);
 			this.button7.Name = "button7";
-			this.button7.Size = new System.Drawing.Size(75, 23);
+			this.button7.Size = new System.Drawing.Size(49, 23);
 			this.button7.TabIndex = 25;
 			this.button7.Text = "test";
 			this.button7.UseVisualStyleBackColor = true;
@@ -170,7 +179,7 @@ namespace WindowsFormsApplication1
 			// 
 			// button8
 			// 
-			this.button8.Location = new System.Drawing.Point(94, 42);
+			this.button8.Location = new System.Drawing.Point(12, 42);
 			this.button8.Name = "button8";
 			this.button8.Size = new System.Drawing.Size(86, 23);
 			this.button8.TabIndex = 26;
@@ -198,7 +207,7 @@ namespace WindowsFormsApplication1
 			// 
 			// button9
 			// 
-			this.button9.Location = new System.Drawing.Point(267, 42);
+			this.button9.Location = new System.Drawing.Point(185, 42);
 			this.button9.Name = "button9";
 			this.button9.Size = new System.Drawing.Size(75, 23);
 			this.button9.TabIndex = 28;
@@ -218,7 +227,7 @@ namespace WindowsFormsApplication1
 			// 
 			// button11
 			// 
-			this.button11.Location = new System.Drawing.Point(186, 42);
+			this.button11.Location = new System.Drawing.Point(104, 42);
 			this.button11.Name = "button11";
 			this.button11.Size = new System.Drawing.Size(75, 23);
 			this.button11.TabIndex = 30;
@@ -234,11 +243,103 @@ namespace WindowsFormsApplication1
 			this.textBox3.TabIndex = 31;
 			this.textBox3.Text = "?";
 			// 
+			// button12
+			// 
+			this.button12.Location = new System.Drawing.Point(601, 40);
+			this.button12.Name = "button12";
+			this.button12.Size = new System.Drawing.Size(49, 23);
+			this.button12.TabIndex = 32;
+			this.button12.Text = "f0";
+			this.button12.UseVisualStyleBackColor = true;
+			this.button12.Click += new System.EventHandler(this.button12_Click);
+			// 
+			// button13
+			// 
+			this.button13.Location = new System.Drawing.Point(656, 40);
+			this.button13.Name = "button13";
+			this.button13.Size = new System.Drawing.Size(49, 23);
+			this.button13.TabIndex = 33;
+			this.button13.Text = "f1";
+			this.button13.UseVisualStyleBackColor = true;
+			this.button13.Click += new System.EventHandler(this.button13_Click);
+			// 
+			// trackBar1
+			// 
+			this.trackBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.trackBar1.Location = new System.Drawing.Point(1101, 15);
+			this.trackBar1.Maximum = 20;
+			this.trackBar1.Name = "trackBar1";
+			this.trackBar1.Orientation = System.Windows.Forms.Orientation.Vertical;
+			this.trackBar1.Size = new System.Drawing.Size(45, 511);
+			this.trackBar1.TabIndex = 34;
+			this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
+			// 
+			// checkBox2
+			// 
+			this.checkBox2.AutoSize = true;
+			this.checkBox2.Location = new System.Drawing.Point(874, 15);
+			this.checkBox2.Name = "checkBox2";
+			this.checkBox2.Size = new System.Drawing.Size(78, 16);
+			this.checkBox2.TabIndex = 35;
+			this.checkBox2.Text = "vga block";
+			this.checkBox2.UseVisualStyleBackColor = true;
+			this.checkBox2.CheckedChanged += new System.EventHandler(this.checkBox2_CheckedChanged);
+			// 
+			// checkBox3
+			// 
+			this.checkBox3.AutoSize = true;
+			this.checkBox3.Location = new System.Drawing.Point(874, 42);
+			this.checkBox3.Name = "checkBox3";
+			this.checkBox3.Size = new System.Drawing.Size(48, 16);
+			this.checkBox3.TabIndex = 36;
+			this.checkBox3.Text = "test";
+			this.checkBox3.UseVisualStyleBackColor = true;
+			this.checkBox3.CheckedChanged += new System.EventHandler(this.checkBox3_CheckedChanged);
+			// 
+			// button14
+			// 
+			this.button14.Location = new System.Drawing.Point(1013, 8);
+			this.button14.Name = "button14";
+			this.button14.Size = new System.Drawing.Size(49, 23);
+			this.button14.TabIndex = 38;
+			this.button14.Text = "clear1";
+			this.button14.UseVisualStyleBackColor = true;
+			this.button14.Click += new System.EventHandler(this.button14_Click);
+			// 
+			// button15
+			// 
+			this.button15.Location = new System.Drawing.Point(958, 8);
+			this.button15.Name = "button15";
+			this.button15.Size = new System.Drawing.Size(49, 23);
+			this.button15.TabIndex = 37;
+			this.button15.Text = "clear0";
+			this.button15.UseVisualStyleBackColor = true;
+			this.button15.Click += new System.EventHandler(this.button15_Click);
+			// 
+			// button16
+			// 
+			this.button16.Location = new System.Drawing.Point(1013, 35);
+			this.button16.Name = "button16";
+			this.button16.Size = new System.Drawing.Size(68, 23);
+			this.button16.TabIndex = 39;
+			this.button16.Text = "test vram";
+			this.button16.UseVisualStyleBackColor = true;
+			this.button16.Click += new System.EventHandler(this.button16_Click);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(866, 473);
+			this.ClientSize = new System.Drawing.Size(1156, 536);
+			this.Controls.Add(this.button16);
+			this.Controls.Add(this.button14);
+			this.Controls.Add(this.button15);
+			this.Controls.Add(this.checkBox3);
+			this.Controls.Add(this.checkBox2);
+			this.Controls.Add(this.trackBar1);
+			this.Controls.Add(this.button13);
+			this.Controls.Add(this.button12);
 			this.Controls.Add(this.textBox3);
 			this.Controls.Add(this.button11);
 			this.Controls.Add(this.button10);
@@ -259,6 +360,7 @@ namespace WindowsFormsApplication1
 			this.Controls.Add(this.button1);
 			this.Name = "Form1";
 			this.Load += new System.EventHandler(this.Form1_Load);
+			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -285,6 +387,14 @@ namespace WindowsFormsApplication1
         private Button button10;
         private Button button11;
 		private TextBox textBox3;
+		private Button button12;
+		private Button button13;
+		private TrackBar trackBar1;
+		private CheckBox checkBox2;
+		private CheckBox checkBox3;
+		private Button button14;
+		private Button button15;
+		private Button button16;
 
 	}
 }

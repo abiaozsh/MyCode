@@ -154,7 +154,7 @@ namespace Assembler
             {
 
                 //bgtu rA, rB, label bltu rB, rA, label
-                //ble rA, rB, label bge rB, rA, label
+                
                 //bleu rA, rB, label bgeu rB, rA, label
                 //cmpgt rC, rA, rB cmplt rC, rB, rA
                 //cmpgti rB, rA, IMMED cmpgei rB, rA, (IMMED+1)
@@ -173,6 +173,10 @@ namespace Assembler
                 if ((new Config("nop")).match(line))//nop add r0, r0, r0
                 {
                     linespass2.Add(Line.match("add r0, r0, r0"));
+                }
+				else if ((new Config("ble reg, reg, sym")).match(line))//ble rA, rB, label bge rB, rA, label
+                {
+                    linespass2.Add(Line.match("bge " + line.op2.text + ", " + line.op1.text + ", " + line.op3.text));
                 }
                 else if ((new Config("bgt reg, reg, sym")).match(line))//bgt rA, rB, label blt rB, rA, label
                 {

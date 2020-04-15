@@ -11,14 +11,13 @@ void dma(){
   int src = 0;
   int des = 0;
   for(int i=0;i<12;i++){
-    IOWR(DMA, DMA_SRC_PAGE, 4096 - 256 + src);//at 1Mbyte //4page per line  512byte per page //   int dma_src = trackBar1.Value * 4;//4page per line
+    IOWR(DMA, DMA_SRC_PAGE, 4096 + src);//at 1Mbyte //4page per line  512byte per page //   int dma_src = trackBar1.Value * 4;//4page per line
     IOWR(DMA, DMA_DES_PAGE, 0 + des);//4page per line  512byte per page //   int dma_src = trackBar1.Value * 4;//4page per line
     IOWR(DMA, DMA_PAGE_LEN, 256);//int page_len = 256;   256page per time       total 12times
     IOWR(DMA, DMA_REQ, 1);
     src+=256;
     des+=256;
   }
-
 }
 
 int main(){
@@ -50,6 +49,7 @@ int main(){
         ((int*)(0x200000))[i] = 0;//at 1Mbyte
       }
       dma();
+      print("done\r\n");
     }
     
     if(equal(str,"test",-1)){
@@ -57,7 +57,7 @@ int main(){
       for(int i=0;i<1024;i++){
         for(int j=0;j<768;j++){
           int val1;
-          if((i>0 && i<100 && j>0 && j<top) || (i==j)){
+          if((i==j) || (i>0 && i<100 && j>0 && j<top)){
             val1 = 0xFFFF;
           }else{
             val1 = 0x0000;
@@ -69,6 +69,18 @@ int main(){
       print("donea");
       dma();
       print("doneb");
+    }
+    
+    if(equal(str,"d",-1)){
+        print("x?\r\n");
+        int x = scanInt();
+        print("y?\r\n");
+        int y = scanInt();
+        print("val?\r\n");
+        int val = scanInt();
+        ((short*)(0x200000))[(y<<10)+x] = val;//at 2Mbyte
+        dma();
+        print("done\r\n");
     }
 
   }
