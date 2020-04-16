@@ -53,7 +53,7 @@ reg [9:0]  buffAB_wraddress;
 reg        buffA_wren;
 reg        buffB_wren;
 
-wire  [7:0] buffDMAWrite_address = sdram_timer2[7:0];
+wire  [7:0] buffDMAWrite_address = sdram_timer2[7:0]-2'b10;
 
 wire        wrclock    = isDMA ? buffDMAWrite_clk             : sdram_clk        ;//buffDMAWrite_clk is sdram_clk at sdrambus
 wire        rdclock    = isDMA ? sdram_clk                    : read_pixel_clk   ;
@@ -156,8 +156,6 @@ sdram8m_controller ins_sdram8m_controller(
   .sdram_rd_burst    (sdram_rd_burst),        //读sdram时数据突发长度
   .sdram_dout        (sdram_dout),     //从sdram中读出的数据
   
-  .block_auto_refresh (0),
-  
   .sdram_init_done  (sdram_init_done)  //sdram 初始化完成标志
 
 );
@@ -221,7 +219,7 @@ reg write_single_sdram_ack;
 reg  [2:0] sdram_timer1;
 reg  [1:0] sram_add_high;
 reg  [8:0] sdram_timer2;
-reg  [7:0] sdram_timer8;
+reg  [8:0] sdram_timer8;
 reg        sdram_page_delay;
 reg        sdram_timer0;
 //sdram_rd_req sdram_rd_burst sdram_rd_addr
@@ -297,34 +295,27 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     if(buffDMAwrite_req_buff && !buffDMAwrite_ack)begin
       //step2
       busy<=1;
-      sdram_timer0 <= 1;
-      if(sdram_timer0 == 0) begin
+      sdram_timer2 <= sdram_timer2 + 1'b1;
+      if(buffDMAwrite_A_B)begin
+        sdram_din <= buffDMAWriteA_q;
+      end else begin
+        sdram_din <= buffDMAWriteB_q;
+      end
+
+      if         (sdram_timer2 == 0)begin
         sdram_rw_addr <= {buffDMAwrite_addr,8'b0};//14+8 **
         sdram_wr_burst <= 256;
-        sdram_timer2 <= 0;//buffDMAWrite_address = sdram_timer2[7:0];
-        sdram_page_delay <= 0;
         sdram_wr_req <= 1;//只需要置高一个周期就可以了
-      end else begin
-        if(sdram_wr_ack || sdram_page_delay)begin
-          sdram_timer2 <= sdram_timer2 + 1'b1;//buffDMAWrite_address = sdram_timer2[7:0];
-          if(sdram_timer2>0 && sdram_timer2<256)begin
-            if(buffDMAwrite_A_B)begin
-              sdram_din <= buffDMAWriteA_q;//sdram_timer2[0] ? 16'h0000 : 16'hffff; //
-            end else begin
-              sdram_din <= buffDMAWriteB_q;//sdram_timer2[0] ? 16'h0000 : 16'hffff; //
-            end
-          end else begin
-            sdram_din <= 0;
-          end
-          if(sdram_timer2==255)begin
-            sdram_page_delay <= 1;
-            sdram_wr_req <= 0;
-          end else if(sdram_timer2==263)begin //263 TODO reduce
-            sdram_timer0 <= 0;
-            buffDMAwrite_ack <= 1;
-          end
-        end
+      end else if(sdram_timer2 == 273)begin
+        sdram_timer2 <= 0;
+        buffDMAwrite_ack <= 1;
       end
+      if(sdram_wr_ack)begin
+        sdram_wr_req <= 0;
+      end
+      
+      
+      
     end
     if(!buffDMAwrite_req_buff && buffDMAwrite_ack)begin
       buffDMAwrite_ack <= 0;

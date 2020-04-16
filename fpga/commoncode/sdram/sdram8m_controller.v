@@ -26,8 +26,6 @@ module sdram8m_controller(
     input  [ 8:0] sdram_rd_burst,   //读sdram时数据突发长度
     output [15:0] sdram_dout,       //从SDRAM读出的数据
     
-    input block_auto_refresh,
-    
     output        sdram_init_done  //SDRAM 初始化完成标志
 
     );
