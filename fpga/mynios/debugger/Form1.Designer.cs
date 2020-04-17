@@ -55,6 +55,7 @@ namespace WindowsFormsApplication1
 			this.button14 = new System.Windows.Forms.Button();
 			this.button15 = new System.Windows.Forms.Button();
 			this.button16 = new System.Windows.Forms.Button();
+			this.button17 = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -169,7 +170,7 @@ namespace WindowsFormsApplication1
 			// 
 			// button7
 			// 
-			this.button7.Location = new System.Drawing.Point(958, 35);
+			this.button7.Location = new System.Drawing.Point(928, 35);
 			this.button7.Name = "button7";
 			this.button7.Size = new System.Drawing.Size(49, 23);
 			this.button7.TabIndex = 25;
@@ -319,7 +320,7 @@ namespace WindowsFormsApplication1
 			// 
 			// button16
 			// 
-			this.button16.Location = new System.Drawing.Point(1013, 35);
+			this.button16.Location = new System.Drawing.Point(983, 35);
 			this.button16.Name = "button16";
 			this.button16.Size = new System.Drawing.Size(68, 23);
 			this.button16.TabIndex = 39;
@@ -327,11 +328,22 @@ namespace WindowsFormsApplication1
 			this.button16.UseVisualStyleBackColor = true;
 			this.button16.Click += new System.EventHandler(this.button16_Click);
 			// 
+			// button17
+			// 
+			this.button17.Location = new System.Drawing.Point(1057, 35);
+			this.button17.Name = "button17";
+			this.button17.Size = new System.Drawing.Size(87, 23);
+			this.button17.TabIndex = 40;
+			this.button17.Text = "clear vram";
+			this.button17.UseVisualStyleBackColor = true;
+			this.button17.Click += new System.EventHandler(this.button17_Click);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1156, 536);
+			this.Controls.Add(this.button17);
 			this.Controls.Add(this.button16);
 			this.Controls.Add(this.button14);
 			this.Controls.Add(this.button15);
@@ -395,6 +407,7 @@ namespace WindowsFormsApplication1
 		private Button button14;
 		private Button button15;
 		private Button button16;
+		private Button button17;
 
 	}
 }

@@ -43,7 +43,6 @@ struct mbr_t {
   char mbrSig1;
 };
 
-
 struct dir_t {
   char name[11];
   char attributes;
@@ -68,7 +67,6 @@ struct dir_t {
   char fileSize_2;
   char fileSize_3;
 };
-
 
 struct bpb_t {
   char bytesPerSector_0;
@@ -115,7 +113,6 @@ struct bpb_t {
   char fat32Reserved[12];
 };
 
-
 struct fbs_t {
   char jmpToBootCode[3];
   char oemName[8];
@@ -151,6 +148,8 @@ short combineShort(char v0, char v1){
   return (v0&0x0FF) | ((v1<<8)&0x0FF00);
 }
 
+class SdFile;
+
 class SdVolume {
  public:
   
@@ -170,6 +169,8 @@ class SdVolume {
   uint16_t rootDirEntryCount_;  // number of entries in FAT16 root dir
   uint32_t rootDirStart_;       // root start block for FAT16, cluster for FAT32
 
+  SdFile* root;
+  
   int error;
   
   Sd2Card* sdCard_;            // Sd2Card object for cache
@@ -225,9 +226,9 @@ class SdVolume {
 
       int totalSectors = combineInt(p->totalSectors_0, p->totalSectors_1, p->totalSectors_2, p->totalSectors_3);
       int firstSector = combineInt(p->firstSector_0, p->firstSector_1, p->firstSector_2, p->firstSector_3);
-      printInt(p->boot);print("\r\n");
-      printInt(totalSectors);print("\r\n");
-      printInt(firstSector);print("\r\n");
+      //printInt(p->boot);print("\r\n");
+      //printInt(totalSectors);print("\r\n");
+      //printInt(firstSector);print("\r\n");
 
       if ((p->boot & 0X7F) !=0  ||
         totalSectors < 100 ||

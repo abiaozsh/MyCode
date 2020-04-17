@@ -533,8 +533,8 @@ end
         end
    
         if(start)begin
-          inited <= 1;
           if(!inited)begin
+            inited <= 1;
             sdram_c_buffDMAread_req <= 1;
             if(timer12!=0)begin
               sdram8m_buffDMAwrite_req <= 1;
@@ -547,7 +547,6 @@ end
               sdram_c_buffDMAread_A_B <= !sdram_c_buffDMAread_A_B;
               sdram8m_buffDMAwrite_addr <= sdram8m_buffDMAwrite_addr + 1'b1;
               sdram8m_buffDMAwrite_A_B <= !sdram8m_buffDMAwrite_A_B;
-              timer12<=timer12+1'b1;
               if(timer12==DMA_page_length)begin
                 blockvga_from_DMA <= 0;
                 inited <= 0;
@@ -557,6 +556,7 @@ end
               end
             end
             if(!sdram_c_buffDMAread_req && !sdram_c_buffDMAread_ack && (!sdram8m_buffDMAwrite_req && !sdram8m_buffDMAwrite_ack || timer12==0) )begin
+              timer12<=timer12+1'b1;
               inited <= 0;
             end
           end

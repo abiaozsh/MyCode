@@ -11,6 +11,21 @@
 #include "inc/FileSystem.cpp"
 
 
+void* __eof__();
+int malloc_index = 0;
+void* malloc(int size){
+  size = (size & (~0x03))+4;
+  int idx = (int)__eof__();
+  idx += malloc_index;
+  malloc_index += size;
+  return (void*)idx;
+}
+
+void mfree(int size){
+  malloc_index -= size;
+}
+
+
 void dma(){
   int src = 0;
   int des = 0;
@@ -25,39 +40,90 @@ void dma(){
   }
 }
 
+void initDisk(Sd2Card** sdcard,int cardidx, SdVolume** sdvolumes, int* totalVolume){
+  int res;
+  res = sdcard[cardidx]->init(cardidx);
+  if(res){
+    print("found card ");printInt(cardidx);print("\r\n");
+    SdVolume* tempVol = (SdVolume*)malloc(sizeof(SdVolume));
+    
+    res = tempVol->init(sdcard[cardidx], 0);
+    if(res){
+      print("found volume 0\r\n");
+      sdvolumes[*totalVolume] = tempVol;
+      *totalVolume = *totalVolume + 1;
+      return;
+    }else{
+      res = tempVol->init(sdcard[cardidx], 1);
+      if(res){
+        print("found volume 1\r\n");
+        sdvolumes[*totalVolume] = tempVol;
+        *totalVolume = *totalVolume + 1;
+        return;
+      }
+    }
+    //mfree(sizeof(SdVolume));
+  }else{
+    print("card error ");printInt(cardidx);print("\r\n");
+  }
+}
+
 int main(){
-  Sd2Card* sdcard = (Sd2Card*)(0x800000);//at8M
-  SdVolume* sdvolume = (SdVolume*)(0x810000);//at8M~
-  SdFile* root = (SdFile*)(0x820000);//at8M~
-  SdFile* file = (SdFile*)(0x830000);//at8M~
-  cid_t* cid = (cid_t*)(0x840000);//at8M~
-  csd_t* csd = (csd_t*)(0x850000);//at8M~
-  
+
+  Sd2Card* sdcard = (Sd2Card*)malloc(sizeof(Sd2Card));//at8M
+  SdVolume* sdvolume = (SdVolume*)malloc(sizeof(SdVolume));//at8M~
+  sdvolume->root = (SdFile*)malloc(sizeof(SdFile));//at8M~
+
+  Sd2Card* sdcards[3];
+  sdcards[0] = (Sd2Card*)malloc(sizeof(Sd2Card));//at eof
+  sdcards[1] = (Sd2Card*)malloc(sizeof(Sd2Card));//at eof
+  sdcards[2] = (Sd2Card*)malloc(sizeof(Sd2Card));//at eof
+  SdVolume* sdvolumes[26];
+  int totalVolume = 0;
+  SdVolume* currVolume;
   print("Hello from My DOS\r\n");
+  printInt((int)sdcards[2]);
+  initDisk(sdcards, 0, sdvolumes, &totalVolume);
+  initDisk(sdcards, 1, sdvolumes, &totalVolume);
+  initDisk(sdcards, 2, sdvolumes, &totalVolume);
+  int res;
+  for(int i=0;i<totalVolume;i++){
+    sdvolumes[i]->root = (SdFile*)malloc(sizeof(SdFile));
+    res = sdvolumes[i]->root->openRoot(sdvolumes[i]);
+    if(res){
+      print("found root");printInt(i);print("\r\n");
+      sdvolumes[i]->root->dirList();
+    }else{
+      print("root error");printInt(i);print("\r\n");
+    }
+  }
   
+  
+  SdFile* file = (SdFile*)malloc(sizeof(SdFile));//at8M~
+  
+
   while(1){
     
     char str[10];
     int res;
     
     scan(str,-1,-1);
+    
     if(equal(str,"i",-1)){
       print("which sd?\r\n");
       int cs = scanInt();
       res = sdcard->init(cs);
       if(res){
         print("sd ok\r\n");
-        //sdcard->printCID(cid);
-        //sdcard->printCSD(csd);
-        //print("size:");printInt(sdcard->cardSize());print("\r\n");
-        
+
         sdcard->printType();
         print("which partition?\r\n");
         int part = scanInt();
         res = sdvolume->init(sdcard, part);
         if(res){
           print("volume ok\r\n");
-          res = root->openRoot(sdvolume);
+          res = sdvolume->root->openRoot(sdvolume);
+          currVolume = sdvolume;
           if(res){
             print("root ok\r\n");
           }else{
@@ -78,16 +144,22 @@ int main(){
         printInt(sdcard->errorCode());
       }
     }
-    
+
+    if(equal(str,"v",-1)){
+      print("which volume?");printInt(totalVolume);print("\r\n");
+      int v = scanInt();
+      currVolume = sdvolumes[v];
+    }
+
     if(equal(str,"dir",-1)){
-      root->dirList();
+      currVolume->root->dirList();
     }
     
     if(equal(str,"mkdir",-1)){
       print("dir name?\r\n");
       char filename[12];
       scan(filename,-1,-1);
-      res = file->makeDir(root, filename);
+      res = file->makeDir(currVolume->root, filename);
       if(res){
         print("mkdir ok\r\n");
       }else{
@@ -100,12 +172,12 @@ int main(){
       print("which file?\r\n");
       char filename[12];
       scan(filename,-1,-1);
-      res = file->open(root, filename, O_READ);
+      res = file->open(currVolume->root, filename, O_READ);
       if(res){
         print("open ok\r\n");
         for(int i=0;i<0x200000;i++){
           int val = file->read();
-          ((char*)(0x200000))[i] = val;//at 1Mbyte
+          ((char*)(0x200000))[i] = val;//at 2Mbyte
           if((i&0x3FF)==0){
             printInt(i);print("\r\n");
           }

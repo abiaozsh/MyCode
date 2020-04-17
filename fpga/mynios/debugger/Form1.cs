@@ -197,7 +197,7 @@ namespace WindowsFormsApplication1
 				for (int i = -32; i < 32; i += 4)
 				{
 					StringBuilder sb2 = new StringBuilder();
-					int code = getmem(pc + cs + i, sb2);
+					uint code = getmem(pc + cs + i, sb2);
 					int target = pc + i;
 					string foundsym = Config.getSym(target, syms);
 					string scode = Config.dasm(syms, (uint)code, pc + i, baseaddr);
@@ -240,7 +240,7 @@ namespace WindowsFormsApplication1
 			return val;
 		}
 
-		public int getmem(int addr, StringBuilder sb)
+		public uint getmem(int addr, StringBuilder sb)
 		{
 			portWrite((byte)(0x20), (byte)((addr >> 0) & 0xFF));
 			portWrite((byte)(0x21), (byte)((addr >> 8) & 0xFF));
@@ -249,16 +249,16 @@ namespace WindowsFormsApplication1
 
 			portWrite((byte)(0x30), 0);
 			byte[] temp;
-			int val = 0;
+			uint val = 0;
 			portWrite((byte)(0x13), (byte)0x00);
 			portWrite((byte)(0x12), (byte)0x00);
 			portWrite((byte)(0x11), (byte)0x00);
 			portWrite((byte)(0x10), (byte)0x00);
 			temp = readFromPort(4);
-			val |= temp[0] << 24;
-			val |= temp[1] << 16;
-			val |= temp[2] << 8;
-			val |= temp[3] << 0;
+			val |= (uint)(temp[0]) << 24;
+			val |= (uint)(temp[1]) << 16;
+			val |= (uint)(temp[2]) << 8;
+			val |= (uint)(temp[3]) << 0;
 			if (sb != null)
 			{
 				sb.Append(Util.getHex2(temp[0]));
@@ -820,7 +820,7 @@ struct dir_t {//directoryEntry
 						}
 						for (int j = i; j < i + 64 && j < data.Length; j++)
 						{
-							int b = getmem(baseAddr + j * 4, null);
+							uint b = getmem(baseAddr + j * 4, null);
 							if (data[j] != b)
 							{
 								error = true;
@@ -1039,6 +1039,27 @@ struct dir_t {//directoryEntry
 				b2.SetPixel(257, j, Color.Green);
 				b2.SetPixel(258, j, Color.Blue);
 			}
+		}
+
+		private void button17_Click(object sender, EventArgs e)
+		{
+			portWrite((byte)(0x01), 1);
+
+
+			//setmem(0x02040008, 1);
+			for (int j = 0; j < 768; j++)
+			{
+				for (int i = 0; i < 1024; i++)
+				{
+					//setmem((uint)(0x00200000 + i * 2 + j * 2048), (v2 << 16) | v1);//
+					setmem((uint)(0x80000000 + (i + j * 1024) * 4), 0);
+					//setmem((uint)(0x80000000 + (i + j * 1024) * 4), v1);
+
+				}
+				this.Text = "" + j;
+			}
+			//setmem(0x02040008, 0);
+
 		}
 
 	}
