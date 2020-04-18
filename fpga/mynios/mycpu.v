@@ -27,7 +27,9 @@ module mycpu (
     output wire         uart_txd,
     output [7:0]    debug8,
     output [31:0]   debug32,
-    input  [7:0]    debugin8
+    input  [7:0]    debugin8,
+    
+    input vga_blanking
   );
 
   wire uart_rec;
@@ -117,7 +119,7 @@ always @(posedge clk or negedge reset_n) begin
     debug_step<=0;
     debug_readmem_step<=0;
 
-    halt_uart<=0;
+    halt_uart<=1;
     debug_read<=0;
     debug_write<=0;
     debug_reset_n<=1;
@@ -131,7 +133,11 @@ always @(posedge clk or negedge reset_n) begin
     end else begin//command_done==0
       if          (command == 8'h00) begin
 
-      end else if (command == 8'h01) begin halt_uart<=data[0]; command_done<=1;
+      end else if (command == 8'h01) begin 
+        if(!vga_blanking)begin
+          halt_uart<=data[0]; 
+          command_done<=1;
+        end
       end else if (command == 8'h02) begin debug_reset_n<=data[0]; command_done<=1;
 
       end else if (command == 8'h03) begin debug_step<=~debug_step; command_done<=1;
@@ -217,7 +223,8 @@ assign debug8[2] = avm_m0_write;
 
 assign debug8[4] = halt;
 assign debug8[5] = cycle;
-assign debug8[6] = cmd_ack;
+assign debug8[6] = debug_read;
+assign debug8[7] = debug_write;
 
 wire cpu_reset_n = reset_n && debug_reset_n;
 

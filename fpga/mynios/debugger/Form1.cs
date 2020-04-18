@@ -130,6 +130,12 @@ namespace WindowsFormsApplication1
 			int halt_uart;
 			sb.Append("  halt_uart:");
 			portWrite((byte)(0x15), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0])); halt_uart = temp[0];
+
+			sb.Append("  waitRequest:");
+			portWrite((byte)(0x16), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0])); halt_uart = temp[0];
+
+			sb.Append("  debugin:");
+			portWrite((byte)(0x17), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getBin8(temp[0])); halt_uart = temp[0];
 			sb.AppendLine();
 
 			if (halt_cpu != 0 || halt_uart != 0)
@@ -356,23 +362,14 @@ namespace WindowsFormsApplication1
 		}
 		private void button12_Click(object sender, EventArgs e)
 		{
-			setmem(0x02050000, 4096);
-			setmem(0x02050004, 0);
-			setmem(0x02050008, 256 * 12);
-			setmem(0x0205000C, 1);
 
-			//setmem(0x02040004, 0);
+			setmem(0x02040004, 1024);//2M byte
 		}
 
 		private void button13_Click(object sender, EventArgs e)
 		{
 
-			setmem(0x02050000, 4096 + 4096);
-			setmem(0x02050004, 0);
-			setmem(0x02050008, 256 * 12);
-			setmem(0x0205000C, 1);
-
-			//setmem(0x02040004, 256);
+			setmem(0x02040004, 2048);//4M byte
 
 		}
 		private uint getpixel(Color c)
@@ -420,7 +417,7 @@ namespace WindowsFormsApplication1
 			Bitmap b2 = new Bitmap(1024, 768);
 			if (true)
 			{
-				Bitmap b = new Bitmap("d:\\test.bmp");
+				Bitmap b = new Bitmap("e:\\test.bmp");
 				Graphics g = Graphics.FromImage(b2);
 				g.DrawImage(b, new Rectangle(0, 0, 1024, 768), 0, 0, b.Width, b.Height, GraphicsUnit.Pixel, null);
 				g.Dispose();
@@ -435,7 +432,8 @@ namespace WindowsFormsApplication1
 				gc.Flush();
 				gc.Dispose();
 			}
-			if (true)
+
+			if (false)
 			{
 
 				draw(b2);
@@ -477,7 +475,7 @@ namespace WindowsFormsApplication1
 					byte[] buff = new byte[768 * 2 * 1024];
 					Marshal.Copy(ptr, buff, 0, 768 * 2 * 1024);
 
-					FileStream fs = new FileStream("d:\\test.img", FileMode.Create, FileAccess.Write);
+					FileStream fs = new FileStream("e:\\test.img", FileMode.Create, FileAccess.Write);
 					for (int y = 0; y < buff.Length; y++)
 					{
 						fs.WriteByte(buff[y]);
@@ -859,13 +857,7 @@ struct dir_t {//directoryEntry
 
 		private void trackBar1_Scroll(object sender, EventArgs e)
 		{
-			//setmem(0x02040004, (uint)(trackBar1.Value));
-			//setmem(0x02040008, 1);
-			setmem((uint)(0x80000000 + (uint)(trackBar1.Value * 4)), 0x0FFFF);
-
-			//setmem(0x02040008, 0);
-
-
+			setmem(0x02040004, (uint)(trackBar1.Value));
 		}
 
 		private void checkBox2_CheckedChanged(object sender, EventArgs e)
@@ -883,19 +875,14 @@ struct dir_t {//directoryEntry
 
 		private void checkBox3_CheckedChanged(object sender, EventArgs e)
 		{
-			setmem(0x02040008, 1);
 			if (checkBox3.Checked)
 			{
-				setmem((uint)(0x80000000), 0x00000);
-				setmem((uint)(0x80000004), 0x0FFFF);
+				setmem(0x02040000, 0);
 			}
 			else
 			{
-				setmem((uint)(0x80000000), 0x0FFFF);
-				setmem((uint)(0x80000004), 0x00000);
+				setmem(0x02040000, 2);
 			}
-
-			setmem(0x02040008, 0);
 
 		}
 
@@ -906,7 +893,7 @@ struct dir_t {//directoryEntry
 			{
 				for (int i = 0; i < 1024; i += 2)
 				{
-					setmem((uint)(0x00200000 + i * 2 + j * 2048), 0);//
+					setmem((uint)(0x00200000 + i * 2 + j * 2048), 0);//2M
 				}
 				this.Text = "" + j;
 			}
@@ -920,7 +907,7 @@ struct dir_t {//directoryEntry
 			{
 				for (int i = 0; i < 1024; i += 2)
 				{
-					setmem((uint)(0x00400000 + i * 2 + j * 2048), 0);//
+					setmem((uint)(0x00400000 + i * 2 + j * 2048), 0);//4M
 				}
 				this.Text = "" + j;
 			}
@@ -1038,6 +1025,15 @@ struct dir_t {//directoryEntry
 				b2.SetPixel(256, j, Color.Red);
 				b2.SetPixel(257, j, Color.Green);
 				b2.SetPixel(258, j, Color.Blue);
+			}
+
+			for (int j = 100; j < 150; j++)
+			{
+				b2.SetPixel(254, j, Color.White);
+				b2.SetPixel(255, j, Color.Black);
+				b2.SetPixel(256, j, Color.White);
+				b2.SetPixel(257, j, Color.Black);
+				b2.SetPixel(258, j, Color.White);
 			}
 		}
 

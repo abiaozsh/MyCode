@@ -26,20 +26,6 @@ void mfree(int size){
 }
 
 
-void dma(){
-  int src = 0;
-  int des = 0;
-  for(int i=0;i<12;i++){
-    // - 256
-    IOWR(DMA, DMA_SRC_PAGE, 4096 + src);//at 2Mbyte //4page per line  512byte per page //   int dma_src = trackBar1.Value * 4;//4page per line
-    IOWR(DMA, DMA_DES_PAGE, 0 + des);//4page per line  512byte per page //   int dma_src = trackBar1.Value * 4;//4page per line
-    IOWR(DMA, DMA_PAGE_LEN, 256);//int page_len = 256;   256page per time       total 12times  256*12=3072page / 4 = 768line
-    IOWR(DMA, DMA_REQ, 1);
-    src+=256;
-    des+=256;
-  }
-}
-
 void initDisk(Sd2Card** sdcard,int cardidx, SdVolume** sdvolumes, int* totalVolume){
   int res;
   res = sdcard[cardidx]->init(cardidx);
@@ -106,7 +92,7 @@ int main(){
     
     char str[10];
     int res;
-    
+    print("cmd?\r\n");
     scan(str,-1,-1);
     
     if(equal(str,"i",-1)){
@@ -149,6 +135,7 @@ int main(){
       print("which volume?");printInt(totalVolume);print("\r\n");
       int v = scanInt();
       currVolume = sdvolumes[v];
+      print("curr volume:");printInt(v);print("\r\n");
     }
 
     if(equal(str,"dir",-1)){
@@ -182,18 +169,35 @@ int main(){
             printInt(i);print("\r\n");
           }
         }
-        dma();
       }else{
         print("open ng\r\n");
         printInt(file->fileError);print("\r\n");
       }
     }
     
+    if(equal(str,"base",-1)){
+      print("base?\r\n");
+      int base = scanInt();
+      IOWR(VGA, VGA_BASE, base);
+      print("done\r\n");
+    }
+
+    
+    if(equal(str,"draw",-1)){
+      for(int j=0;j<768;j++){
+        for(int i=0;i<1024;i++){
+          if(i==j){
+            ((short*)(0x200000))[i+j*2048] = 0xFFFF;//at 2Mbyte
+          }
+        }
+      }
+      print("done\r\n");
+    }
+    
     if(equal(str,"clr",-1)){
       for(int i=0;i<0x80000;i++){
         ((int*)(0x200000))[i] = 0;//at 2Mbyte
       }
-      dma();
       print("done\r\n");
     }
 

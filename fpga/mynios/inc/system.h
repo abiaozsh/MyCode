@@ -9,8 +9,3 @@
 #define VGA_MODE     0
 #define VGA_BASE     1
 #define VGA_BLOCK    2
-#define DMA     0x02050000
-#define DMA_SRC_PAGE 0
-#define DMA_DES_PAGE 1
-#define DMA_PAGE_LEN 2
-#define DMA_REQ      3

@@ -4,7 +4,7 @@ module flow_led(
   input key1,
   input key2,
   output led,
-                   
+    
   //uart接口
   input uart_rxd,
   output uart_txd,
@@ -27,38 +27,7 @@ module flow_led(
   output [12:0] sdram_addr,               //SDRAM 行/列地址
   inout  [15:0] sdram_data,               //SDRAM 数据
   output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
- 
-    
-     //SDRAM8m 芯片接口
-    output        sdram8m_clk_out,            //SDRAM 芯片时钟
-    output        sdram8m_cke,                //SDRAM 时钟有效
-    output        sdram8m_cs_n,               //SDRAM 片选
-    output        sdram8m_ras_n,              //SDRAM 行有效
-    output        sdram8m_cas_n,              //SDRAM 列有效
-    output        sdram8m_we_n,               //SDRAM 写有效
-    output  [1:0] sdram8m_ba,                 //SDRAM Bank地址
-    output [11:0] sdram8m_addr,               //SDRAM 行/列地址
-    inout  [15:0] sdram8m_data,               //SDRAM 数据
-/*
-  //input cy_SCL,
-  //input cy_SDA,
-  inout [7:0] cy_D,
-  inout [7:0] cy_B,
-  output cy_IFCLK_out                     ,
-  input cy_to_fpga_CTL0_FLAGA        ,
-  input cy_to_fpga_CTL2_FLAGC        ,
-  input cy_to_fpga_CTL1_FLAGB        ,
-  input cy_to_fpga_A7_FLAGD          ,
-  output  cy_from_fpga_RDY1_SLWR       ,//output
-  output  cy_from_fpga_RDY0_SLRD       ,//output
-  input cy_A0_INT0                   ,
-  output cy_A1_INT1                   ,
-  output  cy_from_fpga_A2_SLOE         ,//output
-  input cy_A3_WU2                    ,
-  //output  cy_from_fpga_A4_FIFOADR0     ,//output
-  output  cy_from_fpga_A5_FIFOADR1     ,//output
-  //output  cy_from_fpga_A6_PKTEND       ,//output
-*/
+
     //VGA接口                          
     output          vga_hs,         //行同步信号
     output          vga_vs,         //场同步信号
@@ -133,8 +102,8 @@ system system_inst(
 
   .mycpu_uart_rxd (uart_rxd), //        .uart_rxd
   .mycpu_uart_txd (uart_txd), //   mycpu.uart_txd
-  .mycpu_debug8   (debug8),    //        .debug
-  .mycpu_debug32  (debug32),   //        .debug0
+  .debug8         (debug8),    //        .debug
+  .debug32        (debug32),   //        .debug0
 
   .sdram_clk_out (sdram_clk_out	),   // sdram_0.addr
   .sdram_cke     (sdram_cke    	),     //        .ba
@@ -158,45 +127,6 @@ system system_inst(
   
   //.pio0out_export (outpin32), // pio0out.export
   //.pio1in_export  (inpin8),  //  pio1in.export
-
-/*
-	 .cyok(cyok),
-   .cy_cmd(cy_cmd),
-   .cy_dat(cy_dat),
-   .cy_snd_data0(cy_snd_data0),
-   .cy_snd_data1(cy_snd_data1),
-
-
-   .cy_D(cy_D),
-   .cy_B(cy_B),
-   //.cy_SCL(cy_SCL)       ,
-   //.cy_SDA(cy_SDA)       ,
-   .cy_IFCLK(cy_IFCLK_in),
-   .cy_to_fpga_CTL0_FLAGA(cy_to_fpga_CTL0_FLAGA),
-   .cy_to_fpga_CTL2_FLAGC(cy_to_fpga_CTL2_FLAGC),
-   .cy_to_fpga_CTL1_FLAGB(cy_to_fpga_CTL1_FLAGB),
-   .cy_to_fpga_A7_FLAGD(cy_to_fpga_A7_FLAGD),
-   .cy_from_fpga_RDY1_SLWR(cy_from_fpga_RDY1_SLWR)       ,//output
-   .cy_from_fpga_RDY0_SLRD(cy_from_fpga_RDY0_SLRD)       ,//output
-   .cy_from_fpga_A2_SLOE(cy_from_fpga_A2_SLOE)         ,//output
-   .cy_A0_INT0(cy_A0_INT0)                   ,
-   .cy_A1_INT1(cy_A1_INT1)                   ,
-   .cy_A3_WU2(cy_A3_WU2)                    ,
-   //.cy_from_fpga_A4_FIFOADR0(cy_from_fpga_A4_FIFOADR0)     ,//output
-   .cy_from_fpga_A5_FIFOADR1(cy_from_fpga_A5_FIFOADR1)     ,//output
-   //.cy_from_fpga_A6_PKTEND(cy_from_fpga_A6_PKTEND)       ,//output
-*/
-
-    //SDRAM 芯片接口
-    .sdram8m_clk_out   (sdram8m_clk_out),
-    .sdram8m_cke       (sdram8m_cke),    //SDRAM 时钟有效
-    .sdram8m_cs_n      (sdram8m_cs_n),    //SDRAM 片选
-    .sdram8m_ras_n     (sdram8m_ras_n),    //SDRAM 行有效  
-    .sdram8m_cas_n     (sdram8m_cas_n),    //SDRAM 列有效
-    .sdram8m_we_n      (sdram8m_we_n),    //SDRAM 写有效
-    .sdram8m_ba        (sdram8m_ba),      //SDRAM Bank地址
-    .sdram8m_addr      (sdram8m_addr),    //SDRAM 行/列地址
-    .sdram8m_data      (sdram8m_data),    //SDRAM 数据  
 
     .vga_hs         (vga_hs),       
     .vga_vs         (vga_vs),       
