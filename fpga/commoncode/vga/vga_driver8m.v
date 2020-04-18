@@ -12,8 +12,8 @@ module vga_driver8m(
     
     output reg       read_line_req ,
     output reg       read_line_A_B ,
-    output    [11:0] read_line_addr,//4kline total
-    input     [11:0] read_line_base_addr,//start line
+    output    [15:0] read_line_addr,//4kline total
+    input     [15:0] read_line_base_addr,//start line
 
     input [15:0] read_pixelA_data,
     input [15:0] read_pixelB_data,
@@ -93,8 +93,6 @@ reg h_active;
 reg v_active;
 reg v_active_ram;
 
-reg start_load;
-
 //reg define
 reg  [10:0] cnt_h;
 reg  [10:0] cnt_v;
@@ -108,10 +106,9 @@ reg [10:0]v_start;
 reg [10:0]h_end;
 reg [10:0]v_end;
 
-reg [11:0] curr_read_line_base_addr;
-assign read_line_addr = cnt_v+curr_read_line_base_addr-v_start+1'b1;
-wire [15:0]  pixel_data;
-assign pixel_data = blockvga ? 16'b0 : (read_line_addr[0]?read_pixelB_data:read_pixelA_data);
+reg [15:0] curr_read_line_base_addr;
+assign read_line_addr = curr_read_line_base_addr + cnt_v - v_start + 1'b1;
+wire [15:0]  pixel_data = blockvga ? 16'b0 : (read_line_addr[0]?read_pixelB_data:read_pixelA_data);
 
 wire [10:0]temp_read_pixel_addr = (cnt_h-h_start);
 assign read_pixel_addr = temp_read_pixel_addr[9:0];
@@ -186,9 +183,11 @@ always @(posedge vga_clk or negedge rst_n_w) begin
         
       if(cnt_h == h_start)begin
         h_active <= 1;
-        if(v_active_ram && !blockvga)begin
-          read_line_req<=1;
+        if(v_active_ram)begin
           read_line_A_B<=read_line_addr[0];
+        end
+        if(!blockvga)begin
+          read_line_req<=1;
         end
 
       end
