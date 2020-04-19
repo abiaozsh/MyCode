@@ -87,6 +87,9 @@ int main(){
   
   SdFile* file = (SdFile*)malloc(sizeof(SdFile));//at8M~
   
+//sd卡提速：
+//spi提速
+//fat表缓存
 
   while(1){
     
@@ -187,7 +190,7 @@ int main(){
       for(int j=0;j<768;j++){
         for(int i=0;i<1024;i++){
           if(i==j){
-            ((short*)(0x200000))[i+j*2048] = 0xFFFF;//at 2Mbyte
+            ((short*)(0x200000))[i+j*1024] = 0xFFFF;//at 2Mbyte
           }
         }
       }

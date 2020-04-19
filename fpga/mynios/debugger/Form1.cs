@@ -248,10 +248,15 @@ namespace WindowsFormsApplication1
 
 		public uint getmem(int addr, StringBuilder sb)
 		{
-			portWrite((byte)(0x20), (byte)((addr >> 0) & 0xFF));
-			portWrite((byte)(0x21), (byte)((addr >> 8) & 0xFF));
-			portWrite((byte)(0x22), (byte)((addr >> 16) & 0xFF));
-			portWrite((byte)(0x23), (byte)((addr >> 24) & 0xFF));
+			byte a0 = (byte)((addr >> 0) & 0xFF);
+			byte a1 = (byte)((addr >> 8) & 0xFF);
+			byte a2 = (byte)((addr >> 16) & 0xFF);
+			byte a3 = (byte)((addr >> 24) & 0xFF);
+
+			if (buff_a0 == null || buff_a0 != a0) { buff_a0 = a0; portWrite((byte)(0x20), buff_a0.Value); }
+			if (buff_a1 == null || buff_a1 != a1) { buff_a1 = a1; portWrite((byte)(0x21), buff_a1.Value); }
+			if (buff_a2 == null || buff_a2 != a2) { buff_a2 = a2; portWrite((byte)(0x22), buff_a2.Value); }
+			if (buff_a3 == null || buff_a3 != a3) { buff_a3 = a3; portWrite((byte)(0x23), buff_a3.Value); }
 
 			portWrite((byte)(0x30), 0);
 			byte[] temp;
@@ -322,6 +327,11 @@ namespace WindowsFormsApplication1
 		private void button6_Click(object sender, EventArgs e)
 		{
 			portWrite((byte)(0x00), (byte)(0x00));
+
+			portWrite((byte)(0x50), 0x0F);
+
+			portWrite((byte)(0x28), 0x00);
+
 			uint addr = Convert.ToUInt32(textBox1.Text, 16);
 			setmem(addr, Convert.ToUInt32(textBox2.Text, 16));
 		}
