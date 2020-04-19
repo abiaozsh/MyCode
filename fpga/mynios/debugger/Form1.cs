@@ -132,10 +132,10 @@ namespace WindowsFormsApplication1
 			portWrite((byte)(0x15), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0])); halt_uart = temp[0];
 
 			sb.Append("  waitRequest:");
-			portWrite((byte)(0x16), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0])); halt_uart = temp[0];
+			portWrite((byte)(0x16), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
 
 			sb.Append("  debugin:");
-			portWrite((byte)(0x17), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getBin8(temp[0])); halt_uart = temp[0];
+			portWrite((byte)(0x17), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getBin8(temp[0]));
 			sb.AppendLine();
 
 			if (halt_cpu != 0 || halt_uart != 0)

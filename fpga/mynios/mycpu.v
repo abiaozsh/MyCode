@@ -230,12 +230,10 @@ wire cpu_reset_n = reset_n && debug_reset_n;
 
   assign avm_m0_byteenable = byteenable;
 
-  assign avm_m0_address = halt == 1 ? debug_address : (cycle == 0 ? (fetch_address) : (exec_address));
-
-  assign avm_m0_writedata = halt == 1 ? debug_writedata : exec_writedata;
-  assign avm_m0_write = halt == 1 ? debug_write : exec_write;
-
-  assign avm_m0_read = halt == 1 ? debug_read : (cycle == 0 ? fetch_read : (exec_read));
+  assign avm_m0_address   = halt_accept == 1 ? debug_address   : (cycle == 0 ? fetch_address : exec_address);
+  assign avm_m0_writedata = halt_accept == 1 ? debug_writedata : exec_writedata;
+  assign avm_m0_write     = halt_accept == 1 ? debug_write     : exec_write;
+  assign avm_m0_read      = halt_accept == 1 ? debug_read      : (cycle == 0 ? fetch_read : exec_read);
 
   reg [31:0] latch_readdata;
   wire Rtype;
@@ -262,7 +260,7 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   
   reg [4:0] regAddr;
   wire [4:0] reg_addr;
-  assign reg_addr = (halt == 1 && regWrite == 0) ? debug_reg : regAddr;
+  assign reg_addr = (halt_accept == 1) ? debug_reg : regAddr;
   reg  [31:0] regDataIn;
   wire [31:0] regDataOut;
   reg regWrite;
@@ -281,40 +279,44 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   reg        fetch_read;
   reg [ 2:0] fetch_step;
   reg        debug_step_buff;
+  reg        halt_accept;
   always @(posedge clk or negedge cpu_reset_n) begin
     if (!cpu_reset_n) begin
       cycle<=0;
       //fetch_address<=0;
       fetch_read<=0;
       fetch_step<=0;
-       
+      halt_accept <= 0;
       debug_step_buff <= 0;
     end else begin
       regWrite <= 0;
       if(cycle==0)begin
-        if(!halt)begin
-          if         (fetch_step==0)begin
+        if         (fetch_step==0)begin
+          if(halt)begin
+            halt_accept <= 1;
+          end else begin
+            halt_accept <= 0;
             fetch_step <= 1;
             fetch_read <= 1;
-            //fetch_address <= cs + pc;
-          end else if(fetch_step==1)begin
-            if(!avm_m0_waitrequest)begin
-              latch_readdata <= avm_m0_readdata;
-              regAddr <= avm_m0_readdata[31:27];//regA
-              fetch_read <= 0;
-              fetch_step <= 2;
-            end
-          end else if(fetch_step==2)begin
-            regAddr <= regB;
-            fetch_step <= 3;
-          end else if(fetch_step==3)begin
-            regfileA <= regDataOut;
-            fetch_step <= 4;
-          end else if(fetch_step==4)begin
-            regfileB <= regDataOut;
-            fetch_step <= 0;
-            cycle<=1;
           end
+          //fetch_address <= cs + pc;
+        end else if(fetch_step==1)begin
+          if(!avm_m0_waitrequest)begin
+            latch_readdata <= avm_m0_readdata;
+            regAddr <= avm_m0_readdata[31:27];//regA
+            fetch_read <= 0;
+            fetch_step <= 2;
+          end
+        end else if(fetch_step==2)begin
+          regAddr <= regB;
+          fetch_step <= 3;
+        end else if(fetch_step==3)begin
+          regfileA <= regDataOut;
+          fetch_step <= 4;
+        end else if(fetch_step==4)begin
+          regfileB <= regDataOut;
+          fetch_step <= 0;
+          cycle<=1;
         end
       end else begin
         if(cmd_ack)begin
