@@ -57,7 +57,6 @@ INST "u_ddr3_mig/memc?_wrapper_inst/mcb_ui_top_inst/mcb_raw_wrapper_inst/gen_ter
 NET "sys_clk_i" TNM_NET = "sys_clk_i";
 TIMESPEC TS_sys_clk_i = PERIOD "sys_clk_i" 20 ns HIGH 50 %;
 NET "sys_clk_i" 			LOC = A10	| IOSTANDARD = LVCMOS33 ;
-NET "sys_rst_i" 			LOC = T8		| IOSTANDARD = LVCMOS33 | PULLUP;
 ############################################################################
 
 ############################################################################
@@ -165,8 +164,8 @@ NET  "mcb3_zio"                                  LOC = "M5" ;
 
 
 
-
-
+NET "key0" 			LOC = T8		| IOSTANDARD = LVTTL;
+NET "key1" 			LOC = R7		| IOSTANDARD = LVTTL;
 
 NET "A14" 		LOC = A14  	| IOSTANDARD = LVTTL;
 NET "C13" 		LOC = C13  	| IOSTANDARD = LVTTL;

@@ -39,6 +39,10 @@ del *_summary.xml
 del *_usage.xml
 del webtalk_pn.xml
 del *_webtalk.html
+del coregen.cgp
+del ipcore_dir\*.gise
+del ipcore_dir\*.ncf
+rmdir /s /q ipcore_dir\_xmsgs
 rmdir /s /q _ngo
 rmdir /s /q _xmsgs
 rmdir /s /q iseconfig
