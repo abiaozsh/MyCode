@@ -1,4 +1,18 @@
 
+void* __eof__();
+int malloc_index = 0;
+void* malloc(int size){
+  size = (size & (~0x03))+4;
+  int idx = (int)__eof__();
+  idx += malloc_index;
+  malloc_index += size;
+  return (void*)idx;
+}
+
+void mfree(int size){
+  malloc_index -= size;
+}
+
 int print(const char* str){
   int idx = 0;
   while(1){

@@ -841,6 +841,8 @@ struct dir_t {//directoryEntry
 						}
 						else
 						{
+							portWrite((byte)(0x00), 0);
+							readFromPort(10);
 							sretry = "retry";
 						}
 					}

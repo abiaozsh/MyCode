@@ -9,6 +9,8 @@
 #define CACHE_FOR_READ   0
 #define CACHE_FOR_WRITE  1
 
+#define CACHE_BLOCK_INVALID 0XFFFFFFFF
+
 #define NULL 0
 
 struct part_t {
@@ -140,6 +142,14 @@ union cache_t {
   fbs_t    fbs;
 };
 
+struct cache_entity {
+  cache_t cacheBuffer;
+  int cacheDirty;
+  int cacheBlockNumber;
+  int cacheLifeCount;
+  int cacheMirrorBlock;
+};
+
 int combineInt(char v0, char v1, char v2, char v3){
   return (v0&0x0FF) | ((v1<<8)&0x0FF00) | ((v2<<16)&0x0FF0000) | ((v3<<24)&0x0FF000000);
 }
@@ -150,13 +160,17 @@ short combineShort(char v0, char v1){
 
 class SdFile;
 
+#define CACHE_COUNT 64
 class SdVolume {
  public:
   
-  cache_t cacheBuffer_;        // 512 byte cache for device blocks
-  uint32_t cacheBlockNumber_;  // Logical number of block in the cache
-  uint8_t cacheDirty_;         // cacheFlush() will write block if true
-  uint32_t cacheMirrorBlock_;  // block number for mirror FAT
+  //cache_t cacheBuffer_;        // 512 byte cache for device blocks
+  //uint32_t cacheBlockNumber_;  // Logical number of block in the cache
+  //uint8_t cacheDirty_;         // cacheFlush() will write block if true
+  //uint32_t cacheMirrorBlock_;  // block number for mirror FAT
+  
+  cache_entity cacheEntity[CACHE_COUNT];
+  
   uint32_t allocSearchStart_;   // start cluster for alloc search
   uint8_t blocksPerCluster_;    // cluster size in blocks
   uint32_t blocksPerFat_;       // FAT size in blocks
@@ -181,11 +195,11 @@ class SdVolume {
   /** Clear the cache and returns a pointer to the cache.  Used by the WaveRP
    *  recorder to do raw write to the SD card.  Not for normal apps.
    */
-  char* cacheClear(void) {
-    cacheFlush();
-    cacheBlockNumber_ = 0XFFFFFFFF;
-    return cacheBuffer_.data;
-  }
+//  char* cacheClear(void) {
+//    cacheFlush();
+//    cacheBlockNumber_ = CACHE_BLOCK_INVALID;
+//    return cacheBuffer_.data;
+//  }
   /**
    * Initialize a FAT volume.  Try partition one first then try super
    * floppy format.
@@ -199,25 +213,33 @@ class SdVolume {
    */
   uint8_t init(Sd2Card* dev, uint8_t part) {
     error = 0;
-    cacheBlockNumber_ = 0XFFFFFFFF;
-    cacheDirty_ = 0;  // cacheFlush() will write block if true
-    cacheMirrorBlock_ = 0;  // mirror  block for second FAT
-    
-    
+
+    {
+      for(int i=0;i<CACHE_COUNT;i++){
+        cacheEntity[i].cacheDirty = 0;
+        cacheEntity[i].cacheBlockNumber = CACHE_BLOCK_INVALID;
+        cacheEntity[i].cacheLifeCount = 0;
+        cacheEntity[i].cacheMirrorBlock = CACHE_BLOCK_INVALID;
+      }
+    }
+
     allocSearchStart_ = 2;
     fatType_ = 0;
     uint32_t volumeStartBlock = 0;
     sdCard_ = dev;
     // if part == 0 assume super floppy with FAT boot sector in block zero
     // if part > 0 assume mbr volume with partition table
+    cache_entity* cacheBuffer_;
     if (part) {
       if (part > 4)return false;
-      if (!cacheRawBlock(volumeStartBlock, CACHE_FOR_READ)){
+      if (!cacheRawBlock(volumeStartBlock, CACHE_FOR_READ, &cacheBuffer_, false, false)){
         error += 1;
         return false;
       }
-      part_t* p = &cacheBuffer_.mbr.part[part-1];
-    
+      part_t* p = &cacheBuffer_->cacheBuffer.mbr.part[part-1];
+      
+      print("cacheBuffer_ =");printInt((int)cacheBuffer_);print("\r\n");
+
       //print("[");
       //for(int i=0;i<512;i++){
       //  printByte(cacheBuffer_.data[i]);
@@ -226,9 +248,9 @@ class SdVolume {
 
       int totalSectors = combineInt(p->totalSectors_0, p->totalSectors_1, p->totalSectors_2, p->totalSectors_3);
       int firstSector = combineInt(p->firstSector_0, p->firstSector_1, p->firstSector_2, p->firstSector_3);
-      //printInt(p->boot);print("\r\n");
-      //printInt(totalSectors);print("\r\n");
-      //printInt(firstSector);print("\r\n");
+      print("p->boot     =");printInt(p->boot     );print("\r\n");
+      print("totalSectors=");printInt(totalSectors);print("\r\n");
+      print("firstSector =");printInt(firstSector );print("\r\n");
 
       if ((p->boot & 0X7F) !=0  ||
         totalSectors < 100 ||
@@ -241,11 +263,14 @@ class SdVolume {
       }
       volumeStartBlock = firstSector;
     }
-    if (!cacheRawBlock(volumeStartBlock, CACHE_FOR_READ)){
+    
+    print("volumeStartBlock =");printInt(volumeStartBlock );print("\r\n");
+
+    if (!cacheRawBlock(volumeStartBlock, CACHE_FOR_READ, &cacheBuffer_, false, false)){
       error += 3;
       return false;
     }
-    bpb_t* bpb = &cacheBuffer_.fbs.bpb;
+    bpb_t* bpb = &cacheBuffer_->cacheBuffer.fbs.bpb;
     
     int bytesPerSector = combineShort(bpb->bytesPerSector_0, bpb->bytesPerSector_1);
     int reservedSectorCount = combineShort(bpb->reservedSectorCount_0, bpb->reservedSectorCount_1);
@@ -253,6 +278,10 @@ class SdVolume {
       bpb->fatCount == 0 ||
       reservedSectorCount == 0 ||
       bpb->sectorsPerCluster == 0) {
+        print("bytesPerSector =");printInt(bytesPerSector );print("\r\n");
+        print("fatCount =");printInt(bpb->fatCount );print("\r\n");
+        print("reservedSectorCount =");printInt(reservedSectorCount );print("\r\n");
+        print("sectorsPerCluster =");printInt(bpb->sectorsPerCluster );print("\r\n");
          // not valid FAT volume
         error += 4;
         return false;
@@ -309,8 +338,13 @@ class SdVolume {
       rootDirStart_ = fat32RootCluster;
       fatType_ = 32;
     }
+    
+    //print("blocksPerFat_");printInt(blocksPerFat_);print("\r\n");//blocksPerFat_+0244   244*(512/2)*512*2
+    //print("blocksPerCluster_");printInt(blocksPerCluster_);print("\r\n");//blocksPerCluster_+02
+
     return true;
   }
+
 
   // inline functions that return volume info
   /** \return The volume's cluster size in blocks. */
@@ -403,60 +437,108 @@ class SdVolume {
     if (setStart) allocSearchStart_ = bgnCluster + 1;
 
     return true;
-  }  
+  }
   
   
   uint8_t blockOfCluster(uint32_t position) const {
-          return (position >> 9) & (blocksPerCluster_ - 1);}
+    return (position >> 9) & (blocksPerCluster_ - 1);
+  }
   uint32_t clusterStartBlock(uint32_t cluster) const {
-           return dataStartBlock_ + ((cluster - 2) << clusterSizeShift_);}
-  uint32_t blockNumber(uint32_t cluster, uint32_t position) const {
-           return clusterStartBlock(cluster) + blockOfCluster(position);}
-  uint8_t cacheFlush(void) {
-    if (cacheDirty_) {
-      if (!sdCard_->writeBlock(cacheBlockNumber_, cacheBuffer_.data)) {
+    return dataStartBlock_ + ((cluster - 2) << clusterSizeShift_);
+  }
+  uint32_t blockNumber(uint32_t cluster, uint32_t position) {
+    return clusterStartBlock(cluster) + blockOfCluster(position);
+  }
+
+  uint8_t cacheFlush(cache_entity* cache) {
+    if (cache->cacheDirty) {
+      print("cacheFlush,");printInt(cache->cacheBlockNumber);print("\r\n");
+      if (!sdCard_->writeBlock(cache->cacheBlockNumber, cache->cacheBuffer.data)) {
         error += 100;
         return false;
       }
       // mirror FAT tables
-      if (cacheMirrorBlock_) {
-        if (!sdCard_->writeBlock(cacheMirrorBlock_, cacheBuffer_.data)) {
+      if (cache->cacheMirrorBlock != CACHE_BLOCK_INVALID) {
+        if (!sdCard_->writeBlock(cache->cacheMirrorBlock, cache->cacheBuffer.data)) {
         error += 200;
           return false;
         }
-        cacheMirrorBlock_ = 0;
+        cache->cacheMirrorBlock = CACHE_BLOCK_INVALID;
       }
-      cacheDirty_ = 0;
+      cache->cacheDirty = 0;
     }
     return true;
   }
-  uint8_t cacheRawBlock(uint32_t blockNumber, uint8_t action) {
-    if (cacheBlockNumber_ != blockNumber) {
-      if (!cacheFlush()){
-        error += 10;
-        return false;
+
+  int cacheRawBlock(uint32_t blockNumber, uint8_t action, cache_entity** cacheBuffer_, int isZero, int isFat) {
+
+    int minLifeVal = 1000000000;
+    int minLifeIdx = 0;
+    int found = -1;
+    for(int i=0;i<CACHE_COUNT;i++){
+      if(cacheEntity[i].cacheBlockNumber == blockNumber){
+        print("found =");printInt(i);print("\r\n");
+        print("blockNumber =");printInt(blockNumber);print("\r\n");
+        print("cacheBlockNumber =");printInt(cacheEntity[i].cacheBlockNumber);print("\r\n");
+        found = i;
+        if(cacheEntity[i].cacheLifeCount<1000000000){//1G
+          cacheEntity[i].cacheLifeCount+=CACHE_COUNT;
+        }
       }
-      if (!sdCard_->readBlock(blockNumber, cacheBuffer_.data)){
+      if(cacheEntity[i].cacheBlockNumber != CACHE_BLOCK_INVALID && cacheEntity[i].cacheLifeCount>0){
+        cacheEntity[i].cacheLifeCount--;
+      }
+      if(cacheEntity[i].cacheLifeCount < minLifeVal){
+        minLifeVal = cacheEntity[i].cacheLifeCount;
+        minLifeIdx = i;
+      }
+      
+    }
+    if(found!=-1){
+      *cacheBuffer_ = &cacheEntity[found];
+      return true;
+    }
+    
+    print("minLifeIdx =");printInt(minLifeIdx);print("\r\n");
+    
+    if (!cacheFlush(&cacheEntity[minLifeIdx])){
+      error += 10;
+      return false;
+    }
+  
+    if(!isZero){
+      if (!sdCard_->readBlock(blockNumber, cacheEntity[minLifeIdx].cacheBuffer.data)){
         error += 20;
         return false;
       }
-      cacheBlockNumber_ = blockNumber;
     }
-    cacheDirty_ |= action;
+    cacheEntity[minLifeIdx].cacheBlockNumber = blockNumber;
+    if(isFat){
+      cacheEntity[minLifeIdx].cacheLifeCount+=CACHE_COUNT * 16;
+    }else{
+      cacheEntity[minLifeIdx].cacheLifeCount+=CACHE_COUNT;
+    }
+    cacheEntity[minLifeIdx].cacheDirty |= action;
+    *cacheBuffer_ = &cacheEntity[minLifeIdx];
     return true;
   }
   
-  void cacheSetDirty(void) {cacheDirty_ |= CACHE_FOR_WRITE;}
+  void cacheSetDirty(cache_entity* cacheBuffer_) {
+    cacheBuffer_->cacheDirty |= CACHE_FOR_WRITE;
+  }
+  
   // cache a zero block for blockNumber
   uint8_t cacheZeroBlock(uint32_t blockNumber) {
-    if (!cacheFlush()) return false;
-
+    cache_entity* cacheBuffer_;
+    if (!cacheRawBlock(blockNumber, CACHE_FOR_WRITE, &cacheBuffer_, true, false)){
+      return false;
+    }
+    
     // loop take less flash than memset(cacheBuffer_.data, 0, 512);
     for (uint16_t i = 0; i < 512; i++) {
-      cacheBuffer_.data[i] = 0;
+      cacheBuffer_->cacheBuffer.data[i] = 0;
     }
-    cacheBlockNumber_ = blockNumber;
-    cacheSetDirty();
+    
     return true;
   }  
   
@@ -473,23 +555,24 @@ class SdVolume {
   }
 
   // Fetch a FAT entry
-  uint8_t fatGet(uint32_t cluster, uint32_t* value) {
+  uint8_t fatGet(uint32_t cluster, uint32_t* next) {
     if (cluster > (clusterCount_ + 1)) return false;
     uint32_t lba = fatStartBlock_;
     lba += fatType_ == 16 ? cluster >> 8 : cluster >> 7;
-    if (lba != cacheBlockNumber_) {
-      if (!cacheRawBlock(lba, CACHE_FOR_READ)) return false;
-    }
+
+    cache_entity* cacheBuffer_;
+    if (!cacheRawBlock(lba, CACHE_FOR_READ, &cacheBuffer_, false, true)) return false;
+
     if (fatType_ == 16) {
-      *value = cacheBuffer_.fat16[cluster & 0XFF];
+      *next = cacheBuffer_->cacheBuffer.fat16[cluster & 0XFF];
     } else {
-      *value = cacheBuffer_.fat32[cluster & 0X7F] & FAT32MASK;
+      *next = cacheBuffer_->cacheBuffer.fat32[cluster & 0X7F] & FAT32MASK;
     }
     return true;
   }
 
   // Store a FAT entry
-  uint8_t fatPut(uint32_t cluster, uint32_t value) {
+  uint8_t fatPut(uint32_t cluster, uint32_t next) {
     // error if reserved cluster
     if (cluster < 2) return false;
 
@@ -500,19 +583,19 @@ class SdVolume {
     uint32_t lba = fatStartBlock_;
     lba += fatType_ == 16 ? cluster >> 8 : cluster >> 7;
 
-    if (lba != cacheBlockNumber_) {
-      if (!cacheRawBlock(lba, CACHE_FOR_READ)) return false;
-    }
+    cache_entity* cacheBuffer_;
+    if (!cacheRawBlock(lba, CACHE_FOR_WRITE, &cacheBuffer_, false, true)) return false;
+    
     // store entry
     if (fatType_ == 16) {
-      cacheBuffer_.fat16[cluster & 0XFF] = value;
+      cacheBuffer_->cacheBuffer.fat16[cluster & 0XFF] = next;
     } else {
-      cacheBuffer_.fat32[cluster & 0X7F] = value;
+      cacheBuffer_->cacheBuffer.fat32[cluster & 0X7F] = next;
     }
-    cacheSetDirty();
-
     // mirror second FAT
-    if (fatCount_ > 1) cacheMirrorBlock_ = lba + blocksPerFat_;
+    if (fatCount_ > 1){
+      cacheBuffer_->cacheMirrorBlock = lba + blocksPerFat_;
+    }
     return true;
   }
   
@@ -544,10 +627,10 @@ class SdVolume {
   uint8_t readBlock(uint32_t block, char* dst) {
     return sdCard_->readBlock(block, dst);
   }
-  uint8_t readData(uint32_t block, uint16_t offset,
-    uint16_t count, char* dst) {
-      return sdCard_->readData(block, offset, count, dst);
-  }
+  //uint8_t readData(uint32_t block, uint16_t offset,
+  //  uint16_t count, char* dst) {
+  //    return sdCard_->readData(block, offset, count, dst);
+  //}
   uint8_t writeBlock(uint32_t block, const char* dst) {
     return sdCard_->writeBlock(block, dst);
   }
@@ -592,7 +675,7 @@ class SdVolume {
 // available bits
 #define F_UNUSED  0X30
 // use unbuffered SD read
-#define F_FILE_UNBUFFERED_READ  0X40
+//#define F_FILE_UNBUFFERED_READ  0X40
 // sync of directory entry required
 #define F_FILE_DIR_DIRTY        0X80
 
@@ -637,6 +720,8 @@ class SdFile {
   uint8_t   dirIndex_;      // index of entry in dirBlock 0 <= dirIndex_ <= 0XF
   uint32_t  fileSize_;      // file size in bytes
   uint32_t  firstCluster_;  // first cluster of file
+  
+  cache_entity* cacheBuffer_;
   SdVolume* vol_;           // volume where file is located
   /** Create an instance of SdFile. */
   int fileError;
@@ -646,14 +731,7 @@ class SdFile {
    * for true after calls to print() and/or write().
    */
   //bool writeError;
-  /**
-   * Cancel unbuffered reads for this file.
-   * See setUnbufferedRead()
-   */
-  void clearUnbufferedRead(void) {
-    flags_ &= ~F_FILE_UNBUFFERED_READ;
-  }
-  
+
   uint8_t close(void) {
     if (!sync())return false;
     type_ = FAT_FILE_TYPE_CLOSED;
@@ -762,10 +840,11 @@ class SdFile {
 
     // cache block for '.'  and '..'
     uint32_t block = vol_->clusterStartBlock(firstCluster_);
-    if (!vol_->cacheRawBlock(block, CACHE_FOR_WRITE)) return false;
+
+    if (!vol_->cacheRawBlock(block, CACHE_FOR_WRITE, &cacheBuffer_, false, false)) return false;
 
     // copy '.' to block
-    memcpy(&vol_->cacheBuffer_.dir[0], &d, sizeof(d));
+    memcpy(&(cacheBuffer_->cacheBuffer.dir[0]), &d, sizeof(d));
 
     // make entry for '..'
     d.name[1] = '.';
@@ -783,13 +862,13 @@ class SdFile {
       d.firstClusterHigh_1 = (dir->firstCluster_>>24) & 0xFF;
     }
     // copy '..' to block
-    memcpy(&vol_->cacheBuffer_.dir[1], &d, sizeof(d));
+    memcpy(&(cacheBuffer_->cacheBuffer.dir[1]), &d, sizeof(d));
 
     // set position after '..'
     curPosition_ = 2 * sizeof(d);
 
     // write first block
-    return vol_->cacheFlush();
+    return vol_->cacheFlush(cacheBuffer_);
   }  
   
   uint8_t open(SdFile* dirFile, const char* fileName, uint8_t oflag) {
@@ -831,7 +910,7 @@ class SdFile {
         if (!emptyFound) {
           emptyFound = true;
           dirIndex_ = index;
-          dirBlock_ = vol_->cacheBlockNumber_;
+          dirBlock_ = cacheBuffer_->cacheBlockNumber;
         }
         // done if no entries follow
         if (p->name[0] == DIR_NAME_FREE) break;
@@ -878,7 +957,7 @@ class SdFile {
 
       // use first entry in cluster
       dirIndex_ = 0;
-      p = vol_->cacheBuffer_.dir;
+      p = cacheBuffer_->cacheBuffer.dir;
     }
     // initialize as empty file
     //memset(p, 0, sizeof(dir_t));
@@ -902,7 +981,7 @@ class SdFile {
 //    p->lastWriteTime = p->creationTime;
 
     // force write of entry to SD
-    if (!vol_->cacheFlush()) {
+    if (!vol_->cacheFlush(cacheBuffer_)) {
       fileError += 9;
       return false;
     }
@@ -1125,24 +1204,16 @@ class SdFile {
       // amount to be read from current block
       if (n > (512 - offset)) n = 512 - offset;
 
-      // no buffering needed if n == 512 or user requests no buffering
-      if ((unbufferedRead() || n == 512) &&
-        block != vol_->cacheBlockNumber_) {
-        if (!vol_->readData(block, offset, n, dst)) {
-          fileError += 3000;
-          return -1;
-        }
-        dst += n;
-      } else {
-        // read block to cache and copy data to caller
-        if (!vol_->cacheRawBlock(block, CACHE_FOR_READ)) {
-          fileError += 4000;
-          return -1;
-        }
-        char* src = vol_->cacheBuffer_.data + offset;
-        char* end = src + n;
-        while (src != end) *dst++ = *src++;
+      // read block to cache and copy data to caller
+
+      if (!vol_->cacheRawBlock(block, CACHE_FOR_READ, &cacheBuffer_, false, false)) {
+        fileError += 4000;
+        return -1;
       }
+      char* src = cacheBuffer_->cacheBuffer.data + offset;
+      char* end = src + n;
+      while (src != end) *dst++ = *src++;
+    
       curPosition_ += n;
       toRead -= n;
     }
@@ -1212,15 +1283,7 @@ class SdFile {
   }
   
   
-  /**
-   * Use unbuffered reads to access this file.  Used with Wave
-   * Shield ISR.  Used with Sd2Card::partialBlockRead() in WaveRP.
-   *
-   * Not recommended for normal applications.
-   */
-  void setUnbufferedRead(void) {
-    if (isFile()) flags_ |= F_FILE_UNBUFFERED_READ;
-  }
+
 //  uint8_t timestamp(uint8_t flag, uint16_t year, uint8_t month, uint8_t day,
 //          uint8_t hour, uint8_t minute, uint8_t second);
   /**
@@ -1264,7 +1327,7 @@ class SdFile {
       // clear directory dirty
       flags_ &= ~F_FILE_DIR_DIRTY;
     }
-    return vol_->cacheFlush();
+    return vol_->cacheFlush(cacheBuffer_);
   }  
   
   /** Type of this SdFile.  You should use isFile() or isDir() instead of type()
@@ -1328,17 +1391,110 @@ class SdFile {
     return seekSet(newPos);
   }  
   
-  /** \return Unbuffered read flag. */
-  uint8_t unbufferedRead(void) const {
-    return flags_ & F_FILE_UNBUFFERED_READ;
-  }
   /** \return SdVolume that contains this file. */
   SdVolume* volume(void) const {return vol_;}
-  size_t write(uint8_t b);
+  size_t write(uint8_t b) {
+    return write(&b, 1);
+  }
   size_t write(const void* buf, uint16_t nbyte);
+  //size_t write(const void* buf, uint16_t nbyte) {
+  //  // convert void* to uint8_t*  -  must be before goto statements
+  //  const char* src = reinterpret_cast<const char*>(buf);
+  //
+  //  // number of bytes left to write  -  must be before goto statements
+  //  uint16_t nToWrite = nbyte;
+  //
+  //  // error if not a normal file or is read-only
+  //  if (!isFile() || !(flags_ & O_WRITE)) goto writeErrorReturn;
+  //
+  //  // seek to end of file if append flag
+  //  if ((flags_ & O_APPEND) && curPosition_ != fileSize_) {
+  //    if (!seekEnd()) goto writeErrorReturn;
+  //  }
+  //
+  //  while (nToWrite > 0) {
+  //    uint8_t blockOfCluster = vol_->blockOfCluster(curPosition_);
+  //    uint16_t blockOffset = curPosition_ & 0X1FF;
+  //    if (blockOfCluster == 0 && blockOffset == 0) {
+  //      // start of new cluster
+  //      if (curCluster_ == 0) {
+  //        if (firstCluster_ == 0) {
+  //          // allocate first cluster of file
+  //          if (!addCluster()) goto writeErrorReturn;
+  //        } else {
+  //          curCluster_ = firstCluster_;
+  //        }
+  //      } else {
+  //        uint32_t next;
+  //        if (!vol_->fatGet(curCluster_, &next)) return false;
+  //        if (vol_->isEOC(next)) {
+  //          // add cluster if at end of chain
+  //          if (!addCluster()) goto writeErrorReturn;
+  //        } else {
+  //          curCluster_ = next;
+  //        }
+  //      }
+  //    }
+  //    // max space in block
+  //    uint16_t n = 512 - blockOffset;
+  //
+  //    // lesser of space and amount to write
+  //    if (n > nToWrite) n = nToWrite;
+  //
+  //    // block for data write
+  //    uint32_t block = vol_->clusterStartBlock(curCluster_) + blockOfCluster;
+  //    if (n == 512) {
+  //      // full block - don't need to use cache
+  //      // invalidate cache if block is in cache
+  //      if (SdVolume::cacheBlockNumber_ == block) {
+  //        SdVolume::cacheBlockNumber_ = 0XFFFFFFFF;
+  //      }
+  //      if (!vol_->writeBlock(block, src)) goto writeErrorReturn;
+  //      src += 512;
+  //    } else {
+  //      if (blockOffset == 0 && curPosition_ >= fileSize_) {
+  //        // start of new block don't need to read into cache
+  //        if (!SdVolume::cacheFlush()) goto writeErrorReturn;
+  //        SdVolume::cacheBlockNumber_ = block;
+  //        SdVolume::cacheSetDirty();
+  //      } else {
+  //        // rewrite part of block
+  //        if (!SdVolume::cacheRawBlock(block, SdVolume::CACHE_FOR_WRITE)) {
+  //          goto writeErrorReturn;
+  //        }
+  //      }
+  //      uint8_t* dst = SdVolume::cacheBuffer_.data + blockOffset;
+  //      uint8_t* end = dst + n;
+  //      while (dst != end) *dst++ = *src++;
+  //    }
+  //    nToWrite -= n;
+  //    curPosition_ += n;
+  //  }
+  //  if (curPosition_ > fileSize_) {
+  //    // update fileSize and insure sync will update dir entry
+  //    fileSize_ = curPosition_;
+  //    flags_ |= F_FILE_DIR_DIRTY;
+  //  } else if (dateTime_ && nbyte) {
+  //    // insure sync will update modified date and time
+  //    flags_ |= F_FILE_DIR_DIRTY;
+  //  }
+  //
+  //  if (flags_ & O_SYNC) {
+  //    if (!sync()) goto writeErrorReturn;
+  //  }
+  //  return nbyte;
+  //
+  // writeErrorReturn:
+  //  // return for write error
+  //  //writeError = true;
+  //  setWriteError();
+  //  return 0;
+  //}
   size_t write(const char* str);
+  //size_t write(const char* str) {
+  //  return write(str, strlen(str));
+  //}
 //------------------------------------------------------------------------------
- private:
 
 
   // private functions
@@ -1371,8 +1527,9 @@ class SdFile {
   // cache a file's directory entry
   // return pointer to cached entry or null for failure
   dir_t* cacheDirEntry(uint8_t action) {
-    if (!vol_->cacheRawBlock(dirBlock_, action)) return NULL;
-    return vol_->cacheBuffer_.dir + dirIndex_;
+
+    if (!vol_->cacheRawBlock(dirBlock_, action, &cacheBuffer_, false, false)) return NULL;
+    return cacheBuffer_->cacheBuffer.dir + dirIndex_;
   }
 
 //  static void (*dateTime_)(uint16_t* date, uint16_t* time);
@@ -1410,7 +1567,7 @@ class SdFile {
   // open a cached directory entry. Assumes vol_ is initializes
   uint8_t openCachedEntry(uint8_t dirIndex, uint8_t oflag) {
     // location of entry in cache
-    dir_t* p = vol_->cacheBuffer_.dir + dirIndex;
+    dir_t* p = cacheBuffer_->cacheBuffer.dir + dirIndex;
 
     // write or truncate is an error for a directory or read-only file
     if (p->attributes & (DIR_ATT_READ_ONLY | DIR_ATT_DIRECTORY)) {
@@ -1421,7 +1578,7 @@ class SdFile {
     }
     // remember location of directory entry on SD
     dirIndex_ = dirIndex;
-    dirBlock_ = vol_->cacheBlockNumber_;
+    dirBlock_ = cacheBuffer_->cacheBlockNumber;
 
     
     // copy first cluster number for directory fields
@@ -1488,7 +1645,7 @@ class SdFile {
     curPosition_ += 31;
 
     // return pointer to entry
-    return (vol_->cacheBuffer_.dir + i);
+    return (cacheBuffer_->cacheBuffer.dir + i);
   }
 
 };

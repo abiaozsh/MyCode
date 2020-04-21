@@ -155,12 +155,12 @@ typedef int size_t;
  */
 class Sd2Card {
  public:
-  uint32_t block_;
+  //uint32_t block_;
   uint8_t chipSelectPin_;
   uint8_t errorCode_;
-  uint8_t inBlock_;
-  uint16_t offset_;
-  uint8_t partialBlockRead_;
+  //uint8_t inBlock_;
+  //uint16_t offset_;
+  //uint8_t partialBlockRead_;
   uint8_t status_;
   uint8_t type_;
   
@@ -184,13 +184,52 @@ class Sd2Card {
    * and the default SD chip select pin.
    * See sd2Card::init(uint8_t sckRateID, uint8_t chipSelectPin).
    */
-  void partialBlockRead(uint8_t value);
+  //void partialBlockRead(uint8_t value);
   /** Returns the current value, true or false, for partial block read. */
-  uint8_t partialBlockRead(void) const {return partialBlockRead_;}
+  //uint8_t partialBlockRead(void) const {return partialBlockRead_;}
 
   uint8_t readBlock(uint32_t block, char* dst) {
-    return readData(block, 0, 512, dst);
+    uint16_t n;
+    uint16_t offset = 0;
+    uint16_t count = 512;
+
+    //if (!inBlock_ || block != block_ || offset < offset_) {
+      //block_ = block;
+      // use address if not SDHC card
+    if (type()!= SD_CARD_TYPE_SDHC) block <<= 9;
+    if (cardCommand(CMD17, block)) {
+      error(SD_CARD_ERROR_CMD17);
+      goto fail;
+    }
+    if (!waitStartBlock()) {
+      goto fail;
+    }
+      //offset_ = 0;
+      //inBlock_ = 1;
+    //}
+
+
+    // skip data before offset
+    //for (;offset_ < offset; offset_++) {
+    //  spiRec();
+    //}
+    // transfer data
+    for (uint16_t i = 0; i < 512; i++) {
+      dst[i] = spiRec();
+    }
+
+    //offset_ += count;
+    //if (!partialBlockRead_ || offset_ >= 512) {
+      // read rest of data, checksum and set chip select high
+    readEnd();
+    //}
+    return true;
+
+   fail:
+    chipSelectHigh();
+    return false;
   }
+
   /**
    * Read a cards CID register. The CID contains card identification
    * information such as Manufacturer ID, Product name, Product serial
@@ -309,12 +348,14 @@ class Sd2Card {
   }
   
   void readEnd(void) {
-    if (inBlock_) {
+    //if (inBlock_) {
         // skip data and crc
-      while (offset_++ < 514) spiRec();
+      //while (offset_++ < 514) spiRec();
+      spiRec();
+      spiRec();
       chipSelectHigh();
-      inBlock_ = 0;
-    }
+      //inBlock_ = 0;
+    //}
   }
   uint8_t setSckRate(uint8_t sckRateID);
   /** Return the card type: SD V1, SD V2 or SDHC */
@@ -472,14 +513,14 @@ class Sd2Card {
     
   uint8_t init(uint8_t chipSelectPin) {
     errorCode_ = 0;
-    inBlock_ = 0;
-    partialBlockRead_ = 0;
+    //inBlock_ = 0;
+    //partialBlockRead_ = 0;
     type_ = 0;
     
-    offset_=0;
+    //offset_=0;
     IOWR(MYTIMER, 2, 0);
     
-    errorCode_ = inBlock_ = partialBlockRead_ = type_ = 0;
+    errorCode_ = type_ = 0;//inBlock_ =  partialBlockRead_ = 
     chipSelectPin_ = chipSelectPin;
     // 16-bit init start time allows over a minute
     uint16_t t0 = (uint16_t)millis();
@@ -574,47 +615,5 @@ class Sd2Card {
     chipSelectHigh();
     return false;
   }
-  uint8_t readData(uint32_t block, uint16_t offset, uint16_t count, char* dst) {
-    uint16_t n;
-    if (count == 0) return true;
-    if ((count + offset) > 512) {
-      goto fail;
-    }
-    if (!inBlock_ || block != block_ || offset < offset_) {
-      block_ = block;
-      // use address if not SDHC card
-      if (type()!= SD_CARD_TYPE_SDHC) block <<= 9;
-      if (cardCommand(CMD17, block)) {
-        error(SD_CARD_ERROR_CMD17);
-        goto fail;
-      }
-      if (!waitStartBlock()) {
-        goto fail;
-      }
-      offset_ = 0;
-      inBlock_ = 1;
-    }
 
-
-    // skip data before offset
-    for (;offset_ < offset; offset_++) {
-      spiRec();
-    }
-    // transfer data
-    for (uint16_t i = 0; i < count; i++) {
-      dst[i] = spiRec();
-    }
-
-    offset_ += count;
-    if (!partialBlockRead_ || offset_ >= 512) {
-      // read rest of data, checksum and set chip select high
-      readEnd();
-    }
-    return true;
-
-   fail:
-    chipSelectHigh();
-    return false;
-  }
-  
 };

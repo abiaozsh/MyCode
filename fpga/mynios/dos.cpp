@@ -11,20 +11,6 @@
 #include "inc/FileSystem.cpp"
 
 
-void* __eof__();
-int malloc_index = 0;
-void* malloc(int size){
-  size = (size & (~0x03))+4;
-  int idx = (int)__eof__();
-  idx += malloc_index;
-  malloc_index += size;
-  return (void*)idx;
-}
-
-void mfree(int size){
-  malloc_index -= size;
-}
-
 
 void initDisk(Sd2Card** sdcard,int cardidx, SdVolume** sdvolumes, int* totalVolume){
   int res;
@@ -55,6 +41,7 @@ void initDisk(Sd2Card** sdcard,int cardidx, SdVolume** sdvolumes, int* totalVolu
 }
 
 int main(){
+  malloc_index = 0;
 
   Sd2Card* sdcard = (Sd2Card*)malloc(sizeof(Sd2Card));//at8M
   SdVolume* sdvolume = (SdVolume*)malloc(sizeof(SdVolume));//at8M~
@@ -68,11 +55,13 @@ int main(){
   int totalVolume = 0;
   SdVolume* currVolume;
   print("Hello from My DOS\r\n");
-  printInt((int)sdcards[2]);
+  if(false){
   initDisk(sdcards, 0, sdvolumes, &totalVolume);
   initDisk(sdcards, 1, sdvolumes, &totalVolume);
   initDisk(sdcards, 2, sdvolumes, &totalVolume);
+  }
   int res;
+  if(false){
   for(int i=0;i<totalVolume;i++){
     sdvolumes[i]->root = (SdFile*)malloc(sizeof(SdFile));
     res = sdvolumes[i]->root->openRoot(sdvolumes[i]);
@@ -83,6 +72,7 @@ int main(){
       print("root error");printInt(i);print("\r\n");
     }
   }
+  }
   
   
   SdFile* file = (SdFile*)malloc(sizeof(SdFile));//at8M~
@@ -90,6 +80,7 @@ int main(){
 //sd卡提速：
 //spi提速
 //fat表缓存
+//清理 readBlock 512 readData
 
   while(1){
     
@@ -121,12 +112,12 @@ int main(){
         }else{
           print("volume ng\r\n");
           printInt(sdvolume->error);print(",");
-          printInt(sdvolume->cacheBlockNumber_);
-          print("[");
-          for(int i=0;i<512;i++){
-            printByte(sdvolume->cacheBuffer_.data[i]);
-          }
-          print("]");
+          //printInt(sdvolume->cacheBlockNumber_);
+          //print("[");
+          //for(int i=0;i<512;i++){
+          //  printByte(sdvolume->cacheBuffer_.data[i]);
+          //}
+          //print("]");
         }
       }else{
         print("sd ng\r\n");
