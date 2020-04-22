@@ -160,7 +160,7 @@ short combineShort(char v0, char v1){
 
 class SdFile;
 
-#define CACHE_COUNT 64
+#define CACHE_COUNT 2
 class SdVolume {
  public:
   
@@ -238,7 +238,7 @@ class SdVolume {
       }
       part_t* p = &cacheBuffer_->cacheBuffer.mbr.part[part-1];
       
-      print("cacheBuffer_ =");printInt((int)cacheBuffer_);print("\r\n");
+      //print("cacheBuffer_ =");printInt((int)cacheBuffer_);print("\r\n");
 
       //print("[");
       //for(int i=0;i<512;i++){
@@ -248,9 +248,9 @@ class SdVolume {
 
       int totalSectors = combineInt(p->totalSectors_0, p->totalSectors_1, p->totalSectors_2, p->totalSectors_3);
       int firstSector = combineInt(p->firstSector_0, p->firstSector_1, p->firstSector_2, p->firstSector_3);
-      print("p->boot     =");printInt(p->boot     );print("\r\n");
-      print("totalSectors=");printInt(totalSectors);print("\r\n");
-      print("firstSector =");printInt(firstSector );print("\r\n");
+      //print("p->boot     =");printInt(p->boot     );print("\r\n");
+      //print("totalSectors=");printInt(totalSectors);print("\r\n");
+      //print("firstSector =");printInt(firstSector );print("\r\n");
 
       if ((p->boot & 0X7F) !=0  ||
         totalSectors < 100 ||
@@ -264,7 +264,7 @@ class SdVolume {
       volumeStartBlock = firstSector;
     }
     
-    print("volumeStartBlock =");printInt(volumeStartBlock );print("\r\n");
+    //print("volumeStartBlock =");printInt(volumeStartBlock );print("\r\n");
 
     if (!cacheRawBlock(volumeStartBlock, CACHE_FOR_READ, &cacheBuffer_, false, false)){
       error += 3;
@@ -278,10 +278,10 @@ class SdVolume {
       bpb->fatCount == 0 ||
       reservedSectorCount == 0 ||
       bpb->sectorsPerCluster == 0) {
-        print("bytesPerSector =");printInt(bytesPerSector );print("\r\n");
-        print("fatCount =");printInt(bpb->fatCount );print("\r\n");
-        print("reservedSectorCount =");printInt(reservedSectorCount );print("\r\n");
-        print("sectorsPerCluster =");printInt(bpb->sectorsPerCluster );print("\r\n");
+        //print("bytesPerSector =");printInt(bytesPerSector );print("\r\n");
+        //print("fatCount =");printInt(bpb->fatCount );print("\r\n");
+        //print("reservedSectorCount =");printInt(reservedSectorCount );print("\r\n");
+        //print("sectorsPerCluster =");printInt(bpb->sectorsPerCluster );print("\r\n");
          // not valid FAT volume
         error += 4;
         return false;
@@ -477,9 +477,6 @@ class SdVolume {
     int found = -1;
     for(int i=0;i<CACHE_COUNT;i++){
       if(cacheEntity[i].cacheBlockNumber == blockNumber){
-        print("found =");printInt(i);print("\r\n");
-        print("blockNumber =");printInt(blockNumber);print("\r\n");
-        print("cacheBlockNumber =");printInt(cacheEntity[i].cacheBlockNumber);print("\r\n");
         found = i;
         if(cacheEntity[i].cacheLifeCount<1000000000){//1G
           cacheEntity[i].cacheLifeCount+=CACHE_COUNT;
@@ -496,10 +493,11 @@ class SdVolume {
     }
     if(found!=-1){
       *cacheBuffer_ = &cacheEntity[found];
+      //print("found =");printInt(blockNumber);print("\r\n");
       return true;
     }
     
-    print("minLifeIdx =");printInt(minLifeIdx);print("\r\n");
+    //print("useCache =");printInt(minLifeIdx);print("\r\n");
     
     if (!cacheFlush(&cacheEntity[minLifeIdx])){
       error += 10;
@@ -922,7 +920,7 @@ class SdFile {
         }
 
         // open found file
-        if(!openCachedEntry(0XF & index, oflag)){
+        if(!openCachedEntry(0XF & index, oflag, dirFile)){
           fileError += 5;
           return false;
         }else{
@@ -987,7 +985,7 @@ class SdFile {
     }
 
     // open entry in cache
-    if(!openCachedEntry(dirIndex_, oflag)){
+    if(!openCachedEntry(dirIndex_, oflag, dirFile)){
       fileError += 9;
       return false;
     }else{
@@ -1019,7 +1017,7 @@ class SdFile {
       return false;
     }
     // open cached entry
-    return openCachedEntry(index & 0XF, oflag);
+    return openCachedEntry(index & 0XF, oflag, dirFile);
   }
 
   uint8_t openRoot(SdVolume* vol) {
@@ -1565,9 +1563,9 @@ class SdFile {
   }  
     
   // open a cached directory entry. Assumes vol_ is initializes
-  uint8_t openCachedEntry(uint8_t dirIndex, uint8_t oflag) {
+  uint8_t openCachedEntry(uint8_t dirIndex, uint8_t oflag, SdFile* dirFile) {
     // location of entry in cache
-    dir_t* p = cacheBuffer_->cacheBuffer.dir + dirIndex;
+    dir_t* p = dirFile->cacheBuffer_->cacheBuffer.dir + dirIndex;
 
     // write or truncate is an error for a directory or read-only file
     if (p->attributes & (DIR_ATT_READ_ONLY | DIR_ATT_DIRECTORY)) {
@@ -1578,7 +1576,7 @@ class SdFile {
     }
     // remember location of directory entry on SD
     dirIndex_ = dirIndex;
-    dirBlock_ = cacheBuffer_->cacheBlockNumber;
+    dirBlock_ = dirFile->cacheBuffer_->cacheBlockNumber;
 
     
     // copy first cluster number for directory fields
@@ -1592,6 +1590,7 @@ class SdFile {
     if (DIR_IS_FILE(p)) {
       //fileSize_ = p->fileSize;
       fileSize_ = combineInt(p->fileSize_0, p->fileSize_1, p->fileSize_2, p->fileSize_3);
+      print("cacheBuffer_:");printInt((int)dirFile->cacheBuffer_);print("\r\n");
       type_ = FAT_FILE_TYPE_NORMAL;
     } else if (DIR_IS_SUBDIR(p)) {
       if (!vol_->chainSize(firstCluster_, &fileSize_)) {

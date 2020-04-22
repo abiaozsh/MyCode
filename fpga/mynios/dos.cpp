@@ -149,6 +149,24 @@ int main(){
 
     }
     
+    if(equal(str,"print",-1)){
+      print("which file?\r\n");
+      char filename[12];
+      scan(filename,-1,-1);
+      res = file->open(currVolume->root, filename, O_READ);
+      if(res){
+        print("open ok\r\n");
+        printInt(file->fileSize_);print("\r\n");
+        for(int i=0;i<file->fileSize_;i++){
+          int val = file->read();
+          uart_write(val);
+        }
+      }else{
+        print("open ng\r\n");
+        printInt(file->fileError);print("\r\n");
+      }
+    }
+    
     if(equal(str,"load",-1)){
       print("which file?\r\n");
       char filename[12];
