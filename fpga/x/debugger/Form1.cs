@@ -214,6 +214,15 @@ namespace WindowsFormsApplication1
 
 		private void button7_Click(object sender, EventArgs e)
 		{
+			{
+				portWrite((byte)(0x01), 0);
+				var temp = readFromPort(1);
+				if (temp[0] != 123)
+				{
+					MessageBox.Show("no echo");
+					return;
+				}
+			}
 			Random r = new Random();
 			int total = 256;
 			int addrFact = 4;
