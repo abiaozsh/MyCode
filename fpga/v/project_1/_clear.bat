@@ -1,6 +1,7 @@
 del *.backup.jou
 del *.backup.log
 del vivado_pid*.*
+ps7_init.c
 del /s ps7_summary.html
 del /s design_1_processing_system7_0_0.xml
 del /s libps7.dll
