@@ -95,9 +95,9 @@ input E21 ,
 input D21 ,
 input C21 ,
 
-output B21 ,
-output N19 ,
-output M19 ,
+input B21 ,
+input N19 ,
+input M19 ,
 /////////////////////////////////
 input AA13,
 input AA14,
@@ -126,28 +126,28 @@ input E22 ,
 input D22 ,
 input C22 ,
 
-output B22 ,
-output N20 ,
-output M20 ,
+input B22 ,
+input N20 ,
+input M20 ,
 ///////////////////////////////////
   input key1,
   input key2,
   output reg led
 
 ); 
-assign B21 = shift[0];
-assign N19 = shift[1];
-assign M19 = shift[2];
+//assign B21 = shift[0];
+//assign N19 = shift[1];
+//assign M19 = shift[2];
 //assign H22 = shift[3];
-assign B22 = shift[4];
-assign N20 = shift[5];
-assign M20 = shift[6];
+//assign B22 = shift[4];
+//assign N20 = shift[5];
+//assign M20 = shift[6];
 //assign C22 = shift[7];
 
 
 
 reg [7:0] shift;
-reg [23:0] timer;
+reg [22:0] timer;
 always @(posedge sys_clk or negedge key1) begin
   if (!key1) begin
     timer <= 0;

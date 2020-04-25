@@ -253,18 +253,18 @@ generate
 endgenerate
 
 reg  [2:0] current_slot;
-wire [2:0] cache_hited       = /*cache_hit[0]       ? 1 :*/
-                               /*cache_hit[1]       ? 2 :*/
-                               /*cache_hit[2]       ? 3 :*/
-                               /*cache_hit[3]       ? 4 :*/ 0;
-wire [2:0] cache_flush_hited = /*cache_flush_hit[0] ? 1 :*/
-                               /*cache_flush_hit[1] ? 2 :*/
-                               /*cache_flush_hit[2] ? 3 :*/
-                               /*cache_flush_hit[3] ? 4 :*/ 0;
-wire [2:0] free_cache        = /*cache_life[0] == 0 ? 1 :*/
-                               /*cache_life[1] == 0 ? 2 :*/
-                               /*cache_life[2] == 0 ? 3 :*/
-                               /*cache_life[3] == 0 ? 4 :*/ 0;
+wire [2:0] cache_hited       = /**/cache_hit[0]       ? 1 :
+                               /**/cache_hit[1]       ? 2 :
+                               /**/cache_hit[2]       ? 3 :
+                               /**/cache_hit[3]       ? 4 : 0;
+wire [2:0] cache_flush_hited = /**/cache_flush_hit[0] ? 1 :
+                               /**/cache_flush_hit[1] ? 2 :
+                               /**/cache_flush_hit[2] ? 3 :
+                               /**/cache_flush_hit[3] ? 4 : 0;
+wire [2:0] free_cache        = /**/cache_life[0] == 0 ? 1 :
+                               /**/cache_life[1] == 0 ? 2 :
+                               /**/cache_life[2] == 0 ? 3 :
+                               /**/cache_life[3] == 0 ? 4 : 0;
 
 
 

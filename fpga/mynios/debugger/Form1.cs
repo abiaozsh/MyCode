@@ -497,10 +497,9 @@ namespace WindowsFormsApplication1
 			int cacheaddr0 = getCacheInfoVal(8);//life 0
 
 			//if (cacheaddr0 != 4) MessageBox.Show("err2");
-
 			for (uint i = 0; i < 256; i++)
 			{
-				uint val = this.getmem((int)(i * 4), null);
+				uint val = this.getmem((int)(i * 4), null);读取加延迟参数，带写回的读取会比较慢
 				if (val != data0[i])
 				{
 					MessageBox.Show("err3");
