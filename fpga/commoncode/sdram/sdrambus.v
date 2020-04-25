@@ -110,6 +110,39 @@ sdram_controller ins_sdram_controller(
 
 );
 
+parameter CACHE_COUNT = 4;
+
+wire [31:0] dummy = avs_s0_writedata;
+
+wire  [ 7:0] cacheAddrLow8 = avs_s0_address[22:8];
+reg   [35:0] cacheData;
+reg   wren[CACHE_COUNT];
+
+reg  [14:0] cacheAddrHigh[CACHE_COUNT];//32Mbyte / 1024byte per cache slot = total 32k cache slot
+wire [35:0] cacheq[CACHE_COUNT];
+wire cache_hit[CACHE_COUNT];
+
+genvar i;
+generate
+  for(i=0; i<CACHE_COUNT; i=i+1) begin//:BLOCK1
+    cache256x36 cache[i] (
+      .address(cacheAddrLow8),//input	[7:0]  address;
+      .clock  (clk          ),  //input	  clock;
+      .data   (cacheData    ),   //input	[35:0]  data;
+      .wren   (wren[i]      ),   //input	  wren;
+      .q      (cacheq[i]    ));     //output	[35:0]  q;
+    assign cache_hit[i] = avs_s0_address[22:8] == cacheAddrHigh[i];
+
+  end
+endgenerate
+
+wire cache_hited = cache_hit[0] | cache_hit[1] | cache_hit[2] | cache_hit[3];
+
+wire [35:0] cache_hit_data = cache_hit[0] ? cacheq[0] :
+                             cache_hit[1] ? cacheq[1] :
+                             cache_hit[2] ? cacheq[2] :
+                             cache_hit[3] ? cacheq[3] : 36'b0;
+
 
 reg interface_step;
 reg        read_sdram_req;
@@ -146,6 +179,22 @@ always@(posedge clk or negedge sys_rst_n) begin
   end else begin
     read_sdram_ack_buff <= read_sdram_ack;
     write_single_sdram_ack_buff <= write_single_sdram_ack;
+    
+    if(dummy[0] && cache_hited)begin
+      avs_s0_readdata <= cache_hit_data[31:0];
+    end
+    if(dummy[1])begin
+      cacheAddrHigh[dummy[31:30]] <= avs_s0_address[22:8];
+    end
+    
+    if(dummy[2])begin
+      cacheData[dummy[31:30]] <= dummy;
+    end
+    
+    if(dummy[3])begin
+      wren[dummy[31:30]] <= dummy;
+    end
+    
     
     if(avs_s0_read && !avs_s0_read_ack)begin
       if(interface_step==0)begin
