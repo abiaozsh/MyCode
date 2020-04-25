@@ -27,7 +27,19 @@ module mycpu (
     output wire         uart_txd,
     output [7:0]    debug8,
     output [31:0]   debug32,
+    
+    
     input  [7:0]    debugin8,
+    input [15:0] cache_life0   ,
+    input [15:0] cache_life1   ,
+    input [15:0] cache_life2   ,
+    input [15:0] cache_life3   ,
+    input [15:0] cacheAddrHigh0,
+    input [15:0] cacheAddrHigh1,
+    input [15:0] cacheAddrHigh2,
+    input [15:0] cacheAddrHigh3,
+    input [31:0] debugin32,
+    
     
     input vga_blanking
   );
@@ -91,26 +103,10 @@ reg  [2:0] debug_readmem_step;
 reg        debug_step;
 reg  [4:0] debug_reg;
 reg        debug_reset_n;
-
+reg  [3:0] debug_byteenable;
 reg halt_uart;
 
-
-
-//////////////////////////////////////////////////
-
-//ram36{
-//	.address(ram36_address),//input	[7:0]  
-//	.byteena(ram36_byteena);//input	[3:0]  
-//	.clock(ram36_clock);//input	  
-//	.data(ram36_data);//input	[35:0]  
-//	.wren(ram36_wren);//input	  
-//	.q(ram36_q);//output	[35:0]  
-//};
-
-
-
-
-//////////////////////////////////////////////
+reg [15:0] accessTime;
 
 always @(posedge clk or negedge reset_n) begin
   if (!reset_n) begin
@@ -123,6 +119,8 @@ always @(posedge clk or negedge reset_n) begin
     debug_read<=0;
     debug_write<=0;
     debug_reset_n<=1;
+    debug_byteenable <= 4'b1111;
+    accessTime <= 0;
   end else begin
     uart_send<=0;
     
@@ -134,14 +132,17 @@ always @(posedge clk or negedge reset_n) begin
       if          (command == 8'h00) begin
 
       end else if (command == 8'h01) begin 
-        if(!vga_blanking)begin
-          halt_uart<=data[0]; 
+        if(!vga_blanking)begin//TODO del
+          halt_uart<=data[0];
           command_done<=1;
         end
       end else if (command == 8'h02) begin debug_reset_n<=data[0]; command_done<=1;
 
       end else if (command == 8'h03) begin debug_step<=~debug_step; command_done<=1;
+
       
+      end else if (command == 8'h04) begin uart_send<=1; uart_data_in<=accessTime[ 7: 0]; command_done<=1;
+      end else if (command == 8'h05) begin uart_send<=1; uart_data_in<=accessTime[15: 8]; command_done<=1;
 
       end else if (command == 8'h10) begin uart_send<=1; uart_data_in<=debug_data[ 7: 0]; command_done<=1;
       end else if (command == 8'h11) begin uart_send<=1; uart_data_in<=debug_data[15: 8]; command_done<=1;
@@ -151,10 +152,7 @@ always @(posedge clk or negedge reset_n) begin
 
       end else if (command == 8'h14) begin uart_send<=1; uart_data_in<=halt_cpu; command_done<=1;
       end else if (command == 8'h15) begin uart_send<=1; uart_data_in<=halt_uart; command_done<=1;
-      
       end else if (command == 8'h16) begin uart_send<=1; uart_data_in<=avm_m0_waitrequest; command_done<=1;
-      end else if (command == 8'h17) begin uart_send<=1; uart_data_in<=debugin8; command_done<=1;
-      
       end else if (command == 8'h18) begin uart_send<=1; uart_data_in<=cmd; command_done<=1;
       end else if (command == 8'h19) begin uart_send<=1; uart_data_in<=Rtype; command_done<=1;
       
@@ -168,11 +166,41 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h26) begin debug_writedata[23:16] <= data; command_done<=1;
       end else if (command == 8'h27) begin debug_writedata[31:24] <= data; command_done<=1;
 
+      end else if (command == 8'h28) begin debug_byteenable <= data[3:0]; command_done<=1;
+      
+      end else if (command == 8'h50) begin uart_send<=1; uart_data_in<=cache_life0[ 7: 0]; command_done<=1;
+      end else if (command == 8'h51) begin uart_send<=1; uart_data_in<=cache_life0[15: 8]; command_done<=1;
+      end else if (command == 8'h52) begin uart_send<=1; uart_data_in<=cache_life1[ 7: 0]; command_done<=1;
+      end else if (command == 8'h53) begin uart_send<=1; uart_data_in<=cache_life1[15: 8]; command_done<=1;
+      end else if (command == 8'h54) begin uart_send<=1; uart_data_in<=cache_life2[ 7: 0]; command_done<=1;
+      end else if (command == 8'h55) begin uart_send<=1; uart_data_in<=cache_life2[15: 8]; command_done<=1;
+      end else if (command == 8'h56) begin uart_send<=1; uart_data_in<=cache_life3[ 7: 0]; command_done<=1;
+      end else if (command == 8'h57) begin uart_send<=1; uart_data_in<=cache_life3[15: 8]; command_done<=1;
+      
+      end else if (command == 8'h58) begin uart_send<=1; uart_data_in<=cacheAddrHigh0[ 7: 0]; command_done<=1;
+      end else if (command == 8'h59) begin uart_send<=1; uart_data_in<=cacheAddrHigh0[15: 8]; command_done<=1;
+      end else if (command == 8'h5A) begin uart_send<=1; uart_data_in<=cacheAddrHigh1[ 7: 0]; command_done<=1;
+      end else if (command == 8'h5B) begin uart_send<=1; uart_data_in<=cacheAddrHigh1[15: 8]; command_done<=1;
+      end else if (command == 8'h5C) begin uart_send<=1; uart_data_in<=cacheAddrHigh2[ 7: 0]; command_done<=1;
+      end else if (command == 8'h5D) begin uart_send<=1; uart_data_in<=cacheAddrHigh2[15: 8]; command_done<=1;
+      end else if (command == 8'h5E) begin uart_send<=1; uart_data_in<=cacheAddrHigh3[ 7: 0]; command_done<=1;
+      end else if (command == 8'h5F) begin uart_send<=1; uart_data_in<=cacheAddrHigh3[15: 8]; command_done<=1;
+      
+      end else if (command == 8'h60) begin uart_send<=1; uart_data_in<=debugin32[ 7: 0]; command_done<=1;
+      end else if (command == 8'h61) begin uart_send<=1; uart_data_in<=debugin32[15: 8]; command_done<=1;
+      end else if (command == 8'h62) begin uart_send<=1; uart_data_in<=debugin32[23:16]; command_done<=1;
+      end else if (command == 8'h63) begin uart_send<=1; uart_data_in<=debugin32[31:24]; command_done<=1;
+      end else if (command == 8'h64) begin uart_send<=1; uart_data_in<=debugin8; command_done<=1;
+
+
+
       end else if (command == 8'h30) begin
         if         (debug_readmem_step==0)begin
           debug_readmem_step <= 1;
           debug_read <= 1;
+          accessTime <= 0;
         end else if(debug_readmem_step==1)begin
+          accessTime <= accessTime + 1'b1;
           if(!avm_m0_waitrequest)begin
             debug_data <= avm_m0_readdata;
             debug_read <= 0;
@@ -185,7 +213,9 @@ always @(posedge clk or negedge reset_n) begin
         if         (debug_readmem_step==0)begin
           debug_readmem_step <= 1;
           debug_write <= 1;
+          accessTime <= 0;
         end else if(debug_readmem_step==1)begin
+          accessTime <= accessTime + 1'b1;
           if(!avm_m0_waitrequest)begin
             debug_write <= 0;
             debug_readmem_step <= 0;
@@ -228,12 +258,11 @@ assign debug8[7] = debug_write;
 
 wire cpu_reset_n = reset_n && debug_reset_n;
 
-  assign avm_m0_byteenable = byteenable;
-
-  assign avm_m0_address   = halt_accept == 1 ? debug_address   : (cycle == 0 ? fetch_address : exec_address);
-  assign avm_m0_writedata = halt_accept == 1 ? debug_writedata : exec_writedata;
-  assign avm_m0_write     = halt_accept == 1 ? debug_write     : exec_write;
-  assign avm_m0_read      = halt_accept == 1 ? debug_read      : (cycle == 0 ? fetch_read : exec_read);
+  assign avm_m0_byteenable = halt_accept == 1 ? debug_byteenable : byteenable;
+  assign avm_m0_address    = halt_accept == 1 ? debug_address    : (cycle == 0 ? fetch_address : exec_address);
+  assign avm_m0_writedata  = halt_accept == 1 ? debug_writedata  : exec_writedata;
+  assign avm_m0_write      = halt_accept == 1 ? debug_write      : exec_write;
+  assign avm_m0_read       = halt_accept == 1 ? debug_read       : (cycle == 0 ? fetch_read : exec_read);
 
   reg [31:0] latch_readdata;
   wire Rtype;

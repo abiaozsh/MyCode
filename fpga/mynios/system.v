@@ -79,7 +79,8 @@ module system (
   
   assign debug8 = sdrambus_debug8;
   assign debug32 = mycpu_debug32;
-  
+  wire [31:0] sdrambus_debug32;
+
   
   
   
@@ -108,8 +109,16 @@ module system (
     .debug8             (mycpu_debug8),                    //            .export
     .debug32            (mycpu_debug32),                    //            .export
       
-    .debugin8           (sdrambus_debug8),
-    
+    .debugin8            (sdrambus_debug8    ),
+    .cache_life0    (cache_life0   ),
+    .cache_life1    (cache_life1   ),
+    .cache_life2    (cache_life2   ),
+    .cache_life3    (cache_life3   ),
+    .cacheAddrHigh0 (cacheAddrHigh0),
+    .cacheAddrHigh1 (cacheAddrHigh1),
+    .cacheAddrHigh2 (cacheAddrHigh2),
+    .cacheAddrHigh3 (cacheAddrHigh3),
+    .debugin32  (sdrambus_debug32),
     .vga_blanking(blanking)
       
   );
@@ -137,6 +146,16 @@ module system (
   wire [15:0] read_pixelB_data      ;//output [15:0] buff_readB_data,
   wire  [9:0] read_pixel_addr       ;//input [9:0]   buff_readB_addr,
   wire        read_pixel_clk        ;//input         buff_readB_clk,
+
+  wire  [15:0] cache_life0   ;
+  wire  [15:0] cache_life1   ;
+  wire  [15:0] cache_life2   ;
+  wire  [15:0] cache_life3   ;
+  wire  [15:0] cacheAddrHigh0;
+  wire  [15:0] cacheAddrHigh1;
+  wire  [15:0] cacheAddrHigh2;
+  wire  [15:0] cacheAddrHigh3;
+
 
   
   wire sdrambus_cs = avm_m0_address[31:25] == 7'h0;// 0000:0000 ~ 01FF:FFFF 32M byte
@@ -173,16 +192,48 @@ module system (
     .read_pixelB_data(read_pixelB_data    ),//output [15:0] buff_readB_data,
     .read_pixel_addr (read_pixel_addr     ),//input [9:0]   buff_readB_addr,
     .read_pixel_clk  (read_pixel_clk      ),//input         buff_readB_clk,
-   
-    .debug8 (sdrambus_debug8)
+
+    .flush_cache    (flush_cache),
+    .flush_page     (flush_page ),
+    
+    .debug8         (sdrambus_debug8 ),
+    .cache_life0    (cache_life0     ),
+    .cache_life1    (cache_life1     ),
+    .cache_life2    (cache_life2     ),
+    .cache_life3    (cache_life3     ),
+    .cacheAddrHigh0 (cacheAddrHigh0  ),
+    .cacheAddrHigh1 (cacheAddrHigh1  ),
+    .cacheAddrHigh2 (cacheAddrHigh2  ),
+    .cacheAddrHigh3 (cacheAddrHigh3  ),
+    .debug32        (sdrambus_debug32)
 
   );
   wire [22:0] sdrambus_address;
   assign      sdrambus_address = avm_m0_address[24:2];//~[0]
   
-  wire   sdrambus_read  = sdrambus_cs ? avm_m0_read : 1'b0;
+  wire   sdrambus_read  = sdrambus_cs ? avm_m0_read  : 1'b0;
   wire   sdrambus_write = sdrambus_cs ? avm_m0_write : 1'b0;
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+  wire cacheCtl_cs = avm_m0_address[31:16] == 16'h0205;
+  reg              flush_cache;
+  reg   [14:0]     flush_page;
+  always@(posedge clk or negedge reset_n) begin
+    if(!reset_n) begin
+      flush_cache <= 0;
+      flush_page <= 0;
+    end else begin
+      if(cacheCtl_cs && avm_m0_write)begin
+        if         (avm_m0_address[15:2]==0)begin
+          flush_cache <= avm_m0_writedata[31];
+          flush_page = avm_m0_writedata[14:0];
+        end else if(avm_m0_address[15:2]==1)begin
+        end
+      end
+    end
+  end
+
+  
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   
   

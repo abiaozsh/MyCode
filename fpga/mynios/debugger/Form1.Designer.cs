@@ -54,6 +54,10 @@ namespace WindowsFormsApplication1
 			this.checkBox3 = new System.Windows.Forms.CheckBox();
 			this.button14 = new System.Windows.Forms.Button();
 			this.button15 = new System.Windows.Forms.Button();
+			this.checkBox4 = new System.Windows.Forms.CheckBox();
+			this.checkBox5 = new System.Windows.Forms.CheckBox();
+			this.checkBox6 = new System.Windows.Forms.CheckBox();
+			this.checkBox7 = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -168,7 +172,7 @@ namespace WindowsFormsApplication1
 			// 
 			// button7
 			// 
-			this.button7.Location = new System.Drawing.Point(958, 40);
+			this.button7.Location = new System.Drawing.Point(531, 37);
 			this.button7.Name = "button7";
 			this.button7.Size = new System.Drawing.Size(49, 23);
 			this.button7.TabIndex = 25;
@@ -244,7 +248,7 @@ namespace WindowsFormsApplication1
 			// 
 			// button12
 			// 
-			this.button12.Location = new System.Drawing.Point(601, 40);
+			this.button12.Location = new System.Drawing.Point(1013, 38);
 			this.button12.Name = "button12";
 			this.button12.Size = new System.Drawing.Size(49, 23);
 			this.button12.TabIndex = 32;
@@ -254,7 +258,7 @@ namespace WindowsFormsApplication1
 			// 
 			// button13
 			// 
-			this.button13.Location = new System.Drawing.Point(656, 40);
+			this.button13.Location = new System.Drawing.Point(1068, 37);
 			this.button13.Name = "button13";
 			this.button13.Size = new System.Drawing.Size(49, 23);
 			this.button13.TabIndex = 33;
@@ -270,7 +274,7 @@ namespace WindowsFormsApplication1
 			this.trackBar1.Maximum = 8192;
 			this.trackBar1.Name = "trackBar1";
 			this.trackBar1.Orientation = System.Windows.Forms.Orientation.Vertical;
-			this.trackBar1.Size = new System.Drawing.Size(42, 758);
+			this.trackBar1.Size = new System.Drawing.Size(45, 758);
 			this.trackBar1.TabIndex = 34;
 			this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
 			// 
@@ -316,11 +320,59 @@ namespace WindowsFormsApplication1
 			this.button15.UseVisualStyleBackColor = true;
 			this.button15.Click += new System.EventHandler(this.button15_Click);
 			// 
+			// checkBox4
+			// 
+			this.checkBox4.AutoSize = true;
+			this.checkBox4.Checked = true;
+			this.checkBox4.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkBox4.Location = new System.Drawing.Point(587, 42);
+			this.checkBox4.Name = "checkBox4";
+			this.checkBox4.Size = new System.Drawing.Size(15, 14);
+			this.checkBox4.TabIndex = 39;
+			this.checkBox4.UseVisualStyleBackColor = true;
+			// 
+			// checkBox5
+			// 
+			this.checkBox5.AutoSize = true;
+			this.checkBox5.Checked = true;
+			this.checkBox5.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkBox5.Location = new System.Drawing.Point(608, 42);
+			this.checkBox5.Name = "checkBox5";
+			this.checkBox5.Size = new System.Drawing.Size(15, 14);
+			this.checkBox5.TabIndex = 40;
+			this.checkBox5.UseVisualStyleBackColor = true;
+			// 
+			// checkBox6
+			// 
+			this.checkBox6.AutoSize = true;
+			this.checkBox6.Checked = true;
+			this.checkBox6.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkBox6.Location = new System.Drawing.Point(629, 42);
+			this.checkBox6.Name = "checkBox6";
+			this.checkBox6.Size = new System.Drawing.Size(15, 14);
+			this.checkBox6.TabIndex = 41;
+			this.checkBox6.UseVisualStyleBackColor = true;
+			// 
+			// checkBox7
+			// 
+			this.checkBox7.AutoSize = true;
+			this.checkBox7.Checked = true;
+			this.checkBox7.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkBox7.Location = new System.Drawing.Point(650, 42);
+			this.checkBox7.Name = "checkBox7";
+			this.checkBox7.Size = new System.Drawing.Size(15, 14);
+			this.checkBox7.TabIndex = 42;
+			this.checkBox7.UseVisualStyleBackColor = true;
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1156, 783);
+			this.Controls.Add(this.checkBox7);
+			this.Controls.Add(this.checkBox6);
+			this.Controls.Add(this.checkBox5);
+			this.Controls.Add(this.checkBox4);
 			this.Controls.Add(this.button14);
 			this.Controls.Add(this.button15);
 			this.Controls.Add(this.checkBox3);
@@ -382,6 +434,10 @@ namespace WindowsFormsApplication1
 		private CheckBox checkBox3;
 		private Button button14;
 		private Button button15;
+		private CheckBox checkBox4;
+		private CheckBox checkBox5;
+		private CheckBox checkBox6;
+		private CheckBox checkBox7;
 
 	}
 }
