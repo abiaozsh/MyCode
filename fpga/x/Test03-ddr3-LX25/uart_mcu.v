@@ -112,7 +112,7 @@ always @(posedge clk or negedge reset_n) begin
     end else begin//command_done==0
       if          (command == 8'h00) begin
 
-      //end else if (command == 8'h01) begin debug8 <= data; command_done<=1;
+      end else if (command == 8'h01) begin uart_send<=1; uart_data_in<=123; command_done<=1;
 
       end else if (command == 8'h10) begin uart_send<=1; uart_data_in<=dataToPC[ 7: 0]; command_done<=1;
       end else if (command == 8'h11) begin uart_send<=1; uart_data_in<=dataToPC[15: 8]; command_done<=1;

@@ -93,13 +93,13 @@
 	 input P6 ,
 	 input L7 ,
 	 input T4 ,
-	 output R5 ,//tx1
-	 input T7 ,//rx1
-	 output M9 ,//tx0
-	 input M10,//rx0
-	 input P11,//segled
-	 input M11,//segled
-	 input T9Led,//segled
+	 input R5 ,//segled
+	 input T7 ,//segled
+	 input M9 ,//segled
+	 input M10,//rx1
+	 output P11,//tx1
+	 input M11,//rx0
+	 output T9Led,//tx0
 
 //”“÷–
    input E12,
@@ -447,13 +447,13 @@ seg_led_hex595 ins_seg_led_hex595(
 );
 
 
-wire rxd2 = T7;
-assign R5 = txd2;
-wire txd2 = 1'bz;
+wire rx1 = M10;
+assign P11 = tx1;
+wire tx1 = 1'bz;
 
-wire rxd = M10;
-assign M9 = txd;
-wire txd;
+wire rx0 = M11;
+assign T9Led = tx0;
+wire tx0;
 
 wire [7:0] debug8;
 wire [31:0] debug32;
@@ -463,8 +463,8 @@ uart_mcu uart_mcu_inst(
  .clk(clk_50m), 
  .reset_n(sys_rst_i),
 
- .uart_txd(txd),
- .uart_rxd(rxd),
+ .uart_txd(tx0),
+ .uart_rxd(rx0),
  
  .debug8(debug8),
  .debug32(debug32),
