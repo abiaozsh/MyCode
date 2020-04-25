@@ -1,0 +1,66 @@
+{
+   "ActiveEmotionalView": "Default View",
+   "Default View_ScaleFactor": "1.0",
+   "Default View_TopLeft": "-403,-207",
+   "Display-PortTypeClock": "true",
+   "Display-PortTypeOthers": "true",
+   "ExpandedHierarchyInLayout": "",
+   "Interfaces View_Layers": "/processing_system7_0_FCLK_CLK0:false|/clk_1:false|",
+   "Interfaces View_ScaleFactor": "1.0",
+   "Interfaces View_TopLeft": "-488,-364",
+   "No Loops_ScaleFactor": "1.0",
+   "No Loops_TopLeft": "-453,-310",
+   "Reduced Jogs_Layers": "/processing_system7_0_FCLK_CLK0:true|/clk_1:true|",
+   "Reduced Jogs_ScaleFactor": "1.0",
+   "Reduced Jogs_TopLeft": "-433,-299",
+   "guistr": "# # String gsaved with Nlview 7.0.21  2019-05-29 bk=1.5064 VDI=41 GEI=36 GUI=JA:9.0 non-TLS
+#  -string -flagsOSRD
+preplace port DDR_0 -pg 1 -lvl 3 -x 750 -y 80 -defaultsOSRD
+preplace port FIXED_IO_0 -pg 1 -lvl 3 -x 750 -y 100 -defaultsOSRD
+preplace port uart_txd -pg 1 -lvl 3 -x 750 -y 220 -defaultsOSRD
+preplace port uart_rxd -pg 1 -lvl 0 -x -20 -y 150 -defaultsOSRD
+preplace port clk -pg 1 -lvl 0 -x -20 -y 100 -defaultsOSRD
+preplace portBus led -pg 1 -lvl 3 -x 750 -y 200 -defaultsOSRD
+preplace portBus keyin -pg 1 -lvl 0 -x -20 -y 130 -defaultsOSRD
+preplace portBus debug_0 -pg 1 -lvl 3 -x 750 -y 170 -defaultsOSRD
+preplace inst processing_system7_0 -pg 1 -lvl 2 -x 500 -y 110 -defaultsOSRD
+preplace inst test_0 -pg 1 -lvl 1 -x 140 -y 140 -defaultsOSRD
+preplace netloc test_0_led 1 1 2 270 30 700J
+preplace netloc test_0_uart_txd 1 1 2 260 20 710J
+preplace netloc keyin_1 1 0 1 10 130n
+preplace netloc uart_rxd_1 1 0 1 0 150n
+preplace netloc test_0_debug 1 1 2 280J 190 720J
+preplace netloc clk_1 1 0 2 10 50 290
+preplace netloc processing_system7_0_FIXED_IO 1 2 1 720J 100n
+preplace netloc processing_system7_0_DDR 1 2 1 690J 80n
+preplace netloc test_0_M00_AXI 1 1 1 280 100n
+levelinfo -pg 1 -20 140 500 750
+pagesize -pg 1 -db -bbox -sgen -130 -20 890 350
+",
+   ExpandedHierarchyInLayout: "",
+   guistr: "# # String gsaved with Nlview 6.8.5  2018-01-30 bk=1.4354 VDI=40 GEI=35 GUI=JA:1.6 non-TLS
+#  -string -flagsOSRD
+preplace port uart_txd -pg 1 -y 220 -defaultsOSRD
+preplace port DDR_0 -pg 1 -y 80 -defaultsOSRD
+preplace port uart_rxd -pg 1 -y 150 -defaultsOSRD
+preplace port FIXED_IO_0 -pg 1 -y 100 -defaultsOSRD
+preplace portBus debug -pg 1 -y 200 -defaultsOSRD
+preplace portBus keyin -pg 1 -y 130 -defaultsOSRD
+preplace portBus led -pg 1 -y 20 -defaultsOSRD
+preplace inst test_0 -pg 1 -lvl 1 -y 130 -defaultsOSRD
+preplace inst processing_system7_0 -pg 1 -lvl 2 -y 470 -defaultsOSRD
+preplace netloc processing_system7_0_DDR 1 2 1 700J
+preplace netloc test_0_led 1 1 2 220J 20 NJ
+preplace netloc keyin_0_1 1 0 1 NJ
+preplace netloc test_0_M00_AXI 1 1 1 230
+preplace netloc test_0_uart_txd 1 1 2 NJ 140 710J
+preplace netloc processing_system7_0_FIXED_IO 1 2 1 720J
+preplace netloc uart_rxd 1 0 1 NJ
+preplace netloc processing_system7_0_FCLK_CLK0 1 0 3 -30 220 220 560 710
+preplace netloc test_0_debug 1 1 2 220J 200 NJ
+levelinfo -pg 1 -50 100 500 800 -top 0 -bot 960
+",
+}
+{
+   "da_clkrst_cnt": "1",
+}

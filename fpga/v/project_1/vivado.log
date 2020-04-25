@@ -1,0 +1,59 @@
+#-----------------------------------------------------------
+# Vivado v2018.1 (64-bit)
+# SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018
+# IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018
+# Start of session at: Sat Apr 25 16:31:16 2020
+# Process ID: 14500
+# Current directory: E:/MyCode.github/fpga/v/project_1
+# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent15052 E:\MyCode.github\fpga\v\project_1\project_1.xpr
+# Log file: E:/MyCode.github/fpga/v/project_1/vivado.log
+# Journal file: E:/MyCode.github/fpga/v/project_1\vivado.jou
+#-----------------------------------------------------------
+start_gui
+open_project E:/MyCode.github/fpga/v/project_1/project_1.xpr
+Scanning sources...
+Finished scanning sources
+WARNING: [Project 1-509] GeneratedRun file for 'synth_1' not found
+WARNING: [Project 1-509] GeneratedRun file for 'design_1_processing_system7_0_0_synth_1' not found
+WARNING: [Project 1-509] GeneratedRun file for 'design_1_test_0_0_synth_1' not found
+WARNING: [Project 1-509] GeneratedRun file for 'impl_1' not found
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository 'H:/Xilinx/Vivado/2018.1/data/ip'.
+open_project: Time (s): cpu = 00:00:13 ; elapsed = 00:00:09 . Memory (MB): peak = 814.957 ; gain = 103.203
+update_compile_order -fileset sources_1
+update_module_reference design_1_test_0_0
+INFO: [IP_Flow 19-5107] Inferred bus interface 'M00_AXI' of definition 'xilinx.com:interface:aximm:1.0' (from X_INTERFACE_INFO parameter from HDL file).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'M00_AXI' of definition 'xilinx.com:interface:aximm:1.0' (from 'X_INTERFACE_INFO' attribute).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'clk' of definition 'xilinx.com:signal:clock:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-4728] Bus Interface 'clk': Added interface parameter 'ASSOCIATED_BUSIF' with value 'M00_AXI'.
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+Adding cell -- xilinx.com:ip:processing_system7:5.5 - processing_system7_0
+Adding cell -- xilinx.com:module_ref:test:1.0 - test_0
+Successfully read diagram <design_1> from BD file <E:/MyCode.github/fpga/v/project_1/project_1.srcs/sources_1/bd/design_1/design_1.bd>
+Upgrading 'E:/MyCode.github/fpga/v/project_1/project_1.srcs/sources_1/bd/design_1/design_1.bd'
+INFO: [IP_Flow 19-1972] Upgraded design_1_test_0_0 from test_v1_0 1.0 to test_v1_0 1.0
+Wrote  : <E:/MyCode.github/fpga/v/project_1/project_1.srcs/sources_1/bd/design_1/design_1.bd> 
+upgrade_ip: Time (s): cpu = 00:00:11 ; elapsed = 00:00:08 . Memory (MB): peak = 929.594 ; gain = 65.844
+update_module_reference: Time (s): cpu = 00:00:11 ; elapsed = 00:00:10 . Memory (MB): peak = 929.594 ; gain = 65.844
+launch_runs impl_1 -to_step write_bitstream -jobs 2
+Wrote  : <E:/MyCode.github/fpga/v/project_1/project_1.srcs/sources_1/bd/design_1/design_1.bd> 
+VHDL Output written to : E:/MyCode.github/fpga/v/project_1/project_1.srcs/sources_1/bd/design_1/synth/design_1.v
+VHDL Output written to : E:/MyCode.github/fpga/v/project_1/project_1.srcs/sources_1/bd/design_1/sim/design_1.v
+VHDL Output written to : E:/MyCode.github/fpga/v/project_1/project_1.srcs/sources_1/bd/design_1/hdl/design_1_wrapper.v
+INFO: [BD 41-1029] Generation completed for the IP Integrator block processing_system7_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block test_0 .
+Exporting to file E:/MyCode.github/fpga/v/project_1/project_1.srcs/sources_1/bd/design_1/hw_handoff/design_1.hwh
+Generated Block Design Tcl file E:/MyCode.github/fpga/v/project_1/project_1.srcs/sources_1/bd/design_1/hw_handoff/design_1_bd.tcl
+Generated Hardware Definition File E:/MyCode.github/fpga/v/project_1/project_1.srcs/sources_1/bd/design_1/synth/design_1.hwdef
+[Sat Apr 25 16:33:21 2020] Launched design_1_processing_system7_0_0_synth_1, design_1_test_0_0_synth_1, synth_1...
+Run output will be captured here:
+design_1_processing_system7_0_0_synth_1: E:/MyCode.github/fpga/v/project_1/project_1.runs/design_1_processing_system7_0_0_synth_1/runme.log
+design_1_test_0_0_synth_1: E:/MyCode.github/fpga/v/project_1/project_1.runs/design_1_test_0_0_synth_1/runme.log
+synth_1: E:/MyCode.github/fpga/v/project_1/project_1.runs/synth_1/runme.log
+[Sat Apr 25 16:33:21 2020] Launched impl_1...
+Run output will be captured here: E:/MyCode.github/fpga/v/project_1/project_1.runs/impl_1/runme.log
+launch_runs: Time (s): cpu = 00:00:22 ; elapsed = 00:00:26 . Memory (MB): peak = 1046.277 ; gain = 116.684
+exit
+INFO: [Common 17-206] Exiting Vivado at Sat Apr 25 16:37:10 2020...
