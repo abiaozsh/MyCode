@@ -248,7 +248,7 @@ namespace WindowsFormsApplication1
 			// 
 			// button12
 			// 
-			this.button12.Location = new System.Drawing.Point(1013, 38);
+			this.button12.Location = new System.Drawing.Point(674, 42);
 			this.button12.Name = "button12";
 			this.button12.Size = new System.Drawing.Size(49, 23);
 			this.button12.TabIndex = 32;
@@ -258,11 +258,11 @@ namespace WindowsFormsApplication1
 			// 
 			// button13
 			// 
-			this.button13.Location = new System.Drawing.Point(1068, 37);
+			this.button13.Location = new System.Drawing.Point(958, 38);
 			this.button13.Name = "button13";
-			this.button13.Size = new System.Drawing.Size(49, 23);
+			this.button13.Size = new System.Drawing.Size(79, 23);
 			this.button13.TabIndex = 33;
-			this.button13.Text = "f1";
+			this.button13.Text = "makeimg";
 			this.button13.UseVisualStyleBackColor = true;
 			this.button13.Click += new System.EventHandler(this.button13_Click);
 			// 

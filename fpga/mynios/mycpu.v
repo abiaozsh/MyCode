@@ -108,6 +108,8 @@ reg halt_uart;
 
 reg [15:0] accessTime;
 
+//`define QUICKREG false
+
 always @(posedge clk or negedge reset_n) begin
   if (!reset_n) begin
 
@@ -131,11 +133,8 @@ always @(posedge clk or negedge reset_n) begin
     end else begin//command_done==0
       if          (command == 8'h00) begin
 
-      end else if (command == 8'h01) begin 
-        if(!vga_blanking)begin//TODO del
-          halt_uart<=data[0];
-          command_done<=1;
-        end
+      end else if (command == 8'h01) begin halt_uart<=data[0]; command_done<=1;
+
       end else if (command == 8'h02) begin debug_reset_n<=data[0]; command_done<=1;
 
       end else if (command == 8'h03) begin debug_step<=~debug_step; command_done<=1;
@@ -205,6 +204,7 @@ always @(posedge clk or negedge reset_n) begin
             debug_data <= avm_m0_readdata;
             debug_read <= 0;
             debug_readmem_step <= 0;
+            uart_send<=1; uart_data_in<=123;
             command_done = 1;
           end
         end
@@ -219,6 +219,7 @@ always @(posedge clk or negedge reset_n) begin
           if(!avm_m0_waitrequest)begin
             debug_write <= 0;
             debug_readmem_step <= 0;
+            uart_send<=1; uart_data_in<=123;
             command_done <= 1;
           end
         end
@@ -227,7 +228,10 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h43) begin debug_data<=pc; command_done<=1;
       end else if (command == 8'h44) begin debug_data<=cs; command_done<=1;
       end else if (command == 8'h45) begin debug_data<=ds; command_done<=1;
-      end else if (command == 8'h47) begin 
+      end else if (command == 8'h47) begin
+        `ifdef QUICKREG
+        debug_data <= regfile[data[4:0]];
+        `else
         if         (debug_readmem_step==0)begin
           debug_readmem_step <= 1;
           debug_reg <= data[4:0];
@@ -238,6 +242,7 @@ always @(posedge clk or negedge reset_n) begin
           debug_readmem_step <= 0;
           command_done <= 1;
         end
+        `endif
       end else begin
         command_done<=1;
       end
@@ -286,13 +291,15 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   wire [31:0] fetch_address;
   assign fetch_address = cs + pc;
   
-  
+`ifdef QUICKREG
+  reg [31:0] regfile[32];
+`else
+  reg regWrite;
   reg [4:0] regAddr;
   wire [4:0] reg_addr;
   assign reg_addr = (halt_accept == 1) ? debug_reg : regAddr;
   reg  [31:0] regDataIn;
   wire [31:0] regDataOut;
-  reg regWrite;
   //用m9k实现可以省1K逻辑单元
   regfile  regfile_inst (
     .address ( reg_addr ),
@@ -301,7 +308,8 @@ wire cpu_reset_n = reset_n && debug_reset_n;
     .wren ( regWrite ),
     .q ( regDataOut )
   );
-
+`endif
+  
   reg [31:0] regfileA;
   reg [31:0] regfileB;
 
@@ -318,7 +326,11 @@ wire cpu_reset_n = reset_n && debug_reset_n;
       halt_accept <= 0;
       debug_step_buff <= 0;
     end else begin
+      `ifdef QUICKREG
+      `else
       regWrite <= 0;
+      `endif
+      
       if(cycle==0)begin
         if         (fetch_step==0)begin
           if(halt)begin
@@ -329,6 +341,17 @@ wire cpu_reset_n = reset_n && debug_reset_n;
             fetch_read <= 1;
           end
           //fetch_address <= cs + pc;
+        `ifdef QUICKREG
+        end else if(fetch_step==1)begin
+          if(!avm_m0_waitrequest)begin
+            latch_readdata <= avm_m0_readdata;
+            regfileA <= regfile[avm_m0_readdata[31:27]];//regA
+            regfileB <= regfile[avm_m0_readdata[26:22]];
+            fetch_read <= 0;
+            fetch_step <= 0;
+            cycle<=1;
+          end
+        `else
         end else if(fetch_step==1)begin
           if(!avm_m0_waitrequest)begin
             latch_readdata <= avm_m0_readdata;
@@ -346,10 +369,22 @@ wire cpu_reset_n = reset_n && debug_reset_n;
           regfileB <= regDataOut;
           fetch_step <= 0;
           cycle<=1;
+        `endif
         end
       end else begin
         if(cmd_ack)begin
           debug_step_buff <= debug_step;
+          `ifdef QUICKREG
+          if(regResultB && regB!=0)begin
+            regfile[regB] <= regResult;
+          end
+          if(regResultC && regC!=0)begin
+            regfile[regC] <= regResult;
+          end
+          if(regResultRA)begin
+            regfile[31] <= regResult;
+          end
+          `else
           if(regResultB && regB!=0)begin
             regAddr <= regB;
             regDataIn <= regResult;
@@ -365,6 +400,7 @@ wire cpu_reset_n = reset_n && debug_reset_n;
             regDataIn <= regResult;
             regWrite <= 1;
           end
+          `endif
           cycle <= 0;
         end
       end

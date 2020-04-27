@@ -163,7 +163,8 @@ class SdFile;
 #define CACHE_COUNT 2
 class SdVolume {
  public:
-  
+  static int arrayaa[];
+  int arraybb[10];
   //cache_t cacheBuffer_;        // 512 byte cache for device blocks
   //uint32_t cacheBlockNumber_;  // Logical number of block in the cache
   //uint8_t cacheDirty_;         // cacheFlush() will write block if true
@@ -344,7 +345,6 @@ class SdVolume {
 
     return true;
   }
-
 
   // inline functions that return volume info
   /** \return The volume's cluster size in blocks. */
@@ -634,6 +634,8 @@ class SdVolume {
   }
 };
 
+
+ int SdVolume::arrayaa[] = {1,2,3,4,5};
 
 // flags for ls()
 

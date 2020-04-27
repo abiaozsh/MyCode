@@ -45,7 +45,7 @@ module sdrambusvga(
     output [15:0] cacheAddrHigh2,
     output [15:0] cacheAddrHigh3,
     output [31:0] debug32
-
+    
 );
 wire sys_clk = clk;
 wire sys_rst_n = reset_n;
@@ -187,7 +187,9 @@ sdram_controller ins_sdram_controller(
 
 parameter CACHE_COUNT = 4;
 
-assign debug32 = avs_s0_address[22:8];
+assign debug32 = flushCount;//{interface_status,1'b0,free_cache,1'b0,current_slot};
+
+reg [31:0] flushCount;
 
 reg cacheAddrLow8_writeBack;
 wire  [ 7:0] cacheAddrLow8 = cacheAddrLow8_writeBack ? write_back_count[7:0] : avs_s0_address[7:0];
@@ -218,8 +220,6 @@ generate
     assign wren[i] = (current_slot == (i+1)) ? write_enable : 1'b0;
     always@(posedge clk or negedge sys_rst_n) begin
       if(!sys_rst_n) begin
-        //cache_life[i]<=512;
-        //cache_life[i]<=16;
         //cacheAddrHigh[i] <= i;
         cache_life[i]<=0;
         cacheAddrHigh[i] <= {1'b1,15'b0};
@@ -228,7 +228,7 @@ generate
           //if(cache_hit[i])begin
           if((i+1)==current_slot)begin
             //if(cache_life[i]<(65535-CACHE_COUNT))begin
-            if(cache_life[i]<(256-CACHE_COUNT))begin
+            if(cache_life[i]<(10000))begin
               cache_life[i]<=cache_life[i]+CACHE_COUNT*2;
             end
           end else begin
@@ -241,7 +241,7 @@ generate
         if((i+1)==set_cacheAddrHigh)begin
           cacheAddrHigh[i] <= avs_s0_address[22:8];
           //cache_life[i] <= 512;
-          cache_life[i] <= 16;
+          cache_life[i] <= 512;
         end
         if((i+1)==clr_cacheAddrHigh)begin
           cacheAddrHigh[i] <= {1'b1,15'b0};
@@ -318,6 +318,7 @@ always@(posedge clk or negedge sys_rst_n) begin
     adj_cache_life <= 0;
     debug8 <= 0;
     cacheAddrLow8_writeBack <= 0;
+    flushCount <= 0;
   end else begin
     read_sdram_ack_buff <= read_sdram_ack;
     write_single_sdram_ack_buff <= write_single_sdram_ack;
@@ -326,6 +327,8 @@ always@(posedge clk or negedge sys_rst_n) begin
     adj_cache_life <= 0;
     clr_cacheAddrHigh <= 0;
     set_cacheAddrHigh <= 0;
+    
+    
     //载入cache后，第一次读内容不对
     if(avs_s0_read && !avs_s0_read_ack)begin
       if         (interface_status==STATUS_INIT)begin//初始化
@@ -338,6 +341,7 @@ always@(posedge clk or negedge sys_rst_n) begin
             current_slot <= cache_flush_hited;
             write_back_count <= 0;
             cacheAddrLow8_writeBack <= 1;
+            flushCount <= flushCount + 1'b1;
             interface_status <= STATUS_WRITE_BACK_DLY;
           end else begin
             if(free_cache != 0)begin//找到空闲cache
@@ -347,6 +351,7 @@ always@(posedge clk or negedge sys_rst_n) begin
               end else begin
                 write_back_count <= 0;
                 cacheAddrLow8_writeBack <= 1;
+                flushCount <= flushCount + 1'b1;
                 interface_status <= STATUS_WRITE_BACK_DLY;
               end
             end else begin//不经过cache
@@ -382,16 +387,13 @@ always@(posedge clk or negedge sys_rst_n) begin
         if(write_back_count==256)begin
           cacheAddrLow8_writeBack <= 0;
           if(flush_cache && current_slot != 0)begin
-            debug8[0] <= 1;//0  00000110
             clr_cacheAddrHigh <= current_slot;
             `RD_FINISH
           end else begin
-            debug8[1] <= 1;//1  00000110
             interface_status <= STATUS_HITED1;set_cacheAddrHigh <= current_slot;//当前地址写入缓存地址高
           end
         end else begin
           interface_status <= STATUS_WRITE_BACK;
-          debug8[2] <= 1;//1  00000110
           write_enable <= 1;//写回后要置空
           cacheData <= {36'b0};//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
         end
@@ -443,6 +445,7 @@ always@(posedge clk or negedge sys_rst_n) begin
             end else begin
               write_back_count <= 0;
               cacheAddrLow8_writeBack <= 1;
+              flushCount <= flushCount + 1'b1;
               interface_status <= STATUS_WRITE_BACK_DLY;
             end
           end else begin

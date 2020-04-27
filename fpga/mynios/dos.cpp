@@ -40,9 +40,50 @@ void initDisk(Sd2Card** sdcard,int cardidx, SdVolume** sdvolumes, int* totalVolu
   }
 }
 
+
+  short* imgArr;
+  
+  int drawImg(int blockx, int blocky, int block){
+    int basex = 100;
+    int basey = 100;
+    int blockbase = block*20*20;
+    for(int j=0;j<20;j++){
+      for(int i=0;i<20;i++){
+        int x = basex + blockx * 20 + i;
+        int y = basey + blocky * 20 + j;
+        ((short*)(0x200000))[x+y*1024] = imgArr[blockbase+i+j*20];//at 2Mbyte
+      }
+    }
+  }
+  
+  int loadImg(SdFile* file, SdVolume* currVolume, char* filename, char* arr){
+    int res = file->open(currVolume->root, filename, O_READ);
+    if(res){
+      print("open ok\r\n");
+      print(filename);
+      print("\r\n");
+      printInt(file->fileSize_);print("\r\n");
+      for(int i=0;i<file->fileSize_;i++){
+        arr[i] = file->read();
+      }
+    }else{
+      print("open ng\r\n");
+      printInt(file->fileError);print("\r\n");
+    }
+  }
+
+  
 int main(){
   malloc_index = 0;
+  imgArr = (short*)malloc(100*100*16*2);
 
+  
+  //base + clr
+  IOWR(VGA, VGA_BASE, 1024);//1024=2Mbyte
+  for(int i=0;i<0x80000;i++){
+    ((int*)(0x200000))[i] = 0;//at 2Mbyte
+  }
+  
   Sd2Card* sdcard = (Sd2Card*)malloc(sizeof(Sd2Card));//at8M
   SdVolume* sdvolume = (SdVolume*)malloc(sizeof(SdVolume));//at8M~
   sdvolume->root = (SdFile*)malloc(sizeof(SdFile));//at8M~
@@ -55,11 +96,15 @@ int main(){
   int totalVolume = 0;
   SdVolume* currVolume;
   print("Hello from My DOS\r\n");
+  printInt(SdVolume::arrayaa[2]);
   if(false){
   initDisk(sdcards, 0, sdvolumes, &totalVolume);
   initDisk(sdcards, 1, sdvolumes, &totalVolume);
   initDisk(sdcards, 2, sdvolumes, &totalVolume);
   }
+  sdvolumes[1]->arraybb[2] = 12;
+  printInt(sdvolumes[1]->arraybb[2]);
+
   int res;
   if(false){
   for(int i=0;i<totalVolume;i++){
@@ -190,19 +235,63 @@ int main(){
     if(equal(str,"base",-1)){
       print("base?\r\n");
       int base = scanInt();
-      IOWR(VGA, VGA_BASE, base);
+      IOWR(VGA, VGA_BASE, base);//1024=2Mbyte
+      print("done\r\n");
+    }
+    
+    
+    if(equal(str,"draw1f",-1)){
+      for(int i=0;i<64;i++){
+        ((short*)(0x200000))[i+64*1024] = 0xFFFF;//at 2Mbyte
+      }
+      flushCache(&(((short*)(0x200000))[0+64*1024]));
+      print("done\r\n");
+    }
+    if(equal(str,"draw1",-1)){
+      for(int i=0;i<64;i++){
+        ((short*)(0x200000))[i+64*1024] = 0xFFFF;//at 2Mbyte
+      }
+      print("done\r\n");
+    }
+    if(equal(str,"draw0f",-1)){
+      for(int i=0;i<64;i++){
+        ((short*)(0x200000))[i+64*1024] = 0;//at 2Mbyte
+      }
+      flushCache(&(((short*)(0x200000))[0+64*1024]));
+      print("done\r\n");
+    }
+    if(equal(str,"draw0",-1)){
+      for(int i=0;i<64;i++){
+        ((short*)(0x200000))[i+64*1024] = 0;//at 2Mbyte
+      }
       print("done\r\n");
     }
 
+    if(equal(str,"loadimg",-1)){
+      loadImg(file, currVolume, "0.img", (char*)(&imgArr[0]));
+      loadImg(file, currVolume, "1.img", (char*)(&imgArr[1*20*20]));
+      loadImg(file, currVolume, "2.img", (char*)(&imgArr[2*20*20]));
+    }
     
+
     if(equal(str,"draw",-1)){
-      for(int j=0;j<768;j++){
-        for(int i=0;i<1024;i++){
-          if(i==j){
-            ((short*)(0x200000))[i+j*1024] = 0xFFFF;//at 2Mbyte
-          }
-        }
-      }
+      print("blockx?\r\n");
+      int blockx = scanInt();
+      print("blocky?\r\n");
+      int blocky = scanInt();
+      print("block?\r\n");
+      int block = scanInt();
+
+      drawImg(blockx, blocky, block);
+
+      
+      //for(int j=0;j<768;j++){
+      //  for(int i=0;i<1024;i++){
+      //    if(i==j){
+      //      ((short*)(0x200000))[i+j*1024] = 0xFFFF;//at 2Mbyte
+      //    }
+      //  }
+      //}
       print("done\r\n");
     }
     

@@ -13,6 +13,11 @@ void mfree(int size){
   malloc_index -= size;
 }
 
+void flushCache(void* addr){
+  IOWR(CACHE_CTL, 0, 0x80000000+(((int)addr)>>10));
+  IOWR(CACHE_CTL, 0, 0);
+}
+
 int print(const char* str){
   int idx = 0;
   while(1){

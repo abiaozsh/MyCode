@@ -4,7 +4,7 @@ inline void _dly()
   while(1)
   {
 	  int time = IORD(MYTIMER, 0);
-	  if(time > 20){
+	  if(time > 5){
 		  break;
 	  }
   }

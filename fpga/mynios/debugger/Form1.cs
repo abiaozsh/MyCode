@@ -306,6 +306,11 @@ namespace WindowsFormsApplication1
 
 			portWrite((byte)(0x30), 0);
 			byte[] temp;
+			temp = readFromPort(1);
+			if (temp[0] != 123)
+			{
+				throw new Exception("err");
+			}
 			uint val = 0;
 			portWrite((byte)(0x13), (byte)0x00);
 			portWrite((byte)(0x12), (byte)0x00);
@@ -359,6 +364,12 @@ namespace WindowsFormsApplication1
 			if (buff_d3 == null || buff_d3 != d3) { buff_d3 = d3; portWrite((byte)(0x27), buff_d3.Value); }
 
 			portWrite((byte)(0x31), 0);
+			byte[] temp;
+			temp = readFromPort(1);
+			if (temp[0] != 123)
+			{
+				throw new Exception("err");
+			}
 		}
 
 		private void button2_Click_1(object sender, EventArgs e)
@@ -423,15 +434,37 @@ namespace WindowsFormsApplication1
 		}
 		private void button12_Click(object sender, EventArgs e)
 		{
-
-			setmem(0x02040004, 1024);//2M byte
+			for (int i = 0; i < 256; i++)
+			{
+				getmem(0x00001000, null);
+				getmem(0x00002000, null);
+				getmem(0x00003000, null);
+				getmem(0x00004000, null);
+			}
 		}
 
 		private void button13_Click(object sender, EventArgs e)
 		{
+			Bitmap b2 = new Bitmap(20, 20);
+			for (int f = 0; f < 16; f++)
+			{
+				Bitmap b = new Bitmap(@"D:\MyCode.github\Other\Tetris_html\" + f + ".bmp");
+				Graphics g = Graphics.FromImage(b2);
+				g.DrawImage(b, new Rectangle(0, 0, 1024, 768), 0, 0, b.Width, b.Height, GraphicsUnit.Pixel, null);
+				g.Dispose();
 
-			setmem(0x02040004, 2048);//4M byte
-
+				FileStream fs = new FileStream(@"d:\temp\" + f + ".img", FileMode.CreateNew, FileAccess.Write);
+				for (int j = 0; j < 20; j++)
+				{
+					for (int i = 0; i < 20; i++)
+					{
+						uint val = getpixel(b.GetPixel(i, j));
+						fs.WriteByte((byte)val);
+						fs.WriteByte((byte)(val >> 8));
+					}
+				}
+				fs.Close();
+			}
 		}
 		private uint getpixel(Color c)
 		{
@@ -465,15 +498,14 @@ namespace WindowsFormsApplication1
 			}
 		}
 
+		uint[] data0 = new uint[256];
 
 		private void button7_Click(object sender, EventArgs e)
 		{
-			uint[] data0 = new uint[256];
 			this.getmem(1024 * 0, null);
 			this.getmem(1024 * 1, null);
 			this.getmem(1024 * 2, null);
 			this.getmem(1024 * 3, null);
-
 
 			Random r = new Random();
 			for (uint i = 0; i < 256; i++)
@@ -494,18 +526,56 @@ namespace WindowsFormsApplication1
 
 			this.getmem(1024 * 4, null);//*******************
 
-			int cacheaddr0 = getCacheInfoVal(8);//life 0
+			int cacheaddr0 = getCacheInfoVal(8);//addr 0
 
 			//if (cacheaddr0 != 4) MessageBox.Show("err2");
 			for (uint i = 0; i < 256; i++)
 			{
-				uint val = this.getmem((int)(i * 4), null);读取加延迟参数，带写回的读取会比较慢
+				uint val = this.getmem((int)(i * 4), null);
 				if (val != data0[i])
 				{
 					MessageBox.Show("err3");
 					break;
 				}
 			}
+
+			int cachelife2 = getCacheInfoVal(4);//life 0
+
+			for (uint i = 0; i < cachelife2; i++)
+			{
+				this.getmem(1024 * 4, null);//page1
+			}
+
+			this.getmem(1024 * 14, null);//page1
+			this.getmem(1024 * 15, null);//page1
+
+			int byteEnable = 1;
+			portWrite((byte)(0x28), (byte)byteEnable);
+			this.setmem(0, 0xFF);
+
+			byteEnable = 8;
+			portWrite((byte)(0x28), (byte)byteEnable);
+			this.setmem(4, 0xFF000000);
+
+			uint v1 = this.getmem(0, null);
+
+			uint v2 = this.getmem(4, null);
+
+			cachelife2 = getCacheInfoVal(6);
+			for (uint i = 0; i < cachelife2; i++)
+			{
+				this.getmem(1024 * 14, null);//page1
+			}
+			this.getmem(1024 * 22, null);//page1
+			this.getmem(1024 * 23, null);//page1
+
+			uint v3 = this.getmem(0, null);
+
+			uint v4 = this.getmem(4, null);
+
+
+			byteEnable = 15;
+			portWrite((byte)(0x28), (byte)byteEnable);
 			this.getstatus();
 
 			/*
