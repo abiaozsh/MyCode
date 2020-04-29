@@ -327,7 +327,9 @@ namespace debugger
 				}
 				else if (itype == Instype.call || itype == Instype.jmpi)
 				{
-					sIns += ((ins >> 6)) + "(" + (((ins >> 6)) - (baseaddr / 4)) + ")";
+					long target = (((ins >> 6)) - (baseaddr / 4))*4;
+					string sym2 = getSym((int)target, syms);
+					sIns += ((ins >> 6)) + "(" + (((ins >> 6)) - (baseaddr / 4)) + ")"+ sym2;
 				}
 				else
 				{

@@ -136,6 +136,9 @@ namespace WindowsFormsApplication1
 			StringBuilder sb = new StringBuilder();
 			sb.Append("pc:");
 			int pc = getreg(0x43, 0x00, sb);
+			sb.Append("  private_offset:");
+			int private_offset = getreg(0x44, 0, sb);
+
 			byte[] temp;
 			sb.Append("  last cmd:");
 			portWrite((byte)(0x18), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
@@ -172,9 +175,15 @@ namespace WindowsFormsApplication1
 
 			sb.Append("cache_addr:" + getCacheInfo(8) + getCacheInfo(10) + getCacheInfo(12) + getCacheInfo(14));
 
+			sb.Append("  numer:"); getreg(0x40, 0, sb);
+			sb.Append("  denom:"); getreg(0x41, 0, sb);
+			sb.Append("  quotient:"); getreg(0x42, 0, sb);
+			sb.Append("  remain:"); getreg(0x45, 0, sb);
+
+
 			sb.AppendLine();
 
-			if (false && (halt_cpu != 0 || halt_uart != 0))
+			if (true && (halt_cpu != 0 || halt_uart != 0))
 			{
 
 				sb.Append("r0:");
@@ -216,19 +225,13 @@ namespace WindowsFormsApplication1
 				getreg(0x47, 28, sb);
 				sb.AppendLine();
 
-				sb.Append("cs:");
-				int cs = getreg(0x44, 0, sb);
-				sb.Append("   ds:");
-				int ds = getreg(0x45, 0, sb);
-				sb.AppendLine();
-
 				sb.Append(" ra:");
 				getreg(0x47, 31, sb);
 				sb.AppendLine();
 
 
 				sb.AppendLine("stack: ");
-				baseaddr = sp + ds;
+				baseaddr = sp + private_offset;
 				for (int i = -Convert.ToInt32(this.comboBox2.Text) * 4; i < Convert.ToInt32(this.comboBox2.Text) * 4; i += 4)
 				{
 					sb.Append((i == 0 ? "*" : " ") + Util.getHex8((uint)(i + baseaddr)) + ":"); getmem(i + baseaddr, sb); sb.AppendLine();
@@ -239,7 +242,7 @@ namespace WindowsFormsApplication1
 				for (int i = -32; i < 32; i += 4)
 				{
 					StringBuilder sb2 = new StringBuilder();
-					uint code = getmem(pc + cs + i, sb2);
+					uint code = getmem(pc + private_offset + i, sb2);
 					int target = pc + i;
 					string foundsym = Config.getSym(target, syms);
 					string scode = Config.dasm(syms, (uint)code, pc + i, baseaddr);
@@ -247,7 +250,7 @@ namespace WindowsFormsApplication1
 					{
 						sb.AppendLine("----------------------------------------------------------------------------------");
 					}
-					sb.AppendLine((i == 0 ? "*" : " ") + Util.getHex8((uint)(pc + cs + i)) + ":" + scode);
+					sb.AppendLine((i == 0 ? "*" : " ") + Util.getHex8((uint)(pc + private_offset + i)) + ":" + scode);
 					if (i == 0)
 					{
 						sb.AppendLine("----------------------------------------------------------------------------------");

@@ -1,7 +1,6 @@
-//函数指针
-//变量指针
 //中断向量
 //浮点数
+
 #include "inc/io.h"
 #include "inc/system.h"
 #include "inc/uart.cpp"
@@ -41,41 +40,74 @@ void initDisk(Sd2Card** sdcard,int cardidx, SdVolume** sdvolumes, int* totalVolu
 }
 
 
-  short* imgArr;
-  
-  int drawImg(int blockx, int blocky, int block){
-    int basex = 100;
-    int basey = 100;
-    int blockbase = block*20*20;
-    for(int j=0;j<20;j++){
-      for(int i=0;i<20;i++){
-        int x = basex + blockx * 20 + i;
-        int y = basey + blocky * 20 + j;
-        ((short*)(0x200000))[x+y*1024] = imgArr[blockbase+i+j*20];//at 2Mbyte
-      }
-    }
-  }
-  
-  int loadImg(SdFile* file, SdVolume* currVolume, char* filename, char* arr){
-    int res = file->open(currVolume->root, filename, O_READ);
-    if(res){
-      print("open ok\r\n");
-      print(filename);
-      print("\r\n");
-      printInt(file->fileSize_);print("\r\n");
-      for(int i=0;i<file->fileSize_;i++){
-        arr[i] = file->read();
-      }
-    }else{
-      print("open ng\r\n");
-      printInt(file->fileError);print("\r\n");
-    }
-  }
+short* imgArr;
 
+int drawImg(int blockx, int blocky, int block){
+  int basex = 100;
+  int basey = 100;
+  int blockbase = block*20*20;
+  for(int j=0;j<20;j++){
+    for(int i=0;i<20;i++){
+      int x = basex + blockx * 20 + i;
+      int y = basey + blocky * 20 + j;
+      ((short*)(0x200000))[x+y*1024] = imgArr[blockbase+i+j*20];//at 2Mbyte
+    }
+  }
+}
+
+int loadImg(SdFile* file, SdVolume* currVolume, char* filename, char* arr){
+  int res = file->open(currVolume->root, filename, O_READ);
+  if(res){
+    print("open ok\r\n");
+    print(filename);
+    print("\r\n");
+    printInt(file->fileSize_);print("\r\n");
+    for(int i=0;i<file->fileSize_;i++){
+      arr[i] = file->read();
+    }
+  }else{
+    print("open ng\r\n");
+    printInt(file->fileError);print("\r\n");
+  }
+}
+
+
+int p1(int v1){
+  print("a");
+  printInt(v1);
+}
+
+int p2(int v1){
+  print("b");
+  printInt(v1);
+}
+
+typedef int (*PF)(int);
+PF getFunc(int val){
+  if(val==1){
+    return p1;
+  }
   
+  if(val==2){
+    return p2;
+  }
+}
+
+
 int main(){
+  
+  int (*proc1)(int);
+
+  proc1 = getFunc(1);
+  
+  proc1(1);
+  
+  proc1 = getFunc(2);
+  
+  proc1(1);
+
   malloc_index = 0;
-  imgArr = (short*)malloc(100*100*16*2);
+  imgArr = (short*)malloc(20*20*16*2);
 
   
   //base + clr

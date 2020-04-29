@@ -148,7 +148,6 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h12) begin uart_send<=1; uart_data_in<=debug_data[23:16]; command_done<=1;
       end else if (command == 8'h13) begin uart_send<=1; uart_data_in<=debug_data[31:24]; command_done<=1;
       
-
       end else if (command == 8'h14) begin uart_send<=1; uart_data_in<=halt_cpu; command_done<=1;
       end else if (command == 8'h15) begin uart_send<=1; uart_data_in<=halt_uart; command_done<=1;
       end else if (command == 8'h16) begin uart_send<=1; uart_data_in<=avm_m0_waitrequest; command_done<=1;
@@ -225,9 +224,15 @@ always @(posedge clk or negedge reset_n) begin
         end
         
 
+  ;
+
+      end else if (command == 8'h40) begin debug_data<=numer; command_done<=1;
+      end else if (command == 8'h41) begin debug_data<=denom; command_done<=1;
+      end else if (command == 8'h42) begin debug_data<=quotient; command_done<=1;
       end else if (command == 8'h43) begin debug_data<=pc; command_done<=1;
-      end else if (command == 8'h44) begin debug_data<=cs; command_done<=1;
-      end else if (command == 8'h45) begin debug_data<=ds; command_done<=1;
+      end else if (command == 8'h44) begin debug_data<=private_offset; command_done<=1;
+      end else if (command == 8'h45) begin debug_data<=remain; command_done<=1;
+
       end else if (command == 8'h47) begin
         `ifdef QUICKREG
         debug_data <= regfile[data[4:0]];
@@ -264,10 +269,12 @@ assign debug8[7] = debug_write;
 wire cpu_reset_n = reset_n && debug_reset_n;
 
   assign avm_m0_byteenable = halt_accept == 1 ? debug_byteenable : byteenable;
-  assign avm_m0_address    = halt_accept == 1 ? debug_address    : (cycle == 0 ? fetch_address : exec_address);
-  assign avm_m0_writedata  = halt_accept == 1 ? debug_writedata  : exec_writedata;
-  assign avm_m0_write      = halt_accept == 1 ? debug_write      : exec_write;
-  assign avm_m0_read       = halt_accept == 1 ? debug_read       : (cycle == 0 ? fetch_read : exec_read);
+  
+  wire [31:0] affect_address    = halt_accept == 1   ? debug_address                                : (cycle == 0 ? fetch_address : {exec_address[31:2],2'b0});
+  assign avm_m0_address         = affect_address[31] ? {1'b0,affect_address[30:0]} + private_offset : affect_address;
+  assign avm_m0_writedata       = halt_accept == 1   ? debug_writedata                              : exec_writedata;
+  assign avm_m0_write           = halt_accept == 1   ? debug_write                                  : exec_write;
+  assign avm_m0_read            = halt_accept == 1   ? debug_read                                   : (cycle == 0 ? fetch_read : exec_read);
 
   reg [31:0] latch_readdata;
   wire Rtype;
@@ -276,6 +283,7 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   wire [4:0]  regC;
   wire [4:0]  IMM5;
   wire [15:0] IMM16;
+  wire [31:0] IMM16zx;
   wire [31:0] IMM16sx;
   wire [25:0] IMM26;
   assign regB = latch_readdata[26:22];
@@ -284,12 +292,13 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   assign IMM26 = latch_readdata[31:6];
   assign IMM16 = latch_readdata[21:6];
   assign IMM16sx = {{16{IMM16[15]}},IMM16};
+  assign IMM16zx = {16'b0,IMM16};
   assign Rtype = latch_readdata[5:0]==6'h3A;
   assign cmd = Rtype ? latch_readdata[16:11] : latch_readdata[5:0];
 
   reg cycle;//0:fetchCode 1:execCode
   wire [31:0] fetch_address;
-  assign fetch_address = cs + pc;
+  assign fetch_address = pc;
   
 `ifdef QUICKREG
   reg [31:0] regfile[32];
@@ -320,7 +329,6 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   always @(posedge clk or negedge cpu_reset_n) begin
     if (!cpu_reset_n) begin
       cycle<=0;
-      //fetch_address<=0;
       fetch_read<=0;
       fetch_step<=0;
       halt_accept <= 0;
@@ -340,7 +348,6 @@ wire cpu_reset_n = reset_n && debug_reset_n;
             fetch_step <= 1;
             fetch_read <= 1;
           end
-          //fetch_address <= cs + pc;
         `ifdef QUICKREG
         end else if(fetch_step==1)begin
           if(!avm_m0_waitrequest)begin
@@ -416,10 +423,10 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   reg        regResultC;
   reg        regResultRA;
 
-  reg [31:0] cs;
-  reg [31:0] ds;
   reg [31:0] pc;
 
+  reg [31:0] private_offset;
+  
   wire [31:0] nextpc;
   assign nextpc = pc + 4;
   
@@ -430,7 +437,7 @@ wire cpu_reset_n = reset_n && debug_reset_n;
 
   reg cmd_ack;
   
-  reg [31:0] exec_address;
+  wire [31:0] exec_address;
   reg        exec_read;
   reg        exec_write;
   reg [31:0] exec_writedata;
@@ -443,7 +450,8 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   wire comp_lt = $signed(regfileA)<$signed(regfileB);
   wire comp_ltu = regfileA < regfileB;
   
-  wire [31:0] dsAddr = ds + regfileA + IMM16sx;
+  //wire [31:0] dsAddr = ds + regfileA + IMM16sx;
+  assign exec_address = regfileA + IMM16sx;
 
   wire [31:0] shiftDataIn;
   assign shiftDataIn = regfileA;
@@ -477,21 +485,36 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   reg [31:0] mulDataB;
   wire [63:0] mulResultSigned;
   mulSigned  mulSigned_inst (
-    .dataa ( mulDataA ),
-    .datab ( mulDataB ),
+    .dataa  ( mulDataA ),
+    .datab  ( mulDataB ),
     .result ( mulResultSigned )
   );
-  assign debug32 = dsAddr;
+  
+  wire [31:0] numer;
+  assign numer = regfileA;
+  wire [31:0] denom;
+  assign denom = regfileB;
+  wire [31:0] quotient;
+  wire [31:0] remain;
+
+  divSigned  divSigned_inst (
+    .denom    (denom),
+    .numer    (numer),
+    .quotient (quotient),
+    .remain   (remain)
+  );
+
+  reg [7:0] exec_cnt;
+  //assign debug32 = dsAddr;
   always @(posedge clk or negedge cpu_reset_n) begin
     if (!cpu_reset_n) begin
       cmd_ack<=0;
-      exec_address<=0;
+      //exec_address<=0;
       exec_read<=0;
       exec_write<=0;
       exec_writedata<=0;
        
-      cs<=32'h0000_0000;
-      ds<=32'h0000_0000;
+      private_offset<=32'h0000_0000;
       pc<=32'h0200_0000;
       byteenable <= 4'b1111;
       exec_step<=0;
@@ -523,6 +546,8 @@ wire cpu_reset_n = reset_n && debug_reset_n;
             halt_cpu <= IMM16[0];
             pc <= nextpc;
             cmd_ack <= 1;
+            
+            
           //br sym                       @          20 @                      0 @   6 @ 0x06
           end else if(cmd==6'd6)begin//ok
             pc <= nextpc + IMM16sx;
@@ -570,7 +595,17 @@ wire cpu_reset_n = reset_n && debug_reset_n;
               pc <= nextpc;//else PC ← PC + 4
             end
             cmd_ack <= 1;
+          //bgeu reg, reg, sym           @          15 @                      0 @  46 @          101110      0x2e
+          end else if(cmd==6'h2e)begin//ok
+            if(!comp_ltu) begin//if ((unsigned) rA >= (unsigned) rB) 
+              pc <= nextpc + IMM16sx;//then PC ← PC + 4 + σ(IMM16)
+            end else begin
+              pc <= nextpc;//else PC ← PC + 4
+            end
+            cmd_ack <= 1;
 
+          
+          
 
           //andi reg, reg, ins           @          10 @                      0 @  12 @ 0x0c
           end else if(cmd==6'd12)begin//ok
@@ -658,13 +693,20 @@ wire cpu_reset_n = reset_n && debug_reset_n;
             regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
+          //cmpgeui reg, reg, ins        @          10 @                      0 @  40 @          101000      0x28
+          end else if(cmd==6'h28)begin//ok
+            regResult <= {31'b0,(regfileA >= IMM16zx)};//if ((unsigned) rA >= (unsigned) (0x0000 : IMM16)) then rB ← 1 else rB ← 0
+            regResultB <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
 
             
-          //ldw reg, regins              @          11 @                      0 @  23 @ 0x17
-          end else if(cmd==6'd23)begin//ok
+
+          //ldw,ldwio reg, regins              @          11 @                      0 @  23 @ 0x17
+          end else if(cmd==6'd23 || cmd==6'd55)begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
-              exec_address <= {dsAddr[31:2],2'b0};//rB ← Mem32[rA + σ(IMM16)]
+              //exec_address <= {dsAddr[31:2],2'b0};//rB ← Mem32[rA + σ(IMM16)]
               exec_read <= 1;
             end else if(exec_step==1)begin
               if(!avm_m0_waitrequest)begin
@@ -676,42 +718,11 @@ wire cpu_reset_n = reset_n && debug_reset_n;
                 cmd_ack <= 1;
               end
             end
-          //stw reg, regins              @          11 @                      0 @  21 @ 0x15
-          end else if(cmd==6'd21)begin//ok
+          //stw,stwio reg, regins              @          11 @                      0 @  21 @ 0x15
+          end else if(cmd==6'd21 || cmd==6'd53)begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
-              exec_address <= {dsAddr[31:2],2'b0};//Mem32[rA + σ(IMM16)] ← rB
-              exec_writedata <= regfileB;
-              exec_write <= 1;
-            end else if(exec_step==1)begin
-              if(!avm_m0_waitrequest)begin
-                exec_write <= 0;
-                exec_step <= 0;
-                pc <= nextpc;
-                cmd_ack <= 1;
-              end
-            end
-          //ldwio reg, regins            @          11 @                      0 @  55 @ 0x37
-          end else if(cmd==6'd55)begin//ok
-            if         (exec_step==0)begin
-              exec_step <= 1;
-              exec_address <= regfileA + IMM16sx;//rB ← Mem32[rA + σ(IMM16)]
-              exec_read <= 1;
-            end else if(exec_step==1)begin
-              if(!avm_m0_waitrequest)begin
-                regResult <= avm_m0_readdata;
-                regResultB <= 1;
-                exec_read <= 0;
-                exec_step <= 0;
-                pc <= nextpc;
-                cmd_ack <= 1;
-              end
-            end
-          //stwio reg, regins            @          11 @                      0 @  53 @ 0x35
-          end else if(cmd==6'd53)begin//ok
-            if         (exec_step==0)begin
-              exec_step <= 1;
-              exec_address <= regfileA + IMM16sx;//Mem32[rA + σ(IMM16)] ← rB
+              //exec_address <= {dsAddr[31:2],2'b0};//Mem32[rA + σ(IMM16)] ← rB
               exec_writedata <= regfileB;
               exec_write <= 1;
             end else if(exec_step==1)begin
@@ -730,11 +741,11 @@ wire cpu_reset_n = reset_n && debug_reset_n;
           end else if(cmd==6'd3)begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
-              exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x000000 : Mem8[rA + σ(IMM16)]
+              //exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x000000 : Mem8[rA + σ(IMM16)]
               exec_read <= 1;
             end else if(exec_step==1)begin
               if(!avm_m0_waitrequest)begin
-                case(dsAddr[1:0])
+                case(exec_address[1:0])
                   0:begin regResult <= {24'b0,avm_m0_readdata[ 7: 0]};end
                   1:begin regResult <= {24'b0,avm_m0_readdata[15: 8]};end
                   2:begin regResult <= {24'b0,avm_m0_readdata[23:16]};end
@@ -751,11 +762,11 @@ wire cpu_reset_n = reset_n && debug_reset_n;
           end else if(cmd==6'd7)begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
-              exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x000000 : Mem8[rA + σ(IMM16)]
+              //exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x000000 : Mem8[rA + σ(IMM16)]
               exec_read <= 1;
             end else if(exec_step==1)begin
               if(!avm_m0_waitrequest)begin
-                case(dsAddr[1:0])
+                case(exec_address[1:0])
                   0:begin regResult <= {{24{avm_m0_readdata[ 7]}},avm_m0_readdata[ 7: 0]};end
                   1:begin regResult <= {{24{avm_m0_readdata[15]}},avm_m0_readdata[15: 8]};end
                   2:begin regResult <= {{24{avm_m0_readdata[23]}},avm_m0_readdata[23:16]};end
@@ -772,11 +783,11 @@ wire cpu_reset_n = reset_n && debug_reset_n;
           end else if(cmd==6'd11)begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
-              exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x0000 : Mem16[rA + σ(IMM16)]
+              //exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x0000 : Mem16[rA + σ(IMM16)]
               exec_read <= 1;
             end else if(exec_step==1)begin
               if(!avm_m0_waitrequest)begin
-                case(dsAddr[1])
+                case(exec_address[1])
                   0:begin regResult <= {16'b0,avm_m0_readdata[15: 0]};end
                   1:begin regResult <= {16'b0,avm_m0_readdata[31:16]};end
                 endcase
@@ -792,8 +803,8 @@ wire cpu_reset_n = reset_n && debug_reset_n;
           end else if(cmd==6'd5)begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
-              exec_address <= {dsAddr[31:2],2'b0};//Mem8[rA + σ(IMM16)] ← rB7..0
-              case(dsAddr[1:0])
+              //exec_address <= {dsAddr[31:2],2'b0};//Mem8[rA + σ(IMM16)] ← rB7..0
+              case(exec_address[1:0])
                 0:begin byteenable <= 4'b0001; exec_writedata <= {24'b0,regfileB[7:0]};end
                 1:begin byteenable <= 4'b0010; exec_writedata <= {16'b0,regfileB[7:0],8'b0};end
                 2:begin byteenable <= 4'b0100; exec_writedata <= {8'b0,regfileB[7:0],16'b0};end
@@ -813,8 +824,8 @@ wire cpu_reset_n = reset_n && debug_reset_n;
           end else if(cmd==6'd13)begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
-              exec_address <= {dsAddr[31:2],2'b0};//Mem8[rA + σ(IMM16)] ← rB7..0
-              case(dsAddr[1])
+              //exec_address <= {dsAddr[31:2],2'b0};//Mem8[rA + σ(IMM16)] ← rB7..0
+              case(exec_address[1])
                 0:begin byteenable <= 4'b0011; exec_writedata <= {16'b0,regfileB[15:0]};end
                 1:begin byteenable <= 4'b1100; exec_writedata <= {regfileB[15:0],16'b0};end
               endcase
@@ -832,11 +843,11 @@ wire cpu_reset_n = reset_n && debug_reset_n;
           end else if(cmd==6'h0f)begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
-              exec_address <= {dsAddr[31:2],2'b0};//rB ← σ(Mem16[rA + σ(IMM16)])
+              //exec_address <= {dsAddr[31:2],2'b0};//rB ← σ(Mem16[rA + σ(IMM16)])
               exec_read <= 1;
             end else if(exec_step==1)begin
               if(!avm_m0_waitrequest)begin
-                case(dsAddr[1])
+                case(exec_address[1])
                   0:begin regResult <= {{16{avm_m0_readdata[15]}},avm_m0_readdata[15: 0]};end
                   1:begin regResult <= {{16{avm_m0_readdata[31]}},avm_m0_readdata[31:16]};end
                 endcase
@@ -863,6 +874,25 @@ wire cpu_reset_n = reset_n && debug_reset_n;
           if         (cmd==6'd5)begin
             pc <= regfileA;//regA == 31
             cmd_ack <= 1;
+            
+            
+          //stoff reg                    @          50 @                      1 @  10 @          001010      0x3A,0x0A*
+          end else if(cmd==6'h0A)begin//ok
+            private_offset <= regfileA;
+            pc <= nextpc;
+            cmd_ack <= 1;
+
+          //callr reg                    @          50 @                      1 @  29 @          011101      0x3A,0x1d
+          end else if(cmd==6'h1D)begin//ok
+            pc <= regfileA;
+            regResult <= pc + 4;//rC ← rA + rB
+            regResultC <= 1;// c is ra
+            cmd_ack <= 1;
+          //jmp reg                      @          50 @                      1 @  13 @          001101      0x3A,0x0d
+          end else if(cmd==6'h0D)begin//ok
+            pc <= regfileA;
+            cmd_ack <= 1;
+
           //add reg, reg, reg            @          30 @                      1 @  49 @ 0x3A,0x31
           end else if(cmd==6'd49)begin
             regResult <= regfileA + regfileB;//rC ← rA + rB
@@ -880,14 +910,29 @@ wire cpu_reset_n = reset_n && debug_reset_n;
             if         (exec_step==0)begin
               mulDataB <= regfileB;
               exec_step <= 1;
-            end else if(exec_step==1)begin
-              // shift left logical immediate
+            end else if(exec_step==1)begin//50Mhz
               regResult <= mulResultSigned[31:0];
               regResultC <= 1;
               exec_step <= 0;
               pc <= nextpc;
               cmd_ack <= 1;
             end
+          //div reg, reg, reg            @          30 @                      1 @  37 @          100101      0x3A,0x25
+          end else if(cmd==6'h25)begin//ok
+            if         (exec_step==0)begin
+              exec_cnt <= 0;
+              exec_step <= 1;
+            end else if(exec_step==1)begin
+              exec_cnt <= exec_cnt + 1'b1;
+              if(exec_cnt == 2)begin//50Mhz
+                regResult <= quotient;
+                regResultC <= 1;
+                exec_step <= 0;
+                pc <= nextpc;
+                cmd_ack <= 1;
+              end
+            end
+            
           //and reg, reg, reg            @          30 @                      1 @  14 @ 0x3A,0x0e
           end else if(cmd==6'd14)begin
             regResult <= regfileA & regfileB;// rC ← rA | rB
@@ -908,7 +953,14 @@ wire cpu_reset_n = reset_n && debug_reset_n;
             regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
+          //xor reg, reg, reg            @          30 @                      1 @  30 @          011110      0x3A,0x1e
+          end else if(cmd==6'h1e)begin
+            regResult <= regfileA ^ regfileB;// rC ← rA ^ rB
+            regResultC <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
 
+            
           //sll reg, reg, reg            @          30 @                      1 @  19 @ 0x3A,0x13
           end else if(cmd==6'd19)begin
             if         (exec_step==0)begin
@@ -951,7 +1003,20 @@ wire cpu_reset_n = reset_n && debug_reset_n;
               pc <= nextpc;
               cmd_ack <= 1;
             end
-
+          //srl reg, reg, reg            @          30 @                      1 @  27 @          011011      0x3A,0x1b
+          end else if(cmd==6'h1b)begin
+            if         (exec_step==0)begin
+              shiftDirection <= 1;//0:left 1:right
+              shiftDistance <= regfileB[4:0];//rC ← (unsigned) rA >> ((unsigned) rB4..0)
+              exec_step <= 1;
+            end else if(exec_step==1)begin
+              // shift right logical
+              regResult <= shiftResultLogical;
+              regResultC <= 1;
+              exec_step <= 0;
+              pc <= nextpc;
+              cmd_ack <= 1;
+            end
 
 
 
@@ -983,6 +1048,14 @@ wire cpu_reset_n = reset_n && debug_reset_n;
             pc <= nextpc;
             cmd_ack <= 1;
 
+          //cmpltu reg, reg, reg         @          30 @                      1 @  48 @          110000      0x3A,0x30
+          end else if(cmd==6'h30)begin
+            regResult <= {31'b0,(comp_ltu)};//if ((unsigned) rA < (unsigned) rB) then rC ← 1 else rC ← 0
+            regResultC <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+
+            
           //slli reg, reg, ins           @          40 @                      1 @  18 @ 0x3A,0x12
           end else if(cmd==6'd18)begin
             // rC ← rA << IMM5

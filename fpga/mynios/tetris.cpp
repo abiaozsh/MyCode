@@ -118,8 +118,8 @@ class Tetris {
 		// add to board
 		for (int idx = 0; idx < 4; idx++) {
 			int block = Public_GetBlock(NowShapeNo, NowDirectionNo, idx);
-			var x = PosX + Public_GetBlockXout;
-			var y = PosY - Public_GetBlockYout;
+			int x = PosX + Public_GetBlockXout;
+			int y = PosY - Public_GetBlockYout;
 			private_setBoard(x, y, block);
 		}
 
@@ -164,15 +164,16 @@ class Tetris {
 		private_NextShape();
 	};
   
-	int private_getBoard(x, y) {
+	int private_getBoard(int x, int y) {
 		return Board[x * 20 + y];
-	},
-	int private_setBoard(x, y, val) {
+	};
+  
+	int private_setBoard(int x, int y, int val) {
 		Board[x * 20 + y] = val;
-	},
+	};
 
-	Public_GetBlockXout;
-	Public_GetBlockYout;
+	int Public_GetBlockXout;
+	int Public_GetBlockYout;
 	int Public_GetBlock(int ShapeNo, int DirectionNo, int idx) {
 		int dat = _block[(ShapeNo << 4) + (DirectionNo << 2) + idx];
 		Public_GetBlockYout = dat & 3;// (0000 00XX)
@@ -215,104 +216,89 @@ class Tetris {
 	}
 };
 
-  int rnd7;
-	int CallBack_GetRandom = function() {
-		return rnd7;//0~6
-	};
+int rnd7;
+short* imgArr;
+Tetris* tetris;
 
-  int drawImg(int blockx, int blocky, int block){
-    
-    
+int CallBack_GetRandom() {
+  return rnd7;//0~6
+};
+
+int drawImg(int blockx, int blocky, short* block, int isNext){
+  int basex = 100;
+  int basey = 100;
+  if(isNext){
+    basey = 500;
   }
+  for(int j=0;j<20;j++){
+    for(int i=0;i<20;i++){
+      int x = basex + blockx * 20 + i;
+      int y = basey + blocky * 20 + j;
+      ((short*)(0x200000))[x+y*1024] = block[i+j*20];//at 2Mbyte
+    }
+  }
+}
+
+
+int CallBack_DrawNextShape(Tetris* tetris) {
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      //ImgNext[j][i].src = "0.bmp";
+      drawImg(i,j,&(imgArr[0*20*20]), true);
+    }
+  }
+  for (int idx = 0; idx < 4; idx++) {
+    int block = tetris->Public_GetBlock(tetris->NextShapeNo, 0, idx);
+    int i = tetris->Public_GetBlockXout;
+    int j = tetris->Public_GetBlockYout;
+    //ImgNext[j][i].src = block + ".bmp";
+    drawImg(i,j,&(imgArr[block*20*20]), true);
+  }
+};
+
+
+
+void DrawBoard() {
+  for (int j = 0; j < 20; j++) {
+    for (int i = 0; i < 10; i++) {
+      //ImgBoard[j][i].src = Tetris.Board[i * 20 + 19 - j] + ".bmp";
+      int block = tetris->Board[i * 20 + 19 - j];
+      drawImg(i,j,&(imgArr[block*20*20]), false);
+		}
+	}
   
-	int CallBack_DrawNextShape(Tetris* tetris) {
-		for (var i = 0; i < 4; i++) {
-			for (var j = 0; j < 4; j++) {
-				ImgNext[j][i].src = "0.bmp";
-			}
-		}
-		for (var idx = 0; idx < 4; idx++) {
-			var block = tetris->Public_GetBlock(tetris->NextShapeNo, 0, idx);
-			var i = tetris->Public_GetBlockXout;
-			var j = tetris->Public_GetBlockYout;
-			ImgNext[j][i].src = block + ".bmp";
-		}
-	};
-
-	// UI Board
-	var SpanBoard = document.getElementById("Board");
-	ImgBoard = new Array(20);
-	for (var i = 0; i < 20; i++) {
-		ImgBoard[i] = new Array(10);
-		for (var j = 0; j < 10; j++) {
-			img = document.createElement("img");
-			img.src = "0.bmp";
-			SpanBoard.appendChild(img);
-			ImgBoard[i][j] = img;
-		}
-		var br = document.createElement("br");
-		SpanBoard.appendChild(br);
+	for (int idx = 0; idx < 4; idx++) {
+		int block = tetris->Public_GetBlock(tetris->NowShapeNo, tetris->NowDirectionNo, idx);
+		int x = tetris->PosX + tetris->Public_GetBlockXout;
+		int y = 19 - (tetris->PosY - tetris->Public_GetBlockYout);
+		//ImgBoard[y][x].src = block + ".bmp";
+    drawImg(x,y,&(imgArr[block*20*20]), false);
 	}
+}
 
-	// UI Next
-	var SpanNext = document.getElementById("Next");
-	ImgNext = new Array(4);
-	for (var i = 0; i < 4; i++) {
-		ImgNext[i] = new Array(4);
-		for (var j = 0; j < 4; j++) {
-			var img = document.createElement("img");
-			img.src = "0.bmp";
-			SpanNext.appendChild(img);
-			ImgNext[i][j] = img;
-		}
-		var br = document.createElement("br");
-		SpanNext.appendChild(br);
-	}
-	document.onkeydown = keyDown;
-	var timename = setInterval("timing();",1000);
-
-	Tetris.Public_Init();
+void timing() {
+	tetris->Public_Down();
 	DrawBoard();
 }
 
-
-function timing() {
-	Tetris.Public_Down();
-	DrawBoard();
-}
-
-function keyDown(key) {
-	if (k == space)
-		Tetris.Public_Rotate();
-	else if (k == d)
-		Tetris.Public_Move(1);
-	else if (k == a)
-		Tetris.Public_Move(-1);
-	else if (k == s)
-		Tetris.Public_Down();
-	else if (k == x) {
-		while (Tetris.Public_Down())
+void keyDown(int k) {
+	if (k == ' ')
+		tetris->Public_Rotate();
+	else if (k == 'd')
+		tetris->Public_Move(1);
+	else if (k == 'a')
+		tetris->Public_Move(-1);
+	else if (k == 's')
+		tetris->Public_Down();
+	else if (k == 'x') {
+		while (tetris->Public_Down())
 			;
 	}
 	DrawBoard();
 }
 
-function DrawBoard() {
-	for (var i = 0; i < 10; i++) {
-		for (var j = 0; j < 20; j++) {
-			ImgBoard[j][i].src = Tetris.Board[i * 20 + 19 - j] + ".bmp";
-		}
-	}
-	for (var idx = 0; idx < 4; idx++) {
-		var block = Tetris.Public_GetBlock(Tetris.NowShapeNo, Tetris.NowDirectionNo, idx);
-		var x = Tetris.PosX + Tetris.Public_GetBlockXout;
-		var y = 19 - (Tetris.PosY - Tetris.Public_GetBlockYout);
-		ImgBoard[y][x].src = block + ".bmp";
-	}
-}
-
-int loadImg(char* filename, char* arr){
-  res = file->open(currVolume->root, filename, O_READ);
+int loadImg(SdFile* file, SdVolume* currVolume, char* filename, char* arr){
+  int res = file->open(currVolume->root, filename, O_READ);
   if(res){
     print("open ok\r\n");
     print(filename);
@@ -331,15 +317,23 @@ int loadImg(char* filename, char* arr){
 int main()
 {
   malloc_index = 0;
-  Tetris* tetris = (Tetris*)malloc(sizeof(Tetris));
+  print("Hello from tetris!\r\n");
+
+  imgArr = (short*)malloc(20*20*16*2);
+  
+  tetris = (Tetris*)malloc(sizeof(Tetris));
   Sd2Card* sdcard = (Sd2Card*)malloc(sizeof(Sd2Card));
   SdVolume* sdvolume = (SdVolume*)malloc(sizeof(SdVolume));
   sdvolume->root = (SdFile*)malloc(sizeof(SdFile));
   SdFile* file = (SdFile*)malloc(sizeof(SdFile));
 
+  
+  tetris->CallBack_GetRandom = CallBack_GetRandom;
+  
+  tetris->CallBack_DrawNextShape = CallBack_DrawNextShape;
 
   int cs = 1;
-  res = sdcard->init(cs);
+  int res = sdcard->init(cs);
   if(res){
     print("sd ok\r\n");
     sdcard->printType();
@@ -349,7 +343,7 @@ int main()
     if(res){
       print("volume ok\r\n");
       res = sdvolume->root->openRoot(sdvolume);
-      currVolume = sdvolume;
+
       if(res){
         print("root ok\r\n");
       }else{
@@ -364,13 +358,27 @@ int main()
     printInt(sdcard->errorCode());
   }
 
-  loadImg("0.img", img0);
-  loadImg("1.img", img0);
-  loadImg("2.img", img0);
+  if(res){
+    loadImg(file, sdvolume, "0.img" , (char*)(&imgArr[0]));
+    loadImg(file, sdvolume, "1.img" , (char*)(&imgArr[1*20*20]));
+    loadImg(file, sdvolume, "2.img" , (char*)(&imgArr[2*20*20]));
+    loadImg(file, sdvolume, "3.img" , (char*)(&imgArr[3*20*20]));
+    loadImg(file, sdvolume, "4.img" , (char*)(&imgArr[4*20*20]));
+    loadImg(file, sdvolume, "5.img" , (char*)(&imgArr[5*20*20]));
+    loadImg(file, sdvolume, "6.img" , (char*)(&imgArr[6*20*20]));
+    loadImg(file, sdvolume, "7.img" , (char*)(&imgArr[7*20*20]));
+    loadImg(file, sdvolume, "8.img" , (char*)(&imgArr[8*20*20]));
+    loadImg(file, sdvolume, "9.img" , (char*)(&imgArr[9*20*20]));
+    loadImg(file, sdvolume, "10.img", (char*)(&imgArr[10*20*20]));
+    loadImg(file, sdvolume, "11.img", (char*)(&imgArr[11*20*20]));
+    loadImg(file, sdvolume, "12.img", (char*)(&imgArr[12*20*20]));
+    loadImg(file, sdvolume, "13.img", (char*)(&imgArr[13*20*20]));
+    loadImg(file, sdvolume, "14.img", (char*)(&imgArr[14*20*20]));
+    loadImg(file, sdvolume, "15.img", (char*)(&imgArr[15*20*20]));
+    
+    tetris->Public_Init();
+    DrawBoard();
 
-	print("Hello from tetris!\r\n");
-
-  while(1){
     IOWR(MYTIMER, 0, 0);
     while(1)
     {
@@ -392,7 +400,8 @@ int main()
       
     }
     
-    
+  }else{
+    while(1);
   }
   return 0;
 }

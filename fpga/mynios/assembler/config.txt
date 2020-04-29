@@ -1,14 +1,18 @@
 #pattern                     @ text format @ ins format 0:i 1:r 2:j @  cmd@                      sample
 																		                        
 hlt ins                      @           5 @                      0 @   2 @          000010      0x02*
+
 jmpi sym                     @          21 @                      2 @  10 @          001010      0x0A*
 jmpi ins                     @          23 @                      2 @  10 @          001010      0x0A*
 call sym                     @          22 @                      2 @  26 @          011010      0x1A*
+
 bne reg, reg, sym            @          15 @                      0 @  30 @          011110      0x1e bne rA, rB, label
 beq reg, reg, sym            @          15 @                      0 @  38 @          100110      0x26
 bge reg, reg, sym            @          15 @                      0 @  14 @          001110      0x0e
 blt reg, reg, sym            @          15 @                      0 @  22 @          010110      0x16
 bltu reg, reg, sym           @          15 @                      0 @  54 @          110110      0x36
+bgeu reg, reg, sym           @          15 @                      0 @  46 @          101110      0x2e
+
 
 br sym                       @          20 @                      0 @   6 @          000110      0x06
 																		                        
@@ -24,33 +28,41 @@ cmplti reg, reg, ins         @          10 @                      0 @  16 @     
 cmpltui reg, reg, ins        @          10 @                      0 @  48 @          110000      0x30
 cmpgei reg, reg, ins         @          10 @                      0 @   8 @          001000      0x08
 cmpnei reg, reg, ins         @          10 @                      0 @  24 @          011000      0x18
+cmpgeui reg, reg, ins        @          10 @                      0 @  40 @          101000      0x28
+
 																		                        
-ldbu reg, regins             @          11 @                      0 @   3 @          000011      0x03
 stb reg, regins              @          11 @                      0 @   5 @          000101      0x05
+sth reg, regins              @          11 @                      0 @  13 @          001101      0x0d
+stw reg, regins              @          11 @                      0 @  21 @          010101      0x15 stw rB, byte_offset(rA)
+stwio reg, regins            @          11 @                      0 @  53 @          110101      0x35
+ldbu reg, regins             @          11 @                      0 @   3 @          000011      0x03
 ldb reg, regins              @          11 @                      0 @   7 @          000111      0x07
 ldhu reg, regins             @          11 @                      0 @  11 @          001011      0x0b
-sth reg, regins              @          11 @                      0 @  13 @          001101      0x0d
 ldh reg, regins              @          11 @                      0 @  15 @          001111      0x0f
 ldw reg, regins              @          11 @                      0 @  23 @          010111      0x17 ldw rB, byte_offset(rA)
-stw reg, regins              @          11 @                      0 @  21 @          010101      0x15 stw rB, byte_offset(rA)
 ldwio reg, regins            @          11 @                      0 @  55 @          110111      0x37
-stwio reg, regins            @          11 @                      0 @  53 @          110101      0x35
 																		                        
 																		                        
 add reg, reg, reg            @          30 @                      1 @  49 @          110001      0x3A,0x31 add rC, rA, rB
 sub reg, reg, reg            @          30 @                      1 @  57 @          111001      0x3A,0x39
 mul reg, reg, reg            @          30 @                      1 @  39 @          100111      0x3A,0x27
+div reg, reg, reg            @          30 @                      1 @  37 @          100101      0x3A,0x25
 sll reg, reg, reg            @          30 @                      1 @  19 @          010011      0x3A,0x13
 sra reg, reg, reg            @          30 @                      1 @  59 @          111011      0x3A,0x3b
 rol reg, reg, reg            @          30 @                      1 @   3 @          000011      0x3A,0x03
+srl reg, reg, reg            @          30 @                      1 @  27 @          011011      0x3A,0x1b
 
 and reg, reg, reg            @          30 @                      1 @  14 @          001110      0x3A,0x0e
 or reg, reg, reg             @          30 @                      1 @  22 @          010110      0x3A,0x16
 nor reg, reg, reg            @          30 @                      1 @   6 @          000110      0x3A,0x06
+xor reg, reg, reg            @          30 @                      1 @  30 @          011110      0x3A,0x1e
+
 cmpeq reg, reg, reg          @          30 @                      1 @  32 @          100000      0x3A,0x20
 cmpne reg, reg, reg          @          30 @                      1 @  24 @          011000      0x3A,0x18
 cmpge reg, reg, reg          @          30 @                      1 @   8 @          001000      0x3A,0x08
 cmplt reg, reg, reg          @          30 @                      1 @  16 @          010000      0x3A,0x10
+cmpltu reg, reg, reg         @          30 @                      1 @  48 @          110000      0x3A,0x30
+
 																		                        
 slli reg, reg, ins           @          40 @                      1 @  18 @          010010      0x3A,0x12
 srai reg, reg, ins           @          40 @                      1 @  58 @          111010      0x3A,0x3a
@@ -59,6 +71,9 @@ srli reg, reg, ins           @          40 @                      1 @  26 @     
 xxx                          @           0 @                      1 @  99 @                      xxx
 																		                        
 ret                          @           1 @                      1 @   5 @          000101      0x3A,0x05 ret
+callr reg                    @          50 @                      1 @  29 @          011101      0x3A,0x1d
+stoff reg                    @          50 @                      1 @  10 @          001010      0x3A,0x0A*
+jmp reg                      @          50 @                      1 @  13 @          001101      0x3A,0x0d
 
 #stds
 #ldds

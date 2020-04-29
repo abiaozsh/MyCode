@@ -1,3 +1,11 @@
+void abort (void)
+{
+  while(1);
+}
+
+void setOff(int val){
+  __asm__ __volatile__("stoff %[input1]"::[input1]"r"(val));
+}
 
 void* __eof__();
 int malloc_index = 0;
