@@ -228,7 +228,7 @@ int drawImg(int blockx, int blocky, short* block, int isNext){
   int basex = 100;
   int basey = 100;
   if(isNext){
-    basey = 500;
+    basex = 500;
   }
   for(int j=0;j<20;j++){
     for(int i=0;i<20;i++){
@@ -282,15 +282,16 @@ void timing() {
 }
 
 void keyDown(int k) {
-	if (k == ' ')
+  uart_write(k);
+	if (k == ' '){
 		tetris->Public_Rotate();
-	else if (k == 'd')
+	}else if (k == 'd'){
 		tetris->Public_Move(1);
-	else if (k == 'a')
+	}else if (k == 'a'){
 		tetris->Public_Move(-1);
-	else if (k == 's')
+	}else if (k == 's'){
 		tetris->Public_Down();
-	else if (k == 'x') {
+	}else if (k == 'x') {
 		while (tetris->Public_Down())
 			;
 	}
@@ -308,7 +309,7 @@ int loadImg(SdFile* file, SdVolume* currVolume, char* filename, char* arr){
       arr[i] = file->read();
     }
   }else{
-    print("open ng\r\n");
+    print(filename);print(" open ng\r\n");
     printInt(file->fileError);print("\r\n");
   }
 }
@@ -376,6 +377,8 @@ int main()
     loadImg(file, sdvolume, "14.img", (char*)(&imgArr[14*20*20]));
     loadImg(file, sdvolume, "15.img", (char*)(&imgArr[15*20*20]));
     
+    screenInit();
+
     tetris->Public_Init();
     DrawBoard();
 

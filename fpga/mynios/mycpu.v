@@ -91,6 +91,7 @@ always @(posedge clk or negedge reset_n) begin
   end
 end
 
+//https://www.intel.cn/content/www/cn/zh/programmable/products/processors/support.html
 
 reg command_done;
 
@@ -108,7 +109,7 @@ reg halt_uart;
 
 reg [15:0] accessTime;
 
-//`define QUICKREG false
+`define QUICKREG true
 
 always @(posedge clk or negedge reset_n) begin
   if (!reset_n) begin
@@ -228,10 +229,10 @@ always @(posedge clk or negedge reset_n) begin
 
       end else if (command == 8'h40) begin debug_data<=numer; command_done<=1;
       end else if (command == 8'h41) begin debug_data<=denom; command_done<=1;
-      end else if (command == 8'h42) begin debug_data<=quotient; command_done<=1;
+      end else if (command == 8'h42) begin debug_data<=quotientUnsigned; command_done<=1;
       end else if (command == 8'h43) begin debug_data<=pc; command_done<=1;
       end else if (command == 8'h44) begin debug_data<=private_offset; command_done<=1;
-      end else if (command == 8'h45) begin debug_data<=remain; command_done<=1;
+      end else if (command == 8'h45) begin debug_data<=quotientSigned; command_done<=1;
 
       end else if (command == 8'h47) begin
         `ifdef QUICKREG
@@ -494,15 +495,27 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   assign numer = regfileA;
   wire [31:0] denom;
   assign denom = regfileB;
-  wire [31:0] quotient;
-  wire [31:0] remain;
+  wire [31:0] quotientSigned;
+  wire [31:0] remainSigned;
+  wire [31:0] quotientUnsigned;
+  wire [31:0] remainUnsigned;
 
   divSigned  divSigned_inst (
+    //.clock    (clk),
     .denom    (denom),
     .numer    (numer),
-    .quotient (quotient),
-    .remain   (remain)
+    .quotient (quotientSigned),
+    .remain   (remainSigned)
   );
+  divUnsigned  divUnsigned_inst (
+    //.clock    (clk),
+    .denom    (denom),
+    .numer    (numer),
+    .quotient (quotientUnsigned),
+    .remain   (remainUnsigned)
+  );
+
+
 
   reg [7:0] exec_cnt;
   //assign debug32 = dsAddr;
@@ -659,7 +672,15 @@ wire cpu_reset_n = reset_n && debug_reset_n;
             regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
+          //xorhi reg, reg, ins          @          10 @                      0 @  60 @          111100      0x3c
+          end else if(cmd==6'h3c)begin//ok
+            regResult <= {(regfileA[31:16] ^ IMM16), regfileA[15:0]};//rB ← rA ^ (IMM16 : 0x0000)
+            regResultB <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
 
+            
+            
           //cmpeqi reg, reg, ins         @          10 @                      0 @  32 @ 0x20
           end else if(cmd==6'd32)begin//ok
             regResult <= {31'b0,(regfileA == IMM16sx)};//if (rA == σ(IMM16)) then rB ← 1 else rB ← 0
@@ -908,14 +929,33 @@ wire cpu_reset_n = reset_n && debug_reset_n;
           //mul reg, reg, reg            @          30 @                      1 @  39 @ 0x3A,0x27
           end else if(cmd==6'd39)begin//ok
             if         (exec_step==0)begin
+              exec_cnt <= 0;
               mulDataB <= regfileB;
               exec_step <= 1;
             end else if(exec_step==1)begin//50Mhz
-              regResult <= mulResultSigned[31:0];
-              regResultC <= 1;
-              exec_step <= 0;
-              pc <= nextpc;
-              cmd_ack <= 1;
+              exec_cnt <= exec_cnt + 1'b1;
+              if(exec_cnt == 5)begin//50Mhz
+                regResult <= mulResultSigned[31:0];
+                regResultC <= 1;
+                exec_step <= 0;
+                pc <= nextpc;
+                cmd_ack <= 1;
+              end
+            end
+          //divu reg, reg, reg           @          30 @                      1 @  37 @          100101      0x3A,0x24
+          end else if(cmd==6'h24)begin//ok
+            if         (exec_step==0)begin
+              exec_cnt <= 0;
+              exec_step <= 1;
+            end else if(exec_step==1)begin
+              exec_cnt <= exec_cnt + 1'b1;
+              if(exec_cnt == 5)begin//50Mhz
+                regResult <= quotientUnsigned;
+                regResultC <= 1;
+                exec_step <= 0;
+                pc <= nextpc;
+                cmd_ack <= 1;
+              end
             end
           //div reg, reg, reg            @          30 @                      1 @  37 @          100101      0x3A,0x25
           end else if(cmd==6'h25)begin//ok
@@ -924,15 +964,15 @@ wire cpu_reset_n = reset_n && debug_reset_n;
               exec_step <= 1;
             end else if(exec_step==1)begin
               exec_cnt <= exec_cnt + 1'b1;
-              if(exec_cnt == 2)begin//50Mhz
-                regResult <= quotient;
+              if(exec_cnt == 5)begin//50Mhz
+                regResult <= quotientSigned;
                 regResultC <= 1;
                 exec_step <= 0;
                 pc <= nextpc;
                 cmd_ack <= 1;
               end
             end
-            
+
           //and reg, reg, reg            @          30 @                      1 @  14 @ 0x3A,0x0e
           end else if(cmd==6'd14)begin
             regResult <= regfileA & regfileB;// rC ← rA | rB

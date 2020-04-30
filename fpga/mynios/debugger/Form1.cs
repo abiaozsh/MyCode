@@ -174,6 +174,7 @@ namespace WindowsFormsApplication1
 			sb.AppendLine();
 
 			sb.Append("cache_addr:" + getCacheInfo(8) + getCacheInfo(10) + getCacheInfo(12) + getCacheInfo(14));
+			sb.AppendLine();
 
 			sb.Append("  numer:"); getreg(0x40, 0, sb);
 			sb.Append("  denom:"); getreg(0x41, 0, sb);

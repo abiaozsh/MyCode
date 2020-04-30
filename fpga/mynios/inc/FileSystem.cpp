@@ -160,7 +160,7 @@ short combineShort(char v0, char v1){
 
 class SdFile;
 
-#define CACHE_COUNT 2
+#define CACHE_COUNT 8
 class SdVolume {
  public:
   static int arrayaa[];
@@ -1587,12 +1587,12 @@ class SdFile {
     firstCluster_ = combineInt(p->firstClusterLow_0, p->firstClusterLow_1, p->firstClusterHigh_0, p->firstClusterHigh_1);
 
     // make sure it is a normal file or subdirectory
-    print("dir->attributes:");printInt(p->attributes);print("\r\n");
-    print("dirIndex:");printInt(dirIndex);print("\r\n");
+    //print("dir->attributes:");printInt(p->attributes);print("\r\n");
+    //print("dirIndex:");printInt(dirIndex);print("\r\n");
     if (DIR_IS_FILE(p)) {
       //fileSize_ = p->fileSize;
       fileSize_ = combineInt(p->fileSize_0, p->fileSize_1, p->fileSize_2, p->fileSize_3);
-      print("cacheBuffer_:");printInt((int)dirFile->cacheBuffer_);print("\r\n");
+      //print("cacheBuffer_:");printInt((int)dirFile->cacheBuffer_);print("\r\n");
       type_ = FAT_FILE_TYPE_NORMAL;
     } else if (DIR_IS_SUBDIR(p)) {
       if (!vol_->chainSize(firstCluster_, &fileSize_)) {

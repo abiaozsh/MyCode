@@ -158,6 +158,7 @@ int main(){
 //spi提速
 //fat表缓存
 //清理 readBlock 512 readData
+screenInit();
 
   while(1){
     
@@ -165,6 +166,7 @@ int main(){
     int res;
     print("cmd?\r\n");
     scan(str,-1,-1);
+    printScreen(str[0]);
     
     if(equal(str,"i",-1)){
       print("which sd?\r\n");

@@ -23,6 +23,8 @@ orhi reg, reg, ins           @          10 @                      0 @  52 @     
 muli reg, reg, ins           @          10 @                      0 @  36 @          100100      0x24
 ori  reg, reg, ins           @          10 @                      0 @  20 @          010100      0x14
 xori reg, reg, ins           @          10 @                      0 @  28 @          011100      0x1c
+xorhi reg, reg, ins          @          10 @                      0 @  60 @          111100      0x3c
+
 cmpeqi reg, reg, ins         @          10 @                      0 @  32 @          100000      0x20
 cmplti reg, reg, ins         @          10 @                      0 @  16 @          010000      0x10
 cmpltui reg, reg, ins        @          10 @                      0 @  48 @          110000      0x30
@@ -46,6 +48,7 @@ ldwio reg, regins            @          11 @                      0 @  55 @     
 add reg, reg, reg            @          30 @                      1 @  49 @          110001      0x3A,0x31 add rC, rA, rB
 sub reg, reg, reg            @          30 @                      1 @  57 @          111001      0x3A,0x39
 mul reg, reg, reg            @          30 @                      1 @  39 @          100111      0x3A,0x27
+divu reg, reg, reg           @          30 @                      1 @  36 @          100100      0x3A,0x24
 div reg, reg, reg            @          30 @                      1 @  37 @          100101      0x3A,0x25
 sll reg, reg, reg            @          30 @                      1 @  19 @          010011      0x3A,0x13
 sra reg, reg, reg            @          30 @                      1 @  59 @          111011      0x3A,0x3b
