@@ -371,13 +371,20 @@ int screenInit(){
 }
 int printScreen(int chr){
   for(int j=0;j<16;j++){
+    void* addr;
     for(int i=0;i<8;i++){
-      int val = char_table[j>>2]>>(  ((3-(j&3))<<3)  +  (i)  ) & 1;
-      
+      int a = (chr*4) + (j>>2);
+      int b = ((3-(j&3))<<3)  +  (7-i);
+      //printInt(a);print(" ");
+      //printInt(b);print(" ");
+      int val = char_table[a]>>(  b  ) & 1;
+      //uart_write('0'+val);print("\r\n");
       int calc_x = x * 8 + i;
       int calc_y = y * 16 + j;
-      ((short*)(0x200000))[calc_x+calc_y*1024] = val?0xFFFF:0x0000;//at 2Mbyte
+      addr = (void*)(0x200000+(calc_x+calc_y*1024)*2);
+      *((short*)(addr)) = val?0xFFFF:0x0000;//at 2Mbyte
     }
+    //flushCache(addr);
   }
   x++;
   if(x==80 || (chr == 0x0A)){
