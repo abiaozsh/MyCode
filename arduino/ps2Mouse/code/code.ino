@@ -1,5 +1,4 @@
 #ifndef PS2Mouse_h
-
 #define PS2Mouse_h
 #define REMOTE 1
 #define STREAM 2
@@ -270,8 +269,15 @@ void PS2Mouse::pull_high(int pin) {
   digitalWrite(pin, HIGH);
 }
 
+//v
+//g
+//...
+//clk
+//data
 
+//白色
 #define MOUSE_DATA A0
+//绿色
 #define MOUSE_CLOCK A1
 
 PS2Mouse mouse(MOUSE_CLOCK, MOUSE_DATA, STREAM);
@@ -292,10 +298,18 @@ void loop()
 {
   int16_t data[3];
   mouse.report(data);
-  Serial.print(data[0]); // Status Byte
+  Serial.print((data[0]>>7)&1); // Status Byte
+  Serial.print((data[0]>>6)&1); // Status Byte
+  Serial.print((data[0]>>5)&1); // Status Byte
+  Serial.print((data[0]>>4)&1); // Status Byte
+  Serial.print((data[0]>>3)&1); // Status Byte
+  Serial.print((data[0]>>2)&1); // Status Byte
+  Serial.print((data[0]>>1)&1); // Status Byte
+  Serial.print((data[0]>>0)&1); // Status Byte
   Serial.print(":");
   Serial.print(data[1]); // X Movement Data
   Serial.print(",");
   Serial.print(data[2]); // Y Movement Data
   Serial.println();
+  delay(100);
 }
