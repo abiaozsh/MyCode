@@ -33,7 +33,10 @@ module flow_led(
     output          vga_vs,         //场同步信号
     output  [15:0]  vga_rgb,         //红绿蓝三原色输出 
 
-    
+    inout key_data,
+    inout key_clk,
+    inout mouse_data,
+    inout mouse_clk,
     
   input  wire        spi_MISO,        //     spi.MISO
   output wire        spi_MOSI,        //        .MOSI
@@ -119,6 +122,11 @@ system system_inst(
   
   .myuart_rxd     (uart2_rxd),     //  myuart.rxd
   .myuart_txd     (uart2_txd),      //        .txd
+	
+  .key_data   (key_data   ),
+  .key_clk    (key_clk    ),
+  .mouse_data (mouse_data ),
+  .mouse_clk  (mouse_clk  ),
 
   .softspi_MISO        (spi_MISO),        //     spi.MISO
   .softspi_MOSI        (spi_MOSI),        //        .MOSI

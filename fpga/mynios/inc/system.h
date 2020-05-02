@@ -10,3 +10,4 @@
 #define VGA_BASE     1
 #define VGA_BLOCK    2
 #define CACHE_CTL    0x02050000
+#define MYKEYB       0x02060000

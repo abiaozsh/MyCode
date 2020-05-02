@@ -7,17 +7,18 @@
 #include "inc/uart.cpp"
 #include "inc/print.cpp"
 
-
-//int b[1000000];
-char* bb = "bbbbaaaaa";
-
 int main(){
-  //sdrambuff = (char*)(0);
+
   print("Hello from Nios II! demo b\r\n");
   while(1){
+    
+    
     print("input:\r\n");
-    char buff[5];
-    scan(buff,4,-1);
+    char buff[10];
+    scan(buff,10,-1);
+    print(buff);
+    print("\r\n");
+    /*
     print(buff);
     printInt(equal(buff,"abcd",1));
     printInt(equal(buff,"abcd",2));
@@ -46,6 +47,6 @@ int main(){
       print("input int:");
       int val = scanInt();
       printInt(val);
-    }
+    }*/
   }
 }

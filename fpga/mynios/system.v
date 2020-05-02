@@ -28,6 +28,10 @@ module system (
     input          myuart_rxd,     //  myuart.rxd
     output         myuart_txd,     //        .txd
     
+    inout key_data,
+    inout key_clk,
+    inout mouse_data,
+    inout mouse_clk,
 
      //SDRAM2m 芯片接口
     //output        sdram2m_clk_out,            //SDRAM 芯片时钟
@@ -132,6 +136,9 @@ module system (
     end else if(myuart_cs   )begin avm_m0_waitrequest <= myuart_waitrequest   ; avm_m0_readdata <= myuart_readdata   ;
     end else if(softspi_cs  )begin avm_m0_waitrequest <= softspi_waitrequest  ; avm_m0_readdata <= softspi_readdata  ;
     end else if(vga_cs      )begin avm_m0_waitrequest <= vga_waitrequest      ; avm_m0_readdata <= 0                 ;
+    end else if(mykeyb_cs   )begin avm_m0_waitrequest <= 0                    ; avm_m0_readdata <= mykeyb_readdata   ;
+    
+    
     end else                 begin avm_m0_waitrequest <= 0;                     avm_m0_readdata <= 0;
     end
   end
@@ -413,7 +420,88 @@ end
     .vga_rgb        (vga_rgb)
   );
 
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  
+    assign key_data   = 1'bz;
+    assign key_clk    = 1'bz;
+    assign mouse_data = 1'bz;
+    assign mouse_clk  = 1'bz;
 
+  wire mykeyb_cs = avm_m0_address[31:16] == 16'h0206;
+  
+  reg [15:0] timer_key;
+  reg [3:0] bitpos;
+  reg key_clk_buff0;
+  reg key_clk_buff1;
+  reg [9:0] keyboard_data;
+  reg       keyboard_data_valid;
+  wire [10:0] mykeyb_readdata = {keyboard_data_valid,keyboard_data};
+  always@(posedge clk or negedge reset_n) begin
+    if(!reset_n) begin
+      timer_key <= 0;
+      key_clk_buff0 <= 0;
+      key_clk_buff1 <= 0;
+      keyboard_data_valid <= 0;
+    end else begin
+      key_clk_buff0 <= key_clk;
+      key_clk_buff1 <= key_clk_buff0;
+      if(timer_key!=16'hFFFF)begin
+        timer_key<=timer_key+1'b1;
+      end
+      
+      if(key_clk_buff1 && !key_clk_buff0)begin
+        timer_key <= 0;
+        if(timer_key==16'hFFFF)begin
+          bitpos<=1;
+          keyboard_data[0]<=key_data;
+        end else begin
+          bitpos<=bitpos+1'b1;
+          keyboard_data[bitpos]<=key_data;
+          if(bitpos==10)begin
+            bitpos <= 0;
+            keyboard_data_valid <= 1;
+          end
+        end
+      end
+      
+      if(mykeyb_cs && avm_m0_read)begin
+        keyboard_data_valid <= 0;
+      end
+      
+    end
+  end
+
+  
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  /*
+  wire mymouse_cs = avm_m0_address[31:16] == 16'h0207;
+
+  wire [31:0] myuart_readdata;
+  wire        myuart_waitrequest;
+  myuart myuart_inst (
+    .clk                (clk),                       //       clock.clk
+    .reset_n            (reset_n), //       reset.reset_n
+    .avs_s0_address     (myuart_address ),
+    .avs_s0_read        (myuart_read ),
+    .avs_s0_write       (myuart_write ),
+    .avs_s0_readdata    (myuart_readdata ),
+    .avs_s0_writedata   (avm_m0_writedata ),
+    .avs_s0_waitrequest (myuart_waitrequest ),
+    .avs_s0_byteenable  (avm_m0_byteenable ),
+    
+    .uart_rxd           (myuart_rxd),
+    .uart_txd           (myuart_txd)
+  );
+  
+  wire        myuart_address;
+  assign myuart_address = avm_m0_address[2];//~[0]
+  
+  wire myuart_read;
+  assign myuart_read = myuart_cs ? avm_m0_read : 1'b0;
+  wire myuart_write;
+  assign myuart_write = myuart_cs ? avm_m0_write : 1'b0;
+  */
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 

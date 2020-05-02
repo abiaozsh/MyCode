@@ -210,8 +210,12 @@ set_location_assignment PIN_A4 -to vga_rgb[14]
 set_location_assignment PIN_C3 -to vga_rgb[15]
 
 
-
-
+set_location_assignment PIN_M22 -to mouse_data
+set_location_assignment PIN_L22 -to mouse_clk
+set_location_assignment PIN_M21 -to key_data
+set_location_assignment PIN_L21 -to key_clk
+  
+  
 set_location_assignment PIN_K1 -to flash_data0
 set_location_assignment PIN_D1 -to flash_sdo
 set_location_assignment PIN_E2 -to flash_sce
