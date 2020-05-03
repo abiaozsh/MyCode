@@ -1,7 +1,8 @@
 
 module vga_driver8m(
-    input           sys_clk,
     input           sys_rst_n,    //复位信号
+input vga_clk_25M,
+input vga_clk_65M,
 
     //00 640*480 txt
     //01 640*480 img
@@ -26,31 +27,6 @@ module vga_driver8m(
     output  [15:0]  vga_rgb      //红绿蓝三原色输出
     
   );
-
-`include "config.v"
-
-//wire define
-wire vga_clk_25M;
-wire vga_clk_65M;
-wire         locked_w;              //PLL输出稳定信号
-wire         rst_n_w;               //内部复位信号
-
-//*****************************************************
-//**                    main code
-//***************************************************** 
-//待PLL输出稳定之后，停止复位
-assign rst_n_w = sys_rst_n && locked_w;
-
-`ifdef IS_ALTERA
-vga_pll  u_vga_pll(                  //时钟分频模块
-  .inclk0         (sys_clk),    
-  .areset         (~sys_rst_n),
-    
-  .c0             (vga_clk_25M), //VGA时钟 25M
-  .c1             (vga_clk_65M), //65M 102*768
-  .locked         (locked_w)
-  ); 
-`endif
 
 //parameter define  
 parameter  H25_SYNC   =  11'd96;    //行同步
@@ -123,8 +99,8 @@ assign read_pixel_addr = temp_read_pixel_addr[9:0];
 
 
 //行计数器对像素时钟计数
-always @(posedge vga_clk or negedge rst_n_w) begin
-    if (!rst_n_w)begin
+always @(posedge vga_clk or negedge sys_rst_n) begin
+    if (!sys_rst_n)begin
       cnt_h <= 0;
       cnt_v <= 0;
       vga_hs <= 0;

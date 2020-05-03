@@ -1,6 +1,8 @@
 module sdrambusvga(
     input          clk,                // clock.clk
     input          reset_n,               // reset.reset
+		input          clk_100m,
+    input          clk_100m_shift,
 
     //SDRAM 芯片接口
     output        sdram_clk_out,            //SDRAM 芯片时钟
@@ -50,30 +52,6 @@ module sdrambusvga(
 wire sys_clk = clk;
 wire sys_rst_n = reset_n;
 
-`include "config.v"
-
-wire rst_n;
-wire clk_50m;
-wire clk_100m;
-wire clk_100m_shift;
-wire locked;
-//待PLL输出稳定之后，停止系统复位
-assign rst_n = sys_rst_n & locked;
-
-//例化PLL, 产生各模块所需要的时钟
-pll_clk u_pll_clk(
-  .inclk0             (sys_clk),
-  .areset             (~sys_rst_n),
-  
-  .c0                 (clk_50m),
-  .c1                 (clk_100m),
-  .c2                 (clk_100m_shift),
-  .locked             (locked)
-);
-
-
-
-
 reg [15:0] buffAB_wrdata;
 reg [9:0]  buffAB_wraddress;
 reg        buffA_wren;
@@ -89,7 +67,6 @@ wire        wrenB      = buffB_wren       ;
 
 assign      read_pixelA_data = qA;
 wire [15:0] qA;
-`ifdef IS_ALTERA
 buff1024x16  buffReadA (
   .data      ( data             ),
   .wraddress ( wraddress        ),
@@ -99,10 +76,8 @@ buff1024x16  buffReadA (
   .rdclock   ( rdclock          ),
   .q         ( qA               )
 );
-`endif
 assign      read_pixelB_data = qB;
 wire [15:0] qB;
-`ifdef IS_ALTERA
 buff1024x16  buffReadB (
   .data      ( data             ),
   .wraddress ( wraddress        ),
@@ -112,11 +87,6 @@ buff1024x16  buffReadB (
   .rdclock   ( rdclock          ),
   .q         ( qB               )
 );
-`endif
-
-
-
-
 
 
 
@@ -143,7 +113,7 @@ wire        sdram_init_done ;  //SDRAM 初始化完成标志       output
 //SDRAM控制器
 sdram_controller ins_sdram_controller(
   .clk        (sdram_clk),      //sdram 控制器时钟
-  .rst_n        (rst_n),      //系统复位
+  .rst_n        (reset_n),      //系统复位
 
   //SDRAM 芯片接口
   .sdram_cke       (sdram_cke),    //SDRAM 时钟有效
