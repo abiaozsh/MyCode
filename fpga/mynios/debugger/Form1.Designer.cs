@@ -63,7 +63,7 @@ namespace WindowsFormsApplication1
 			// 
 			// button1
 			// 
-			this.button1.Location = new System.Drawing.Point(105, 12);
+			this.button1.Location = new System.Drawing.Point(105, 13);
 			this.button1.Name = "button1";
 			this.button1.Size = new System.Drawing.Size(61, 23);
 			this.button1.TabIndex = 0;
@@ -274,7 +274,7 @@ namespace WindowsFormsApplication1
 			this.trackBar1.Maximum = 8192;
 			this.trackBar1.Name = "trackBar1";
 			this.trackBar1.Orientation = System.Windows.Forms.Orientation.Vertical;
-			this.trackBar1.Size = new System.Drawing.Size(45, 758);
+			this.trackBar1.Size = new System.Drawing.Size(42, 758);
 			this.trackBar1.TabIndex = 34;
 			this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
 			// 

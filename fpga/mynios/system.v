@@ -1,6 +1,11 @@
 module system (
     input  wire        clk,  //   clk50.clk
     input  wire        reset_n,  //   reset.reset_n
+		input clk_50M,
+		input vga_clk_25M,
+		input vga_clk_65M,
+		input clk_100m,
+		input clk_100m_shift,
 
     output        mycpu_uart_txd, //   mycpu.uart_txd
     input         mycpu_uart_rxd, //        .uart_rxd
@@ -98,6 +103,8 @@ module system (
   wire [ 3:0] avm_m0_byteenable;
   mycpu mycpu_0 (
     .clk                (clk),                       //       clock.clk
+		.clk_50M            (clk_50M),
+
     .reset_n            (reset_n), //       reset.reset_n
     .avm_m0_address     (avm_m0_address),              //          m0.address
     .avm_m0_read        (avm_m0_read),                 //            .read
@@ -122,8 +129,7 @@ module system (
     .cacheAddrHigh1 (cacheAddrHigh1),
     .cacheAddrHigh2 (cacheAddrHigh2),
     .cacheAddrHigh3 (cacheAddrHigh3),
-    .debugin32  (sdrambus_debug32),
-    .vga_blanking(blanking)
+    .debugin32  (sdrambus_debug32)
       
   );
   reg [31:0] avm_m0_readdata;
@@ -171,6 +177,8 @@ module system (
   wire sdrambus_waitrequest;
   sdrambusvga sdrambusvga_inst (
     .clk                (clk),                       //       clock.clk
+		.clk_100m           (clk_100m),
+		.clk_100m_shift     (clk_100m_shift),
     .reset_n            (reset_n), //       reset.reset_n
     .avs_s0_address     (sdrambus_address ),
     .avs_s0_read        (sdrambus_read ),
@@ -291,6 +299,7 @@ end
   wire        mytimer_waitrequest;
   mytimer mytimer_inst (
     .clk                (clk),                       //       clock.clk
+		.clk_50M            (clk_50M),
     .reset_n            (reset_n), //       reset.reset_n
     .avs_s0_address     (mytimer_address ),
     .avs_s0_read        (mytimer_read ),
@@ -318,6 +327,7 @@ end
   wire        myuart_waitrequest;
   myuart myuart_inst (
     .clk                (clk),                       //       clock.clk
+		.clk_50M            (clk_50M),
     .reset_n            (reset_n), //       reset.reset_n
     .avs_s0_address     (myuart_address ),
     .avs_s0_read        (myuart_read ),
@@ -398,17 +408,18 @@ end
 
   wire blanking;
   vga_driver8m u_vga_driver8m(
-    .sys_clk        (clk    ),
     .sys_rst_n      (reset_n),
+		.vga_clk_25M(vga_clk_25M),
+		.vga_clk_65M(vga_clk_65M),
 
     .blockvga(blockvga),
     .vga_mode(vga_mode),
     .blanking(blanking),
+    .read_line_base_addr (read_line_base_addr ),
     
     .read_line_req       (read_line_req       ),
     .read_line_A_B       (read_line_A_B       ),
     .read_line_addr      (read_line_addr      ),
-    .read_line_base_addr (read_line_base_addr ),
     
     .read_pixelA_data    (read_pixelA_data    ),
     .read_pixelB_data    (read_pixelB_data    ),

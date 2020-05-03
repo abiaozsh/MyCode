@@ -71,7 +71,7 @@ int loadImg(SdFile* file, SdVolume* currVolume, char* filename, char* arr){
   }
 }
 
-
+/*
 int p1(int v1){
   print("a");
   printInt(v1);
@@ -92,9 +92,6 @@ PF getFunc(int val){
     return p2;
   }
 }
-
-
-int main(){
   
   int (*proc1)(int);
 
@@ -105,6 +102,9 @@ int main(){
   proc1 = getFunc(2);
   
   proc1(1);
+*/
+
+int main(){
 
   malloc_index = 0;
   imgArr = (short*)malloc(20*20*16*2);

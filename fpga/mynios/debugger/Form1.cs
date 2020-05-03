@@ -130,8 +130,14 @@ namespace WindowsFormsApplication1
 
 		public void getstatus()
 		{
+			byte[] temp;
 			portWrite((byte)(0x00), (byte)(0x00));
 			int baseaddr = 0;
+
+
+			portWrite((byte)(0x06), (byte)(123));
+			temp = readFromPort(1);
+
 
 			StringBuilder sb = new StringBuilder();
 			sb.Append("pc:");
@@ -139,7 +145,6 @@ namespace WindowsFormsApplication1
 			sb.Append("  private_offset:");
 			int private_offset = getreg(0x44, 0, sb);
 
-			byte[] temp;
 			sb.Append("  last cmd:");
 			portWrite((byte)(0x18), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
 			sb.Append("  Rtype:");
@@ -313,7 +318,7 @@ namespace WindowsFormsApplication1
 			temp = readFromPort(1);
 			if (temp[0] != 123)
 			{
-				throw new Exception("err");
+				//throw new Exception("err");
 			}
 			uint val = 0;
 			portWrite((byte)(0x13), (byte)0x00);

@@ -10,9 +10,9 @@
 
 `timescale 1 ps / 1 ps
 module mycpu (
-    input  wire        clk,                // clock.clk
-    input  wire        reset_n,              // reset.reset
-
+    input  wire        clk,
+    input  wire        reset_n,
+    input              clk_50M,
     //bus
     output wire [31:0] avm_m0_address       ,     //    m0.address
     output wire        avm_m0_read          ,        //      .read
@@ -38,40 +38,46 @@ module mycpu (
     input [15:0] cacheAddrHigh1,
     input [15:0] cacheAddrHigh2,
     input [15:0] cacheAddrHigh3,
-    input [31:0] debugin32,
-    
-    
-    input vga_blanking
+    input [31:0] debugin32
   );
 
-  wire uart_rec;
-  wire [7:0] uart_data_out;
-  reg uart_send;
-  reg [7:0] uart_data_in;
-  uart_hs uart_hs_inst (
-    .sys_clk(clk), 
-    .sys_rst_n(reset_n),
+	
+wire uart_rec_req;
+reg  uart_rec_ack;
+wire [7:0] uart_data_out;
+wire uart_send_req = uart_send;
+reg [7:0] uart_data_in;
+uart_hs uart_hs_inst (
+	.sys_clk(clk_50M),
+	.sys_rst_n(reset_n),
 
-    .uart_txd(uart_txd),
-    .uart_rxd(uart_rxd),
-    
-    .uart_rec(uart_rec),
-    .uart_data_out(uart_data_out),
+	.uart_txd(uart_txd),
+	.uart_rxd(uart_rxd),
+	
+	.uart_rec_req(uart_rec_req),
+	.uart_rec_ack(uart_rec_ack),
+	.uart_data_out(uart_data_out),
 
-    .uart_send(uart_send),
-    .uart_data_in(uart_data_in)
-  );
-  
+	.uart_send_req(uart_send_req),
+	.uart_send_ack(uart_send_ack),
+	.uart_data_in(uart_data_in)
+);
+
 reg [7:0] command;
 reg [7:0] data;
 reg [7:0] command_temp;
 reg data_cmd;//1:data 0:cmd
+reg uart_rec_req_buff;
 always @(posedge clk or negedge reset_n) begin
   if (!reset_n) begin
     command <= 0;
     data <= 0;
+		uart_rec_req_buff<=0;
+		uart_rec_ack<=0;
   end else begin
-    if (uart_rec) begin 
+		uart_rec_req_buff <= uart_rec_req;
+	
+    if (uart_rec_req_buff && !uart_rec_ack) begin 
       if(data_cmd==0)begin
         if(uart_data_out!=0)begin
           data_cmd<=1;
@@ -82,12 +88,16 @@ always @(posedge clk or negedge reset_n) begin
         command <= command_temp;
         data <= uart_data_out;
       end
-
-    end else begin
-      if(command_done)begin
-        command <= 0;
-      end
+			uart_rec_ack <= 1;
     end
+		
+    if (!uart_rec_req_buff && uart_rec_ack) begin 
+			uart_rec_ack <= 0;
+    end
+		
+		if(command_done)begin
+			command <= 0;
+		end
   end
 end
 
@@ -110,7 +120,8 @@ reg halt_uart;
 reg [15:0] accessTime;
 
 `define QUICKREG true
-
+reg uart_send;
+reg uart_send_ack_buff;
 always @(posedge clk or negedge reset_n) begin
   if (!reset_n) begin
 
@@ -124,9 +135,14 @@ always @(posedge clk or negedge reset_n) begin
     debug_reset_n<=1;
     debug_byteenable <= 4'b1111;
     accessTime <= 0;
+		uart_send_ack_buff<=0;
   end else begin
-    uart_send<=0;
-    
+    uart_send_ack_buff <= uart_send_ack;
+
+		if(uart_send_ack_buff)begin
+			uart_send<=0;
+		end
+		
     if(command_done)begin
       if          (command == 8'h00) begin 
         command_done<=0;
@@ -140,9 +156,10 @@ always @(posedge clk or negedge reset_n) begin
 
       end else if (command == 8'h03) begin debug_step<=~debug_step; command_done<=1;
 
-      
       end else if (command == 8'h04) begin uart_send<=1; uart_data_in<=accessTime[ 7: 0]; command_done<=1;
       end else if (command == 8'h05) begin uart_send<=1; uart_data_in<=accessTime[15: 8]; command_done<=1;
+
+			end else if (command == 8'h06) begin uart_send<=1; uart_data_in<=data; command_done<=1;
 
       end else if (command == 8'h10) begin uart_send<=1; uart_data_in<=debug_data[ 7: 0]; command_done<=1;
       end else if (command == 8'h11) begin uart_send<=1; uart_data_in<=debug_data[15: 8]; command_done<=1;
@@ -515,8 +532,8 @@ wire cpu_reset_n = reset_n && debug_reset_n;
     .remain   (remainUnsigned)
   );
 
-
-
+parameter MUL_DIV_DELAY = 5;
+  
   reg [7:0] exec_cnt;
   //assign debug32 = dsAddr;
   always @(posedge clk or negedge cpu_reset_n) begin
@@ -655,15 +672,19 @@ wire cpu_reset_n = reset_n && debug_reset_n;
           //muli reg, reg, ins           @          10 @                      0 @  36 @ 0x24
           end else if(cmd==6'd36)begin//ok
             if         (exec_step==0)begin
+							exec_cnt <= 0;
               mulDataB <= IMM16sx;
               exec_step <= 1;
             end else if(exec_step==1)begin
-              // shift left logical immediate
-              regResult <= mulResultSigned[31:0];
-              regResultB <= 1;
-              exec_step <= 0;
-              pc <= nextpc;
-              cmd_ack <= 1;
+              exec_cnt <= exec_cnt + 1'b1;
+              if(exec_cnt == MUL_DIV_DELAY)begin//50Mhz
+								// shift left logical immediate
+								regResult <= mulResultSigned[31:0];
+								regResultB <= 1;
+								exec_step <= 0;
+								pc <= nextpc;
+								cmd_ack <= 1;
+						  end
             end
 
           //xori reg, reg, ins           @          10 @                      0 @  28 @ 0x1c
@@ -934,7 +955,7 @@ wire cpu_reset_n = reset_n && debug_reset_n;
               exec_step <= 1;
             end else if(exec_step==1)begin//50Mhz
               exec_cnt <= exec_cnt + 1'b1;
-              if(exec_cnt == 5)begin//50Mhz
+              if(exec_cnt == MUL_DIV_DELAY)begin//50Mhz
                 regResult <= mulResultSigned[31:0];
                 regResultC <= 1;
                 exec_step <= 0;
@@ -949,7 +970,7 @@ wire cpu_reset_n = reset_n && debug_reset_n;
               exec_step <= 1;
             end else if(exec_step==1)begin
               exec_cnt <= exec_cnt + 1'b1;
-              if(exec_cnt == 5)begin//50Mhz
+              if(exec_cnt == MUL_DIV_DELAY)begin//50Mhz
                 regResult <= quotientUnsigned;
                 regResultC <= 1;
                 exec_step <= 0;
@@ -964,7 +985,7 @@ wire cpu_reset_n = reset_n && debug_reset_n;
               exec_step <= 1;
             end else if(exec_step==1)begin
               exec_cnt <= exec_cnt + 1'b1;
-              if(exec_cnt == 5)begin//50Mhz
+              if(exec_cnt == MUL_DIV_DELAY)begin//50Mhz
                 regResult <= quotientSigned;
                 regResultC <= 1;
                 exec_step <= 0;

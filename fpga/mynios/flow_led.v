@@ -42,26 +42,47 @@ module flow_led(
   output wire        spi_MOSI,        //        .MOSI
   output wire        spi_SCLK,        //        .SCLK
   output wire [2:0]  spi_SS_n         //        .SS_n
-
+ 
 );
 wire sys_rst_n;
-assign sys_rst_n = key1;
+assign sys_rst_n = key1 && locked_vga && locked_sdram && locked_cpu;
 
 assign led = 0;
-/*
-assign led = cyok;
-wire cyok;
-//25Mhz
-reg clk_cy;
-always @(posedge sys_clk or negedge sys_rst_n) begin
-  if (!sys_rst_n) begin
-    clk_cy <= 0;
-  end else begin
-    clk_cy <= !clk_cy;
-  end
-end
-*/
+//`include "config.v"
 
+wire vga_clk_25M;
+wire vga_clk_65M;
+wire clk_100m;
+wire clk_100m_shift;
+wire clk_cpu;
+wire locked_vga;
+wire locked_sdram;
+wire locked_cpu;
+//例化PLL, 产生各模块所需要的时钟
+pll_clk u_pll_sdram(
+  .inclk0             (sys_clk),
+  .c0                 (clk_100m),
+  .c1                 (clk_100m_shift),
+	.locked             (locked_sdram)
+);
+ 
+//例化PLL, 产生各模块所需要的时钟
+pll_vga u_pll_vga(
+  .inclk0             (sys_clk),
+
+  .c0                 (vga_clk_25M),
+  .c1                 (vga_clk_65M),
+	.locked             (locked_vga)
+);
+
+//例化PLL, 产生各模块所需要的时钟
+pll_cpu u_pll_cpu(
+  .inclk0             (sys_clk),
+  .c0                 (clk_cpu),
+	.locked             (locked_cpu)
+);
+ 
+     
 wire [7:0] seg_data0;
 wire [7:0] seg_data1;
 wire [7:0] seg_data2;
@@ -100,7 +121,13 @@ assign debug = sdrambus_debug8;//debug8;
 
 wire dummy;
 system system_inst(
-  .clk      (sys_clk),        //     clk.clk
+  .clk      (clk_cpu),        //     clk.clk
+	.clk_50M  (sys_clk),
+	.vga_clk_25M(vga_clk_25M),
+  .vga_clk_65M(vga_clk_65M),
+  .clk_100m(clk_100m),
+  .clk_100m_shift(clk_100m_shift),
+	
   .reset_n  (sys_rst_n),  //   reset.reset_n
 
   .mycpu_uart_rxd (uart_rxd), //        .uart_rxd
