@@ -2,7 +2,7 @@
     int _data_pin;
 
 
-void write(int data) {
+void write(uint16_t data) {
   char i;
   pull_high(_clock_pin);
   
@@ -13,10 +13,8 @@ void write(int data) {
   delayMicroseconds(100);
   pull_high(_clock_pin); // Start Bit
   
-  while (!digitalRead(_clock_pin)) {;}
-  while (digitalRead(_clock_pin)) {;}
   // clock is low, and we are clear to send data
-  for (i=0; i < 8; i++) {
+  for (i=0; i < 10; i++) {
     if (data & 0x01) {
       pull_high(_data_pin);
     } else {
@@ -27,17 +25,6 @@ void write(int data) {
     while (digitalRead(_clock_pin)) {;}
     data = data >> 1;
   }
-  // parity
-  if (1) {
-    pull_high(_data_pin);
-  } else {
-    pull_low(_data_pin);
-  }
-  while (!digitalRead(_clock_pin)) {;}
-  while (digitalRead(_clock_pin)) {;}
-  pull_high(_data_pin);
-  delayMicroseconds(50);
-  while (digitalRead(_clock_pin)) {;}
   while ((!digitalRead(_clock_pin)) || (!digitalRead(_data_pin))) {;} // wait for mouse to switch modes
   pull_low(_clock_pin); // put a hold on the incoming data.
 }
@@ -125,7 +112,7 @@ void loop()
 {
   int16_t data[4];
   
-  write(0xeb); // Send Read Data
+  write(0x03D6); // Send Read Data
 
   data[0] = read_byte(); // Status bit
   data[1] = read_byte(); // Status bit
