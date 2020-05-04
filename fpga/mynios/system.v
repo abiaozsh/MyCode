@@ -23,8 +23,7 @@ module system (
     output [12:0] sdram_addr,               //SDRAM 行/列地址
     inout  [15:0] sdram_data,               //SDRAM 数据
     output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
-    output  [7:0] sdrambus_debug8,
-    
+
     input          softspi_MISO,   // softspi.MISO
     output         softspi_MOSI,   //        .MOSI
     output         softspi_SCLK,   //        .SCLK
@@ -86,7 +85,7 @@ module system (
   
   
   
-  assign debug8 = sdrambus_debug8;
+  wire sdrambus_debug8;
   assign debug32 = mycpu_debug32;
   wire [31:0] sdrambus_debug32;
 
@@ -143,6 +142,7 @@ module system (
     end else if(softspi_cs  )begin avm_m0_waitrequest <= softspi_waitrequest  ; avm_m0_readdata <= softspi_readdata  ;
     end else if(vga_cs      )begin avm_m0_waitrequest <= vga_waitrequest      ; avm_m0_readdata <= 0                 ;
     end else if(mykeyb_cs   )begin avm_m0_waitrequest <= 0                    ; avm_m0_readdata <= mykeyb_readdata   ;
+    end else if(mymouse_cs  )begin avm_m0_waitrequest <= 0                    ; avm_m0_readdata <= mymouse_readdata  ;
     
     
     end else                 begin avm_m0_waitrequest <= 0;                     avm_m0_readdata <= 0;
@@ -435,8 +435,6 @@ end
   
     assign key_data   = 1'bz;
     assign key_clk    = 1'bz;
-    assign mouse_data = 1'bz;
-    assign mouse_clk  = 1'bz;
 
   wire mykeyb_cs = avm_m0_address[31:16] == 16'h0206;
   
@@ -456,11 +454,13 @@ end
     end else begin
       key_clk_buff0 <= key_clk;
       key_clk_buff1 <= key_clk_buff0;
+      
       if(timer_key!=16'hFFFF)begin
         timer_key<=timer_key+1'b1;
       end
       
-      if(key_clk_buff1 && !key_clk_buff0)begin
+        //pos edge
+      if(!key_clk_buff1 && key_clk_buff0)begin//1 old 0 new
         timer_key <= 0;
         if(timer_key==16'hFFFF)begin
           bitpos<=1;
@@ -484,34 +484,231 @@ end
 
   
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  /*
+  //assign debug8 = mouse_send_data;
+  assign debug8[0] = mbitpos[0];//mouse_send_req_buff;
+  assign debug8[1] = mbitpos[1];//mouse_send_ack;
+  assign debug8[2] = mbitpos[2];//mouse_read_req_buff;
+  assign debug8[3] = mbitpos[3];//mouse_read_ack;
+  assign debug8[4] = send_err;
+  assign debug8[5] = read_err;
+  assign debug8[7:6] = mouse_send_state;
+  reg send_err;
+  reg read_err;
+  
+  assign mouse_data = mouse_data_reg ? 1'bz : 1'b0;
+  assign mouse_clk  = mouse_clk_reg  ? 1'bz : 1'b0;
+  
   wire mymouse_cs = avm_m0_address[31:16] == 16'h0207;
 
-  wire [31:0] myuart_readdata;
-  wire        myuart_waitrequest;
-  myuart myuart_inst (
-    .clk                (clk),                       //       clock.clk
-    .reset_n            (reset_n), //       reset.reset_n
-    .avs_s0_address     (myuart_address ),
-    .avs_s0_read        (myuart_read ),
-    .avs_s0_write       (myuart_write ),
-    .avs_s0_readdata    (myuart_readdata ),
-    .avs_s0_writedata   (avm_m0_writedata ),
-    .avs_s0_waitrequest (myuart_waitrequest ),
-    .avs_s0_byteenable  (avm_m0_byteenable ),
+  reg mouse_data_reg;
+  reg mouse_clk_reg;
+
+  reg [29:0]  timer_mouse;
+  reg [10:0]  mymouse_data;
+  reg  [2:0]  mouse_send_state;
+  reg mouse_clk_buff0;
+  reg mouse_clk_buff1;
+  reg mouse_send_req_buff;
+  reg mouse_read_req_buff;
+  reg         mouse_send_ack;
+  reg         mouse_read_ack;
+  reg [3:0] mbitpos;
+  reg parity;
+  always@(posedge clk_50M or negedge reset_n) begin
+    if(!reset_n) begin
+      timer_mouse <= 0;
+      mouse_clk_buff0 <= 0;
+      mouse_clk_buff1 <= 0;
+      mouse_send_state <= 0;
+      mouse_clk_reg <= 1;
+      mouse_data_reg <= 1;
+      mouse_send_ack <= 0;
+      mouse_read_ack <= 0;
+      mouse_send_req_buff <= 0;
+      mouse_read_req_buff <= 0;
+      mbitpos <= 0;
+      send_err <= 0;
+      read_err <= 0;
+    end else begin
+      mouse_clk_buff0 <= mouse_clk;
+      mouse_clk_buff1 <= mouse_clk_buff0;
+      mouse_send_req_buff <= mouse_send_req;
+      mouse_read_req_buff <= mouse_read_req;
+      
+      if(mouse_send_req_buff && !mouse_send_ack)begin
+        if         (mouse_send_state==0)begin
+          parity <= 1;
+          timer_mouse <= 0;
+          mouse_clk_reg <= 1;
+          mouse_send_state <= 1;
+          send_err <= 0;
+        end else if(mouse_send_state==1)begin
+          timer_mouse <= timer_mouse + 1'b1;
+          if(timer_mouse == 200*50)begin// 100us
+            mouse_clk_reg <= 0;
+            mouse_data_reg <= 0;
+            timer_mouse <= 0;
+            mouse_send_state<=2;
+          end
+        end else if(mouse_send_state==2)begin
+          timer_mouse <= timer_mouse + 1'b1;
+          if(timer_mouse == 200*50)begin// 100us
+            mouse_clk_reg <= 1;
+            timer_mouse <= 0;
+            mouse_send_state<=3;
+          end
+        end else if(mouse_send_state==3)begin
+          timer_mouse <= timer_mouse + 1'b1;
+          if(timer_mouse == 4*50)begin// 100us
+            timer_mouse <= 0;
+            mouse_send_state<=4;
+          end
+        end else if(mouse_send_state==4)begin
+          if(timer_mouse!=50*1000*1000)begin
+            timer_mouse<=timer_mouse+1'b1;
+          end else begin
+            send_err <= 1;
+            mouse_send_ack <= 1;
+            mouse_data_reg <= 1;
+            mouse_clk_reg <= 0;
+            mouse_send_state <= 0;
+          end
+
+          //neg edge
+          if(mouse_clk_buff1 && !mouse_clk_buff0)begin//1 old 0 new
+            timer_mouse <= 0;
+            mbitpos<=mbitpos+1'b1;
+            mouse_data_reg <= mouse_send_data[mbitpos];
+            if(mbitpos==9)begin
+              mbitpos <= 0;
+              mouse_data_reg <= 1;
+              mouse_send_state <= 5;
+            end
+          end
+
+        end else if(mouse_send_state==5)begin
+          if(timer_mouse!=50*1000*1000)begin
+            timer_mouse<=timer_mouse+1'b1;
+          end else begin
+            send_err <= 1;
+            mouse_send_ack <= 1;
+            mouse_clk_reg <= 0;
+            mouse_send_state <= 0;
+          end
+          if(mouse_data && mouse_clk_buff0)begin
+            mouse_send_ack <= 1;
+            mouse_clk_reg <= 0;
+            mouse_send_state <= 0;
+          end
+        end
+      end
+      
+      if(!mouse_send_req_buff && mouse_send_ack)begin
+        mouse_send_ack <= 0;
+      end
+      
+      if(mouse_read_req_buff && !mouse_read_ack)begin
+        if         (mouse_send_state==0)begin
+          read_err <= 0;
+          timer_mouse <= 0;
+          mouse_clk_reg <= 1;
+          mouse_data_reg <= 1;
+          mouse_send_state <= 1;
+          mbitpos <= 0;
+        end else if(mouse_send_state==1)begin
+          timer_mouse <= timer_mouse + 1'b1;
+          if(timer_mouse == 4*50)begin// 100us
+            timer_mouse <= 0;
+            mouse_send_state<=2;
+          end
+        end else if(mouse_send_state==2)begin
+          if(timer_mouse!=50*1000*1000)begin
+            timer_mouse<=timer_mouse+1'b1;
+          end else begin
+            read_err <= 1;
+            mouse_read_ack <= 1;
+            mouse_clk_reg <= 0;
+            mouse_send_state <= 0;
+          end
+          //pos edge
+          if(!mouse_clk_buff1 && mouse_clk_buff0)begin//1 old 0 new
+            timer_mouse <= 0;
+            mbitpos<=mbitpos+1'b1;
+            mymouse_data[mbitpos]<=mouse_data;
+            if(mbitpos==9)begin
+              mbitpos <= 0;
+              mouse_send_state<=3;
+            end
+          end
+        end else if(mouse_send_state==3)begin
+          if(timer_mouse!=50*1000*1000)begin
+            timer_mouse<=timer_mouse+1'b1;
+          end else begin
+            read_err <= 1;
+            mouse_read_ack <= 1;
+            mouse_clk_reg <= 0;
+            mouse_send_state <= 0;
+          end
+          //neg edge
+          if(!mouse_clk_buff1 && mouse_clk_buff0)begin//1 old 0 new
+            mouse_read_ack <= 1;
+            mouse_clk_reg <= 0;
+            mouse_send_state <= 0;
+          end
+        end
+      end
+      
+      if(!mouse_read_req_buff && mouse_read_ack)begin
+        mouse_read_ack <= 0;
+      end
+    end
+  end
+
     
-    .uart_rxd           (myuart_rxd),
-    .uart_txd           (myuart_txd)
-  );
+  wire [12:0] mymouse_readdata = avm_m0_address[15:2]==0?{mymouse_data_valid,mymouse_data}:mouse_send_busy;
+  wire        mouse_send_busy = mouse_send_req && !mouse_send_ack;
+  reg         mouse_send_req;
+  reg         mouse_read_req;
+  reg         mymouse_data_valid;
+  reg         mouse_read_ack_buff;
+  reg  [9:0]  mouse_send_data;
+  always@(posedge clk or negedge reset_n) begin
+    if(!reset_n) begin
+      mouse_send_req <= 0;
+      mouse_read_req <= 0;
+      mymouse_data_valid <= 0;
+      mouse_read_ack_buff <= 0;
+      mouse_send_data <= 0;
+    end else begin
+      mouse_read_ack_buff <= mouse_read_ack;
+    
+      if(mymouse_cs && avm_m0_write)begin
+        if(avm_m0_address[15:2]==0)begin
+          mymouse_data_valid <= 0;
+          mouse_read_req <= 1;
+        end
+        if(avm_m0_address[15:2]==1)begin
+          mouse_send_data <= avm_m0_writedata;
+          mouse_send_req <= 1;
+        end
+      end
+      
+      if(mouse_read_ack_buff)begin
+        mymouse_data_valid <= 1;
+        mouse_read_req <= 0;
+      end
+
+      if(mouse_send_ack)begin
+        mouse_send_req <= 0;
+      end
+
+    end
+  end
+
   
-  wire        myuart_address;
-  assign myuart_address = avm_m0_address[2];//~[0]
   
-  wire myuart_read;
-  assign myuart_read = myuart_cs ? avm_m0_read : 1'b0;
-  wire myuart_write;
-  assign myuart_write = myuart_cs ? avm_m0_write : 1'b0;
-  */
+ 
+  
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 

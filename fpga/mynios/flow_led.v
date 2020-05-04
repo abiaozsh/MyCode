@@ -100,8 +100,7 @@ seg_led_hex595 ins_seg_led_hex595(
   .data2(seg_data2),
   .data3(seg_data3)
 );
-
- 
+                               
 assign seg_data3 = debug32[31:24];//outpin32  debug32
 assign seg_data2 = debug32[23:16];//outpin32  debug32
 assign seg_data1 = debug32[15:8]; //outpin32  debug32
@@ -109,15 +108,13 @@ assign seg_data0 = debug32[7:0];  //outpin32  debug32
 
 
 
-
+ 
 wire [31:0] outpin32;
 
 wire [7:0] debug8;
 wire [31:0] debug32;
 
-wire [7:0] sdrambus_debug8;
-
-assign debug = sdrambus_debug8;//debug8;
+assign debug = debug8;//
 
 wire dummy;
 system system_inst(
@@ -145,8 +142,7 @@ system system_inst(
   .sdram_addr    (sdram_addr   	),  //        .ras_n
   .sdram_data    (sdram_data   	),   //        .we_n
   .sdram_dqm     (sdram_dqm      ),
-  .sdrambus_debug8 (sdrambus_debug8),
-  
+
   .myuart_rxd     (uart2_rxd),     //  myuart.rxd
   .myuart_txd     (uart2_txd),      //        .txd
 	

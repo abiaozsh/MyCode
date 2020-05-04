@@ -388,7 +388,7 @@ namespace WindowsFormsApplication1
 			StringBuilder sb = new StringBuilder();
 			getmem(addr, sb);
 			textBox2.Text = sb.ToString();
-			getstatus();
+			//getstatus();
 		}
 		private void button6_Click(object sender, EventArgs e)
 		{
@@ -404,7 +404,7 @@ namespace WindowsFormsApplication1
 
 			uint addr = Convert.ToUInt32(textBox1.Text, 16);
 			setmem(addr, Convert.ToUInt32(textBox2.Text, 16));
-			getstatus();
+			//getstatus();
 		}
 
 

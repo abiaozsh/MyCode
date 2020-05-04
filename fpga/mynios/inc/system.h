@@ -11,3 +11,6 @@
 #define VGA_BLOCK    2
 #define CACHE_CTL    0x02050000
 #define MYKEYB       0x02060000
+#define MYMOUSE      0x02070000
+#define MYMOUSE_GET  0
+#define MYMOUSE_SEND 1

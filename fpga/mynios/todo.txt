@@ -6,7 +6,7 @@ xilinx vga 驱动 维持命令数在readcount 下面一半 根据条件加减命令数
 tetris
 
 dos
-dos load
+dos load 通过uart
 
 img load
 
@@ -14,3 +14,6 @@ img load
 硬件浮点
 
 中文字库
+
+
+超频 72Mhz
