@@ -34,27 +34,21 @@ int8_t read_byte() {
   pull_high(_clock_pin);
   pull_high(_data_pin);
   delayMicroseconds(50);
-  while (digitalRead(_clock_pin)) {;}
-  delayMicroseconds(5);  // not sure why.
-  while (!digitalRead(_clock_pin)) {;} // eat start bit
-  for (int i = 0; i < 8; i++) {
-    bitWrite(data, i, read_bit());
+  for (int i = 0; i < 11; i++) {
+    while (digitalRead(_clock_pin)) {;}
+    int bit = digitalRead(_data_pin);
+    while (!digitalRead(_clock_pin)) {;}
+    if(bit){
+      data |= 1<<i;
+    }
   }
-  read_bit(); // Partiy Bit
-  read_bit(); // Stop bit should be 1
   pull_low(_clock_pin);
   return data;
 }
 
-int read_bit() {
-  while (digitalRead(_clock_pin)) {;}
-  int bit = digitalRead(_data_pin);
-  while (!digitalRead(_clock_pin)) {;}
-  return bit;
-}
 
 int16_t read_movement_x(int status) {
-  int16_t x = read_byte();
+  int16_t x = (read_byte()>>1)&0xFF;
   if (bitRead(status, 4)) {
     for(int i = 8; i < 16; ++i) {
       x |= (1<<i);
@@ -64,7 +58,7 @@ int16_t read_movement_x(int status) {
 }
 
 int16_t read_movement_y(int status) {
-  int16_t y = read_byte();
+  int16_t y = (read_byte()>>1)&0xFF;
   if (bitRead(status, 5)) {
     for(int i = 8; i < 16; ++i) {
       y |= (1<<i);
@@ -115,7 +109,7 @@ void loop()
   write(0x03D6); // Send Read Data
 
   data[0] = read_byte(); // Status bit
-  data[1] = read_byte(); // Status bit
+  data[1] = (read_byte()>>1)&0xFF; // Status bit
   data[2] = read_movement_x(data[1]); // X Movement Packet
   data[3] = read_movement_y(data[1]); // Y Movement Packet
 
@@ -132,5 +126,5 @@ void loop()
   Serial.print(",");
   Serial.print(data[3]); // Y Movement Data
   Serial.println();
-  delay(100);
+  delay(1);
 }
