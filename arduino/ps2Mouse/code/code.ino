@@ -14,7 +14,8 @@ void write(uint16_t data) {
   pull_high(_clock_pin); // Start Bit
   
   // clock is low, and we are clear to send data
-  for (i=0; i < 10; i++) {
+  for (i=0; i < 9; i++) {
+    while (digitalRead(_clock_pin)) {;}
     if (data & 0x01) {
       pull_high(_data_pin);
     } else {
@@ -22,22 +23,20 @@ void write(uint16_t data) {
     }
     // wait for clock cycle
     while (!digitalRead(_clock_pin)) {;}
-    while (digitalRead(_clock_pin)) {;}
     data = data >> 1;
   }
   while ((!digitalRead(_clock_pin)) || (!digitalRead(_data_pin))) {;} // wait for mouse to switch modes
   pull_low(_clock_pin); // put a hold on the incoming data.
 }
 
-int8_t read_byte() {
-  int8_t data = 0;
+int16_t read_byte() {
+  int16_t data = 0;
   pull_high(_clock_pin);
   pull_high(_data_pin);
-  delayMicroseconds(50);
   for (int i = 0; i < 11; i++) {
-    while (digitalRead(_clock_pin)) {;}
-    int bit = digitalRead(_data_pin);
     while (!digitalRead(_clock_pin)) {;}
+    int bit = digitalRead(_data_pin);
+    while (digitalRead(_clock_pin)) {;}
     if(bit){
       data |= 1<<i;
     }
@@ -48,7 +47,7 @@ int8_t read_byte() {
 
 
 int16_t read_movement_x(int status) {
-  int16_t x = (read_byte()>>1)&0xFF;
+  int16_t x = (read_byte()>>3)&0xFF;
   if (bitRead(status, 4)) {
     for(int i = 8; i < 16; ++i) {
       x |= (1<<i);
@@ -58,7 +57,7 @@ int16_t read_movement_x(int status) {
 }
 
 int16_t read_movement_y(int status) {
-  int16_t y = (read_byte()>>1)&0xFF;
+  int16_t y = (read_byte()>>3)&0xFF;
   if (bitRead(status, 5)) {
     for(int i = 8; i < 16; ++i) {
       y |= (1<<i);
@@ -106,10 +105,10 @@ void loop()
 {
   int16_t data[4];
   
-  write(0x03D6); // Send Read Data
-
+  //write(0x03D6); // Send Read Data
+  write(0x01EB);
   data[0] = read_byte(); // Status bit
-  data[1] = (read_byte()>>1)&0xFF; // Status bit
+  data[1] = (read_byte()>>3)&0xFF; // Status bit
   data[2] = read_movement_x(data[1]); // X Movement Packet
   data[3] = read_movement_y(data[1]); // Y Movement Packet
 
