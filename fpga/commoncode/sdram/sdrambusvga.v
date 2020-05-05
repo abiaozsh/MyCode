@@ -157,7 +157,9 @@ sdram_controller ins_sdram_controller(
 
 parameter CACHE_COUNT = 4;
 
-assign debug32 = flushCount;//{interface_status,1'b0,free_cache,1'b0,current_slot};
+assign debug32 = {flush_cache,1'b0,flush_page};//{interface_status,1'b0,free_cache,1'b0,current_slot};
+    //input              flush_cache,
+    //input   [14:0]     flush_page,
 
 reg [31:0] flushCount;
 
@@ -303,34 +305,31 @@ always@(posedge clk or negedge sys_rst_n) begin
     if(avs_s0_read && !avs_s0_read_ack)begin
       if         (interface_status==STATUS_INIT)begin//初始化
         debug8 <= 0;
-        if(cache_hited != 0)begin
+        if(flush_cache && cache_flush_hited != 0)begin
+          debug8[0] <= 1;
+          current_slot <= cache_flush_hited;
+          write_back_count <= 0;
+          cacheAddrLow8_writeBack <= 1;
+          flushCount <= flushCount + 1'b1;
+          interface_status <= STATUS_WRITE_BACK_DLY;
+        end else if(cache_hited != 0)begin
           current_slot <= cache_hited;
           interface_status <= STATUS_HITED1;//高地址命中等一个周期
-        end else begin
-          if(flush_cache && cache_flush_hited != 0)begin
-            current_slot <= cache_flush_hited;
+        end else if(free_cache != 0)begin//找到空闲cache
+          current_slot <= free_cache;
+          if(cacheAddrHigh[free_cache-1][15])begin//invalid 无效 直接使用
+            interface_status <= STATUS_HITED1; set_cacheAddrHigh <= free_cache;//当前地址写入缓存地址高
+          end else begin
             write_back_count <= 0;
             cacheAddrLow8_writeBack <= 1;
             flushCount <= flushCount + 1'b1;
             interface_status <= STATUS_WRITE_BACK_DLY;
-          end else begin
-            if(free_cache != 0)begin//找到空闲cache
-              current_slot <= free_cache;
-              if(cacheAddrHigh[free_cache-1][15])begin//invalid 无效 直接使用
-                interface_status <= STATUS_HITED1; set_cacheAddrHigh <= free_cache;//当前地址写入缓存地址高
-              end else begin
-                write_back_count <= 0;
-                cacheAddrLow8_writeBack <= 1;
-                flushCount <= flushCount + 1'b1;
-                interface_status <= STATUS_WRITE_BACK_DLY;
-              end
-            end else begin//不经过cache
-              current_slot <= 0;
-              rdwr_sdram_addr <= {avs_s0_address,1'b0};
-              read_sdram_req <= 1;
-              interface_status <= STATUS_READ;
-            end
           end
+        end else begin//不经过cache
+          current_slot <= 0;
+          rdwr_sdram_addr <= {avs_s0_address,1'b0};
+          read_sdram_req <= 1;
+          interface_status <= STATUS_READ;
         end
       end else if(interface_status==STATUS_HITED1)begin//高地址命中
         if(cache_hit_data[FLG_VALID])begin
@@ -358,8 +357,10 @@ always@(posedge clk or negedge sys_rst_n) begin
           cacheAddrLow8_writeBack <= 0;
           if(flush_cache && current_slot != 0)begin
             clr_cacheAddrHigh <= current_slot;
+            debug8[1] <= 1;
             `RD_FINISH
           end else begin
+            debug8[2] <= 1;
             interface_status <= STATUS_HITED1;set_cacheAddrHigh <= current_slot;//当前地址写入缓存地址高
           end
         end else begin
