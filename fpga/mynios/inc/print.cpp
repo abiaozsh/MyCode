@@ -22,7 +22,10 @@ void mfree(int size){
 }
 
 void flushCache(void* addr){
-  IOWR(CACHE_CTL, 0, 0x80000000+(((int)addr)>>10));
+  int tmp = (int)addr;
+  tmp = tmp >> 10;
+  IOWR(CACHE_CTL, 0, 0x80000000 | tmp);
+  volatile int a = *((int*)addr);
   IOWR(CACHE_CTL, 0, 0);
 }
 
@@ -396,6 +399,20 @@ int printScreen(int chr){
   }
 }
 
+//void printBin(int data2){
+//    uart_write((data2>>11)&1?'1':'0'); // Status Byte
+//    uart_write((data2>>10)&1?'1':'0'); // Status Byte
+//    uart_write((data2>>9)&1?'1':'0'); // Status Byte
+//    uart_write((data2>>8)&1?'1':'0'); // Status Byte
+//    uart_write((data2>>7)&1?'1':'0'); // Status Byte
+//    uart_write((data2>>6)&1?'1':'0'); // Status Byte
+//    uart_write((data2>>5)&1?'1':'0'); // Status Byte
+//    uart_write((data2>>4)&1?'1':'0'); // Status Byte
+//    uart_write((data2>>3)&1?'1':'0'); // Status Byte
+//    uart_write((data2>>2)&1?'1':'0'); // Status Byte
+//    uart_write((data2>>1)&1?'1':'0'); // Status Byte
+//    uart_write((data2>>0)&1?'1':'0'); // Status Byte
+//}
 
 
 

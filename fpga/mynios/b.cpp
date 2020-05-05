@@ -7,40 +7,21 @@
 #include "inc/uart.cpp"
 #include "inc/print.cpp"
 
-void printBin(int data2){
-    uart_write((data2>>11)&1?'1':'0'); // Status Byte
-    uart_write((data2>>10)&1?'1':'0'); // Status Byte
-    uart_write((data2>>9)&1?'1':'0'); // Status Byte
-    uart_write((data2>>8)&1?'1':'0'); // Status Byte
-    uart_write((data2>>7)&1?'1':'0'); // Status Byte
-    uart_write((data2>>6)&1?'1':'0'); // Status Byte
-    uart_write((data2>>5)&1?'1':'0'); // Status Byte
-    uart_write((data2>>4)&1?'1':'0'); // Status Byte
-    uart_write((data2>>3)&1?'1':'0'); // Status Byte
-    uart_write((data2>>2)&1?'1':'0'); // Status Byte
-    uart_write((data2>>1)&1?'1':'0'); // Status Byte
-    uart_write((data2>>0)&1?'1':'0'); // Status Byte
-  
-}
 
 int main(){
   printInt(-1);
   print("Hello from Nios II! demo b\r\n");
+  
+  //base + clr
+  IOWR(VGA, VGA_BASE, 1024);//1024=2Mbyte
+  for(int i=0;i<0x80000;i++){
+    ((int*)(0x200000))[i] = 0;//at 2Mbyte
+  }
+
+  int x = 0;
+  int y = 0;
+  
   while(1){
-    //0xeb //0111010110
-    //1D6
-    //3D6
-    
-    //ff4
-    //c10
-    //e00
-    //1111 1111 0100
-    //1100 0001 0000
-    //1110 0000 0000
-    
-    //#define MYMOUSE      0x02070000
-    //#define MYMOUSE_GET  0
-    //#define MYMOUSE_SEND 1
 
     IOWR(MYMOUSE, MYMOUSE_SEND ,0x01EB);
     while(IORD(MYMOUSE, MYMOUSE_SEND));
@@ -54,7 +35,7 @@ int main(){
     while(1){
       tmp = IORD(MYMOUSE, MYMOUSE_GET);
       if(tmp&0x800){
-        data1 = tmp;//(tmp>>3) & 0xFF;
+        data1 = (tmp>>2) & 0xFF;
         break;
       }
     }
@@ -63,7 +44,7 @@ int main(){
     while(1){
       tmp = IORD(MYMOUSE, MYMOUSE_GET);
       if(tmp&0x800){
-        data2 = tmp;//(tmp>>3) & 0xFF;
+        data2 = (tmp>>2) & 0xFF;
         break;
       }
     }
@@ -73,32 +54,79 @@ int main(){
     while(1){
       tmp = IORD(MYMOUSE, MYMOUSE_GET);
       if(tmp&0x800){
-        data3 = tmp;//(tmp>>3) & 0xFF;
+        data3 = (tmp>>2) & 0xFF;
         break;
       }
     }
+    if(data2&(1<<4)){
+      data3|=0xFFFFFF00;
+    }
+    
     IOWR(MYMOUSE, MYMOUSE_GET ,1);
     while(1){
       tmp = IORD(MYMOUSE, MYMOUSE_GET);
       if(tmp&0x800){
-        data4 = tmp;//(tmp>>3) & 0xFF;
+        data4 = (tmp>>2) & 0xFF;
         break;
       }
     }
+    if(data2&(1<<5)){
+      data4|=0xFFFFFF00;
+    }
+
+    x+=data3;
+    if(x<0){
+      x=0;
+    }
+    if(x>1023){
+      x=1023;
+    }
+    y-=data4;
+    if(y<0){
+      y=0;
+    }
+    if(y>767){
+      y=767;
+    }
     
+    //if(data2&0x01){
+    //  print("L");
+    //}else{
+    //  print(" ");
+    //}
+    //if(data2&0x02){
+    //  print("R");
+    //}else{
+    //  print(" ");
+    //}
+    //
+    //
+    //print(" x:");
+    //printInt(x);
+    //print(" y:");
+    //printInt(y);
+    //print("\r\n");
+
+    short* p = &(((short*)(0x200000))[x+y*1024]);
+    *p = 0xFFFF;//at 2Mbyte
+    flushCache(p);
+
+      
     
-    
-    print("data1:");
-    printBin(data1);
-    print("  data2:");
-    printBin(data2);
-    print("  data3:");
-    printBin(data3);
-    print("  data4:");
-    printBin(data4);
-    print("\r\n");
-    
-    uart_read(-1);
+    if(data2&0x01){
+      for(int i=0;i<0x80000;i++){
+        ((int*)(0x200000))[i] = 0;//at 2Mbyte
+      }
+    }
+
+    IOWR(MYTIMER, 0 ,0);
+    while(1){
+      int timer = IORD(MYTIMER, 0);
+      if(timer>50000){
+        break;
+      }
+    }
+
 
     /*
     print(buff);

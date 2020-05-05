@@ -229,6 +229,13 @@ module system (
   wire   sdrambus_read  = sdrambus_cs ? avm_m0_read  : 1'b0;
   wire   sdrambus_write = sdrambus_cs ? avm_m0_write : 1'b0;
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  assign debug8[0] = flush_cache;//mouse_send_req_buff;
+  //assign debug8[1] = mbitpos[1];//mouse_send_ack;
+  //assign debug8[2] = mbitpos[2];//mouse_read_req_buff;
+  //assign debug8[3] = mbitpos[3];//mouse_read_ack;
+  //assign debug8[4] = send_err;
+  //assign debug8[5] = read_err;
+  //assign debug8[7:6] = mouse_send_state;
 
   wire cacheCtl_cs = avm_m0_address[31:16] == 16'h0205;
   reg              flush_cache;
@@ -485,13 +492,13 @@ end
   
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   //assign debug8 = mouse_send_data;
-  assign debug8[0] = mbitpos[0];//mouse_send_req_buff;
-  assign debug8[1] = mbitpos[1];//mouse_send_ack;
-  assign debug8[2] = mbitpos[2];//mouse_read_req_buff;
-  assign debug8[3] = mbitpos[3];//mouse_read_ack;
-  assign debug8[4] = send_err;
-  assign debug8[5] = read_err;
-  assign debug8[7:6] = mouse_send_state;
+  //assign debug8[0] = mbitpos[0];//mouse_send_req_buff;
+  //assign debug8[1] = mbitpos[1];//mouse_send_ack;
+  //assign debug8[2] = mbitpos[2];//mouse_read_req_buff;
+  //assign debug8[3] = mbitpos[3];//mouse_read_ack;
+  //assign debug8[4] = send_err;
+  //assign debug8[5] = read_err;
+  //assign debug8[7:6] = mouse_send_state;
   reg send_err;
   reg read_err;
   
@@ -564,7 +571,7 @@ end
             mouse_send_state<=4;
           end
         end else if(mouse_send_state==4)begin
-          if(timer_mouse!=50*1000*1000)begin
+          if(timer_mouse!=50*10*1000)begin
             timer_mouse<=timer_mouse+1'b1;
           end else begin
             send_err <= 1;
@@ -587,7 +594,7 @@ end
           end
 
         end else if(mouse_send_state==5)begin
-          if(timer_mouse!=50*1000*1000)begin
+          if(timer_mouse!=50*10*1000)begin
             timer_mouse<=timer_mouse+1'b1;
           end else begin
             send_err <= 1;
@@ -622,7 +629,7 @@ end
             mouse_send_state<=2;
           end
         end else if(mouse_send_state==2)begin
-          if(timer_mouse!=50*1000*1000)begin
+          if(timer_mouse!=50*10*1000)begin
             timer_mouse<=timer_mouse+1'b1;
           end else begin
             read_err <= 1;
@@ -641,7 +648,7 @@ end
             end
           end
         end else if(mouse_send_state==3)begin
-          if(timer_mouse!=50*1000*1000)begin
+          if(timer_mouse!=50*10*1000)begin
             timer_mouse<=timer_mouse+1'b1;
           end else begin
             read_err <= 1;
@@ -665,7 +672,7 @@ end
   end
 
     
-  wire [12:0] mymouse_readdata = avm_m0_address[15:2]==0?{mymouse_data_valid,mymouse_data}:mouse_send_busy;
+  wire [12:0] mymouse_readdata = avm_m0_address[15:2]==0?{mymouse_data_valid,(read_err?11'b0:mymouse_data)}:mouse_send_busy;
   wire        mouse_send_busy = mouse_send_req && !mouse_send_ack;
   reg         mouse_send_req;
   reg         mouse_read_req;
