@@ -53,10 +53,9 @@ namespace WindowsFormsApplication1
 			// 
 			// textBox3
 			// 
-			this.textBox3.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+			this.textBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.textBox3.Location = new System.Drawing.Point(392, 41);
+			this.textBox3.Location = new System.Drawing.Point(657, 41);
 			this.textBox3.Multiline = true;
 			this.textBox3.Name = "textBox3";
 			this.textBox3.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
@@ -65,13 +64,14 @@ namespace WindowsFormsApplication1
 			// 
 			// textBox4
 			// 
-			this.textBox4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
+			this.textBox4.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.textBox4.Location = new System.Drawing.Point(13, 41);
 			this.textBox4.Multiline = true;
 			this.textBox4.Name = "textBox4";
 			this.textBox4.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.textBox4.Size = new System.Drawing.Size(373, 699);
+			this.textBox4.Size = new System.Drawing.Size(638, 699);
 			this.textBox4.TabIndex = 8;
 			// 
 			// timer1
@@ -134,7 +134,7 @@ namespace WindowsFormsApplication1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(915, 752);
+			this.ClientSize = new System.Drawing.Size(1180, 752);
 			this.Controls.Add(this.label1);
 			this.Controls.Add(this.comboBox2);
 			this.Controls.Add(this.button2);
