@@ -102,13 +102,13 @@
 	 output T9Led,//tx0
 
 //сржп
-   input E12,
-	 input B15,
-	 input C15,
-	 input D14,
-	 input E15,
-	 input F15,
-	 input G11,
+    output E12,
+	 output B15,
+	 output C15,
+	 output D14,
+	 output E15,
+	 output F15,
+	 output G11,
 	 input F14,
 	 input G16,
 	 input H15,
@@ -131,17 +131,17 @@
 	 input T12,
 
 //срср
-	 input E13,
-	 input B16,
-	 input C16,
-	 input D16,
-	 input E16,
-	 input F16,
-	 input F12,
-	 input F13,
-	 input G14,
-	 input H16,
-	 input H11,
+	 output E13,
+	 output B16,
+	 output C16,
+	 output D16,
+	 output E16,
+	 output F16,
+	 output F12,
+	 output F13,
+	 output G14,
+	 output H16,
+	 output H11,
 	 input H14,
 	 input J16,
 	 input J12,
@@ -488,38 +488,37 @@ uart_mcu uart_mcu_inst(
 
   
   
-  
+ 				
+				
+	F13			vga12
+	G14			vga13
+	H16			vga14
+	H11			vga15
+
   
   
 //сржп
 assign E12 = vga_rgb[0];
 assign B15 = vga_rgb[1];
 assign C15 = vga_rgb[2];
-assign D14 = vga_vs    ;
-assign E15 = vga_hs    ;
-assign F15 = sdcard[7] ;
-assign G11 = sdcard[6] ;
-assign F14 = sdcard[5] ;
-assign G16 = sdcard[4] ;
-assign H15 = sdcard[3] ;
-assign G12 = sdcard[2] ;
-assign H13 = sdcard[1] ;
-assign J14 = sdcard[0] ;
+assign E13 = vga_rgb[3];
+assign B16 = vga_rgb[4];
+assign F12 = vga_rgb[5];
+assign E16 = vga_rgb[6];
+assign D16 = vga_rgb[7];
+assign E15 = vga_rgb[8];
+assign D14 = vga_rgb[9];
+assign C16 = vga_rgb[10];
+assign F16 = vga_rgb[11];
+assign F13 = vga_rgb[12];
+assign G14 = vga_rgb[13];
+assign H16 = vga_rgb[14];
+assign H11 = vga_rgb[15];
+
+assign F15 = vga_hs    ;
+assign G11 = vga_vs    ;
 
 //срср
-assign E13 = vga_rgb[3] ;
-assign B16 = vga_rgb[4] ;
-assign C16 = vga_rgb[5] ;
-assign D16 = vga_rgb[6] ;
-assign E16 = vga_rgb[7] ;
-assign F16 = vga_rgb[8] ;
-assign F12 = vga_rgb[9] ;
-assign F13 = vga_rgb[10];
-assign G14 = vga_rgb[11];
-assign H16 = vga_rgb[12];
-assign H11 = vga_rgb[13];
-assign H14 = vga_rgb[14];
-assign J16 = vga_rgb[15];
 
 wire [7:0] sdcard;
 

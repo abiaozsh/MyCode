@@ -32,14 +32,6 @@ module vga_driverX(
 
 
 
-
-
-
-
-
-
-
-
  reg       read_line_req ;
  reg       read_line_A_B ;
 wire    [15:0] read_line_addr;//4kline total
@@ -75,18 +67,6 @@ wire        wrenB      = buffB_wren       ;
 
 assign      read_pixelA_data = qA;
 wire [15:0] qA;
-`ifdef IS_ALTERA
-buff1024x16  buffReadA (
-  .data      ( data             ),
-  .wraddress ( wraddress        ),
-  .wrclock   ( wrclock          ),
-  .wren      ( wrenA            ),
-  .rdaddress ( rdaddress        ),
-  .rdclock   ( rdclock          ),
-  .q         ( qA               )
-);
-`endif
-`ifdef IS_XILINX
 buff1024x16  buffReadA (
   .clka  (wrclock),   //input clka;
   .wea   (wrenA),     //input [0 : 0] wea;
@@ -96,24 +76,11 @@ buff1024x16  buffReadA (
   .addrb (rdaddress), //input [9 : 0] addrb;
   .doutb (qA)         //output [15 : 0] doutb;
 );
-`endif
 
 
 
 assign      read_pixelB_data = qB;
 wire [15:0] qB;
-`ifdef IS_ALTERA
-buff1024x16  buffReadB (
-  .data      ( data             ),
-  .wraddress ( wraddress        ),
-  .wrclock   ( wrclock          ),
-  .wren      ( wrenB            ),
-  .rdaddress ( rdaddress        ),
-  .rdclock   ( rdclock          ),
-  .q         ( qB               )
-);
-`endif
-`ifdef IS_XILINX
 buff1024x16  buffReadB (
   .clka  (wrclock),   //input clka;
   .wea   (wrenB),     //input [0 : 0] wea;
@@ -123,12 +90,20 @@ buff1024x16  buffReadB (
   .addrb (rdaddress), //input [9 : 0] addrb;
   .doutb (qB)         //output [15 : 0] doutb;
 );
-`endif
-
-
 
 
 /*
+    output reg c3_p1_cmd_en,
+    input c3_p1_cmd_full,
+    output reg c3_p1_cmd_rw,
+    output reg [5:0] c3_p1_cmd_bl,
+    output reg [29:0] c3_p1_cmd_byte_addr,
+
+    output reg c3_p1_rd_en,
+    input wire [31:0] c3_p1_rd_data,
+    input wire c3_p1_rd_empty,
+
+
 reg read_sdram_req_buff;
 reg write_single_sdram_req_buff;
 reg read_line_req_buff;
@@ -139,52 +114,63 @@ reg read_line_ack;
 
 reg sdram_page_delay;
 reg        sdram_timer0;
-reg  [8:0] sdram_timer2;
+reg  [10:0] cmd_count;
+reg  [10:0] read_count;
 
 reg  [2:0] sdram_timer1;
 reg  [1:0] sram_add_high;
 
 reg [1:0]  sdram_step;
-reg [1:0] cmd;
 reg [31:0] readBuffer;
 //sdram_rd_req sdram_rd_burst sdram_rw_addr
-always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram ä¸»æŽ§
+always@(posedge sys_clk or negedge sys_rst_n) begin // sdram Ö÷¿Ø
   if(!sys_rst_n) begin
     sdram_timer0 <= 0;
     sdram_step <= 0;
     
-    read_sdram_req_buff <= 0;
-    write_single_sdram_req_buff <= 0;
     read_line_req_buff <= 0;
     
-    read_sdram_ack <= 0;
-    write_single_sdram_ack <= 0;
     read_line_ack <= 0;
-    
+    cmd_count <= 0;
     sdram_rd_req <= 0;
     sdram_wr_req <= 0;
     sdram_rd_burst <= 0;
     sdram_rw_addr <= 0;
   end else begin
-    read_sdram_req_buff <= read_sdram_req;
-    write_single_sdram_req_buff <= write_single_sdram_req;
     read_line_req_buff <= read_line_req;
         
     buffA_wren <= 0;
     buffB_wren <= 0;
 
-    if(cmd==0)begin
-      if         (read_line_req_buff)begin
-        cmd <= 1;
-      end else if(read_sdram_req_buff)begin
-        cmd <= 2;
-      end else if(write_single_sdram_req_buff)begin
-        cmd <= 3;
-      end
-    end
-
     //vga line read
-    if          (cmd == 1 && !read_line_ack)begin
+    if(read_line_req_buff && !read_line_ack)begin
+      if(cmd_count<512)begin
+        if(!c3_p0_cmd_full)begin
+          
+        end
+      end
+      
+        if         (debug_readmem_step==0)begin
+          if(!c3_p0_cmd_full)begin
+            debug_readmem_step <= 1;
+            c3_p0_cmd_byte_addr <= addr;
+            c3_p0_cmd_en <= 1;
+            c3_p0_cmd_rw <= 1;
+          end
+        end else if(debug_readmem_step==1)begin
+          c3_p0_cmd_en <= 0;
+          if(!c3_p0_rd_empty)begin
+            c3_p0_rd_en <= 1;
+            dataToPC <= c3_p0_rd_data;
+            debug_readmem_step <= 2;
+          end
+        end else if(debug_readmem_step==2)begin
+          debug_readmem_step <= 0;
+          c3_p0_rd_en <= 0;
+          command_done <= 1;
+        end
+    
+    
       //step3
       sdram_timer0 <= 1;
       if(sdram_timer0 == 0)begin
@@ -232,9 +218,8 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram ä¸»æŽ§
   end
 end
 
+
 */
-
-
 
 
 //wire define
@@ -246,7 +231,7 @@ wire         rst_n_w;
 //*****************************************************
 //**                    main code
 //***************************************************** 
-//å¾…PLLè¾“å‡ºç¨³å®šä¹‹åŽï¼Œåœæ­¢å¤ä½
+//´ýPLLÊä³öÎÈ¶¨Ö®ºó£¬Í£Ö¹¸´Î»
 assign rst_n_w = sys_rst_n && locked_w;
 
 `ifdef IS_ALTERA
