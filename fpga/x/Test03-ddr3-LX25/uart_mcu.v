@@ -6,7 +6,8 @@ module uart_mcu(
     output      uart_txd,
     output [7:0] debug8,
     output [31:0] debug32,
-
+    input [31:0] debugin32,
+    
     output reg c3_p0_cmd_en,
     input      c3_p0_cmd_full,
     output reg c3_p0_cmd_rw,
@@ -20,38 +21,52 @@ module uart_mcu(
 
     output reg c3_p0_rd_en,
     input wire [31:0] c3_p0_rd_data,
-    input wire c3_p0_rd_empty
+    input wire c3_p0_rd_empty,
+    input wire c3_p0_rd_full,
+    input wire[6:0]		  c3_p0_rd_count,
+    input wire				  c3_p0_rd_overflow,
+    input wire				  c3_p0_rd_error
+
 
   );
 
-wire uart_rec;
-wire [7:0] uart_data_out;
 reg uart_send;
+wire uart_rec_req;
+reg  uart_rec_ack;
+wire [7:0] uart_data_out;
+wire uart_send_req = uart_send;
 reg [7:0] uart_data_in;
 uart_hs uart_hs_inst (
- .sys_clk(clk), 
- .sys_rst_n(reset_n),
+	.sys_clk(clk),//clk_50M
+	.sys_rst_n(reset_n),
 
- .uart_txd(uart_txd),
- .uart_rxd(uart_rxd),
- 
- .uart_rec(uart_rec),
- .uart_data_out(uart_data_out),
+	.uart_txd(uart_txd),
+	.uart_rxd(uart_rxd),
+	
+	.uart_rec_req(uart_rec_req),
+	.uart_rec_ack(uart_rec_ack),
+	.uart_data_out(uart_data_out),
 
- .uart_send(uart_send),
- .uart_data_in(uart_data_in)
+	.uart_send_req(uart_send_req),
+	.uart_send_ack(uart_send_ack),
+	.uart_data_in(uart_data_in)
 );
 
 reg [7:0] command;
 reg [7:0] data;
 reg [7:0] command_temp;
 reg data_cmd;//1:data 0:cmd
+reg uart_rec_req_buff;
 always @(posedge clk or negedge reset_n) begin
   if (!reset_n) begin
     command <= 0;
     data <= 0;
+		uart_rec_req_buff<=0;
+		uart_rec_ack<=0;
   end else begin
-    if (uart_rec) begin 
+		uart_rec_req_buff <= uart_rec_req;
+	
+    if (uart_rec_req_buff && !uart_rec_ack) begin 
       if(data_cmd==0)begin
         if(uart_data_out!=0)begin
           data_cmd<=1;
@@ -62,11 +77,16 @@ always @(posedge clk or negedge reset_n) begin
         command <= command_temp;
         data <= uart_data_out;
       end
-    end else begin
-      if(command_done)begin
-        command <= 0;
-      end
+			uart_rec_ack <= 1;
     end
+		
+    if (!uart_rec_req_buff && uart_rec_ack) begin 
+			uart_rec_ack <= 0;
+    end
+		
+		if(command_done)begin
+			command <= 0;
+		end
   end
 end
 
@@ -81,6 +101,7 @@ reg [31:0] dataFromPC;
 reg [31:0] dataToPC;
 
 reg halt_uart;
+reg uart_send_ack_buff;
 always @(posedge clk or negedge reset_n) begin
   if (!reset_n) begin
 
@@ -101,9 +122,15 @@ always @(posedge clk or negedge reset_n) begin
     addr <= 0;
     dataFromPC <= 0;
     dataToPC <= 0;
+    
+		uart_send_ack_buff<=0;
 
   end else begin
-    uart_send<=0;
+    uart_send_ack_buff <= uart_send_ack;
+
+		if(uart_send_ack_buff)begin
+			uart_send<=0;
+		end
     
     if(command_done)begin
       if          (command == 8'h00) begin 
@@ -129,18 +156,25 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h26) begin dataFromPC[23:16] <= data; command_done<=1;
       end else if (command == 8'h27) begin dataFromPC[31:24] <= data; command_done<=1;
 
-      end else if (command == 8'h30) begin c3_p0_cmd_bl <= data[5:0]; command_done<=1;
-      end else if (command == 8'h31) begin c3_p0_wr_mask <= data[3:0]; command_done<=1;//c3_p0_wr_mask 1:block data
+      end else if (command == 8'h28) begin c3_p0_cmd_bl <= data[5:0]; command_done<=1;
+      end else if (command == 8'h29) begin c3_p0_wr_mask <= data[3:0]; command_done<=1;//c3_p0_wr_mask 1:block data
 		
-      end else if (command == 8'h32) begin uart_send<=1; uart_data_in<=c3_p0_cmd_full; command_done<=1;
-      end else if (command == 8'h33) begin uart_send<=1; uart_data_in<=c3_p0_wr_full; command_done<=1;
-      end else if (command == 8'h34) begin uart_send<=1; uart_data_in<=c3_p0_cmd_full; command_done<=1;
-      end else if (command == 8'h35) begin uart_send<=1; uart_data_in<=c3_p0_cmd_full; command_done<=1;
-      end else if (command == 8'h36) begin uart_send<=1; uart_data_in<=c3_p0_cmd_full; command_done<=1;
-      end else if (command == 8'h37) begin uart_send<=1; uart_data_in<=c3_p0_cmd_full; command_done<=1;
+      end else if (command == 8'h32) begin uart_send<=1; uart_data_in<=c3_p0_cmd_full   ; command_done<=1;
+      end else if (command == 8'h33) begin uart_send<=1; uart_data_in<=c3_p0_wr_full    ; command_done<=1;
+      end else if (command == 8'h34) begin uart_send<=1; uart_data_in<=c3_p0_rd_full    ; command_done<=1;
+      end else if (command == 8'h35) begin uart_send<=1; uart_data_in<=c3_p0_rd_empty   ; command_done<=1;
+      end else if (command == 8'h36) begin uart_send<=1; uart_data_in<=c3_p0_rd_count   ; command_done<=1;
+      end else if (command == 8'h37) begin uart_send<=1; uart_data_in<=c3_p0_rd_overflow; command_done<=1;
+      end else if (command == 8'h38) begin uart_send<=1; uart_data_in<=c3_p0_rd_error   ; command_done<=1;
+
+      end else if (command == 8'h39) begin uart_send<=1; uart_data_in<=debugin32[ 7: 0]   ; command_done<=1;
+      end else if (command == 8'h3A) begin uart_send<=1; uart_data_in<=debugin32[15: 8]   ; command_done<=1;
+      end else if (command == 8'h3B) begin uart_send<=1; uart_data_in<=debugin32[23:16]   ; command_done<=1;
+      end else if (command == 8'h3C) begin uart_send<=1; uart_data_in<=debugin32[31:24]   ; command_done<=1;
+
 
       //ddr read
-      end else if (command == 8'h50) begin
+      end else if (command == 8'h30) begin
 
         if         (debug_readmem_step==0)begin
           if(!c3_p0_cmd_full)begin
@@ -160,28 +194,11 @@ always @(posedge clk or negedge reset_n) begin
           debug_readmem_step <= 0;
           c3_p0_rd_en <= 0;
           command_done <= 1;
+          uart_send<=1; uart_data_in<=123;
         end
-		/*
-        if         (debug_readmem_step==0)begin
-          debug_readmem_step <= 1;
-			 c3_p0_cmd_byte_addr <= addr;
-          c3_p0_cmd_en <= 1;
-          c3_p0_cmd_rw <= 1;
-        end else if(debug_readmem_step==1)begin
-          c3_p0_cmd_en <= 0;
-          if(!c3_p0_rd_empty)begin
-				c3_p0_rd_en <= 1;
-            dataToPC <= c3_p0_rd_data;
-            debug_readmem_step <= 2;
-          end
-        end else if(debug_readmem_step==2)begin
-		    debug_readmem_step <= 0;
-          c3_p0_rd_en <= 0;
-          command_done <= 1;
-        end
-*/
+
       //ddr write
-      end else if (command == 8'h51) begin
+      end else if (command == 8'h31) begin
 		
         if         (debug_readmem_step==0)begin
           if(!c3_p0_cmd_full && !c3_p0_wr_full)begin
@@ -197,27 +214,34 @@ always @(posedge clk or negedge reset_n) begin
           c3_p0_wr_en <= 0;
           c3_p0_cmd_en <= 0;
           command_done <= 1;
+          uart_send<=1; uart_data_in<=123;
         end
-		  /*
+
+        
+      end else if (command == 8'h60) begin
+
         if         (debug_readmem_step==0)begin
           debug_readmem_step <= 1;
-          c3_p0_wr_data <= dataFromPC;
-          c3_p0_wr_en <= 1;
-			 //c3_p0_wr_data = uartdata
-        end else if(debug_readmem_step==1)begin
-          debug_readmem_step <= 2;
-          c3_p0_wr_en <= 0;
-        end else if(debug_readmem_step==2)begin
-          debug_readmem_step <= 3;
           c3_p0_cmd_byte_addr <= addr;
-			 c3_p0_cmd_en <= 1;
-			 c3_p0_cmd_rw <= 0;
-        end else if(debug_readmem_step==3)begin
-          debug_readmem_step <= 0;
+          c3_p0_cmd_en <= 1;
+          c3_p0_cmd_rw <= 1;
+        end else if(debug_readmem_step==1)begin
           c3_p0_cmd_en <= 0;
-			 command_done <= 1;
+          debug_readmem_step <= 0;
+          command_done <= 1;
         end
-*/
+        
+      end else if (command == 8'h61) begin
+        if         (debug_readmem_step==0)begin
+          c3_p0_rd_en <= 1;
+          dataToPC <= c3_p0_rd_data;
+          debug_readmem_step <= 1;
+        end else if(debug_readmem_step==1)begin
+          debug_readmem_step <= 0;
+          c3_p0_rd_en <= 0;
+          command_done <= 1;
+        end
+
 
 
       //sram read

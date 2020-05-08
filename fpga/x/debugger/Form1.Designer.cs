@@ -198,21 +198,21 @@ namespace WindowsFormsApplication1
 			// 
 			// button9
 			// 
-			this.button9.Location = new System.Drawing.Point(267, 42);
+			this.button9.Location = new System.Drawing.Point(253, 42);
 			this.button9.Name = "button9";
 			this.button9.Size = new System.Drawing.Size(75, 23);
 			this.button9.TabIndex = 28;
-			this.button9.Text = "reset";
+			this.button9.Text = "test2";
 			this.button9.UseVisualStyleBackColor = true;
 			this.button9.Click += new System.EventHandler(this.button9_Click);
 			// 
 			// button11
 			// 
-			this.button11.Location = new System.Drawing.Point(186, 42);
+			this.button11.Location = new System.Drawing.Point(172, 42);
 			this.button11.Name = "button11";
 			this.button11.Size = new System.Drawing.Size(75, 23);
 			this.button11.TabIndex = 30;
-			this.button11.Text = "upload dos";
+			this.button11.Text = "test1";
 			this.button11.UseVisualStyleBackColor = true;
 			this.button11.Click += new System.EventHandler(this.button11_Click);
 			// 

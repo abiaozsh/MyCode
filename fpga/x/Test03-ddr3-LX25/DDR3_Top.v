@@ -48,14 +48,14 @@
 	 input C13,
 	 input B12,
 	 input C11,
-	 input B10,
-	 input C9 ,
-	 input B8 ,
-	 input C7 ,
-	 input B6 ,
-	 input B5 ,
-	 input E10,
-	 input E11,
+	 output B10,
+	 output C9 ,
+	 output B8 ,
+	 output C7 ,
+	 output B6 ,
+	 output B5 ,
+	 output E10,
+	 output E11,
 	 input F9 ,
 	 input C8 ,
 	 input E7 ,
@@ -289,14 +289,14 @@ u_ddr3_mig (
 
 
 
-  .c3_p1_cmd_clk                          (clk_50m),
+  .c3_p1_cmd_clk                          (clk_100m),
   .c3_p1_cmd_en                           (c3_p1_cmd_en),
   .c3_p1_cmd_instr                        ({2'b0,c3_p1_cmd_rw}),
   .c3_p1_cmd_bl                           (c3_p1_cmd_bl),
   .c3_p1_cmd_byte_addr                    (c3_p1_cmd_byte_addr),
   //.c3_p1_cmd_empty                        (mcb3_cmd_empty),
   .c3_p1_cmd_full                         (c3_p1_cmd_full),
-  .c3_p1_wr_clk                           (clk_50m),
+  .c3_p1_wr_clk                           (clk_100m),
   .c3_p1_wr_en                            (c3_p1_wr_en),
   .c3_p1_wr_mask                          (c3_p1_wr_mask),
   .c3_p1_wr_data                          (c3_p1_wr_data),
@@ -305,7 +305,7 @@ u_ddr3_mig (
   //.c3_p1_wr_count                         (mcb3_wr_count),
   //.c3_p1_wr_underrun                      (mcb3_wr_underrun),
   //.c3_p1_wr_error                         (mcb3_wr_error),
-  .c3_p1_rd_clk                           (clk_50m),
+  .c3_p1_rd_clk                           (clk_100m),
   .c3_p1_rd_en                            (c3_p1_rd_en),
   .c3_p1_rd_data                          (c3_p1_rd_data),
   //.c3_p1_rd_full                          (mcb3_rd_full),
@@ -411,6 +411,9 @@ u_ddr3_mig (
 );
 //wire led_1;
 
+wire vga_clk_25M;
+wire vga_clk_65M;
+
 clk_rst_gen #(.WDOG_CALC_INIT_WIDTH(26)) 
 u_pll (
     .sys_clk(sys_clk_i),
@@ -419,8 +422,27 @@ u_pll (
 	 .clk_50m(clk_50m),
     .clk_100m(clk_100m),
     .calc_done(calib_rst),
-    .rst_ddr_n(rst_ddr_n)
+    .rst_ddr_n(rst_ddr_n),
+	 .vga_clk_25M(vga_clk_25M),
+	 .vga_clk_65M(vga_clk_65M)
 );
+
+
+reg delay_rst;
+
+reg [31:0] delay;
+always@(posedge clk_50m or negedge sys_rst_i) begin // sdram 主控
+  if(!sys_rst_i) begin
+    delay_rst <= 0;
+  end else begin
+    if(delay==5*1000*1000)begin
+      delay_rst <= 1;
+    end else begin
+      delay<=delay+1'b1;
+    end
+  end
+end
+
 
 
 wire segled_clk;
@@ -434,7 +456,7 @@ wire [7:0] seg_data2;
 wire [7:0] seg_data3;
 seg_led_hex595 ins_seg_led_hex595(
   .sys_clk(clk_50m), 
-  .sys_rst_n(sys_rst_i),
+  .sys_rst_n(delay_rst),
  
   .clk(segled_clk),
   .dat(segled_dat),
@@ -455,19 +477,31 @@ wire rx0 = M11;
 assign T9Led = tx0;
 wire tx0;
 
+wire [7:0] vga_debug8;
+
+assign B10 = vga_debug8[0];
+assign C9  = vga_debug8[1];
+assign B8  = vga_debug8[2];
+assign C7  = vga_debug8[3];
+assign B6  = vga_debug8[4];
+assign B5  = vga_debug8[5];
+assign E10 = vga_debug8[6];
+assign E11 = vga_debug8[7];
+
+
 wire [7:0] debug8;
 wire [31:0] debug32;
-
-
+wire [31:0] vga_debug32;
 uart_mcu uart_mcu_inst(
  .clk(clk_50m), 
- .reset_n(sys_rst_i),
+ .reset_n(delay_rst),
 
  .uart_txd(tx0),
  .uart_rxd(rx0),
  
  .debug8(debug8),
  .debug32(debug32),
+ .debugin32(vga_debug32),
 
 .c3_p0_cmd_en(c3_p0_cmd_en),                   //output reg 
 .c3_p0_cmd_full(c3_p0_cmd_full),
@@ -485,15 +519,6 @@ uart_mcu uart_mcu_inst(
 .c3_p0_rd_empty(c3_p0_rd_empty)                  //input wire 
 
   );
-
-  
-  
- 				
-				
-	F13			vga12
-	G14			vga13
-	H16			vga14
-	H11			vga15
 
   
   
@@ -527,16 +552,20 @@ wire vga_hs;
 wire vga_vs;
 wire [15:0] vga_rgb;
 vga_driverX(
-    .sys_clk (clk_50m),//input           sys_clk,
-    .sys_rst_n(sys_rst_n),//input           sys_rst_n,    //复位信号
+    .sys_clk (clk_100m),//input           sys_clk,
+    .sys_rst_n(delay_rst),//input           sys_rst_n,    //复位信号
+	.vga_clk_25M(vga_clk_25M),
+	.vga_clk_65M(vga_clk_65M),
+  .debug8(vga_debug8),
+  .debug32(vga_debug32),
     //
     ////00 640*480 txt
     ////01 640*480 img
     ////1x 1024*768 img
-    //input [1:0] vga_mode,
+    .vga_mode(2),
     //output reg blanking,
     //input blockvga,
-    //
+    .read_line_base_addr(0),
     //
     .c3_p1_cmd_en        (c3_p1_cmd_en       ),//output reg c3_p1_cmd_en,
     .c3_p1_cmd_full      (c3_p1_cmd_full     ),//input c3_p1_cmd_full,

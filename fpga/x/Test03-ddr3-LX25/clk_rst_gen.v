@@ -31,7 +31,11 @@ module clk_rst_gen #(
 	output clk_100m,
 //watchdog for ddr calic
     input  calc_done,
-    output rst_ddr_n
+    output rst_ddr_n,
+	 
+	 
+output vga_clk_25M,
+output vga_clk_65M
 
     );
 wire   clk_ddr_bufi;
@@ -139,6 +143,20 @@ begin
 end	 
 
 assign rst_ddr_n = sys_rst_n&pu_rst_dly&pll_locked;
+
+
+
+
+wire CLKFB;
+vga_pll vga_pll_inst
+ (// Clock in ports
+  .CLK_IN1(      sys_clk_ibufg),
+  .CLKFB_IN(         CLKFB),
+  // Clock out ports
+  .CLK_OUT1(        vga_clk_25M),
+  .CLK_OUT2(        vga_clk_65M),
+  .CLKFB_OUT(        CLKFB)
+ );
 
 
 endmodule

@@ -19,7 +19,12 @@ namespace WindowsFormsApplication1
                 //COM4为Arduino使用的串口号，需根据实际情况调整  115200
                 port = new SerialPort(portName, 2000000, Parity.None, 8, StopBits.One);
                 port.Open();
-            }
+			}
+			else {
+				port.Close();
+				port = new SerialPort(portName, 2000000, Parity.None, 8, StopBits.One);
+				port.Open();
+			}
         }
         public byte[] readFromPort(int count)
         {

@@ -2,24 +2,28 @@
 module vga_driverX(
     input           sys_clk,
     input           sys_rst_n,
-
+input vga_clk_25M,
+input vga_clk_65M,
     //00 640*480 txt
     //01 640*480 img
     //1x 1024*768 img
-    input [1:0] vga_mode,
-    output reg blanking,
-    input blockvga,
+    input [1:0]  vga_mode,
+    output reg   blanking,
+    input        blockvga,
+    input [15:0] read_line_base_addr,//start line
 
-
-    output reg c3_p1_cmd_en,
-    input c3_p1_cmd_full,
-    output reg c3_p1_cmd_rw,
-    output reg [5:0] c3_p1_cmd_bl,
+    output [7:0] debug8,
+    output [31:0] debug32,
+    
+    output reg        c3_p1_cmd_en,
+    input             c3_p1_cmd_full,
+    output reg        c3_p1_cmd_rw,
+    output reg [5:0]  c3_p1_cmd_bl,
     output reg [29:0] c3_p1_cmd_byte_addr,
 
-    output reg c3_p1_rd_en,
+    output reg        c3_p1_rd_en,
     input wire [31:0] c3_p1_rd_data,
-    input wire c3_p1_rd_empty,
+    input wire        c3_p1_rd_empty,
 
     output     reg     vga_hs,
     output     reg     vga_vs,
@@ -35,7 +39,6 @@ module vga_driverX(
  reg       read_line_req ;
  reg       read_line_A_B ;
 wire    [15:0] read_line_addr;//4kline total
-wire    [15:0] read_line_base_addr;//start line
 //
 wire [15:0] read_pixelA_data;
 wire [15:0] read_pixelB_data;
@@ -92,50 +95,48 @@ buff1024x16  buffReadB (
 );
 
 
-/*
-    output reg c3_p1_cmd_en,
-    input c3_p1_cmd_full,
-    output reg c3_p1_cmd_rw,
-    output reg [5:0] c3_p1_cmd_bl,
-    output reg [29:0] c3_p1_cmd_byte_addr,
 
-    output reg c3_p1_rd_en,
-    input wire [31:0] c3_p1_rd_data,
-    input wire c3_p1_rd_empty,
+//    c3_p1_cmd_en,
+//    c3_p1_cmd_full,
+//    c3_p1_cmd_rw,
+//    c3_p1_cmd_bl,
+//    c3_p1_cmd_byte_addr,
+//    
+//    c3_p1_rd_en,
+//    c3_p1_rd_data,
+//    c3_p1_rd_empty,
 
-
-reg read_sdram_req_buff;
-reg write_single_sdram_req_buff;
+reg [3:0] curr_read_count;
 reg read_line_req_buff;
-
-reg read_sdram_ack;
-reg write_single_sdram_ack;
 reg read_line_ack;
-
-reg sdram_page_delay;
-reg        sdram_timer0;
 reg  [10:0] cmd_count;
-reg  [10:0] read_count;
+reg  [11:0] read_count;
+reg [15:0] readBufferHigh;
 
-reg  [2:0] sdram_timer1;
-reg  [1:0] sram_add_high;
 
-reg [1:0]  sdram_step;
-reg [31:0] readBuffer;
-//sdram_rd_req sdram_rd_burst sdram_rw_addr
-always@(posedge sys_clk or negedge sys_rst_n) begin // sdram Ö÷¿Ø
+assign debug8[0] = read_line_req_buff;
+assign debug8[1] = read_line_ack;
+assign debug8[2] = c3_p1_rd_empty;
+assign debug8[7:4] = curr_read_count;
+
+assign debug32[15:0] = cmd_count;
+assign debug32[31:16] = read_count;
+
+reg read_phase;//0: read/write low, 1: write high
+wire ok_to_send_cmd = cmd_count!=512 && !c3_p1_cmd_full && curr_read_count!=7;//cmd_count++
+wire ok_to_read_data = !c3_p1_rd_empty && read_phase==0;//read_count++
+always@(posedge sys_clk or negedge sys_rst_n) begin // sdram ä¸»æ§
   if(!sys_rst_n) begin
-    sdram_timer0 <= 0;
-    sdram_step <= 0;
-    
+   
     read_line_req_buff <= 0;
     
     read_line_ack <= 0;
     cmd_count <= 0;
-    sdram_rd_req <= 0;
-    sdram_wr_req <= 0;
-    sdram_rd_burst <= 0;
-    sdram_rw_addr <= 0;
+    read_count <= 0;
+    
+    curr_read_count <= 0;
+    c3_p1_rd_en <= 0;
+    read_phase <= 0;
   end else begin
     read_line_req_buff <= read_line_req;
         
@@ -144,74 +145,60 @@ always@(posedge sys_clk or negedge sys_rst_n) begin // sdram Ö÷¿Ø
 
     //vga line read
     if(read_line_req_buff && !read_line_ack)begin
-      if(cmd_count<512)begin
-        if(!c3_p0_cmd_full)begin
-          
+      if(ok_to_send_cmd)begin
+        cmd_count<=cmd_count+1'b1;
+        c3_p1_cmd_byte_addr <= {read_line_addr,cmd_count[8:0],2'b0};
+        c3_p1_cmd_bl <= 0;
+        c3_p1_cmd_en <= 1;
+        c3_p1_cmd_rw <= 1;
+      end else begin
+        c3_p1_cmd_en <= 0;
+      end
+      
+      if(ok_to_read_data)begin
+        read_phase <= 1;
+        c3_p1_rd_en <= 1;
+        read_count <= read_count+1'b1;
+        buffAB_wrdata <= c3_p1_rd_data[15:0];
+        readBufferHigh <= c3_p1_rd_data[31:16];
+        buffAB_wraddress <= read_count;
+        if(read_line_A_B)begin
+          buffA_wren <= 1;
+        end else begin
+          buffB_wren <= 1;
+        end
+      end
+      if(read_phase)begin
+        read_phase <= 0;
+        c3_p1_rd_en <= 0;
+        read_count <= read_count+1'b1;
+        buffAB_wrdata <= readBufferHigh;
+        buffAB_wraddress <= read_count;
+        if(read_line_A_B)begin
+          buffA_wren <= 1;
+        end else begin
+          buffB_wren <= 1;
         end
       end
       
-        if         (debug_readmem_step==0)begin
-          if(!c3_p0_cmd_full)begin
-            debug_readmem_step <= 1;
-            c3_p0_cmd_byte_addr <= addr;
-            c3_p0_cmd_en <= 1;
-            c3_p0_cmd_rw <= 1;
-          end
-        end else if(debug_readmem_step==1)begin
-          c3_p0_cmd_en <= 0;
-          if(!c3_p0_rd_empty)begin
-            c3_p0_rd_en <= 1;
-            dataToPC <= c3_p0_rd_data;
-            debug_readmem_step <= 2;
-          end
-        end else if(debug_readmem_step==2)begin
-          debug_readmem_step <= 0;
-          c3_p0_rd_en <= 0;
-          command_done <= 1;
-        end
-    
-    
-      //step3
-      sdram_timer0 <= 1;
-      if(sdram_timer0 == 0)begin
-        if         (sdram_timer1 == 0) begin sram_add_high <= 0; sdram_timer1 <= 1; sdram_rw_addr <= {read_line_addr,2'b00,8'b0}; //12+2+8  **
-        end else if(sdram_timer1 == 1) begin sram_add_high <= 1; sdram_timer1 <= 2; sdram_rw_addr <= {read_line_addr,2'b01,8'b0}; //12+2+8  **
-        end else if(sdram_timer1 == 2) begin sram_add_high <= 2; sdram_timer1 <= 3; sdram_rw_addr <= {read_line_addr,2'b10,8'b0}; //12+2+8  **
-        end else if(sdram_timer1 == 3) begin sram_add_high <= 3; sdram_timer1 <= 4; sdram_rw_addr <= {read_line_addr,2'b11,8'b0}; //12+2+8  **
-        end
-        sdram_rd_burst <= 256;
-        sdram_timer2 <= 0;
-        sdram_page_delay <= 0;
-        sdram_rd_req = 1;
-      end else begin
-        if(sdram_rd_ack || sdram_page_delay)begin
-          sdram_timer2 <= sdram_timer2 + 1'b1;
-          if(!sdram_page_delay)begin
-            buffAB_wrdata <= sdram_dout;
-            buffAB_wraddress <= {sram_add_high,sdram_timer2[7:0]};
-            if(read_line_A_B)begin
-              buffA_wren <= 1;
-            end else begin
-              buffB_wren <= 1;
-            end
-          end
-          if(sdram_timer2==255)begin 
-            sdram_page_delay <= 1;
-            sdram_rd_req <= 0;
-          end else if(sdram_timer2==263)begin //263 TODO reduce
-            sdram_timer0 <= 0;
-            if(sdram_timer1 == 4)begin
-              sdram_timer1 <= 0;
-              read_line_ack <= 1;
-            end
-          end else begin
-          end
-        end
+      //æ— æ³•è¯»å–ï¼Œå†™å…¥cmd
+      if(ok_to_send_cmd && !ok_to_read_data)begin
+        curr_read_count <= curr_read_count+1'b1;
+      end
+      //è¯»å–ï¼Œæ²¡æœ‰å†™å…¥cmd
+      if(!ok_to_send_cmd && ok_to_read_data)begin
+        curr_read_count <= curr_read_count-1'b1;
+      end
+      
+      if(cmd_count==512&& read_count==1024)begin
+        cmd_count<=0;
+        read_count<=0;
+        curr_read_count<=0;
+        read_line_ack <= 1;
       end
     end
     
-    if(!read_line_req && read_line_ack)begin
-      cmd <= 0;
+    if(!read_line_req_buff && read_line_ack)begin
       read_line_ack <= 0;
     end
 
@@ -219,31 +206,6 @@ always@(posedge sys_clk or negedge sys_rst_n) begin // sdram Ö÷¿Ø
 end
 
 
-*/
-
-
-//wire define
-wire vga_clk_25M;
-wire vga_clk_65M;
-wire         locked_w;
-wire         rst_n_w;
-
-//*****************************************************
-//**                    main code
-//***************************************************** 
-//´ıPLLÊä³öÎÈ¶¨Ö®ºó£¬Í£Ö¹¸´Î»
-assign rst_n_w = sys_rst_n && locked_w;
-
-`ifdef IS_ALTERA
-vga_pll  u_vga_pll(
-  .inclk0         (sys_clk),    
-  .areset         (~sys_rst_n),
-    
-  .c0             (vga_clk_25M), //VGA 25M
-  .c1             (vga_clk_65M), //65M 102*768
-  .locked         (locked_w)
-  ); 
-`endif
 
 //parameter define  
 parameter  H25_SYNC   =  11'd96;    
@@ -309,8 +271,8 @@ assign read_pixel_addr = temp_read_pixel_addr[9:0];
 //8*16 char table 
 //16byte per char
 //128char = 2048byte
-always @(posedge vga_clk or negedge rst_n_w) begin
-    if (!rst_n_w)begin
+always @(posedge vga_clk or negedge sys_rst_n) begin
+    if (!sys_rst_n)begin
       cnt_h <= 0;
       cnt_v <= 0;
       vga_hs <= 0;
@@ -377,9 +339,13 @@ always @(posedge vga_clk or negedge rst_n_w) begin
         end
 
       end
+		
+      if(read_line_ack)begin
+        read_line_req <= 0;
+      end
+		
       if(cnt_h == h_end)begin
         h_active <= 0;
-        read_line_req <= 0;
       end
       
       if(cnt_v == v_start)begin
