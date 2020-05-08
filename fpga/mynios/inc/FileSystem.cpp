@@ -163,8 +163,6 @@ class SdFile;
 #define CACHE_COUNT 8
 class SdVolume {
  public:
-  static int arrayaa[];
-  int arraybb[10];
   //cache_t cacheBuffer_;        // 512 byte cache for device blocks
   //uint32_t cacheBlockNumber_;  // Logical number of block in the cache
   //uint8_t cacheDirty_;         // cacheFlush() will write block if true
@@ -450,9 +448,15 @@ class SdVolume {
     return clusterStartBlock(cluster) + blockOfCluster(position);
   }
 
+  uint8_t cacheFlushAll() {
+    for(int i=0;i<CACHE_COUNT;i++){
+      cacheFlush(&(cacheEntity[i]));
+    }
+  }
+  
   uint8_t cacheFlush(cache_entity* cache) {
     if (cache->cacheDirty) {
-      print("cacheFlush,");printInt(cache->cacheBlockNumber);print("\r\n");
+      print("cacheFlush:");printInt(cache->cacheBlockNumber);print("\r\n");
       if (!sdCard_->writeBlock(cache->cacheBlockNumber, cache->cacheBuffer.data)) {
         error += 100;
         return false;
@@ -492,6 +496,7 @@ class SdVolume {
       
     }
     if(found!=-1){
+      cacheEntity[found].cacheDirty |= action;
       *cacheBuffer_ = &cacheEntity[found];
       //print("found =");printInt(blockNumber);print("\r\n");
       return true;
@@ -635,7 +640,7 @@ class SdVolume {
 };
 
 
- int SdVolume::arrayaa[] = {1,2,3,4,5};
+// int SdVolume::arrayaa[] = {1,2,3,4,5};
 
 // flags for ls()
 
@@ -745,46 +750,7 @@ class SdFile {
   uint32_t curCluster(void) const {return curCluster_;}
   /** \return The current position for a file or directory. */
   uint32_t curPosition(void) const {return curPosition_;}
-  /**
-   * Set the date/time callback function
-   *
-   * \param[in] dateTime The user's call back function.  The callback
-   * function is of the form:
-   *
-   * \code
-   * void dateTime(uint16_t* date, uint16_t* time) {
-   *   uint16_t year;
-   *   uint8_t month, day, hour, minute, second;
-   *
-   *   // User gets date and time from GPS or real-time clock here
-   *
-   *   // return date using FAT_DATE macro to format fields
-   *   *date = FAT_DATE(year, month, day);
-   *
-   *   // return time using FAT_TIME macro to format fields
-   *   *time = FAT_TIME(hour, minute, second);
-   * }
-   * \endcode
-   *
-   * Sets the function that is called when a file is created or when
-   * a file's directory entry is modified by sync(). All timestamps,
-   * access, creation, and modify, are set when a file is created.
-   * sync() maintains the last access date and last modify date/time.
-   *
-   * See the timestamp() function.
-   */
-//  static void dateTimeCallback(
-//    void (*dateTime)(uint16_t* date, uint16_t* time)) {
-//    dateTime_ = dateTime;
-//  }
 
-  /**
-   * Cancel the date/time callback function.
-   */
-//  static void dateTimeCallbackCancel(void) {
-//    // use explicit zero since NULL is not defined for Sanguino
-//    dateTime_ = 0;
-//  }
 
   /** \return Address of the block that contains this file's directory. */
   uint32_t dirBlock(void) const {return dirBlock_;}
@@ -938,6 +904,7 @@ class SdFile {
 
     // cache found slot or add cluster if end of file
     if (emptyFound) {
+      print("emptyFound\r\n");
       p = cacheDirEntry(CACHE_FOR_WRITE);
       if (!p) {
         fileError += 7;
@@ -995,7 +962,7 @@ class SdFile {
     }
     return true;
   }
-
+/*
   uint8_t open(SdFile* dirFile, uint16_t index, uint8_t oflag) {
     type_ = FAT_FILE_TYPE_CLOSED;
     // error if already open
@@ -1021,7 +988,7 @@ class SdFile {
     // open cached entry
     return openCachedEntry(index & 0XF, oflag, dirFile);
   }
-
+*/
   uint8_t openRoot(SdVolume* vol) {
     type_ = FAT_FILE_TYPE_CLOSED;
     // error if file is already open
@@ -1225,13 +1192,62 @@ class SdFile {
 
 
   int8_t readDir(dir_t* dir);
-  static uint8_t remove(SdFile* dirFile, const char* fileName);
-  uint8_t remove(void);
+  uint8_t del(SdFile* dirFile, const char* fileName) {
+    SdFile file;
+    if (!file.open(dirFile, fileName, O_WRITE)) return false;
+    if(file.isSubDir()){
+      return file.rmDir();
+    }
+    else{
+      return file.remove();
+    }
+  }
+  
+  uint8_t remove(void) {
+    // free any clusters - will fail if read-only or directory
+    if (!truncate(0)) return false;
+
+    // cache directory entry
+    dir_t* d = cacheDirEntry(CACHE_FOR_WRITE);
+    if (!d) return false;
+
+    // mark entry deleted
+    d->name[0] = DIR_NAME_DELETED;
+
+    // set this SdFile closed
+    type_ = FAT_FILE_TYPE_CLOSED;
+
+    // write entry to SD
+    return vol_->cacheFlush(cacheBuffer_);
+  }
+  
   /** Set the file's current position to zero. */
   void rewind(void) {
     curPosition_ = curCluster_ = 0;
   }
-  uint8_t rmDir(void);
+  uint8_t rmDir(void) {
+    // must be open subdirectory
+    //if (!isSubDir()) return false;
+
+    rewind();
+
+    // make sure directory is empty
+    while (curPosition_ < fileSize_) {
+      dir_t* p = readDirCache();
+      if (p == NULL) return false;
+      // done if past last used entry
+      if (p->name[0] == DIR_NAME_FREE) break;
+      // skip empty slot or '.' or '..'
+      if (p->name[0] == DIR_NAME_DELETED || p->name[0] == '.') continue;
+      // error not empty
+      if (DIR_IS_FILE_OR_SUBDIR(p)) return false;
+    }
+    // convert empty directory to normal file for remove
+    type_ = FAT_FILE_TYPE_NORMAL;
+    flags_ |= O_WRITE;
+    return remove();
+  }
+  
   uint8_t rmRfStar(void);
   /** Set the files position to current position + \a pos. See seekSet(). */
   uint8_t seekCur(uint32_t pos) {
@@ -1327,7 +1343,7 @@ class SdFile {
       // clear directory dirty
       flags_ &= ~F_FILE_DIR_DIRTY;
     }
-    return vol_->cacheFlush(cacheBuffer_);
+    return vol_->cacheFlushAll();//TODO
   }  
   
   /** Type of this SdFile.  You should use isFile() or isDir() instead of type()
@@ -1396,100 +1412,96 @@ class SdFile {
   size_t write(uint8_t b) {
     return write(&b, 1);
   }
-  size_t write(const void* buf, uint16_t nbyte);
-  //size_t write(const void* buf, uint16_t nbyte) {
-  //  // convert void* to uint8_t*  -  must be before goto statements
-  //  const char* src = reinterpret_cast<const char*>(buf);
-  //
-  //  // number of bytes left to write  -  must be before goto statements
-  //  uint16_t nToWrite = nbyte;
-  //
-  //  // error if not a normal file or is read-only
-  //  if (!isFile() || !(flags_ & O_WRITE)) goto writeErrorReturn;
-  //
-  //  // seek to end of file if append flag
-  //  if ((flags_ & O_APPEND) && curPosition_ != fileSize_) {
-  //    if (!seekEnd()) goto writeErrorReturn;
-  //  }
-  //
-  //  while (nToWrite > 0) {
-  //    uint8_t blockOfCluster = vol_->blockOfCluster(curPosition_);
-  //    uint16_t blockOffset = curPosition_ & 0X1FF;
-  //    if (blockOfCluster == 0 && blockOffset == 0) {
-  //      // start of new cluster
-  //      if (curCluster_ == 0) {
-  //        if (firstCluster_ == 0) {
-  //          // allocate first cluster of file
-  //          if (!addCluster()) goto writeErrorReturn;
-  //        } else {
-  //          curCluster_ = firstCluster_;
-  //        }
-  //      } else {
-  //        uint32_t next;
-  //        if (!vol_->fatGet(curCluster_, &next)) return false;
-  //        if (vol_->isEOC(next)) {
-  //          // add cluster if at end of chain
-  //          if (!addCluster()) goto writeErrorReturn;
-  //        } else {
-  //          curCluster_ = next;
-  //        }
-  //      }
-  //    }
-  //    // max space in block
-  //    uint16_t n = 512 - blockOffset;
-  //
-  //    // lesser of space and amount to write
-  //    if (n > nToWrite) n = nToWrite;
-  //
-  //    // block for data write
-  //    uint32_t block = vol_->clusterStartBlock(curCluster_) + blockOfCluster;
-  //    if (n == 512) {
-  //      // full block - don't need to use cache
-  //      // invalidate cache if block is in cache
-  //      if (SdVolume::cacheBlockNumber_ == block) {
-  //        SdVolume::cacheBlockNumber_ = 0XFFFFFFFF;
-  //      }
-  //      if (!vol_->writeBlock(block, src)) goto writeErrorReturn;
-  //      src += 512;
-  //    } else {
-  //      if (blockOffset == 0 && curPosition_ >= fileSize_) {
-  //        // start of new block don't need to read into cache
-  //        if (!SdVolume::cacheFlush()) goto writeErrorReturn;
-  //        SdVolume::cacheBlockNumber_ = block;
-  //        SdVolume::cacheSetDirty();
-  //      } else {
-  //        // rewrite part of block
-  //        if (!SdVolume::cacheRawBlock(block, SdVolume::CACHE_FOR_WRITE)) {
-  //          goto writeErrorReturn;
-  //        }
-  //      }
-  //      uint8_t* dst = SdVolume::cacheBuffer_.data + blockOffset;
-  //      uint8_t* end = dst + n;
-  //      while (dst != end) *dst++ = *src++;
-  //    }
-  //    nToWrite -= n;
-  //    curPosition_ += n;
-  //  }
-  //  if (curPosition_ > fileSize_) {
-  //    // update fileSize and insure sync will update dir entry
-  //    fileSize_ = curPosition_;
-  //    flags_ |= F_FILE_DIR_DIRTY;
-  //  } else if (dateTime_ && nbyte) {
-  //    // insure sync will update modified date and time
-  //    flags_ |= F_FILE_DIR_DIRTY;
-  //  }
-  //
-  //  if (flags_ & O_SYNC) {
-  //    if (!sync()) goto writeErrorReturn;
-  //  }
-  //  return nbyte;
-  //
-  // writeErrorReturn:
-  //  // return for write error
-  //  //writeError = true;
-  //  setWriteError();
-  //  return 0;
-  //}
+  //size_t write(const void* buf, uint16_t nbyte);
+  size_t write(const void* buf, uint16_t nbyte) {
+    // convert void* to uint8_t*  -  must be before goto statements
+    const char* src = reinterpret_cast<const char*>(buf);
+  
+    // number of bytes left to write  -  must be before goto statements
+    uint16_t nToWrite = nbyte;
+  
+    // error if not a normal file or is read-only
+    if (!isFile() || !(flags_ & O_WRITE)) goto writeErrorReturn;
+  
+    // seek to end of file if append flag
+    if ((flags_ & O_APPEND) && curPosition_ != fileSize_) {
+      if (!seekEnd()) goto writeErrorReturn;
+    }
+  
+    while (nToWrite > 0) {
+      uint8_t blockOfCluster = vol_->blockOfCluster(curPosition_);
+      uint16_t blockOffset = curPosition_ & 0X1FF;
+      if (blockOfCluster == 0 && blockOffset == 0) {
+        // start of new cluster
+        if (curCluster_ == 0) {
+          if (firstCluster_ == 0) {
+            // allocate first cluster of file
+            if (!addCluster()) goto writeErrorReturn;
+          } else {
+            curCluster_ = firstCluster_;
+          }
+        } else {
+          uint32_t next;
+          if (!vol_->fatGet(curCluster_, &next)) return false;
+          if (vol_->isEOC(next)) {
+            // add cluster if at end of chain
+            if (!addCluster()) goto writeErrorReturn;
+          } else {
+            curCluster_ = next;
+          }
+        }
+      }
+      // max space in block
+      uint16_t n = 512 - blockOffset;
+  
+      // lesser of space and amount to write
+      if (n > nToWrite) n = nToWrite;
+  
+      // block for data write
+      uint32_t block = vol_->clusterStartBlock(curCluster_) + blockOfCluster;
+      //if (n == 512) {
+      //  // full block - don't need to use cache
+      //  // invalidate cache if block is in cache
+      //  if (SdVolume::cacheBlockNumber_ == block) {
+      //    SdVolume::cacheBlockNumber_ = 0XFFFFFFFF;
+      //  }
+      //  if (!vol_->writeBlock(block, src)) goto writeErrorReturn;
+      //  src += 512;
+      //} else 
+      {
+        //if (blockOffset == 0 && curPosition_ >= fileSize_) {
+        //  // start of new block don't need to read into cache
+        //  if (!SdVolume::cacheFlush()) goto writeErrorReturn;
+        //  SdVolume::cacheBlockNumber_ = block;
+        //  SdVolume::cacheSetDirty();
+        //} else {
+          // rewrite part of block
+          //if (!SdVolume::cacheRawBlock(block, SdVolume::CACHE_FOR_WRITE)) {
+          if (!vol_->cacheRawBlock(block, CACHE_FOR_WRITE, &cacheBuffer_, false, false)) {
+            goto writeErrorReturn;
+          }
+        //}
+        char* dst = (char*)(((int)cacheBuffer_->cacheBuffer.data) + blockOffset);
+        char* end = dst + n;
+        while (dst != end) *dst++ = *src++;
+      }
+      nToWrite -= n;
+      curPosition_ += n;
+    }
+    fileSize_ = curPosition_;
+    flags_ |= F_FILE_DIR_DIRTY;
+
+    if (flags_ & O_SYNC) {
+      if (!sync()) goto writeErrorReturn;
+    }
+    return nbyte;
+  
+   writeErrorReturn:
+    // return for write error
+    //writeError = true;
+    //setWriteError();
+    return 0;
+  }
   size_t write(const char* str);
   //size_t write(const char* str) {
   //  return write(str, strlen(str));

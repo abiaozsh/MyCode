@@ -53,6 +53,7 @@ namespace WindowsFormsApplication1
 			this.button10.Enabled = true;
 			this.textBox3.Enabled = true;
 			this.button7.Enabled = true;
+			this.button15.Enabled = true;
 			loadSym();
 		}
 		private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -157,8 +158,12 @@ namespace WindowsFormsApplication1
 			sb.Append("  halt_uart:");
 			portWrite((byte)(0x15), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0])); halt_uart = temp[0];
 
+
 			sb.Append("  waitRequest:");
 			portWrite((byte)(0x16), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
+
+			sb.Append("  irq_req:");
+			portWrite((byte)(0x17), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0])); 
 
 			sb.Append("  debugin:");
 			portWrite((byte)(0x64), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getBin8(temp[0]));
@@ -1075,15 +1080,40 @@ struct dir_t {//directoryEntry
 
 		private void button15_Click(object sender, EventArgs e)
 		{
-			portWrite((byte)(0x01), 1);
-			for (int j = 0; j < 768; j++)
+			//portWrite((byte)(0x01), 1);
+			//for (int j = 0; j < 768; j++)
+			//{
+			//	for (int i = 0; i < 1024; i += 2)
+			//	{
+			//		setmem((uint)(0x00200000 + i * 2 + j * 2048), 0);//2M
+			//	}
+			//	this.Text = "" + j;
+			//}
+			String s = "车";
+			byte[] a = System.Text.Encoding.GetEncoding("GB2312").GetBytes(s);
+			int i = a[0] - 0xa0;
+			int j = a[1] - 0xa0;
+
+			FileStream fs = new FileStream(@"D:\fpgaproj\hzk\HZK16", FileMode.Open, FileAccess.Read);
+			Bitmap bmp = new Bitmap(16, 16);
+			fs.Seek((94 * (i - 1) + (j - 1)) * 32, SeekOrigin.Begin);
+			byte[] mat = new byte[32];
+			fs.Read(mat,0,32);
+			for (j = 0; j < 16; j++)
 			{
-				for (int i = 0; i < 1024; i += 2)
+				for (i = 0; i < 16; i++)
 				{
-					setmem((uint)(0x00200000 + i * 2 + j * 2048), 0);//2M
+					if ((mat[j * 2 + i / 8] & (0x80 >> (i & 7))) != 0)
+					{/*测试为1的位则显示*/
+						bmp.SetPixel(i , j, Color.White);
+					}
+					else {
+						bmp.SetPixel(i , j, Color.Black);
+					}
 				}
-				this.Text = "" + j;
 			}
+			bmp.Save(@"D:\fpgaproj\hzk\tmp.bmp");
+			fs.Close();
 
 		}
 

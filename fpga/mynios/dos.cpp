@@ -3,6 +3,7 @@
 
 #include "inc/io.h"
 #include "inc/system.h"
+#include "inc/system.cpp"
 #include "inc/uart.cpp"
 #include "inc/print.cpp"
 #include "inc/spi.cpp"
@@ -40,82 +41,12 @@ void initDisk(Sd2Card** sdcard,int cardidx, SdVolume** sdvolumes, int* totalVolu
 }
 
 
-short* imgArr;
-
-int drawImg(int blockx, int blocky, int block){
-  int basex = 100;
-  int basey = 100;
-  int blockbase = block*20*20;
-  for(int j=0;j<20;j++){
-    for(int i=0;i<20;i++){
-      int x = basex + blockx * 20 + i;
-      int y = basey + blocky * 20 + j;
-      ((short*)(0x200000))[x+y*1024] = imgArr[blockbase+i+j*20];//at 2Mbyte
-    }
-  }
-}
-
-int loadImg(SdFile* file, SdVolume* currVolume, char* filename, char* arr){
-  int res = file->open(currVolume->root, filename, O_READ);
-  if(res){
-    print("open ok\r\n");
-    print(filename);
-    print("\r\n");
-    printInt(file->fileSize_);print("\r\n");
-    for(int i=0;i<file->fileSize_;i++){
-      arr[i] = file->read();
-    }
-  }else{
-    print("open ng\r\n");
-    printInt(file->fileError);print("\r\n");
-  }
-}
-
-/*
-int p1(int v1){
-  print("a");
-  printInt(v1);
-}
-
-int p2(int v1){
-  print("b");
-  printInt(v1);
-}
-
-typedef int (*PF)(int);
-PF getFunc(int val){
-  if(val==1){
-    return p1;
-  }
-  
-  if(val==2){
-    return p2;
-  }
-}
-  
-  int (*proc1)(int);
-
-  proc1 = getFunc(1);
-  
-  proc1(1);
-  
-  proc1 = getFunc(2);
-  
-  proc1(1);
-*/
-
 int main(){
 
   malloc_index = 0;
-  imgArr = (short*)malloc(20*20*16*2);
 
-  
-  //base + clr
-  IOWR(VGA, VGA_BASE, 1024);//1024=2Mbyte
-  for(int i=0;i<0x80000;i++){
-    ((int*)(0x200000))[i] = 0;//at 2Mbyte
-  }
-  
+  screenInit(1024);
+
   Sd2Card* sdcard = (Sd2Card*)malloc(sizeof(Sd2Card));//at8M
   SdVolume* sdvolume = (SdVolume*)malloc(sizeof(SdVolume));//at8M~
   sdvolume->root = (SdFile*)malloc(sizeof(SdFile));//at8M~
@@ -128,14 +59,14 @@ int main(){
   int totalVolume = 0;
   SdVolume* currVolume;
   print("Hello from My DOS\r\n");
-  printInt(SdVolume::arrayaa[2]);
+  //printInt(SdVolume::arrayaa[2]);
   if(false){
   initDisk(sdcards, 0, sdvolumes, &totalVolume);
   initDisk(sdcards, 1, sdvolumes, &totalVolume);
   initDisk(sdcards, 2, sdvolumes, &totalVolume);
   }
-  sdvolumes[1]->arraybb[2] = 12;
-  printInt(sdvolumes[1]->arraybb[2]);
+  //sdvolumes[1]->arraybb[2] = 12;
+  //printInt(sdvolumes[1]->arraybb[2]);
 
   int res;
   if(false){
@@ -154,11 +85,6 @@ int main(){
   
   SdFile* file = (SdFile*)malloc(sizeof(SdFile));//at8M~
   
-//sd卡提速：
-//spi提速
-//fat表缓存
-//清理 readBlock 512 readData
-screenInit();
 
   while(1){
     
@@ -225,9 +151,46 @@ screenInit();
       }else{
         print("mkdir ng\r\n");
       }
-
     }
-    
+    if(equal(str,"del",-1)){
+      print("name?\r\n");
+      char filename[12];
+      scan(filename,-1,-1);
+      res = file->del(currVolume->root, filename);
+      if(res){
+        print("del ok\r\n");
+      }else{
+        print("del ng\r\n");
+      }
+    }
+
+    if(equal(str,"write",-1)){
+      print("filename?\r\n");
+      char filename[12];
+      scan(filename,-1,-1);
+      res = file->open(currVolume->root, filename, O_CREAT | O_WRITE | O_APPEND);
+      if(res){
+        print("open ok\r\n");
+        while(1){
+          int val = uart_read();
+          file->write(val);
+          if(val==0){
+            break;
+          }
+        }
+        res = file->close();
+        currVolume->root->sync();
+        if(res){
+          print("close ok\r\n");
+        }else{
+          print("close ng\r\n");
+        }
+      }else{
+        print("open ng\r\n");
+        printInt(file->fileError);print("\r\n");
+      }
+    }
+
     if(equal(str,"print",-1)){
       print("which file?\r\n");
       char filename[12];
@@ -264,69 +227,6 @@ screenInit();
         print("open ng\r\n");
         printInt(file->fileError);print("\r\n");
       }
-    }
-    
-    if(equal(str,"base",-1)){
-      print("base?\r\n");
-      int base = scanInt();
-      IOWR(VGA, VGA_BASE, base);//1024=2Mbyte
-      print("done\r\n");
-    }
-    
-    
-    if(equal(str,"draw1f",-1)){
-      for(int i=0;i<64;i++){
-        ((short*)(0x200000))[i+64*1024] = 0xFFFF;//at 2Mbyte
-      }
-      flushCache(&(((short*)(0x200000))[0+64*1024]));
-      print("done\r\n");
-    }
-    if(equal(str,"draw1",-1)){
-      for(int i=0;i<64;i++){
-        ((short*)(0x200000))[i+64*1024] = 0xFFFF;//at 2Mbyte
-      }
-      print("done\r\n");
-    }
-    if(equal(str,"draw0f",-1)){
-      for(int i=0;i<64;i++){
-        ((short*)(0x200000))[i+64*1024] = 0;//at 2Mbyte
-      }
-      flushCache(&(((short*)(0x200000))[0+64*1024]));
-      print("done\r\n");
-    }
-    if(equal(str,"draw0",-1)){
-      for(int i=0;i<64;i++){
-        ((short*)(0x200000))[i+64*1024] = 0;//at 2Mbyte
-      }
-      print("done\r\n");
-    }
-
-    if(equal(str,"loadimg",-1)){
-      loadImg(file, currVolume, "0.img", (char*)(&imgArr[0]));
-      loadImg(file, currVolume, "1.img", (char*)(&imgArr[1*20*20]));
-      loadImg(file, currVolume, "2.img", (char*)(&imgArr[2*20*20]));
-    }
-    
-
-    if(equal(str,"draw",-1)){
-      print("blockx?\r\n");
-      int blockx = scanInt();
-      print("blocky?\r\n");
-      int blocky = scanInt();
-      print("block?\r\n");
-      int block = scanInt();
-
-      drawImg(blockx, blocky, block);
-
-      
-      //for(int j=0;j<768;j++){
-      //  for(int i=0;i<1024;i++){
-      //    if(i==j){
-      //      ((short*)(0x200000))[i+j*1024] = 0xFFFF;//at 2Mbyte
-      //    }
-      //  }
-      //}
-      print("done\r\n");
     }
     
     if(equal(str,"clr",-1)){

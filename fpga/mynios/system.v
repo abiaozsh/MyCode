@@ -89,10 +89,6 @@ module system (
   assign debug32 = mycpu_debug32;
   wire [31:0] sdrambus_debug32;
 
-  
-  
-  
-  
   wire [7:0]  mycpu_debug8;
   wire [31:0]  mycpu_debug32;
   wire [31:0] avm_m0_address;
@@ -100,9 +96,10 @@ module system (
   wire        avm_m0_write;
   wire [31:0] avm_m0_writedata;
   wire [ 3:0] avm_m0_byteenable;
-  mycpu mycpu_0 (
+  mycpu mycpu_0
+    (
     .clk                (clk),                       //       clock.clk
-		.clk_50M            (clk_50M),
+    .clk_50M            (clk_50M),
 
     .reset_n            (reset_n), //       reset.reset_n
     .avm_m0_address     (avm_m0_address),              //          m0.address
@@ -112,14 +109,14 @@ module system (
     .avm_m0_writedata   (avm_m0_writedata),            //            .writedata
     .avm_m0_byteenable  (avm_m0_byteenable),           //            .byteenable
     .avm_m0_waitrequest (avm_m0_waitrequest),          //            .waitrequest
-    .inr_irq0_irq       (inr_irq0_irq),                //        irq0.irq
-
+    .irq_req            (irq_req),                //        irq0.irq
+    
     .uart_txd           (mycpu_uart_txd),                  // conduit_end.export
     .uart_rxd           (mycpu_uart_rxd),                  //            .export
     .debug8             (mycpu_debug8),                    //            .export
     .debug32            (mycpu_debug32),                    //            .export
       
-    .debugin8            (sdrambus_debug8    ),
+    .debugin8           (sdrambus_debug8    ),
     .cache_life0    (cache_life0   ),
     .cache_life1    (cache_life1   ),
     .cache_life2    (cache_life2   ),
@@ -133,10 +130,11 @@ module system (
   );
   reg [31:0] avm_m0_readdata;
   reg        avm_m0_waitrequest;
-  reg [31:0] inr_irq0_irq;
   always @ (*) begin
     if         (sdrambus_cs )begin avm_m0_waitrequest <= sdrambus_waitrequest ; avm_m0_readdata <= sdrambus_readdata ;//TODO
     end else if(mainSRAM_cs )begin avm_m0_waitrequest <= mainSRAM_waitrequest ; avm_m0_readdata <= mainSRAM_readdata ;
+    end else if(cacheCtrl_cs)begin avm_m0_waitrequest <= 0                    ; avm_m0_readdata <= 0                 ;
+    end else if(irq_Ctrl_cs )begin avm_m0_waitrequest <= 0                    ; avm_m0_readdata <= irq_Ctrl_readdata ;
     end else if(mytimer_cs  )begin avm_m0_waitrequest <= mytimer_waitrequest  ; avm_m0_readdata <= mytimer_readdata  ;
     end else if(myuart_cs   )begin avm_m0_waitrequest <= myuart_waitrequest   ; avm_m0_readdata <= myuart_readdata   ;
     end else if(softspi_cs  )begin avm_m0_waitrequest <= softspi_waitrequest  ; avm_m0_readdata <= softspi_readdata  ;
@@ -148,6 +146,15 @@ module system (
     end else                 begin avm_m0_waitrequest <= 0;                     avm_m0_readdata <= 0;
     end
   end
+  
+  
+  
+  
+  
+  
+  
+  
+  
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   
   
@@ -177,8 +184,8 @@ module system (
   wire sdrambus_waitrequest;
   sdrambusvga sdrambusvga_inst (
     .clk                (clk),                       //       clock.clk
-		.clk_100m           (clk_100m),
-		.clk_100m_shift     (clk_100m_shift),
+    .clk_100m           (clk_100m),
+    .clk_100m_shift     (clk_100m_shift),
     .reset_n            (reset_n), //       reset.reset_n
     .avs_s0_address     (sdrambus_address ),
     .avs_s0_read        (sdrambus_read ),
@@ -229,36 +236,6 @@ module system (
   wire   sdrambus_read  = sdrambus_cs ? avm_m0_read  : 1'b0;
   wire   sdrambus_write = sdrambus_cs ? avm_m0_write : 1'b0;
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  assign debug8[0] = flush_cache;//mouse_send_req_buff;
-  //assign debug8[1] = mbitpos[1];//mouse_send_ack;
-  //assign debug8[2] = mbitpos[2];//mouse_read_req_buff;
-  //assign debug8[3] = mbitpos[3];//mouse_read_ack;
-  //assign debug8[4] = send_err;
-  //assign debug8[5] = read_err;
-  //assign debug8[7:6] = mouse_send_state;
-
-  wire cacheCtl_cs = avm_m0_address[31:16] == 16'h0205;
-  reg              flush_cache;
-  reg   [14:0]     flush_page;
-  always@(posedge clk or negedge reset_n) begin
-    if(!reset_n) begin
-      flush_cache <= 0;
-      flush_page <= 0;
-    end else begin
-      if(cacheCtl_cs && avm_m0_write)begin
-        if         (avm_m0_address[15:2]==0)begin
-          flush_cache <= avm_m0_writedata[31];
-          flush_page = avm_m0_writedata[14:0];
-        end else if(avm_m0_address[15:2]==1)begin
-        end
-      end
-    end
-  end
-
-  
-  //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  
-  
   
   
   //512dword = 2048byte
@@ -297,10 +274,71 @@ end
   wire [8:0] mainSRAM_address = avm_m0_address[10:2];//~[8:0]
   
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  assign debug8[0] = flush_cache;//mouse_send_req_buff;
+  //assign debug8[1] = mbitpos[1];//mouse_send_ack;
+  //assign debug8[2] = mbitpos[2];//mouse_read_req_buff;
+  //assign debug8[3] = mbitpos[3];//mouse_read_ack;
+  //assign debug8[4] = send_err;
+  //assign debug8[5] = read_err;
+  //assign debug8[7:6] = mouse_send_state;
+
+  wire cacheCtrl_cs = avm_m0_address[31:16] == 16'h0201;
+  reg              flush_cache;
+  reg   [14:0]     flush_page;
+  always@(posedge clk or negedge reset_n) begin
+    if(!reset_n) begin
+      flush_cache <= 0;
+      flush_page <= 0;
+    end else begin
+      if(cacheCtrl_cs && avm_m0_write)begin
+        if         (avm_m0_address[15:2]==0)begin
+          flush_cache <= avm_m0_writedata[31];
+          flush_page = avm_m0_writedata[14:0];
+        end else if(avm_m0_address[15:2]==1)begin
+        end
+      end
+    end
+  end
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  wire irq_Ctrl_cs = avm_m0_address[31:16] == 16'h0202;
+
+  wire irq_req = irq_num!=0;
+  reg [31:0] irq_num;
+  wire [31:0] irq_Ctrl_readdata = irq_num;
+
+  wire myuart_irq_req;
+  reg  myuart_irq_ack;
+
+  always@(posedge clk or negedge reset_n) begin
+    if(!reset_n) begin
+      irq_num <= 0;
+      myuart_irq_ack <= 0;
+    end else begin
+      if(irq_Ctrl_cs && avm_m0_write)begin
+        if         (avm_m0_address[15:2]==0)begin
+          irq_num <= irq_num & (~avm_m0_writedata);
+        end else if(avm_m0_address[15:2]==1)begin
+        end
+      end
+      
+      if(myuart_irq_req && !myuart_irq_ack)begin
+        irq_num[0] <= 1;
+        myuart_irq_ack <= 1;
+      end
+      if(!myuart_irq_req && myuart_irq_ack)begin
+        myuart_irq_ack <= 0;
+      end
+      
+    end
+  end
+  
+  
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   
   
-  wire mytimer_cs = avm_m0_address[31:16] == 16'h0201;
+  wire mytimer_cs = avm_m0_address[31:16] == 16'h0203;
 
   wire [31:0] mytimer_readdata;
   wire        mytimer_waitrequest;
@@ -328,7 +366,7 @@ end
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   
-  wire myuart_cs = avm_m0_address[31:16] == 16'h0202;
+  wire myuart_cs = avm_m0_address[31:16] == 16'h0204;
 
   wire [31:0] myuart_readdata;
   wire        myuart_waitrequest;
@@ -343,6 +381,9 @@ end
     .avs_s0_writedata   (avm_m0_writedata ),
     .avs_s0_waitrequest (myuart_waitrequest ),
     .avs_s0_byteenable  (avm_m0_byteenable ),
+    .irq_req            (myuart_irq_req),       //  irq0.irq
+    .irq_ack            (myuart_irq_ack),
+
     
     .uart_rxd           (myuart_rxd),
     .uart_txd           (myuart_txd)
@@ -359,7 +400,7 @@ end
 
   
   
-  wire softspi_cs = avm_m0_address[31:16] == 16'h0203;
+  wire softspi_cs = avm_m0_address[31:16] == 16'h0205;
 
   wire [31:0] softspi_readdata;
   wire        softspi_waitrequest;
@@ -389,7 +430,7 @@ end
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  wire vga_cs = avm_m0_address[31:16] == 16'h0204;
+  wire vga_cs = avm_m0_address[31:16] == 16'h0206;
   reg [1:0] vga_mode;
   reg blockvga;
   //read_line_base_addr
@@ -443,7 +484,7 @@ end
     assign key_data   = 1'bz;
     assign key_clk    = 1'bz;
 
-  wire mykeyb_cs = avm_m0_address[31:16] == 16'h0206;
+  wire mykeyb_cs = avm_m0_address[31:16] == 16'h0207;
   
   reg [15:0] timer_key;
   reg [3:0] bitpos;
@@ -505,7 +546,7 @@ end
   assign mouse_data = mouse_data_reg ? 1'bz : 1'b0;
   assign mouse_clk  = mouse_clk_reg  ? 1'bz : 1'b0;
   
-  wire mymouse_cs = avm_m0_address[31:16] == 16'h0207;
+  wire mymouse_cs = avm_m0_address[31:16] == 16'h0208;
 
   reg mouse_data_reg;
   reg mouse_clk_reg;

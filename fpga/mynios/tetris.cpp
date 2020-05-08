@@ -1,5 +1,6 @@
 #include "inc/io.h"
 #include "inc/system.h"
+#include "inc/system.cpp"
 #include "inc/uart.cpp"
 #include "inc/print.cpp"
 #include "inc/spi.cpp"
@@ -68,7 +69,7 @@ class Tetris {
   //  return *rnd7;
 	//};
   
-  int (*CallBack_DrawNextShape)(Tetris*);
+  //int (*CallBack_DrawNextShape)(Tetris*);
 	//int CallBack_DrawNextShape() {
   //  call GUI
 	//},
@@ -204,7 +205,6 @@ class Tetris {
 		NowDirectionNo = 0;
 		PosY = 19;
 		PosX = 3;
-		CallBack_DrawNextShape(this);
 	};
   
 	int private_Clear() {
@@ -224,6 +224,8 @@ int CallBack_GetRandom() {
   return rnd7;//0~6
 };
 
+int currBuff;
+int buffAddr;
 int drawImg(int blockx, int blocky, short* block, int isNext){
   int basex = 100;
   int basey = 100;
@@ -234,31 +236,21 @@ int drawImg(int blockx, int blocky, short* block, int isNext){
     for(int i=0;i<20;i++){
       int x = basex + blockx * 20 + i;
       int y = basey + blocky * 20 + j;
-      ((short*)(0x200000))[x+y*1024] = block[i+j*20];//at 2Mbyte
+      ((short*)(buffAddr))[x+y*1024] = block[i+j*20];//at 2Mbyte
     }
   }
 }
 
 
-int CallBack_DrawNextShape(Tetris* tetris) {
-  for (int i = 0; i < 4; i++) {
-    for (int j = 0; j < 4; j++) {
-      //ImgNext[j][i].src = "0.bmp";
-      drawImg(i,j,&(imgArr[0*20*20]), true);
-    }
-  }
-  for (int idx = 0; idx < 4; idx++) {
-    int block = tetris->Public_GetBlock(tetris->NextShapeNo, 0, idx);
-    int i = tetris->Public_GetBlockXout;
-    int j = tetris->Public_GetBlockYout;
-    //ImgNext[j][i].src = block + ".bmp";
-    drawImg(i,j,&(imgArr[block*20*20]), true);
-  }
-};
-
-
 
 void DrawBoard() {
+  if(currBuff==0){
+    buffAddr = 0x400000;
+    currBuff = 1;
+  }else{
+    buffAddr = 0x800000;
+    currBuff = 0;
+  }
   for (int j = 0; j < 20; j++) {
     for (int i = 0; i < 10; i++) {
       //ImgBoard[j][i].src = Tetris.Board[i * 20 + 19 - j] + ".bmp";
@@ -274,6 +266,25 @@ void DrawBoard() {
 		//ImgBoard[y][x].src = block + ".bmp";
     drawImg(x,y,&(imgArr[block*20*20]), false);
 	}
+  
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      //ImgNext[j][i].src = "0.bmp";
+      drawImg(i,j,&(imgArr[0*20*20]), true);
+    }
+  }
+  for (int idx = 0; idx < 4; idx++) {
+    int block = tetris->Public_GetBlock(tetris->NextShapeNo, 0, idx);
+    int i = tetris->Public_GetBlockXout;
+    int j = tetris->Public_GetBlockYout;
+    //ImgNext[j][i].src = block + ".bmp";
+    drawImg(i,j,&(imgArr[block*20*20]), true);
+  }
+  if(currBuff){
+    IOWR(VGA, VGA_BASE, 1024);
+  }else{
+    IOWR(VGA, VGA_BASE, 2048);
+  }
 }
 
 void timing() {
@@ -377,7 +388,8 @@ int main()
     loadImg(file, sdvolume, "14.img", (char*)(&imgArr[14*20*20]));
     loadImg(file, sdvolume, "15.img", (char*)(&imgArr[15*20*20]));
     
-    screenInit();
+    screenInit(1024);
+    screenInit(2048);
 
     tetris->Public_Init();
     DrawBoard();

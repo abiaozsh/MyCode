@@ -274,7 +274,7 @@ namespace WindowsFormsApplication1
 			this.trackBar1.Maximum = 8192;
 			this.trackBar1.Name = "trackBar1";
 			this.trackBar1.Orientation = System.Windows.Forms.Orientation.Vertical;
-			this.trackBar1.Size = new System.Drawing.Size(42, 758);
+			this.trackBar1.Size = new System.Drawing.Size(45, 758);
 			this.trackBar1.TabIndex = 34;
 			this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
 			// 
@@ -316,7 +316,7 @@ namespace WindowsFormsApplication1
 			this.button15.Name = "button15";
 			this.button15.Size = new System.Drawing.Size(49, 23);
 			this.button15.TabIndex = 37;
-			this.button15.Text = "clear0";
+			this.button15.Text = "font";
 			this.button15.UseVisualStyleBackColor = true;
 			this.button15.Click += new System.EventHandler(this.button15_Click);
 			// 

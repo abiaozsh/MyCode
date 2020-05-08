@@ -10,8 +10,9 @@ module myuart (
 		input  [31:0] avs_s0_writedata,   //      .writedata
 		output        avs_s0_waitrequest, //      .waitrequest
 		input  [3:0]  avs_s0_byteenable,    //      .readdata
-		output        ins_irq0_irq,       //  irq0.irq
-
+		output   reg  irq_req,       //  irq0.irq
+    input         irq_ack,
+    
 		input     uart_rxd,
 		output    uart_txd
 
@@ -21,8 +22,6 @@ module myuart (
 
 	assign avs_s0_readdata = avs_s0_address == 0 ? ({23'b0,rec_flg,rec_data}) : ({23'b0,uart_busy,8'b0});
 
-	assign ins_irq0_irq = 1'b0;
-
   reg rec_flg;
   reg [7:0] rec_data;
 	wire uart_busy = uart_send_req && !uart_send_ack;
@@ -31,6 +30,7 @@ module myuart (
     if (!reset_n) begin
       rec_flg <= 0;
 			uart_send_req <= 0;
+      irq_req <= 0;
     end else begin
       uart_rec_req_buff <= uart_rec_req;
     
@@ -39,11 +39,16 @@ module myuart (
       end
     
       if(uart_rec_req_buff && !uart_rec_ack)begin
+        irq_req <= 1;
         rec_flg <= 1;
         rec_data <= uart_data_out;
 				uart_rec_ack <= 1;
       end
-			
+      
+			if(irq_ack)begin
+        irq_req <= 0;
+      end
+      
       if(!uart_rec_req_buff && uart_rec_ack)begin
 				uart_rec_ack <= 0;
       end

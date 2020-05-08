@@ -21,7 +21,7 @@ module mycpu (
     output wire [31:0] avm_m0_writedata     ,   //      .writedata
     output wire [3:0]  avm_m0_byteenable    ,    //      .readdata
     input  wire        avm_m0_waitrequest   , //      .waitrequest
-    input  wire [31:0] inr_irq0_irq,        //  irq0.irq
+    input  wire        irq_req,
     
     input wire          uart_rxd,
     output wire         uart_txd,
@@ -120,6 +120,8 @@ reg halt_uart;
 reg [15:0] accessTime;
 
 `define QUICKREG true
+
+
 reg uart_send;
 reg uart_send_ack_buff;
 always @(posedge clk or negedge reset_n) begin
@@ -135,14 +137,14 @@ always @(posedge clk or negedge reset_n) begin
     debug_reset_n<=1;
     debug_byteenable <= 4'b1111;
     accessTime <= 0;
-		uart_send_ack_buff<=0;
+    uart_send_ack_buff<=0;
   end else begin
     uart_send_ack_buff <= uart_send_ack;
 
-		if(uart_send_ack_buff)begin
-			uart_send<=0;
-		end
-		
+    if(uart_send_ack_buff)begin
+      uart_send<=0;
+    end
+
     if(command_done)begin
       if          (command == 8'h00) begin 
         command_done<=0;
@@ -159,7 +161,7 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h04) begin uart_send<=1; uart_data_in<=accessTime[ 7: 0]; command_done<=1;
       end else if (command == 8'h05) begin uart_send<=1; uart_data_in<=accessTime[15: 8]; command_done<=1;
 
-			end else if (command == 8'h06) begin uart_send<=1; uart_data_in<=data; command_done<=1;
+      end else if (command == 8'h06) begin uart_send<=1; uart_data_in<=data; command_done<=1;
 
       end else if (command == 8'h10) begin uart_send<=1; uart_data_in<=debug_data[ 7: 0]; command_done<=1;
       end else if (command == 8'h11) begin uart_send<=1; uart_data_in<=debug_data[15: 8]; command_done<=1;
@@ -169,6 +171,7 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h14) begin uart_send<=1; uart_data_in<=halt_cpu; command_done<=1;
       end else if (command == 8'h15) begin uart_send<=1; uart_data_in<=halt_uart; command_done<=1;
       end else if (command == 8'h16) begin uart_send<=1; uart_data_in<=avm_m0_waitrequest; command_done<=1;
+      end else if (command == 8'h17) begin uart_send<=1; uart_data_in<={3'b0,irq_enable,3'b0,irq_req}; command_done<=1;
       end else if (command == 8'h18) begin uart_send<=1; uart_data_in<=cmd; command_done<=1;
       end else if (command == 8'h19) begin uart_send<=1; uart_data_in<=Rtype; command_done<=1;
       
@@ -344,6 +347,8 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   reg [ 2:0] fetch_step;
   reg        debug_step_buff;
   reg        halt_accept;
+  reg        irq_req_buff;
+  reg        irq_req_buff2;
   always @(posedge clk or negedge cpu_reset_n) begin
     if (!cpu_reset_n) begin
       cycle<=0;
@@ -357,6 +362,8 @@ wire cpu_reset_n = reset_n && debug_reset_n;
       regWrite <= 0;
       `endif
       
+      irq_req_buff = irq_req;
+
       if(cycle==0)begin
         if         (fetch_step==0)begin
           if(halt)begin
@@ -364,25 +371,46 @@ wire cpu_reset_n = reset_n && debug_reset_n;
           end else begin
             halt_accept <= 0;
             fetch_step <= 1;
-            fetch_read <= 1;
+
+            if(irq_req_buff && irq_enable)begin
+              irq_req_buff2 <= 1;
+            end else begin
+              irq_req_buff2 <= 0;
+              fetch_read <= 1;
+            end
+
           end
         `ifdef QUICKREG
         end else if(fetch_step==1)begin
-          if(!avm_m0_waitrequest)begin
-            latch_readdata <= avm_m0_readdata;
-            regfileA <= regfile[avm_m0_readdata[31:27]];//regA
-            regfileB <= regfile[avm_m0_readdata[26:22]];
-            fetch_read <= 0;
+          
+          if(irq_req_buff2)begin
+            latch_readdata = {26'b0,6'h2A};//callirq
             fetch_step <= 0;
             cycle<=1;
+          end else begin
+            if(!avm_m0_waitrequest)begin
+              latch_readdata <= avm_m0_readdata;
+              regfileA <= regfile[avm_m0_readdata[31:27]];//regA
+              regfileB <= regfile[avm_m0_readdata[26:22]];
+              fetch_read <= 0;
+              fetch_step <= 0;
+              cycle<=1;
+            end
           end
+          
         `else
         end else if(fetch_step==1)begin
-          if(!avm_m0_waitrequest)begin
-            latch_readdata <= avm_m0_readdata;
-            regAddr <= avm_m0_readdata[31:27];//regA
-            fetch_read <= 0;
-            fetch_step <= 2;
+          if(irq_req_buff2)begin
+            latch_readdata = {26'b0,6'h2A};//callirq
+            fetch_step <= 0;
+            cycle<=1;
+          end else begin
+            if(!avm_m0_waitrequest)begin
+              latch_readdata <= avm_m0_readdata;
+              regAddr <= avm_m0_readdata[31:27];//regA
+              fetch_read <= 0;
+              fetch_step <= 2;
+            end
           end
         end else if(fetch_step==2)begin
           regAddr <= regB;
@@ -491,7 +519,7 @@ wire cpu_reset_n = reset_n && debug_reset_n;
     .distance ( shiftDistance ),
     .result ( shiftResultArithmetic )
   );
-  shiftRotate	shiftRotate_inst (
+  shiftRotate shiftRotate_inst (
     .data ( shiftDataIn ),
     .direction ( shiftDirection ),
     .distance ( shiftDistance ),
@@ -534,6 +562,8 @@ wire cpu_reset_n = reset_n && debug_reset_n;
 
 parameter MUL_DIV_DELAY = 5;
   
+  reg irq_enable;
+  reg [31:0] irq_addr;
   reg [7:0] exec_cnt;
   //assign debug32 = dsAddr;
   always @(posedge clk or negedge cpu_reset_n) begin
@@ -550,6 +580,9 @@ parameter MUL_DIV_DELAY = 5;
       exec_step<=0;
        
       halt_cpu<=0;
+      
+      irq_enable<=0;
+      irq_addr<=0;
     end else begin
       if(cycle==1 && cmd_ack==0)begin
         regResultB <= 0;
@@ -562,14 +595,25 @@ parameter MUL_DIV_DELAY = 5;
           
           //call sym                     @          22 @                      2 @  26 @          011010      0x1A
           if         (cmd==6'h1A)begin//ok
-            pc <= {IMM26,2'b00};
+            pc <= {pc[31:28],IMM26,2'b00};
             //regfile[31] <= nextpc; code is 31
             regResult <= nextpc;
             regResultRA <= 1;
             cmd_ack <= 1;
+          
+          //call IRQ
+          end else if(cmd==6'h2A)begin//ok
+            pc <= irq_addr;
+            //regfile[31] <= nextpc; code is 31
+            regResult <= pc;
+            irq_enable <= 0;
+            regResultRA <= 1;
+            cmd_ack <= 1;
+
+            
           //jmpi sym                     @          21 @                      2 @  10 @          001010      0x0A
           end else if(cmd==6'h0A)begin//ok
-            pc <= {IMM26,2'b00};
+            pc <= {pc[31:28],IMM26,2'b00};
             cmd_ack <= 1;
           //hlt                          @           0 @                      1 @   2 @ extends
           end else if(cmd==6'd2)begin//ok
@@ -916,7 +960,11 @@ parameter MUL_DIV_DELAY = 5;
           if         (cmd==6'd5)begin
             pc <= regfileA;//regA == 31
             cmd_ack <= 1;
-            
+          //reti                         @           1 @                      1 @  21 @          000101      0x3A,0x15
+          end else if(cmd==6'h15)begin//ok
+            pc <= regfileA;
+            irq_enable <= 1;
+            cmd_ack <= 1;
             
           //stoff reg                    @          50 @                      1 @  10 @          001010      0x3A,0x0A*
           end else if(cmd==6'h0A)begin//ok
@@ -1078,6 +1126,13 @@ parameter MUL_DIV_DELAY = 5;
               pc <= nextpc;
               cmd_ack <= 1;
             end
+
+          //setirq reg, reg, ins         @          40 @                      1 @  34 @          100010      0x3A,0x22* ins=0,1
+          end else if(cmd==6'h22)begin//ok
+            irq_enable <= IMM5[0];//rB ← rA & (0x0000 : IMM16)
+            irq_addr <= regfileA;
+            pc <= nextpc;
+            cmd_ack <= 1;
 
 
 
