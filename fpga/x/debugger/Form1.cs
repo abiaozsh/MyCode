@@ -115,14 +115,11 @@ namespace WindowsFormsApplication1
 			sb.Append("\r\n c3_p0_rd_overflow:"); portWrite((byte)(0x37), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
 			sb.Append("\r\n c3_p0_rd_error   :"); portWrite((byte)(0x38), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
 
-			sb.Append("\r\n debug31 0   :"); portWrite((byte)(0x39), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
-			sb.Append("\r\n debug31 1   :"); portWrite((byte)(0x3A), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
-			sb.Append("\r\n debug31 2   :"); portWrite((byte)(0x3B), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
-			sb.Append("\r\n debug31 3   :"); portWrite((byte)(0x3C), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
-
-
-
-
+			portWrite((byte)(0x39), 0);
+			sb.Append("\r\n debug31 0   :"); portWrite((byte)(0x10), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
+			sb.Append("\r\n debug31 1   :"); portWrite((byte)(0x11), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
+			sb.Append("\r\n debug31 2   :"); portWrite((byte)(0x12), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
+			sb.Append("\r\n debug31 3   :"); portWrite((byte)(0x13), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
 
 
 			this.textBox4.Text = sb.ToString();
@@ -142,22 +139,15 @@ namespace WindowsFormsApplication1
 
 		private void button9_Click(object sender, EventArgs e)
 		{
-			Bitmap b = (Bitmap)Bitmap.FromFile("E:\\test.bmp");
-
-			for (uint j = 0; j < 768; j++)
-			{
-				for (uint i = 0; i < 1024; i += 2)
-				{
-					uint c = getpixel(b.GetPixel((int)i, (int)j));
-					uint c2 = getpixel(b.GetPixel((int)(i + 1), (int)j));
-					setmem(j * 2048 + i *2, c + (c2 << 16));
-				}
-			}
+			portWrite((byte)(0x61), (byte)0x00);
+			getStatus();
 		}
 
 		private void button11_Click(object sender, EventArgs e)
 		{
-			portWrite((byte)(0x61), (byte)0x00);
+			//portWrite((byte)(0x30), 0);
+			portWrite((byte)(0x28), (byte)int.Parse(this.textBox3.Text));
+			portWrite((byte)(0x60), (byte)0x00);
 			getStatus();
 		}
 
@@ -356,10 +346,20 @@ namespace WindowsFormsApplication1
 
 		private void button8_Click(object sender, EventArgs e)
 		{
+			Bitmap b = (Bitmap)Bitmap.FromFile("E:\\test.bmp");
+
+			for (uint j = 0; j < 768; j++)
+			{
+				for (uint i = 0; i < 1024; i += 2)
+				{
+					uint c = getpixel(b.GetPixel((int)i, (int)j));
+					uint c2 = getpixel(b.GetPixel((int)(i + 1), (int)j));
+					setmem(j * 2048 + i * 2, c + (c2 << 16));
+				}
+				this.Text = "" + j;
+			}
 
 
-			portWrite((byte)(0x30), 0);
-			portWrite((byte)(0x31), (byte)int.Parse(this.textBox3.Text));
 		}
 
 		private void button10_Click(object sender, EventArgs e)
