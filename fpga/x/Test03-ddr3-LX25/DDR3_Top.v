@@ -198,13 +198,15 @@ wire          c3_p1_cmd_full;
 wire          c3_p1_cmd_rw;
 wire [5:0]    c3_p1_cmd_bl;
 wire [29:0]   c3_p1_cmd_byte_addr;
-wire          c3_p1_wr_en;
+wire          c3_p1_wr_en=0;
 wire          c3_p1_wr_full;
 wire [3:0]    c3_p1_wr_mask;
 wire [31:0]   c3_p1_wr_data;
 wire          c3_p1_rd_en;
 wire [31:0]   c3_p1_rd_data;
 wire          c3_p1_rd_empty;
+wire          c3_p1_rd_full;
+wire          c3_p1_rd_overflow;
 
 
 
@@ -308,10 +310,10 @@ u_ddr3_mig (
   .c3_p1_rd_clk                           (clk_100m),
   .c3_p1_rd_en                            (c3_p1_rd_en),
   .c3_p1_rd_data                          (c3_p1_rd_data),
-  //.c3_p1_rd_full                          (mcb3_rd_full),
-  .c3_p1_rd_empty                         (c3_p1_rd_empty)
+  .c3_p1_rd_full                          (c3_p1_rd_full),
+  .c3_p1_rd_empty                         (c3_p1_rd_empty),
   //.c3_p1_rd_count                         (mcb3_rd_count),
-  //.c3_p1_rd_overflow                      (mcb3_rd_overflow),
+  .c3_p1_rd_overflow                      (c3_p1_rd_overflow)
   //.c3_p1_rd_error                         (mcb3_rd_error),
 
    
@@ -479,8 +481,8 @@ wire tx0;
 
 wire [7:0] vga_debug8;
 
-assign B10 = vga_debug8[0];
-assign C9  = vga_debug8[1];
+assign B10 = c3_p1_rd_full;//vga_debug8[0];
+assign C9  = c3_p1_rd_overflow;//vga_debug8[1];
 assign B8  = vga_debug8[2];
 assign C7  = vga_debug8[3];
 assign B6  = vga_debug8[4];
@@ -488,6 +490,8 @@ assign B5  = vga_debug8[5];
 assign E10 = vga_debug8[6];
 assign E11 = vga_debug8[7];
 
+//wire          c3_p1_rd_full;
+//wire          c3_p1_rd_overflow;
 
 wire [7:0] debug8;
 wire [31:0] debug32;

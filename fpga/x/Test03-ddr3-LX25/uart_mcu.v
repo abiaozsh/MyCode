@@ -167,10 +167,7 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h37) begin uart_send<=1; uart_data_in<=c3_p0_rd_overflow; command_done<=1;
       end else if (command == 8'h38) begin uart_send<=1; uart_data_in<=c3_p0_rd_error   ; command_done<=1;
 
-      end else if (command == 8'h39) begin uart_send<=1; uart_data_in<=debugin32[ 7: 0]   ; command_done<=1;
-      end else if (command == 8'h3A) begin uart_send<=1; uart_data_in<=debugin32[15: 8]   ; command_done<=1;
-      end else if (command == 8'h3B) begin uart_send<=1; uart_data_in<=debugin32[23:16]   ; command_done<=1;
-      end else if (command == 8'h3C) begin uart_send<=1; uart_data_in<=debugin32[31:24]   ; command_done<=1;
+      end else if (command == 8'h39) begin dataToPC<=debugin32; command_done<=1;
 
 
       //ddr read

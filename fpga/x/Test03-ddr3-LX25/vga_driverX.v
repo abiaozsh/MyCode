@@ -123,7 +123,7 @@ assign debug32[15:0] = cmd_count;
 assign debug32[31:16] = read_count;
 
 reg read_phase;//0: read/write low, 1: write high
-wire ok_to_send_cmd = cmd_count!=512 && !c3_p1_cmd_full && curr_read_count!=7;//cmd_count++
+wire ok_to_send_cmd = cmd_count!=512 && !c3_p1_cmd_full && curr_read_count!=8;//cmd_count++
 wire ok_to_read_data = !c3_p1_rd_empty && read_phase==0;//read_count++
 always@(posedge sys_clk or negedge sys_rst_n) begin // sdram 主控
   if(!sys_rst_n) begin
@@ -190,7 +190,7 @@ always@(posedge sys_clk or negedge sys_rst_n) begin // sdram 主控
         curr_read_count <= curr_read_count-1'b1;
       end
       
-      if(cmd_count==512&& read_count==1024)begin
+      if(cmd_count==512 && read_count==1024)begin
         cmd_count<=0;
         read_count<=0;
         curr_read_count<=0;
@@ -198,6 +198,12 @@ always@(posedge sys_clk or negedge sys_rst_n) begin // sdram 主控
       end
     end
     
+    if(!read_line_req_buff && !read_line_ack)begin
+        cmd_count<=0;
+        read_count<=0;
+        curr_read_count<=0;
+    end
+
     if(!read_line_req_buff && read_line_ack)begin
       read_line_ack <= 0;
     end
@@ -333,19 +339,20 @@ always @(posedge vga_clk or negedge sys_rst_n) begin
         h_active <= 1;
         if(v_active_ram)begin
           read_line_A_B<=read_line_addr[0];
-        end
-        if(!blockvga)begin
-          read_line_req<=1;
+          if(!blockvga)begin
+            read_line_req<=1;
+          end
         end
 
       end
 		
-      if(read_line_ack)begin
-        read_line_req <= 0;
-      end
+      //if(read_line_ack)begin
+      //  read_line_req <= 0;
+      //end
 		
       if(cnt_h == h_end)begin
         h_active <= 0;
+        read_line_req<=0;
       end
       
       if(cnt_v == v_start)begin
