@@ -106,7 +106,7 @@ buff1024x16  buffReadB (
 //    c3_p1_rd_data,
 //    c3_p1_rd_empty,
 
-reg [3:0] curr_read_count;
+reg [7:0] curr_read_count;
 reg read_line_req_buff;
 reg read_line_ack;
 reg  [10:0] cmd_count;
@@ -123,20 +123,27 @@ assign debug32[15:0] = cmd_count;
 assign debug32[31:16] = read_count;
 
 reg read_phase;//0: read/write low, 1: write high
-wire ok_to_send_cmd = cmd_count!=512 && !c3_p1_cmd_full && curr_read_count!=8;//cmd_count++
+wire ok_to_send_cmd = cmd_count!=16 && !c3_p1_cmd_full && curr_read_count<32;//cmd_count++
 wire ok_to_read_data = !c3_p1_rd_empty && read_phase==0;//read_count++
 always@(posedge sys_clk or negedge sys_rst_n) begin // sdram 主控
   if(!sys_rst_n) begin
-   
-    read_line_req_buff <= 0;
+    c3_p1_cmd_bl<=0;
+    c3_p1_rd_en <= 0;
+    c3_p1_cmd_en <= 0;
+    c3_p1_cmd_byte_addr <= 0;
+    c3_p1_cmd_rw <= 1;
     
+    read_line_req_buff <= 0;
     read_line_ack <= 0;
+    
     cmd_count <= 0;
     read_count <= 0;
     
     curr_read_count <= 0;
-    c3_p1_rd_en <= 0;
     read_phase <= 0;
+    buffAB_wrdata <= 0;
+    buffA_wren <= 0;
+    buffB_wren <= 0;
   end else begin
     read_line_req_buff <= read_line_req;
         
@@ -147,8 +154,8 @@ always@(posedge sys_clk or negedge sys_rst_n) begin // sdram 主控
     if(read_line_req_buff && !read_line_ack)begin
       if(ok_to_send_cmd)begin
         cmd_count<=cmd_count+1'b1;
-        c3_p1_cmd_byte_addr <= {read_line_addr,cmd_count[8:0],2'b0};
-        c3_p1_cmd_bl <= 0;
+        c3_p1_cmd_byte_addr <= {read_line_addr,cmd_count[3:0],7'b0};
+        c3_p1_cmd_bl <= 31;
         c3_p1_cmd_en <= 1;
         c3_p1_cmd_rw <= 1;
       end else begin
@@ -183,14 +190,14 @@ always@(posedge sys_clk or negedge sys_rst_n) begin // sdram 主控
       
       //无法读取，写入cmd
       if(ok_to_send_cmd && !ok_to_read_data)begin
-        curr_read_count <= curr_read_count+1'b1;
+        curr_read_count <= curr_read_count+6'b100000;
       end
       //读取，没有写入cmd
       if(!ok_to_send_cmd && ok_to_read_data)begin
         curr_read_count <= curr_read_count-1'b1;
       end
       
-      if(cmd_count==512 && read_count==1024)begin
+      if(cmd_count==16 && read_count==1024)begin
         cmd_count<=0;
         read_count<=0;
         curr_read_count<=0;
@@ -198,11 +205,11 @@ always@(posedge sys_clk or negedge sys_rst_n) begin // sdram 主控
       end
     end
     
-    if(!read_line_req_buff && !read_line_ack)begin
-        cmd_count<=0;
-        read_count<=0;
-        curr_read_count<=0;
-    end
+    //if(!read_line_req_buff && !read_line_ack)begin
+    //    cmd_count<=0;
+    //    read_count<=0;
+    //    curr_read_count<=0;
+    //end
 
     if(!read_line_req_buff && read_line_ack)begin
       read_line_ack <= 0;
@@ -272,6 +279,7 @@ wire [15:0]  pixel_data = blockvga ? 16'b0 : (read_line_addr[0]?read_pixelB_data
 wire [10:0]temp_read_pixel_addr = (cnt_h-h_start);
 assign read_pixel_addr = temp_read_pixel_addr[9:0];
 
+reg [31:0] vga_error_cnt;
 //80*30
 //128*32:4096byte //BUFFA BUFFB
 //8*16 char table 
@@ -295,6 +303,9 @@ always @(posedge vga_clk or negedge sys_rst_n) begin
       v_end <= V25_SYNC + V25_BACK + V25_DISP;
       blanking <= 0;
       curr_read_line_base_addr <= 0;
+      vga_error_cnt<=0;
+      read_line_req<=0;
+      v_active_ram<=0;
     end else begin
       if(vga_mode[1])begin
         h_total <= H65_TOTAL;
@@ -346,13 +357,16 @@ always @(posedge vga_clk or negedge sys_rst_n) begin
 
       end
 		
-      //if(read_line_ack)begin
-      //  read_line_req <= 0;
-      //end
+      if(read_line_ack)begin
+        read_line_req <= 0;
+      end
 		
       if(cnt_h == h_end)begin
         h_active <= 0;
-        read_line_req<=0;
+        if(read_line_req)begin
+          vga_error_cnt<=vga_error_cnt+1'b1;
+          read_line_req<=0;
+        end
       end
       
       if(cnt_v == v_start)begin

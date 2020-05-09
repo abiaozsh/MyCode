@@ -137,18 +137,32 @@ namespace WindowsFormsApplication1
 			return val;
 		}
 
-		private void button9_Click(object sender, EventArgs e)
-		{
-			portWrite((byte)(0x61), (byte)0x00);
-			getStatus();
-		}
 
 		private void button11_Click(object sender, EventArgs e)
 		{
 			//portWrite((byte)(0x30), 0);
-			portWrite((byte)(0x28), (byte)int.Parse(this.textBox3.Text));
-			portWrite((byte)(0x60), (byte)0x00);
-			getStatus();
+			portWrite((byte)(0x64), (byte)int.Parse(this.textBox3.Text));
+			byte[] temp;
+			temp = readFromPort(1);
+			if (temp[0] != 123)
+			{
+				//throw new Exception("err");
+			}
+			//portWrite((byte)(0x64), (byte)0x00);
+			//getStatus();
+		}
+		private void button9_Click(object sender, EventArgs e)
+		{
+		Random r = new Random();
+		setmem(0,(uint)r.Next());
+			portWrite((byte)(0x65), (byte)0x00);
+			byte[] temp;
+			temp = readFromPort(1);
+			if (temp[0] != 123)
+			{
+				//throw new Exception("err");
+			}
+			//getStatus();
 		}
 
 		private void textBox4_TextChanged(object sender, EventArgs e)

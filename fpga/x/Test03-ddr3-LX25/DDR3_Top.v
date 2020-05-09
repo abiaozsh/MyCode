@@ -186,11 +186,15 @@ wire [5:0]    c3_p0_cmd_bl;
 wire [29:0]   c3_p0_cmd_byte_addr;
 wire          c3_p0_wr_en;
 wire          c3_p0_wr_full;
+wire          c3_p0_wr_empty;
 wire [3:0]    c3_p0_wr_mask;
 wire [31:0]   c3_p0_wr_data;
 wire          c3_p0_rd_en;
 wire [31:0]   c3_p0_rd_data;
 wire          c3_p0_rd_empty;
+wire[6:0]		  c3_p0_rd_count;
+wire				  c3_p0_rd_overflow;
+wire				  c3_p0_rd_error;
 
 
 wire          c3_p1_cmd_en;
@@ -276,7 +280,7 @@ u_ddr3_mig (
   .c3_p0_wr_mask                          (c3_p0_wr_mask),
   .c3_p0_wr_data                          (c3_p0_wr_data),
   .c3_p0_wr_full                          (c3_p0_wr_full),
-  //.c3_p0_wr_empty                         (mcb3_wr_empty),
+  .c3_p0_wr_empty                         (c3_p0_wr_empty),
   //.c3_p0_wr_count                         (mcb3_wr_count),
   //.c3_p0_wr_underrun                      (mcb3_wr_underrun),
   //.c3_p0_wr_error                         (mcb3_wr_error),
@@ -285,9 +289,9 @@ u_ddr3_mig (
   .c3_p0_rd_data                          (c3_p0_rd_data),
   //.c3_p0_rd_full                          (mcb3_rd_full),
   .c3_p0_rd_empty                         (c3_p0_rd_empty),
-  //.c3_p0_rd_count                         (mcb3_rd_count),
-  //.c3_p0_rd_overflow                      (mcb3_rd_overflow),
-  //.c3_p0_rd_error                         (mcb3_rd_error),
+  .c3_p0_rd_count                         (c3_p0_rd_count),
+  .c3_p0_rd_overflow                      (c3_p0_rd_overflow),
+  .c3_p0_rd_error                         (c3_p0_rd_error),
 
 
 
@@ -515,6 +519,7 @@ uart_mcu uart_mcu_inst(
                                 
 .c3_p0_wr_en(c3_p0_wr_en),                    //output reg 
 .c3_p0_wr_full(c3_p0_wr_full),
+.c3_p0_wr_empty(c3_p0_wr_empty),
 .c3_p0_wr_mask(c3_p0_wr_mask),            //[3:0] output reg 
 .c3_p0_wr_data(c3_p0_wr_data),           //[31:0] output reg 
                                 
