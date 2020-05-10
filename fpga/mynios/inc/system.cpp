@@ -3,6 +3,10 @@ void abort (void)
   while(1);
 }
 
+void jmp(int val){
+  __asm__ __volatile__("jmp %[input1]"::[input1]"r"(val));
+}
+
 void setOff(int val){
   __asm__ __volatile__("stoff %[input1]"::[input1]"r"(val));
 }

@@ -58,7 +58,7 @@ int main(){
   SdVolume* sdvolumes[26];
   int totalVolume = 0;
   SdVolume* currVolume;
-  print("Hello from My DOS\r\n");
+  print("Hello from My DOS 1.0\r\n");
   //printInt(SdVolume::arrayaa[2]);
   if(false){
   initDisk(sdcards, 0, sdvolumes, &totalVolume);
@@ -92,11 +92,12 @@ int main(){
     int res;
     print("cmd?\r\n");
     scan(str,-1,-1);
-    printScreen(str[0]);
+    print(str);
     
     if(equal(str,"i",-1)){
       print("which sd?\r\n");
       int cs = scanInt();
+      printInt(cs);
       res = sdcard->init(cs);
       if(res){
         print("sd ok\r\n");
@@ -104,6 +105,7 @@ int main(){
         sdcard->printType();
         print("which partition?\r\n");
         int part = scanInt();
+        printInt(part);
         res = sdvolume->init(sdcard, part);
         if(res){
           print("volume ok\r\n");
@@ -161,6 +163,14 @@ int main(){
         print("del ok\r\n");
       }else{
         print("del ng\r\n");
+        print("file             ");printInt((int)file);print("\r\n");
+        print("currVolume->root ");printInt((int)currVolume->root);print("\r\n");
+        
+        print("file->delError             ");printInt(file->delError);print("\r\n");
+        print("file->removeError          ");printInt(file->removeError);print("\r\n");
+        print("file->truncateError        ");printInt(file->truncateError);print("\r\n");
+        print("file->vol_->freeChainError ");printInt(file->vol_->freeChainError);print("\r\n");
+        print("file->vol_->fatPutError    ");printInt(file->vol_->fatPutError);print("\r\n");
       }
     }
 
@@ -195,6 +205,7 @@ int main(){
       print("which file?\r\n");
       char filename[12];
       scan(filename,-1,-1);
+      print("[");print(filename);print("]");
       res = file->open(currVolume->root, filename, O_READ);
       if(res){
         print("open ok\r\n");
@@ -229,11 +240,67 @@ int main(){
       }
     }
     
-    if(equal(str,"clr",-1)){
-      for(int i=0;i<0x80000;i++){
-        ((int*)(0x200000))[i] = 0;//at 2Mbyte
+    if(equal(str,"upload",-1)){
+      print("filename?\r\n");
+      char filename[12];
+      scan(filename,-1,-1);
+      print(filename);
+      print("length?\r\n");
+      int len = scanInt();
+      printInt(len);
+      res = file->open(currVolume->root, filename, O_CREAT | O_WRITE | O_APPEND);
+      if(res){
+        print("open ok\r\n");
+        for(int i=0;i<len;i++){
+          int val = uart_read();
+          file->write(val);
+          uart_write(val);
+        }
+        res = file->close();
+        currVolume->root->sync();
+        if(res){
+          print("close ok\r\n");
+        }else{
+          print("close ng\r\n");
+        }
+      }else{
+        print("open ng\r\n");
+        printInt(file->fileError);print("\r\n");
       }
-      print("done\r\n");
+    }
+
+    if(equal(str,"run",-1)){
+      print("which file?\r\n");
+      char filename[12];
+      scan(filename,-1,-1);
+      res = file->open(currVolume->root, filename, O_READ);
+      if(res){
+        print("open ok:");printInt(file->fileSize_);print("\r\n");
+        
+        char* prog_data = (char*)malloc(file->fileSize_);
+        
+        //int (*prog)(void) = (int(*)(void))prog_data;
+
+        for(int i=0;i<file->fileSize_;i++){
+          int val = file->read();
+          prog_data[i] = val;
+          if(i & 511==0){
+            print("loading:");printInt(i);print("\r\n");
+          }
+        }
+
+        setOff((int)prog_data);
+        jmp(0x80000000);
+        
+      }else{
+        print("open ng\r\n");
+        printInt(file->fileError);print("\r\n");
+      }
+    }
+
+    
+    if(equal(str,"clr",-1)){
+      screenInit(1024);
     }
 
   }

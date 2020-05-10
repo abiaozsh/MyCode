@@ -162,11 +162,11 @@ int printScreen(int chr){
     flushCache(addr);
   }
   x++;
-  if(x==80 || (chr == 0x0D)){
+  if(x==80 || (chr == 0x0A)){
     x=0;
     y++;
-    if(y==30){
-      y==0;
+    if(y>=30){
+      y=0;
     }
     
     for(int j=0;j<16;j++){

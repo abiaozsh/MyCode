@@ -141,10 +141,8 @@ namespace WindowsFormsApplication1
 
 
 			StringBuilder sb = new StringBuilder();
-			sb.Append("pc:");
-			int pc = getreg(0x43, 0x00, sb);
-			sb.Append("  private_offset:");
-			int private_offset = getreg(0x44, 0, sb);
+			sb.Append("pc:");			int pc = getreg(0x43, 0x00, sb);
+			sb.Append("  private_offset:");getreg(0x44, 0, sb);
 
 			sb.Append("  last cmd:");
 			portWrite((byte)(0x18), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
@@ -242,7 +240,7 @@ namespace WindowsFormsApplication1
 
 
 				sb.AppendLine("stack: ");
-				baseaddr = sp + private_offset;
+				baseaddr = sp;
 				for (int i = -Convert.ToInt32(this.comboBox2.Text) * 4; i < Convert.ToInt32(this.comboBox2.Text) * 4; i += 4)
 				{
 					sb.Append((i == 0 ? "*" : " ") + Util.getHex8((uint)(i + baseaddr)) + ":"); getmem(i + baseaddr, sb); sb.AppendLine();
@@ -253,7 +251,7 @@ namespace WindowsFormsApplication1
 				for (int i = -32; i < 32; i += 4)
 				{
 					StringBuilder sb2 = new StringBuilder();
-					uint code = getmem(pc + private_offset + i, sb2);
+					uint code = getmem(pc + i, sb2);
 					int target = pc + i;
 					string foundsym = Config.getSym(target, syms);
 					string scode = Config.dasm(syms, (uint)code, pc + i, baseaddr);
@@ -261,7 +259,7 @@ namespace WindowsFormsApplication1
 					{
 						sb.AppendLine("----------------------------------------------------------------------------------");
 					}
-					sb.AppendLine((i == 0 ? "*" : " ") + Util.getHex8((uint)(pc + private_offset + i)) + ":" + scode);
+					sb.AppendLine((i == 0 ? "*" : " ") + Util.getHex8((uint)(pc + i)) + ":" + scode);
 					if (i == 0)
 					{
 						sb.AppendLine("----------------------------------------------------------------------------------");

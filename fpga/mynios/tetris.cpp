@@ -342,7 +342,7 @@ int main()
   
   tetris->CallBack_GetRandom = CallBack_GetRandom;
   
-  tetris->CallBack_DrawNextShape = CallBack_DrawNextShape;
+  //tetris->CallBack_DrawNextShape = CallBack_DrawNextShape;
 
   int cs = 1;
   int res = sdcard->init(cs);

@@ -18,7 +18,7 @@ namespace Assembler
 			string fileout;
 			string filetemp;
 			string test = "a";
-			string type = "dos";
+			string type = "app";
 			string fileoutBin;
 			if (args.Length > 0 && !String.IsNullOrEmpty(args[0]))
 			{
@@ -119,12 +119,17 @@ namespace Assembler
 				lines.Add(Line.match("addi sp, sp, %lo(" + sp + ")", null));
 				lines.Add(Line.match("jmpi main", null));
 			}
-			else
+			else if (type == "app")
 			{
-				Console.WriteLine("type=normal");
-				basePos = 0x00000000;
+				Console.WriteLine("type=app");
+				uint h = 0x80000000;
+				basePos = (int)(h);
 				lines.Add(Line.match("call main", null));
 				lines.Add(Line.match("ret", null));
+			}
+			else
+			{
+				throw new Exception();
 			}
 
 			foreach (var lineraw in linesraw)
@@ -314,7 +319,7 @@ namespace Assembler
 								if (ins.txtformat == 15 || ins.txtformat == 20)
 								{
 									ins.IMM16 = found.pos - ins.pos - 4;
-									if (ins.IMM16 > 30000 || ins.IMM16 < -30000)
+									if (ins.IMM16 > 32768 || ins.IMM16 < -30000)
 									{
 										throw new Exception();
 									}
@@ -327,7 +332,7 @@ namespace Assembler
 										temppos += ins.op.symAdj.Value;
 									}
 									ins.IMM16 = procAdj(ins.op, temppos);
-									if (ins.IMM16 > 30000 || ins.IMM16 < -30000)
+									if (ins.IMM16 > 32768 || ins.IMM16 < -30000)
 									{
 										throw new Exception();
 									}

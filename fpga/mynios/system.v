@@ -307,6 +307,9 @@ end
   reg [31:0] irq_num;
   wire [31:0] irq_Ctrl_readdata = irq_num;
 
+  wire mytimer_irq_req;
+  reg  mytimer_irq_req_buff;
+  reg  mytimer_irq_ack;
   wire myuart_irq_req;
   reg  myuart_irq_ack;
 
@@ -321,9 +324,18 @@ end
         end else if(avm_m0_address[15:2]==1)begin
         end
       end
+      mytimer_irq_req_buff = mytimer_irq_req;
       
-      if(myuart_irq_req && !myuart_irq_ack)begin
+      if(mytimer_irq_req_buff && !mytimer_irq_ack)begin
         irq_num[0] <= 1;
+        mytimer_irq_ack <= 1;
+      end
+      if(!mytimer_irq_req_buff && mytimer_irq_ack)begin
+        mytimer_irq_ack <= 0;
+      end
+
+      if(myuart_irq_req && !myuart_irq_ack)begin
+        irq_num[1] <= 1;
         myuart_irq_ack <= 1;
       end
       if(!myuart_irq_req && myuart_irq_ack)begin
@@ -346,18 +358,16 @@ end
     .clk                (clk),                       //       clock.clk
 		.clk_50M            (clk_50M),
     .reset_n            (reset_n), //       reset.reset_n
-    .avs_s0_address     (mytimer_address ),
+    .avs_s0_address     (avm_m0_address ),
     .avs_s0_read        (mytimer_read ),
     .avs_s0_write       (mytimer_write ),
     .avs_s0_readdata    (mytimer_readdata ),
     .avs_s0_writedata   (avm_m0_writedata ),
     .avs_s0_waitrequest (mytimer_waitrequest ),
     .avs_s0_byteenable  (avm_m0_byteenable ),
-    .dummy(dummy)
+    .irq_req            (mytimer_irq_req),       //  irq0.irq
+    .irq_ack            (mytimer_irq_ack)
   );
-  
-  wire    [1:0]  mytimer_address;
-  assign mytimer_address = avm_m0_address[3:2];//~[0]
   
   wire mytimer_read;
   assign mytimer_read = mytimer_cs ? avm_m0_read : 1'b0;

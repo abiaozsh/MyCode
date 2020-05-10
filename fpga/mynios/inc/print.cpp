@@ -9,6 +9,12 @@ int print(const char* str){
   }
 }
 
+int printByte(int val){
+  char* chardata = "0123456789ABCDEF";
+  uart_write(chardata[(val>>4)&0x0F]);
+  uart_write(chardata[(val)&0x0F]);
+}
+
 int print(const char* str, int len){
   int idx = 0;
   int i;
@@ -158,9 +164,15 @@ int scanInt(){
   int j;
   int idx = 0;
   int neg = 0;
+  char v;
+  while(1){
+    v = uart_read();
+    if(v=='-'||(v>='0'&&v<='9')){
+      break;
+    }
+  }
   for(i = 0; i < 10 ; i++)
   {
-    char v = uart_read();
     if(i==0 && v=='-'){
       neg = 1;
     }else{
@@ -169,6 +181,7 @@ int scanInt(){
       }
       buff[idx++] = v;
     }
+    v = uart_read();
   }
   
   int val = 0;
@@ -184,12 +197,6 @@ int scanInt(){
     val=-val;
   }
   return val;
-}
-
-int printByte(int val){
-  char* chardata = "0123456789ABCDEF";
-  uart_write(chardata[(val>>4)&0x0F]);
-  uart_write(chardata[(val)&0x0F]);
 }
 
 int printBin(int data2){

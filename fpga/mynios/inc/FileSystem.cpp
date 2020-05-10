@@ -456,7 +456,7 @@ class SdVolume {
   
   uint8_t cacheFlush(cache_entity* cache) {
     if (cache->cacheDirty) {
-      print("cacheFlush:");printInt(cache->cacheBlockNumber);print("\r\n");
+      //print("cacheFlush:");printInt(cache->cacheBlockNumber);print("\r\n");
       if (!sdCard_->writeBlock(cache->cacheBlockNumber, cache->cacheBuffer.data)) {
         error += 100;
         return false;
@@ -567,27 +567,38 @@ class SdVolume {
     if (!cacheRawBlock(lba, CACHE_FOR_READ, &cacheBuffer_, false, true)) return false;
 
     if (fatType_ == 16) {
-      *next = cacheBuffer_->cacheBuffer.fat16[cluster & 0XFF];
+      *next = cacheBuffer_->cacheBuffer.fat16[cluster & 0XFF] & 0xFFFF;
     } else {
       *next = cacheBuffer_->cacheBuffer.fat32[cluster & 0X7F] & FAT32MASK;
     }
     return true;
   }
 
+  int fatPutError;
   // Store a FAT entry
   uint8_t fatPut(uint32_t cluster, uint32_t next) {
+    fatPutError=0;
     // error if reserved cluster
-    if (cluster < 2) return false;
+    if (cluster < 2) {
+      fatPutError = 1;
+      return false;
+    }
 
     // error if not in FAT
-    if (cluster > (clusterCount_ + 1)) return false;
+    if (cluster > (clusterCount_ + 1)) {
+      fatPutError = 2;
+      return false;
+    }
 
     // calculate block address for entry
     uint32_t lba = fatStartBlock_;
     lba += fatType_ == 16 ? cluster >> 8 : cluster >> 7;
 
     cache_entity* cacheBuffer_;
-    if (!cacheRawBlock(lba, CACHE_FOR_WRITE, &cacheBuffer_, false, true)) return false;
+    if (!cacheRawBlock(lba, CACHE_FOR_WRITE, &cacheBuffer_, false, true)) {
+      fatPutError = 3;
+      return false;
+    }
     
     // store entry
     if (fatType_ == 16) {
@@ -605,17 +616,28 @@ class SdVolume {
   uint8_t fatPutEOC(uint32_t cluster) {
     return fatPut(cluster, 0x0FFFFFFF);
   }
+  
+  int freeChainError;
   // free a cluster chain
   uint8_t freeChain(uint32_t cluster) {
+    freeChainError = 0;
     // clear free cluster location
     allocSearchStart_ = 2;
 
     do {
       uint32_t next;
-      if (!fatGet(cluster, &next)) return false;
+      if (!fatGet(cluster, &next)){
+        freeChainError = 1;
+        return false;
+      }
 
       // free cluster
-      if (!fatPut(cluster, 0)) return false;
+      if (!fatPut(cluster, 0)) {
+        freeChainError = 2;
+        return false;
+      }
+      
+      //print("next:");printInt(next);print("\r\n");
 
       cluster = next;
     } while (!isEOC(cluster));
@@ -868,9 +890,6 @@ class SdFile {
         return false;
       }
       
-      //print(dname,11);
-      //print(p->name, 11);
-      //print("\r\n");
       if (p->name[0] == DIR_NAME_FREE || p->name[0] == DIR_NAME_DELETED) {
         // remember first empty slot
         if (!emptyFound) {
@@ -880,19 +899,30 @@ class SdFile {
         }
         // done if no entries follow
         if (p->name[0] == DIR_NAME_FREE) break;
-      } else if (equal(dname, p->name, 11)) {
-        // don't open existing file if O_CREAT and O_EXCL
-        if ((oflag & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL)) {
-          fileError += 4;
-          return false;
-        }
+      } else {
+        //for(int i=0;i<11;i++){
+        //  printByte(dname[i]);
+        //  printByte(p->name[i]);
+        //}
+        //print(dname,11);
+        //print(p->name, 11);
+        int ret = equal(dname, p->name, 11);
+        //printInt(ret);
+        //print("\r\n");
+        if (ret) {
+          // don't open existing file if O_CREAT and O_EXCL
+          if ((oflag & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL)) {
+            fileError += 4;
+            return false;
+          }
 
-        // open found file
-        if(!openCachedEntry(0XF & index, oflag, dirFile)){
-          fileError += 5;
-          return false;
-        }else{
-          return true;
+          // open found file
+          if(!openCachedEntry(0XF & index, oflag, dirFile)){
+            fileError += 5;
+            return false;
+          }else{
+            return true;
+          }
         }
       }
     }
@@ -1043,7 +1073,7 @@ class SdFile {
     while (true) {
       p = readDirCache();
       if(!p){
-        print("[err");printInt(fileError);print("]\r\n");
+        //print("[err");printInt(fileError);print("]\r\n");
         break;
       }
       // done if past last used entry
@@ -1192,24 +1222,44 @@ class SdFile {
 
 
   int8_t readDir(dir_t* dir);
+  
+  int delError;
   uint8_t del(SdFile* dirFile, const char* fileName) {
-    SdFile file;
-    if (!file.open(dirFile, fileName, O_WRITE)) return false;
-    if(file.isSubDir()){
-      return file.rmDir();
+    delError = 0;
+    if (!open(dirFile, fileName, O_WRITE)) {
+      delError = 1;
+      return false;
+    }
+    if(isSubDir()){
+      if(!rmDir()){
+        delError = 2;
+        return false;
+      }
     }
     else{
-      return file.remove();
+      if(!remove()){
+        delError = 3;
+        return false;
+      }
     }
+    return true;
   }
   
+  int removeError;
   uint8_t remove(void) {
+    removeError = 0;
     // free any clusters - will fail if read-only or directory
-    if (!truncate(0)) return false;
+    if (!truncate(0)) {
+      removeError = 1;
+      return false;
+    }
 
     // cache directory entry
     dir_t* d = cacheDirEntry(CACHE_FOR_WRITE);
-    if (!d) return false;
+    if (!d) {
+      removeError = 2;
+      return false;
+    }
 
     // mark entry deleted
     d->name[0] = DIR_NAME_DELETED;
@@ -1218,7 +1268,12 @@ class SdFile {
     type_ = FAT_FILE_TYPE_CLOSED;
 
     // write entry to SD
-    return vol_->cacheFlush(cacheBuffer_);
+    if(!vol_->cacheFlush(cacheBuffer_)){
+      removeError = 3;
+      return false;
+    }
+    
+    return true;
   }
   
   /** Set the file's current position to zero. */
@@ -1364,12 +1419,20 @@ class SdFile {
  * Reasons for failure include file is read only, file is a directory,
  * \a length is greater than the current file size or an I/O error occurs.
  */
+  int truncateError;
   uint8_t truncate(uint32_t length) {
+    truncateError = 0;
   // error if not a normal file or read-only
-    if (!isFile() || !(flags_ & O_WRITE)) return false;
+    if (!isFile() || !(flags_ & O_WRITE)){
+      truncateError = 1;
+      return false;
+    }
 
     // error if length is greater than current size
-    if (length > fileSize_) return false;
+    if (length > fileSize_){
+      truncateError = 2;
+      return false;
+    }
 
     // fileSize and length are zero - nothing to do
     if (fileSize_ == 0) return true;
@@ -1378,22 +1441,39 @@ class SdFile {
     uint32_t newPos = curPosition_ > length ? length : curPosition_;
 
     // position to last cluster in truncated file
-    if (!seekSet(length)) return false;
+    if (!seekSet(length)) {
+      truncateError = 3;
+      return false;
+    }
 
     if (length == 0) {
       // free all clusters
-      if (!vol_->freeChain(firstCluster_)) return false;
+      //print("this:");printInt((int)this);print("\r\n");
+      //print("firstCluster_:");printInt(firstCluster_);print("\r\n");
+      if (!vol_->freeChain(firstCluster_)) {
+        truncateError = 4;
+        return false;
+      }
       firstCluster_ = 0;
     } else {
       uint32_t toFree;
-      if (!vol_->fatGet(curCluster_, &toFree)) return false;
+      if (!vol_->fatGet(curCluster_, &toFree)){
+        truncateError = 5;
+        return false;
+      }
 
       if (!vol_->isEOC(toFree)) {
         // free extra clusters
-        if (!vol_->freeChain(toFree)) return false;
+        if (!vol_->freeChain(toFree)){
+          truncateError = 6;
+          return false;
+        }
 
         // current cluster is end of chain
-        if (!vol_->fatPutEOC(curCluster_)) return false;
+        if (!vol_->fatPutEOC(curCluster_)){
+          truncateError = 7;
+          return false;
+        }
       }
     }
     fileSize_ = length;
@@ -1401,7 +1481,10 @@ class SdFile {
     // need to update directory entry
     flags_ |= F_FILE_DIR_DIRTY;
 
-    if (!sync()) return false;
+    if (!sync()) {
+      truncateError = 8;
+      return false;
+    }
 
     // set file to correct position
     return seekSet(newPos);
@@ -1597,7 +1680,8 @@ class SdFile {
     //firstCluster_ = (uint32_t)p->firstClusterHigh << 16;
     //firstCluster_ |= p->firstClusterLow;
     firstCluster_ = combineInt(p->firstClusterLow_0, p->firstClusterLow_1, p->firstClusterHigh_0, p->firstClusterHigh_1);
-
+    //print("this:");printInt((int)this);print("\r\n");
+    //print("firstCluster_:");printInt(firstCluster_);print("\r\n");
     // make sure it is a normal file or subdirectory
     //print("dir->attributes:");printInt(p->attributes);print("\r\n");
     //print("dirIndex:");printInt(dirIndex);print("\r\n");
