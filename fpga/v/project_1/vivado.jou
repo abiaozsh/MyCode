@@ -2,16 +2,58 @@
 # Vivado v2018.1 (64-bit)
 # SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018
 # IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018
-# Start of session at: Sat Apr 25 16:31:16 2020
-# Process ID: 14500
+# Start of session at: Fri May  1 15:12:38 2020
+# Process ID: 21232
 # Current directory: E:/MyCode.github/fpga/v/project_1
-# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent15052 E:\MyCode.github\fpga\v\project_1\project_1.xpr
+# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent21700 E:\MyCode.github\fpga\v\project_1\project_1.xpr
 # Log file: E:/MyCode.github/fpga/v/project_1/vivado.log
 # Journal file: E:/MyCode.github/fpga/v/project_1\vivado.jou
 #-----------------------------------------------------------
 start_gui
 open_project E:/MyCode.github/fpga/v/project_1/project_1.xpr
 update_compile_order -fileset sources_1
-update_module_reference design_1_test_0_0
-launch_runs impl_1 -to_step write_bitstream -jobs 2
-wait_on_run impl_1
+launch_sdk -workspace E:/MyCode.github/fpga/v/project_1/project_1.sdk -hwspec E:/MyCode.github/fpga/v/project_1/project_1.sdk/design_1_wrapper.hdf
+open_hw
+connect_hw_server
+disconnect_hw_server localhost:3121
+connect_hw_server
+disconnect_hw_server localhost:3121
+connect_hw_server
+open_hw_target
+set_property PROGRAM.FILE {E:/MyCode.github/fpga/v/project_1/project_1.runs/impl_1/design_1_wrapper.bit} [get_hw_devices xc7z010_1]
+current_hw_device [get_hw_devices xc7z010_1]
+refresh_hw_device -update_hw_probes false [lindex [get_hw_devices xc7z010_1] 0]
+disconnect_hw_server localhost:3121
+connect_hw_server
+disconnect_hw_server localhost:3121
+connect_hw_server
+disconnect_hw_server localhost:3121
+connect_hw_server
+disconnect_hw_server localhost:3121
+connect_hw_server
+disconnect_hw_server localhost:3121
+connect_hw_server
+open_hw_target
+set_property PROGRAM.FILE {E:/MyCode.github/fpga/v/project_1/project_1.runs/impl_1/design_1_wrapper.bit} [get_hw_devices xc7z010_1]
+current_hw_device [get_hw_devices xc7z010_1]
+refresh_hw_device -update_hw_probes false [lindex [get_hw_devices xc7z010_1] 0]
+file copy -force E:/MyCode.github/fpga/v/project_1/project_1.runs/impl_1/design_1_wrapper.sysdef E:/MyCode.github/fpga/v/project_1/project_1.sdk/design_1_wrapper.hdf
+
+set_property PROBES.FILE {} [get_hw_devices xc7z010_1]
+set_property FULL_PROBES.FILE {} [get_hw_devices xc7z010_1]
+set_property PROGRAM.FILE {E:/MyCode.github/fpga/v/project_1/project_1.runs/impl_1/design_1_wrapper.bit} [get_hw_devices xc7z010_1]
+program_hw_devices [get_hw_devices xc7z010_1]
+refresh_hw_device [lindex [get_hw_devices xc7z010_1] 0]
+set_property PROBES.FILE {} [get_hw_devices xc7z010_1]
+set_property FULL_PROBES.FILE {} [get_hw_devices xc7z010_1]
+set_property PROGRAM.FILE {E:/MyCode.github/fpga/v/project_1/project_1.runs/impl_1/design_1_wrapper.bit} [get_hw_devices xc7z010_1]
+program_hw_devices [get_hw_devices xc7z010_1]
+refresh_hw_device [lindex [get_hw_devices xc7z010_1] 0]
+file copy -force E:/MyCode.github/fpga/v/project_1/project_1.runs/impl_1/design_1_wrapper.sysdef E:/MyCode.github/fpga/v/project_1/project_1.sdk/design_1_wrapper.hdf
+
+file copy -force E:/MyCode.github/fpga/v/project_1/project_1.runs/impl_1/design_1_wrapper.sysdef E:/MyCode.github/fpga/v/project_1/project_1.sdk/design_1_wrapper.hdf
+
+file copy -force E:/MyCode.github/fpga/v/project_1/project_1.runs/impl_1/design_1_wrapper.sysdef E:/MyCode.github/fpga/v/project_1/project_1.sdk/design_1_wrapper.hdf
+
+launch_sdk -workspace E:/MyCode.github/fpga/v/project_1/project_1.sdk -hwspec E:/MyCode.github/fpga/v/project_1/project_1.sdk/design_1_wrapper.hdf
+refresh_hw_device [lindex [get_hw_devices xc7z010_1] 0]

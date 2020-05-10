@@ -1,7 +1,0 @@
-//arch = zynq; split = false; format = BIN
-the_ROM_image:
-{
-	[bootloader]E:\vivadoProj\vTestB\project_1\project_1.sdk\fsbl\Debug\fsbl.elf
-	E:\vivadoProj\vTestB\project_1\project_1.sdk\design_1_wrapper_hw_platform_0\design_1_wrapper.bit
-	E:\vivadoProj\vTestB\project_1\project_1.sdk\aaaw\Debug\aaaw.elf
-}

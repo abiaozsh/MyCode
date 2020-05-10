@@ -58,8 +58,10 @@ module design_1_test_0_0 (
   clk,
   led,
   keyin,
-  uart_txd,
-  uart_rxd,
+  uart0_txd,
+  uart0_rxd,
+  uart1_txd,
+  uart1_rxd,
   debug,
   M00_AXI_awaddr,
   M00_AXI_awlen,
@@ -93,8 +95,10 @@ module design_1_test_0_0 (
 input wire clk;
 output wire [3 : 0] led;
 input wire [3 : 0] keyin;
-output wire uart_txd;
-input wire uart_rxd;
+output wire uart0_txd;
+input wire uart0_rxd;
+output wire uart1_txd;
+input wire uart1_rxd;
 output wire [7 : 0] debug;
 (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M00_AXI AWADDR" *)
 output wire [31 : 0] M00_AXI_awaddr;
@@ -157,8 +161,10 @@ output wire M00_AXI_bready;
     .clk(clk),
     .led(led),
     .keyin(keyin),
-    .uart_txd(uart_txd),
-    .uart_rxd(uart_rxd),
+    .uart0_txd(uart0_txd),
+    .uart0_rxd(uart0_rxd),
+    .uart1_txd(uart1_txd),
+    .uart1_rxd(uart1_rxd),
     .debug(debug),
     .M00_AXI_awaddr(M00_AXI_awaddr),
     .M00_AXI_awlen(M00_AXI_awlen),

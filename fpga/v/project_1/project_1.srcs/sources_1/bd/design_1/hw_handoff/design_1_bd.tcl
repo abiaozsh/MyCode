@@ -169,8 +169,10 @@ proc create_root_design { parentCell } {
   set debug [ create_bd_port -dir O -from 7 -to 0 debug ]
   set keyin [ create_bd_port -dir I -from 3 -to 0 keyin ]
   set led [ create_bd_port -dir O -from 3 -to 0 led ]
-  set uart_rxd [ create_bd_port -dir I uart_rxd ]
-  set uart_txd [ create_bd_port -dir O uart_txd ]
+  set uart0_rxd [ create_bd_port -dir I uart0_rxd ]
+  set uart0_txd [ create_bd_port -dir O uart0_txd ]
+  set uart1_rxd [ create_bd_port -dir I uart1_rxd ]
+  set uart1_txd [ create_bd_port -dir O uart1_txd ]
 
   # Create instance: processing_system7_0, and set properties
   set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0 ]
@@ -825,8 +827,10 @@ proc create_root_design { parentCell } {
   connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/S_AXI_GP0_ACLK] [get_bd_pins test_0/clk]
   connect_bd_net -net test_0_debug [get_bd_ports debug] [get_bd_pins test_0/debug]
   connect_bd_net -net test_0_led [get_bd_ports led] [get_bd_pins test_0/led]
-  connect_bd_net -net test_0_uart_txd [get_bd_ports uart_txd] [get_bd_pins test_0/uart_txd]
-  connect_bd_net -net uart_rxd [get_bd_ports uart_rxd] [get_bd_pins test_0/uart_rxd]
+  connect_bd_net -net test_0_uart0_txd [get_bd_ports uart0_txd] [get_bd_pins test_0/uart0_txd]
+  connect_bd_net -net test_0_uart1_txd [get_bd_ports uart1_txd] [get_bd_pins test_0/uart1_txd]
+  connect_bd_net -net uart0_rxd_0_1 [get_bd_ports uart0_rxd] [get_bd_pins test_0/uart0_rxd]
+  connect_bd_net -net uart1_rxd_0_1 [get_bd_ports uart1_rxd] [get_bd_pins test_0/uart1_rxd]
 
   # Create address segments
   create_bd_addr_seg -range 0x10000000 -offset 0x00000000 [get_bd_addr_spaces test_0/M00_AXI] [get_bd_addr_segs processing_system7_0/S_AXI_GP0/GP0_DDR_LOWOCM] SEG_processing_system7_0_GP0_DDR_LOWOCM

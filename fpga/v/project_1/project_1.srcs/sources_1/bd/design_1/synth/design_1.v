@@ -1,7 +1,7 @@
 //Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.
 //--------------------------------------------------------------------------------
 //Tool Version: Vivado v.2018.1 (win64) Build 2188600 Wed Apr  4 18:40:38 MDT 2018
-//Date        : Sat Apr 25 16:32:58 2020
+//Date        : Fri May  1 14:59:54 2020
 //Host        : zsh-PC running 64-bit Service Pack 1  (build 7601)
 //Command     : generate_target design_1.bd
 //Design      : design_1
@@ -35,8 +35,10 @@ module design_1
     debug,
     keyin,
     led,
-    uart_rxd,
-    uart_txd);
+    uart0_rxd,
+    uart0_txd,
+    uart1_rxd,
+    uart1_txd);
   (* X_INTERFACE_INFO = "xilinx.com:interface:ddrx:1.0 DDR_0 ADDR" *) (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME DDR_0, AXI_ARBITRATION_SCHEME TDM, BURST_LENGTH 8, CAN_DEBUG false, CAS_LATENCY 11, CAS_WRITE_LATENCY 11, CS_ENABLED true, DATA_MASK_ENABLED true, DATA_WIDTH 8, MEMORY_TYPE COMPONENTS, MEM_ADDR_MAP ROW_COLUMN_BANK, SLOT Single, TIMEPERIOD_PS 1250" *) inout [14:0]DDR_0_addr;
   (* X_INTERFACE_INFO = "xilinx.com:interface:ddrx:1.0 DDR_0 BA" *) inout [2:0]DDR_0_ba;
   (* X_INTERFACE_INFO = "xilinx.com:interface:ddrx:1.0 DDR_0 CAS_N" *) inout DDR_0_cas_n;
@@ -61,8 +63,10 @@ module design_1
   output [7:0]debug;
   input [3:0]keyin;
   output [3:0]led;
-  input uart_rxd;
-  output uart_txd;
+  input uart0_rxd;
+  output uart0_txd;
+  input uart1_rxd;
+  output uart1_txd;
 
   wire [3:0]keyin_0_1;
   wire [14:0]processing_system7_0_DDR_ADDR;
@@ -114,13 +118,18 @@ module design_1
   wire test_0_M00_AXI_WVALID;
   wire [7:0]test_0_debug;
   wire [3:0]test_0_led;
-  wire test_0_uart_txd;
-  wire uart_rxd;
+  wire test_0_uart0_txd;
+  wire test_0_uart1_txd;
+  wire uart0_rxd_0_1;
+  wire uart1_rxd_0_1;
 
   assign debug[7:0] = test_0_debug;
   assign keyin_0_1 = keyin[3:0];
   assign led[3:0] = test_0_led;
-  assign uart_txd = test_0_uart_txd;
+  assign uart0_rxd_0_1 = uart0_rxd;
+  assign uart0_txd = test_0_uart0_txd;
+  assign uart1_rxd_0_1 = uart1_rxd;
+  assign uart1_txd = test_0_uart1_txd;
   design_1_processing_system7_0_0 processing_system7_0
        (.DDR_Addr(DDR_0_addr[14:0]),
         .DDR_BankAddr(DDR_0_ba[2:0]),
@@ -211,6 +220,8 @@ module design_1
         .debug(test_0_debug),
         .keyin(keyin_0_1),
         .led(test_0_led),
-        .uart_rxd(uart_rxd),
-        .uart_txd(test_0_uart_txd));
+        .uart0_rxd(uart0_rxd_0_1),
+        .uart0_txd(test_0_uart0_txd),
+        .uart1_rxd(uart1_rxd_0_1),
+        .uart1_txd(test_0_uart1_txd));
 endmodule

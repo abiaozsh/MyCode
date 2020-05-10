@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<bd:repository xmlns:bd="http://www.xilinx.com/bd" bd:BoundaryCRC="0xFCE9C7BB25640FC2" bd:device="xc7z010clg400-1" bd:isValidated="true" bd:synthFlowMode="Hierarchical" bd:tool_version="2018.1" bd:top="design_1" bd:version="1.00.a">
+<bd:repository xmlns:bd="http://www.xilinx.com/bd" bd:BoundaryCRC="0x7EC84D9877422766" bd:device="xc7z010clg400-1" bd:isValidated="true" bd:synthFlowMode="Hierarchical" bd:tool_version="2018.1" bd:top="design_1" bd:version="1.00.a">
 
   <spirit:component xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009">
     <spirit:vendor>xilinx.com</spirit:vendor>
@@ -187,13 +187,25 @@
           </spirit:wire>
         </spirit:port>
         <spirit:port>
-          <spirit:name>uart_rxd</spirit:name>
+          <spirit:name>uart0_rxd</spirit:name>
           <spirit:wire>
             <spirit:direction>in</spirit:direction>
           </spirit:wire>
         </spirit:port>
         <spirit:port>
-          <spirit:name>uart_txd</spirit:name>
+          <spirit:name>uart0_txd</spirit:name>
+          <spirit:wire>
+            <spirit:direction>out</spirit:direction>
+          </spirit:wire>
+        </spirit:port>
+        <spirit:port>
+          <spirit:name>uart1_rxd</spirit:name>
+          <spirit:wire>
+            <spirit:direction>in</spirit:direction>
+          </spirit:wire>
+        </spirit:port>
+        <spirit:port>
+          <spirit:name>uart1_txd</spirit:name>
           <spirit:wire>
             <spirit:direction>out</spirit:direction>
           </spirit:wire>
@@ -628,20 +640,30 @@
         <spirit:externalPortReference spirit:portRef="led"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>uart_rxd</spirit:name>
-        <spirit:externalPortReference spirit:portRef="uart_rxd"/>
-        <spirit:internalPortReference spirit:componentRef="test_0" spirit:portRef="uart_rxd"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>test_0_uart_txd</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="test_0" spirit:portRef="uart_txd"/>
-        <spirit:externalPortReference spirit:portRef="uart_txd"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
         <spirit:name>processing_system7_0_FCLK_CLK0</spirit:name>
         <spirit:internalPortReference spirit:componentRef="processing_system7_0" spirit:portRef="FCLK_CLK0"/>
         <spirit:internalPortReference spirit:componentRef="processing_system7_0" spirit:portRef="S_AXI_GP0_ACLK"/>
         <spirit:internalPortReference spirit:componentRef="test_0" spirit:portRef="clk"/>
+      </spirit:adHocConnection>
+      <spirit:adHocConnection>
+        <spirit:name>uart0_rxd_0_1</spirit:name>
+        <spirit:externalPortReference spirit:portRef="uart0_rxd"/>
+        <spirit:internalPortReference spirit:componentRef="test_0" spirit:portRef="uart0_rxd"/>
+      </spirit:adHocConnection>
+      <spirit:adHocConnection>
+        <spirit:name>test_0_uart0_txd</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="test_0" spirit:portRef="uart0_txd"/>
+        <spirit:externalPortReference spirit:portRef="uart0_txd"/>
+      </spirit:adHocConnection>
+      <spirit:adHocConnection>
+        <spirit:name>uart1_rxd_0_1</spirit:name>
+        <spirit:externalPortReference spirit:portRef="uart1_rxd"/>
+        <spirit:internalPortReference spirit:componentRef="test_0" spirit:portRef="uart1_rxd"/>
+      </spirit:adHocConnection>
+      <spirit:adHocConnection>
+        <spirit:name>test_0_uart1_txd</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="test_0" spirit:portRef="uart1_txd"/>
+        <spirit:externalPortReference spirit:portRef="uart1_txd"/>
       </spirit:adHocConnection>
     </spirit:adHocConnections>
     <spirit:hierConnections>

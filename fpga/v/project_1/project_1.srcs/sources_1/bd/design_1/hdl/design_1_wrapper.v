@@ -1,7 +1,7 @@
 //Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.
 //--------------------------------------------------------------------------------
 //Tool Version: Vivado v.2018.1 (win64) Build 2188600 Wed Apr  4 18:40:38 MDT 2018
-//Date        : Sat Apr 25 16:32:58 2020
+//Date        : Fri May  1 14:59:54 2020
 //Host        : zsh-PC running 64-bit Service Pack 1  (build 7601)
 //Command     : generate_target design_1_wrapper.bd
 //Design      : design_1_wrapper
@@ -34,8 +34,10 @@ module design_1_wrapper
     debug,
     keyin,
     led,
-    uart_rxd,
-    uart_txd);
+    uart0_rxd,
+    uart0_txd,
+    uart1_rxd,
+    uart1_txd);
   inout [14:0]DDR_0_addr;
   inout [2:0]DDR_0_ba;
   inout DDR_0_cas_n;
@@ -60,8 +62,10 @@ module design_1_wrapper
   output [7:0]debug;
   input [3:0]keyin;
   output [3:0]led;
-  input uart_rxd;
-  output uart_txd;
+  input uart0_rxd;
+  output uart0_txd;
+  input uart1_rxd;
+  output uart1_txd;
 
   wire [14:0]DDR_0_addr;
   wire [2:0]DDR_0_ba;
@@ -87,8 +91,10 @@ module design_1_wrapper
   wire [7:0]debug;
   wire [3:0]keyin;
   wire [3:0]led;
-  wire uart_rxd;
-  wire uart_txd;
+  wire uart0_rxd;
+  wire uart0_txd;
+  wire uart1_rxd;
+  wire uart1_txd;
 
   design_1 design_1_i
        (.DDR_0_addr(DDR_0_addr),
@@ -115,6 +121,8 @@ module design_1_wrapper
         .debug(debug),
         .keyin(keyin),
         .led(led),
-        .uart_rxd(uart_rxd),
-        .uart_txd(uart_txd));
+        .uart0_rxd(uart0_rxd),
+        .uart0_txd(uart0_txd),
+        .uart1_rxd(uart1_rxd),
+        .uart1_txd(uart1_txd));
 endmodule

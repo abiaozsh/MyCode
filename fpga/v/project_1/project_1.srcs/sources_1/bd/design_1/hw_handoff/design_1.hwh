@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<EDKSYSTEM EDWVERSION="1.2" TIMESTAMP="Sat Apr 25 16:33:14 2020" VIVADOVERSION="2018.1">
+<EDKSYSTEM EDWVERSION="1.2" TIMESTAMP="Fri May  1 14:59:55 2020" VIVADOVERSION="2018.1">
 
   <SYSTEMINFO ARCH="zynq" DEVICE="7z010" NAME="design_1" PACKAGE="clg400" SPEEDGRADE="-1"/>
 
@@ -40,14 +40,24 @@
         <CONNECTION INSTANCE="test_0" PORT="led"/>
       </CONNECTIONS>
     </PORT>
-    <PORT DIR="I" NAME="uart_rxd" SIGIS="undef" SIGNAME="External_Ports_uart_rxd">
+    <PORT DIR="I" NAME="uart0_rxd" SIGIS="undef" SIGNAME="External_Ports_uart0_rxd">
       <CONNECTIONS>
-        <CONNECTION INSTANCE="test_0" PORT="uart_rxd"/>
+        <CONNECTION INSTANCE="test_0" PORT="uart0_rxd"/>
       </CONNECTIONS>
     </PORT>
-    <PORT DIR="O" NAME="uart_txd" SIGIS="undef" SIGNAME="test_0_uart_txd">
+    <PORT DIR="O" NAME="uart0_txd" SIGIS="undef" SIGNAME="test_0_uart0_txd">
       <CONNECTIONS>
-        <CONNECTION INSTANCE="test_0" PORT="uart_txd"/>
+        <CONNECTION INSTANCE="test_0" PORT="uart0_txd"/>
+      </CONNECTIONS>
+    </PORT>
+    <PORT DIR="I" NAME="uart1_rxd" SIGIS="undef" SIGNAME="External_Ports_uart1_rxd">
+      <CONNECTIONS>
+        <CONNECTION INSTANCE="test_0" PORT="uart1_rxd"/>
+      </CONNECTIONS>
+    </PORT>
+    <PORT DIR="O" NAME="uart1_txd" SIGIS="undef" SIGNAME="test_0_uart1_txd">
+      <CONNECTIONS>
+        <CONNECTION INSTANCE="test_0" PORT="uart1_txd"/>
       </CONNECTIONS>
     </PORT>
   </EXTERNALPORTS>
@@ -1365,14 +1375,24 @@
             <CONNECTION INSTANCE="External_Ports" PORT="keyin"/>
           </CONNECTIONS>
         </PORT>
-        <PORT DIR="O" NAME="uart_txd" SIGIS="undef" SIGNAME="test_0_uart_txd">
+        <PORT DIR="O" NAME="uart0_txd" SIGIS="undef" SIGNAME="test_0_uart0_txd">
           <CONNECTIONS>
-            <CONNECTION INSTANCE="External_Ports" PORT="uart_txd"/>
+            <CONNECTION INSTANCE="External_Ports" PORT="uart0_txd"/>
           </CONNECTIONS>
         </PORT>
-        <PORT DIR="I" NAME="uart_rxd" SIGIS="undef" SIGNAME="External_Ports_uart_rxd">
+        <PORT DIR="I" NAME="uart0_rxd" SIGIS="undef" SIGNAME="External_Ports_uart0_rxd">
           <CONNECTIONS>
-            <CONNECTION INSTANCE="External_Ports" PORT="uart_rxd"/>
+            <CONNECTION INSTANCE="External_Ports" PORT="uart0_rxd"/>
+          </CONNECTIONS>
+        </PORT>
+        <PORT DIR="O" NAME="uart1_txd" SIGIS="undef" SIGNAME="test_0_uart1_txd">
+          <CONNECTIONS>
+            <CONNECTION INSTANCE="External_Ports" PORT="uart1_txd"/>
+          </CONNECTIONS>
+        </PORT>
+        <PORT DIR="I" NAME="uart1_rxd" SIGIS="undef" SIGNAME="External_Ports_uart1_rxd">
+          <CONNECTIONS>
+            <CONNECTION INSTANCE="External_Ports" PORT="uart1_rxd"/>
           </CONNECTIONS>
         </PORT>
         <PORT DIR="O" LEFT="7" NAME="debug" RIGHT="0" SIGIS="undef" SIGNAME="test_0_debug">

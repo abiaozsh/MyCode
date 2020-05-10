@@ -3,8 +3,10 @@ module test(
     input clk,
     output [3:0] led,
     input [3:0] keyin,
-    output uart_txd,
-    input uart_rxd,
+    output uart0_txd,
+    input uart0_rxd,
+    output uart1_txd,
+    input uart1_rxd,
     output debug,
     
 output M00_AXI_awaddr,
@@ -116,23 +118,40 @@ output M00_AXI_bready
   
   assign reset_n = keyin[3];
   
-  
-  wire uart_rec;
-  wire [7:0] uart_data_out;
-  reg uart_send;
-  reg [7:0] uart_data_in;
-  uart_hs uart_hs_inst (
+  wire       uart0_rec;
+  wire [7:0] uart0_data_out;
+  reg        uart0_send;
+  reg [7:0]  uart0_data_in;
+  uart_hs uart_hs_inst0 (
     .sys_clk(clk), 
     .sys_rst_n(reset_n),
 
-    .uart_txd(uart_txd),
-    .uart_rxd(uart_rxd),
+    .uart_txd(uart0_txd),
+    .uart_rxd(uart0_rxd),
     
-    .uart_rec(uart_rec),
-    .uart_data_out(uart_data_out),
+    .uart_rec(uart0_rec),
+    .uart_data_out(uart0_data_out),
 
-    .uart_send(uart_send),
-    .uart_data_in(uart_data_in)
+    .uart_send(uart0_send),
+    .uart_data_in(uart0_data_in)
+  );
+  
+  wire       uart1_rec;
+  wire [7:0] uart1_data_out;
+  reg        uart1_send;
+  reg [7:0]  uart1_data_in;
+  uart_hs uart_hs_inst1 (
+    .sys_clk(clk), 
+    .sys_rst_n(reset_n),
+
+    .uart_txd(uart1_txd),
+    .uart_rxd(uart1_rxd),
+    
+    .uart_rec(uart1_rec),
+    .uart_data_out(uart1_data_out),
+
+    .uart_send(uart1_send),
+    .uart_data_in(uart1_data_in)
   );
 
 reg [7:0] command;
@@ -144,16 +163,16 @@ always @(posedge clk or negedge reset_n) begin
     command <= 0;
     data <= 0;
   end else begin
-    if (uart_rec) begin 
+    if (uart0_rec) begin 
       if(data_cmd==0)begin
-        if(uart_data_out!=0)begin
+        if(uart0_data_out!=0)begin
           data_cmd<=1;
-          command_temp<=uart_data_out;
+          command_temp<=uart0_data_out;
         end
       end else begin
         data_cmd <= 0;
         command <= command_temp;
-        data <= uart_data_out;
+        data <= uart0_data_out;
       end
 
     end else begin
@@ -218,7 +237,7 @@ always @(posedge clk or negedge reset_n) begin
     
     M00_AXI_wstrb <= 4'b1111;
   end else begin
-    uart_send<=0;
+    uart0_send<=0;
     
     if(command_done)begin
       if          (command == 8'h00) begin 
@@ -226,12 +245,15 @@ always @(posedge clk or negedge reset_n) begin
       end
     end else begin//command_done==0
       if          (command == 8'h00) begin
-      end else if (command == 8'h01) begin uart_send<=1; uart_data_in<=123; command_done<=1;
+      end else if (command == 8'h01) begin uart0_send<=1; uart0_data_in<=123; command_done<=1;
 
-      end else if (command == 8'h10) begin uart_send<=1; uart_data_in<=data_buff[ 7: 0]; command_done<=1;
-      end else if (command == 8'h11) begin uart_send<=1; uart_data_in<=data_buff[15: 8]; command_done<=1;
-      end else if (command == 8'h12) begin uart_send<=1; uart_data_in<=data_buff[23:16]; command_done<=1;
-      end else if (command == 8'h13) begin uart_send<=1; uart_data_in<=data_buff[31:24]; command_done<=1;
+      end else if (command == 8'h02) begin uart1_send<=1; uart1_data_in<=123; command_done<=1;
+      end else if (command == 8'h03) begin uart1_send<=1; uart1_data_in<=uart1_data_out; command_done<=1;
+
+      end else if (command == 8'h10) begin uart0_send<=1; uart0_data_in<=data_buff[ 7: 0]; command_done<=1;
+      end else if (command == 8'h11) begin uart0_send<=1; uart0_data_in<=data_buff[15: 8]; command_done<=1;
+      end else if (command == 8'h12) begin uart0_send<=1; uart0_data_in<=data_buff[23:16]; command_done<=1;
+      end else if (command == 8'h13) begin uart0_send<=1; uart0_data_in<=data_buff[31:24]; command_done<=1;
       
       end else if (command == 8'h20) begin addr[ 7: 0] <= data; command_done<=1;
       end else if (command == 8'h21) begin addr[15: 8] <= data; command_done<=1;
