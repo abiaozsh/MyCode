@@ -109,6 +109,55 @@ namespace WindowsFormsApplication1
 			sb2 = new StringBuilder();
 		}
 
+		private void button3_Click(object sender, EventArgs e)
+		{
+			FileStream fs = new FileStream("..\\mynios\\a.bin", FileMode.Open, FileAccess.Read);
+			int len = (int)fs.Length;
+
+			foreach (var item in "upload\n")
+			{
+				port.Write(new byte[] { (byte)item }, 0, 1);
+			}
+			Thread.Sleep(1000);
+			Application.DoEvents();
+			foreach (var item in "c.bin\n")
+			{
+				port.Write(new byte[] { (byte)item }, 0, 1);
+			}
+			Thread.Sleep(1000);
+			Application.DoEvents();
+			foreach (var item in len + "\n")
+			{
+				port.Write(new byte[] { (byte)item }, 0, 1);
+			}
+			Thread.Sleep(1000);
+			Application.DoEvents();
+			timer1_Tick(null, null);
+			this.timer1.Enabled=false;
+
+			for (int i = 0; i < len; i++)
+			{
+				int val = fs.ReadByte();
+				port.Write(new byte[] { (byte)val }, 0, 1);
+				char data;
+				while(true){
+					if (fifo.Count > 0) { 
+					data = fifo.Dequeue();
+					break;
+					}
+				}
+				if (data != val)
+				{
+					throw new Exception();
+				}
+				this.Text = "" + i;
+			}
+			this.timer1.Enabled=true;
+
+			MessageBox.Show("ok");
+
+		}
+
 
 	}
 }

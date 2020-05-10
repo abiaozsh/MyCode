@@ -39,6 +39,7 @@ namespace WindowsFormsApplication1
 			this.button2 = new System.Windows.Forms.Button();
 			this.comboBox2 = new System.Windows.Forms.ComboBox();
 			this.label1 = new System.Windows.Forms.Label();
+			this.button3 = new System.Windows.Forms.Button();
 			this.SuspendLayout();
 			// 
 			// button1
@@ -59,7 +60,7 @@ namespace WindowsFormsApplication1
 			this.textBox3.Multiline = true;
 			this.textBox3.Name = "textBox3";
 			this.textBox3.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.textBox3.Size = new System.Drawing.Size(511, 699);
+			this.textBox3.Size = new System.Drawing.Size(511, 108);
 			this.textBox3.TabIndex = 5;
 			// 
 			// textBox4
@@ -71,7 +72,7 @@ namespace WindowsFormsApplication1
 			this.textBox4.Multiline = true;
 			this.textBox4.Name = "textBox4";
 			this.textBox4.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.textBox4.Size = new System.Drawing.Size(638, 699);
+			this.textBox4.Size = new System.Drawing.Size(638, 108);
 			this.textBox4.TabIndex = 8;
 			// 
 			// timer1
@@ -130,11 +131,22 @@ namespace WindowsFormsApplication1
 			this.label1.TabIndex = 21;
 			this.label1.Text = "endwith";
 			// 
+			// button3
+			// 
+			this.button3.Location = new System.Drawing.Point(909, 10);
+			this.button3.Name = "button3";
+			this.button3.Size = new System.Drawing.Size(75, 23);
+			this.button3.TabIndex = 22;
+			this.button3.Text = "upload";
+			this.button3.UseVisualStyleBackColor = true;
+			this.button3.Click += new System.EventHandler(this.button3_Click);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(1180, 752);
+			this.ClientSize = new System.Drawing.Size(1180, 161);
+			this.Controls.Add(this.button3);
 			this.Controls.Add(this.label1);
 			this.Controls.Add(this.comboBox2);
 			this.Controls.Add(this.button2);
@@ -162,6 +174,7 @@ namespace WindowsFormsApplication1
 		private Button button2;
 		private ComboBox comboBox2;
 		private Label label1;
+		private Button button3;
 
 	}
 }
