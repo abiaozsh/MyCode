@@ -15,6 +15,26 @@ int printByte(int val){
   uart_write(chardata[(val)&0x0F]);
 }
 
+int printHex(int val){
+  char* chardata = "0123456789ABCDEF";
+  uart_write(chardata[(val>>28)&0x0F]);
+  uart_write(chardata[(val>>24)&0x0F]);
+  uart_write(chardata[(val>>20)&0x0F]);
+  uart_write(chardata[(val>>16)&0x0F]);
+  uart_write(chardata[(val>>12)&0x0F]);
+  uart_write(chardata[(val>>8)&0x0F]);
+  uart_write(chardata[(val>>4)&0x0F]);
+  uart_write(chardata[(val)&0x0F]);
+}
+
+int printBin(int data2){
+  for(int i=31;i>=0;i--){
+    uart_write((data2>>i)&1?'1':'0'); // Status Byte
+  }
+}
+
+
+
 int print(const char* str, int len){
   int idx = 0;
   int i;
@@ -198,12 +218,4 @@ int scanInt(){
   }
   return val;
 }
-
-int printBin(int data2){
-  for(int i=31;i>=0;i--){
-    uart_write((data2>>i)&1?'1':'0'); // Status Byte
-  }
-}
-
-
 

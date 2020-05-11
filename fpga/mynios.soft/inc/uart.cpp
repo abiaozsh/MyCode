@@ -135,6 +135,7 @@ int char_table[] = {
 int x;
 int y;
 int screen_base;
+int screenInited = 0;
 int screenInit(int screenBase){
   x = 0;
   y = 0;
@@ -143,44 +144,48 @@ int screenInit(int screenBase){
   for(int i=0;i<0x80000;i++){
     ((int*)(screen_base))[i] = 0;//at 2Mbyte
   }
+  screenInited = 1;
 }
 int printScreen(int chr){
-  for(int j=0;j<16;j++){
-    void* addr;
-    for(int i=0;i<8;i++){
-      int a = (chr*4) + (j>>2);
-      int b = ((3-(j&3))<<3)  +  (7-i);
-      //printInt(a);print(" ");
-      //printInt(b);print(" ");
-      int val = char_table[a]>>( b ) & 1;
-      //uart_write('0'+val);print("\r\n");
-      int calc_x = x * 8 + i;
-      int calc_y = y * 16 + j;
-      addr = (void*)(screen_base+(calc_x+calc_y*1024)*2);
-      *((short*)(addr)) = val?0xFFFF:0x0000;//at 2Mbyte
-    }
-    flushCache(addr);
-  }
-  x++;
-  if(x==80 || (chr == 0x0A)){
-    x=0;
-    y++;
-    if(y>=30){
-      y=0;
-    }
-    
+  if(screenInited){
     for(int j=0;j<16;j++){
       void* addr;
-      for(int i=0;i<1024;i++){
+      for(int i=0;i<8;i++){
+        int a = (chr*4) + (j>>2);
+        int b = ((3-(j&3))<<3)  +  (7-i);
+        //printInt(a);print(" ");
+        //printInt(b);print(" ");
+        int val = char_table[a]>>( b ) & 1;
+        //uart_write('0'+val);print("\r\n");
         int calc_x = x * 8 + i;
         int calc_y = y * 16 + j;
         addr = (void*)(screen_base+(calc_x+calc_y*1024)*2);
-        *((short*)(addr)) = 0x0000;//at 2Mbyte
+        *((short*)(addr)) = val?0xFFFF:0x0000;//at 2Mbyte
       }
       flushCache(addr);
     }
-    
+    x++;
+    if(x==80 || (chr == 0x0A)){
+      x=0;
+      y++;
+      if(y>=30){
+        y=0;
+      }
+      
+      for(int j=0;j<16;j++){
+        void* addr;
+        for(int i=0;i<1024;i++){
+          int calc_x = x * 8 + i;
+          int calc_y = y * 16 + j;
+          addr = (void*)(screen_base+(calc_x+calc_y*1024)*2);
+          *((short*)(addr)) = 0x0000;//at 2Mbyte
+        }
+        flushCache(addr);
+      }
+      
+    }
   }
+
 }
 
 

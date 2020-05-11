@@ -118,7 +118,10 @@ int main(){
           }
         }else{
           print("volume ng\r\n");
-          printInt(sdvolume->error);print(",");
+          printInt(sdvolume->initError);print(",");
+          if(sdvolume->initError==4){
+            sdvolume->printErrorSector();
+          }
           //printInt(sdvolume->cacheBlockNumber_);
           //print("[");
           //for(int i=0;i<512;i++){

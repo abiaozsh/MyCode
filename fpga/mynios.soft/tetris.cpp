@@ -166,11 +166,11 @@ class Tetris {
 	};
   
 	int private_getBoard(int x, int y) {
-		return Board[x * 20 + y];
+		return Board[x + y * 10];
 	};
   
 	int private_setBoard(int x, int y, int val) {
-		Board[x * 20 + y] = val;
+		Board[x + y * 10] = val;
 	};
 
 	int Public_GetBlockXout;
@@ -227,50 +227,88 @@ int CallBack_GetRandom() {
 int currBuff;
 int buffAddr;
 int drawImg(int blockx, int blocky, short* block, int isNext){
-  int basex = 100;
+  int basex = 50;
   int basey = 100;
   if(isNext){
-    basex = 500;
+    basex = 200;
   }
+  basex = basex + blockx * 10;
+  basey = basey + blocky * 20;
+  int* src = (int*)block;
   for(int j=0;j<20;j++){
-    for(int i=0;i<20;i++){
-      int x = basex + blockx * 20 + i;
-      int y = basey + blocky * 20 + j;
-      ((short*)(buffAddr))[x+y*1024] = block[i+j*20];//at 2Mbyte
+    int j_temp = j*10;
+    for(int i=0;i<10;i++){
+      int x = basex + i;
+      int y = basey + j;
+      ((int*)(buffAddr))[x+(y<<9)] = src[i+j_temp];//at 2Mbyte
     }
   }
 }
 
 
+int* lastBoard;
+int* currBoard;
+int* lastNext;
+int* currNext;
+void InitBoard() {
+  lastBoard = (int*)malloc(200*4*2);
+  currBoard = (int*)malloc(200*4);
+  
+  lastNext = (int*)malloc(16*4*2);
+  currNext = (int*)malloc(16*4);
+  for(int i=0;i<200*2;i++){
+    lastBoard[i] = -1;
+  }
+  for(int i=0;i<16*2;i++){
+    lastNext[i] = -1;
+  }
+}
 
 void DrawBoard() {
   if(currBuff==0){
-    buffAddr = 0x400000;
+    buffAddr = 0x200000;
     currBuff = 1;
   }else{
-    buffAddr = 0x800000;
+    buffAddr = 0x400000;
     currBuff = 0;
   }
+
   for (int j = 0; j < 20; j++) {
     for (int i = 0; i < 10; i++) {
       //ImgBoard[j][i].src = Tetris.Board[i * 20 + 19 - j] + ".bmp";
-      int block = tetris->Board[i * 20 + 19 - j];
-      drawImg(i,j,&(imgArr[block*20*20]), false);
-		}
-	}
+      int block = tetris->Board[i + (19 - j) * 10];
+      currBoard[i+j*10] = block;
+    }
+  }
   
-	for (int idx = 0; idx < 4; idx++) {
-		int block = tetris->Public_GetBlock(tetris->NowShapeNo, tetris->NowDirectionNo, idx);
-		int x = tetris->PosX + tetris->Public_GetBlockXout;
-		int y = 19 - (tetris->PosY - tetris->Public_GetBlockYout);
-		//ImgBoard[y][x].src = block + ".bmp";
-    drawImg(x,y,&(imgArr[block*20*20]), false);
-	}
+  for (int idx = 0; idx < 4; idx++) {
+    int block = tetris->Public_GetBlock(tetris->NowShapeNo, tetris->NowDirectionNo, idx);
+    int x = tetris->PosX + tetris->Public_GetBlockXout;
+    int y = 19 - (tetris->PosY - tetris->Public_GetBlockYout);
+    //ImgBoard[y][x].src = block + ".bmp";
+    currBoard[x+y*10] = block;
+  }
+  
+  int* lb = lastBoard;
+  if(currBuff){
+    lb+=200;
+  }
+  for (int j = 0; j < 20; j++) {
+    for (int i = 0; i < 10; i++) {
+      if(lb[i+j*10]!=currBoard[i+j*10]){
+        lb[i+j*10] = currBoard[i+j*10];
+        int block = lb[i+j*10];
+        drawImg(i,j,&(imgArr[block*20*20]), false);
+      }
+    }
+  }
+
+  
   
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       //ImgNext[j][i].src = "0.bmp";
-      drawImg(i,j,&(imgArr[0*20*20]), true);
+      currNext[i+j*4] = 0;
     }
   }
   for (int idx = 0; idx < 4; idx++) {
@@ -278,8 +316,22 @@ void DrawBoard() {
     int i = tetris->Public_GetBlockXout;
     int j = tetris->Public_GetBlockYout;
     //ImgNext[j][i].src = block + ".bmp";
-    drawImg(i,j,&(imgArr[block*20*20]), true);
+    currNext[i+j*4] = block;
   }
+  
+  int* ln = lastNext;
+  if(currBuff){
+    ln+=16;
+  }
+  for (int j = 0; j < 4; j++) {
+    for (int i = 0; i < 4; i++) {
+      if(ln[i+j*4]!=currNext[i+j*4]){
+        int block = ln[i+j*4] = currNext[i+j*4];
+        drawImg(i,j,&(imgArr[block*20*20]), true);
+      }
+    }
+  }
+
   if(currBuff){
     IOWR(VGA, VGA_BASE, 1024);
   }else{
@@ -293,7 +345,6 @@ void timing() {
 }
 
 void keyDown(int k) {
-  uart_write(k);
 	if (k == ' '){
 		tetris->Public_Rotate();
 	}else if (k == 'd'){
@@ -307,6 +358,7 @@ void keyDown(int k) {
 			;
 	}
 	DrawBoard();
+  uart_write(k);
 }
 
 int loadImg(SdFile* file, SdVolume* currVolume, char* filename, char* arr){
@@ -324,7 +376,13 @@ int loadImg(SdFile* file, SdVolume* currVolume, char* filename, char* arr){
     printInt(file->fileError);print("\r\n");
   }
 }
-
+int screenInit2(int screenBase){
+  IOWR(VGA, VGA_BASE, screenBase);//1024=2Mbyte
+  screen_base = screenBase*2048;
+  for(int i=0;i<0x80000;i++){
+    ((int*)(screen_base))[i] = 0;//at 2Mbyte
+  }
+}
 
 int main()
 {
@@ -339,12 +397,13 @@ int main()
   sdvolume->root = (SdFile*)malloc(sizeof(SdFile));
   SdFile* file = (SdFile*)malloc(sizeof(SdFile));
 
+  InitBoard();
   
   tetris->CallBack_GetRandom = CallBack_GetRandom;
   
   //tetris->CallBack_DrawNextShape = CallBack_DrawNextShape;
 
-  int cs = 1;
+  int cs = 2;
   int res = sdcard->init(cs);
   if(res){
     print("sd ok\r\n");
@@ -388,13 +447,14 @@ int main()
     loadImg(file, sdvolume, "14.img", (char*)(&imgArr[14*20*20]));
     loadImg(file, sdvolume, "15.img", (char*)(&imgArr[15*20*20]));
     
-    screenInit(1024);
-    screenInit(2048);
+    screenInit2(1024);
+    screenInit2(2048);
 
     tetris->Public_Init();
     DrawBoard();
 
     IOWR(MYTIMER, 0, 0);
+    int skip = 0;
     while(1)
     {
       rnd7++;
@@ -403,14 +463,32 @@ int main()
       }
       int time = IORD(MYTIMER, 0);
       if(time > 1000000){
-        time<=0;
+        IOWR(MYTIMER, 0, 0);
         timing();
       }
       int tmp = IORD(MYUART, 0);
       if(tmp&0x100){
         int key = tmp & 0xFF;
+        uart_write(key);
         keyDown(key);
       }
+      
+      //int tmp = IORD(MYKEYB, 0);
+      //if(tmp&0x400){
+      //  if(skip){
+      //    skip = 0;
+      //  }else{
+      //    tmp = (tmp>>1) & 0xFF;
+      //    if(tmp == 0xF0 || tmp ==0xE0)
+      //    {
+      //      skip = 1;
+      //    }
+      //    else{
+      //      keyDown(PS2Keymap_US[tmp]);
+      //      IORD(MYKEYB, 0);
+      //    }
+      //  }
+      //}
 
       
     }

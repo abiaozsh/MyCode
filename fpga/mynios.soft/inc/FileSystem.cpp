@@ -210,8 +210,30 @@ class SdVolume {
    * failure include not finding a valid partition, not finding a valid
    * FAT file system or an I/O error.
    */
+  int initError;
+  cache_entity* errorSector;
+  int printErrorSector(){
+    for(int i=0;i<32;i++){
+      for(int j=0;j<16;j++){
+        printByte(errorSector->cacheBuffer.data[(i<<4)+j]);
+      }
+      print("\r\n");
+    }
+    if(initError==4){
+      bpb_t* bpb = &errorSector->cacheBuffer.fbs.bpb;
+      
+      int bytesPerSector = combineShort(bpb->bytesPerSector_0, bpb->bytesPerSector_1);
+      int reservedSectorCount = combineShort(bpb->reservedSectorCount_0, bpb->reservedSectorCount_1);
+
+      print("bytesPerSector        =");printInt(bytesPerSector         );print("\r\n");
+      print("bpb->fatCount         =");printInt(bpb->fatCount          );print("\r\n");
+      print("reservedSectorCount   =");printInt(reservedSectorCount    );print("\r\n");
+      print("bpb->sectorsPerCluster=");printInt(bpb->sectorsPerCluster );print("\r\n");
+    }
+  }
+  
   uint8_t init(Sd2Card* dev, uint8_t part) {
-    error = 0;
+    initError = 0;
 
     {
       for(int i=0;i<CACHE_COUNT;i++){
@@ -232,7 +254,7 @@ class SdVolume {
     if (part) {
       if (part > 4)return false;
       if (!cacheRawBlock(volumeStartBlock, CACHE_FOR_READ, &cacheBuffer_, false, false)){
-        error += 1;
+        initError = 1;
         return false;
       }
       part_t* p = &cacheBuffer_->cacheBuffer.mbr.part[part-1];
@@ -257,7 +279,7 @@ class SdVolume {
         // not a valid partition
         
         
-        error += 2;
+        initError = 2;
         return false;
       }
       volumeStartBlock = firstSector;
@@ -266,7 +288,7 @@ class SdVolume {
     //print("volumeStartBlock =");printInt(volumeStartBlock );print("\r\n");
 
     if (!cacheRawBlock(volumeStartBlock, CACHE_FOR_READ, &cacheBuffer_, false, false)){
-      error += 3;
+      error = 3;
       return false;
     }
     bpb_t* bpb = &cacheBuffer_->cacheBuffer.fbs.bpb;
@@ -277,12 +299,8 @@ class SdVolume {
       bpb->fatCount == 0 ||
       reservedSectorCount == 0 ||
       bpb->sectorsPerCluster == 0) {
-        //print("bytesPerSector =");printInt(bytesPerSector );print("\r\n");
-        //print("fatCount =");printInt(bpb->fatCount );print("\r\n");
-        //print("reservedSectorCount =");printInt(reservedSectorCount );print("\r\n");
-        //print("sectorsPerCluster =");printInt(bpb->sectorsPerCluster );print("\r\n");
-         // not valid FAT volume
-        error += 4;
+        errorSector = cacheBuffer_;
+        initError = 4;
         return false;
     }
     fatCount_ = bpb->fatCount;
@@ -293,7 +311,7 @@ class SdVolume {
     while (blocksPerCluster_ != (1 << clusterSizeShift_)) {
       // error if not power of 2
       if (clusterSizeShift_++ > 7) {
-        error += 5;
+        initError = 5;
         return false;
       }
     }
