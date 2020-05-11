@@ -312,6 +312,9 @@ end
   reg  mytimer_irq_ack;
   wire myuart_irq_req;
   reg  myuart_irq_ack;
+  reg  mykeyb_irq_req;
+  reg  mykeyb_irq_req_buff;
+  reg  mykeyb_irq_ack;
 
   always@(posedge clk or negedge reset_n) begin
     if(!reset_n) begin
@@ -325,6 +328,7 @@ end
         end
       end
       mytimer_irq_req_buff = mytimer_irq_req;
+      mykeyb_irq_req_buff = mykeyb_irq_req;
       
       if(mytimer_irq_req_buff && !mytimer_irq_ack)begin
         irq_num[0] <= 1;
@@ -342,6 +346,14 @@ end
         myuart_irq_ack <= 0;
       end
       
+      if(mykeyb_irq_req_buff && !mykeyb_irq_ack)begin
+        irq_num[2] <= 1;
+        mykeyb_irq_ack <= 1;
+      end
+      if(!mykeyb_irq_req_buff && mykeyb_irq_ack)begin
+        mykeyb_irq_ack <= 0;
+      end
+
     end
   end
   
@@ -496,31 +508,35 @@ end
 
   wire mykeyb_cs = avm_m0_address[31:16] == 16'h0207;
   
-  reg [15:0] timer_key;
+  reg [15:0] keyboard_timer;
   reg [3:0] bitpos;
   reg key_clk_buff0;
   reg key_clk_buff1;
   reg [9:0] keyboard_data;
   reg       keyboard_data_valid;
+  reg       keyboard_clr_req;
+  reg       keyboard_clr_req_buff;
+  reg       keyboard_clr_ack;
   wire [10:0] mykeyb_readdata = {keyboard_data_valid,keyboard_data};
-  always@(posedge clk or negedge reset_n) begin
+  always@(posedge clk_50M or negedge reset_n) begin
     if(!reset_n) begin
-      timer_key <= 0;
+      keyboard_timer <= 0;
       key_clk_buff0 <= 0;
       key_clk_buff1 <= 0;
       keyboard_data_valid <= 0;
     end else begin
       key_clk_buff0 <= key_clk;
       key_clk_buff1 <= key_clk_buff0;
+      keyboard_clr_req_buff <= keyboard_clr_req;
       
-      if(timer_key!=16'hFFFF)begin
-        timer_key<=timer_key+1'b1;
+      if(keyboard_timer!=16'hFFFF)begin
+        keyboard_timer<=keyboard_timer+1'b1;
       end
       
         //pos edge
       if(!key_clk_buff1 && key_clk_buff0)begin//1 old 0 new
-        timer_key <= 0;
-        if(timer_key==16'hFFFF)begin
+        keyboard_timer <= 0;
+        if(keyboard_timer==16'hFFFF)begin
           bitpos<=1;
           keyboard_data[0]<=key_data;
         end else begin
@@ -529,18 +545,41 @@ end
           if(bitpos==10)begin
             bitpos <= 0;
             keyboard_data_valid <= 1;
+            mykeyb_irq_req <= 1;
           end
         end
       end
       
-      if(mykeyb_cs && avm_m0_read)begin
+      if(mykeyb_irq_ack)begin
+        mykeyb_irq_req <= 0;
+      end
+      
+      if(keyboard_clr_req_buff && !keyboard_clr_ack)begin
         keyboard_data_valid <= 0;
+        keyboard_clr_ack <= 1;
+      end
+      if(!keyboard_clr_req_buff && keyboard_clr_ack)begin
+        keyboard_clr_ack <= 0;
       end
       
     end
   end
-
   
+  always@(posedge clk or negedge reset_n) begin
+    if(!reset_n) begin
+      keyboard_clr_req <= 0;
+    end else begin
+
+      if(mykeyb_cs && avm_m0_read)begin
+        keyboard_clr_req <= 1;
+      end
+      
+      if(keyboard_clr_ack)begin
+        keyboard_clr_req <= 0;
+      end
+    end
+  end
+
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   //assign debug8 = mouse_send_data;
   //assign debug8[0] = mbitpos[0];//mouse_send_req_buff;

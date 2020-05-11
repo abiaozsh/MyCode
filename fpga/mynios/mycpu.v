@@ -119,9 +119,6 @@ reg halt_uart;
 
 reg [15:0] accessTime;
 
-`define QUICKREG true
-
-
 reg uart_send;
 reg uart_send_ack_buff;
 always @(posedge clk or negedge reset_n) begin
@@ -243,9 +240,6 @@ always @(posedge clk or negedge reset_n) begin
             command_done <= 1;
           end
         end
-        
-
-  ;
 
       end else if (command == 8'h40) begin debug_data<=numer; command_done<=1;
       end else if (command == 8'h41) begin debug_data<=denom; command_done<=1;
@@ -255,20 +249,14 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h45) begin debug_data<=quotientSigned; command_done<=1;
 
       end else if (command == 8'h47) begin
-        `ifdef QUICKREG
-        debug_data <= regfile[data[4:0]];
-        `else
         if         (debug_readmem_step==0)begin
           debug_readmem_step <= 1;
           debug_reg <= data[4:0];
         end else if(debug_readmem_step==1)begin
-          debug_readmem_step <= 2;
-        end else if(debug_readmem_step==2)begin
           debug_data <= regDataOut;
           debug_readmem_step <= 0;
           command_done <= 1;
         end
-        `endif
       end else begin
         command_done<=1;
       end
@@ -277,6 +265,39 @@ always @(posedge clk or negedge reset_n) begin
 
   end
 end
+
+
+
+
+
+  //问题：总线速度低
+  
+  //存储仲裁器，取指令模块，执行模块
+  
+  
+  //指令 cache： 环状可回退fifo
+
+  //起始指针，结束指针，当前指针
+  
+  
+  //32:ins
+  //n:预测字 0：无预测，PC+4 否则-n
+  
+  //流水线每一级的信号：停止信号，气泡（not valid），冲洗（PC发生预测错误时）：（flush信号下，产生气泡 not valid）
+  
+  //1，取指令：
+  //hlt状态下，存储器等待，时产生气泡
+  //hlt指令：置hlt状态1，并flush流水线
+  //参考PC 和 预测字段，获取指令
+  
+  //2，解码+寄存器A  解码将指令字转成各个alu的EA
+  //3，寄存器B
+  //4，执行
+  //5，写回+PC更新（冲刷）+hlt
+
+
+
+
 
 assign debug8[0] = avm_m0_waitrequest;
 assign debug8[1] = avm_m0_read;
@@ -297,8 +318,10 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   assign avm_m0_write           = halt_accept == 1   ? debug_write                                  : exec_write;
   assign avm_m0_read            = halt_accept == 1   ? debug_read                                   : (cycle == 0 ? fetch_read : exec_read);
 
+  
+  
   reg [31:0] latch_readdata;
-  wire Rtype;
+  wire        Rtype;
   wire [5:0]  cmd;
   wire [4:0]  regB;
   wire [4:0]  regC;
@@ -307,6 +330,8 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   wire [31:0] IMM16zx;
   wire [31:0] IMM16sx;
   wire [25:0] IMM26;
+  assign Rtype = latch_readdata[5:0]==6'h3A;
+  assign cmd = Rtype ? latch_readdata[16:11] : latch_readdata[5:0];//把这些变量全部转成寄存器，在第二个周期固化下来，
   assign regB = latch_readdata[26:22];
   assign regC = latch_readdata[21:17];
   assign IMM5 = latch_readdata[10:6];
@@ -314,31 +339,29 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   assign IMM16 = latch_readdata[21:6];
   assign IMM16sx = {{16{IMM16[15]}},IMM16};
   assign IMM16zx = {16'b0,IMM16};
-  assign Rtype = latch_readdata[5:0]==6'h3A;
-  assign cmd = Rtype ? latch_readdata[16:11] : latch_readdata[5:0];
 
   reg cycle;//0:fetchCode 1:execCode
   wire [31:0] fetch_address;
   assign fetch_address = pc;
   
-`ifdef QUICKREG
+  
   reg [31:0] regfile[32];
-`else
+  
   reg regWrite;
   reg [4:0] regAddr;
   wire [4:0] reg_addr;
   assign reg_addr = (halt_accept == 1) ? debug_reg : regAddr;
   reg  [31:0] regDataIn;
-  wire [31:0] regDataOut;
-  //用m9k实现可以省1K逻辑单元
-  regfile  regfile_inst (
-    .address ( reg_addr ),
-    .clock ( clk ),
-    .data ( regDataIn ),
-    .wren ( regWrite ),
-    .q ( regDataOut )
-  );
-`endif
+  wire [31:0] regDataOut = regfile[reg_addr];
+  always @(posedge clk or negedge cpu_reset_n) begin
+    if (!cpu_reset_n) begin
+    end else begin
+      if(regWrite)begin
+        regfile[reg_addr] <= regDataIn;
+      end
+    end
+  end
+
   
   reg [31:0] regfileA;
   reg [31:0] regfileB;
@@ -356,11 +379,9 @@ wire cpu_reset_n = reset_n && debug_reset_n;
       fetch_step<=0;
       halt_accept <= 0;
       debug_step_buff <= 0;
-    end else begin
-      `ifdef QUICKREG
-      `else
       regWrite <= 0;
-      `endif
+    end else begin
+      regWrite <= 0;
       
       irq_req_buff = irq_req;
 
@@ -380,28 +401,9 @@ wire cpu_reset_n = reset_n && debug_reset_n;
             end
 
           end
-        `ifdef QUICKREG
-        end else if(fetch_step==1)begin
-          
-          if(irq_req_buff2)begin
-            latch_readdata = {26'b0,6'h2A};//callirq
-            fetch_step <= 0;
-            cycle<=1;
-          end else begin
-            if(!avm_m0_waitrequest)begin
-              latch_readdata <= avm_m0_readdata;
-              regfileA <= regfile[avm_m0_readdata[31:27]];//regA
-              regfileB <= regfile[avm_m0_readdata[26:22]];
-              fetch_read <= 0;
-              fetch_step <= 0;
-              cycle<=1;
-            end
-          end
-          
-        `else
         end else if(fetch_step==1)begin
           if(irq_req_buff2)begin
-            latch_readdata = {26'b0,6'h2A};//callirq
+            latch_readdata <= {26'b0,6'h2A};//callirq
             fetch_step <= 0;
             cycle<=1;
           end else begin
@@ -413,31 +415,17 @@ wire cpu_reset_n = reset_n && debug_reset_n;
             end
           end
         end else if(fetch_step==2)begin
+          regfileA <= regDataOut;
           regAddr <= regB;
           fetch_step <= 3;
         end else if(fetch_step==3)begin
-          regfileA <= regDataOut;
-          fetch_step <= 4;
-        end else if(fetch_step==4)begin
           regfileB <= regDataOut;
           fetch_step <= 0;
           cycle<=1;
-        `endif
         end
       end else begin
         if(cmd_ack)begin
           debug_step_buff <= debug_step;
-          `ifdef QUICKREG
-          if(regResultB && regB!=0)begin
-            regfile[regB] <= regResult;
-          end
-          if(regResultC && regC!=0)begin
-            regfile[regC] <= regResult;
-          end
-          if(regResultRA)begin
-            regfile[31] <= regResult;
-          end
-          `else
           if(regResultB && regB!=0)begin
             regAddr <= regB;
             regDataIn <= regResult;
@@ -453,7 +441,6 @@ wire cpu_reset_n = reset_n && debug_reset_n;
             regDataIn <= regResult;
             regWrite <= 1;
           end
-          `endif
           cycle <= 0;
         end
       end
@@ -616,14 +603,14 @@ parameter MUL_DIV_DELAY = 5;
             pc <= {pc[31:28],IMM26,2'b00};
             cmd_ack <= 1;
           //hlt                          @           0 @                      1 @   2 @ extends
-          end else if(cmd==6'd2)begin//ok
+          end else if(cmd==6'h02)begin//ok
             halt_cpu <= IMM16[0];
             pc <= nextpc;
             cmd_ack <= 1;
             
             
           //br sym                       @          20 @                      0 @   6 @ 0x06
-          end else if(cmd==6'd6)begin//ok
+          end else if(cmd==6'h06)begin//ok
             pc <= nextpc + IMM16sx;
             cmd_ack <= 1;
           //bne reg, reg, sym            @          15 @                      0 @  30 @ 0x1e
@@ -634,7 +621,7 @@ parameter MUL_DIV_DELAY = 5;
               pc <= nextpc + IMM16sx;
             end
             cmd_ack <= 1;
-          // beq reg, reg, sym            @          15 @                      0 @  38 @ 0x26
+          //beq reg, reg, sym            @          15 @                      0 @  38 @ 0x26
           end else if(cmd==6'd38)begin//ok
             if(comp_eq) begin
               pc <= nextpc + IMM16sx;
