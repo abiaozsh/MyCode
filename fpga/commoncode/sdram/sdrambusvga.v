@@ -300,8 +300,6 @@ always@(posedge clk or negedge sys_rst_n) begin
     clr_cacheAddrHigh <= 0;
     set_cacheAddrHigh <= 0;
     
-    
-    //载入cache后，第一次读内容不对
     if(avs_s0_read && !avs_s0_read_ack)begin
       if         (interface_status==STATUS_INIT)begin//初始化
         debug8 <= 0;
