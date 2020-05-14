@@ -29,7 +29,7 @@ module mycpu (
     output [31:0]   debug32,
     
     
-    input  [7:0]    debugin8,
+    input  [7:0] debugin8,
     input [15:0] cache_life0   ,
     input [15:0] cache_life1   ,
     input [15:0] cache_life2   ,
@@ -47,6 +47,7 @@ reg  uart_rec_ack;
 wire [7:0] uart_data_out;
 wire uart_send_req = uart_send;
 reg [7:0] uart_data_in;
+wire uart_send_ack;
 uart_hs uart_hs_inst (
 	.sys_clk(clk_50M),
 	.sys_rst_n(reset_n),
@@ -265,10 +266,28 @@ always @(posedge clk or negedge reset_n) begin
 
   end
 end
+  //大家好，分享一个diy cpu的视频
+  //这次是整体工作的review视频，代码细节会在后面的视频里解释
+  //所有涉及到的源码，已经放到github上了
+  //cpu是32位处理器，指令集参考了NIOSII，总线参考了qsys总线，都有所修改
+  //编译器是使用NIOSII的编译器，
+  //这次的demo：从rom中的bios启动，加载位于sd卡上的操作系统
+  //从操作系统再启动3个应用程序：图片查看程序，画图板，俄罗斯方块
+  //开发板：勤谋的Altera EP4CE15 
+  //外设：vga口，sd卡，键盘，鼠标，串口
 
+  //示波器前期准备
+  
+  //sd卡座拆分
+  
+  
+  
+  
 
-
-
+  //流水线难点：
+  //指令地址相关性
+  //寄存器相关性
+  
 
   //问题：总线速度低
   
@@ -283,14 +302,17 @@ end
   //32:ins
   //n:预测字 0：无预测，PC+4 否则-n
   
-  //流水线每一级的信号：停止信号，气泡（not valid），冲洗（PC发生预测错误时）：（flush信号下，产生气泡 not valid）
+  //流水线每一级的信号：停止信号，气泡（not valid）
   
-  //1，取指令：
+  //1，取指令+解码         解码将指令字转成各个alu的EA???
   //hlt状态下，存储器等待，时产生气泡
   //hlt指令：置hlt状态1，并flush流水线
   //参考PC 和 预测字段，获取指令
   
-  //2，解码+寄存器A  解码将指令字转成各个alu的EA
+  //以下每级流水线有PCchange标志，和寄存器change标志，取指令级发现PC冲突和寄存器冲突，则产生气泡
+  //{pc冲突时，停止取指令}
+  //{寄存器冲突时，发送气泡}
+  //2，寄存器A
   //3，寄存器B
   //4，执行
   //5，写回+PC更新（冲刷）+hlt

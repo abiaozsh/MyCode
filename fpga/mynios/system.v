@@ -116,7 +116,7 @@ module system (
     .debug8             (mycpu_debug8),                    //            .export
     .debug32            (mycpu_debug32),                    //            .export
       
-    .debugin8           (sdrambus_debug8    ),
+    .debugin8           (spidebug8    ),
     .cache_life0    (cache_life0   ),
     .cache_life1    (cache_life1   ),
     .cache_life2    (cache_life2   ),
@@ -426,8 +426,10 @@ end
 
   wire [31:0] softspi_readdata;
   wire        softspi_waitrequest;
+  wire [7:0] spidebug8;
   softspi softspi_inst (
     .clk                (clk),                       //       clock.clk
+		.clk_50M            (clk_50M),
     .reset_n            (reset_n), //       reset.reset_n
     .avs_s0_address     (softspi_address ),
     .avs_s0_read        (softspi_read ),
@@ -436,6 +438,8 @@ end
     .avs_s0_writedata   (avm_m0_writedata ),
     .avs_s0_waitrequest (softspi_waitrequest ),
     .avs_s0_byteenable  (avm_m0_byteenable ),
+    
+    .debug8 (spidebug8),
     
     .MISO           (softspi_MISO),
     .MOSI           (softspi_MOSI),
@@ -785,7 +789,7 @@ end
           mouse_read_req <= 1;
         end
         if(avm_m0_address[15:2]==1)begin
-          mouse_send_data <= avm_m0_writedata;
+          mouse_send_data <= avm_m0_writedata[9:0];
           mouse_send_req <= 1;
         end
       end

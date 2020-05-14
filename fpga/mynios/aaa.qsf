@@ -88,14 +88,6 @@ set_location_assignment PIN_N20 -to debug[6]
 set_location_assignment PIN_M20 -to debug[7]
 
 
-set_location_assignment PIN_E1 -to spi_SS_n[2]
-set_location_assignment PIN_C1 -to spi_SS_n[1]
-set_location_assignment PIN_B1 -to spi_SS_n[0]
-set_location_assignment PIN_B3 -to spi_MOSI
-set_location_assignment PIN_B4 -to spi_SCLK
-set_location_assignment PIN_C4 -to spi_MISO
-
-
 
 
 set_location_assignment PIN_AB4 -to sdram_we_n
@@ -181,19 +173,29 @@ set_location_assignment PIN_V6 -to sdram_addr[12]
 #set_location_assignment PIN_C2 -to vga_rgb[14]
 
 
+#set_location_assignment PIN_H1 -to ?
+#set_location_assignment PIN_F1 -to ?
+set_location_assignment PIN_E1 -to spi_SS_n[2]
+set_location_assignment PIN_C1 -to spi_SS_n[1]
+set_location_assignment PIN_B1 -to spi_SS_n[0]
+set_location_assignment PIN_B3 -to spi_MOSI
+set_location_assignment PIN_B4 -to spi_SCLK
+set_location_assignment PIN_C4 -to spi_MISO
+
+
 set_location_assignment PIN_R1 -to vga_rgb[0]
 set_location_assignment PIN_P1 -to vga_rgb[1]
 set_location_assignment PIN_N1 -to vga_rgb[2]
 set_location_assignment PIN_M1 -to vga_vs
 set_location_assignment PIN_J1 -to vga_hs
-set_location_assignment PIN_H1 -to sdcard[7]
-set_location_assignment PIN_F1 -to sdcard[6]
-set_location_assignment PIN_E1 -to sdcard[5]
-set_location_assignment PIN_C1 -to sdcard[4]
-set_location_assignment PIN_B1 -to sdcard[3]
-set_location_assignment PIN_B3 -to sdcard[2]
-set_location_assignment PIN_B4 -to sdcard[1]
-set_location_assignment PIN_C4 -to sdcard[0]
+#set_location_assignment PIN_H1 -to sdcard[7]
+#set_location_assignment PIN_F1 -to sdcard[6]
+#set_location_assignment PIN_E1 -to sdcard[5]
+#set_location_assignment PIN_C1 -to sdcard[4]
+#set_location_assignment PIN_B1 -to sdcard[3]
+#set_location_assignment PIN_B3 -to sdcard[2]
+#set_location_assignment PIN_B4 -to sdcard[1]
+#set_location_assignment PIN_C4 -to sdcard[0]
 
 set_location_assignment PIN_R2 -to vga_rgb[3]
 set_location_assignment PIN_P2 -to vga_rgb[4]
