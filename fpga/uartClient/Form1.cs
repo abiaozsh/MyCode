@@ -55,14 +55,19 @@ namespace WindowsFormsApplication1
 		StringBuilder sb2 = new StringBuilder();
 		private void timer1_Tick(object sender, EventArgs e)
 		{
-			while (fifo.Count > 0)
+			if (fifo.Count > 0)
 			{
-				char c = fifo.Dequeue();
-				sb1.Append(c);
-				sb2.Append(" " + getHex2((byte)c));
+				while (fifo.Count > 0)
+				{
+					char c = fifo.Dequeue();
+					sb1.Append(c);
+					sb2.Append(" " + getHex2((byte)c));
+				}
+				textBox4.Text = sb1.ToString().Replace('\0', ' ');
+				textBox3.Text = sb2.ToString().Replace('\0', ' ');
+				this.textBox4.Select(this.textBox4.TextLength, 0);
+				textBox4.ScrollToCaret();
 			}
-			textBox4.Text = sb1.ToString().Replace('\0', ' ');
-			textBox3.Text = sb2.ToString().Replace('\0', ' ');
 		}
 
 		void textBox1_KeyDown(object sender, KeyEventArgs e)
@@ -107,6 +112,8 @@ namespace WindowsFormsApplication1
 		{
 			sb1 = new StringBuilder();
 			sb2 = new StringBuilder();
+			textBox4.Text = sb1.ToString().Replace('\0', ' ');
+			textBox3.Text = sb2.ToString().Replace('\0', ' ');
 		}
 
 		private void button3_Click(object sender, EventArgs e)
@@ -133,17 +140,19 @@ namespace WindowsFormsApplication1
 			Thread.Sleep(1000);
 			Application.DoEvents();
 			timer1_Tick(null, null);
-			this.timer1.Enabled=false;
+			this.timer1.Enabled = false;
 
 			for (int i = 0; i < len; i++)
 			{
 				int val = fs.ReadByte();
 				port.Write(new byte[] { (byte)val }, 0, 1);
 				char data;
-				while(true){
-					if (fifo.Count > 0) { 
-					data = fifo.Dequeue();
-					break;
+				while (true)
+				{
+					if (fifo.Count > 0)
+					{
+						data = fifo.Dequeue();
+						break;
 					}
 				}
 				if (data != val)
@@ -152,7 +161,7 @@ namespace WindowsFormsApplication1
 				}
 				this.Text = "" + i;
 			}
-			this.timer1.Enabled=true;
+			this.timer1.Enabled = true;
 
 			MessageBox.Show("ok");
 
