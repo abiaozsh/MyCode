@@ -131,7 +131,7 @@ int main(){
         }
       }else{
         print("sd ng\r\n");
-        printInt(sdcard->errorCode());
+        print("sdcard->initError");printInt(sdcard->initError);print("\r\n");
       }
     }
 

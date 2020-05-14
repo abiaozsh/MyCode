@@ -1,133 +1,86 @@
-//函数指针
-//变量指针
-//中断向量
-//浮点数
-
-//sd硬件层用 E:\MyCode.github\arduino\softSD\simple Nofat  （带mmc）（现有的）
-//文件系统用 E:\MyCode.github\fpga\mynios\inc\SD
-
-//#define DEBUG
-
 #include "inc/io.h"
 #include "inc/system.h"
+#include "inc/system.cpp"
 #include "inc/uart.cpp"
 #include "inc/print.cpp"
 #include "inc/spi.cpp"
-#include "inc/sd.cpp"
+#include "inc/Sd2Card.cpp"
 
 
+uint8_t cardCommand(uint8_t cmd, uint32_t arg) {
+  // send command
+  spiSend(cmd | 0x40);
 
+  // send argument
+  for (int8_t s = 24; s >= 0; s -= 8) spiSend(arg >> s);
+
+  // send CRC
+  uint8_t crc = 0XFF;
+  if (cmd == CMD0) crc = 0X95;  // correct crc for CMD0 with arg 0
+  if (cmd == CMD8) crc = 0X87;  // correct crc for CMD8 with arg 0X1AA
+  spiSend(crc);
+
+  // wait for response
+  //for (uint8_t i = 0; ((status_ = spiRec()) & 0X80) && i != 0XFF; i++)
+    ;
+  return 0;
+}
 
 int main()
 {
   
-  SDcard* sdcard;
-  SdVolume* sdvolume;
-  Root* root;
-  File* file;
-  
-  sdcard = (SDcard*)(0x1000);//at sdram [512]
-  sdvolume = (SdVolume*)(0x2000);
-  root = (Root*)(0x3000);
-  file = (File*)(0x4000);
-  
-  sdcard->chip_select = 0;
-  sdcard->inBlock = 0;
+  malloc_index = 0;
+
+  Sd2Card* sdcard = (Sd2Card*)malloc(sizeof(Sd2Card));//at8M
   
 	char sbuff[20];
 
 	print("Hello from Nios II!\r\n");
-
-  //short* shorttest = (short*)(0x2000);
-  //shorttest[0] = 12;
-  //shorttest[1] = 34;
-  //shorttest[2] = 56;
-  //shorttest[3] = 78;
-  //shorttest[4] = 90;
-  //shorttest[5] = 12345;
-  //shorttest[6] = 65432;
-  //
-  //printInt(shorttest[6]);print("\r\n");
-  //printInt(shorttest[5]);print("\r\n");
-  //printInt(shorttest[4]);print("\r\n");
-  //printInt(shorttest[3]);print("\r\n");
-  //printInt(shorttest[2]);print("\r\n");
-  //printInt(shorttest[1]);print("\r\n");
-  //printInt(shorttest[0]);print("\r\n");
-  
   
 	while(1){
     scan(sbuff,-1,-1);
-
+    print(sbuff);print("\r\n");
     
     
-		if(equal(sbuff,"i",-1)){
-      print("which sd?:\r\n");
-      
-      sdcard->chip_select = scanInt();
-      printInt(sdcard->chip_select);
-			print("init start!\r\n");
-			int result = MMCCard_cardinit(sdcard);
-      if(result){
-        print("init success,initSdVolume\r\n");
-        result = SdVolume_volumeinit(sdvolume, sdcard, 1);
-        if(result){
-          print("initSdVolume success!\r\n");
-          
-          //print("cacheDirty       =");printInt(sdvolume->cacheDirty        );print("\r\n");
-          //print("cacheBlockNumber =");printInt(sdvolume->cacheBlockNumber  );print("\r\n");
-          //print("cacheMirrorBlock =");printInt(sdvolume->cacheMirrorBlock  );print("\r\n");
-          //print("fatCount         =");printInt(sdvolume->fatCount          );print("\r\n");
-          //print("blocksPerCluster =");printInt(sdvolume->blocksPerCluster  );print("\r\n");
-          //print("allocSearchStart =");printInt(sdvolume->allocSearchStart  );print("\r\n");
-          //print("blocksPerFat     =");printInt(sdvolume->blocksPerFat      );print("\r\n");
-          //print("clusterCount     =");printInt(sdvolume->clusterCount      );print("\r\n");
-          //print("clusterSizeShift =");printInt(sdvolume->clusterSizeShift  );print("\r\n");
-          //print("dataStartBlock   =");printInt(sdvolume->dataStartBlock    );print("\r\n");
-          //print("fatStartBlock    =");printInt(sdvolume->fatStartBlock     );print("\r\n");
-          //print("fatType          =");printInt(sdvolume->fatType           );print("\r\n");
-          //print("rootDirEntryCount=");printInt(sdvolume->rootDirEntryCount );print("\r\n");
-          //print("rootDirStart     =");printInt(sdvolume->rootDirStart      );print("\r\n");
-          
-          
-          Root_openRoot(root, sdvolume);
-          print(root->volumeLabel,11);
-          
-        }else{
-          print("initSdVolume fail!\r\n");
-          //result = SdVolume_volumeinit(sdvolume, 1);
-        }
+    if(equal(sbuff,"i",-1)){
+      print("which sd?\r\n");
+      int cs = scanInt();
+      printInt(cs);
+      int res = sdcard->init(cs);
+      if(res){
+        print("sd ok\r\n");
 
       }else{
-        print("init fail!\r\n");
-      }
-		}
-
-    if(equal(sbuff,"r",-1)){
-      print("file?:\r\n");
-      scan(sbuff,-1,-1);
-      print(sbuff);
-      int result = File_open(root, file, sbuff);
-      if(result){
-        print("[");
-        int i;
-        for(i=0;i<4096;i++){
-          if((i&15)==0 && i!=0){
-            print("\n");
-          }
-          int data = File_read(file);
-          //printByte(data);
-          uart_write(data);
-          if(data==-1){
-            break;
-          }
-        }
-        print("]");
-      }else{
-        print("open error\r\n");
+        print("sd ng\r\n");
+        print("sdcard->initError");printInt(sdcard->initError);print("\r\n");
       }
     }
+    
+    if(equal(sbuff,"cs",-1)){
+      print("which sd?\r\n");
+      for (uint8_t i = 0; i < 10; i++) spiSend(0XFF);
+      int cs = scanInt();
+      printInt(cs);
+      sdcard->chipSelectPin_ = cs;
+      sdcard->chipSelectLow();
+      print("done\r\n");
+    }
 
+    if(equal(sbuff,"c",-1)){
+      cardCommand(CMD0, 0);
+      print("done\r\n");
+    }
+
+    if(equal(sbuff,"r",-1)){
+      int res = spiRec();
+      print("res:");printByte(res);print("\r\n");
+      print("spi_debug0:");printInt(spi_debug0);print("\r\n");
+    }
+    
+    if(equal(sbuff,"s",-1)){
+      spiSend(1);
+      print("spi_debug1:");printInt(spi_debug1);print("\r\n");
+    }
 
 	}
   return 0;

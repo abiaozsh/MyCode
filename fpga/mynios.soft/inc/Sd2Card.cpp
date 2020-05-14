@@ -512,8 +512,11 @@ class Sd2Card {
   int millis(){
     return IORD(MYTIMER, 2);
   }
-    
+  
+  int initError;
   uint8_t init(uint8_t chipSelectPin) {
+    initError = 0;
+
     errorCode_ = 0;
     //inBlock_ = 0;
     //partialBlockRead_ = 0;
@@ -537,7 +540,7 @@ class Sd2Card {
     // command to go idle in SPI mode
     while ((status_ = cardCommand(CMD0, 0)) != R1_IDLE_STATE) {
       if (((uint16_t)(millis() - t0)) > SD_INIT_TIMEOUT) {
-        error(SD_CARD_ERROR_CMD0);
+        initError = 1;
         goto fail;
       }
     }
@@ -564,7 +567,7 @@ class Sd2Card {
       // only need last byte of r7 response
       for (uint8_t i = 0; i < 4; i++) status_ = spiRec();
       if (status_ != 0XAA) {
-        error(SD_CARD_ERROR_CMD8);
+        initError = 2;
         goto fail;
       }
       type(SD_CARD_TYPE_SD2);
@@ -575,14 +578,14 @@ class Sd2Card {
     while ((status_ = cardAcmd(ACMD41, arg)) != R1_READY_STATE) {
       // check for timeout
       if (((uint16_t)(millis() - t0)) > SD_INIT_TIMEOUT) {
-        error(SD_CARD_ERROR_ACMD41);
+        initError = 3;
         goto fail;
       }
     }
     // if SD2 read OCR register to check for SDHC card
     if (type() == SD_CARD_TYPE_SD2) {
       if (cardCommand(CMD58, 0)) {
-        error(SD_CARD_ERROR_CMD58);
+        initError = 4;
         goto fail;
       }
       if ((spiRec() & 0XC0) == 0XC0) type(SD_CARD_TYPE_SDHC);
@@ -603,12 +606,12 @@ class Sd2Card {
     uint16_t t0 = millis();
     while ((status_ = spiRec()) == 0XFF) {
       if (((uint16_t)millis() - t0) > SD_READ_TIMEOUT) {
-        error(SD_CARD_ERROR_READ_TIMEOUT);
+        initError = 5;
         goto fail;
       }
     }
     if (status_ != DATA_START_BLOCK) {
-      error(SD_CARD_ERROR_READ);
+      initError = 6;
       goto fail;
     }
     return true;
