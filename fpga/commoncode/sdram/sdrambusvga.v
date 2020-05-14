@@ -181,7 +181,7 @@ reg   [2:0] clr_cacheAddrHigh;
 genvar i;
 generate
   for(i=0; i<CACHE_COUNT; i=i+1) begin:BLOCK1
-    cache256x36 (
+    cache256x36 cache256x36_inst (
       .address(cacheAddrLow8),//input	[7:0]  address;
       .clock  (clk          ),  //input	  clock;
       .data   (cacheData    ),   //input	[35:0]  data;
@@ -299,6 +299,8 @@ always@(posedge clk or negedge sys_rst_n) begin
     adj_cache_life <= 0;
     clr_cacheAddrHigh <= 0;
     set_cacheAddrHigh <= 0;
+    
+    //回写时尝试批量写入，提升性能
     
     if(avs_s0_read && !avs_s0_read_ack)begin
       if         (interface_status==STATUS_INIT)begin//初始化
