@@ -170,8 +170,7 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h15) begin uart_send<=1; uart_data_in<=halt_uart; command_done<=1;
       end else if (command == 8'h16) begin uart_send<=1; uart_data_in<=avm_m0_waitrequest; command_done<=1;
       end else if (command == 8'h17) begin uart_send<=1; uart_data_in<={3'b0,irq_enable,3'b0,irq_req}; command_done<=1;
-      end else if (command == 8'h18) begin uart_send<=1; uart_data_in<=cmd; command_done<=1;
-      end else if (command == 8'h19) begin uart_send<=1; uart_data_in<=Rtype; command_done<=1;
+      end else if (command == 8'h18) begin uart_send<=1; uart_data_in<=RtypeCmd; command_done<=1;
       
       end else if (command == 8'h20) begin debug_address[ 7: 0] <= data; command_done<=1;
       end else if (command == 8'h21) begin debug_address[15: 8] <= data; command_done<=1;
@@ -241,13 +240,10 @@ always @(posedge clk or negedge reset_n) begin
             command_done <= 1;
           end
         end
-
-      //end else if (command == 8'h40) begin debug_data<=numer; command_done<=1;
-      //end else if (command == 8'h41) begin debug_data<=denom; command_done<=1;
-      //end else if (command == 8'h42) begin debug_data<=quotientUnsigned; command_done<=1;
+        
+      end else if (command == 8'h40) begin debug_data<=irq_addr; command_done<=1;
       end else if (command == 8'h43) begin debug_data<=pc; command_done<=1;
       end else if (command == 8'h44) begin debug_data<=private_offset; command_done<=1;
-      //end else if (command == 8'h45) begin debug_data<=quotientSigned; command_done<=1;
 
       end else if (command == 8'h47) begin
         if         (debug_readmem_step==0)begin
@@ -310,57 +306,43 @@ end
   //参考PC 和 预测字段，获取指令
   
   //以下每级流水线有PCchange标志，和寄存器change标志，取指令级发现PC冲突和寄存器冲突，则产生气泡
-  //{pc冲突时，停止取指令}
+  //{pc冲突时，停止取指令} 流水线里有PC指令
+  //{总线冲突时，停止取指令}（mem 指令）
   //{寄存器冲突时，发送气泡}
+  //{寄存器端口冲突（存取地址）}
   //2，寄存器A
   //3，寄存器B
   //4，执行
   //5，写回+PC更新（冲刷）+hlt
-
-
-
-
-
-assign debug8[0] = avm_m0_waitrequest;
-assign debug8[1] = avm_m0_read;
-assign debug8[2] = avm_m0_write;
-
-assign debug8[4] = halt;
-assign debug8[5] = cycle;
-assign debug8[6] = debug_read;
-assign debug8[7] = debug_write;
-
-wire cpu_reset_n = reset_n && debug_reset_n;
-
-  assign avm_m0_byteenable = halt_accept == 1 ? debug_byteenable : byteenable;
   
+  //全局信号： Valid PCChange MEMAccess [4:0]regChange
+  
+
+
+
+
+
+  wire cpu_reset_n = reset_n && debug_reset_n;
+
   wire [31:0] affect_address    = halt_accept == 1   ? debug_address                                : (cycle == 0 ? fetch_address : {exec_address[31:2],2'b0});
   assign avm_m0_address         = affect_address[31] ? {1'b0,affect_address[30:0]} + private_offset : affect_address;
   assign avm_m0_writedata       = halt_accept == 1   ? debug_writedata                              : exec_writedata;
+  assign avm_m0_byteenable      = halt_accept == 1   ? debug_byteenable                             : byteenable;
   assign avm_m0_write           = halt_accept == 1   ? debug_write                                  : exec_write;
   assign avm_m0_read            = halt_accept == 1   ? debug_read                                   : (cycle == 0 ? fetch_read : exec_read);
 
   
   
   reg [31:0] latch_readdata;
-  wire        Rtype;
-  wire [5:0]  cmd;
-  wire [4:0]  regB;
-  wire [4:0]  regC;
-  wire [4:0]  IMM5;
-  wire [15:0] IMM16;
-  wire [31:0] IMM16zx;
-  wire [31:0] IMM16sx;
-  wire [25:0] IMM26;
-  assign Rtype = latch_readdata[5:0]==6'h3A;
-  assign cmd = Rtype ? latch_readdata[16:11] : latch_readdata[5:0];//把这些变量全部转成寄存器，在第二个周期固化下来，
-  assign regB = latch_readdata[26:22];
-  assign regC = latch_readdata[21:17];
-  assign IMM5 = latch_readdata[10:6];
-  assign IMM26 = latch_readdata[31:6];
-  assign IMM16 = latch_readdata[21:6];
-  assign IMM16sx = {{16{IMM16[15]}},IMM16};
-  assign IMM16zx = {16'b0,IMM16};
+  reg        Rtype;
+  reg [6:0]  RtypeCmd;
+  reg [4:0]  regB;
+  reg [4:0]  regC;
+  reg [4:0]  IMM5;
+  reg [15:0] IMM16;
+  reg [31:0] IMM16zx;
+  reg [31:0] IMM16sx;
+  reg [25:0] IMM26;
 
   reg cycle;//0:fetchCode 1:execCode
   wire [31:0] fetch_address;
@@ -371,6 +353,7 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   
   reg regWrite;
   reg [4:0] regAddr;
+  reg [4:0] regWriteAddr;
   wire [4:0] reg_addr;
   assign reg_addr = (halt_accept == 1) ? debug_reg : regAddr;
   reg  [31:0] regDataIn;
@@ -379,7 +362,7 @@ wire cpu_reset_n = reset_n && debug_reset_n;
     if (!cpu_reset_n) begin
     end else begin
       if(regWrite)begin
-        regfile[reg_addr] <= regDataIn;
+        regfile[regWriteAddr] <= regDataIn;
       end
     end
   end
@@ -387,7 +370,9 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   
   reg [31:0] regfileA;
   reg [31:0] regfileB;
-
+  reg        PCChange;
+  reg        MEMAccess;
+  
   reg        fetch_read;
   reg [ 2:0] fetch_step;
   reg        debug_step_buff;
@@ -396,12 +381,16 @@ wire cpu_reset_n = reset_n && debug_reset_n;
   reg        irq_req_buff2;
   always @(posedge clk or negedge cpu_reset_n) begin
     if (!cpu_reset_n) begin
-      cycle<=0;
-      fetch_read<=0;
-      fetch_step<=0;
+      cycle <= 0;
+      fetch_read <= 0;
+      fetch_step <= 0;
       halt_accept <= 0;
       debug_step_buff <= 0;
       regWrite <= 0;
+      regAddr <= 0;
+      regWriteAddr <= 0;
+      PCChange <= 0;
+      MEMAccess <= 0;
     end else begin
       regWrite <= 0;
       
@@ -425,23 +414,53 @@ wire cpu_reset_n = reset_n && debug_reset_n;
           end
         end else if(fetch_step==1)begin
           if(irq_req_buff2)begin
-            latch_readdata <= {26'b0,6'h2A};//callirq
+            //#irqcall                     @         xxx @                     xx @  37 @          100101      0x3A,0x25*
+            //7'b1100101 : begin//ok
+            RtypeCmd <= 7'b1100101;
+            PCChange <= 1;
+            MEMAccess <= 0;
             fetch_step <= 0;
-            cycle<=1;
+            cycle <= 1;
           end else begin
             if(!avm_m0_waitrequest)begin
               latch_readdata <= avm_m0_readdata;
+              Rtype <= avm_m0_readdata[5:0]==6'h3A;
               regAddr <= avm_m0_readdata[31:27];//regA
+              
+              PCChange <= 0;
+              MEMAccess <= 0;
+              if(avm_m0_readdata[5:0]==6'h3A)begin
+                if(latch_readdata[13:11]==3'b101)begin//latch_readdata[16:11] ???101
+                  PCChange <= 1;
+                end
+              end else begin
+                if(latch_readdata[1:0]==2'b10)begin//latch_readdata[5:0]  ????10
+                  PCChange <= 1;
+                end
+                if(latch_readdata[2:0]==3'b111)begin
+                  MEMAccess <= 1;
+                end
+              end
+              
+              
               fetch_read <= 0;
               fetch_step <= 2;
             end
           end
         end else if(fetch_step==2)begin
+          RtypeCmd <= {Rtype, (Rtype ? latch_readdata[16:11] : latch_readdata[5:0])};
+          regB <= latch_readdata[26:22];
+          regAddr <= latch_readdata[26:22];//regB;
+          regC <= latch_readdata[21:17];
+          IMM5 <= latch_readdata[10:6];
+          IMM26 <= latch_readdata[31:6];
+          IMM16 <= latch_readdata[21:6];
           regfileA <= regDataOut;
-          regAddr <= regB;
           fetch_step <= 3;
         end else if(fetch_step==3)begin
           regfileB <= regDataOut;
+          IMM16sx <= {{16{IMM16[15]}},IMM16};
+          IMM16zx <= {16'b0,IMM16};
           fetch_step <= 0;
           cycle<=1;
         end
@@ -449,17 +468,17 @@ wire cpu_reset_n = reset_n && debug_reset_n;
         if(cmd_ack)begin
           debug_step_buff <= debug_step;
           if(regResultB && regB!=0)begin
-            regAddr <= regB;
+            regWriteAddr <= regB;
             regDataIn <= regResult;
             regWrite <= 1;
           end
           if(regResultC && regC!=0)begin
-            regAddr <= regC;
+            regWriteAddr <= regC;
             regDataIn <= regResult;
             regWrite <= 1;
           end
           if(regResultRA)begin
-            regAddr <= 31;
+            regWriteAddr <= 31;
             regDataIn <= regResult;
             regWrite <= 1;
           end
@@ -545,30 +564,6 @@ wire cpu_reset_n = reset_n && debug_reset_n;
     .result ( mulResultSigned )
   );
   
-//  wire [31:0] numer;
-//  assign numer = regfileA;
-//  wire [31:0] denom;
-//  assign denom = regfileB;
-//  wire [31:0] quotientSigned;
-//  wire [31:0] remainSigned;
-//  wire [31:0] quotientUnsigned;
-//  wire [31:0] remainUnsigned;
-//
-//  divSigned  divSigned_inst (
-//    //.clock    (clk),
-//    .denom    (denom),
-//    .numer    (numer),
-//    .quotient (quotientSigned),
-//    .remain   (remainSigned)
-//  );
-//  divUnsigned  divUnsigned_inst (
-//    //.clock    (clk),
-//    .denom    (denom),
-//    .numer    (numer),
-//    .quotient (quotientUnsigned),
-//    .remain   (remainUnsigned)
-//  );
-
 parameter MUL_DIV_DELAY = 5;
   
   reg irq_enable;
@@ -597,208 +592,197 @@ parameter MUL_DIV_DELAY = 5;
         regResultB <= 0;
         regResultC <= 0;
         regResultRA <= 0;
-        if(Rtype==0)begin
-          //longcall
-          //longjmp
-          //unknow cmd
-          
-          //call sym                     @          22 @                      2 @  26 @          011010      0x1A
-          if         (cmd==6'h1A)begin//ok
+        
+        case(RtypeCmd)
+          //call sym                     @          22 @                      2 @   6 @          000110      0x06*
+          7'b0000110 : begin//ok
             pc <= {pc[31:28],IMM26,2'b00};
             //regfile[31] <= nextpc; code is 31
             regResult <= nextpc;
             regResultRA <= 1;
             cmd_ack <= 1;
-          
-          //call IRQ
-          end else if(cmd==6'h2A)begin//ok
-            pc <= irq_addr;
-            //regfile[31] <= nextpc; code is 31
-            regResult <= pc;
-            irq_enable <= 0;
-            regResultRA <= 1;
-            cmd_ack <= 1;
-
-            
-          //jmpi sym                     @          21 @                      2 @  10 @          001010      0x0A
-          end else if(cmd==6'h0A)begin//ok
+          end
+          //jmpi sym                     @          21 @                      2 @  62 @          111110      0x3e*
+          7'b0111110 : begin//ok
             pc <= {pc[31:28],IMM26,2'b00};
             cmd_ack <= 1;
-          //hlt                          @           0 @                      1 @   2 @ extends
-          end else if(cmd==6'h02)begin//ok
+          end
+          //hlt ins                      @           5 @                      0 @   0 @          000000      0x00*
+          7'b0000000 : begin//ok
             halt_cpu <= IMM16[0];
             pc <= nextpc;
             cmd_ack <= 1;
-            
-            
-          //br sym                       @          20 @                      0 @   6 @ 0x06
-          end else if(cmd==6'h06)begin//ok
+          end
+          //br sym                       @          20 @                      0 @   6 @          000110      0x06
+          7'b0000110 : begin//ok
             pc <= nextpc + IMM16sx;
             cmd_ack <= 1;
-          //bne reg, reg, sym            @          15 @                      0 @  30 @ 0x1e
-          end else if(cmd==6'd30)begin//ok
+          end
+          //bne reg, reg, sym            @          15 @                      0 @  30 @          011110      0x1e bne rA, rB, label
+          7'b0011110 : begin//ok
             if(comp_eq) begin
               pc <= nextpc;
             end else begin
               pc <= nextpc + IMM16sx;
             end
             cmd_ack <= 1;
-          //beq reg, reg, sym            @          15 @                      0 @  38 @ 0x26
-          end else if(cmd==6'd38)begin//ok
+          end
+          //beq reg, reg, sym            @          15 @                      0 @  38 @          100110      0x26
+          7'b0100110 : begin//ok
             if(comp_eq) begin
               pc <= nextpc + IMM16sx;
             end else begin
               pc <= nextpc;
             end
             cmd_ack <= 1;
-          
-          
-          //bge reg, reg, sym            @          15 @                      0 @  14 @ 0x0e
-          end else if(cmd==6'd14)begin//ok
+          end
+          //bge reg, reg, sym            @          15 @                      0 @  14 @          001110      0x0e
+          7'b0001110 : begin//ok
             if(comp_ge) begin//if ((signed) rA >= (signed) rB)
               pc <= nextpc + IMM16sx;//then PC ← PC + 4 + σ(IMM16)
             end else begin
               pc <= nextpc;//else PC ← PC + 4
             end
             cmd_ack <= 1;
-
-          //blt reg, reg, sym            @          15 @                      0 @  22 @ 0x16
-          end else if(cmd==6'd22)begin//ok
+          end
+          //blt reg, reg, sym            @          15 @                      0 @  22 @          010110      0x16
+          7'b0010110 : begin//ok
             if(comp_lt) begin//if ((signed) rA < (signed) rB)
               pc <= nextpc + IMM16sx;//then PC ← PC + 4 + σ(IMM16)
             end else begin
               pc <= nextpc;//else PC ← PC + 4
             end
             cmd_ack <= 1;
+          end
           //bltu reg, reg, sym           @          15 @                      0 @  54 @          110110      0x36
-          end else if(cmd==6'h36)begin//ok
+          7'b0110110 : begin//ok
             if(comp_ltu) begin//if ((unsigned) rA < (unsigned) rB) 
               pc <= nextpc + IMM16sx;//then PC ← PC + 4 + σ(IMM16)
             end else begin
               pc <= nextpc;//else PC ← PC + 4
             end
             cmd_ack <= 1;
+          end
           //bgeu reg, reg, sym           @          15 @                      0 @  46 @          101110      0x2e
-          end else if(cmd==6'h2e)begin//ok
+          7'b0101110 : begin//ok
             if(!comp_ltu) begin//if ((unsigned) rA >= (unsigned) rB) 
               pc <= nextpc + IMM16sx;//then PC ← PC + 4 + σ(IMM16)
             end else begin
               pc <= nextpc;//else PC ← PC + 4
             end
             cmd_ack <= 1;
-
-          
-          
-
-          //andi reg, reg, ins           @          10 @                      0 @  12 @ 0x0c
-          end else if(cmd==6'd12)begin//ok
+          end
+          //andi reg, reg, ins           @          10 @                      0 @  12 @          001100      0x0c andhi rB, rA, IMM16
+          7'b0001100 : begin//ok
             regResult <= {16'b0, (regfileA[15:0] & IMM16)};//rB ← rA & (0x0000 : IMM16)
             regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-          //andhi reg, reg, ins          @          10 @                      0 @  44 @ 0x2c
-          end else if(cmd==6'd44)begin//ok
+          end
+          //andhi reg, reg, ins          @          10 @                      0 @  44 @          101100      0x2c
+          7'b0101100 : begin//ok
             regResult <= {(regfileA[31:16] & IMM16), 16'b0};//rB ← rA & (IMM16 : 0x0000)
             regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-
-          //addi reg, reg, ins           @          10 @                      0 @   4 @ 0x04
-          end else if(cmd==6'd4)begin//ok
+          end
+          //addi reg, reg, ins           @          10 @                      0 @   4 @          000100      0x04
+          7'b0000100 : begin//ok
             regResult <= regfileA + IMM16sx;//rB ← rA + σ(IMM16)
             regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-          //orhi reg, reg, ins           @          10 @                      0 @  52 @ 0x34
-          end else if(cmd==6'd52)begin//ok
+          end
+          //orhi reg, reg, ins           @          10 @                      0 @  52 @          110100      0x34
+          7'b0110100 : begin//ok
             regResult <= {(regfileA[31:16] | IMM16),regfileA[15:0]};//rB ← rA | (IMM16 : 0x0000)
             regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-          //ori  reg, reg, ins           @          10 @                      0 @  20 @ 0x14
-          end else if(cmd==6'd20)begin//ok
+          end
+          //ori  reg, reg, ins           @          10 @                      0 @  20 @          010100      0x14
+          7'b0010100 : begin//ok
             regResult <= {regfileA[31:16],(regfileA[15:0] | IMM16)};//rB ← rA | (0x0000 : IMM16)
             regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-            
-          //muli reg, reg, ins           @          10 @                      0 @  36 @ 0x24
-          end else if(cmd==6'd36)begin//ok
+          end
+          //xori reg, reg, ins           @          10 @                      0 @  28 @          011100      0x1c
+          7'b0011100 : begin//ok
+            regResult <= {regfileA[31:16], (regfileA[15:0] ^ IMM16)};//rB ← rA ^ (0x0000 : IMM16)
+            regResultB <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+          end
+          //xorhi reg, reg, ins          @          10 @                      0 @  60 @          111100      0x3c
+          7'b0111100 : begin//ok
+            regResult <= {(regfileA[31:16] ^ IMM16), regfileA[15:0]};//rB ← rA ^ (IMM16 : 0x0000)
+            regResultB <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+          end
+          //muli reg, reg, ins           @          10 @                      0 @  36 @          100100      0x24
+          7'b0100100 : begin//ok
             if         (exec_step==0)begin
-							exec_cnt <= 0;
+              exec_cnt <= 0;
               mulDataB <= IMM16sx;
               exec_step <= 1;
             end else if(exec_step==1)begin
               exec_cnt <= exec_cnt + 1'b1;
               if(exec_cnt == MUL_DIV_DELAY)begin//50Mhz
-								// shift left logical immediate
-								regResult <= mulResultSigned[31:0];
-								regResultB <= 1;
-								exec_step <= 0;
-								pc <= nextpc;
-								cmd_ack <= 1;
-						  end
+                // shift left logical immediate
+                regResult <= mulResultSigned[31:0];
+                regResultB <= 1;
+                exec_step <= 0;
+                pc <= nextpc;
+                cmd_ack <= 1;
+              end
             end
-
-          //xori reg, reg, ins           @          10 @                      0 @  28 @ 0x1c
-          end else if(cmd==6'd28)begin//ok
-            regResult <= {regfileA[31:16], (regfileA[15:0] ^ IMM16)};//rB ← rA ^ (0x0000 : IMM16)
-            regResultB <= 1;
-            pc <= nextpc;
-            cmd_ack <= 1;
-          //xorhi reg, reg, ins          @          10 @                      0 @  60 @          111100      0x3c
-          end else if(cmd==6'h3c)begin//ok
-            regResult <= {(regfileA[31:16] ^ IMM16), regfileA[15:0]};//rB ← rA ^ (IMM16 : 0x0000)
-            regResultB <= 1;
-            pc <= nextpc;
-            cmd_ack <= 1;
-
-            
-            
-          //cmpeqi reg, reg, ins         @          10 @                      0 @  32 @ 0x20
-          end else if(cmd==6'd32)begin//ok
+          end
+          //cmpeqi reg, reg, ins         @          10 @                      0 @  32 @          100000      0x20
+          7'b0100000 : begin//ok
             regResult <= {31'b0,(regfileA == IMM16sx)};//if (rA == σ(IMM16)) then rB ← 1 else rB ← 0
             regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-
-          //cmplti reg, reg, ins         @          10 @                      0 @  16 @ 0x10
-          end else if(cmd==6'd16)begin//ok
+          end
+          //cmplti reg, reg, ins         @          10 @                      0 @  16 @          010000      0x10
+          7'b0010000 : begin//ok
             regResult <= {31'b0,($signed(regfileA) < $signed(IMM16sx))};//if ((signed) rA < (signed) σ(IMM16))
             regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
+          end
           //cmpltui reg, reg, ins        @          10 @                      0 @  48 @          110000      0x30
-          end else if(cmd==6'h30)begin//ok
+          7'b0110000 : begin//ok
             regResult <= {31'b0,(regfileA < {16'b0,IMM16})};//if ((unsigned) rA < (unsigned) (0x0000 : IMM16)) then rB ← 1 else rB ← 0
             regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-
-            
-          //cmpgei reg, reg, ins         @          10 @                      0 @   8 @ 0x08
-          end else if(cmd==6'h08)begin//ok
+          end
+          //cmpgei reg, reg, ins         @          10 @                      0 @   8 @          001000      0x08
+          7'b0001000 : begin//ok
             regResult <= {31'b0,($signed(regfileA) >= $signed(IMM16sx))};//if ((signed) rA >= (signed) σ(IMM16)) then rB ← 1 else rB ← 0
             regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-          //cmpnei reg, reg, ins         @          10 @                      0 @  24 @ 0x18
-          end else if(cmd==6'd24)begin//ok
+          end
+          //cmpnei reg, reg, ins         @          10 @                      0 @  24 @          011000      0x18
+          7'b0011000 : begin//ok
             regResult <= {31'b0,(regfileA != IMM16sx)};//if (rA != σ(IMM16)) then rB ← 1 else rB ← 0
             regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
+          end
           //cmpgeui reg, reg, ins        @          10 @                      0 @  40 @          101000      0x28
-          end else if(cmd==6'h28)begin//ok
+          7'b0101000 : begin//ok
             regResult <= {31'b0,(regfileA >= IMM16zx)};//if ((unsigned) rA >= (unsigned) (0x0000 : IMM16)) then rB ← 1 else rB ← 0
             regResultB <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-
-            
-
-          //ldw,ldwio reg, regins              @          11 @                      0 @  23 @ 0x17
-          end else if(cmd==6'd23 || cmd==6'd55)begin//ok
+          end
+          //ldw reg, regins              @          11 @                      0 @   7 @          000111      0x07 ldw rB, byte_offset(rA)
+          7'b0000111 : begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
               //exec_address <= {dsAddr[31:2],2'b0};//rB ← Mem32[rA + σ(IMM16)]
@@ -813,8 +797,9 @@ parameter MUL_DIV_DELAY = 5;
                 cmd_ack <= 1;
               end
             end
-          //stw,stwio reg, regins              @          11 @                      0 @  21 @ 0x15
-          end else if(cmd==6'd21 || cmd==6'd53)begin//ok
+          end
+          //stw reg, regins              @          11 @                      0 @  15 @          001111      0x0f stw rB, byte_offset(rA)
+          7'b0001111 : begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
               //exec_address <= {dsAddr[31:2],2'b0};//Mem32[rA + σ(IMM16)] ← rB
@@ -828,12 +813,9 @@ parameter MUL_DIV_DELAY = 5;
                 cmd_ack <= 1;
               end
             end
-
-
-          
-          
-          //ldbu reg, regins             @          11 @                      0 @   3 @ 0x03
-          end else if(cmd==6'd3)begin//ok
+          end
+          //ldbu reg, regins             @          11 @                      0 @  23 @          010111      0x17
+          7'b0010111 : begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
               //exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x000000 : Mem8[rA + σ(IMM16)]
@@ -853,8 +835,9 @@ parameter MUL_DIV_DELAY = 5;
                 cmd_ack <= 1;
               end
             end
-          //ldb reg, regins              @          11 @                      0 @   7 @ 0x07            
-          end else if(cmd==6'd7)begin//ok
+          end
+          //ldb reg, regins              @          11 @                      0 @  31 @          011111      0x1f*
+          7'b0011111 : begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
               //exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x000000 : Mem8[rA + σ(IMM16)]
@@ -874,8 +857,9 @@ parameter MUL_DIV_DELAY = 5;
                 cmd_ack <= 1;
               end
             end
-          //ldhu reg, regins             @          11 @                      0 @  11 @ 0x0b
-          end else if(cmd==6'd11)begin//ok
+          end
+          //ldhu reg, regins             @          11 @                      0 @  39 @          100111      0x27
+          7'b0100111 : begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
               //exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x0000 : Mem16[rA + σ(IMM16)]
@@ -893,9 +877,29 @@ parameter MUL_DIV_DELAY = 5;
                 cmd_ack <= 1;
               end
             end
-
-          //stb reg, regins              @          11 @                      0 @   5 @ 0x05
-          end else if(cmd==6'd5)begin//ok
+          end
+          //ldh reg, regins              @          11 @                      0 @  47 @          101111      0x2f
+          7'b0101111 : begin//ok
+            if         (exec_step==0)begin
+              exec_step <= 1;
+              //exec_address <= {dsAddr[31:2],2'b0};//rB ← σ(Mem16[rA + σ(IMM16)])
+              exec_read <= 1;
+            end else if(exec_step==1)begin
+              if(!avm_m0_waitrequest)begin
+                case(exec_address[1])
+                  0:begin regResult <= {{16{avm_m0_readdata[15]}},avm_m0_readdata[15: 0]};end
+                  1:begin regResult <= {{16{avm_m0_readdata[31]}},avm_m0_readdata[31:16]};end
+                endcase
+                regResultB <= 1;
+                exec_read <= 0;
+                exec_step <= 0;
+                pc <= nextpc;
+                cmd_ack <= 1;
+              end
+            end
+          end
+          //stb reg, regins              @          11 @                      0 @  55 @          110111      0x37*
+          7'b0110111 : begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
               //exec_address <= {dsAddr[31:2],2'b0};//Mem8[rA + σ(IMM16)] ← rB7..0
@@ -915,8 +919,9 @@ parameter MUL_DIV_DELAY = 5;
                 cmd_ack <= 1;
               end
             end
-          //sth reg, regins              @          11 @                      0 @  13 @ 0x0d
-          end else if(cmd==6'd13)begin//ok
+          end
+          //sth reg, regins              @          11 @                      0 @  63 @          111111      0x3f*
+          7'b0111111 : begin//ok
             if         (exec_step==0)begin
               exec_step <= 1;
               //exec_address <= {dsAddr[31:2],2'b0};//Mem8[rA + σ(IMM16)] ← rB7..0
@@ -934,78 +939,149 @@ parameter MUL_DIV_DELAY = 5;
                 cmd_ack <= 1;
               end
             end
-          //ldh reg, regins              @          11 @                      0 @  15 @          001111      0x0f
-          end else if(cmd==6'h0f)begin//ok
-            if         (exec_step==0)begin
-              exec_step <= 1;
-              //exec_address <= {dsAddr[31:2],2'b0};//rB ← σ(Mem16[rA + σ(IMM16)])
-              exec_read <= 1;
-            end else if(exec_step==1)begin
-              if(!avm_m0_waitrequest)begin
-                case(exec_address[1])
-                  0:begin regResult <= {{16{avm_m0_readdata[15]}},avm_m0_readdata[15: 0]};end
-                  1:begin regResult <= {{16{avm_m0_readdata[31]}},avm_m0_readdata[31:16]};end
-                endcase
-                regResultB <= 1;
-                exec_read <= 0;
-                exec_step <= 0;
-                pc <= nextpc;
-                cmd_ack <= 1;
-              end
-            end
-
-          
-          
-          end else begin
-            halt_cpu <= 1;
-            pc <= nextpc;
-            cmd_ack <= 1;
           end
-        end else begin
-          
-          //?
-          
-          //ret                          @           0 @                      1 @   5 @ 0x3A,0x05
-          if         (cmd==6'd5)begin
+          //ret                          @           1 @                      1 @   5 @          000101      0x3A,0x05
+          7'b1000101 : begin
             pc <= regfileA;//regA == 31
             cmd_ack <= 1;
-          //reti                         @           1 @                      1 @  21 @          000101      0x3A,0x15
-          end else if(cmd==6'h15)begin//ok
+          end
+          //reti                         @           1 @                      1 @  21 @          010101      0x3A,0x15*
+          7'b1010101 : begin//ok
             pc <= regfileA;
             irq_enable <= 1;
             cmd_ack <= 1;
-            
+          end
+          //#irqcall                     @         xxx @                     xx @  37 @          100101      0x3A,0x25*
+          7'b1100101 : begin//ok
+            pc <= irq_addr;
+            //regfile[31] <= nextpc; code is 31
+            regResult <= pc;
+            irq_enable <= 0;
+            regResultRA <= 1;
+            cmd_ack <= 1;
+          end
           //stoff reg                    @          50 @                      1 @  10 @          001010      0x3A,0x0A*
-          end else if(cmd==6'h0A)begin//ok
+          7'b1001010 : begin//ok
             private_offset <= regfileA;
             pc <= nextpc;
             cmd_ack <= 1;
-
+          end
           //callr reg                    @          50 @                      1 @  29 @          011101      0x3A,0x1d
-          end else if(cmd==6'h1D)begin//ok
+          7'b1011101 : begin//ok
             pc <= regfileA;
             regResult <= pc + 4;//rC ← rA + rB
             regResultC <= 1;// c is ra
             cmd_ack <= 1;
+          end
           //jmp reg                      @          50 @                      1 @  13 @          001101      0x3A,0x0d
-          end else if(cmd==6'h0D)begin//ok
+          7'b1001101 : begin//ok
             pc <= regfileA;
             cmd_ack <= 1;
-
-          //add reg, reg, reg            @          30 @                      1 @  49 @ 0x3A,0x31
-          end else if(cmd==6'd49)begin
+          end
+          //add reg, reg, reg            @          30 @                      1 @  49 @          110001      0x3A,0x31 add rC, rA, rB
+          7'b1110001 : begin
             regResult <= regfileA + regfileB;//rC ← rA + rB
             regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-          //sub reg, reg, reg            @          30 @                      1 @  57 @ 0x3A,0x39
-          end else if(cmd==6'd57)begin
+          end
+          //sub reg, reg, reg            @          30 @                      1 @  57 @          111001      0x3A,0x39
+          7'b1111001 : begin
             regResult <= regfileA - regfileB;// rC ← rA – rB
             regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-          //mul reg, reg, reg            @          30 @                      1 @  39 @ 0x3A,0x27
-          end else if(cmd==6'd39)begin//ok
+          end
+          //and reg, reg, reg            @          30 @                      1 @  14 @          001110      0x3A,0x0e
+          7'b1001110 : begin
+            regResult <= regfileA & regfileB;// rC ← rA | rB
+            regResultC <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+          end
+          //or reg, reg, reg             @          30 @                      1 @  22 @          010110      0x3A,0x16
+          7'b1010110 : begin
+            regResult <= regfileA | regfileB;// rC ← rA | rB
+            regResultC <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+          end
+          //nor reg, reg, reg            @          30 @                      1 @   6 @          000110      0x3A,0x06
+          7'b1000110 : begin
+            regResult <= ~(regfileA | regfileB);// rC ← ~(rA | rB)
+            regResultC <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+          end
+          //xor reg, reg, reg            @          30 @                      1 @  30 @          011110      0x3A,0x1e
+          7'b1011110 : begin
+            regResult <= regfileA ^ regfileB;// rC ← rA ^ rB
+            regResultC <= 1;
+            pc <= nextpc;
+            cmd_ack <= 1;
+          end
+          //sll reg, reg, reg            @          30 @                      1 @  19 @          010011      0x3A,0x13
+          7'b1010011 : begin
+            if         (exec_step==0)begin
+              shiftDirection <= 0;//0:left 1:right
+              shiftDistance <= regfileB[4:0];//rC ← rA << (rB4..0)
+              exec_step <= 1;
+            end else if(exec_step==1)begin
+              // shift left logical
+              regResult <= shiftResultLogical;
+              regResultC <= 1;
+              exec_step <= 0;
+              pc <= nextpc;
+              cmd_ack <= 1;
+            end
+          end
+          //sra reg, reg, reg            @          30 @                      1 @  59 @          111011      0x3A,0x3b
+          7'b1111011 : begin
+            if         (exec_step==0)begin
+              shiftDirection <= 1;//0:left 1:right
+              shiftDistance <= regfileB[4:0];//rC ← (signed) rA >> ((unsigned) rB4..0)
+              exec_step <= 1;
+            end else if(exec_step==1)begin
+              // shift right arithmetic
+              regResult <= shiftResultArithmetic;
+              regResultC <= 1;
+              exec_step <= 0;
+              pc <= nextpc;
+              cmd_ack <= 1;
+            end
+          end
+          //rol reg, reg, reg            @          30 @                      1 @   3 @          000011      0x3A,0x03
+          7'b1000011 : begin
+            if         (exec_step==0)begin
+              shiftDirection <= 0;//0:left 1:right
+              shiftDistance <= regfileB[4:0];//rC ← rA rotated left rB4..0 bit positions
+              exec_step <= 1;
+            end else if(exec_step==1)begin
+              // rotate left
+              regResult <= shiftResultRotate;
+              regResultC <= 1;
+              exec_step <= 0;
+              pc <= nextpc;
+              cmd_ack <= 1;
+            end
+          end
+          //srl reg, reg, reg            @          30 @                      1 @  27 @          011011      0x3A,0x1b
+          7'b1011011 : begin
+            if         (exec_step==0)begin
+              shiftDirection <= 1;//0:left 1:right
+              shiftDistance <= regfileB[4:0];//rC ← (unsigned) rA >> ((unsigned) rB4..0)
+              exec_step <= 1;
+            end else if(exec_step==1)begin
+              // shift right logical
+              regResult <= shiftResultLogical;
+              regResultC <= 1;
+              exec_step <= 0;
+              pc <= nextpc;
+              cmd_ack <= 1;
+            end
+          end
+          //mul reg, reg, reg            @          30 @                      1 @  39 @          100111      0x3A,0x27
+          7'b1100111 : begin//ok
             if         (exec_step==0)begin
               exec_cnt <= 0;
               mulDataB <= regfileB;
@@ -1020,169 +1096,52 @@ parameter MUL_DIV_DELAY = 5;
                 cmd_ack <= 1;
               end
             end
-          //divu reg, reg, reg           @          30 @                      1 @  37 @          100101      0x3A,0x24
-          //end else if(cmd==6'h24)begin//ok
-          //  if         (exec_step==0)begin
-          //    exec_cnt <= 0;
-          //    exec_step <= 1;
-          //  end else if(exec_step==1)begin
-          //    exec_cnt <= exec_cnt + 1'b1;
-          //    if(exec_cnt == MUL_DIV_DELAY)begin//50Mhz
-          //      regResult <= quotientUnsigned;
-          //      regResultC <= 1;
-          //      exec_step <= 0;
-          //      pc <= nextpc;
-          //      cmd_ack <= 1;
-          //    end
-          //  end
-          //div reg, reg, reg            @          30 @                      1 @  37 @          100101      0x3A,0x25
-          //end else if(cmd==6'h25)begin//ok
-          //  if         (exec_step==0)begin
-          //    exec_cnt <= 0;
-          //    exec_step <= 1;
-          //  end else if(exec_step==1)begin
-          //    exec_cnt <= exec_cnt + 1'b1;
-          //    if(exec_cnt == MUL_DIV_DELAY)begin//50Mhz
-          //      regResult <= quotientSigned;
-          //      regResultC <= 1;
-          //      exec_step <= 0;
-          //      pc <= nextpc;
-          //      cmd_ack <= 1;
-          //    end
-          //  end
-
-          //and reg, reg, reg            @          30 @                      1 @  14 @ 0x3A,0x0e
-          end else if(cmd==6'd14)begin
-            regResult <= regfileA & regfileB;// rC ← rA | rB
-            regResultC <= 1;
-            pc <= nextpc;
-            cmd_ack <= 1;
-          
-          //or reg, reg, reg             @          30 @                      1 @  22 @ 0x3A,0x16sssssssssss
-          end else if(cmd==6'd22)begin
-            regResult <= regfileA | regfileB;// rC ← rA | rB
-            regResultC <= 1;
-            pc <= nextpc;
-            cmd_ack <= 1;
-
-          //nor reg, reg, reg            @          30 @                      1 @   6 @ 0x3A,0x06
-          end else if(cmd==6'd6)begin
-            regResult <= ~(regfileA | regfileB);// rC ← ~(rA | rB)
-            regResultC <= 1;
-            pc <= nextpc;
-            cmd_ack <= 1;
-          //xor reg, reg, reg            @          30 @                      1 @  30 @          011110      0x3A,0x1e
-          end else if(cmd==6'h1e)begin
-            regResult <= regfileA ^ regfileB;// rC ← rA ^ rB
-            regResultC <= 1;
-            pc <= nextpc;
-            cmd_ack <= 1;
-
-            
-          //sll reg, reg, reg            @          30 @                      1 @  19 @ 0x3A,0x13
-          end else if(cmd==6'd19)begin
-            if         (exec_step==0)begin
-              shiftDirection <= 0;//0:left 1:right
-              shiftDistance <= regfileB[4:0];//rC ← rA << (rB4..0)
-              exec_step <= 1;
-            end else if(exec_step==1)begin
-              // shift left logical
-              regResult <= shiftResultLogical;
-              regResultC <= 1;
-              exec_step <= 0;
-              pc <= nextpc;
-              cmd_ack <= 1;
-            end
-          //sra reg, reg, reg            @          30 @                      1 @  59 @ 0x3A,0x3b
-          end else if(cmd==6'd59)begin
-            if         (exec_step==0)begin
-              shiftDirection <= 1;//0:left 1:right
-              shiftDistance <= regfileB[4:0];//rC ← (signed) rA >> ((unsigned) rB4..0)
-              exec_step <= 1;
-            end else if(exec_step==1)begin
-              // shift right arithmetic
-              regResult <= shiftResultArithmetic;
-              regResultC <= 1;
-              exec_step <= 0;
-              pc <= nextpc;
-              cmd_ack <= 1;
-            end
-          //rol reg, reg, reg            @          30 @                      1 @   3 @          000011      0x3A,0x03
-          end else if(cmd==6'h03)begin
-            if         (exec_step==0)begin
-              shiftDirection <= 0;//0:left 1:right
-              shiftDistance <= regfileB[4:0];//rC ← rA rotated left rB4..0 bit positions
-              exec_step <= 1;
-            end else if(exec_step==1)begin
-              // rotate left
-              regResult <= shiftResultRotate;
-              regResultC <= 1;
-              exec_step <= 0;
-              pc <= nextpc;
-              cmd_ack <= 1;
-            end
-          //srl reg, reg, reg            @          30 @                      1 @  27 @          011011      0x3A,0x1b
-          end else if(cmd==6'h1b)begin
-            if         (exec_step==0)begin
-              shiftDirection <= 1;//0:left 1:right
-              shiftDistance <= regfileB[4:0];//rC ← (unsigned) rA >> ((unsigned) rB4..0)
-              exec_step <= 1;
-            end else if(exec_step==1)begin
-              // shift right logical
-              regResult <= shiftResultLogical;
-              regResultC <= 1;
-              exec_step <= 0;
-              pc <= nextpc;
-              cmd_ack <= 1;
-            end
+          end
 
           //setirq reg, reg, ins         @          40 @                      1 @  34 @          100010      0x3A,0x22* ins=0,1
-          end else if(cmd==6'h22)begin//ok
+          7'b1100010 : begin//ok
             irq_enable <= IMM5[0];//rB ← rA & (0x0000 : IMM16)
             irq_addr <= regfileA;
             pc <= nextpc;
             cmd_ack <= 1;
-
-
-
-          
-          //cmpeq reg, reg, reg          @          30 @                      1 @  32 @ 0x3A,0x20
-          end else if(cmd==6'd32)begin
+          end
+          //cmpeq reg, reg, reg          @          30 @                      1 @  32 @          100000      0x3A,0x20
+          7'b1100000 : begin
             regResult <= {31'b0,comp_eq};//if (rA == rB) then rC ← 1 else rC ← 0
             regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-          //cmpne reg, reg, reg          @          30 @                      1 @  24 @ 0x3A,0x18
-          end else if(cmd==6'd24)begin
+          end
+          //cmpne reg, reg, reg          @          30 @                      1 @  24 @          011000      0x3A,0x18
+          7'b1011000 : begin
             regResult <= {31'b0,(~comp_eq)};//if (rA != rB) then rC ← 1 else rC ← 0
             regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-
-          //cmpge reg, reg, reg          @          30 @                      1 @   8 @ 0x3A,0x08
-          end else if(cmd==6'd8)begin
+          end
+          //cmpge reg, reg, reg          @          30 @                      1 @   8 @          001000      0x3A,0x08
+          7'b1001000 : begin
             regResult <= {31'b0,(comp_ge)};// if ((signed) rA >= (signed) rB) then rC ← 1  else rC ← 0
             regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-
-          //cmplt reg, reg, reg          @          30 @                      1 @  16 @ 0x3A,0x10
-          end else if(cmd==6'd16)begin
+          end
+          //cmplt reg, reg, reg          @          30 @                      1 @  16 @          010000      0x3A,0x10
+          7'b1010000 : begin
             regResult <= {31'b0,(~comp_ge)};//if ((signed) rA < (signed) rB) then rC ← 1 else rC ← 0
             regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-
+          end
           //cmpltu reg, reg, reg         @          30 @                      1 @  48 @          110000      0x3A,0x30
-          end else if(cmd==6'h30)begin
+          7'b1110000 : begin
             regResult <= {31'b0,(comp_ltu)};//if ((unsigned) rA < (unsigned) rB) then rC ← 1 else rC ← 0
             regResultC <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
-
-            
-          //slli reg, reg, ins           @          40 @                      1 @  18 @ 0x3A,0x12
-          end else if(cmd==6'd18)begin
+          end
+          //slli reg, reg, ins           @          40 @                      1 @  18 @          010010      0x3A,0x12
+          7'b1010010 : begin
             // rC ← rA << IMM5
             if         (exec_step==0)begin
               shiftDirection <= 0;//0:left 1:right
@@ -1196,8 +1155,9 @@ parameter MUL_DIV_DELAY = 5;
               pc <= nextpc;
               cmd_ack <= 1;
             end
-          //srai reg, reg, ins           @          40 @                      1 @  58 @ 0x3A,0x3a
-          end else if(cmd==6'd58)begin
+          end
+          //srai reg, reg, ins           @          40 @                      1 @  58 @          111010      0x3A,0x3a
+          7'b1111010 : begin
             // rC ← (signed) rA >> ((unsigned) IMM5)
             if         (exec_step==0)begin
               shiftDirection <= 1;//0:left 1:right
@@ -1211,8 +1171,9 @@ parameter MUL_DIV_DELAY = 5;
               pc <= nextpc;
               cmd_ack <= 1;
             end
+          end
           //srli reg, reg, ins           @          40 @                      1 @  26 @          011010      0x3A,0x1a
-          end else if(cmd==6'h1A)begin
+          7'b1011010 : begin
             // rC ← (unsigned) rA >> ((unsigned) IMM5)
             if         (exec_step==0)begin
               shiftDirection <= 1;//0:left 1:right
@@ -1226,16 +1187,14 @@ parameter MUL_DIV_DELAY = 5;
               pc <= nextpc;
               cmd_ack <= 1;
             end
-
-          end else begin
+          end
+          default : begin
             halt_cpu <= 1;
             pc <= nextpc;
             cmd_ack <= 1;
           end
-        
-        
-        end
-        
+
+        endcase
       end
       
       if(cycle==0 && cmd_ack==1)begin
