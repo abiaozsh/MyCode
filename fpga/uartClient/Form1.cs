@@ -39,7 +39,7 @@ namespace WindowsFormsApplication1
 			}
 			this.textBox1.KeyDown += textBox1_KeyDown;
 
-			this.comboBox2.SelectedIndex = 1;
+			this.comboBox2.SelectedIndex = 2;
 		}
 		private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
 		{
