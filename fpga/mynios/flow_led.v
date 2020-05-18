@@ -4,7 +4,7 @@ module flow_led(
   input key1,
   input key2,
   output led,
- 
+   
   //uart接口
   input uart_rxd,
   output uart_txd,
@@ -15,6 +15,7 @@ module flow_led(
   output segled_dat, 
   output segled_str,
   output [7:0] debug,
+  output [3:0] debug4,
  
   //SDRAM 芯片接口
   output        sdram_clk_out,                //SDRAM 芯片时钟
@@ -38,10 +39,10 @@ module flow_led(
     inout mouse_data,
     inout mouse_clk,
     
-  input  wire        spi_MISO,        //     spi.MISO
-  output wire        spi_MOSI,        //        .MOSI
-  output wire        spi_SCLK,        //        .SCLK
-  output wire [2:0]  spi_SS_n         //        .SS_n
+  input   [2:0]  spi_MISO,        //     spi.MISO
+  output  [2:0]  spi_MOSI,        //        .MOSI
+  output  [2:0]  spi_SCLK,        //        .SCLK
+  output  [2:0]  spi_CS         //        .SS_n
  
 );
 wire sys_rst_n;
@@ -129,6 +130,7 @@ system system_inst(
 
   .mycpu_uart_rxd (uart_rxd), //        .uart_rxd
   .mycpu_uart_txd (uart_txd), //   mycpu.uart_txd
+  .debug4         (debug4),    //        .debug
   .debug8         (debug8),    //        .debug
   .debug32        (debug32),   //        .debug0
 
@@ -154,7 +156,7 @@ system system_inst(
   .softspi_MISO        (spi_MISO),        //     spi.MISO
   .softspi_MOSI        (spi_MOSI),        //        .MOSI
   .softspi_SCLK        (spi_SCLK),        //        .SCLK
-  .softspi_SS_n        (spi_SS_n),         //        .SS_n    
+  .softspi_CS          (spi_CS),         //        .SS_n    
   
   //.pio0out_export (outpin32), // pio0out.export
   //.pio1in_export  (inpin8),  //  pio1in.export

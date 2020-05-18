@@ -242,12 +242,12 @@ always @(posedge clk or negedge reset_n) begin
           end
         end
 
-      end else if (command == 8'h40) begin debug_data<=numer; command_done<=1;
-      end else if (command == 8'h41) begin debug_data<=denom; command_done<=1;
-      end else if (command == 8'h42) begin debug_data<=quotientUnsigned; command_done<=1;
+      //end else if (command == 8'h40) begin debug_data<=numer; command_done<=1;
+      //end else if (command == 8'h41) begin debug_data<=denom; command_done<=1;
+      //end else if (command == 8'h42) begin debug_data<=quotientUnsigned; command_done<=1;
       end else if (command == 8'h43) begin debug_data<=pc; command_done<=1;
       end else if (command == 8'h44) begin debug_data<=private_offset; command_done<=1;
-      end else if (command == 8'h45) begin debug_data<=quotientSigned; command_done<=1;
+      //end else if (command == 8'h45) begin debug_data<=quotientSigned; command_done<=1;
 
       end else if (command == 8'h47) begin
         if         (debug_readmem_step==0)begin
@@ -545,29 +545,29 @@ wire cpu_reset_n = reset_n && debug_reset_n;
     .result ( mulResultSigned )
   );
   
-  wire [31:0] numer;
-  assign numer = regfileA;
-  wire [31:0] denom;
-  assign denom = regfileB;
-  wire [31:0] quotientSigned;
-  wire [31:0] remainSigned;
-  wire [31:0] quotientUnsigned;
-  wire [31:0] remainUnsigned;
-
-  divSigned  divSigned_inst (
-    //.clock    (clk),
-    .denom    (denom),
-    .numer    (numer),
-    .quotient (quotientSigned),
-    .remain   (remainSigned)
-  );
-  divUnsigned  divUnsigned_inst (
-    //.clock    (clk),
-    .denom    (denom),
-    .numer    (numer),
-    .quotient (quotientUnsigned),
-    .remain   (remainUnsigned)
-  );
+//  wire [31:0] numer;
+//  assign numer = regfileA;
+//  wire [31:0] denom;
+//  assign denom = regfileB;
+//  wire [31:0] quotientSigned;
+//  wire [31:0] remainSigned;
+//  wire [31:0] quotientUnsigned;
+//  wire [31:0] remainUnsigned;
+//
+//  divSigned  divSigned_inst (
+//    //.clock    (clk),
+//    .denom    (denom),
+//    .numer    (numer),
+//    .quotient (quotientSigned),
+//    .remain   (remainSigned)
+//  );
+//  divUnsigned  divUnsigned_inst (
+//    //.clock    (clk),
+//    .denom    (denom),
+//    .numer    (numer),
+//    .quotient (quotientUnsigned),
+//    .remain   (remainUnsigned)
+//  );
 
 parameter MUL_DIV_DELAY = 5;
   
@@ -1021,35 +1021,35 @@ parameter MUL_DIV_DELAY = 5;
               end
             end
           //divu reg, reg, reg           @          30 @                      1 @  37 @          100101      0x3A,0x24
-          end else if(cmd==6'h24)begin//ok
-            if         (exec_step==0)begin
-              exec_cnt <= 0;
-              exec_step <= 1;
-            end else if(exec_step==1)begin
-              exec_cnt <= exec_cnt + 1'b1;
-              if(exec_cnt == MUL_DIV_DELAY)begin//50Mhz
-                regResult <= quotientUnsigned;
-                regResultC <= 1;
-                exec_step <= 0;
-                pc <= nextpc;
-                cmd_ack <= 1;
-              end
-            end
+          //end else if(cmd==6'h24)begin//ok
+          //  if         (exec_step==0)begin
+          //    exec_cnt <= 0;
+          //    exec_step <= 1;
+          //  end else if(exec_step==1)begin
+          //    exec_cnt <= exec_cnt + 1'b1;
+          //    if(exec_cnt == MUL_DIV_DELAY)begin//50Mhz
+          //      regResult <= quotientUnsigned;
+          //      regResultC <= 1;
+          //      exec_step <= 0;
+          //      pc <= nextpc;
+          //      cmd_ack <= 1;
+          //    end
+          //  end
           //div reg, reg, reg            @          30 @                      1 @  37 @          100101      0x3A,0x25
-          end else if(cmd==6'h25)begin//ok
-            if         (exec_step==0)begin
-              exec_cnt <= 0;
-              exec_step <= 1;
-            end else if(exec_step==1)begin
-              exec_cnt <= exec_cnt + 1'b1;
-              if(exec_cnt == MUL_DIV_DELAY)begin//50Mhz
-                regResult <= quotientSigned;
-                regResultC <= 1;
-                exec_step <= 0;
-                pc <= nextpc;
-                cmd_ack <= 1;
-              end
-            end
+          //end else if(cmd==6'h25)begin//ok
+          //  if         (exec_step==0)begin
+          //    exec_cnt <= 0;
+          //    exec_step <= 1;
+          //  end else if(exec_step==1)begin
+          //    exec_cnt <= exec_cnt + 1'b1;
+          //    if(exec_cnt == MUL_DIV_DELAY)begin//50Mhz
+          //      regResult <= quotientSigned;
+          //      regResultC <= 1;
+          //      exec_step <= 0;
+          //      pc <= nextpc;
+          //      cmd_ack <= 1;
+          //    end
+          //  end
 
           //and reg, reg, reg            @          30 @                      1 @  14 @ 0x3A,0x0e
           end else if(cmd==6'd14)begin

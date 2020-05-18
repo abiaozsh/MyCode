@@ -173,14 +173,25 @@ set_location_assignment PIN_V6 -to sdram_addr[12]
 #set_location_assignment PIN_C2 -to vga_rgb[14]
 
 
-#set_location_assignment PIN_H1 -to ?
-#set_location_assignment PIN_F1 -to ?
-set_location_assignment PIN_E1 -to spi_SS_n[2]
-set_location_assignment PIN_C1 -to spi_SS_n[1]
-set_location_assignment PIN_B1 -to spi_SS_n[0]
-set_location_assignment PIN_B3 -to spi_MOSI
-set_location_assignment PIN_B4 -to spi_SCLK
-set_location_assignment PIN_C4 -to spi_MISO
+set_location_assignment PIN_H1 -to debug4[0]
+set_location_assignment PIN_F1 -to debug4[1]
+set_location_assignment PIN_E1 -to debug4[2]
+set_location_assignment PIN_C1 -to debug4[3]
+
+set_location_assignment PIN_B1 -to spi_CS[0]
+set_location_assignment PIN_B3 -to spi_MOSI[0]
+set_location_assignment PIN_B4 -to spi_SCLK[0]
+set_location_assignment PIN_C4 -to spi_MISO[0]
+
+set_location_assignment PIN_B17 -to spi_CS[2]
+set_location_assignment PIN_B18 -to spi_MOSI[2]
+set_location_assignment PIN_B19 -to spi_SCLK[2]
+set_location_assignment PIN_B20 -to spi_MISO[2]
+
+set_location_assignment PIN_A17 -to spi_CS[1]
+set_location_assignment PIN_A18 -to spi_MOSI[1]
+set_location_assignment PIN_A19 -to spi_SCLK[1]
+set_location_assignment PIN_A20 -to spi_MISO[1]
 
 
 set_location_assignment PIN_R1 -to vga_rgb[0]

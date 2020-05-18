@@ -9,8 +9,9 @@ module system (
 
     output        mycpu_uart_txd, //   mycpu.uart_txd
     input         mycpu_uart_rxd, //        .uart_rxd
-    output [7:0]  debug8,   //        .debug8
-    output [31:0] debug32,   //        .debug32
+    output [3:0]  debug4, 
+    output [7:0]  debug8, 
+    output [31:0] debug32,
 
     //SDRAM 芯片接口
     output        sdram_clk_out,            //SDRAM 芯片时钟
@@ -24,10 +25,10 @@ module system (
     inout  [15:0] sdram_data,               //SDRAM 数据
     output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
 
-    input          softspi_MISO,   // softspi.MISO
-    output         softspi_MOSI,   //        .MOSI
-    output         softspi_SCLK,   //        .SCLK
-    output  [2:0]  softspi_SS_n,   //        .SS_n
+    input   [2:0]  softspi_MISO,   // softspi.MISO
+    output  [2:0]  softspi_MOSI,   //        .MOSI
+    output  [2:0]  softspi_SCLK,   //        .SCLK
+    output  [2:0]  softspi_CS,   //        .SS_n
     
     input          myuart_rxd,     //  myuart.rxd
     output         myuart_txd,     //        .txd
@@ -274,7 +275,7 @@ end
   wire [8:0] mainSRAM_address = avm_m0_address[10:2];//~[8:0]
   
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  assign debug8[0] = flush_cache;//mouse_send_req_buff;
+  //assign debug8[0] = flush_cache;//mouse_send_req_buff;
   //assign debug8[1] = mbitpos[1];//mouse_send_ack;
   //assign debug8[2] = mbitpos[2];//mouse_read_req_buff;
   //assign debug8[3] = mbitpos[3];//mouse_read_ack;
@@ -420,8 +421,8 @@ end
   assign myuart_write = myuart_cs ? avm_m0_write : 1'b0;
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  
-  
+  assign debug8 = spidebug8;
+ 
   wire softspi_cs = avm_m0_address[31:16] == 16'h0205;
 
   wire [31:0] softspi_readdata;
@@ -439,17 +440,18 @@ end
     .avs_s0_waitrequest (softspi_waitrequest ),
     .avs_s0_byteenable  (avm_m0_byteenable ),
     
+    .debug4 (debug4),
     .debug8 (spidebug8),
     
     .MISO           (softspi_MISO),
     .MOSI           (softspi_MOSI),
     .SCLK           (softspi_SCLK),
-    .SS_n           (softspi_SS_n)
+    .CS             (softspi_CS)
 
   );
   
-  wire   [1:0] softspi_address;
-  assign softspi_address = avm_m0_address[3:2];//~[0]
+  wire   [13:0] softspi_address;
+  assign softspi_address = avm_m0_address[15:2];//~[0]
   
   wire softspi_read = softspi_cs ? avm_m0_read : 1'b0;
   wire softspi_write = softspi_cs ? avm_m0_write : 1'b0;

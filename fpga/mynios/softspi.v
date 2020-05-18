@@ -3,7 +3,7 @@ module softspi (
     input  clk_50M,
     input  reset_n,               // reset.reset
     
-    input   [29:0] avs_s0_address,     //    s0.address
+    input   [13:0] avs_s0_address,     //    s0.address
     input          avs_s0_read,        //      .read
     input          avs_s0_write,       //      .write
     output  [31:0] avs_s0_readdata,    //      .readdata
@@ -12,33 +12,51 @@ module softspi (
     input   [3:0]  avs_s0_byteenable,    //      .readdata
 
     output [7:0]   debug8,
-    
-    input             MISO,
-    output reg        MOSI,
-    output reg        SCLK,
-    output reg [2:0]  SS_n
+    output [3:0]   debug4,
+
+    input      [2:0]  MISO,
+    output     [2:0]  MOSI,
+    output     [2:0]  SCLK,
+    output reg [2:0]  CS
     
 );
 
-  reg [1:0] clk_count;
-  parameter DELAY = 3;
+  //reg [7:0] clk_count;
+  //reg [7:0] clk_delay;
+  
+  reg [3:0] clk_count;
+  parameter clk_delay = 15;
+  
   reg [7:0] read_data;
   reg read_req_buff;
   reg read_ack;
   reg write_req_buff;
   reg write_ack;
   
-  assign debug8[0]=read_req_buff;  // 0  00101100
-  assign debug8[1]=read_ack;       // 0
-  assign debug8[2]=write_req_buff; // 1
-  assign debug8[3]=write_ack;      // 1
+  assign debug8 = clk_delay;
+  assign debug4[0]=~read_req_buff;  // 0  00101100
+  assign debug4[1]=~read_ack;       // 0
+  assign debug4[2]=write_req_buff; // 1
+  assign debug4[3]=write_ack;      // 1
+  
+  reg _MOSI_;
+  assign MOSI[0] = _MOSI_;//(~CS[0]) ?  : 1'b1;
+  assign MOSI[1] = _MOSI_;//(~CS[1]) ?  : 1'b1;
+  assign MOSI[2] = _MOSI_;//(~CS[2]) ?  : 1'b1;
+  reg _SCLK_;
+  assign SCLK[0] = _SCLK_;//(~CS[0]) ?  : 1'b0;
+  assign SCLK[1] = _SCLK_;//(~CS[1]) ?  : 1'b0;
+  assign SCLK[2] = _SCLK_;//(~CS[2]) ?  : 1'b0;
+
+  
+  wire rst_sd_n = reset_n & reset_by_cpu_n;
   
   reg [3:0] count;
   reg       state;
-  always @ (posedge clk_50M or negedge reset_n) begin
-    if (!reset_n) begin
-      MOSI <= 1;
-      SCLK <= 0;
+  always @ (posedge clk_50M or negedge rst_sd_n) begin
+    if (!rst_sd_n) begin
+      _MOSI_ <= 1;
+      _SCLK_ <= 0;
       read_req_buff <= 0;
       read_ack <= 0;
       write_req_buff <= 0;
@@ -53,17 +71,17 @@ module softspi (
       
       if(read_req_buff && !read_ack)begin
         if(         state==0)begin
-          MOSI <= 1;
-          SCLK <= 1;
+          _MOSI_ <= 1;
+          _SCLK_ <= 1;
           clk_count <= clk_count+1'b1;
-          if(clk_count==DELAY)begin
+          if(clk_count==clk_delay)begin
             state <= 1;
             clk_count<=0;
           end
         end else if(state==1)begin
-          SCLK <= 0;
+          _SCLK_ <= 0;
           clk_count <= clk_count+1'b1;
-          if(clk_count==DELAY)begin
+          if(clk_count==clk_delay)begin
             state <= 0;
             clk_count<=0;
             count <= count + 1'b1;
@@ -73,7 +91,16 @@ module softspi (
             end
           end
           if(clk_count==0)begin
-            read_data[count] <= MISO;
+            if(~CS[0])begin
+              read_data[count] <= MISO[0];
+            end
+            if(~CS[1])begin
+              read_data[count] <= MISO[1];
+            end
+            if(~CS[2])begin
+              read_data[count] <= MISO[2];
+            end
+
           end
         end
       end
@@ -84,20 +111,20 @@ module softspi (
 
       if(write_req_buff && !write_ack)begin
         if(         state==0)begin
-          SCLK <= 1;
+          _SCLK_ <= 1;
           if(clk_count==0)begin
-            MOSI <= write_data[count];
+            _MOSI_ <= write_data[count];
           end
           clk_count <= clk_count+1'b1;
-          if(clk_count==DELAY)begin
+          if(clk_count==clk_delay)begin
             clk_count<=0;
             count <= count + 1'b1;
             state <= 1;
           end
         end else if(state==1)begin
-          SCLK <= 0;
+          _SCLK_ <= 0;
           clk_count <= clk_count+1'b1;
-          if(clk_count==DELAY)begin
+          if(clk_count==clk_delay)begin
             clk_count<=0;
             if(count == 8)begin
               count <= 0;
@@ -121,10 +148,6 @@ module softspi (
                            avs_s0_address == 1 ? {write_data_done,8'b0} : 0;
 
   
-  assign debug8[4]=read_req;        // 0  00101100
-  assign debug8[5]=write_req;       // 1
-  assign debug8[6]=read_data_valid; // 0
-  assign debug8[7]=write_data_done; // 0
 
   reg       read_req;
   reg       write_req;
@@ -135,9 +158,10 @@ module softspi (
   reg write_ack_buff;
   reg read_ack_buff2;
   reg write_ack_buff2;
+  reg reset_by_cpu_n;
   always @ (posedge clk or negedge reset_n) begin
     if (!reset_n) begin
-      SS_n <= 3'b111;
+      CS <= 3'b111;
       read_req <= 0;
       write_req <= 0;
       read_ack_buff <= 0;
@@ -146,6 +170,8 @@ module softspi (
       write_ack_buff2 <= 0;
       write_data_done <= 0;
       read_data_valid <= 0;
+      //clk_delay<=123;
+      reset_by_cpu_n <= 1;
     end else begin
       read_ack_buff <= read_ack;
       write_ack_buff <= write_ack;
@@ -171,8 +197,21 @@ module softspi (
           write_req<=1;
         end
         if(avs_s0_address==2) begin
-          SS_n<=avs_s0_writedata[2:0];
+          CS<=avs_s0_writedata[2:0];
         end
+        
+        if(avs_s0_address==3) begin
+          CS <= 3'b111;
+          reset_by_cpu_n<=avs_s0_writedata[0];
+        end
+        
+        //if(avs_s0_address==4) begin
+        //  clk_delay<=avs_s0_writedata[7:0];
+        //end
+        
+
+        
+        
       end
 
       if(!read_ack_buff2 && read_ack_buff)begin
