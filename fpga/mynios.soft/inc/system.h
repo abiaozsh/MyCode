@@ -7,6 +7,8 @@
 #define SOFTSPI_READ  0
 #define SOFTSPI_WRITE 1
 #define SOFTSPI_CS    2
+#define SOFTSPI_RST_N 3
+#define SOFTSPI_SPEED 4
 #define VGA           0x02060000
 #define VGA_MODE      0
 #define VGA_BASE      1

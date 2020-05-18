@@ -513,10 +513,23 @@ class Sd2Card {
     return IORD(MYTIMER, 2);
   }
   
+  int sdSpeed;
   int initError;
   uint8_t init(uint8_t chipSelectPin) {
     initError = 0;
+	ÊÔÊÔ¿´Çå³ýÊ±ÖÓ
+    IOWR(SOFTSPI, SOFTSPI_RST_N, 0);
+    IOWR(SOFTSPI, SOFTSPI_SPEED, sdSpeed);
+    IOWR(MYTIMER, 2, 0);
+    while(true){
+      int time = IORD(MYTIMER, 2);
+      if(time>1000){
+        break;
+      }
+    }
+    IOWR(SOFTSPI, SOFTSPI_RST_N, 1);
 
+    
     errorCode_ = 0;
     //inBlock_ = 0;
     //partialBlockRead_ = 0;

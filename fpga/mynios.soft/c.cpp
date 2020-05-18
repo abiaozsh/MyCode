@@ -5,6 +5,7 @@
 
 #include "inc/io.h"
 #include "inc/system.h"
+#include "inc/system.cpp"
 #include "inc/uart.cpp"
 #include "inc/print.cpp"
 #include "inc/soft-fp/soft-fp.h"

@@ -184,10 +184,10 @@ namespace WindowsFormsApplication1
 			sb.Append("cache_addr:" + getCacheInfo(8) + getCacheInfo(10) + getCacheInfo(12) + getCacheInfo(14));
 			sb.AppendLine();
 
-			sb.Append("  numer:"); getreg(0x40, 0, sb);
-			sb.Append("  denom:"); getreg(0x41, 0, sb);
-			sb.Append("  quotient:"); getreg(0x42, 0, sb);
-			sb.Append("  remain:"); getreg(0x45, 0, sb);
+			//sb.Append("  numer:"); getreg(0x40, 0, sb);
+			//sb.Append("  denom:"); getreg(0x41, 0, sb);
+			//sb.Append("  quotient:"); getreg(0x42, 0, sb);
+			//sb.Append("  remain:"); getreg(0x45, 0, sb);
 
 
 			sb.AppendLine();
@@ -460,12 +460,12 @@ namespace WindowsFormsApplication1
 			Bitmap b2 = new Bitmap(20, 20);
 			for (int f = 0; f < 16; f++)
 			{
-				Bitmap b = new Bitmap(@"D:\MyCode.github\Other\Tetris_html\" + f + ".bmp");
+				Bitmap b = new Bitmap(@"e:\MyCode.github\Other\Tetris_html\" + f + ".bmp");
 				Graphics g = Graphics.FromImage(b2);
 				g.DrawImage(b, new Rectangle(0, 0, 1024, 768), 0, 0, b.Width, b.Height, GraphicsUnit.Pixel, null);
 				g.Dispose();
 
-				FileStream fs = new FileStream(@"d:\temp\" + f + ".img", FileMode.CreateNew, FileAccess.Write);
+				FileStream fs = new FileStream(@"E:\temp\tetris\" + f + ".img", FileMode.CreateNew, FileAccess.Write);
 				for (int j = 0; j < 20; j++)
 				{
 					for (int i = 0; i < 20; i++)
@@ -748,6 +748,9 @@ namespace WindowsFormsApplication1
 			portWrite((byte)(0x00), (byte)(0x00));
 
 			portWrite((byte)(0x02), 0);
+
+			Thread.Sleep(100);
+
 			portWrite((byte)(0x02), 1);
 
 		}

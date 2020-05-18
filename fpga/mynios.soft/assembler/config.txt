@@ -50,8 +50,6 @@ ldwio reg, regins            @          11 @                      0 @  55 @     
 add reg, reg, reg            @          30 @                      1 @  49 @          110001      0x3A,0x31 add rC, rA, rB
 sub reg, reg, reg            @          30 @                      1 @  57 @          111001      0x3A,0x39
 mul reg, reg, reg            @          30 @                      1 @  39 @          100111      0x3A,0x27
-divu reg, reg, reg           @          30 @                      1 @  36 @          100100      0x3A,0x24
-div reg, reg, reg            @          30 @                      1 @  37 @          100101      0x3A,0x25
 sll reg, reg, reg            @          30 @                      1 @  19 @          010011      0x3A,0x13
 sra reg, reg, reg            @          30 @                      1 @  59 @          111011      0x3A,0x3b
 rol reg, reg, reg            @          30 @                      1 @   3 @          000011      0x3A,0x03
@@ -88,3 +86,5 @@ jmp reg                      @          50 @                      1 @  13 @     
 #ldds
 #longcall
 #longjmp
+#divu reg, reg, reg           @          30 @                      1 @  36 @          100100      0x3A,0x24
+#div reg, reg, reg            @          30 @                      1 @  37 @          100101      0x3A,0x25

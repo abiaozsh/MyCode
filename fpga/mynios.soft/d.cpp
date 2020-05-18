@@ -33,16 +33,16 @@ int main()
 
   Sd2Card* sdcard = (Sd2Card*)malloc(sizeof(Sd2Card));//at8M
   
-	char sbuff[20];
+	char str[20];
 
 	print("Hello from Nios II!\r\n");
   
 	while(1){
-    scan(sbuff,-1,-1);
-    print(sbuff);print("\r\n");
+    scan(str,-1,-1);
+    print(str);print("\r\n");
     
     
-    if(equal(sbuff,"i",-1)){
+    if(equal(str,"i",-1)){
       print("which sd?\r\n");
       int cs = scanInt();
       printInt(cs);
@@ -56,7 +56,7 @@ int main()
       }
     }
     
-    if(equal(sbuff,"cs",-1)){
+    if(equal(str,"cs",-1)){
       print("which sd?\r\n");
       for (uint8_t i = 0; i < 10; i++) spiSend(0XFF);
       int cs = scanInt();
@@ -66,20 +66,32 @@ int main()
       print("done\r\n");
     }
 
-    if(equal(sbuff,"c",-1)){
+    if(equal(str,"c",-1)){
       cardCommand(CMD0, 0);
       print("done\r\n");
     }
 
-    if(equal(sbuff,"r",-1)){
+    if(equal(str,"r",-1)){
       int res = spiRec();
-      print("res:");printByte(res);print("\r\n");
+      print("res:");printByte(res);
       print("spi_debug0:");printInt(spi_debug0);print("\r\n");
     }
     
-    if(equal(sbuff,"s",-1)){
-      spiSend(1);
-      print("spi_debug1:");printInt(spi_debug1);print("\r\n");
+    if(equal(str,"speed",-1)){
+      print("speed?\r\n");
+      int speed = scanInt();
+      printInt(speed);
+      sdcard->sdSpeed = speed;
+      IOWR(SOFTSPI, SOFTSPI_RST_N, 0);
+      IOWR(SOFTSPI, SOFTSPI_SPEED, sdcard->sdSpeed);
+      IOWR(MYTIMER, 2, 0);
+      while(true){
+        int time = IORD(MYTIMER, 2);
+        if(time>1000){
+          break;
+        }
+      }
+      IOWR(SOFTSPI, SOFTSPI_RST_N, 1);
     }
 
 	}

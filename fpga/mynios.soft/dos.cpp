@@ -45,7 +45,7 @@ int main(){
 
   malloc_index = 0;
 
-  screenInit(1024);
+  //screenInit(1024);
 
   Sd2Card* sdcard = (Sd2Card*)malloc(sizeof(Sd2Card));//at8M
   SdVolume* sdvolume = (SdVolume*)malloc(sizeof(SdVolume));//at8M~
@@ -301,6 +301,12 @@ int main(){
       }
     }
 
+    if(equal(str,"speed",-1)){
+      print("speed?\r\n");
+      int speed = scanInt();
+      printInt(speed);
+      sdcard->sdSpeed = speed;
+    }
     
     if(equal(str,"clr",-1)){
       screenInit(1024);
