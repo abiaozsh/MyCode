@@ -70,11 +70,19 @@ int main()
       cardCommand(CMD0, 0);
       print("done\r\n");
     }
+    
+    if(equal(str,"clk",-1)){
+      IOWR(SOFTSPI, SOFTSPI_SCK, 1);
+      print("ok\r\n");
+      IOWR(SOFTSPI, SOFTSPI_SCK, 0);
+      print("ok\r\n");
+    }
 
     if(equal(str,"r",-1)){
       int res = spiRec();
       print("res:");printByte(res);
-      print("spi_debug0:");printInt(spi_debug0);print("\r\n");
+      //print("spi_debug0:");printInt(spi_debug0);
+      print("\r\n");
     }
     
     if(equal(str,"speed",-1)){

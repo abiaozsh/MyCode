@@ -201,6 +201,11 @@ namespace Assembler
 				{
 					linespass2.Add(Line.match("add r0, r0, r0", line.filename));
 				}
+				//br sym                       @          20 @                      0 @   6 @          000110      0x06
+				else if ((new Config("br sym")).match(line))//ble rA, rB, label bge rB, rA, label
+				{
+					linespass2.Add(Line.match("beq r0, r0, " + line.op1.text, line.filename));
+				}
 				else if ((new Config("ble reg, reg, sym")).match(line))//ble rA, rB, label bge rB, rA, label
 				{
 					linespass2.Add(Line.match("bge " + line.op2.text + ", " + line.op1.text + ", " + line.op3.text, line.filename));

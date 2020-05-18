@@ -144,10 +144,8 @@ namespace WindowsFormsApplication1
 			sb.Append("pc:");			int pc = getreg(0x43, 0x00, sb);
 			sb.Append("  private_offset:");getreg(0x44, 0, sb);
 
-			sb.Append("  last cmd:");
+			sb.Append("  last RtypeCmd:");
 			portWrite((byte)(0x18), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
-			sb.Append("  Rtype:");
-			portWrite((byte)(0x19), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
 
 			int halt_cpu;
 			sb.Append("  halt_cpu:");
@@ -161,7 +159,9 @@ namespace WindowsFormsApplication1
 			portWrite((byte)(0x16), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
 
 			sb.Append("  irq_req:");
-			portWrite((byte)(0x17), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0])); 
+			portWrite((byte)(0x17), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
+
+			sb.Append("  irq_addr:"); getreg(0x40, 0, sb);
 
 			sb.Append("  debugin:");
 			portWrite((byte)(0x64), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getBin8(temp[0]));
@@ -387,6 +387,9 @@ namespace WindowsFormsApplication1
 		private void button2_Click_1(object sender, EventArgs e)
 		{
 			portWrite((byte)(0x00), (byte)(0x00));
+			
+			clearBuff();
+			
 			int addr = Convert.ToInt32(textBox1.Text, 16);
 			StringBuilder sb = new StringBuilder();
 			getmem(addr, sb);
@@ -396,6 +399,8 @@ namespace WindowsFormsApplication1
 		private void button6_Click(object sender, EventArgs e)
 		{
 			portWrite((byte)(0x00), (byte)(0x00));
+
+			clearBuff();
 
 			int byteEnable = 0;
 			byteEnable |= this.checkBox4.Checked ? 8 : 0;
@@ -430,8 +435,7 @@ namespace WindowsFormsApplication1
 			getstatus();
 		}
 
-		private void button5_Click(object sender, EventArgs e)
-		{
+		private void clearBuff() {
 			buff_a0 = null;
 			buff_a1 = null;
 			buff_a2 = null;
@@ -443,6 +447,10 @@ namespace WindowsFormsApplication1
 			buff_d3 = null;
 			portWrite((byte)(0x00), 0);
 			readFromPort(10);
+		}
+		private void button5_Click(object sender, EventArgs e)
+		{
+		clearBuff();
 		}
 		private void button12_Click(object sender, EventArgs e)
 		{
@@ -706,6 +714,8 @@ namespace WindowsFormsApplication1
 		{
 			portWrite((byte)(0x00), (byte)(0x00));
 
+			clearBuff();
+
 			loadSym();
 
 			uint baseAddr = 0x02000000;
@@ -963,6 +973,7 @@ struct dir_t {//directoryEntry
 		{
 			portWrite((byte)(0x00), (byte)(0x00));
 
+			clearBuff();
 
 			loadSym();
 
@@ -971,7 +982,7 @@ struct dir_t {//directoryEntry
 			portWrite((byte)(0x01), 1);//halt_uart
 
 			{
-				setmem(0x02000000, Convert.ToUInt32("0000000A", 16));
+				setmem(0x02000000, Convert.ToUInt32("0000003E", 16));
 			}
 
 			baseAddr = 0x00000000;

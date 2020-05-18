@@ -517,7 +517,7 @@ class Sd2Card {
   int initError;
   uint8_t init(uint8_t chipSelectPin) {
     initError = 0;
-	 ‘ ‘ø¥«Â≥˝ ±÷”
+
     IOWR(SOFTSPI, SOFTSPI_RST_N, 0);
     IOWR(SOFTSPI, SOFTSPI_SPEED, sdSpeed);
     IOWR(MYTIMER, 2, 0);
