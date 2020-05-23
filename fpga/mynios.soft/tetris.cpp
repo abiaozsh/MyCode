@@ -244,6 +244,23 @@ int drawImg(int blockx, int blocky, short* block, int isNext){
     }
   }
 }
+//int drawImg(int blockx, int blocky, short* block, int isNext){
+//  int basex = 100;
+//  int basey = 100;
+//  if(isNext){
+//    basex = 500;
+//  }
+//  basex = basex + blockx * 20;
+//  basey = basey + blocky * 20;
+//  for(int j=0;j<20;j++){
+//    int j_temp = j*20;
+//    for(int i=0;i<20;i++){
+//      int x = basex + i;
+//      int y = basey + j;
+//      ((short*)(buffAddr))[x+(y<<10)] = block[i+j_temp];//at 2Mbyte
+//    }
+//  }
+//}
 
 
 int* lastBoard;

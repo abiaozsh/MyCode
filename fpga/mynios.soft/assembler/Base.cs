@@ -90,7 +90,7 @@ public class Base
 				{
 					l.dotType = DotType.other;
 				}
-				else if (line.StartsWith(".long") || line.StartsWith(".string") || line.StartsWith(".comm") || line.StartsWith(".zero 4"))
+				else if (line.StartsWith(".long") || line.StartsWith(".string") || line.StartsWith(".comm") || line.StartsWith(".zero 4") || line.StartsWith(".zero 8"))
 				{
 					l.dotType = DotType.other;
 				}
@@ -406,7 +406,7 @@ public class Base
 					Config cfg = new Config(arr[0].Trim());
 					cfg.textformat = int.Parse(arr[1]);
 					cfg.insformat = int.Parse(arr[2]);
-					cfg.cmd = int.Parse(arr[3]);
+					cfg.cmd = Convert.ToInt32(arr[3].Trim(), 2);// int.Parse(arr[3], );
 					cfgs.Add(cfg);
 				}
 
@@ -503,7 +503,8 @@ public class Base
 		public int bitregC;
 		public int IMM16;//16/26bit
 		public int IMM26;//16/26bit
-		public int IMM5;
+		public int CMD3;
+		public int EXT8;
 		public int pos;
 		public string ToString()
 		{

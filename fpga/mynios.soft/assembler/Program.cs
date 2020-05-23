@@ -127,6 +127,11 @@ namespace Assembler
 				lines.Add(Line.match("call main", null));
 				lines.Add(Line.match("ret", null));
 			}
+			else if (type == "debug")
+			{
+				Console.WriteLine("type=debug");
+				basePos = 0x00000000;
+			}
 			else
 			{
 				throw new Exception();
@@ -250,6 +255,35 @@ namespace Assembler
 					//ldw	r4, 0(r1)
 					linespass2.Add(Line.match("ldw " + line.op1.text + ", 0(r1)", line.filename));
 				}
+				else if ((new Config("ldwio reg, regins")).match(line))//ldw r4, %gprel(c)(gp)
+				{
+					//ldw	r4, 0(r1)
+					linespass2.Add(Line.match("ldw " + line.op1.text + ", " + line.op2.text, line.filename));
+				}
+				else if ((new Config("stwio reg, regins")).match(line))//ldw r4, %gprel(c)(gp)
+				{
+					//ldw	r4, 0(r1)
+					linespass2.Add(Line.match("stw " + line.op1.text + ", " + line.op2.text, line.filename));
+				}
+				else if ((new Config("jmpi sym")).match(line))//jmpi
+				{
+					//movhi	r1, %hiadj(c)
+					linespass2.Add(Line.match("orhi r1, r0, %hiadj(" + line.op1.sym + ")", line.filename));
+					//addi	r1, r1, %lo(c)
+					linespass2.Add(Line.match("addi r1, r1, %lo(" + line.op1.sym + ")", line.filename));
+					//ldw	r4, 0(r1)
+					linespass2.Add(Line.match("jmp r1", line.filename));
+				}
+				else if ((new Config("jmpi ins")).match(line))//jmpi
+				{
+					//movhi	r1, %hiadj(c)
+					linespass2.Add(Line.match("orhi r1, r0, %hiadj(" + line.op1.ins + ")", line.filename));
+					//addi	r1, r1, %lo(c)
+					linespass2.Add(Line.match("addi r1, r1, %lo(" + line.op1.ins + ")", line.filename));
+					//ldw	r4, 0(r1)
+					linespass2.Add(Line.match("jmp r1", line.filename));
+				}
+
 				else
 				{
 					linespass2.Add(line);
@@ -452,7 +486,7 @@ namespace Assembler
 						}
 						else if (ins.format == 1)
 						{
-							insbin = (ins.bitregA << (32 - 5)) | (ins.bitregB << (32 - 10)) | (ins.bitregC << (32 - 15)) | (ins.bitcmd << (6 + 5)) | (ins.IMM5 << (6)) | (0x3A);
+							insbin = (ins.bitregA << (32 - 5)) | (ins.bitregB << (32 - 10)) | (ins.bitregC << (32 - 15)) | (ins.CMD3 << (6 + 8)) | (ins.EXT8 << (6)) | ins.bitcmd;
 						}
 						else if (ins.format == 2)
 						{
@@ -531,14 +565,6 @@ namespace Assembler
 				{
 					switch (matchCfg.textformat)
 					{
-						case 0://xxx
-							break;
-						case 1://ret
-							ins.bitregA = 31;
-							break;
-						case 5://hlt ins
-							ins.IMM16 = line.op1.ins.Value;
-							break;
 						case 10://andhi rB, rA, IMM16
 							ins.bitregB = line.op1.reg.Value;
 							ins.bitregA = line.op2.reg.Value;
@@ -554,17 +580,8 @@ namespace Assembler
 							ins.bitregB = line.op2.reg.Value;
 							ins.op = line.op3;
 							break;
-						case 20://jmpi sym
+						case 22://call sym
 							ins.op = line.op1;
-							break;
-						case 21://call sym
-							ins.op = line.op1;
-							break;
-						case 22://br sym
-							ins.op = line.op1;
-							break;
-						case 23://jmp ins
-							ins.IMM26 = line.op1.ins.Value;
 							break;
 						case 30://add rC, rA, rB
 							ins.bitregC = line.op1.reg.Value;
@@ -572,18 +589,47 @@ namespace Assembler
 							ins.bitregB = line.op3.reg.Value;
 							break;
 
-						case 40://slli rC, rA, IMM5
-							ins.bitregC = line.op1.reg.Value;
-							ins.bitregA = line.op2.reg.Value;
-							ins.IMM5 = line.op3.ins.Value;
-							break;
-
-						case 50://callr r2
+						case 50://callr reg
 							ins.bitregC = 31;
 							ins.bitregA = line.op1.reg.Value;
-							ins.IMM5 = 0;
+							ins.CMD3 = 0;
 							break;
 
+						case 51://jmp reg
+							ins.bitregA = line.op1.reg.Value;
+							ins.CMD3 = 1;
+							break;
+
+						case 52://setirq reg, reg, ins
+							ins.bitregA = line.op1.reg.Value;
+							ins.CMD3 = 2;
+							ins.EXT8 = line.op3.ins.Value;
+							break;
+
+						case 53://stoff reg
+							ins.bitregA = line.op1.reg.Value;
+							ins.CMD3 = 3;
+							break;
+
+						case 54://hlt ins
+							ins.EXT8 = line.op1.ins.Value;
+							ins.CMD3 = 4;
+							break;
+
+						case 55://ret
+							ins.bitregA = 31;
+							ins.CMD3 = 5;
+							break;
+
+						case 56://reti
+							ins.bitregA = 31;
+							ins.CMD3 = 6;
+							break;
+
+						case 57://irqcall
+							ins.bitregC = 31;
+							ins.CMD3 = 7;
+							break;
 
 						default:
 							throw new Exception("unknown text format:" + matchCfg.textformat);
@@ -669,6 +715,15 @@ namespace Assembler
 					byte[] src = new byte[4];
 					data.data = src;
 					data.len = 4;
+					pos += data.len;
+					dataInsList.Add(data);
+				}
+				if (line.text == ".zero 8")
+				{
+					Data data = new Data(line);
+					byte[] src = new byte[4];
+					data.data = src;
+					data.len = 8;
 					pos += data.len;
 					dataInsList.Add(data);
 				}
