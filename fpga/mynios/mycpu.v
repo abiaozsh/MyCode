@@ -361,8 +361,7 @@ end
       stage1_Valid <= 0;
       if(
         (stage1_Valid && (stage1_PCChange || stage1_MEMAccess)) ||
-        (stage2_Valid && (stage2_PCChange || stage2_MEMAccess)) ||
-        (stage3_Valid && (stage3_PCChange))//stage3_MEMAccess 这个可能可以去掉
+        (stage2_Valid && (stage2_PCChange || stage2_MEMAccess))
       )begin
       end else begin
         if         (fetch_status==0)begin
@@ -824,7 +823,6 @@ end
       stage3_Valid <= 0;
       if(stage2_Valid)begin
         stage3_Valid <= 1;
-        stage3_PCChange <= stage2_PCChange;
         stage3_regChange <= stage2_regChange;
 
         if(stage2_PCChange)begin
@@ -1177,7 +1175,6 @@ end
     end
   end
   reg        stage3_Valid;
-  reg        stage3_PCChange;
   reg  [4:0] stage3_regChange;
   reg [31:0] stage3_regResult;
   reg [31:0] pcResult;
