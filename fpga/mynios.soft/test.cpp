@@ -41,13 +41,13 @@ int testori(int a){  return a | 0x55AA;}
 int testxori(int a){  return a ^ 0x55AA;}
 int testxorhi(int a){  return a ^ 0x55AA0000;}
 
-muli reg, reg, ins           @          10 @                      0 @  36 @          100100      0x24
-cmpeqi reg, reg, ins         @          10 @                      0 @  32 @          100000      0x20
-cmplti reg, reg, ins         @          10 @                      0 @  16 @          010000      0x10
-cmpltui reg, reg, ins        @          10 @                      0 @  48 @          110000      0x30
-cmpgei reg, reg, ins         @          10 @                      0 @   8 @          001000      0x08
-cmpnei reg, reg, ins         @          10 @                      0 @  24 @          011000      0x18
-cmpgeui reg, reg, ins        @          10 @                      0 @  40 @          101000      0x28
+//muli reg, reg, ins           @          10 @                      0 @  36 @          100100      0x24
+//cmpeqi reg, reg, ins         @          10 @                      0 @  32 @          100000      0x20
+//cmplti reg, reg, ins         @          10 @                      0 @  16 @          010000      0x10
+//cmpltui reg, reg, ins        @          10 @                      0 @  48 @          110000      0x30
+//cmpgei reg, reg, ins         @          10 @                      0 @   8 @          001000      0x08
+//cmpnei reg, reg, ins         @          10 @                      0 @  24 @          011000      0x18
+//cmpgeui reg, reg, ins        @          10 @                      0 @  40 @          101000      0x28
 
 
 int main(){
@@ -86,12 +86,12 @@ int main(){
   res = testandhi(0x11111111);printHex(res);
   res = testandhi(0x00000000);printHex(res);
   
-int testaddi(int a){  return a + 0x55AA;}
-int testaddi2(int a){  return a + 0xAA55;}
-int testorhi(int a){  return a | 0x55AA0000;}
-int testori(int a){  return a | 0x55AA;}
-int testxori(int a){  return a ^ 0x55AA;}
-int testxorhi(int a){  return a ^ 0x55AA0000;}
+//int testaddi(int a){  return a + 0x55AA;}
+//int testaddi2(int a){  return a + 0xAA55;}
+//int testorhi(int a){  return a | 0x55AA0000;}
+//int testori(int a){  return a | 0x55AA;}
+//int testxori(int a){  return a ^ 0x55AA;}
+//int testxorhi(int a){  return a ^ 0x55AA0000;}
 
   while(1){
     

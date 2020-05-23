@@ -513,21 +513,21 @@ class Sd2Card {
     return IORD(MYTIMER, 2);
   }
   
-  int sdSpeed;
-  int initError;
-  uint8_t init(uint8_t chipSelectPin) {
-    initError = 0;
-
-    IOWR(SOFTSPI, SOFTSPI_RST_N, 0);
-    IOWR(SOFTSPI, SOFTSPI_SPEED, sdSpeed);
-    IOWR(MYTIMER, 2, 0);
+  void emptyClock(){
+    IOWR(SOFTSPI, SOFTSPI_SCK, 1);
+    IOWR(MYTIMER, 1, 0);
     while(true){
-      int time = IORD(MYTIMER, 2);
-      if(time>1000){
+      int time = IORD(MYTIMER, 1);
+      if(time>5){
         break;
       }
     }
-    IOWR(SOFTSPI, SOFTSPI_RST_N, 1);
+    IOWR(SOFTSPI, SOFTSPI_SCK, 0);
+  }
+
+  int initError;
+  uint8_t init(uint8_t chipSelectPin) {
+    initError = 0;
 
     
     errorCode_ = 0;
@@ -551,12 +551,31 @@ class Sd2Card {
     chipSelectLow();
 
     // command to go idle in SPI mode
-    while ((status_ = cardCommand(CMD0, 0)) != R1_IDLE_STATE) {
-      if (((uint16_t)(millis() - t0)) > SD_INIT_TIMEOUT) {
+    while(1){
+      int ok = 0;
+      for(int i=0;i<10;i++){
+        status_ = cardCommand(CMD0, 0);
+        if(status_ == R1_IDLE_STATE){
+          ok = 1;
+          break;
+        }
+      }
+      if(ok){
+        break;
+      }
+      if((millis() - t0) > SD_INIT_TIMEOUT){
         initError = 1;
         goto fail;
       }
+      emptyClock();
     }
+    
+    //while ((status_ = cardCommand(CMD0, 0)) != R1_IDLE_STATE) {
+    //  if (((uint16_t)(millis() - t0)) > SD_INIT_TIMEOUT) {
+    //    initError = 1;
+    //    goto fail;
+    //  }
+    //}
     // check SD version
     if ((cardCommand(CMD8, 0x1AA) & R1_ILLEGAL_COMMAND)) {
 

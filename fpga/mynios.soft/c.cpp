@@ -133,6 +133,26 @@ int main()
       printInt(c);print("\r\n");
       printInt(d);print("\r\n");
     }
+    
+    IOWR(MYTIMER, 2, 0);
+    for(int i=0;i<10;i++){
+      dummy = dummyv1 + dummyv2;
+      dummy = dummyv1 - dummyv2;
+      dummy = dummyv1 * dummyv2;
+      dummy = dummyv1 / dummyv2;
+    }
+    int time1 = IORD(MYTIMER, 2);
+    print("time1:");printInt(time1);print("\r\n");
+    
+    IOWR(MYTIMER, 2, 0);
+    for(int i=0;i<100;i++){
+      dummy = dummyv1 + dummyv2;
+      dummy = dummyv1 - dummyv2;
+      dummy = dummyv1 * dummyv2;
+      dummy = dummyv1 / dummyv2;
+    }
+    int time2 = IORD(MYTIMER, 2);
+    print("time2:");printInt(time2);print("\r\n");
   }
 
   return 0;

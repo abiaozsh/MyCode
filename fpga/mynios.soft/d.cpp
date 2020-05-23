@@ -28,7 +28,15 @@ uint8_t cardCommand(uint8_t cmd, uint32_t arg) {
 
 int main()
 {
-  
+              
+//            TODO dos d 还需要测试，sd卡0 报错 41  断电后恢复
+//            done
+//r
+//res:F
+//r
+//res:1
+
+            
   malloc_index = 0;
 
   Sd2Card* sdcard = (Sd2Card*)malloc(sizeof(Sd2Card));//at8M
@@ -85,22 +93,6 @@ int main()
       print("\r\n");
     }
     
-    if(equal(str,"speed",-1)){
-      print("speed?\r\n");
-      int speed = scanInt();
-      printInt(speed);
-      sdcard->sdSpeed = speed;
-      IOWR(SOFTSPI, SOFTSPI_RST_N, 0);
-      IOWR(SOFTSPI, SOFTSPI_SPEED, sdcard->sdSpeed);
-      IOWR(MYTIMER, 2, 0);
-      while(true){
-        int time = IORD(MYTIMER, 2);
-        if(time>1000){
-          break;
-        }
-      }
-      IOWR(SOFTSPI, SOFTSPI_RST_N, 1);
-    }
 
 	}
   return 0;

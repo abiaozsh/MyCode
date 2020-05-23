@@ -141,8 +141,9 @@ namespace WindowsFormsApplication1
 
 
 			StringBuilder sb = new StringBuilder();
-			sb.Append("pc:");			int pc = getreg(0x43, 0x00, sb);
-			sb.Append("  private_offset:");getreg(0x44, 0, sb);
+			sb.Append("pc:"); int pc = getreg(0x43, 0x00, sb);
+			sb.Append("  private_offset:"); getreg(0x44, 0, sb);
+			sb.Append("  pcResult:"); getreg(0x45, 0, sb);
 
 			sb.Append("  last RtypeCmd:");
 			portWrite((byte)(0x18), (byte)0x00); temp = readFromPort(1); sb.Append(Util.getHex2(temp[0]));
@@ -254,7 +255,7 @@ namespace WindowsFormsApplication1
 					uint code = getmem(pc + i, sb2);
 					int target = pc + i;
 					string foundsym = Config.getSym(target, syms);
-					string scode = Config.dasm(syms, (uint)code, pc + i, baseaddr);
+					string scode = Config.dasm(syms, cfgs, (uint)code, pc + i, baseaddr);
 					if (i == 0)
 					{
 						sb.AppendLine("----------------------------------------------------------------------------------");
@@ -353,7 +354,7 @@ namespace WindowsFormsApplication1
 		byte? buff_d2;
 		byte? buff_d3;
 
-		public void setmem(uint addr, uint data)
+		public bool setmem(uint addr, uint data, bool noerr = false)
 		{
 			byte a0 = (byte)((addr >> 0) & 0xFF);
 			byte a1 = (byte)((addr >> 8) & 0xFF);
@@ -380,16 +381,24 @@ namespace WindowsFormsApplication1
 			temp = readFromPort(1);
 			if (temp[0] != 123)
 			{
-				throw new Exception("err");
+				if (!noerr)
+				{
+					throw new Exception("err");
+				}
+				else
+				{
+					return false;
+				}
 			}
+			return true;
 		}
 
 		private void button2_Click_1(object sender, EventArgs e)
 		{
 			portWrite((byte)(0x00), (byte)(0x00));
-			
+
 			clearBuff();
-			
+
 			int addr = Convert.ToInt32(textBox1.Text, 16);
 			StringBuilder sb = new StringBuilder();
 			getmem(addr, sb);
@@ -435,7 +444,8 @@ namespace WindowsFormsApplication1
 			getstatus();
 		}
 
-		private void clearBuff() {
+		private void clearBuff()
+		{
 			buff_a0 = null;
 			buff_a1 = null;
 			buff_a2 = null;
@@ -450,7 +460,7 @@ namespace WindowsFormsApplication1
 		}
 		private void button5_Click(object sender, EventArgs e)
 		{
-		clearBuff();
+			clearBuff();
 		}
 		private void button12_Click(object sender, EventArgs e)
 		{
@@ -687,10 +697,12 @@ namespace WindowsFormsApplication1
 		 */
 
 		}
-
+		List<Config> cfgs;
 
 		private void loadSym()
 		{
+			cfgs = Config.loadConfig(@"assembler\config.txt");
+
 			syms = new List<CodeSym>();
 			FileStream fs = new FileStream("temp.sym", FileMode.Open, FileAccess.Read);
 			StreamReader sw = new StreamReader(fs);
@@ -749,7 +761,10 @@ namespace WindowsFormsApplication1
 
 			portWrite((byte)(0x02), 0);
 			portWrite((byte)(0x02), 1);
-			portWrite((byte)(0x01), 0);//halt_uart
+			if (!checkBox1.Checked)
+			{
+				portWrite((byte)(0x01), 0);
+			}
 
 		}
 
@@ -982,7 +997,15 @@ struct dir_t {//directoryEntry
 			portWrite((byte)(0x01), 1);//halt_uart
 
 			{
-				setmem(0x02000000, Convert.ToUInt32("0000003E", 16));
+				FileStream fs = new FileStream("debugins.hex", FileMode.Open, FileAccess.Read);
+				StreamReader sr = new StreamReader(fs);
+				String s = sr.ReadToEnd();
+				sr.Close();
+				fs.Close();
+				string[] data = s.Split('\n');
+				setmem(0x02000000, Convert.ToUInt32(data[0].Substring(9, 8), 16));
+				setmem(0x02000004, Convert.ToUInt32(data[1].Substring(9, 8), 16));
+				setmem(0x02000008, Convert.ToUInt32(data[2].Substring(9, 8), 16));
 			}
 
 			baseAddr = 0x00000000;
@@ -1016,7 +1039,12 @@ struct dir_t {//directoryEntry
 						//:04001600 1005003a 97
 						for (int j = i; j < i + 64 && j < data.Length; j++)
 						{
-							setmem((uint)(baseAddr + j * 4), data[j]);
+							bool result = setmem((uint)(baseAddr + j * 4), data[j], true);
+							if (!result)
+							{
+								error = true;
+								break;
+							}
 						}
 						for (int j = i; j < i + 64 && j < data.Length; j++)
 						{
@@ -1056,7 +1084,11 @@ struct dir_t {//directoryEntry
 
 			portWrite((byte)(0x02), 0);
 			portWrite((byte)(0x02), 1);
-			portWrite((byte)(0x01), 0);//halt_uart
+
+			if (!checkBox1.Checked)
+			{
+				portWrite((byte)(0x01), 0);
+			}
 		}
 
 		private void trackBar1_Scroll(object sender, EventArgs e)
@@ -1110,17 +1142,18 @@ struct dir_t {//directoryEntry
 			Bitmap bmp = new Bitmap(16, 16);
 			fs.Seek((94 * (i - 1) + (j - 1)) * 32, SeekOrigin.Begin);
 			byte[] mat = new byte[32];
-			fs.Read(mat,0,32);
+			fs.Read(mat, 0, 32);
 			for (j = 0; j < 16; j++)
 			{
 				for (i = 0; i < 16; i++)
 				{
 					if ((mat[j * 2 + i / 8] & (0x80 >> (i & 7))) != 0)
 					{/*测试为1的位则显示*/
-						bmp.SetPixel(i , j, Color.White);
+						bmp.SetPixel(i, j, Color.White);
 					}
-					else {
-						bmp.SetPixel(i , j, Color.Black);
+					else
+					{
+						bmp.SetPixel(i, j, Color.Black);
 					}
 				}
 			}

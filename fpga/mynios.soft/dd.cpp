@@ -12,67 +12,19 @@
 
 
 
-void initDisk(Sd2Card** sdcard,int cardidx, SdVolume** sdvolumes, int* totalVolume){
-  int res;
-  res = sdcard[cardidx]->init(cardidx);
-  if(res){
-    print("found card ");printInt(cardidx);print("\r\n");
-    SdVolume* tempVol = (SdVolume*)malloc(sizeof(SdVolume));
-    
-    res = tempVol->init(sdcard[cardidx], 0);
-    if(res){
-      print("found volume 0\r\n");
-      sdvolumes[*totalVolume] = tempVol;
-      *totalVolume = *totalVolume + 1;
-      return;
-    }else{
-      res = tempVol->init(sdcard[cardidx], 1);
-      if(res){
-        print("found volume 1\r\n");
-        sdvolumes[*totalVolume] = tempVol;
-        *totalVolume = *totalVolume + 1;
-        return;
-      }
-    }
-    //mfree(sizeof(SdVolume));
-  }else{
-    print("card error ");printInt(cardidx);print("\r\n");
-  }
-}
-
-
 int main(){
 
   malloc_index = 0;
 
   //screenInit(1024);
 
-  Sd2Card* sdcards[3];
-  sdcards[0] = (Sd2Card*)malloc(sizeof(Sd2Card));//at eof
-  sdcards[1] = (Sd2Card*)malloc(sizeof(Sd2Card));//at eof
-  sdcards[2] = (Sd2Card*)malloc(sizeof(Sd2Card));//at eof
-  SdVolume* sdvolumes[26];
-  int totalVolume = 0;
+  Sd2Card* sdcard = (Sd2Card*)malloc(sizeof(Sd2Card));//at8M
+  SdVolume* sdvolume = (SdVolume*)malloc(sizeof(SdVolume));//at8M~
+  sdvolume->root = (SdFile*)malloc(sizeof(SdFile));//at8M~
   SdVolume* currVolume;
-  print("Hello from My DOS 1.0\r\n");
-  initDisk(sdcards, 0, sdvolumes, &totalVolume);
-  initDisk(sdcards, 1, sdvolumes, &totalVolume);
-  initDisk(sdcards, 2, sdvolumes, &totalVolume);
-
   int res;
-  for(int i=0;i<totalVolume;i++){
-    sdvolumes[i]->root = (SdFile*)malloc(sizeof(SdFile));
-    res = sdvolumes[i]->root->openRoot(sdvolumes[i]);
-    if(res){
-      print("found root");printInt(i);print("\r\n");
-      sdvolumes[i]->root->dirList();
-    }else{
-      print("root error");printInt(i);print("\r\n");
-    }
-  }
-  
+
   SdFile* file = (SdFile*)malloc(sizeof(SdFile));//at8M~
-  
 
   while(1){
     
@@ -82,11 +34,45 @@ int main(){
     scan(str,-1,-1);
     print(str);
     
-    if(equal(str,"v",-1)){
-      print("which volume?");printInt(totalVolume);print("\r\n");
-      int v = scanInt();
-      currVolume = sdvolumes[v];
-      print("curr volume:");printInt(v);print("\r\n");
+    if(equal(str,"i",-1)){
+      print("which sd?\r\n");
+      int cs = scanInt();
+      printInt(cs);
+      res = sdcard->init(cs);
+      if(res){
+        print("sd ok\r\n");
+
+        sdcard->printType();
+        print("which partition?\r\n");
+        int part = scanInt();
+        printInt(part);
+        res = sdvolume->init(sdcard, part);
+        if(res){
+          print("volume ok\r\n");
+          res = sdvolume->root->openRoot(sdvolume);
+          currVolume = sdvolume;
+          if(res){
+            print("root ok\r\n");
+          }else{
+            print("root ng\r\n");
+          }
+        }else{
+          print("volume ng\r\n");
+          printInt(sdvolume->initError);print(",");
+          if(sdvolume->initError==4){
+            sdvolume->printErrorSector();
+          }
+          //printInt(sdvolume->cacheBlockNumber_);
+          //print("[");
+          //for(int i=0;i<512;i++){
+          //  printByte(sdvolume->cacheBuffer_.data[i]);
+          //}
+          //print("]");
+        }
+      }else{
+        print("sd ng\r\n");
+        print("sdcard->initError");printInt(sdcard->initError);print("\r\n");
+      }
     }
 
     if(equal(str,"dir",-1)){
