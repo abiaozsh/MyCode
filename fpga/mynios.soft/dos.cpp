@@ -170,20 +170,22 @@ int main(){
       }
     }
     
-    if(equal(str,"load",-1)){
+    int buff[128];
+    
+    if(equal(str,"loadimg",-1)){
       print("which file?\r\n");
       char filename[12];
       scan(filename,-1,-1);
       res = file->open(currVolume->root, filename, O_READ);
       if(res){
         print("open ok\r\n");
-        for(int i=0;i<0x200000;i++){
-          int val = file->read();
-          ((char*)(0x200000))[i] = val;//at 2Mbyte
-          if((i&0x3FF)==0){
-            printInt(i);print("\r\n");
+        for(int i=0;i<0x200000/4;i+=128){
+          file->read((char*)buff,512);
+          for(int j=0;j<128;j++){
+            ((int*)(0x200000))[i+j] = buff[j];//at 2Mbyte
           }
         }
+        scan(filename,-1,-1);
       }else{
         print("open ng\r\n");
         printInt(file->fileError);print("\r\n");
@@ -248,7 +250,6 @@ int main(){
       }
     }
 
-    
     if(equal(str,"clr",-1)){
       screenInit(1024);
     }

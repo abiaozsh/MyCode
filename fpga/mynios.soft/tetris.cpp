@@ -420,13 +420,13 @@ int main()
   
   //tetris->CallBack_DrawNextShape = CallBack_DrawNextShape;
 
-  int cs = 2;
+  int cs = 0;////////////////////////////////
   int res = sdcard->init(cs);
   if(res){
     print("sd ok\r\n");
     sdcard->printType();
     print("which partition?\r\n");
-    int part = 1;
+    int part = 1;//////////////////////////////////
     res = sdvolume->init(sdcard, part);
     if(res){
       print("volume ok\r\n");
@@ -490,22 +490,22 @@ int main()
         keyDown(key);
       }
       
-      //int tmp = IORD(MYKEYB, 0);
-      //if(tmp&0x400){
-      //  if(skip){
-      //    skip = 0;
-      //  }else{
-      //    tmp = (tmp>>1) & 0xFF;
-      //    if(tmp == 0xF0 || tmp ==0xE0)
-      //    {
-      //      skip = 1;
-      //    }
-      //    else{
-      //      keyDown(PS2Keymap_US[tmp]);
-      //      IORD(MYKEYB, 0);
-      //    }
-      //  }
-      //}
+      tmp = IORD(MYKEYB, 0);
+      if(tmp&0x400){
+        if(skip){
+          skip = 0;
+        }else{
+          tmp = (tmp>>1) & 0xFF;
+          if(tmp == 0xF0 || tmp ==0xE0)
+          {
+            skip = 1;
+          }
+          else{
+            keyDown(PS2Keymap_US[tmp]);
+            IORD(MYKEYB, 0);
+          }
+        }
+      }
 
       
     }

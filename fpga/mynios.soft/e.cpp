@@ -65,7 +65,7 @@ int irq_proc(){
   int irq = IORD(IRQ, 0);
   if(irq&1){
     //timer
-    IOWR(MYUART, 1 , 't');
+    IOWR(MYUART, 1 , '_');
     IOWR(IRQ, 0, 1);
   }
   if(irq&2){

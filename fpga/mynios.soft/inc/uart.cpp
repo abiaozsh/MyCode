@@ -239,6 +239,14 @@ int PS2Keymap_US[] = {
 	PS2_F11, '+', '3', '-', '*', '9', PS2_SCROLL, 0,
 	0, 0, 0, PS2_F7 };
 
+void readDummy(){
+  while(1){
+    int tmp = IORD(MYKEYB, 0);
+    if(tmp&0x400){
+        return;
+    }
+  }
+}
 int uart_read(int timeout){
   if(timeout!=-1){
     IOWR(MYTIMER, 0 ,0);
@@ -260,10 +268,12 @@ int uart_read(int timeout){
       tmp = (tmp>>1) & 0xFF;
       if(tmp == 0xF0 || tmp ==0xE0)
       {
-        uart_read(timeout);
+        readDummy();
       }
       else{
-        return PS2Keymap_US[tmp];
+        int val = PS2Keymap_US[tmp];
+        printScreen(val);
+        return val;
       }
     }
   }

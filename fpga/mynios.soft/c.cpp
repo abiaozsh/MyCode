@@ -93,6 +93,9 @@ void printDouble(double v){
     v1 = v1 - (double)(int)v1;
   }
 }
+volatile double dummy;
+volatile double dummyv1;
+volatile double dummyv2;
 
 int main()
 {
