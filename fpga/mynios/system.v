@@ -637,7 +637,7 @@ end
       mouse_clk_buff1 <= mouse_clk_buff0;
       mouse_send_req_buff <= mouse_send_req;
       mouse_read_req_buff <= mouse_read_req;
-      
+      调整相位 4种
       if(mouse_send_req_buff && !mouse_send_ack)begin
         if         (mouse_send_state==0)begin
           parity <= 1;

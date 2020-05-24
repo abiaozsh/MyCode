@@ -1140,6 +1140,7 @@ end
         if(stage2_ALU2)begin
           case(stage2_ALU2Cmd)
             //addi reg, reg, ins           @          10 @                      0 @  000010
+            stage2_regfileA + stage2_IMM16sx 放到寄存器中
             4'b0000 : begin stage3_regResult <= stage2_regfileA + stage2_IMM16sx; end//rB ← rA + σ(IMM16)
             //andi reg, reg, ins           @          10 @                      0 @  001010
             4'b0010 : begin stage3_regResult <= {16'b0, (stage2_regfileA[15:0] & stage2_IMM16)}; end//rB ← rA & (0x0000 : IMM16)
