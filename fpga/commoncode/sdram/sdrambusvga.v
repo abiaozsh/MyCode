@@ -155,7 +155,7 @@ sdram_controller ins_sdram_controller(
   assign cacheAddrHigh3 = cacheAddrHigh[3];
 
 
-parameter CACHE_COUNT = 4;
+parameter CACHE_COUNT = 16;
 
 assign debug32 = {flush_cache,1'b0,flush_page};//{interface_status,1'b0,free_cache,1'b0,current_slot};
     //input              flush_cache,
@@ -176,8 +176,6 @@ wire        cache_flush_hit[CACHE_COUNT];
 reg  [15:0] cache_life[CACHE_COUNT];
 reg  [15:0] cache_life_reset;
 reg         adj_cache_life;//update when finish
-reg   [2:0] set_cacheAddrHigh;
-reg   [2:0] clr_cacheAddrHigh;
 genvar i;
 generate
   for(i=0; i<CACHE_COUNT; i=i+1) begin:BLOCK1
@@ -224,19 +222,57 @@ generate
   end
 endgenerate
 
-reg  [2:0] current_slot;
-wire [2:0] cache_hited       = /**/cache_hit[0]       ? 1 :
-                               /**/cache_hit[1]       ? 2 :
-                               /**/cache_hit[2]       ? 3 :
-                               /**/cache_hit[3]       ? 4 : 0;
-wire [2:0] cache_flush_hited = /**/cache_flush_hit[0] ? 1 :
-                               /**/cache_flush_hit[1] ? 2 :
-                               /**/cache_flush_hit[2] ? 3 :
-                               /**/cache_flush_hit[3] ? 4 : 0;
-wire [2:0] free_cache        = /**/cache_life[0] == 0 ? 1 :
-                               /**/cache_life[1] == 0 ? 2 :
-                               /**/cache_life[2] == 0 ? 3 :
-                               /**/cache_life[3] == 0 ? 4 : 0;
+reg  [4:0] set_cacheAddrHigh;
+reg  [4:0] clr_cacheAddrHigh;
+reg  [4:0] current_slot;
+wire [4:0] cache_hited       = /**/cache_hit[ 0]       ?  1 :
+                               /**/cache_hit[ 1]       ?  2 :
+                               /**/cache_hit[ 2]       ?  3 :
+                               /**/cache_hit[ 3]       ?  4 :
+                               /**/cache_hit[ 4]       ?  5 :
+                               /**/cache_hit[ 5]       ?  6 :
+                               /**/cache_hit[ 6]       ?  7 :
+                               /**/cache_hit[ 7]       ?  8 :
+                               /**/cache_hit[ 8]       ?  9 :
+                               /**/cache_hit[ 9]       ? 10 :
+                               /**/cache_hit[10]       ? 11 :
+                               /**/cache_hit[11]       ? 12 :
+                               /**/cache_hit[12]       ? 13 :
+                               /**/cache_hit[13]       ? 14 :
+                               /**/cache_hit[14]       ? 15 :
+                               /**/cache_hit[15]       ? 16 : 0;
+wire [4:0] cache_flush_hited = /**/cache_flush_hit[ 0] ?  1 :
+                               /**/cache_flush_hit[ 1] ?  2 :
+                               /**/cache_flush_hit[ 2] ?  3 :
+                               /**/cache_flush_hit[ 3] ?  4 :
+                               /**/cache_flush_hit[ 4] ?  5 :
+                               /**/cache_flush_hit[ 5] ?  6 :
+                               /**/cache_flush_hit[ 6] ?  7 :
+                               /**/cache_flush_hit[ 7] ?  8 :
+                               /**/cache_flush_hit[ 8] ?  9 :
+                               /**/cache_flush_hit[ 9] ? 10 :
+                               /**/cache_flush_hit[10] ? 11 :
+                               /**/cache_flush_hit[11] ? 12 :
+                               /**/cache_flush_hit[12] ? 13 :
+                               /**/cache_flush_hit[13] ? 14 :
+                               /**/cache_flush_hit[14] ? 15 :
+                               /**/cache_flush_hit[15] ? 16 : 0;
+wire [4:0] free_cache        = /**/cache_life[ 0] == 0 ?  1 :
+                               /**/cache_life[ 1] == 0 ?  2 :
+                               /**/cache_life[ 2] == 0 ?  3 :
+                               /**/cache_life[ 3] == 0 ?  4 :
+                               /**/cache_life[ 4] == 0 ?  5 :
+                               /**/cache_life[ 5] == 0 ?  6 :
+                               /**/cache_life[ 6] == 0 ?  7 :
+                               /**/cache_life[ 7] == 0 ?  8 :
+                               /**/cache_life[ 8] == 0 ?  9 :
+                               /**/cache_life[ 9] == 0 ? 10 :
+                               /**/cache_life[10] == 0 ? 11 :
+                               /**/cache_life[11] == 0 ? 12 :
+                               /**/cache_life[12] == 0 ? 13 :
+                               /**/cache_life[13] == 0 ? 14 :
+                               /**/cache_life[14] == 0 ? 15 :
+                               /**/cache_life[15] == 0 ? 16 : 0;
 
 
 
