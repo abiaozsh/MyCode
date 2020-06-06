@@ -1,6 +1,6 @@
 module softspi (
     input  clk,                // clock.clk
-    input  clk_50M,
+    input  clk_25M,
     input  reset_n,               // reset.reset
     
     input   [13:0] avs_s0_address,     //    s0.address
@@ -59,7 +59,7 @@ module softspi (
   reg manual_ack;
   reg [3:0] count;
   reg       state;
-  always @ (posedge clk_50M or negedge rst_sd_n) begin
+  always @ (posedge clk_25M or negedge rst_sd_n) begin
     if (!rst_sd_n) begin
       _MOSI_ <= 1;
       _SCLK_ <= 0;
@@ -84,60 +84,120 @@ module softspi (
         manual_ack <= 0;
       end
 
+      
+      
       if(read_req_buff && !read_ack)begin
-        if(         state==0)begin
-          _MOSI_ <= 1;
-          _SCLK_ <= 1;
-          clk_count <= clk_count+1'b1;
-          if(clk_count==clk_delay)begin
-            state <= 1;
-            clk_count<=0;
-          end
-        end else if(state==1)begin
-          _SCLK_ <= 0;
-          clk_count <= clk_count+1'b1;
-          if(clk_count==clk_delay)begin
-            state <= 0;
-            clk_count<=0;
-            count <= count + 1'b1;
-            if(count == 7)begin
-              count <= 0;
-              read_ack <= 1;
+        _MOSI_ <= 1;
+        case(rpha)
+        0:begin
+          if(         state==0)begin
+            _SCLK_ <= ~rpol;
+            clk_count <= clk_count+1'b1;
+            if(clk_count==clk_delay)begin
+              clk_count<=0;
+              state <= 1;
+            end
+            if(clk_count==0)begin
+              read_data[count] <= _MISO_;
+            end
+          end else if(state==1)begin
+            _SCLK_ <= rpol;
+            clk_count <= clk_count+1'b1;
+            if(clk_count==clk_delay)begin
+              clk_count<=0;
+              state <= 0;
+              count <= count + 1'b1;
+              if(count == 7)begin
+                count <= 0;
+                read_ack <= 1;
+              end
             end
           end
-          if(clk_count==0)begin
-            read_data[count] <= _MISO_;
+        end
+        1:begin
+          if(         state==0)begin
+            _SCLK_ <= ~rpol;
+            clk_count <= clk_count+1'b1;
+            if(clk_count==clk_delay)begin
+              clk_count<=0;
+              state <= 1;
+            end
+          end else if(state==1)begin
+            _SCLK_ <= rpol;
+            clk_count <= clk_count+1'b1;
+            if(clk_count==clk_delay)begin
+              clk_count<=0;
+              state <= 0;
+              count <= count + 1'b1;
+              if(count == 7)begin
+                count <= 0;
+                read_ack <= 1;
+              end
+            end
+            if(clk_count==0)begin
+              read_data[count] <= _MISO_;
+            end
           end
         end
+        endcase
       end
       if(!read_req_buff && read_ack)begin
         read_ack <= 0;
       end
 
       if(write_req_buff && !write_ack)begin
-        if(         state==0)begin
-          _SCLK_ <= 1;
-          if(clk_count==0)begin
-            _MOSI_ <= write_data[count];
-          end
-          clk_count <= clk_count+1'b1;
-          if(clk_count==clk_delay)begin
-            clk_count<=0;
-            count <= count + 1'b1;
-            state <= 1;
-          end
-        end else if(state==1)begin
-          _SCLK_ <= 0;
-          clk_count <= clk_count+1'b1;
-          if(clk_count==clk_delay)begin
-            clk_count<=0;
-            if(count == 8)begin
-              count <= 0;
-              write_ack <= 1;
+        case(wpha)
+        0:begin
+          if(         state==0)begin
+            _SCLK_ <= ~wpol;
+            clk_count <= clk_count+1'b1;
+            if(clk_count==clk_delay)begin
+              clk_count<=0;
+              state <= 1;
             end
-            state <= 0;
+            if(clk_count==0)begin
+              _MOSI_ <= write_data[count];
+            end
+          end else if(state==1)begin
+            _SCLK_ <= wpol;
+            clk_count <= clk_count+1'b1;
+            if(clk_count==clk_delay)begin
+              clk_count<=0;
+              state <= 0;
+              count <= count + 1'b1;
+              if(count == 7)begin
+                count <= 0;
+                write_ack <= 1;
+              end
+            end
           end
         end
+        1:begin
+          if(         state==0)begin
+            _SCLK_ <= ~wpol;
+            clk_count <= clk_count+1'b1;
+            if(clk_count==clk_delay)begin
+              clk_count<=0;
+              state <= 1;
+            end
+          end else if(state==1)begin
+            _SCLK_ <= wpol;
+            clk_count <= clk_count+1'b1;
+            if(clk_count==clk_delay)begin
+              clk_count<=0;
+              state <= 0;
+              count <= count + 1'b1;
+              if(count == 7)begin
+                count <= 0;
+                write_ack <= 1;
+              end
+            end
+            if(clk_count==0)begin
+              _MOSI_ <= write_data[count];
+            end
+          end
+        end
+        endcase
       end
       if(!write_req_buff && write_ack)begin
         write_ack <= 0;
@@ -152,6 +212,10 @@ module softspi (
                            avs_s0_address == 1 ? {write_data_done,8'b0} : {6'b0,MISO};
 
   
+  reg rpol;
+  reg rpha;
+  reg wpol;
+  reg wpha;
 
   reg       read_req;
   reg       write_req;
@@ -181,7 +245,10 @@ module softspi (
       write_ack_buff2 <= 0;
       write_data_done <= 0;
       read_data_valid <= 0;
-      //clk_delay<=123;
+      rpol <= 0;
+      rpha <= 0;
+      wpol <= 0;
+      wpha <= 0;
       reset_by_cpu_n <= 1;
       _MOSI_data <= 0;
       _SCLK_data <= 0;
@@ -220,9 +287,9 @@ module softspi (
           reset_by_cpu_n<=avs_s0_writedata[0];
         end
         
-        //if(avs_s0_address==4) begin
-        //  clk_delay<=avs_s0_writedata[7:0];
-        //end
+        if(avs_s0_address==4) begin
+          {wpol,wpha,rpol,rpha}<=avs_s0_writedata[3:0];
+        end
         
         if(avs_s0_address==5) begin
           _MOSI_data <= avs_s0_writedata[0];

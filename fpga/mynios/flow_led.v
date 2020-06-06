@@ -34,11 +34,10 @@ module flow_led(
     output          vga_vs,         //场同步信号
     output  [15:0]  vga_rgb,         //红绿蓝三原色输出 
 
-    inout key_data,
-    inout key_clk,
-    inout mouse_data,
-    inout mouse_clk,
-    
+    input hid_dat_n,
+    input hid_clk_n,
+    input hid_str_n,
+
   input   [2:0]  spi_MISO,        //     spi.MISO
   output  [2:0]  spi_MOSI,        //        .MOSI
   output  [2:0]  spi_SCLK,        //        .SCLK
@@ -115,7 +114,16 @@ wire [31:0] outpin32;
 wire [7:0] debug8;
 wire [31:0] debug32;
 
-assign debug = debug8;//
+//assign debug = debug8;//
+assign debug[0] = hid_dat;
+assign debug[1] = hid_clk;
+assign debug[2] = hid_str;
+
+wire hid_dat = ~hid_dat_n;
+wire hid_clk = ~hid_clk_n;
+wire hid_str = ~hid_str_n;
+
+
 
 wire dummy;
 system system_inst(
@@ -147,11 +155,10 @@ system system_inst(
 
   .myuart_rxd     (uart2_rxd),     //  myuart.rxd
   .myuart_txd     (uart2_txd),      //        .txd
-	
-  .key_data   (key_data   ),
-  .key_clk    (key_clk    ),
-  .mouse_data (mouse_data ),
-  .mouse_clk  (mouse_clk  ),
+
+  .hid_clk   (hid_clk ),
+  .hid_dat   (hid_dat ),
+  .hid_str   (hid_str ),
 
   .softspi_MISO        (spi_MISO),        //     spi.MISO
   .softspi_MOSI        (spi_MOSI),        //        .MOSI
