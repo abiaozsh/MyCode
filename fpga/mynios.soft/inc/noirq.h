@@ -1,0 +1,2 @@
+#define sti()
+#define cli()

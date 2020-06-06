@@ -133,7 +133,8 @@ namespace debugger
 				string B = Reg((ins >> (32 - 10)) & 0x1F);
 				string C = Reg((ins >> (32 - 15)) & 0x1F);
 				uint imm8 = (ins >> (6)) & 255;
-				sIns += "C:" + C + " <- (A:" + A + " ... B:" + B + ") cmd3:" + cmd3 + " imm8:" + imm8;
+				uint IMM16 = (ins >> (32 - 26)) & 0xFFFF;
+				sIns += "C:" + C + " <- (A:" + A + " ... B:" + B + ") cmd3:" + cmd3 + " imm8:" + imm8 + " IMM16:" + IMM16;
 
 			}
 			else
@@ -164,7 +165,8 @@ namespace debugger
 					string A = Reg(ins >> (32 - 5));
 					string B = Reg((ins >> (32 - 10)) & 0x1F);
 					string C = Reg((ins >> (32 - 15)) & 0x1F);
-					sIns += "C:" + C + " <- (A:" + A + " ... B:" + B + ")";
+					uint IMM16 = (ins >> (32 - 26)) & 0xFFFF;
+					sIns += "C:" + C + " <- (A:" + A + " ... B:" + B + ")" + " IMM16:" + IMM16;
 				}
 				else
 				{

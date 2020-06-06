@@ -1,7 +1,9 @@
 #include "inc/io.h"
+#include "inc/irq.h"
 #include "inc/system.h"
 #include "inc/system.cpp"
 #include "inc/uart.cpp"
+#include "inc/uartio.cpp"
 #include "inc/print.cpp"
 #include "inc/spi.cpp"
 #include "inc/Sd2Card.cpp"
@@ -15,13 +17,6 @@
 // display
 // random
 // timer
-// 00 01 02 03
-// 10 11 12 13
-// 20 21 22 23
-// 30 31 32 33
-// 19-0 .. 19-9
-// .. .. ..
-// 0-0 .. 0-9
 
 int _block[] = {//
 	0x070, 0x034, 0x038, 0x06C,//
@@ -237,11 +232,14 @@ int drawImg(int blockx, int blocky, short* block, int isNext){
   int* src = (int*)block;
   for(int j=0;j<20;j++){
     int j_temp = j*10;
+    int* addr;
     for(int i=0;i<10;i++){
       int x = basex + i;
       int y = basey + j;
-      ((int*)(buffAddr))[x+(y<<9)] = src[i+j_temp];//at 2Mbyte
+      addr = (int*)(&((int*)(buffAddr))[x+(y<<9)]);
+      *addr = src[i+j_temp];//at 2Mbyte
     }
+    flushCache(addr);
   }
 }
 //int drawImg(int blockx, int blocky, short* block, int isNext){
@@ -261,6 +259,55 @@ int drawImg(int blockx, int blocky, short* block, int isNext){
 //    }
 //  }
 //}
+
+#define PS2_TAB				9
+#define PS2_ENTER			10
+#define PS2_BACKSPACE			127
+#define PS2_ESC				27
+#define PS2_INSERT			0
+#define PS2_DELETE			127
+#define PS2_HOME			0
+#define PS2_END				0
+#define PS2_PAGEUP			25
+#define PS2_PAGEDOWN			26
+#define PS2_UPARROW			11
+#define PS2_LEFTARROW			8
+#define PS2_DOWNARROW			10
+#define PS2_RIGHTARROW			21
+#define PS2_F1				0
+#define PS2_F2				0
+#define PS2_F3				0
+#define PS2_F4				0
+#define PS2_F5				0
+#define PS2_F6				0
+#define PS2_F7				0
+#define PS2_F8				0
+#define PS2_F9				0
+#define PS2_F10				0
+#define PS2_F11				0
+#define PS2_F12				0
+#define PS2_SCROLL			0
+
+int PS2Keymap_US[] = {
+  // without shift
+	0, PS2_F9, 0, PS2_F5, PS2_F3, PS2_F1, PS2_F2, PS2_F12,
+	0, PS2_F10, PS2_F8, PS2_F6, PS2_F4, PS2_TAB, '`', 0,
+	0, 0 /*Lalt*/, 0 /*Lshift*/, 0, 0 /*Lctrl*/, 'q', '1', 0,
+	0, 0, 'z', 's', 'a', 'w', '2', 0,
+	0, 'c', 'x', 'd', 'e', '4', '3', 0,
+	0, ' ', 'v', 'f', 't', 'r', '5', 0,
+	0, 'n', 'b', 'h', 'g', 'y', '6', 0,
+	0, 0, 'm', 'j', 'u', '7', '8', 0,
+	0, ',', 'k', 'i', 'o', '0', '9', 0,
+	0, '.', '/', 'l', ';', 'p', '-', 0,
+	0, 0, '\'', 0, '[', '=', 0, 0,
+	0 /*CapsLock*/, 0 /*Rshift*/, PS2_ENTER /*Enter*/, ']', 0, '\\', 0, 0,
+	0, 0, 0, 0, 0, 0, PS2_BACKSPACE, 0,
+	0, '1', 0, '4', '7', 0, 0, 0,
+	'0', '.', '2', '5', '6', '8', PS2_ESC, 0 /*NumLock*/,
+	PS2_F11, '+', '3', '-', '*', '9', PS2_SCROLL, 0,
+	0, 0, 0, PS2_F7 };
+
 
 
 int* lastBoard;
@@ -375,7 +422,6 @@ void keyDown(int k) {
 			;
 	}
 	DrawBoard();
-  uart_write(k);
 }
 
 int loadImg(SdFile* file, SdVolume* currVolume, char* filename, char* arr){
@@ -395,16 +441,45 @@ int loadImg(SdFile* file, SdVolume* currVolume, char* filename, char* arr){
 }
 int screenInit2(int screenBase){
   IOWR(VGA, VGA_BASE, screenBase);//1024=2Mbyte
-  screen_base = screenBase*2048;
+  int screen_base = screenBase*2048;
   for(int i=0;i<0x80000;i++){
     ((int*)(screen_base))[i] = 0;//at 2Mbyte
   }
 }
 
+
+volatile int timeon;
+volatile int hidon;
+volatile int hid_value;
+
+void irq_proc(){
+  int irq = IORD(IRQ, 0);
+  if(irq&1){
+    //timer
+    timeon = 1;
+    IOWR(IRQ, 0, 1);
+    //putc('t');
+  }
+  if(irq&2){
+    //int tmp = IORD(MYUART, 0);
+    //IOWR(MYUART, 1 ,tmp);
+    IOWR(IRQ, 0, 2);
+  }
+  if(irq&4){
+    hid_value = IORD(HID, 0);
+    hidon = 1;
+    //putc('k');
+    IOWR(IRQ, 0, 4);
+  }
+}
+
+
+
 int main()
 {
   malloc_index = 0;
   print("Hello from tetris!\r\n");
+  
 
   imgArr = (short*)malloc(20*20*16*2);
   
@@ -447,16 +522,16 @@ int main()
   }
 
   if(res){
-    loadImg(file, sdvolume, "0.img" , (char*)(&imgArr[0]));
-    loadImg(file, sdvolume, "1.img" , (char*)(&imgArr[1*20*20]));
-    loadImg(file, sdvolume, "2.img" , (char*)(&imgArr[2*20*20]));
-    loadImg(file, sdvolume, "3.img" , (char*)(&imgArr[3*20*20]));
-    loadImg(file, sdvolume, "4.img" , (char*)(&imgArr[4*20*20]));
-    loadImg(file, sdvolume, "5.img" , (char*)(&imgArr[5*20*20]));
-    loadImg(file, sdvolume, "6.img" , (char*)(&imgArr[6*20*20]));
-    loadImg(file, sdvolume, "7.img" , (char*)(&imgArr[7*20*20]));
-    loadImg(file, sdvolume, "8.img" , (char*)(&imgArr[8*20*20]));
-    loadImg(file, sdvolume, "9.img" , (char*)(&imgArr[9*20*20]));
+    loadImg(file, sdvolume,  "0.img", (char*)(&imgArr[ 0      ]));
+    loadImg(file, sdvolume,  "1.img", (char*)(&imgArr[ 1*20*20]));
+    loadImg(file, sdvolume,  "2.img", (char*)(&imgArr[ 2*20*20]));
+    loadImg(file, sdvolume,  "3.img", (char*)(&imgArr[ 3*20*20]));
+    loadImg(file, sdvolume,  "4.img", (char*)(&imgArr[ 4*20*20]));
+    loadImg(file, sdvolume,  "5.img", (char*)(&imgArr[ 5*20*20]));
+    loadImg(file, sdvolume,  "6.img", (char*)(&imgArr[ 6*20*20]));
+    loadImg(file, sdvolume,  "7.img", (char*)(&imgArr[ 7*20*20]));
+    loadImg(file, sdvolume,  "8.img", (char*)(&imgArr[ 8*20*20]));
+    loadImg(file, sdvolume,  "9.img", (char*)(&imgArr[ 9*20*20]));
     loadImg(file, sdvolume, "10.img", (char*)(&imgArr[10*20*20]));
     loadImg(file, sdvolume, "11.img", (char*)(&imgArr[11*20*20]));
     loadImg(file, sdvolume, "12.img", (char*)(&imgArr[12*20*20]));
@@ -470,44 +545,40 @@ int main()
     tetris->Public_Init();
     DrawBoard();
 
+    IOWR(MYTIMER, 4, 1000000);
     IOWR(MYTIMER, 0, 0);
-    int skip = 0;
-    while(1)
-    {
+    timeon = 0;
+    hidon = 0;
+    setIrq(irq_proc, 1);
+
+    //1，去掉定时器，只有键盘鼠标，看下跑挂后的状态
+    //2，去掉显示，只留uart输出，看下是否会跑挂
+    while(1){
       rnd7++;
       if(rnd7==7){
         rnd7 = 0;
       }
-      int time = IORD(MYTIMER, 0);
-      if(time > 1000000){
-        IOWR(MYTIMER, 0, 0);
-        timing();
-      }
-      int tmp = IORD(MYUART, 0);
-      if(tmp&0x100){
-        int key = tmp & 0xFF;
-        uart_write(key);
-        keyDown(key);
-      }
-      
-      tmp = IORD(MYKEYB, 0);
-      if(tmp&0x400){
-        if(skip){
-          skip = 0;
-        }else{
-          tmp = (tmp>>1) & 0xFF;
-          if(tmp == 0xF0 || tmp ==0xE0)
-          {
-            skip = 1;
-          }
-          else{
+      if(hidon){
+      //hid_value = IORD(HID, 0);
+      //if(hid_value){
+        hidon = 0;
+        print("hid\r\n");
+        if((hid_value & 0xFF000000) == 0x01000000){
+          //key
+          if(((hid_value & 0x00008000) != 0x00008000) && ((hid_value & 0x00800000) != 0x00800000)){
+            int tmp = hid_value & 0xFF;
             keyDown(PS2Keymap_US[tmp]);
-            IORD(MYKEYB, 0);
           }
         }
       }
-
-      
+      if(timeon){
+      //int time = IORD(MYTIMER, 0);
+      //if(time>1000000){
+        IOWR(MYTIMER, 0, 0);
+        print("time\r\n");
+        timeon = 0;
+        timing();
+      }
     }
     
   }else{

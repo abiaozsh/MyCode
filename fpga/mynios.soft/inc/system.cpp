@@ -1,4 +1,4 @@
-void abort (void)
+void abort(void)
 {
   while(1);
 }
@@ -28,9 +28,11 @@ void mfree(int size){
 void flushCache(void* addr){
   int tmp = (int)addr;
   tmp = tmp >> 10;
+  cli();
   IOWR(CACHE_CTL, 0, 0x80000000 | tmp);
   volatile int a = *((int*)addr);
   IOWR(CACHE_CTL, 0, 0);
+  sti();
 }
 
 void memcpy(void *dst, const void *src, int len){

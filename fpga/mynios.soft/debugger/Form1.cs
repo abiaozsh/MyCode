@@ -111,22 +111,32 @@ namespace WindowsFormsApplication1
 		{
 			getstatus();
 		}
-		public string getCacheInfo(int id)
+		public string getCacheAddr(int id)
 		{
-			portWrite((byte)(0x50 + id), (byte)0x00);
-			portWrite((byte)(0x50 + id + 1), (byte)0x00);
+			portWrite((byte)(0x2A), (byte)id);
+			portWrite((byte)(0x6A), (byte)0);
+			portWrite((byte)(0x6B), (byte)0);
 			var temp = readFromPort(2);
 			int val = temp[0] | (temp[1] << 8);
-			return String.Format("{0:00000000} ", val);
+			return "   " + Util.getHex4(val);
 		}
-		public int getCacheInfoVal(int id)
+		public string getCacheLife(int id)
 		{
-			portWrite((byte)(0x50 + id), (byte)0x00);
-			portWrite((byte)(0x50 + id + 1), (byte)0x00);
+			portWrite((byte)(0x29), (byte)id);
+			portWrite((byte)(0x68), (byte)0);
+			portWrite((byte)(0x69), (byte)0);
 			var temp = readFromPort(2);
 			int val = temp[0] | (temp[1] << 8);
-			return val;
+			return String.Format("{0:000000} ", val);
 		}
+		//public int getCacheInfoVal(int id)
+		//{
+		//	portWrite((byte)(0x50 + id), (byte)0x00);
+		//	portWrite((byte)(0x50 + id + 1), (byte)0x00);
+		//	var temp = readFromPort(2);
+		//	int val = temp[0] | (temp[1] << 8);
+		//	return val;
+		//}
 
 
 		public void getstatus()
@@ -178,11 +188,18 @@ namespace WindowsFormsApplication1
 			sb.Append((temp[0] + (temp[1] << 8)));
 			sb.AppendLine();
 
-			sb.Append("cache_life:" + getCacheInfo(0) + getCacheInfo(2) + getCacheInfo(4) + getCacheInfo(6));
-
+			sb.Append("cache_life: ");
+			for (int i = 0; i < 16; i++)
+			{
+				sb.Append(" " + getCacheLife(i));
+			}
 			sb.AppendLine();
 
-			sb.Append("cache_addr:" + getCacheInfo(8) + getCacheInfo(10) + getCacheInfo(12) + getCacheInfo(14));
+			sb.Append("cache_addr:");
+			for (int i = 0; i < 16; i++)
+			{
+				sb.Append(" " + getCacheAddr(i));
+			}
 			sb.AppendLine();
 
 			//sb.Append("  numer:"); getreg(0x40, 0, sb);
@@ -234,6 +251,9 @@ namespace WindowsFormsApplication1
 				sb.Append("    fp:");
 				getreg(0x47, 28, sb);
 				sb.AppendLine();
+
+				sb.Append(" re:");
+				getreg(0x47, 29, sb);
 
 				sb.Append(" ra:");
 				getreg(0x47, 31, sb);
@@ -532,81 +552,84 @@ namespace WindowsFormsApplication1
 
 		private void button7_Click(object sender, EventArgs e)
 		{
-			this.getmem(1024 * 0, null);
-			this.getmem(1024 * 1, null);
-			this.getmem(1024 * 2, null);
-			this.getmem(1024 * 3, null);
+			/*
+				this.getmem(1024 * 0, null);
+				this.getmem(1024 * 1, null);
+				this.getmem(1024 * 2, null);
+				this.getmem(1024 * 3, null);
 
-			Random r = new Random();
-			for (uint i = 0; i < 256; i++)
-			{
-				data0[i] = (uint)r.Next();
-				this.setmem(i * 4, data0[i]);//page0
-			}
-
-			int cachelife0 = getCacheInfoVal(0);//life 0
-
-			for (uint i = 0; i < cachelife0; i++)
-			{
-				this.getmem(1028, null);//page1
-			}
-			cachelife0 = getCacheInfoVal(0);//life 0
-
-			//if (cachelife0 != 0) MessageBox.Show("err1");
-
-			this.getmem(1024 * 4, null);//*******************
-
-			int cacheaddr0 = getCacheInfoVal(8);//addr 0
-
-			//if (cacheaddr0 != 4) MessageBox.Show("err2");
-			for (uint i = 0; i < 256; i++)
-			{
-				uint val = this.getmem((int)(i * 4), null);
-				if (val != data0[i])
+				Random r = new Random();
+				for (uint i = 0; i < 256; i++)
 				{
-					MessageBox.Show("err3");
-					break;
+					data0[i] = (uint)r.Next();
+					this.setmem(i * 4, data0[i]);//page0
 				}
-			}
 
-			int cachelife2 = getCacheInfoVal(4);//life 0
+				int cachelife0 = getCacheInfoVal(0);//life 0
 
-			for (uint i = 0; i < cachelife2; i++)
-			{
-				this.getmem(1024 * 4, null);//page1
-			}
+				for (uint i = 0; i < cachelife0; i++)
+				{
+					this.getmem(1028, null);//page1
+				}
+				cachelife0 = getCacheInfoVal(0);//life 0
 
-			this.getmem(1024 * 14, null);//page1
-			this.getmem(1024 * 15, null);//page1
+				//if (cachelife0 != 0) MessageBox.Show("err1");
 
-			int byteEnable = 1;
-			portWrite((byte)(0x28), (byte)byteEnable);
-			this.setmem(0, 0xFF);
+				this.getmem(1024 * 4, null);//*******************
 
-			byteEnable = 8;
-			portWrite((byte)(0x28), (byte)byteEnable);
-			this.setmem(4, 0xFF000000);
+				int cacheaddr0 = getCacheInfoVal(8);//addr 0
 
-			uint v1 = this.getmem(0, null);
+				//if (cacheaddr0 != 4) MessageBox.Show("err2");
+				for (uint i = 0; i < 256; i++)
+				{
+					uint val = this.getmem((int)(i * 4), null);
+					if (val != data0[i])
+					{
+						MessageBox.Show("err3");
+						break;
+					}
+				}
 
-			uint v2 = this.getmem(4, null);
+				int cachelife2 = getCacheInfoVal(4);//life 0
 
-			cachelife2 = getCacheInfoVal(6);
-			for (uint i = 0; i < cachelife2; i++)
-			{
+				for (uint i = 0; i < cachelife2; i++)
+				{
+					this.getmem(1024 * 4, null);//page1
+				}
+
 				this.getmem(1024 * 14, null);//page1
-			}
-			this.getmem(1024 * 22, null);//page1
-			this.getmem(1024 * 23, null);//page1
+				this.getmem(1024 * 15, null);//page1
 
-			uint v3 = this.getmem(0, null);
+				int byteEnable = 1;
+				portWrite((byte)(0x28), (byte)byteEnable);
+				this.setmem(0, 0xFF);
 
-			uint v4 = this.getmem(4, null);
+				byteEnable = 8;
+				portWrite((byte)(0x28), (byte)byteEnable);
+				this.setmem(4, 0xFF000000);
+
+				uint v1 = this.getmem(0, null);
+
+				uint v2 = this.getmem(4, null);
+
+				cachelife2 = getCacheInfoVal(6);
+				for (uint i = 0; i < cachelife2; i++)
+				{
+					this.getmem(1024 * 14, null);//page1
+				}
+				this.getmem(1024 * 22, null);//page1
+				this.getmem(1024 * 23, null);//page1
+
+				uint v3 = this.getmem(0, null);
+
+				uint v4 = this.getmem(4, null);
 
 
-			byteEnable = 15;
-			portWrite((byte)(0x28), (byte)byteEnable);
-			this.getstatus();
+				byteEnable = 15;
+				portWrite((byte)(0x28), (byte)byteEnable);
+				this.getstatus();
+				*/
+
 
 			/*
 
@@ -1138,7 +1161,7 @@ struct dir_t {//directoryEntry
 			int i = a[0] - 0xa0;
 			int j = a[1] - 0xa0;
 
-			FileStream fs = new FileStream(@"D:\fpgaproj\hzk\HZK16", FileMode.Open, FileAccess.Read);
+			FileStream fs = new FileStream(@"e:\fpgaproj\mynios.soft\HZK16", FileMode.Open, FileAccess.Read);
 			Bitmap bmp = new Bitmap(16, 16);
 			fs.Seek((94 * (i - 1) + (j - 1)) * 32, SeekOrigin.Begin);
 			byte[] mat = new byte[32];

@@ -189,27 +189,6 @@ class SdVolume {
   Sd2Card* sdCard_;            // Sd2Card object for cache
   Sd2Card* sdCard(void) {return sdCard_;}
 
-  /** Create an instance of SdVolume */
-  
-  /** Clear the cache and returns a pointer to the cache.  Used by the WaveRP
-   *  recorder to do raw write to the SD card.  Not for normal apps.
-   */
-//  char* cacheClear(void) {
-//    cacheFlush();
-//    cacheBlockNumber_ = CACHE_BLOCK_INVALID;
-//    return cacheBuffer_.data;
-//  }
-  /**
-   * Initialize a FAT volume.  Try partition one first then try super
-   * floppy format.
-   *
-   * \param[in] dev The Sd2Card where the volume is located.
-   *
-   * \return The value one, true, is returned for success and
-   * the value zero, false, is returned for failure.  Reasons for
-   * failure include not finding a valid partition, not finding a valid
-   * FAT file system or an I/O error.
-   */
   int initError;
   cache_entity* errorSector;
   int printErrorSector(){
@@ -253,7 +232,7 @@ class SdVolume {
     cache_entity* cacheBuffer_;
     if (part) {
       if (part > 4)return false;
-      if (!cacheRawBlock(volumeStartBlock, CACHE_FOR_READ, &cacheBuffer_, false, false)){
+      if (!cacheRawBlock(volumeStartBlock, CACHE_FOR_READ, &cacheBuffer_, false, false, 1)){
         initError = 1;
         return false;
       }
@@ -287,7 +266,7 @@ class SdVolume {
     
     //print("volumeStartBlock =");printInt(volumeStartBlock );print("\r\n");
 
-    if (!cacheRawBlock(volumeStartBlock, CACHE_FOR_READ, &cacheBuffer_, false, false)){
+    if (!cacheRawBlock(volumeStartBlock, CACHE_FOR_READ, &cacheBuffer_, false, false, 2)){
       error = 3;
       return false;
     }
@@ -471,7 +450,16 @@ class SdVolume {
       cacheFlush(&(cacheEntity[i]));
     }
   }
-  
+  void cacheReport() {
+    for(int i=0;i<CACHE_COUNT;i++){
+      print("cache");printInt(i);print(":\r\n");
+      print("cacheBlockNumber");printInt(cacheEntity[i].cacheBlockNumber);print(":\r\n");
+      print("cacheDirty      ");printInt(cacheEntity[i].cacheDirty);print(":\r\n");
+      print("cacheLifeCount  ");printInt(cacheEntity[i].cacheLifeCount);print(":\r\n");
+      print("cacheMirrorBlock");printInt(cacheEntity[i].cacheMirrorBlock);print(":\r\n");
+    }
+  }
+
   uint8_t cacheFlush(cache_entity* cache) {
     if (cache->cacheDirty) {
       //print("cacheFlush:");printInt(cache->cacheBlockNumber);print("\r\n");
@@ -492,8 +480,8 @@ class SdVolume {
     return true;
   }
 
-  int cacheRawBlock(uint32_t blockNumber, uint8_t action, cache_entity** cacheBuffer_, int isZero, int isFat) {
-
+  int cacheRawBlock(uint32_t blockNumber, uint8_t action, cache_entity** cacheBuffer_, int isZero, int isFat, int ID) {
+    //print("cacheRawBlock,block:");printInt(blockNumber);print(",ID:");printInt(ID);print(",dirty:");printInt(action);print("\r\n");
     int minLifeVal = 1000000000;
     int minLifeIdx = 0;
     int found = -1;
@@ -551,7 +539,7 @@ class SdVolume {
   // cache a zero block for blockNumber
   uint8_t cacheZeroBlock(uint32_t blockNumber) {
     cache_entity* cacheBuffer_;
-    if (!cacheRawBlock(blockNumber, CACHE_FOR_WRITE, &cacheBuffer_, true, false)){
+    if (!cacheRawBlock(blockNumber, CACHE_FOR_WRITE, &cacheBuffer_, true, false, 3)){
       return false;
     }
     
@@ -582,7 +570,7 @@ class SdVolume {
     lba += fatType_ == 16 ? cluster >> 8 : cluster >> 7;
 
     cache_entity* cacheBuffer_;
-    if (!cacheRawBlock(lba, CACHE_FOR_READ, &cacheBuffer_, false, true)) return false;
+    if (!cacheRawBlock(lba, CACHE_FOR_READ, &cacheBuffer_, false, true, 4)) return false;
 
     if (fatType_ == 16) {
       *next = cacheBuffer_->cacheBuffer.fat16[cluster & 0XFF] & 0xFFFF;
@@ -613,7 +601,7 @@ class SdVolume {
     lba += fatType_ == 16 ? cluster >> 8 : cluster >> 7;
 
     cache_entity* cacheBuffer_;
-    if (!cacheRawBlock(lba, CACHE_FOR_WRITE, &cacheBuffer_, false, true)) {
+    if (!cacheRawBlock(lba, CACHE_FOR_WRITE, &cacheBuffer_, false, true, 5)) {
       fatPutError = 3;
       return false;
     }
@@ -667,16 +655,8 @@ class SdVolume {
   uint8_t isEOC(uint32_t cluster) const {
     return  cluster >= (fatType_ == 16 ? FAT16EOC_MIN : FAT32EOC_MIN);
   }
-  uint8_t readBlock(uint32_t block, char* dst) {
-    return sdCard_->readBlock(block, dst);
-  }
-  //uint8_t readData(uint32_t block, uint16_t offset,
-  //  uint16_t count, char* dst) {
-  //    return sdCard_->readData(block, offset, count, dst);
-  //}
-  uint8_t writeBlock(uint32_t block, const char* dst) {
-    return sdCard_->writeBlock(block, dst);
-  }
+
+
 };
 
 
@@ -778,7 +758,9 @@ class SdFile {
   //bool writeError;
 
   uint8_t close(void) {
+    //vol_->cacheReport();
     if (!sync())return false;
+    //vol_->cacheReport();
     type_ = FAT_FILE_TYPE_CLOSED;
     return true;
   }  
@@ -832,7 +814,7 @@ class SdFile {
     if (!sync()) return false;
 
     // cache entry - should already be in cache due to sync() call
-    dir_t* p = cacheDirEntry(CACHE_FOR_WRITE);
+    dir_t* p = cacheDirEntry();
     if (!p) return false;
 
     // change directory entry  attribute
@@ -847,7 +829,7 @@ class SdFile {
     // cache block for '.'  and '..'
     uint32_t block = vol_->clusterStartBlock(firstCluster_);
 
-    if (!vol_->cacheRawBlock(block, CACHE_FOR_WRITE, &cacheBuffer_, false, false)) return false;
+    if (!vol_->cacheRawBlock(block, CACHE_FOR_WRITE, &cacheBuffer_, false, false, 6)) return false;
 
     // copy '.' to block
     memcpy(&(cacheBuffer_->cacheBuffer.dir[0]), &d, sizeof(d));
@@ -913,7 +895,8 @@ class SdFile {
         if (!emptyFound) {
           emptyFound = true;
           dirIndex_ = index;
-          dirBlock_ = cacheBuffer_->cacheBlockNumber;
+          //print("cacheBuffer_->cacheBlockNumber:");printInt(dirFile->cacheBuffer_->cacheBlockNumber);print("\r\n");
+          dirBlock_ = dirFile->cacheBuffer_->cacheBlockNumber;
         }
         // done if no entries follow
         if (p->name[0] == DIR_NAME_FREE) break;
@@ -953,7 +936,7 @@ class SdFile {
     // cache found slot or add cluster if end of file
     if (emptyFound) {
       print("emptyFound\r\n");
-      p = cacheDirEntry(CACHE_FOR_WRITE);
+      p = cacheDirEntry();
       if (!p) {
         fileError += 7;
         return false;
@@ -972,7 +955,7 @@ class SdFile {
 
       // use first entry in cluster
       dirIndex_ = 0;
-      p = cacheBuffer_->cacheBuffer.dir;
+      p = dirFile->cacheBuffer_->cacheBuffer.dir;
     }
     // initialize as empty file
     //memset(p, 0, sizeof(dir_t));
@@ -981,22 +964,8 @@ class SdFile {
     }
     memcpy(p->name, dname, 11);
     
-    
-//    // set timestamps
-//    if (dateTime_) {
-//      // call user function
-//      dateTime_(&p->creationDate, &p->creationTime);
-//    } else {
-//      // use default date/time
-//      p->creationDate = FAT_DEFAULT_DATE;
-//      p->creationTime = FAT_DEFAULT_TIME;
-//    }
-//    p->lastAccessDate = p->creationDate;
-//    p->lastWriteDate = p->creationDate;
-//    p->lastWriteTime = p->creationTime;
-
     // force write of entry to SD
-    if (!vol_->cacheFlush(cacheBuffer_)) {
+    if (!vol_->cacheFlush(dirFile->cacheBuffer_)) {
       fileError += 9;
       return false;
     }
@@ -1010,33 +979,7 @@ class SdFile {
     }
     return true;
   }
-/*
-  uint8_t open(SdFile* dirFile, uint16_t index, uint8_t oflag) {
-    type_ = FAT_FILE_TYPE_CLOSED;
-    // error if already open
-    if (isOpen())return false;
 
-    // don't open existing file if O_CREAT and O_EXCL - user call error
-    if ((oflag & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL)) return false;
-
-    vol_ = dirFile->vol_;
-
-    // seek to location of entry
-    if (!dirFile->seekSet(32 * index)) return false;
-
-    // read entry into cache
-    dir_t* p = dirFile->readDirCache();
-    if (p == NULL) return false;
-
-    // error if empty slot or '.' or '..'
-    if (p->name[0] == DIR_NAME_FREE ||
-        p->name[0] == DIR_NAME_DELETED || p->name[0] == '.') {
-      return false;
-    }
-    // open cached entry
-    return openCachedEntry(index & 0XF, oflag, dirFile);
-  }
-*/
   uint8_t openRoot(SdVolume* vol) {
     type_ = FAT_FILE_TYPE_CLOSED;
     // error if file is already open
@@ -1107,7 +1050,7 @@ class SdFile {
       if (!DIR_IS_FILE_OR_SUBDIR(p)) continue;
 
       // print any indent spaces
-//      for (int8_t i = 0; i < indent; i++) uart_write(' ');
+//      for (int8_t i = 0; i < indent; i++) putc(' ');
 
       // print file name with possible blank fill
       //printDirName(*p, flags & (LS_DATE | LS_SIZE) ? 14 : 0);
@@ -1116,12 +1059,12 @@ class SdFile {
       // print modify date/time if requested
 //      if (flags & LS_DATE) {
 //         printFatDate(p->lastWriteDate);
-//         uart_write(' ');
+//         putc(' ');
 //         printFatTime(p->lastWriteTime);
 //      }
       // print size if requested
       if (!DIR_IS_SUBDIR(p)) {// && (flags & LS_SIZE)
-        uart_write(' ');
+        putc(' ');
         int fileSize = combineInt(p->fileSize_0, p->fileSize_1, p->fileSize_2, p->fileSize_3);
         printInt(fileSize);
       }
@@ -1143,18 +1086,18 @@ class SdFile {
     for (uint8_t i = 0; i < 11; i++) {
       if (dir.name[i] == ' ')continue;
       if (i == 8) {
-        uart_write('.');
+        putc('.');
         w++;
       }
-      uart_write(dir.name[i]);
+      putc(dir.name[i]);
       w++;
     }
     if (DIR_IS_SUBDIR(&dir)) {
-      uart_write('/');
+      putc('/');
       w++;
     }
     while (w < width) {
-      uart_write(' ');
+      putc(' ');
       w++;
     }
   }
@@ -1221,7 +1164,7 @@ class SdFile {
 
       // read block to cache and copy data to caller
 
-      if (!vol_->cacheRawBlock(block, CACHE_FOR_READ, &cacheBuffer_, false, false)) {
+      if (!vol_->cacheRawBlock(block, CACHE_FOR_READ, &cacheBuffer_, false, false, 7)) {
         fileError += 4000;
         return -1;
       }
@@ -1273,7 +1216,7 @@ class SdFile {
     }
 
     // cache directory entry
-    dir_t* d = cacheDirEntry(CACHE_FOR_WRITE);
+    dir_t* d = cacheDirEntry();
     if (!d) {
       removeError = 2;
       return false;
@@ -1389,7 +1332,7 @@ class SdFile {
     if (!isOpen()) return false;
 
     if (flags_ & F_FILE_DIR_DIRTY) {
-      dir_t* d = cacheDirEntry(CACHE_FOR_WRITE);
+      dir_t* d = cacheDirEntry();
       if (!d) return false;
 
       // do not set filesize for dir files
@@ -1578,7 +1521,7 @@ class SdFile {
         //} else {
           // rewrite part of block
           //if (!SdVolume::cacheRawBlock(block, SdVolume::CACHE_FOR_WRITE)) {
-          if (!vol_->cacheRawBlock(block, CACHE_FOR_WRITE, &cacheBuffer_, false, false)) {
+          if (!vol_->cacheRawBlock(block, CACHE_FOR_WRITE, &cacheBuffer_, false, false, 8)) {
             goto writeErrorReturn;
           }
         //}
@@ -1639,9 +1582,9 @@ class SdFile {
   }
   // cache a file's directory entry
   // return pointer to cached entry or null for failure
-  dir_t* cacheDirEntry(uint8_t action) {
+  dir_t* cacheDirEntry() {
 
-    if (!vol_->cacheRawBlock(dirBlock_, action, &cacheBuffer_, false, false)) return NULL;
+    if (!vol_->cacheRawBlock(dirBlock_, CACHE_FOR_WRITE, &cacheBuffer_, false, false, 9)) return NULL;
     return cacheBuffer_->cacheBuffer.dir + dirIndex_;
   }
 

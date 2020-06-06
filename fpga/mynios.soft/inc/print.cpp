@@ -4,35 +4,10 @@ int print(const char* str){
   while(1){
     char tmp = str[idx];
     if(tmp=='\0')break;
-    uart_write(tmp);
+    putc(tmp);
     idx++;
   }
 }
-
-int printByte(int val){
-  char* chardata = "0123456789ABCDEF";
-  uart_write(chardata[(val>>4)&0x0F]);
-  uart_write(chardata[(val)&0x0F]);
-}
-
-int printHex(int val){
-  char* chardata = "0123456789ABCDEF";
-  uart_write(chardata[(val>>28)&0x0F]);
-  uart_write(chardata[(val>>24)&0x0F]);
-  uart_write(chardata[(val>>20)&0x0F]);
-  uart_write(chardata[(val>>16)&0x0F]);
-  uart_write(chardata[(val>>12)&0x0F]);
-  uart_write(chardata[(val>>8)&0x0F]);
-  uart_write(chardata[(val>>4)&0x0F]);
-  uart_write(chardata[(val)&0x0F]);
-}
-
-int printBin(int data2){
-  for(int i=31;i>=0;i--){
-    uart_write((data2>>i)&1?'1':'0'); // Status Byte
-  }
-}
-
 
 
 int print(const char* str, int len){
@@ -40,9 +15,57 @@ int print(const char* str, int len){
   int i;
   for(i=0;i<len;i++){
     char tmp = str[i];
-    uart_write(tmp);
+    putc(tmp);
   }
 }
+
+
+int printgb(const char* str){
+  int idx = 0;
+  while(1){
+    int tmp1 = str[idx]&0xFF;
+    int tmp2 = str[idx]&0xFF;
+    if(tmp1=='\0')break;
+    if(tmp1>=0xA0 && tmp2>=0xA0){
+      int i = tmp1 - 0xA0;
+      int j = tmp2 - 0xA0;
+      #ifdef putcgb
+      putcgb(94 * (i - 1) + (j - 1));
+      #endif
+      idx+=2;
+    }else{
+      putc(tmp1);
+      idx++;
+    }
+  }
+}
+
+
+
+int printByte(int val){
+  char* chardata = "0123456789ABCDEF";
+  putc(chardata[(val>>4)&0x0F]);
+  putc(chardata[(val)&0x0F]);
+}
+
+int printHex(int val){
+  char* chardata = "0123456789ABCDEF";
+  putc(chardata[(val>>28)&0x0F]);
+  putc(chardata[(val>>24)&0x0F]);
+  putc(chardata[(val>>20)&0x0F]);
+  putc(chardata[(val>>16)&0x0F]);
+  putc(chardata[(val>>12)&0x0F]);
+  putc(chardata[(val>>8)&0x0F]);
+  putc(chardata[(val>>4)&0x0F]);
+  putc(chardata[(val)&0x0F]);
+}
+
+int printBin(int data2){
+  for(int i=31;i>=0;i--){
+    putc((data2>>i)&1?'1':'0'); // Status Byte
+  }
+}
+
 
 int equal(const char* a,const  char* b, int maxlen){
   int i = 0;
@@ -67,10 +90,10 @@ int equal(const char* a,const  char* b, int maxlen){
   return 1;
 }
 
-int scan(char* buff, int maxlen, int timeout){
+int scan(char* buff, int maxlen){
   int idx = 0;
   while(1){
-    int c = uart_read(timeout);
+    int c = getc();
     if(c==-1){
       return 0;
     }
@@ -136,13 +159,13 @@ void printInt(int val)
   int num;
   if(val>=0){
     num = val;
-    uart_write('+');
+    putc('+');
   }else{
     num = -val;
-    uart_write('-');
+    putc('-');
   }
   
-  uart_write('0');
+  putc('0');
   int outNum;
   int flg = 0;
   for(idx = 0; idx < 10 ; idx++)
@@ -162,10 +185,10 @@ void printInt(int val)
       }
     }
     if(flg==1){
-      uart_write('0' + outNum);
+      putc('0' + outNum);
     }else{
       if(outNum!=0){
-        uart_write('0' + outNum);
+        putc('0' + outNum);
         flg = 1;
       }
     }
@@ -174,8 +197,8 @@ void printInt(int val)
 
 void printInt(int val, int newline){
   printInt(val);
-  uart_write('\r');
-  uart_write('\n');
+  putc('\r');
+  putc('\n');
 }
 
 int scanInt(){
@@ -186,7 +209,7 @@ int scanInt(){
   int neg = 0;
   char v;
   while(1){
-    v = uart_read();
+    v = getc();
     if(v=='-'||(v>='0'&&v<='9')){
       break;
     }
@@ -201,7 +224,7 @@ int scanInt(){
       }
       buff[idx++] = v;
     }
-    v = uart_read();
+    v = getc();
   }
   
   int val = 0;

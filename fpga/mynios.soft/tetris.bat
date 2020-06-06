@@ -1,4 +1,5 @@
 call setpath.bat
-"nios2-elf-gcc" -S tetris.cpp -o tetris.s
-compile tetris.s out.hex tetris.temp.s dos
+rem 
+"nios2-elf-gcc" -S -Os tetris.cpp -o tetris.s
+compile inc\irq.asm,tetris.s out.hex tetris.temp.s dos
 pause

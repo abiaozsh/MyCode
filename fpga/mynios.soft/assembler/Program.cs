@@ -17,8 +17,8 @@ namespace Assembler
 			string filein;
 			string fileout;
 			string filetemp;
-			string test = "a";
-			string type = "app";
+			string test = "dos";
+			string type = "dos";
 			string fileoutBin;
 			if (args.Length > 0 && !String.IsNullOrEmpty(args[0]))
 			{
@@ -455,7 +455,6 @@ namespace Assembler
 			}
 
 			{
-				int entry = 0;
 				int len = pos;
 				FileStream fs = new FileStream(fileoutBin, FileMode.Create, FileAccess.Write);
 				FileStream fs2 = new FileStream(fileout, FileMode.Create, FileAccess.Write);
@@ -470,6 +469,15 @@ namespace Assembler
 				int posx = 0;
 				foreach (var item in dataInsList)
 				{
+					string ssym = "";
+					foreach (var sym in syms)
+					{
+						if (((posx) * 4) == sym.pos)
+						{
+							ssym += sym.name + ",";
+						}
+					}
+
 					if (item is Ins)
 					{
 						var ins = item as Ins;
@@ -495,7 +503,8 @@ namespace Assembler
 						bw.Write(insbin);
 						writehex(insbin, posx++, sw);
 
-						sw3.WriteLine(((posx - 1) * 4) + " [" + getHex8(insbin) + "] " + ins.line.text);
+						sw3.WriteLine(getHex8((posx - 1) * 4) + " [" + getHex8(insbin) + "] (" + ssym + ") " + ins.line.text);
+
 					}
 
 					if (item is Data)
@@ -522,7 +531,7 @@ namespace Assembler
 							}
 							bw.Write(val);
 							writehex(val, posx++, sw);
-							sw3.WriteLine(((posx - 1) * 4) + " [" + getHex8(val) + "] ");
+							sw3.WriteLine(getHex8((posx - 1) * 4) + " [" + getHex8(val) + "] (" + ssym + ")");
 						}
 					}
 				}
@@ -622,7 +631,7 @@ namespace Assembler
 							break;
 
 						case 56://reti
-							ins.bitregA = 31;
+							ins.bitregA = 29;
 							ins.CMD3 = 6;
 							break;
 

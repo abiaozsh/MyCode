@@ -1,8 +1,11 @@
 #include "inc/io.h"
+#include "inc/irq.h"
 #include "inc/system.h"
 #include "inc/system.cpp"
-//#include "inc/uart.cpp"
-//#include "inc/print.cpp"
+#include "inc/irq.h"
+#include "inc/uart.cpp"
+#include "inc/uartio.cpp"
+#include "inc/print.cpp"
 
 #define PS2_TAB				9
 #define PS2_ENTER			10
@@ -53,58 +56,133 @@ int PS2Keymap_US[] = {
 	0, 0, 0, PS2_F7 };
 
 
-void setIrq(int val){
-  __asm__ __volatile__("setirq %[input1],%[input1],1"::[input1]"r"(val));
-}
-void clrIrq(int val){
-  __asm__ __volatile__("setirq %[input1],%[input1],0"::[input1]"r"(val));
-}
+volatile int hid_value;
+volatile int hid_arrived;
 
 int skip;
-int irq_proc(){
+void irq_proc(){
   int irq = IORD(IRQ, 0);
+  //putc('(');
   if(irq&1){
     //timer
-    IOWR(MYUART, 1 , '_');
+    //putc('_');
     IOWR(IRQ, 0, 1);
   }
   if(irq&2){
     int tmp = IORD(MYUART, 0);
-    IOWR(MYUART, 1 ,tmp);
+    //putc(tmp);
     IOWR(IRQ, 0, 2);
   }
   if(irq&4){
-    int tmp = IORD(MYKEYB, 0);
-    if(tmp&0x400){
-      if(skip){
-        skip = 0;
-      }else{
-        tmp = (tmp>>1) & 0xFF;
-        if(tmp == 0xF0 || tmp ==0xE0)
-        {
-          skip = 1;
-        }
-        else{
-          tmp = PS2Keymap_US[tmp];
-          IOWR(MYUART, 1 ,tmp);
-        }
-      }
-    }
+    int tmp = IORD(HID, 0);
+    hid_value = tmp;
+    hid_arrived = 1;
+    //putc('f');
     IOWR(IRQ, 0, 4);
   }
+  //putc(')');
+}
 
-  
-  asm("reti");
+int screenInit2(int screenBase){
+  IOWR(VGA, VGA_BASE, screenBase);//1024=2Mbyte
+  int screen_base = screenBase*2048;
+  for(int i=0;i<0x80000;i++){
+    ((int*)(screen_base))[i] = 0;//at 2Mbyte
+  }
+}
+//鼠标箭头 加到vga
+
+int drawImg(int blockx, int blocky, short* block, int isNext){
+  int basex = 50;
+  int basey = 100;
+  if(isNext){
+    basex = 200;
+  }
+
+  basex = basex + blockx * 10;
+  basey = basey + blocky * 20;
+  int* src = (int*)block;
+  for(int j=0;j<20;j++){
+    int j_temp = j*10;
+    for(int i=0;i<10;i++){
+      int x = basex + i;
+      int y = basey + j;
+    }
+  }
+}
+
+int getpixel(int r, int g, int b)
+{
+  int val = 0;
+  val += (r >> 3) << (5 + 6);
+  val += (g >> 2) << (5);
+  val += (b >> 3);
+  return val;
 }
 
 int main(){
   
-  IOWR(MYTIMER, 4, 1000000);
-  IOWR(MYTIMER, 0, 0);
-  setIrq((int)irq_proc);
+  //IOWR(MYTIMER, 4, 1000000);
+  //IOWR(MYTIMER, 0, 0);
+  setIrq(irq_proc ,1);
   
-  
+  screenInit2(1024);
+  int buffAddr = 0x200000;
+
   //print("Hello from video demo\r\n");
-  
-  while(1){};
+  int x = 0;
+  int y = 0;
+  while(1){
+    if(hid_arrived){
+      hid_arrived = 0;
+      if((hid_value & 0xFF000000) == 0x01000000){
+        //key
+        if(((hid_value & 0x00008000) != 0x00008000) && ((hid_value & 0x00800000) != 0x00800000)){
+          int tmp = hid_value & 0xFF;
+          putc(PS2Keymap_US[tmp]);
+        }
+      }else{
+        //mouse
+        x+=(char)( hid_value     & 0x000000FF);
+        y-=(char)((hid_value>>8) & 0x000000FF);
+        int btn1 = hid_value & 0x00010000;
+        int btn2 = hid_value & 0x00020000;
+        int btn3 = hid_value & 0x00040000;//mid
+        if(x<0){
+          x=0;
+        }
+        if(x>1024){
+          x=1024;
+        }
+
+        if(y<0){
+          y=0;
+        }
+        if(y>768){
+          y=768;
+        }
+        
+        for(int j=0;j<16;j++){
+          for(int i=0;i<16;i++){
+            short* addr = (short*)(&((short*)(buffAddr))[x+i+((y+j)<<10)]);
+            *addr = getpixel(btn1?0xFF:0, btn2?0xFF:0, btn3?0xFF:0);//at 2Mbyte
+            flushCache(addr);
+          }
+        }
+        //printInt(x);
+        //print(" ");
+        //printInt(y);
+        //print("\r\n");
+
+      }
+      //printHex(hid_value);
+      
+      
+      
+      //putc('\r');
+      //putc('\n');
+    }
+    
+    
+  };
 }

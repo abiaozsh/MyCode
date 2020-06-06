@@ -1,11 +1,9 @@
-//函数指针
-//变量指针
-//中断向量
-//浮点数
 #include "inc/io.h"
 #include "inc/system.h"
+#include "inc/noirq.h"
 #include "inc/system.cpp"
 #include "inc/uart.cpp"
+#include "inc/uartio.cpp"
 
 //int uart_write(int val){
 //  while((IORD(MYUART, 1)) & 0x100);
@@ -28,7 +26,7 @@ int printByte(int val){
 }
 
 int main(){
-  screenInit(1024);
+  stdioInit(1024);
   uart_write('t');
   uart_write('e');
   uart_write('s');

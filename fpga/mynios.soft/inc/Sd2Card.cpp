@@ -157,6 +157,7 @@ class Sd2Card {
  public:
   //uint32_t block_;
   uint8_t chipSelectPin_;
+  int polpha_;
   uint8_t errorCode_;
   //uint8_t inBlock_;
   //uint16_t offset_;
@@ -230,123 +231,6 @@ class Sd2Card {
     return false;
   }
 
-  /**
-   * Read a cards CID register. The CID contains card identification
-   * information such as Manufacturer ID, Product name, Product serial
-   * number and Manufacturing date. */
-//  uint8_t readCID(cid_t* cid) {
-//    return readRegister(CMD10, cid);
-//  }
-//  void printCID(cid_t* cid){
-//    int ret = readCID(cid);
-//    if(ret){
-//      print("mid:");printByte(cid->mid);print("\r\n");  // Manufacturer ID
-//      print("oid:");print(cid->oid, 2);print("\r\n");  // OEM/Application ID
-//      print("pnm:");print(cid->pnm, 5);print("\r\n");  // Product name
-//      print("prv:");printByte(cid->prv_n_prv_m);print("\r\n");//char prv_n_prv_m;  //4:4 h_l Product revision n.m
-//      print("psn:");printByte(cid->psn_0);printByte(cid->psn_1);printByte(cid->psn_2);printByte(cid->psn_3);print("\r\n");//char psn_0;  // Product serial number
-//      //char psn_1;  // Product serial number
-//      //char psn_2;  // Product serial number
-//      //char psn_3;  // Product serial number
-//      print("mdt:");printByte(cid->reserved_mdt_year_high);printByte(cid->mdt_year_low_mdt_month);print("\r\n");//char reserved_mdt_year_high;  //4:4 h_l Manufacturing date
-//      //char mdt_year_low_mdt_month;//4:4 h_l 
-//      //char crc_always1;//7:1 h_l 
-//
-//    }else{
-//      print("readCID error\r\n");
-//    }
-//    
-//  }
-  
-  
-  /**
-   * Read a cards CSD register. The CSD contains Card-Specific Data that
-   * provides information regarding access to the card's contents. */
-//  uint8_t readCSD(csd_t* csd) {
-//    return readRegister(CMD9, csd);
-//  }
-//  void printCSD(csd_t* csd){
-//    int ret = readCSD(csd);
-//    if(ret){
-//      print("csdver");printByte(((csd1_t*)csd)->csd_ver_reserved1);print("\r\n");
-//      if(
-//
-////------------------------------------------------------------------------------
-//// CSD for version 1.00 cards
-//struct csd1_t {
-//  char csd_ver_reserved1;//2:6
-//  char taac;
-//  char nsac;
-//  char tran_speed;
-//  char ccc_high;
-//  char ccc_low_read_bl_len;//4:4
-//  char read_bl_partial_write_blk_misalign_read_blk_misalign_dsr_imp_reserved2_c_size_high;//1:1:1:1:2:2
-//  char c_size_mid;
-//  char c_size_low_vdd_r_curr_min_vdd_r_curr_max : 3;//2:3:3
-//  char vdd_w_curr_min_vdd_w_cur_max_c_size_mult_high;//3:3:2
-//  char c_size_mult_low_erase_blk_en_sector_size_high;//1:1:6
-//  char sector_size_low_wp_grp_size;//1:7
-//  char wp_grp_enable_reserved3_r2w_factor_write_bl_len_high;//1:2:3:2
-//  char write_bl_len_low_write_partial_reserved4 : 5;//2:1:5
-//  char file_format_grp_copy_perm_write_protect_tmp_write_protect_file_format_reserved5;//1:1:1:1:2:2
-//  char crc_always1;//7:1
-//};
-////------------------------------------------------------------------------------
-//// CSD for version 2.00 cards
-//struct csd2_t {
-//  char csd_ver_reserved1;//2:6
-//  char taac;
-//  char nsac;
-//  char tran_speed;
-//  char ccc_high;
-//  char ccc_low_read_bl_len;//4:4
-//  char read_bl_partial_write_blk_misalign_read_blk_misalign_dsr_imp_reserved2;//1:1:1:1:4
-//  char c_size_high_reserved3;//6:2
-//  char c_size_mid;
-//  char c_size_low;
-//  char reserved4_erase_blk_en_sector_size_high;//1:1:6
-//  char sector_size_low_wp_grp_size;//1:7
-//  char wp_grp_enable_reserved5_r2w_factor_write_bl_len_high;//1:2:3:2
-//  char write_bl_len_low_write_partial_reserved6;//2:1:5
-//  char file_format_grp_copy_perm_write_protect_tmp_write_protect_file_format_reserved7;//1:1:1:1:2:2
-//  char crc_always1;//7:1
-//};
-
-//
-//    }else{
-//      print("readCSD error\r\n");
-//    }
-//    
-//  }
-  /**
-   * Determine the size of an SD flash memory card.
-   *
-   * \return The number of 512 byte data blocks in the card
-   *         or zero if an error occurs.
-   */
-//  uint32_t cardSize(void) {
-//    csd_t csd;
-//    if (!readCSD(&csd)) return 0;
-//    int csd_ver = (csd.v1.csd_ver_reserved1 & 0xFF) >> 6;
-//    if (csd_ver == 0) {
-//      uint8_t read_bl_len = csd.v1.ccc_low_read_bl_len & 0x0F;
-//      int c_size_high = csd.v1.read_bl_partial_write_blk_misalign_read_blk_misalign_dsr_imp_reserved2_c_size_high >> 7;
-//      int c_size_low = csd.v1.c_size_low_vdd_r_curr_min_vdd_r_curr_max >> 6;
-//      int c_size_mult_high = csd.v1.vdd_w_curr_min_vdd_w_cur_max_c_size_mult_high & 3;
-//      int c_size_mult_low = csd.v1.c_size_mult_low_erase_blk_en_sector_size_high >> 7;
-//      uint16_t c_size = (c_size_high << 10) | (csd.v1.c_size_mid << 2) | c_size_low;
-//      uint8_t c_size_mult = (c_size_mult_high << 1) | c_size_mult_low;
-//      return (uint32_t)(c_size + 1) << (c_size_mult + read_bl_len - 7);
-//    } else if (csd_ver == 1) {
-//      int c_size_high = csd.v2.c_size_high_reserved3 >> 2;
-//      uint32_t c_size = ((uint32_t)c_size_high << 16) | (csd.v2.c_size_mid << 8) | csd.v2.c_size_low;
-//      return (c_size + 1) << 10;
-//    } else {
-//      error(SD_CARD_ERROR_BAD_CSD);
-//      return 0;
-//    }
-//  }
-  
   void readEnd(void) {
     //if (inBlock_) {
         // skip data and crc
@@ -407,43 +291,15 @@ class Sd2Card {
     return cardCommand(cmd, arg);
   }
   void error(uint8_t code) {errorCode_ = code;}
-  /** read CID or CSR register */
-//  uint8_t readRegister(uint8_t cmd, void* buf) {
-//    uint8_t* dst = reinterpret_cast<uint8_t*>(buf);
-//    if (cardCommand(cmd, 0)) {
-//      error(SD_CARD_ERROR_READ_REG);
-//      goto fail;
-//    }
-//    if (!waitStartBlock()){
-//      goto fail;
-//    }
-//    // transfer data
-//    print("[");
-//    for (uint16_t i = 0; i < 16; i++) {
-//      dst[i] = spiRec();
-//      printByte(dst[i]);
-//    }
-//    print("]");
-//    spiRec();  // get first crc byte
-//    spiRec();  // get second crc byte
-//    chipSelectHigh();
-//    return true;
-//
-//   fail:
-//    chipSelectHigh();
-//    return false;
-//  }  
-  
-  uint8_t sendWriteCommand(uint32_t blockNumber, uint32_t eraseCount);
 
   void chipSelectHigh() {
     SPI_CHIP_SELECT_HIGH();
   }
   void chipSelectLow() {
+    SPI_WRITE_POLPHA(polpha_);
     SPI_CHIP_SELECT_LOW(chipSelectPin_);
   }
 
-  
   void type(uint8_t value) {type_ = value;}
   uint8_t waitNotBusy(uint16_t timeoutMillis) {
     uint16_t t0 = millis();
@@ -513,17 +369,6 @@ class Sd2Card {
     return IORD(MYTIMER, 2);
   }
   
-  void emptyClock(){
-    IOWR(SOFTSPI, SOFTSPI_SCK, 1);
-    IOWR(MYTIMER, 1, 0);
-    while(true){
-      int time = IORD(MYTIMER, 1);
-      if(time>5){
-        break;
-      }
-    }
-    IOWR(SOFTSPI, SOFTSPI_SCK, 0);
-  }
 
   int initError;
   uint8_t init(uint8_t chipSelectPin) {
@@ -548,28 +393,30 @@ class Sd2Card {
     // must supply min of 74 clock cycles with CS high.
     for (uint8_t i = 0; i < 10; i++) spiSend(0XFF);
 
-    chipSelectLow();
 
     // command to go idle in SPI mode
-    while(1){
-      int ok = 0;
+    int ok = 0;
+    for(int i=0;i<16;i++){
+      polpha_ = i;
+      chipSelectLow();
+      
       for(int i=0;i<10;i++){
         status_ = cardCommand(CMD0, 0);
         if(status_ == R1_IDLE_STATE){
           ok = 1;
           break;
         }
+        IOWR(MYTIMER, 2, 0);
+        while(IORD(MYTIMER, 2)<1000);
       }
       if(ok){
         break;
       }
-      if((millis() - t0) > SD_INIT_TIMEOUT){
-        initError = 1;
-        goto fail;
-      }
-      emptyClock();
     }
-    
+    if(!ok){
+      initError = 1;
+      goto fail;
+    }
     //while ((status_ = cardCommand(CMD0, 0)) != R1_IDLE_STATE) {
     //  if (((uint16_t)(millis() - t0)) > SD_INIT_TIMEOUT) {
     //    initError = 1;

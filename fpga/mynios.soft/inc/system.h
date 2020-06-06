@@ -9,14 +9,11 @@
 #define SOFTSPI_CS     2
 #define SOFTSPI_MISO   2
 #define SOFTSPI_RST_N  3
-#define SOFTSPI_SPEED  4
+#define SOFTSPI_POLPHA 4
 #define SOFTSPI_MOSI   5
 #define SOFTSPI_SCK    6
 #define VGA            0x02060000
 #define VGA_MODE       0
 #define VGA_BASE       1
 #define VGA_BLOCK      2
-#define MYKEYB         0x02070000
-#define MYMOUSE        0x02080000
-#define MYMOUSE_GET    0
-#define MYMOUSE_SEND   1
+#define HID            0x02070000

@@ -5,6 +5,10 @@ void SPI_CHIP_SELECT_LOW(int chip){
   IOWR(SOFTSPI, SOFTSPI_CS, ~(1<<chip));
 }
 
+void SPI_WRITE_POLPHA(int val){
+  IOWR(SOFTSPI, SOFTSPI_POLPHA, val);
+}
+
 //------------------------------------------------------------------------------
 //volatile int spi_debug0;
 int spiRec() {
