@@ -274,21 +274,21 @@ int stdioInit(int screenBase){
 
 void putc(int chr){
   if(screenInited){
-    for(int j=0;j<16;j++){
-      void* addr;
-      for(int i=0;i<8;i++){
-        int a = (chr*4) + (j>>2);
-        int b = ((3-(j&3))<<3)  +  (7-i);
-        //printInt(a);print(" ");
-        //printInt(b);print(" ");
-        int val = char_table[a]>>( b ) & 1;
-        //uart_write('0'+val);print("\r\n");
-        int calc_x = x * 8 + i;
-        int calc_y = y * 16 + j;
-        addr = (void*)(screen_base+(calc_x+calc_y*1024)*2);
-        *((short*)(addr)) = val?0xFFFF:0x0000;
+    if(chr == 0x0D || chr == 0x0A){
+    }else{
+      for(int j=0;j<16;j++){
+        void* addr;
+        for(int i=0;i<8;i++){
+          int a = (chr*4) + (j>>2);
+          int b = ((3-(j&3))<<3)  +  (7-i);
+          int val = char_table[a]>>( b ) & 1;
+          int calc_x = x * 8 + i;
+          int calc_y = y * 16 + j;
+          addr = (void*)(screen_base+(calc_x+calc_y*1024)*2);
+          *((short*)(addr)) = val?0xFFFF:0x0000;
+        }
+        flushCache(addr);
       }
-      flushCache(addr);
     }
     x++;
     if(x==80 || (chr == 0x0A)){
@@ -297,7 +297,6 @@ void putc(int chr){
       if(y>=30){
         y=0;
       }
-      
       for(int j=0;j<16;j++){
         void* addr;
         for(int i=0;i<1024;i+=2){
@@ -328,7 +327,6 @@ void putcgb(int chr){
       int a = (chr<<3) + (j>>1);
       int calc_y = y * 16 + j;
       for(int i=0;i<8;i++){
-        
         int b = (((j&1))<<4)  +  (7-i);
         //printInt(a);print(" ");
         //printInt(b);print(" ");
@@ -339,7 +337,6 @@ void putcgb(int chr){
         *((short*)(addr)) = val?0xFFFF:0x0000;
       }
       for(int i=0;i<8;i++){
-        
         int b = (((j&1))<<4)  +  (7-i) + 8;
         //printInt(a);print(" ");
         //printInt(b);print(" ");
@@ -432,8 +429,9 @@ int getc(){
     if((hid_value & 0xFF000000) == 0x01000000){
       //key
       if(((hid_value & 0x00008000) != 0x00008000) && ((hid_value & 0x00800000) != 0x00800000)){
-        int tmp = hid_value & 0xFF;
-        return PS2Keymap_US[tmp];
+        int tmp = PS2Keymap_US[hid_value & 0xFF];
+        putc(tmp);
+        return tmp;
       }
     }
   }
