@@ -119,6 +119,7 @@ int main(){
       }
     }
     
+    #ifdef hasGB
     if(equal(str,"printgb",-1)){
       printgb("ÎÄ¼þÃû?\r\n");
       char filename[12];
@@ -161,7 +162,8 @@ int main(){
         printInt(file->fileError);print("\r\n");
       }
     }
-
+    #endif
+    
     int buff[128];
     
     if(equal(str,"loadimg",-1)){
@@ -184,6 +186,7 @@ int main(){
       }
     }
     
+    #ifdef hasGB
     if(equal(str,"ttt",-1)){
       print("i:");
       int i = scanInt();;
@@ -219,7 +222,8 @@ int main(){
         }
       }
     }
-
+    #endif
+    
     if(equal(str,"run",-1)){
       print("which file?\r\n");
       char filename[12];

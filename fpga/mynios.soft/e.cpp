@@ -129,6 +129,18 @@ int main(){
   screenInit2(1024);
   int buffAddr = 0x200000;
 
+  for(int j=0;j<32;j++){
+    for(int i=0;i<32;i++){
+      if(i>j){
+        IOWR(VGA, (VGA_CURSOR_DATA+i+j*32), 0x00FF);
+      }else if(i<j){
+        IOWR(VGA, (VGA_CURSOR_DATA+i+j*32), 0xFF00);
+      }else{
+        IOWR(VGA, (VGA_CURSOR_DATA+i+j*32), 0x0001);
+      }
+    }
+  }
+
   //print("Hello from video demo\r\n");
   int x = 0;
   int y = 0;
@@ -161,12 +173,20 @@ int main(){
         if(y>768){
           y=768;
         }
-        
-        for(int j=0;j<16;j++){
-          for(int i=0;i<16;i++){
-            short* addr = (short*)(&((short*)(buffAddr))[x+i+((y+j)<<10)]);
-            *addr = getpixel(btn1?0xFF:0, btn2?0xFF:0, btn3?0xFF:0);//at 2Mbyte
-            flushCache(addr);
+        IOWR(VGA, VGA_CURSOR_X, x);
+        IOWR(VGA, VGA_CURSOR_Y, y);
+        if(btn1 || btn2 || btn3){
+          printInt(x);putc(' ');printInt(y);putc('\r');putc('\n');
+          for(int j=0;j<16;j++){
+            for(int i=0;i<16;i++){
+              short* addr = (short*)(&((short*)(buffAddr))[x+i+((y+j)<<10)]);
+              if(i==j){
+                *addr = 0;//at 2Mbyte
+              }else{
+                *addr = getpixel(btn1?0xFF:0, btn2?0xFF:0, btn3?0xFF:0);//at 2Mbyte
+              }
+              flushCache(addr);
+            }
           }
         }
         //printInt(x);

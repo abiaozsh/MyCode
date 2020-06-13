@@ -355,7 +355,7 @@ namespace Assembler
 							}
 							if (ins.format == 0)
 							{
-								if (ins.txtformat == 15 || ins.txtformat == 20)
+								if (ins.textformat == 15 || ins.textformat == 20)
 								{
 									ins.IMM16 = found.pos - ins.pos - 4;
 									if (ins.IMM16 > 32768 || ins.IMM16 < -30000)
@@ -363,7 +363,7 @@ namespace Assembler
 										throw new Exception();
 									}
 								}
-								else if (ins.txtformat == 10)
+								else if (ins.textformat == 10)
 								{
 									int temppos = found.pos;
 									if (ins.op.symAdj != null)
@@ -490,16 +490,29 @@ namespace Assembler
 						int insbin = 0;
 						if (ins.format == 0)//andi reg, reg, ins
 						{
-							insbin = (ins.bitregA << (32 - 5)) | (ins.bitregB << (32 - 10)) | ((ins.IMM16 & 0x0000FFFF) << (6)) | (ins.bitcmd);
+							insbin = (ins.bitregA << (31 - 5)) | (ins.bitregB << (31 - 10)) | ((ins.IMM16 & 0x0000FFFF) << (5)) | (ins.bitcmd);
 						}
 						else if (ins.format == 1)
 						{
-							insbin = (ins.bitregA << (32 - 5)) | (ins.bitregB << (32 - 10)) | (ins.bitregC << (32 - 15)) | (ins.CMD3 << (6 + 8)) | (ins.EXT8 << (6)) | ins.bitcmd;
+							insbin = (ins.bitregA << (31 - 5)) | (ins.bitregB << (31 - 10)) | (ins.bitregC << (31 - 15)) | (ins.IMM6 << (5 + 5)) | (ins.bitcmd << (5)) | 0;
 						}
 						else if (ins.format == 2)
 						{
-							insbin = (ins.IMM26 << 6) | (ins.bitcmd);
+							insbin = (ins.IMM26 << 5) | (ins.bitcmd);
 						}
+						else if (ins.format == 3)
+						{
+							insbin = (ins.bitregA << (31 - 5)) | (ins.bitregB << (31 - 10)) | (ins.bitregC << (31 - 15)) | (ins.IMM6 << (5 + 5)) | (ins.bitcmd << (5)) | 31;
+						}
+
+						int paritycheck = 0;
+						for (int i = 0; i < 31; i++)
+						{
+							paritycheck ^= (insbin >> i) & 1;
+						}
+
+						insbin |= (~paritycheck) << 31;
+
 						bw.Write(insbin);
 						writehex(insbin, posx++, sw);
 
@@ -597,6 +610,11 @@ namespace Assembler
 							ins.bitregA = line.op2.reg.Value;
 							ins.bitregB = line.op3.reg.Value;
 							break;
+						case 31://slli reg, reg, ins
+							ins.bitregC = line.op1.reg.Value;
+							ins.bitregA = line.op2.reg.Value;
+							ins.IMM6 = line.op3.ins.Value;
+							break;
 
 						case 50://callr reg
 							ins.bitregC = 31;
@@ -612,7 +630,7 @@ namespace Assembler
 						case 52://setirq reg, reg, ins
 							ins.bitregA = line.op1.reg.Value;
 							ins.CMD3 = 2;
-							ins.EXT8 = line.op3.ins.Value;
+							ins.IMM6 = line.op3.ins.Value;
 							break;
 
 						case 53://stoff reg
@@ -621,7 +639,7 @@ namespace Assembler
 							break;
 
 						case 54://hlt ins
-							ins.EXT8 = line.op1.ins.Value;
+							ins.IMM6 = line.op1.ins.Value;
 							ins.CMD3 = 4;
 							break;
 
@@ -650,7 +668,7 @@ namespace Assembler
 					throw new Exception("error:" + line.text);
 				}
 				ins.line = line;
-				ins.txtformat = matchCfg.textformat;
+				ins.textformat = matchCfg.textformat;
 				ins.format = matchCfg.insformat;
 				ins.bitcmd = matchCfg.cmd;
 				ins.pos = pos;

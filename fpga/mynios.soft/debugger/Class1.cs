@@ -105,17 +105,53 @@ namespace debugger
 			string hex = Util.getHex8(ins);
 			string sIns = "";
 
-			uint cmd = (ins & 0x3F);
+			uint cmd = (ins & 0x1F);
 
 			sIns = "";
-
-			if (cmd == 0x3F)
+			int ext = 0;
+			int pc = 0;
+			if (cmd == 0x1F)
 			{
-				uint cmd3 = (ins >> (6 + 8)) & 7;
+				pc = 1;
+				cmd = ins >> 5 & 0x1F;
+			}
+			else if (cmd == 0x00)
+			{
+				ext = 1;
+				cmd = (ins >> 5) & 0x1F;
+			}
+
+			if (ext == 1)
+			{
 				Config cfg = null;
 				foreach (var item in cfgs)
 				{
-					if (cmd3 + 50 == item.textformat)
+					if (cmd == item.cmd && item.insformat == 1)
+					{
+						cfg = item;
+					}
+				}
+				if (cfg != null)
+				{
+					sIns = cfg.scmd + " ";
+				}
+				else
+				{
+					sIns = "unknow";
+				}
+
+				string A = Reg((ins >> (31 - 5)) & 0x1F);
+				string B = Reg((ins >> (31 - 10)) & 0x1F);
+				string C = Reg((ins >> (31 - 15)) & 0x1F);
+				uint imm6 = (ins >> (10)) & 0x3F;
+				sIns += "C:" + C + " <- (A:" + A + " ... B:" + B + ")" + " imm6:" + imm6;
+			}
+			else if (pc == 1)
+			{
+				Config cfg = null;
+				foreach (var item in cfgs)
+				{
+					if (cmd == item.cmd && item.insformat == 3)
 					{
 						cfg = item;
 					}
@@ -129,20 +165,19 @@ namespace debugger
 					sIns = "unknow";
 				}
 
-				string A = Reg(ins >> (32 - 5));
-				string B = Reg((ins >> (32 - 10)) & 0x1F);
-				string C = Reg((ins >> (32 - 15)) & 0x1F);
-				uint imm8 = (ins >> (6)) & 255;
-				uint IMM16 = (ins >> (32 - 26)) & 0xFFFF;
-				sIns += "C:" + C + " <- (A:" + A + " ... B:" + B + ") cmd3:" + cmd3 + " imm8:" + imm8 + " IMM16:" + IMM16;
-
+				string A = Reg((ins >> (31 - 5)) & 0x1F);
+				string B = Reg((ins >> (31 - 10)) & 0x1F);
+				string C = Reg((ins >> (31 - 15)) & 0x1F);
+				uint imm6 = (ins >> (10)) & 0x3F;
+				uint imm26 = ((ins & 0x7FFFFFFF) >> (5));
+				sIns += "C:" + C + " <- (A:" + A + " ... B:" + B + ") " + " imm6:" + imm6 + " imm26:" + imm26;
 			}
 			else
 			{
 				Config cfg = null;
 				foreach (var item in cfgs)
 				{
-					if (cmd == item.cmd)
+					if (cmd == item.cmd && (item.insformat == 0 || item.insformat == 2))
 					{
 						cfg = item;
 					}
@@ -155,142 +190,13 @@ namespace debugger
 				{
 					sIns = "unknow";
 				}
-				if (cmd == 7) {
-					long target = (((ins >> 6)) - (baseaddr / 4)) * 4;
-					string sym2 = getSym((int)target, syms);
-					sIns += ((ins >> 6)) + "(" + (((ins >> 6)) - (baseaddr / 4)) + ")" + sym2;
-				}
-				else if ((cmd & 4) == 4)
-				{
-					string A = Reg(ins >> (32 - 5));
-					string B = Reg((ins >> (32 - 10)) & 0x1F);
-					string C = Reg((ins >> (32 - 15)) & 0x1F);
-					uint IMM16 = (ins >> (32 - 26)) & 0xFFFF;
-					sIns += "C:" + C + " <- (A:" + A + " ... B:" + B + ")" + " IMM16:" + IMM16;
-				}
-				else
-				{
-					string A = Reg(ins >> (32 - 5));
-					string B = Reg((ins >> (32 - 10)) & 0x1F);
-					uint IMM = (ins >> (32 - 26)) & 0xFFFF;
-					sIns += "B:" + B + " A:" + A + " IMM:" + Util.getHex4((int)IMM);
-
-				}
-
+				string A = Reg((ins >> (31 - 5)) & 0x1F);
+				string B = Reg((ins >> (31 - 10)) & 0x1F);
+				uint IMM = (ins >> (5)) & 0xFFFF;
+				sIns += "B:" + B + " A:" + A + " IMM:" + Util.getHex4((int)IMM);
 			}
 			sIns += " cmd:" + cmd;
-			/*
-			Rtype rtype = Rtype.none;
-			if (itype == Instype.Rtype)
-			{
-				rtype = (Rtype)((ins >> (6 + 5)) & 0x3F);
 
-				if (rtype == Rtype.add)
-				{
-					sIns += C + " <- " + A + "+" + B;
-				}
-				else if (rtype == Rtype.cmpeq)
-				{
-					sIns += C + " <- (" + A + " == " + B + " ? 1 : 0)";
-				}
-				else if (rtype == Rtype.cmplt)
-				{
-					sIns += C + " <- ((signed)" + A + " < (signed)" + B + " ? 1 : 0)";
-				}
-				else if (rtype == Rtype.cmpge)
-				{
-					sIns += C + " <- ((signed)" + A + " >= (signed)" + B + " ? 1 : 0)";
-				}
-				else if (rtype == Rtype.sll)
-				{
-					sIns += C + " <- " + A + " << " + B + "[4:0]";
-				}
-				else if (rtype == Rtype.callr)
-				{
-					sIns += "PC <- " + A;
-				}
-				else if (rtype == Rtype.jmp)
-				{
-					sIns += "PC <- " + A;
-				}
-				else if (rtype == Rtype.ret)
-				{
-					sIns += "PC <- " + A;
-				}
-				else
-				{
-					sIns += "C:" + C + " A:" + A + " B:" + B + "--------------------------------------";
-				}
-			}
-			else
-			{
-				string A = Reg(ins >> (32 - 5));
-				string B = Reg((ins >> (32 - 10)) & 0x1F);
-				uint IMM = (ins >> (32 - 26)) & 0xFFFF;
-
-				sIns = itype.ToString() + " ";
-
-				if (itype == Instype.ori)
-				{
-					sIns += B + " <- " + A + " | " + Util.getHex4((int)IMM);
-				}
-				else if (itype == Instype.hlt)
-				{
-					sIns += IMM;
-				}
-				else if (itype == Instype.orhi)
-				{
-					sIns += B + " <- " + A + " | " + Util.getHex4((int)IMM) + "0000";
-				}
-				else if (itype == Instype.addi)
-				{
-					sIns += B + " <- " + A + (((short)IMM) > 0 ? "+" : "") + ((short)IMM);
-				}
-				else if (itype == Instype.andi)
-				{
-					sIns += B + " <- " + A + "&" + Util.getHex4((int)IMM);
-				}
-				else if (itype == Instype.cmplti)
-				{
-					sIns += B + " <- ((signed)" + A + "<" + ((short)IMM) + " ? 1 : 0 )";
-				}
-				else if (itype == Instype.stw || itype == Instype.stwio)
-				{
-					sIns += "[" + A + "+" + Util.getHex4((int)IMM) + "] <- " + B;
-				}
-				else if (itype == Instype.ldw || itype == Instype.ldwio)
-				{
-					sIns += B + " <- [" + A + "+" + Util.getHex4((int)IMM) + "]";
-				}
-				else if (itype == Instype.br)
-				{
-					sIns += ((short)IMM / 4) + "(" + (pos + 1 + ((short)IMM / 4)) + ")";
-				}
-				else if (itype == Instype.beq || itype == Instype.bgeu)
-				{
-					sIns += A + "==" + B + "," + ((short)IMM / 4) + "(" + (pos + 1 + ((short)IMM / 4)) + ")";
-				}
-				else if (itype == Instype.bne)
-				{
-					sIns += A + "!=" + B + "," + ((short)IMM / 4) + "(" + (pos + 1 + ((short)IMM / 4)) + ")";
-				}
-				else if (itype == Instype.bltu || itype == Instype.blt)
-				{
-					sIns += A + "<" + B + "," + ((short)IMM / 4) + "(" + (pos + 1 + ((short)IMM / 4)) + ")";
-				}
-				else if (itype == Instype.call || itype == Instype.jmpi)
-				{
-					long target = (((ins >> 6)) - (baseaddr / 4))*4;
-					string sym2 = getSym((int)target, syms);
-					sIns += ((ins >> 6)) + "(" + (((ins >> 6)) - (baseaddr / 4)) + ")"+ sym2;
-				}
-				else
-				{
-					sIns += A + "," + B + "," + Util.getHex4((int)IMM) + "--------------------------------------";
-				}
-			}
-
-			*/
 			string sym = getSym(pos, syms);
 
 			sb.Append("(" + sym + ") [" + hex + "]" + " : " + sIns);

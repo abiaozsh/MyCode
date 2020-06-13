@@ -494,7 +494,7 @@ public class Base
 	{
 		public string name;
 		public Op op;
-		public int txtformat;//ins format 0:i 1:r 2:j
+		public int textformat;//ins format 0:i 1:r 2:j
 		public int format;//ins format 0:i 1:r 2:j
 
 		public int bitcmd;
@@ -504,7 +504,7 @@ public class Base
 		public int IMM16;//16/26bit
 		public int IMM26;//16/26bit
 		public int CMD3;
-		public int EXT8;
+		public int IMM6;
 		public int pos;
 		public string ToString()
 		{

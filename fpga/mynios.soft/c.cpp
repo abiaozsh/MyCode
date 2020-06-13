@@ -101,13 +101,9 @@ volatile double dummyv2;
 
 int main()
 {
-  //int aa = scanInt();
-  //int bb = scanInt();
-  //int cc = aa/bb;
-  //
-  //printInt(cc);
 
   while(1){
+    //出现1.0000001的情况，多是由于mem指令 写内存指令 写了寄存器
     print("v1?\r\n");
     double v1 = scanDouble();
     printDouble(v1);print("\r\n");
