@@ -7,7 +7,7 @@ input vga_clk_65M,
     //00 640*480 txt
     //01 640*480 img
     //1x 1024*768 img
-    input [1:0] vga_mode,
+    input vga_mode,
     output reg blanking,
     input blockvga,
     
@@ -21,11 +21,18 @@ input vga_clk_65M,
     output [9:0] read_pixel_addr,
     output       read_pixel_clk,
 
+    input  [9:0] cursor_posX,//0~1024
+    input  [9:0] cursor_posY,//0~1024
+    input [15:0] read_cursor_data,
+    output reg [9:0] read_cursor_addr,//32 * 32
+    output       read_cursor_clk,
+    
     //VGA接口
     output     reg     vga_hs,       //行同步信号
     output     reg     vga_vs,       //场同步信号
-    output  [15:0]  vga_rgb      //红绿蓝三原色输出
+    output  [15:0]  vga_rgb,      //红绿蓝三原色输出
     
+    output [7:0] debug
   );
 
 //parameter define  
@@ -51,7 +58,6 @@ parameter  V65_BACK   =  11'd29;    //场显示后沿
 parameter  V65_DISP   =  11'd768;   //场有效数据
 parameter  V65_TOTAL  =  11'd806;   //场扫描周期
 
-
 //wire define
 
 //使能RGB565数据输出
@@ -60,11 +66,10 @@ wire vga_en  = h_active && v_active;
 //RGB565数据输出
 assign vga_rgb = vga_en ?  pixel_data: 16'd0;//16'hffff  pixel_data
 
-wire vga_clk;
-assign vga_clk = vga_mode[1] ? vga_clk_65M : vga_clk_25M;
+wire vga_clk = vga_mode ? vga_clk_65M : vga_clk_25M;
 
 assign read_pixel_clk = vga_clk;
-
+assign read_cursor_clk = vga_clk;
 reg h_active;
 reg v_active;
 reg v_active_ram;
@@ -82,12 +87,15 @@ reg [10:0]v_start;
 reg [10:0]h_end;
 reg [10:0]v_end;
 
+reg showCursor;
+
+assign debug[0] = showCursor;
+
 reg [15:0] curr_read_line_base_addr;
 assign read_line_addr = curr_read_line_base_addr + cnt_v - v_start + 1'b1;
-wire [15:0]  pixel_data = blockvga ? 16'b0 : (read_line_addr[0]?read_pixelB_data:read_pixelA_data);
+wire [15:0]  pixel_data = blockvga ? 16'b0 : ((showCursor && read_cursor_data != 0) ? read_cursor_data : ( read_line_addr[0]?read_pixelB_data:read_pixelA_data ) );
 
-wire [10:0]temp_read_pixel_addr = (cnt_h-h_start);
-assign read_pixel_addr = temp_read_pixel_addr[9:0];
+assign read_pixel_addr = dotPosX[9:0];
 
 //字符模式：
 //80*30
@@ -97,8 +105,12 @@ assign read_pixel_addr = temp_read_pixel_addr[9:0];
 //128char = 2048byte
 //提前2周期取字符，提前1周期取像素，8周期显示像素
 
+wire [4:0] cursorPixX = dotPosX - cursor_posX + 1'b1;
+wire [4:0] cursorPixY = dotPosY - cursor_posY;
 
-//行计数器对像素时钟计数
+wire [10:0] dotPosX = cnt_h - h_start;
+wire [10:0] dotPosY = cnt_v - v_start;
+
 always @(posedge vga_clk or negedge sys_rst_n) begin
     if (!sys_rst_n)begin
       cnt_h <= 0;
@@ -117,8 +129,9 @@ always @(posedge vga_clk or negedge sys_rst_n) begin
       v_end <= V25_SYNC + V25_BACK + V25_DISP;
       blanking <= 0;
       curr_read_line_base_addr <= 0;
+      showCursor <= 0;
     end else begin
-      if(vga_mode[1])begin
+      if(vga_mode)begin
         h_total <= H65_TOTAL;
         v_total <= V65_TOTAL;
         h_sync <= H65_SYNC;
@@ -149,6 +162,9 @@ always @(posedge vga_clk or negedge sys_rst_n) begin
         end
       end
     
+      showCursor <= (dotPosX >= cursor_posX) && (dotPosX < (cursor_posX + 32)) && (dotPosY >= cursor_posY) && (dotPosY < (cursor_posY + 32));
+      read_cursor_addr <= {cursorPixX,cursorPixY};
+    
       if(cnt_h == h_sync)begin
         vga_hs <= 0;
       end
@@ -165,8 +181,8 @@ always @(posedge vga_clk or negedge sys_rst_n) begin
         if(!blockvga)begin
           read_line_req<=1;
         end
-
       end
+      
       if(cnt_h == h_end)begin
         h_active <= 0;
         read_line_req <= 0;
