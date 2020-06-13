@@ -263,7 +263,6 @@ set_global_assignment -name VERILOG_FILE ../commoncode/uart_hs.v
 set_global_assignment -name VERILOG_FILE mycpu.v
 set_global_assignment -name VERILOG_FILE ../commoncode/seg_led_hex595.v
 set_global_assignment -name VERILOG_FILE flow_led.v
-set_global_assignment -name QIP_FILE regfile.qip
 set_global_assignment -name QIP_FILE shiftArithmetic.qip
 set_global_assignment -name QIP_FILE shiftLogical.qip
 set_global_assignment -name QIP_FILE mainSRAM.qip

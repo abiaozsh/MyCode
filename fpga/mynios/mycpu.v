@@ -166,8 +166,8 @@ always @(posedge clk or negedge reset_n) begin
       end else if (command == 8'h15) begin uart_send<=1; uart_data_in<=halt_uart; command_done<=1;
       end else if (command == 8'h16) begin uart_send<=1; uart_data_in<=avm_m0_waitrequest; command_done<=1;
       end else if (command == 8'h17) begin uart_send<=1; uart_data_in<={3'b0,irq_enable,3'b0,irq_req}; command_done<=1;
-      end else if (command == 8'h18) begin uart_send<=1; uart_data_in<=Cmd; command_done<=1;
-      end else if (command == 8'h19) begin uart_send<=1; uart_data_in<=Cmd3; command_done<=1;
+      //end else if (command == 8'h18) begin uart_send<=1; uart_data_in<=Cmd; command_done<=1;
+      //end else if (command == 8'h19) begin uart_send<=1; uart_data_in<=Cmd3; command_done<=1;
       
       end else if (command == 8'h20) begin debug_address[ 7: 0] <= data; command_done<=1;
       end else if (command == 8'h21) begin debug_address[15: 8] <= data; command_done<=1;
@@ -300,10 +300,6 @@ end
   wire [7:0] debug_flgw = {stage1_Valid,stage2_Valid,stage3_Valid,exec_write,halt_accept,controlByExec};
   reg [7:0] debug_flg;
   
-  //全局信号： Valid PCChange MEMAccess CMP CMDALU1 CMDALU2 [4:0]regChange
-  reg [5:0]  Cmd;
-  reg [2:0]  Cmd3;
-  
   wire cpu_reset_n = reset_n && debug_reset_n;
   wire halt = (halt_cpu || halt_uart) && (debug_step == debug_step_buff);
 
@@ -317,6 +313,20 @@ end
   assign avm_m0_byteenable      = halt_accept == 1   ? debug_byteenable                             : byteenable;
   assign avm_m0_write           = halt_accept == 1   ? debug_write                                  : exec_write;
   assign avm_m0_read            = halt_accept == 1   ? debug_read                                   : ((!controlByExec) ? fetch_read : exec_read);
+
+  wire [4:0] avm_m0_readdata_regA = avm_m0_readdata[30:26];
+  wire [4:0] avm_m0_readdata_regB = avm_m0_readdata[25:21];
+  wire [4:0] avm_m0_readdata_regC = avm_m0_readdata[20:16];
+  wire [15:0] avm_m0_readdata_IMM16 = avm_m0_readdata[20:5];
+  wire [25:0] avm_m0_readdata_IMM26 = avm_m0_readdata[30:5];
+  wire [5:0] avm_m0_readdata_IMM6 = avm_m0_readdata[15:10];
+
+  wire [4:0] latch_readdata_regA = latch_readdata[30:26];
+  wire [4:0] latch_readdata_regB = latch_readdata[25:21];
+  wire [4:0] latch_readdata_regC = latch_readdata[20:16];
+  wire [15:0] latch_readdata_IMM16 = latch_readdata[20:5];
+  wire [25:0] latch_readdata_IMM26 = latch_readdata[30:5];
+  wire [5:0] latch_readdata_IMM6 = latch_readdata[15:10];
 
   reg [31:0] pc;
   wire [31:0] nextpc = pc + 4;
@@ -359,12 +369,13 @@ end
               //r29 ea Exception return address
               stage1_Valid <= 1;
               stage1_PCChange <= 1;
-              stage1_PCChangeCmd <= 3'b111;
-              stage1_PCChangeCmdExt <= 3'b111;
               stage1_MEMAccess <= 0;
               stage1_CMP <= 0;
-              stage1_ALU1 <= 0;
-              stage1_ALU2 <= 0;
+              stage1_ALU <= 0;
+              stage1_SHIFT1 <= 0;
+              stage1_SHIFT2 <= 0;
+              stage1_cmd_ext <= 1;
+              stage1_cmd <= 3'b111;
               fetch_status <= 3;
             end else begin
               fetch_read <= 1;
@@ -376,208 +387,136 @@ end
             fetch_read <= 0;
             //发送指令前判断寄存器冲突
             if(
-                (stage1_Valid && stage1_regChange != 5'b0 && (stage1_regChange == avm_m0_readdata[31:27] || stage1_regChange == avm_m0_readdata[26:22])) || //regA regB
-                (stage2_Valid && stage2_regChange != 5'b0 && (stage2_regChange == avm_m0_readdata[31:27] || stage2_regChange == avm_m0_readdata[26:22])) || //regA regB
-                (stage3_Valid && stage3_regChange != 5'b0 && (stage3_regChange == avm_m0_readdata[31:27] || stage3_regChange == avm_m0_readdata[26:22]))    //regA regB
+                (stage1_Valid && stage1_regChange != 5'b0 && (stage1_regChange == avm_m0_readdata_regA || stage1_regChange == avm_m0_readdata_regB)) || //regA regB
+                (stage2_Valid && stage2_regChange != 5'b0 && (stage2_regChange == avm_m0_readdata_regA || stage2_regChange == avm_m0_readdata_regB)) || //regA regB
+                (stage3_Valid && stage3_regChange != 5'b0 && (stage3_regChange == avm_m0_readdata_regA || stage3_regChange == avm_m0_readdata_regB))    //regA regB
             )begin
               latch_readdata <= avm_m0_readdata;
               fetch_status <= 2;
             end else begin
-
-              stage1_Valid <= 1;
-              
-              stage1_CMP <= 0;
-              stage1_ALU1 <= 0;
-              stage1_ALU2 <= 0;
-              stage1_MEMAccess <= 0;
-              stage1_PCChange <= 0;
-              //AAAAABBBBBiimm1616iimm161600000
-              //regA regB imm16             cmd
-              //AAAAABBBBBCCCCC1111111111100000
-              //          regC ext
-              //imm26
-              //stage1_regA <= avm_m0_readdata[31:27];
-              stage1_regB <= avm_m0_readdata[26:22];
-              regDataOutA = wire_regDataOutA;
-              regDataOutB = wire_regDataOutB;
-              stage1_regC <= avm_m0_readdata[21:17];
-              stage1_IMM8 <= avm_m0_readdata[13:6];
-              stage1_IMM16 = avm_m0_readdata[21:6];
-              stage1_IMM26 <= avm_m0_readdata[31:6];
-              stage1_IMM16sx <= {{16{stage1_IMM16[15]}},stage1_IMM16};
-              stage1_IMM16zx <= {16'b0,stage1_IMM16};
-
-              Cmd <= avm_m0_readdata[5:0];
-              Cmd3 <= avm_m0_readdata[16:14];
-              
-              case(avm_m0_readdata[2:0])//synthesis parallel_case
-              3'b000 : begin
-                stage1_CMP <= 1;
-                stage1_CMPCmd <= avm_m0_readdata[5:2];
-                stage1_regChange <= avm_m0_readdata[26:22];//regB
+              case(avm_m0_readdata[1:0])
+              2'b00 : begin
                 fetch_status <= 0;
                 pc <= nextpc;
               end
-              3'b100 : begin
-                stage1_CMP <= 1;
-                stage1_CMPCmd <= avm_m0_readdata[5:2];
-                stage1_regChange <= avm_m0_readdata[21:17];//regC
+              2'b01 : begin
                 fetch_status <= 0;
                 pc <= nextpc;
               end
-              
-              3'b001 : begin
-                stage1_ALU1 <= 1;
-                stage1_ALU1Cmd <= avm_m0_readdata[5:2];
-                stage1_regChange <= avm_m0_readdata[26:22];//regB
+              2'b10 : begin
                 fetch_status <= 0;
                 pc <= nextpc;
               end
-              3'b101 : begin
-                stage1_ALU1 <= 1;
-                stage1_ALU1Cmd <= avm_m0_readdata[5:2];
-                stage1_regChange <= avm_m0_readdata[21:17];//regC
-                fetch_status <= 0;
-                pc <= nextpc;
-              end
-
-              3'b010 : begin
-                stage1_ALU2 <= 1;
-                stage1_ALU2Cmd <= avm_m0_readdata[5:2];
-                stage1_regChange <= avm_m0_readdata[26:22];//regB
-                fetch_status <= 0;
-                pc <= nextpc;
-              end
-              3'b110 : begin
-                stage1_ALU2 <= 1;
-                stage1_ALU2Cmd <= avm_m0_readdata[5:2];
-                stage1_regChange <= avm_m0_readdata[21:17];//regC
-                fetch_status <= 0;
-                pc <= nextpc;
-              end
-
-              3'b011 : begin
-                stage1_MEMAccess <= 1;
-                stage1_MEMAccessCmd <= avm_m0_readdata[5:3];
-                stage1_regChange <= 0;//MEM的情况下，后续执行逻辑会再变更这个字段
-                fetch_status <= 0;
-                pc <= nextpc;
-              end
-              
-              3'b111 : begin
-                stage1_PCChange <= 1;
-                stage1_PCChangeCmd <= avm_m0_readdata[5:3];
-                stage1_PCChangeCmdExt <= avm_m0_readdata[16:14];
-                stage1_regChange <= 0;//PC的情况下，后续执行逻辑会再变更这个字段
+              2'b11 : begin
                 fetch_status <= 3;//update pc
               end
               endcase
+              stage1_Valid <= 1;
             end
 
+            stage1_parity_check_error <= (
+              avm_m0_readdata[ 0] ^ avm_m0_readdata[ 1] ^ avm_m0_readdata[ 2] ^ avm_m0_readdata[ 3] ^
+              avm_m0_readdata[ 4] ^ avm_m0_readdata[ 5] ^ avm_m0_readdata[ 6] ^ avm_m0_readdata[ 7] ^
+              avm_m0_readdata[ 8] ^ avm_m0_readdata[ 9] ^ avm_m0_readdata[10] ^ avm_m0_readdata[11] ^
+              avm_m0_readdata[12] ^ avm_m0_readdata[13] ^ avm_m0_readdata[14] ^ avm_m0_readdata[15] ^
+              avm_m0_readdata[16] ^ avm_m0_readdata[17] ^ avm_m0_readdata[18] ^ avm_m0_readdata[19] ^
+              avm_m0_readdata[20] ^ avm_m0_readdata[21] ^ avm_m0_readdata[22] ^ avm_m0_readdata[23] ^
+              avm_m0_readdata[24] ^ avm_m0_readdata[25] ^ avm_m0_readdata[26] ^ avm_m0_readdata[27] ^
+              avm_m0_readdata[28] ^ avm_m0_readdata[29] ^ avm_m0_readdata[30]) == avm_m0_readdata[31];
+            
+            stage1_PCChange <= 0;
+            stage1_MEMAccess <= 0;
+            stage1_CMP <= 0;
+            stage1_ALU <= 0;
+            stage1_SHIFT1 <= 0;
+            stage1_SHIFT2 <= 0;
+            stage1_cmd_ext <= 0;
+
+            stage1_regA <= avm_m0_readdata_regA;
+            stage1_regB <= avm_m0_readdata_regB;
+            regDataOutA = wire_regDataOutA;
+            regDataOutB = wire_regDataOutB;
+            stage1_regC <= avm_m0_readdata_regC;
+            stage1_IMM16 <= avm_m0_readdata_IMM16;
+            stage1_IMM26 <= avm_m0_readdata_IMM26;
+            stage1_IMM6 <= avm_m0_readdata_IMM6;
+            stage1_IMM16sx <= {{16{avm_m0_readdata_IMM16[15]}},avm_m0_readdata_IMM16};
+            stage1_IMM16zx <= {16'b0,avm_m0_readdata_IMM16};
+
+            stage1_cmd <= avm_m0_readdata[4:2];
+            stage1_regChange <= avm_m0_readdata_regB;//regB
+            case(avm_m0_readdata[1:0])
+            2'b00 : begin
+              if(avm_m0_readdata[4:2]==3'b000)begin//ext
+                stage1_cmd_ext <= 1;
+                stage1_cmd <= avm_m0_readdata[9:7];
+                stage1_regChange <= avm_m0_readdata_regC;//regB
+                case(avm_m0_readdata[6:5])
+                  2'b00 : begin
+                    stage1_CMP <= 1;
+                  end
+                  2'b01 : begin
+                    stage1_ALU <= 1;
+                  end
+                  2'b10 : begin
+                    stage1_SHIFT1 <= 1;
+                  end
+                  2'b11 : begin
+                    stage1_SHIFT2 <= 1;
+                  end
+                endcase
+              end else begin
+                stage1_CMP <= 1;
+              end
+            end
+            2'b01 : begin
+              stage1_ALU <= 1;
+            end
+            2'b10 : begin
+              stage1_MEMAccess <= 1;
+              stage1_regChange <= 0;//MEM的情况下，后续执行逻辑会再变更这个字段
+            end
+            2'b11 : begin
+              if(avm_m0_readdata[4:2]==3'b111)begin//ext
+                stage1_cmd_ext <= 1;
+                stage1_cmd <= avm_m0_readdata[9:7];
+              end
+              stage1_PCChange <= 1;
+              stage1_regChange <= 0;//PC的情况下，后续执行逻辑会再变更这个字段
+            end
+            endcase
 
           end
 
         end else if(fetch_status==2)begin//
           //同1
           if(
-              (stage1_Valid && stage1_regChange != 5'b0 && (stage1_regChange == latch_readdata[31:27] || stage1_regChange == latch_readdata[26:22])) || //regA regB
-              (stage2_Valid && stage2_regChange != 5'b0 && (stage2_regChange == latch_readdata[31:27] || stage2_regChange == latch_readdata[26:22])) || //regA regB
-              (stage3_Valid && stage3_regChange != 5'b0 && (stage3_regChange == latch_readdata[31:27] || stage3_regChange == latch_readdata[26:22]))    //regA regB
+              (stage1_Valid && stage1_regChange != 5'b0 && (stage1_regChange == latch_readdata_regA || stage1_regChange == latch_readdata_regB)) || //regA regB
+              (stage2_Valid && stage2_regChange != 5'b0 && (stage2_regChange == latch_readdata_regA || stage2_regChange == latch_readdata_regB)) || //regA regB
+              (stage3_Valid && stage3_regChange != 5'b0 && (stage3_regChange == latch_readdata_regA || stage3_regChange == latch_readdata_regB))    //regA regB
           )begin
             fetch_status <= 2;
           end else begin
 
-            stage1_Valid <= 1;
-            
-            stage1_CMP <= 0;
-            stage1_ALU1 <= 0;
-            stage1_ALU2 <= 0;
-            stage1_MEMAccess <= 0;
-            stage1_PCChange <= 0;
-            //AAAAABBBBBiimm1616iimm161600000
-            //regA regB imm16             cmd
-            //AAAAABBBBBCCCCC1111111111100000
-            //          regC ext
-            //imm26
-            //stage1_regA <= latch_readdata[31:27];
-            stage1_regB <= latch_readdata[26:22];
-            regDataOutA = wire_regDataOutA;
-            regDataOutB = wire_regDataOutB;
-            stage1_regC <= latch_readdata[21:17];
-            stage1_IMM8 <= latch_readdata[13:6];
-            stage1_IMM16 = latch_readdata[21:6];
-            stage1_IMM26 <= latch_readdata[31:6];
-            stage1_IMM16sx <= {{16{stage1_IMM16[15]}},stage1_IMM16};
-            stage1_IMM16zx <= {16'b0,stage1_IMM16};
-            
-            Cmd <= latch_readdata[5:0];
-            Cmd3 <= latch_readdata[16:14];
-            
-            //TODO 添加校验位
-            
-            
-            case(latch_readdata[2:0])//synthesis parallel_case
-            3'b000 : begin
-              stage1_CMP <= 1;
-              stage1_CMPCmd <= latch_readdata[5:2];
-              stage1_regChange <= latch_readdata[26:22];//regB
+            case(latch_readdata[1:0])
+            2'b00 : begin
               fetch_status <= 0;
               pc <= nextpc;
             end
-            3'b100 : begin
-              stage1_CMP <= 1;
-              stage1_CMPCmd <= latch_readdata[5:2];
-              stage1_regChange <= latch_readdata[21:17];//regC
+            2'b01 : begin
               fetch_status <= 0;
               pc <= nextpc;
             end
-            
-            3'b001 : begin
-              stage1_ALU1 <= 1;
-              stage1_ALU1Cmd <= latch_readdata[5:2];
-              stage1_regChange <= latch_readdata[26:22];//regB
+            2'b10 : begin
               fetch_status <= 0;
               pc <= nextpc;
             end
-            3'b101 : begin
-              stage1_ALU1 <= 1;
-              stage1_ALU1Cmd <= latch_readdata[5:2];
-              stage1_regChange <= latch_readdata[21:17];//regC
-              fetch_status <= 0;
-              pc <= nextpc;
-            end
-
-            3'b010 : begin
-              stage1_ALU2 <= 1;
-              stage1_ALU2Cmd <= latch_readdata[5:2];
-              stage1_regChange <= latch_readdata[26:22];//regB
-              fetch_status <= 0;
-              pc <= nextpc;
-            end
-            3'b110 : begin
-              stage1_ALU2 <= 1;
-              stage1_ALU2Cmd <= latch_readdata[5:2];
-              stage1_regChange <= latch_readdata[21:17];//regC
-              fetch_status <= 0;
-              pc <= nextpc;
-            end
-
-            3'b011 : begin
-              stage1_MEMAccess <= 1;
-              stage1_MEMAccessCmd <= latch_readdata[5:3];
-              stage1_regChange <= 0;//MEM的情况下，后续执行逻辑会再变更这个字段
-              fetch_status <= 0;
-              pc <= nextpc;
-            end
-            
-            3'b111 : begin
-              stage1_PCChange <= 1;
-              stage1_PCChangeCmd <= latch_readdata[5:3];
-              stage1_PCChangeCmdExt <= latch_readdata[16:14];
-              stage1_regChange <= 0;//PC的情况下，后续执行逻辑会再变更这个字段
+            2'b11 : begin
               fetch_status <= 3;//update pc
             end
             endcase
+            stage1_Valid <= 1;
+
           end
 
         end else if(fetch_status==3)begin//wait rw
@@ -589,21 +528,19 @@ end
   end
   reg        stage1_Valid;
   reg        stage1_PCChange;
-  reg [2:0]  stage1_PCChangeCmd;
-  reg [2:0]  stage1_PCChangeCmdExt;//cmd3
   reg        stage1_MEMAccess;
-  reg [2:0]  stage1_MEMAccessCmd;
   reg        stage1_CMP;
-  reg [3:0]  stage1_CMPCmd;
-  reg        stage1_ALU1;
-  reg [3:0]  stage1_ALU1Cmd;
-  reg        stage1_ALU2;
-  reg [3:0]  stage1_ALU2Cmd;
+  reg        stage1_ALU;
+  reg        stage1_SHIFT1;
+  reg        stage1_SHIFT2;
+  reg        stage1_cmd_ext;
+  reg        stage1_parity_check_error;
+  reg [2:0]  stage1_cmd;
   reg [4:0]  stage1_regChange;
-  //reg [4:0]  stage1_regA;
+  reg [4:0]  stage1_regA;
   reg [4:0]  stage1_regB;
   reg [4:0]  stage1_regC;
-  reg [7:0]  stage1_IMM8;
+  reg [5:0]  stage1_IMM6;
   reg [15:0] stage1_IMM16;
   reg [31:0] stage1_IMM16zx;
   reg [31:0] stage1_IMM16sx;
@@ -612,9 +549,9 @@ end
   reg [31:0] regDataOutB;
   //////////////////////////////////////////////////////////
   reg  [31:0] regfile[32];
-  wire  [4:0] reg_addr = (halt_accept == 1) ? debug_reg : (fetch_status == 1 ? avm_m0_readdata[31:27] : latch_readdata[31:27]);//stage1_regA
+  wire  [4:0] reg_addr = (halt_accept == 1) ? debug_reg : (fetch_status == 1 ? avm_m0_readdata_regA : latch_readdata_regA);//stage1_regA
   wire [31:0] wire_regDataOutA = regfile[reg_addr];
-  wire [31:0] wire_regDataOutB = regfile[(fetch_status == 1 ? avm_m0_readdata[26:22] : latch_readdata[26:22])];//stage1_regB
+  wire [31:0] wire_regDataOutB = regfile[(fetch_status == 1 ? avm_m0_readdata_regB : latch_readdata_regB)];//stage1_regB
   
   //TODO wire_regDataOutA 改成ram IP
   
@@ -630,125 +567,109 @@ end
         stage2_Valid <= 0;
         if(stage1_Valid)begin
           stage2_Valid <= 1;
-          stage2_PCChange       <= stage1_PCChange;
-          stage2_PCChangeCmd    <= stage1_PCChangeCmd;
-          stage2_PCChangeCmdExt <= stage1_PCChangeCmdExt;
-          stage2_MEMAccess      <= stage1_MEMAccess;
-          stage2_MEMAccessCmd   <= stage1_MEMAccessCmd;
-          stage2_CMP            <= stage1_CMP;
-          stage2_CMPCmd         <= stage1_CMPCmd;
-          stage2_ALU1           <= stage1_ALU1;
-          stage2_ALU1Cmd        <= stage1_ALU1Cmd;
-          stage2_ALU2           <= stage1_ALU2;
-          stage2_ALU2Cmd        <= stage1_ALU2Cmd;
-          stage2_regChange      <= stage1_regChange;
-          //stage2_regA           <= stage1_regA;
-          stage2_regB           <= stage1_regB;
-          stage2_regC           <= stage1_regC;
-          stage2_IMM8           <= stage1_IMM8;
-          //stage2_IMM16          <= stage1_IMM16;
-          //stage2_IMM16zx        <= stage1_IMM16zx;
-          stage2_IMM16sx        <= stage1_IMM16sx;
-          stage2_IMM26          <= stage1_IMM26;
-
-          stage2_regfileA       <= regDataOutA;
-          stage2_regfileB       <= regDataOutB;
           
-            //muli reg, reg, ins           @          10 @                      0 @   2 @          000001      0x02*
-            //6'b000001 : begin//ok
-            //mul reg, reg, reg            @          30 @                      3 @  000101
-            //6'b000101 : begin//ok
-          if(stage1_ALU1)begin
-            if(stage1_ALU1Cmd[0]==0)begin
-              mulDataB <= stage1_IMM16sx;
-            end else begin
-              mulDataB <= regDataOutB;
-            end
+          stage2_PCChange  <= stage1_PCChange   ;
+          stage2_MEMAccess <= stage1_MEMAccess  ;
+          stage2_CMP       <= stage1_CMP        ;
+          stage2_ALU       <= stage1_ALU        ;
+          stage2_SHIFT1    <= stage1_SHIFT1     ;
+          stage2_SHIFT2    <= stage1_SHIFT2     ;
+          stage2_cmd_ext   <= stage1_cmd_ext    ;
+          stage2_cmd       <= stage1_cmd        ;
+          stage2_regChange <= stage1_regChange  ;
+          stage2_regA      <= stage1_regA       ;
+          stage2_regB      <= stage1_regB       ;
+          stage2_regC      <= stage1_regC       ;
+          stage2_IMM6      <= stage1_IMM6       ;
+          stage2_IMM16     <= stage1_IMM16      ;
+          stage2_IMM16zx   <= stage1_IMM16zx    ;
+          stage2_IMM16sx   <= stage1_IMM16sx    ;
+          stage2_IMM26     <= stage1_IMM26      ;
+          stage2_regfileA  <= regDataOutA       ;
+          stage2_regfileB  <= regDataOutB       ;
+          stage2_parity_check_error <= stage1_parity_check_error;
+
+          //#01 alu
+          //muli reg, reg, ins           @          10 @                      0 @  10001
+          //#01 alu ext
+          //mul reg, reg, reg            @          30 @                      1 @  10001
+          //if(stage1_ALU && stage1_cmd==3'b100)begin
+          if(stage1_cmd_ext)begin
+            mulDataB <= regDataOutB;
+          end else begin
+            mulDataB <= stage1_IMM16sx;
+          end
+          //end
+
+          if(stage1_SHIFT1)begin
+            shiftDistance <= stage1_IMM6[4:0];
+          end else begin //if(stage1_SHIFT2)begin
+            shiftDistance <= regDataOutB[4:0];
           end
 
-          case(stage1_ALU1Cmd)
-            //slli reg, reg, ins           @          10 @                      0 @   9 @          0010 01      0x09
-            4'b0010 : begin
-              shiftDirection <= 0;//0:left 1:right
-              shiftDistance <= stage1_IMM16[4:0];
-            end
-            //srai reg, reg, ins           @          10 @                      0 @  17 @          0100 01      0x11
-            4'b0100 : begin
-              shiftDirection <= 1;//0:left 1:right
-              shiftDistance <= stage1_IMM16[4:0];
-            end
-            //srli reg, reg, ins           @          10 @                      0 @  25 @          011001      0x19
-            4'b0110 : begin
-              shiftDirection <= 1;//0:left 1:right
-              shiftDistance <= stage1_IMM16[4:0];
-            end
-            //roli reg, reg, ins           @          10 @                      0 @  33 @          100001      0x21
-            4'b1000 : begin
-              shiftDirection <= 0;//0:left 1:right
-              shiftDistance <= stage1_IMM16[4:0];//rC ← rA rotated left rB4..0 bit positions
-            end
-            //sll reg, reg, reg            @          30 @                      3 @  001101
-            4'b0011 : begin
-              shiftDirection <= 0;//0:left 1:right
-              shiftDistance <= regDataOutB[4:0];//rC ← rA << (rB4..0)
-            end
-            //sra reg, reg, reg            @          30 @                      1 @  010101
-            4'b0101 : begin
-              shiftDirection <= 1;//0:left 1:right
-              shiftDistance <= regDataOutB[4:0];//rC ← (signed) rA >> ((unsigned) rB4..0)
-            end
-            //srl reg, reg, reg            @          30 @                      3 @  011101
-            4'b0111 : begin
-              shiftDirection <= 1;//0:left 1:right
-              shiftDistance <= regDataOutB[4:0];//rC ← (unsigned) rA >> ((unsigned) rB4..0)
-            end
-            //rol reg, reg, reg            @          30 @                      3 @  100101
-            4'b1001 : begin
-              shiftDirection <= 0;//0:left 1:right
-              shiftDistance <= regDataOutB[4:0];//rC ← rA rotated left rB4..0 bit positions
-            end
+          //#10 shift1
+          //#11 shift2
+          case(stage1_cmd[1:0])
+          //slli reg, reg, ins            @         31 @                      1 @  00010
+          //sll reg, reg, reg            @          30 @                      1 @  00011
+          2'b00 : begin
+            shiftDirection <= 0;//0:left 1:right
+          end
+          //srai reg, reg, ins            @         31 @                      1 @  00110
+          //sra reg, reg, reg            @          30 @                      1 @  00111
+          2'b01 : begin
+            shiftDirection <= 1;//0:left 1:right
+          end
+          //srli reg, reg, ins            @         31 @                      1 @  01010
+          //srl reg, reg, reg            @          30 @                      1 @  01011
+          2'b10 : begin
+            shiftDirection <= 1;//0:left 1:right
+          end
+          //roli reg, reg, ins            @         31 @                      1 @  01110
+          //rol reg, reg, reg            @          30 @                      1 @  01111
+          2'b11 : begin
+            shiftDirection <= 0;//0:left 1:right
+          end
           endcase
-
-
 
 
           //stage2_CMP
           //cmpgei reg, reg, ins         @          10 @                      0 @  001000
           stage2_res_cmpgei <= ($signed(regDataOutA) >= $signed(stage1_IMM16sx)); //if ((signed) rA >= (signed) σ(IMM16)) then rB ← 1 else rB ← 0
           //cmplti reg, reg, ins         @          10 @                      0 @  010000
-          stage2_res_cmplti <= ($signed(regDataOutA) < $signed(stage1_IMM16sx)); //if ((signed) rA < (signed) σ(IMM16))
+          //stage2_res_cmplti <= !stage2_res_cmpgei;//($signed(regDataOutA) < $signed(stage1_IMM16sx)); //if ((signed) rA < (signed) σ(IMM16))
           //cmpnei reg, reg, ins         @          10 @                      0 @  011000
-          stage2_res_cmpnei <= (regDataOutA != stage1_IMM16sx); //if (rA != σ(IMM16)) then rB ← 1 else rB ← 0
+          stage2_res_cmpnei = (regDataOutA != stage1_IMM16sx); //if (rA != σ(IMM16)) then rB ← 1 else rB ← 0
           //cmpeqi reg, reg, ins         @          10 @                      0 @  100000
-          stage2_res_cmpeqi <= (regDataOutA == stage1_IMM16sx); //if (rA == σ(IMM16)) then rB ← 1 else rB ← 0
+          //stage2_res_cmpeqi <= !stage2_res_cmpnei;//(regDataOutA == stage1_IMM16sx); //if (rA == σ(IMM16)) then rB ← 1 else rB ← 0
           //cmpgeui reg, reg, ins        @          10 @                      0 @  101000
-          stage2_res_cmpgeui <= (regDataOutA >= stage1_IMM16zx); //if ((unsigned) rA >= (unsigned) (0x0000 : IMM16)) then rB ← 1 else rB ← 0
+          stage2_res_cmpgeui = (regDataOutA >= stage1_IMM16zx); //if ((unsigned) rA >= (unsigned) (0x0000 : IMM16)) then rB ← 1 else rB ← 0
           //cmpltui reg, reg, ins        @          10 @                      0 @  110000
-          stage2_res_cmpltui <= (regDataOutA < stage1_IMM16zx); //if ((unsigned) rA < (unsigned) (0x0000 : IMM16)) then rB ← 1 else rB ← 0
+          //stage2_res_cmpltui <= !stage2_res_cmpgeui;//(regDataOutA < stage1_IMM16zx); //if ((unsigned) rA < (unsigned) (0x0000 : IMM16)) then rB ← 1 else rB ← 0
 
           //cmpge reg, reg, reg          @          30 @                      3 @  001100
-          stage2_res_cmpge <= ($signed(regDataOutA)>=$signed(regDataOutB)); // if ((signed) rA >= (signed) rB) then rC ← 1  else rC ← 0
+          stage2_res_cmpge = ($signed(regDataOutA)>=$signed(regDataOutB)); // if ((signed) rA >= (signed) rB) then rC ← 1  else rC ← 0
           //cmplt reg, reg, reg          @          30 @                      3 @  010100
-          stage2_res_cmplt <= ($signed(regDataOutA)<$signed(regDataOutB)); //if ((signed) rA < (signed) rB) then rC ← 1 else rC ← 0
+          //stage2_res_cmplt <= !stage2_res_cmpge;//($signed(regDataOutA)<$signed(regDataOutB)); //if ((signed) rA < (signed) rB) then rC ← 1 else rC ← 0
           //cmpne reg, reg, reg          @          30 @                      3 @  011100
-          stage2_res_cmpne <= (regDataOutA!=regDataOutB); //if (rA != rB) then rC ← 1 else rC ← 0
+          stage2_res_cmpne = (regDataOutA!=regDataOutB); //if (rA != rB) then rC ← 1 else rC ← 0
           //cmpeq reg, reg, reg          @          30 @                      3 @  100100
-          stage2_res_cmpeq <= (regDataOutA==regDataOutB); //if (rA == rB) then rC ← 1 else rC ← 0
+          //stage2_res_cmpeq <= !stage2_res_cmpne;//(regDataOutA==regDataOutB); //if (rA == rB) then rC ← 1 else rC ← 0
           //#cmpgeu reg, reg, reg         @          30 @                      3 @  101100
-          stage2_res_cmpgeu <= (regDataOutA>=regDataOutB); //if (rA == rB) then rC ← 1 else rC ← 0
+          stage2_res_cmpgeu = (regDataOutA>=regDataOutB); //if (rA == rB) then rC ← 1 else rC ← 0
           //cmpltu reg, reg, reg         @          30 @                      3 @  110100
-          stage2_res_cmpltu <= (regDataOutA < regDataOutB); //if ((unsigned) rA < (unsigned) rB) then rC ← 1 else rC ← 0
+          //stage2_res_cmpltu <= !stage2_res_cmpgeu;//(regDataOutA < regDataOutB); //if ((unsigned) rA < (unsigned) rB) then rC ← 1 else rC ← 0
 
 
-          //stage2_ALU2
+          //stage2_ALU
           //addi reg, reg, ins           @          10 @                      0 @  000010
-          stage2_res_addi <= regDataOutA + stage1_IMM16sx; //rB ← rA + σ(IMM16)
+          //stage2_res_addi <= regDataOutA + stage1_IMM16sx; //rB ← rA + σ(IMM16)
           //andi reg, reg, ins           @          10 @                      0 @  001010
-          stage2_res_andi <= {16'b0, (regDataOutA[15:0] & stage1_IMM16)}; //rB ← rA & (0x0000 : IMM16)
+          //stage2_res_andi <= {16'b0, (regDataOutA[15:0] & stage1_IMM16)}; //rB ← rA & (0x0000 : IMM16)
           //ori  reg, reg, ins           @          10 @                      0 @  010010
-          stage2_res_ori <= {regDataOutA[31:16],(regDataOutA[15:0] | stage1_IMM16)}; //rB ← rA | (0x0000 : IMM16)
+          //stage2_res_ori <= {regDataOutA[31:16],(regDataOutA[15:0] | stage1_IMM16)}; //rB ← rA | (0x0000 : IMM16)
           //xori reg, reg, ins           @          10 @                      0 @  011010
-          stage2_res_xori <= {regDataOutA[31:16], (regDataOutA[15:0] ^ stage1_IMM16)}; //rB ← rA ^ (0x0000 : IMM16)
+          //stage2_res_xori <= {regDataOutA[31:16], (regDataOutA[15:0] ^ stage1_IMM16)}; //rB ← rA ^ (0x0000 : IMM16)
           //#                                                                      100010
           //andhi reg, reg, ins          @          10 @                      0 @  101010
           stage2_res_andhi <= {(regDataOutA[31:16] & stage1_IMM16), 16'b0}; //rB ← rA & (IMM16 : 0x0000)
@@ -758,13 +679,13 @@ end
           stage2_res_xorhi <= {(regDataOutA[31:16] ^ stage1_IMM16), regDataOutA[15:0]}; //rB ← rA ^ (IMM16 : 0x0000)
 
           //add reg, reg, reg            @          30 @                      1 @  000110
-          stage2_res_add <= regDataOutA + regDataOutB; //rC ← rA + rB
+          stage2_res_add <= regDataOutA + (stage1_cmd_ext ? regDataOutB : stage1_IMM16sx); //rC ← rA + rB
           //and reg, reg, reg            @          30 @                      1 @  001110
-          stage2_res_and <= regDataOutA & regDataOutB; // rC ← rA | rB
+          stage2_res_and <= regDataOutA & (stage1_cmd_ext ? regDataOutB : stage1_IMM16zx); // rC ← rA | rB
           //or reg, reg, reg             @          30 @                      1 @  010110
-          stage2_res_or <= regDataOutA | regDataOutB; // rC ← rA | rB
+          stage2_res_or <= regDataOutA | (stage1_cmd_ext ? regDataOutB : stage1_IMM16zx); // rC ← rA | rB
           //xor reg, reg, reg            @          30 @                      1 @  011110
-          stage2_res_xor <= regDataOutA ^ regDataOutB; // rC ← rA ^ rB
+          stage2_res_xor <= regDataOutA ^ (stage1_cmd_ext ? regDataOutB : stage1_IMM16zx); // rC ← rA ^ rB
           //sub reg, reg, reg            @          30 @                      1 @  100110
           stage2_res_sub <= regDataOutA - regDataOutB; // rC ← rA – rB
           //nor reg, reg, reg            @          30 @                      1 @  101110
@@ -776,23 +697,21 @@ end
   end
   reg        stage2_Valid;
   reg        stage2_PCChange;
-  reg [2:0]  stage2_PCChangeCmd;
-  reg [2:0]  stage2_PCChangeCmdExt;//cmd3
   reg        stage2_MEMAccess;
-  reg [2:0]  stage2_MEMAccessCmd;
   reg        stage2_CMP;
-  reg [3:0]  stage2_CMPCmd;
-  reg        stage2_ALU1;
-  reg [3:0]  stage2_ALU1Cmd;
-  reg        stage2_ALU2;
-  reg [3:0]  stage2_ALU2Cmd;
+  reg        stage2_ALU;
+  reg        stage2_SHIFT1;
+  reg        stage2_SHIFT2;
+  reg        stage2_cmd_ext;
+  reg        stage2_parity_check_error;
+  reg [2:0]  stage2_cmd;
   reg [4:0]  stage2_regChange;
-  //reg [4:0]  stage2_regA;
+  reg [4:0]  stage2_regA;
   reg [4:0]  stage2_regB;
   reg [4:0]  stage2_regC;
-  reg [7:0]  stage2_IMM8;
-  //reg [15:0] stage2_IMM16;
-  //reg [31:0] stage2_IMM16zx;
+  reg [5:0]  stage2_IMM6;
+  reg [15:0] stage2_IMM16;
+  reg [31:0] stage2_IMM16zx;
   reg [31:0] stage2_IMM16sx;
   reg [25:0] stage2_IMM26;
   reg [31:0] stage2_regfileA;
@@ -806,38 +725,38 @@ end
           //cmpgei reg, reg, ins         @          10 @                      0 @  001000
 reg stage2_res_cmpgei;
           //cmplti reg, reg, ins         @          10 @                      0 @  010000
-reg stage2_res_cmplti;
+wire stage2_res_cmplti = !stage2_res_cmpgei;
           //cmpnei reg, reg, ins         @          10 @                      0 @  011000
 reg stage2_res_cmpnei;
           //cmpeqi reg, reg, ins         @          10 @                      0 @  100000
-reg stage2_res_cmpeqi;
+wire stage2_res_cmpeqi = !stage2_res_cmpnei;
           //cmpgeui reg, reg, ins        @          10 @                      0 @  101000
 reg stage2_res_cmpgeui;
           //cmpltui reg, reg, ins        @          10 @                      0 @  110000
-reg stage2_res_cmpltui;
+wire stage2_res_cmpltui = !stage2_res_cmpgeui;
 
           //cmpge reg, reg, reg          @          30 @                      3 @  001100
 reg stage2_res_cmpge;
           //cmplt reg, reg, reg          @          30 @                      3 @  010100
-reg stage2_res_cmplt;
+wire stage2_res_cmplt = !stage2_res_cmpge;
           //cmpne reg, reg, reg          @          30 @                      3 @  011100
 reg stage2_res_cmpne;
           //cmpeq reg, reg, reg          @          30 @                      3 @  100100
-reg stage2_res_cmpeq;
+wire stage2_res_cmpeq = !stage2_res_cmpne;
           //#cmpgeu reg, reg, reg         @          30 @                      3 @  101100
 reg stage2_res_cmpgeu;
           //cmpltu reg, reg, reg         @          30 @                      3 @  110100
-reg stage2_res_cmpltu;
+wire stage2_res_cmpltu = !stage2_res_cmpgeu;
 
           //stage2_ALU2
           //addi reg, reg, ins           @          10 @                      0 @  000010
-reg [31:0] stage2_res_addi;
+//reg [31:0] stage2_res_addi;
           //andi reg, reg, ins           @          10 @                      0 @  001010
-reg [31:0] stage2_res_andi;
+//reg [31:0] stage2_res_andi;
           //ori  reg, reg, ins           @          10 @                      0 @  010010
-reg [31:0] stage2_res_ori;
+//reg [31:0] stage2_res_ori;
           //xori reg, reg, ins           @          10 @                      0 @  011010
-reg [31:0] stage2_res_xori;
+//reg [31:0] stage2_res_xori;
           //#                                                                      100010
           //andhi reg, reg, ins          @          10 @                      0 @  101010
 reg [31:0] stage2_res_andhi;
@@ -859,8 +778,14 @@ reg [31:0] stage2_res_sub;
           //nor reg, reg, reg            @          30 @                      1 @  101110
 reg [31:0] stage2_res_nor;
 
+
   
   //////////////////////////////////////////////////////////
+
+  //CompSigned CompSigned()
+
+
+
   wire [31:0] shiftDataIn;
   assign shiftDataIn = stage2_regfileA;
   wire  [31:0]  shiftResultLogical;
@@ -926,13 +851,15 @@ reg [31:0] stage2_res_nor;
       irq_enable <= 0;
       halt_cpu <= 0;
     end else begin
+      byteenable <= 4'b1111;
       stage3_Valid <= 0;
       if(stage2_Valid)begin
         stage3_Valid <= 1;
         stage3_regChange <= stage2_regChange;
         
         if(stage2_PCChange)begin
-          case(stage2_PCChangeCmd)
+          if(stage2_cmd_ext == 0)begin
+            case(stage2_cmd)
             //call sym                     @          22 @                      2 @  000111
             3'b000 : begin//ok
               pcResult <= {pc[31:28],stage2_IMM26,2'b00};
@@ -989,71 +916,71 @@ reg [31:0] stage2_res_nor;
                 pcResult <= nextpc;//else PC ← PC + 4
               end
             end
-            // 111111 
-            3'b111 : begin//ok
-              case(stage2_PCChangeCmdExt)
-                //callr reg                    @          50 @                      1 @  111111
-                3'b000 : begin//ok
-                  pcResult <= stage2_regfileA;
-                  stage3_regResult <= nextpc;//rC ← rA + rB
-                  stage3_regChange <= stage2_regC;//regResultC <= 1;// c is ra
-                end
-                //jmp reg                      @          51 @                      1 @  111111
-                3'b001 : begin//ok
-                  pcResult <= stage2_regfileA;
-                end
-                //setirq reg, reg, ins         @          52 @                      1 @  111111
-                3'b010 : begin//ok
-                  irq_enable <= stage2_IMM8[0];//rB ← rA & (0x0000 : IMM16)
-                  if(stage2_IMM8[1])begin
-                    irq_addr <= stage2_regfileA;
-                  end
-                  pcResult <= nextpc;
-                end
-                //stoff reg                    @          53 @                      1 @  111111
-                3'b011 : begin//ok
-                  private_offset <= stage2_regfileA;
-                  pcResult <= nextpc;
-                end
-                //hlt ins                      @          54 @                      1 @  111111
-                3'b100 : begin//ok
-                  halt_cpu <= stage2_IMM8[0];
-                  pcResult <= nextpc;
-                end
-                //ret                          @          55 @                      1 @  111111         TODO 等效于 jmp reg 可以合并 腾出指令空间
-                3'b101 : begin
-                  pcResult <= stage2_regfileA;//regA == 31
-                end
-                //reti                         @          56 @                      1 @  111111
-                3'b110 : begin//ok
-                  pcResult <= stage2_regfileA;
-                  irq_enable <= 1;
-                end
-                //#irqcall                     @          57 @                      1 @  111111
-                //r29 ea Exception return address
-                3'b111 : begin//ok
-                  pcResult <= irq_addr;
-                  irq_enable <= 0;
-                  stage3_regResult <= pc;
-                  stage3_regChange <= 29;//r29 ea Exception return address
-                end
-              endcase
+            endcase
+          end else begin
+            case(stage2_cmd)
+            //callr reg                    @          50 @                      1 @  111111
+            3'b000 : begin//ok
+              pcResult <= stage2_regfileA;
+              stage3_regResult <= nextpc;//rC ← rA + rB
+              stage3_regChange <= stage2_regC;//regResultC <= 1;// c is ra
             end
-          endcase
+            //jmp reg                      @          51 @                      1 @  111111
+            3'b001 : begin//ok
+              pcResult <= stage2_regfileA;
+            end
+            //setirq reg, reg, ins         @          52 @                      1 @  111111
+            3'b010 : begin//ok
+              irq_enable <= stage2_IMM6[0];//rB ← rA & (0x0000 : IMM16)
+              if(stage2_IMM6[1])begin
+                irq_addr <= stage2_regfileA;
+              end
+              pcResult <= nextpc;
+              stage3_regResult[0] <= irq_enable;//rC ← rA + rB
+              stage3_regChange <= stage2_regC;//regResultC <= 1;// c is ra
+            end
+            //stoff reg                    @          53 @                      1 @  111111
+            3'b011 : begin//ok
+              private_offset <= stage2_regfileA;
+              pcResult <= nextpc;
+            end
+            //hlt ins                      @          54 @                      1 @  111111
+            3'b100 : begin//ok
+              halt_cpu <= stage2_IMM6[0];
+              pcResult <= nextpc;
+            end
+            //ret                          @          55 @                      1 @  111111         TODO 等效于 jmp reg 可以合并 腾出指令空间
+            3'b101 : begin
+              pcResult <= stage2_regfileA;//regA == 31
+            end
+            //reti                         @          56 @                      1 @  111111
+            3'b110 : begin//ok
+              pcResult <= stage2_regfileA;
+              irq_enable <= 1;
+            end
+            //#irqcall                     @          57 @                      1 @  111111
+            //r29 ea Exception return address
+            3'b111 : begin//ok
+              pcResult <= irq_addr;
+              irq_enable <= 0;
+              stage3_regResult <= pc;
+              stage3_regChange <= 29;//r29 ea Exception return address
+            end
+            endcase
+          end
         end
         
         if(stage2_MEMAccess)begin
-          case(stage2_MEMAccessCmd)
+          case(stage2_cmd)
             //ldw reg, regins              @          11 @                      0 @   7 @          000111      0x07 ldw rB, byte_offset(rA)
             3'b000 : begin//ok
               stage3_regChange <= stage2_regB;//regB
+              stage3_regResult <= avm_m0_readdata;
               if         (exec_step==0)begin
                 exec_step <= 1;
-                //exec_address <= {dsAddr[31:2],2'b0};//rB ← Mem32[rA + σ(IMM16)]
                 exec_read <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
-                  stage3_regResult <= avm_m0_readdata;
                   exec_read <= 0;
                   exec_step <= 0;
                 end
@@ -1061,10 +988,9 @@ reg [31:0] stage2_res_nor;
             end
             //stw reg, regins              @          11 @                      0 @  15 @          001111      0x0f stw rB, byte_offset(rA)
             3'b001 : begin//ok
+              exec_writedata <= stage2_regfileB;
               if         (exec_step==0)begin
                 exec_step <= 1;
-                //exec_address <= {dsAddr[31:2],2'b0};//Mem32[rA + σ(IMM16)] ← rB
-                exec_writedata <= stage2_regfileB;
                 exec_write <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
@@ -1076,18 +1002,17 @@ reg [31:0] stage2_res_nor;
             //ldbu reg, regins             @          11 @                      0 @  23 @          010111      0x17
             3'b010 : begin//ok
               stage3_regChange <= stage2_regB;//regB
+              case(exec_address[1:0])
+                0:begin stage3_regResult <= {24'b0,avm_m0_readdata[ 7: 0]};end
+                1:begin stage3_regResult <= {24'b0,avm_m0_readdata[15: 8]};end
+                2:begin stage3_regResult <= {24'b0,avm_m0_readdata[23:16]};end
+                3:begin stage3_regResult <= {24'b0,avm_m0_readdata[31:24]};end
+              endcase
               if         (exec_step==0)begin
                 exec_step <= 1;
-                //exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x000000 : Mem8[rA + σ(IMM16)]
                 exec_read <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
-                  case(exec_address[1:0])
-                    0:begin stage3_regResult <= {24'b0,avm_m0_readdata[ 7: 0]};end
-                    1:begin stage3_regResult <= {24'b0,avm_m0_readdata[15: 8]};end
-                    2:begin stage3_regResult <= {24'b0,avm_m0_readdata[23:16]};end
-                    3:begin stage3_regResult <= {24'b0,avm_m0_readdata[31:24]};end
-                  endcase
                   exec_read <= 0;
                   exec_step <= 0;
                 end
@@ -1096,18 +1021,17 @@ reg [31:0] stage2_res_nor;
             //ldb reg, regins              @          11 @                      0 @  31 @          011111      0x1f*
             3'b011 : begin//ok
               stage3_regChange <= stage2_regB;//regB
+              case(exec_address[1:0])
+                0:begin stage3_regResult <= {{24{avm_m0_readdata[ 7]}},avm_m0_readdata[ 7: 0]};end
+                1:begin stage3_regResult <= {{24{avm_m0_readdata[15]}},avm_m0_readdata[15: 8]};end
+                2:begin stage3_regResult <= {{24{avm_m0_readdata[23]}},avm_m0_readdata[23:16]};end
+                3:begin stage3_regResult <= {{24{avm_m0_readdata[31]}},avm_m0_readdata[31:24]};end
+              endcase
               if         (exec_step==0)begin
                 exec_step <= 1;
-                //exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x000000 : Mem8[rA + σ(IMM16)]
                 exec_read <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
-                  case(exec_address[1:0])
-                    0:begin stage3_regResult <= {{24{avm_m0_readdata[ 7]}},avm_m0_readdata[ 7: 0]};end
-                    1:begin stage3_regResult <= {{24{avm_m0_readdata[15]}},avm_m0_readdata[15: 8]};end
-                    2:begin stage3_regResult <= {{24{avm_m0_readdata[23]}},avm_m0_readdata[23:16]};end
-                    3:begin stage3_regResult <= {{24{avm_m0_readdata[31]}},avm_m0_readdata[31:24]};end
-                  endcase
                   exec_read <= 0;
                   exec_step <= 0;
                 end
@@ -1116,16 +1040,15 @@ reg [31:0] stage2_res_nor;
             //ldhu reg, regins             @          11 @                      0 @  39 @          100111      0x27
             3'b100 : begin//ok
               stage3_regChange <= stage2_regB;//regB
+              case(exec_address[1])
+                0:begin stage3_regResult <= {16'b0,avm_m0_readdata[15: 0]};end
+                1:begin stage3_regResult <= {16'b0,avm_m0_readdata[31:16]};end
+              endcase
               if         (exec_step==0)begin
                 exec_step <= 1;
-                //exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x0000 : Mem16[rA + σ(IMM16)]
                 exec_read <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
-                  case(exec_address[1])
-                    0:begin stage3_regResult <= {16'b0,avm_m0_readdata[15: 0]};end
-                    1:begin stage3_regResult <= {16'b0,avm_m0_readdata[31:16]};end
-                  endcase
                   exec_read <= 0;
                   exec_step <= 0;
                 end
@@ -1134,16 +1057,15 @@ reg [31:0] stage2_res_nor;
             //ldh reg, regins              @          11 @                      0 @  47 @          101111      0x2f
             3'b101 : begin//ok
               stage3_regChange <= stage2_regB;//regB
+              case(exec_address[1])
+                0:begin stage3_regResult <= {{16{avm_m0_readdata[15]}},avm_m0_readdata[15: 0]};end
+                1:begin stage3_regResult <= {{16{avm_m0_readdata[31]}},avm_m0_readdata[31:16]};end
+              endcase
               if         (exec_step==0)begin
                 exec_step <= 1;
-                //exec_address <= {dsAddr[31:2],2'b0};//rB ← σ(Mem16[rA + σ(IMM16)])
                 exec_read <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
-                  case(exec_address[1])
-                    0:begin stage3_regResult <= {{16{avm_m0_readdata[15]}},avm_m0_readdata[15: 0]};end
-                    1:begin stage3_regResult <= {{16{avm_m0_readdata[31]}},avm_m0_readdata[31:16]};end
-                  endcase
                   exec_read <= 0;
                   exec_step <= 0;
                 end
@@ -1151,19 +1073,17 @@ reg [31:0] stage2_res_nor;
             end
             //stb reg, regins              @          11 @                      0 @  55 @          110111      0x37*
             3'b110 : begin//ok
+              case(exec_address[1:0])
+                0:begin byteenable <= 4'b0001; exec_writedata <= {24'b0,stage2_regfileB[7:0]};end
+                1:begin byteenable <= 4'b0010; exec_writedata <= {16'b0,stage2_regfileB[7:0],8'b0};end
+                2:begin byteenable <= 4'b0100; exec_writedata <= {8'b0,stage2_regfileB[7:0],16'b0};end
+                3:begin byteenable <= 4'b1000; exec_writedata <= {stage2_regfileB[7:0],24'b0};end
+              endcase
               if         (exec_step==0)begin
                 exec_step <= 1;
-                //exec_address <= {dsAddr[31:2],2'b0};//Mem8[rA + σ(IMM16)] ← rB7..0
-                case(exec_address[1:0])
-                  0:begin byteenable <= 4'b0001; exec_writedata <= {24'b0,stage2_regfileB[7:0]};end
-                  1:begin byteenable <= 4'b0010; exec_writedata <= {16'b0,stage2_regfileB[7:0],8'b0};end
-                  2:begin byteenable <= 4'b0100; exec_writedata <= {8'b0,stage2_regfileB[7:0],16'b0};end
-                  3:begin byteenable <= 4'b1000; exec_writedata <= {stage2_regfileB[7:0],24'b0};end
-                endcase
                 exec_write <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
-                  byteenable <= 4'b1111;
                   exec_write <= 0;
                   exec_step <= 0;
                 end
@@ -1171,17 +1091,15 @@ reg [31:0] stage2_res_nor;
             end
             //sth reg, regins              @          11 @                      0 @  63 @          111111      0x3f*
             3'b111 : begin//ok
+              case(exec_address[1])
+                0:begin byteenable <= 4'b0011; exec_writedata <= {16'b0,stage2_regfileB[15:0]};end
+                1:begin byteenable <= 4'b1100; exec_writedata <= {stage2_regfileB[15:0],16'b0};end
+              endcase
               if         (exec_step==0)begin
                 exec_step <= 1;
-                //exec_address <= {dsAddr[31:2],2'b0};//Mem8[rA + σ(IMM16)] ← rB7..0
-                case(exec_address[1])
-                  0:begin byteenable <= 4'b0011; exec_writedata <= {16'b0,stage2_regfileB[15:0]};end
-                  1:begin byteenable <= 4'b1100; exec_writedata <= {stage2_regfileB[15:0],16'b0};end
-                endcase
                 exec_write <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
-                  byteenable <= 4'b1111;
                   exec_write <= 0;
                   exec_step <= 0;
                 end
@@ -1192,95 +1110,80 @@ reg [31:0] stage2_res_nor;
 
         if(stage2_CMP)begin
           stage3_regResult[31:1] <= 0;
-          case(stage2_CMPCmd)
+          case(stage2_cmd)
             //cmpgei reg, reg, ins         @          10 @                      0 @  001000
-            4'b0010 : begin stage3_regResult[0] <= stage2_res_cmpgei;end//{31'b0,($signed(stage2_regfileA) >= $signed(stage2_IMM16sx))}; end//if ((signed) rA >= (signed) σ(IMM16)) then rB ← 1 else rB ← 0
-            //cmplti reg, reg, ins         @          10 @                      0 @  010000
-            4'b0100 : begin stage3_regResult[0] <= stage2_res_cmplti;end//{31'b0,($signed(stage2_regfileA) < $signed(stage2_IMM16sx))}; end//if ((signed) rA < (signed) σ(IMM16))
-            //cmpnei reg, reg, ins         @          10 @                      0 @  011000
-            4'b0110 : begin stage3_regResult[0] <= stage2_res_cmpnei;end//{31'b0,(stage2_regfileA != stage2_IMM16sx)}; end//if (rA != σ(IMM16)) then rB ← 1 else rB ← 0
-            //cmpeqi reg, reg, ins         @          10 @                      0 @  100000
-            4'b1000 : begin stage3_regResult[0] <= stage2_res_cmpeqi;end//{31'b0,(stage2_regfileA == stage2_IMM16sx)}; end//if (rA == σ(IMM16)) then rB ← 1 else rB ← 0
-            //cmpgeui reg, reg, ins        @          10 @                      0 @  101000
-            4'b1010 : begin stage3_regResult[0] <= stage2_res_cmpgeui;end//{31'b0,(stage2_regfileA >= stage2_IMM16zx)}; end//if ((unsigned) rA >= (unsigned) (0x0000 : IMM16)) then rB ← 1 else rB ← 0
-            //cmpltui reg, reg, ins        @          10 @                      0 @  110000
-            4'b1100 : begin stage3_regResult[0] <= stage2_res_cmpltui;end//{31'b0,(stage2_regfileA < stage2_IMM16zx)}; end//if ((unsigned) rA < (unsigned) (0x0000 : IMM16)) then rB ← 1 else rB ← 0
-
             //cmpge reg, reg, reg          @          30 @                      3 @  001100
-            4'b0011 : begin stage3_regResult[0] <= stage2_res_cmpge;end//{31'b0,(comp_ge)}; end// if ((signed) rA >= (signed) rB) then rC ← 1  else rC ← 0
+            3'b001 : begin stage3_regResult[0] <= stage2_cmd_ext ? stage2_res_cmpge : stage2_res_cmpgei;end//{31'b0,($signed(stage2_regfileA) >= $signed(stage2_IMM16sx))}; end//if ((signed) rA >= (signed) σ(IMM16)) then rB ← 1 else rB ← 0
+            //cmplti reg, reg, ins         @          10 @                      0 @  010000
             //cmplt reg, reg, reg          @          30 @                      3 @  010100
-            4'b0101 : begin stage3_regResult[0] <= stage2_res_cmplt;end//{31'b0,(~comp_ge)}; end//if ((signed) rA < (signed) rB) then rC ← 1 else rC ← 0
+            3'b010 : begin stage3_regResult[0] <= stage2_cmd_ext ? stage2_res_cmplt : stage2_res_cmplti;end//{31'b0,($signed(stage2_regfileA) < $signed(stage2_IMM16sx))}; end//if ((signed) rA < (signed) σ(IMM16))
+            //cmpnei reg, reg, ins         @          10 @                      0 @  011000
             //cmpne reg, reg, reg          @          30 @                      3 @  011100
-            4'b0111 : begin stage3_regResult[0] <= stage2_res_cmpne;end//{31'b0,(~comp_eq)}; end//if (rA != rB) then rC ← 1 else rC ← 0
+            3'b011 : begin stage3_regResult[0] <= stage2_cmd_ext ? stage2_res_cmpne : stage2_res_cmpnei;end//{31'b0,(stage2_regfileA != stage2_IMM16sx)}; end//if (rA != σ(IMM16)) then rB ← 1 else rB ← 0
+            //cmpeqi reg, reg, ins         @          10 @                      0 @  100000
             //cmpeq reg, reg, reg          @          30 @                      3 @  100100
-            4'b1001 : begin stage3_regResult[0] <= stage2_res_cmpeq;end//{31'b0,comp_eq}; end//if (rA == rB) then rC ← 1 else rC ← 0
+            3'b100 : begin stage3_regResult[0] <= stage2_cmd_ext ? stage2_res_cmpeq : stage2_res_cmpeqi;end//{31'b0,(stage2_regfileA == stage2_IMM16sx)}; end//if (rA == σ(IMM16)) then rB ← 1 else rB ← 0
+            //cmpgeui reg, reg, ins        @          10 @                      0 @  101000
             //#cmpgeu reg, reg, reg        @          30 @                      3 @  101100
-            4'b1011 : begin stage3_regResult[0] <= stage2_res_cmpgeu;end//{31'b0,comp_eq}; end//if (rA == rB) then rC ← 1 else rC ← 0
+            3'b101 : begin stage3_regResult[0] <= stage2_cmd_ext ? stage2_res_cmpgeu : stage2_res_cmpgeui;end//{31'b0,(stage2_regfileA >= stage2_IMM16zx)}; end//if ((unsigned) rA >= (unsigned) (0x0000 : IMM16)) then rB ← 1 else rB ← 0
+            //cmpltui reg, reg, ins        @          10 @                      0 @  110000
             //cmpltu reg, reg, reg         @          30 @                      3 @  110100
-            4'b1101 : begin stage3_regResult[0] <= stage2_res_cmpltu;end//{31'b0,(comp_ltu)}; end//if ((unsigned) rA < (unsigned) rB) then rC ← 1 else rC ← 0
+            3'b110 : begin stage3_regResult[0] <= stage2_cmd_ext ? stage2_res_cmpltu : stage2_res_cmpltui;end//{31'b0,(stage2_regfileA < stage2_IMM16zx)}; end//if ((unsigned) rA < (unsigned) (0x0000 : IMM16)) then rB ← 1 else rB ← 0
+            default : begin stage3_regResult[0] <= 0;end
           endcase
         end
 
-        if(stage2_ALU1)begin
-          case(stage2_ALU1Cmd)
-            //muli reg, reg, ins           @          10 @                      0 @   2 @          000001      0x02*
-            4'b0000 : begin stage3_regResult <= mulResultSigned[31:0]; end
-            //slli reg, reg, ins           @          10 @                      0 @   9 @          001001      0x09
-            4'b0010 : begin stage3_regResult <= shiftResultLogical; end
-            //srai reg, reg, ins           @          10 @                      0 @  17 @          010001      0x11
-            4'b0100 : begin stage3_regResult <= shiftResultArithmetic; end
-            //srli reg, reg, ins           @          10 @                      0 @  25 @          011001      0x19
-            4'b0110 : begin stage3_regResult <= shiftResultLogical; end
-            //roli reg, reg, ins           @          10 @                      0 @  33 @          100001      0x21
-            4'b1000 : begin stage3_regResult <= shiftResultRotate; end
-            
-            //mul reg, reg, reg            @          30 @                      3 @  000101
-            4'b0001 : begin stage3_regResult <= mulResultSigned[31:0]; end
-            //sll reg, reg, reg            @          30 @                      3 @  001101
-            4'b0011 : begin stage3_regResult <= shiftResultLogical; end
-            //sra reg, reg, reg            @          30 @                      1 @  010101
-            4'b0101 : begin stage3_regResult <= shiftResultArithmetic; end
-            //srl reg, reg, reg            @          30 @                      3 @  011101
-            4'b0111 : begin stage3_regResult <= shiftResultLogical; end
-            //rol reg, reg, reg            @          30 @                      3 @  100101
-            4'b1001 : begin stage3_regResult <= shiftResultRotate; end
+            //#01 alu
+            //
+            //#01 alu ext
+
+        if(stage2_ALU)begin
+          case(stage2_cmd)
+            //addi reg, reg, ins           @          10 @                      0 @  00001
+            //add reg, reg, reg            @          30 @                      1 @  00001
+            3'b000 : begin stage3_regResult <= stage2_res_add;end//stage2_regfileA + stage2_IMM16sx; end//rB ← rA + σ(IMM16)
+            //andi reg, reg, ins           @          10 @                      0 @  00101
+            //and reg, reg, reg            @          30 @                      1 @  00101
+            3'b001 : begin stage3_regResult <= stage2_res_and;end//stage2_regfileA & stage2_regfileB; end// rC ← rA | rB
+            //ori  reg, reg, ins           @          10 @                      0 @  01001
+            //or reg, reg, reg             @          30 @                      1 @  01001
+            3'b010 : begin stage3_regResult <= stage2_res_or;end//stage2_regfileA | stage2_regfileB; end// rC ← rA | rB
+            //xori reg, reg, ins           @          10 @                      0 @  01101
+            //xor reg, reg, reg            @          30 @                      1 @  01101
+            3'b011 : begin stage3_regResult <= stage2_res_xor;end//{stage2_regfileA[31:16], (stage2_regfileA[15:0] ^ stage2_IMM16)}; end//rB ← rA ^ (0x0000 : IMM16)
+            //muli reg, reg, ins           @          10 @                      0 @  10001
+            //mul reg, reg, reg            @          30 @                      1 @  10001
+            3'b100 : begin stage3_regResult <= mulResultSigned[31:0]; end
+            //andhi reg, reg, ins          @          10 @                      0 @  10101
+            //sub reg, reg, reg            @          30 @                      1 @  10101
+            3'b101 : begin stage3_regResult <= stage2_cmd_ext ? stage2_res_sub : stage2_res_andhi;end//{(stage2_regfileA[31:16] & stage2_IMM16), 16'b0}; end//rB ← rA & (IMM16 : 0x0000)
+            //orhi reg, reg, ins           @          10 @                      0 @  11001
+            //nor reg, reg, reg            @          30 @                      1 @  11001
+            3'b110 : begin stage3_regResult <= stage2_cmd_ext ? stage2_res_nor : stage2_res_orhi;end//~(stage2_regfileA | stage2_regfileB); end// rC ← ~(rA | rB)
+            //xorhi reg, reg, ins          @          10 @                      0 @  11101
+            3'b111 : begin stage3_regResult <= stage2_res_xorhi;end//{(stage2_regfileA[31:16] ^ stage2_IMM16), stage2_regfileA[15:0]}; end//rB ← rA ^ (IMM16 : 0x0000)
           endcase
         end
 
-        if(stage2_ALU2)begin
-          case(stage2_ALU2Cmd)
-            //addi reg, reg, ins           @          10 @                      0 @  000010
-            4'b0000 : begin stage3_regResult <= stage2_res_addi;end//stage2_regfileA + stage2_IMM16sx; end//rB ← rA + σ(IMM16)
-            //andi reg, reg, ins           @          10 @                      0 @  001010
-            4'b0010 : begin stage3_regResult <= stage2_res_andi;end//{16'b0, (stage2_regfileA[15:0] & stage2_IMM16)}; end//rB ← rA & (0x0000 : IMM16)
-            //ori  reg, reg, ins           @          10 @                      0 @  010010
-            4'b0100 : begin stage3_regResult <= stage2_res_ori;end//{stage2_regfileA[31:16],(stage2_regfileA[15:0] | stage2_IMM16)}; end//rB ← rA | (0x0000 : IMM16)
-            //xori reg, reg, ins           @          10 @                      0 @  011010
-            4'b0110 : begin stage3_regResult <= stage2_res_xori;end//{stage2_regfileA[31:16], (stage2_regfileA[15:0] ^ stage2_IMM16)}; end//rB ← rA ^ (0x0000 : IMM16)
-            //#                                                                      100010
-            //andhi reg, reg, ins          @          10 @                      0 @  101010
-            4'b1010 : begin stage3_regResult <= stage2_res_andhi;end//{(stage2_regfileA[31:16] & stage2_IMM16), 16'b0}; end//rB ← rA & (IMM16 : 0x0000)
-            //orhi reg, reg, ins           @          10 @                      0 @  110010
-            4'b1100 : begin stage3_regResult <= stage2_res_orhi;end//{(stage2_regfileA[31:16] | stage2_IMM16),stage2_regfileA[15:0]}; end//rB ← rA | (IMM16 : 0x0000)
-            //xorhi reg, reg, ins          @          10 @                      0 @  111010
-            4'b1110 : begin stage3_regResult <= stage2_res_xorhi;end//{(stage2_regfileA[31:16] ^ stage2_IMM16), stage2_regfileA[15:0]}; end//rB ← rA ^ (IMM16 : 0x0000)
-
-            //add reg, reg, reg            @          30 @                      1 @  000110
-            4'b0001 : begin stage3_regResult <= stage2_res_add;end//stage2_regfileA + stage2_regfileB; end//rC ← rA + rB
-            //and reg, reg, reg            @          30 @                      1 @  001110
-            4'b0011 : begin stage3_regResult <= stage2_res_and;end//stage2_regfileA & stage2_regfileB; end// rC ← rA | rB
-            //or reg, reg, reg             @          30 @                      1 @  010110
-            4'b0101 : begin stage3_regResult <= stage2_res_or;end//stage2_regfileA | stage2_regfileB; end// rC ← rA | rB
-            //xor reg, reg, reg            @          30 @                      1 @  011110
-            4'b0111 : begin stage3_regResult <= stage2_res_xor;end//stage2_regfileA ^ stage2_regfileB; end// rC ← rA ^ rB
-            //sub reg, reg, reg            @          30 @                      1 @  100110
-            4'b1001 : begin stage3_regResult <= stage2_res_sub;end//stage2_regfileA - stage2_regfileB; end// rC ← rA – rB
-            //nor reg, reg, reg            @          30 @                      1 @  101110
-            4'b1011 : begin stage3_regResult <= stage2_res_nor;end//~(stage2_regfileA | stage2_regfileB); end// rC ← ~(rA | rB)
+        if(stage2_SHIFT1 || stage2_SHIFT2)begin
+          case(stage2_cmd[1:0])
+            //slli reg, reg, ins            @         31 @                      1 @  00010
+            //sll reg, reg, reg            @          30 @                      1 @  00011
+            2'b00 : begin stage3_regResult <= shiftResultLogical; end
+            //srai reg, reg, ins            @         31 @                      1 @  00110
+            //sra reg, reg, reg            @          30 @                      1 @  00111
+            2'b01 : begin stage3_regResult <= shiftResultArithmetic; end
+            //srli reg, reg, ins            @         31 @                      1 @  01010
+            //srl reg, reg, reg            @          30 @                      1 @  01011
+            2'b10 : begin stage3_regResult <= shiftResultLogical; end
+            //roli reg, reg, ins            @         31 @                      1 @  01110
+            //rol reg, reg, reg            @          30 @                      1 @  01111
+            2'b11 : begin stage3_regResult <= shiftResultRotate; end
           endcase
         end
-
-
+        if(stage2_parity_check_error)begin
+          halt_cpu <= 1;
+        end
       end
     end
   end
@@ -1335,6 +1238,43 @@ module mulSigned (
 		lpm_mult_component.lpm_widtha = 32,
 		lpm_mult_component.lpm_widthb = 32,
 		lpm_mult_component.lpm_widthp = 64;
+
+
+endmodule
+
+
+module CompSigned (
+	dataa,
+	datab,
+	ageb,
+	alb);
+
+	input	[31:0]  dataa;
+	input	[31:0]  datab;
+	output	  ageb;
+	output	  alb;
+
+	wire  sub_wire0;
+	wire  sub_wire1;
+	wire  ageb = sub_wire0;
+	wire  alb = sub_wire1;
+
+	lpm_compare	LPM_COMPARE_component (
+				.dataa (dataa),
+				.datab (datab),
+				.ageb (sub_wire0),
+				.alb (sub_wire1),
+				.aclr (1'b0),
+				.aeb (),
+				.agb (),
+				.aleb (),
+				.aneb (),
+				.clken (1'b1),
+				.clock (1'b0));
+	defparam
+		LPM_COMPARE_component.lpm_representation = "SIGNED",
+		LPM_COMPARE_component.lpm_type = "LPM_COMPARE",
+		LPM_COMPARE_component.lpm_width = 32;
 
 
 endmodule

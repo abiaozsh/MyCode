@@ -114,10 +114,10 @@ wire [31:0] outpin32;
 wire [7:0] debug8;
 wire [31:0] debug32;
 
-//assign debug = debug8;//
-assign debug[0] = hid_dat;
-assign debug[1] = hid_clk;
-assign debug[2] = hid_str;
+assign debug = debug8;//
+//assign debug[0] = hid_dat;
+//assign debug[1] = hid_clk;
+//assign debug[2] = hid_str;
 
 wire hid_dat = ~hid_dat_n;
 wire hid_clk = ~hid_clk_n;

@@ -443,28 +443,72 @@ end
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   wire vga_cs = avm_m0_address[31:16] == 16'h0206;
-  reg [1:0] vga_mode;
-  reg blockvga;
-  //read_line_base_addr
   always@(posedge clk or negedge reset_n) begin
     if(!reset_n) begin
-      vga_mode <= 3;
+      vga_mode <= 1;
+      blockvga <= 0;
+      read_line_base_addr <= 0;
+      write_cursor_ena <= 0;
+      write_cursor_addr <= 0;
+      write_cursor_data <= 0;
     end else begin
+      write_cursor_ena <= 0;
+      write_cursor_addr <= avm_m0_address[11:2];
+      write_cursor_data <= avm_m0_writedata[15:0];
       if(vga_cs && avm_m0_write)begin
-        if         (avm_m0_address[15:2]==0)begin
-          vga_mode <= avm_m0_writedata[1:0];
-        end else if(avm_m0_address[15:2]==1)begin
-          read_line_base_addr = avm_m0_writedata[15:0];
-        end else if(avm_m0_address[15:2]==2)begin
-          blockvga = avm_m0_writedata[0];
+      
+        case(avm_m0_address[15:13])
+        3'b000 : begin // 0x0000 dw
+          vga_mode <= avm_m0_writedata[0];
         end
+        3'b001 : begin // 0x0800 dw
+          blockvga <= avm_m0_writedata[0];
+        end
+        3'b010 : begin // 0x1000 dw
+          read_line_base_addr <= avm_m0_writedata[15:0];
+        end
+        3'b011 : begin // 0x1800 dw
+          write_cursor_ena <= 1;
+        end
+        3'b100 : begin // 0x2000 dw
+          cursor_posX <= avm_m0_writedata[9:0];
+        end
+        3'b101 : begin // 0x2800 dw
+          cursor_posY <= avm_m0_writedata[9:0];
+        end
+        endcase
+        
       end
     end
   end
   wire vga_waitrequest = 0;
   
   //128m byte range 64k line * 2048byte per line
+  reg vga_mode;
+  reg blockvga;
   reg  [15:0] read_line_base_addr   ;//input [9:0] read_buff_addr,
+  reg [15:0] write_cursor_data;
+  reg [9:0] write_cursor_addr;
+  reg write_cursor_ena;
+  reg  [9:0]  cursor_posX;//0~1024
+  reg  [9:0]  cursor_posY;//0~1024
+  
+  wire [15:0] read_cursor_data;
+  wire [9:0]  read_cursor_addr;//32 * 32
+  wire        read_cursor_clk;
+
+  buff1024x16  buffCursor (
+    .data      ( write_cursor_data  ),
+    .wraddress ( write_cursor_addr  ),
+    .wrclock   ( clk                ),
+    .wren      ( write_cursor_ena   ),
+    .rdaddress ( read_cursor_addr   ),
+    .rdclock   ( read_cursor_clk    ),
+    .q         ( read_cursor_data   )
+  );
+  
+wire [7:0] vga_debug;
+assign debug8 = vga_debug;
 
   wire blanking;
   vga_driver8m u_vga_driver8m(
@@ -486,9 +530,18 @@ end
     .read_pixel_addr     (read_pixel_addr     ),
     .read_pixel_clk      (read_pixel_clk      ),
     
+    
+    .cursor_posX(cursor_posX),//0~1024
+    .cursor_posY(cursor_posY),//0~1024
+    .read_cursor_data(read_cursor_data),
+    .read_cursor_addr(read_cursor_addr),//32 * 32
+    .read_cursor_clk (read_cursor_clk ),
+
     .vga_hs         (vga_hs),
     .vga_vs         (vga_vs),
-    .vga_rgb        (vga_rgb)
+    .vga_rgb        (vga_rgb),
+    
+    .debug(vga_debug)
   );
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
