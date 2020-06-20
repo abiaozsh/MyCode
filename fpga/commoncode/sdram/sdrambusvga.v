@@ -167,7 +167,12 @@ wire        cache_flush_hit[CACHE_COUNT];
 
 wire        cacheInvalid[CACHE_COUNT];//32Mbyte / 1024byte per cache slot = total 32k cache slot
 wire [14:0] cacheAddrHigh[CACHE_COUNT];//32Mbyte / 1024byte per cache slot = total 32k cache slot
-wire [15:0] cache_life[CACHE_COUNT];
+wire [CACHE_COUNT-1:0] cache_life[CACHE_COUNT];
+
+wire [CACHE_COUNT-1:0] cache_hited;
+wire [CACHE_COUNT-1:0] cache_flush_hited;
+wire [CACHE_COUNT-1:0] free_cache_temp;
+
 genvar i;
 generate
   for(i=0; i<CACHE_COUNT; i=i+1) begin:BLOCK1
@@ -194,65 +199,17 @@ generate
       .cacheAddrHigh      (cacheAddrHigh[i]      ),
       .cache_life         (cache_life[i]         )
     );
+    assign cache_hited[i] = cache_hit[i];
+    assign cache_flush_hited[i] = cache_flush_hit[i];
+    assign free_cache_temp[i] = cache_life[i] == 0;
   end
 endgenerate
 
-reg  [15:0] set_cacheAddrHigh;
-reg  [15:0] clr_cacheAddrHigh;
-reg  [15:0] current_slot;
-wire [15:0] cache_hited;
-assign cache_hited[ 0] = cache_hit[ 0];
-assign cache_hited[ 1] = cache_hit[ 1];
-assign cache_hited[ 2] = cache_hit[ 2];
-assign cache_hited[ 3] = cache_hit[ 3];
-assign cache_hited[ 4] = cache_hit[ 4];
-assign cache_hited[ 5] = cache_hit[ 5];
-assign cache_hited[ 6] = cache_hit[ 6];
-assign cache_hited[ 7] = cache_hit[ 7];
-assign cache_hited[ 8] = cache_hit[ 8];
-assign cache_hited[ 9] = cache_hit[ 9];
-assign cache_hited[10] = cache_hit[10];
-assign cache_hited[11] = cache_hit[11];
-assign cache_hited[12] = cache_hit[12];
-assign cache_hited[13] = cache_hit[13];
-assign cache_hited[14] = cache_hit[14];
-assign cache_hited[15] = cache_hit[15];
-wire [15:0] cache_flush_hited;
-assign cache_flush_hited[ 0] = cache_flush_hit[ 0];
-assign cache_flush_hited[ 1] = cache_flush_hit[ 1];
-assign cache_flush_hited[ 2] = cache_flush_hit[ 2];
-assign cache_flush_hited[ 3] = cache_flush_hit[ 3];
-assign cache_flush_hited[ 4] = cache_flush_hit[ 4];
-assign cache_flush_hited[ 5] = cache_flush_hit[ 5];
-assign cache_flush_hited[ 6] = cache_flush_hit[ 6];
-assign cache_flush_hited[ 7] = cache_flush_hit[ 7];
-assign cache_flush_hited[ 8] = cache_flush_hit[ 8];
-assign cache_flush_hited[ 9] = cache_flush_hit[ 9];
-assign cache_flush_hited[10] = cache_flush_hit[10];
-assign cache_flush_hited[11] = cache_flush_hit[11];
-assign cache_flush_hited[12] = cache_flush_hit[12];
-assign cache_flush_hited[13] = cache_flush_hit[13];
-assign cache_flush_hited[14] = cache_flush_hit[14];
-assign cache_flush_hited[15] = cache_flush_hit[15];
-wire [15:0] free_cache_temp;
-assign free_cache_temp[ 0] = cache_life[ 0] == 0;
-assign free_cache_temp[ 1] = cache_life[ 1] == 0;
-assign free_cache_temp[ 2] = cache_life[ 2] == 0;
-assign free_cache_temp[ 3] = cache_life[ 3] == 0;
-assign free_cache_temp[ 4] = cache_life[ 4] == 0;
-assign free_cache_temp[ 5] = cache_life[ 5] == 0;
-assign free_cache_temp[ 6] = cache_life[ 6] == 0;
-assign free_cache_temp[ 7] = cache_life[ 7] == 0;
-assign free_cache_temp[ 8] = cache_life[ 8] == 0;
-assign free_cache_temp[ 9] = cache_life[ 9] == 0;
-assign free_cache_temp[10] = cache_life[10] == 0;
-assign free_cache_temp[11] = cache_life[11] == 0;
-assign free_cache_temp[12] = cache_life[12] == 0;
-assign free_cache_temp[13] = cache_life[13] == 0;
-assign free_cache_temp[14] = cache_life[14] == 0;
-assign free_cache_temp[15] = cache_life[15] == 0;
+reg  [CACHE_COUNT-1:0] set_cacheAddrHigh;
+reg  [CACHE_COUNT-1:0] clr_cacheAddrHigh;
+reg  [CACHE_COUNT-1:0] current_slot;
 
-wire [15:0] free_cache;
+wire [CACHE_COUNT-1:0] free_cache;
 
 //assign singleOut = free_cache_temp;
 //assign free_cache = singleIn;
@@ -378,8 +335,10 @@ always@(posedge clk or negedge sys_rst_n) begin
     //回写时尝试批量写入，提升性能
     
     if(avs_s0_read && !avs_s0_read_ack)begin
+      cacheData[31:0] <= readBuffer;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
       case (interface_status)
       STATUS_INIT : begin//初始化
+        rdwr_sdram_addr <= {avs_s0_address,1'b0};
         if(flush_cache && cache_flush_hited != 0)begin
           current_slot <= cache_flush_hited;
           write_back_count <= 0;
@@ -402,55 +361,55 @@ always@(posedge clk or negedge sys_rst_n) begin
           end
         end else begin//不经过cache
           current_slot <= 0;
-          rdwr_sdram_addr <= {avs_s0_address,1'b0};
           read_sdram_req <= 1;
           interface_status <= STATUS_READ;
         end
       end
       STATUS_HITED1 : begin//高地址命中
+        rdwr_sdram_addr <= {avs_s0_address,1'b0};
+        avs_s0_readdata <= cache_hit_data[31:0];//TODO
         if(cache_hit_data[FLG_VALID])begin
-          avs_s0_readdata <= cache_hit_data[31:0];
           adj_cache_life <= 1;
           `RD_FINISH
         end else begin
           interface_status <= STATUS_READ;
-          rdwr_sdram_addr <= {avs_s0_address,1'b0};
           read_sdram_req <= 1;
         end
       end
       STATUS_READ : begin//读取等待
+        avs_s0_readdata <= readBuffer;
+        cacheData[35:32] <= 4'b1000;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
         if(read_sdram_ack_buff)begin
           read_sdram_req <= 0;
-          avs_s0_readdata <= readBuffer;
           if(current_slot != 0)begin
             write_enable <= 1;
-            cacheData <= {4'b1000,readBuffer};//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
           end
           adj_cache_life <= 1;
           `RD_FINISH
         end
       end
       STATUS_WRITE_BACK_DLY : begin//sram读出延时
+        cacheData[35:32] <= 4'b0000;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
         if(write_back_count==256)begin
           cacheAddrLow8_writeBack <= 0;
           if(flush_cache && current_slot != 0)begin
             clr_cacheAddrHigh <= current_slot;
             `RD_FINISH
           end else begin
-            interface_status <= STATUS_HITED1;set_cacheAddrHigh <= current_slot;//当前地址写入缓存地址高
+            interface_status <= STATUS_HITED1;
+            set_cacheAddrHigh <= current_slot;//当前地址写入缓存地址高
           end
         end else begin
           interface_status <= STATUS_WRITE_BACK;
           write_enable <= 1;//写回后要置空
-          cacheData <= {36'b0};//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
         end
       end
       STATUS_WRITE_BACK : begin//dirty 的话，写回
+        rdwr_sdram_addr <= {current_cacheAddrHigh,write_back_count[7:0],1'b0};
+        write_single_sdram_data <= cache_hit_data[31:0];
+        write_single_sdram_mask <= 4'b0000;
         if(cache_hit_data[FLG_DIRTY])begin
           interface_status <= STATUS_WRITE_BACK_EXEC;
-          rdwr_sdram_addr <= {current_cacheAddrHigh,write_back_count[7:0],1'b0};
-          write_single_sdram_data <= cache_hit_data[31:0];
-          write_single_sdram_mask <= 4'b0000;
           write_single_sdram_req <= 1;
         end else begin
           write_back_count <= write_back_count + 1'b1;
@@ -477,11 +436,14 @@ always@(posedge clk or negedge sys_rst_n) begin
     if(avs_s0_write && !avs_s0_write_ack)begin
       case(interface_status)
       STATUS_INIT : begin//初始化
+        rdwr_sdram_addr <= {avs_s0_address,1'b0};
+        write_single_sdram_data <= avs_s0_writedata;
+        write_single_sdram_mask <= ~avs_s0_byteenable;
+        cacheData <= {4'b1100,avs_s0_writedata};//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
         if(cache_hited)begin
           current_slot <= cache_hited;
           if(avs_s0_byteenable==4'b1111)begin//完整写入DW的话，不考虑FLG_VALID
             write_enable <= 1;
-            cacheData <= {4'b1100,avs_s0_writedata};//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
             adj_cache_life <= 1;
             `WR_FINISH
           end else begin
@@ -503,46 +465,44 @@ always@(posedge clk or negedge sys_rst_n) begin
             //直接写入
             current_slot <= 0;
             interface_status <= STATUS_WRITE;//高地址命中等一个周期
-            rdwr_sdram_addr <= {avs_s0_address,1'b0};
-            write_single_sdram_data <= avs_s0_writedata;
-            write_single_sdram_mask <= ~avs_s0_byteenable;
             write_single_sdram_req <= 1;
           end
         end
       end
       STATUS_HITED1 : begin//高地址命中
+        rdwr_sdram_addr <= {avs_s0_address,1'b0};
+        cacheData <= {4'b1100,
+          avs_s0_byteenable[3] ? avs_s0_writedata[31:24] : cache_hit_data[31:24],
+          avs_s0_byteenable[2] ? avs_s0_writedata[23:16] : cache_hit_data[23:16],
+          avs_s0_byteenable[1] ? avs_s0_writedata[15: 8] : cache_hit_data[15: 8],
+          avs_s0_byteenable[0] ? avs_s0_writedata[ 7: 0] : cache_hit_data[ 7: 0]
+          };//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
         if(cache_hit_data[FLG_VALID])begin//有效
-            write_enable <= 1;
-            cacheData <= {4'b1100,
-              avs_s0_byteenable[3] ? avs_s0_writedata[31:24] : cache_hit_data[31:24],
-              avs_s0_byteenable[2] ? avs_s0_writedata[23:16] : cache_hit_data[23:16],
-              avs_s0_byteenable[1] ? avs_s0_writedata[15: 8] : cache_hit_data[15: 8],
-              avs_s0_byteenable[0] ? avs_s0_writedata[ 7: 0] : cache_hit_data[ 7: 0]
-              };//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
-            adj_cache_life <= 1;
-            `WR_FINISH
+          write_enable <= 1;
+          adj_cache_life <= 1;
+          `WR_FINISH
         end else begin
           //读取后写入
-            interface_status <= STATUS_READ;
-            rdwr_sdram_addr <= {avs_s0_address,1'b0};
-            read_sdram_req <= 1;
+          interface_status <= STATUS_READ;
+          read_sdram_req <= 1;
         end
       end
       STATUS_READ : begin//读取等待
+        cacheData <= {4'b1100,
+          avs_s0_byteenable[3] ? avs_s0_writedata[31:24] : readBuffer[31:24],
+          avs_s0_byteenable[2] ? avs_s0_writedata[23:16] : readBuffer[23:16],
+          avs_s0_byteenable[1] ? avs_s0_writedata[15: 8] : readBuffer[15: 8],
+          avs_s0_byteenable[0] ? avs_s0_writedata[ 7: 0] : readBuffer[ 7: 0]
+          };//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
         if(read_sdram_ack_buff)begin
           read_sdram_req <= 0;
           write_enable <= 1;
-          cacheData <= {4'b1100,
-            avs_s0_byteenable[3] ? avs_s0_writedata[31:24] : readBuffer[31:24],
-            avs_s0_byteenable[2] ? avs_s0_writedata[23:16] : readBuffer[23:16],
-            avs_s0_byteenable[1] ? avs_s0_writedata[15: 8] : readBuffer[15: 8],
-            avs_s0_byteenable[0] ? avs_s0_writedata[ 7: 0] : readBuffer[ 7: 0]
-            };//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
           adj_cache_life <= 1;
           `WR_FINISH
         end
       end
       STATUS_WRITE_BACK_DLY : begin//sram读出延时
+        cacheData[35:32] <= 4'b0000;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
         if(write_back_count==256)begin
           set_cacheAddrHigh <= current_slot;//当前地址写入缓存地址高
           cacheAddrLow8_writeBack <= 0;
@@ -550,15 +510,14 @@ always@(posedge clk or negedge sys_rst_n) begin
         end else begin
           interface_status <= STATUS_WRITE_BACK;
           write_enable <= 1;//写回后要置空
-          cacheData <= 36'b0;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
         end
       end
       STATUS_WRITE_BACK : begin//dirty 的话，写回
+        rdwr_sdram_addr <= {current_cacheAddrHigh,write_back_count[7:0],1'b0};
+        write_single_sdram_data <= cache_hit_data[31:0];
+        write_single_sdram_mask <= 4'b0000;
         if(cache_hit_data[FLG_DIRTY])begin
           interface_status <= STATUS_WRITE_BACK_EXEC;
-          rdwr_sdram_addr <= {current_cacheAddrHigh,write_back_count[7:0],1'b0};
-          write_single_sdram_data <= cache_hit_data[31:0];
-          write_single_sdram_mask <= 4'b0000;
           write_single_sdram_req <= 1;
         end else begin
           write_back_count <= write_back_count + 1'b1;
@@ -574,9 +533,9 @@ always@(posedge clk or negedge sys_rst_n) begin
       end
       STATUS_WRITE_BACK_FINISH : begin
         set_cacheAddrHigh <= 0;
+        cacheData <= {4'b1100,avs_s0_writedata};//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
         if(avs_s0_byteenable==4'b1111)begin//完整写入DW的话，不考虑FLG_VALID
           write_enable <= 1;
-          cacheData <= {4'b1100,avs_s0_writedata};//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
           `WR_FINISH
         end else begin
           interface_status <= STATUS_HITED1;//高地址命中等一个周期
@@ -618,8 +577,11 @@ reg  [2:0] sdram_timer1;
 reg  [1:0] sram_add_high;
 
 reg [1:0]  sdram_step;
-reg [1:0] cmd;
 reg [31:0] readBuffer;
+
+reg read_sdram_req_cmd;
+reg write_single_sdram_req_cmd;
+reg read_line_req_cmd;
 //sdram_rd_req sdram_rd_burst sdram_rw_addr
 always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
   if(!sys_rst_n) begin
@@ -630,6 +592,10 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     write_single_sdram_req_buff <= 0;
     read_line_req_buff <= 0;
     
+    read_sdram_req_cmd <= 0;
+    write_single_sdram_req_cmd <= 0;
+    read_line_req_cmd <= 0;
+
     read_sdram_ack <= 0;
     write_single_sdram_ack <= 0;
     read_line_ack <= 0;
@@ -646,18 +612,26 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     buffA_wren <= 0;
     buffB_wren <= 0;
 
-    if(cmd==0)begin
+    
+    if(read_line_req_cmd==0 && read_sdram_req_cmd==0 && write_single_sdram_req_cmd==0)begin
+      read_sdram_req_cmd <= 0;
+      write_single_sdram_req_cmd <= 0;
+      read_line_req_cmd <= 0;
       if         (read_line_req_buff)begin
-        cmd <= 1;
+        read_line_req_cmd <= 1;
       end else if(read_sdram_req_buff)begin
-        cmd <= 2;
+        read_sdram_req_cmd <= 1;
       end else if(write_single_sdram_req_buff)begin
-        cmd <= 3;
+        write_single_sdram_req_cmd <= 1;
       end
     end
+    
+    buffAB_wrdata <= sdram_dout;
+    buffAB_wraddress <= {sram_add_high,sdram_timer2[7:0]};
 
     //vga line read
-    if          (cmd == 1 && !read_line_ack)begin
+    if (read_line_req_cmd && !read_line_ack)begin
+      sdram_rd_burst <= 256;
       //step3
       sdram_timer0 <= 1;
       if(sdram_timer0 == 0)begin
@@ -666,7 +640,6 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
         end else if(sdram_timer1 == 2) begin sram_add_high <= 2; sdram_timer1 <= 3; sdram_rw_addr <= {read_line_addr,2'b10,8'b0}; //12+2+8  **
         end else if(sdram_timer1 == 3) begin sram_add_high <= 3; sdram_timer1 <= 4; sdram_rw_addr <= {read_line_addr,2'b11,8'b0}; //12+2+8  **
         end
-        sdram_rd_burst <= 256;
         sdram_timer2 <= 0;
         sdram_page_delay <= 0;
         sdram_rd_req = 1;//只需要置高一个周期就可以了
@@ -674,8 +647,6 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
         if(sdram_rd_ack || sdram_page_delay)begin
           sdram_timer2 <= sdram_timer2 + 1'b1;
           if(!sdram_page_delay)begin
-            buffAB_wrdata <= sdram_dout;
-            buffAB_wraddress <= {sram_add_high,sdram_timer2[7:0]};
             if(read_line_A_B)begin
               buffA_wren <= 1;
             end else begin
@@ -695,11 +666,13 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
           end
         end
       end
-    end else if (cmd == 2 && !read_sdram_ack)begin
+    end
+    
+    if (read_sdram_req_cmd && !read_sdram_ack)begin
+      sdram_rd_burst <= 2;
+      sdram_rw_addr <= rdwr_sdram_addr;
       if         (sdram_step == 0) begin
         sdram_step <= 1;
-        sdram_rw_addr <= rdwr_sdram_addr;
-        sdram_rd_burst <= 2;
         sdram_rd_req <= 1;
       end else if(sdram_step == 1) begin
         if(sdram_rd_ack)begin
@@ -712,21 +685,26 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
         sdram_step <= 0;
         read_sdram_ack <= 1;
       end
-    end else if (cmd == 3 && !write_single_sdram_ack)begin
+    end
+
+    if(sdram_step[0])begin
+      sdram_din <= write_single_sdram_data[15:0];
+      sdram_mask <= write_single_sdram_mask[1:0];
+    end else begin
+      sdram_din <= write_single_sdram_data[31:16];
+      sdram_mask <= write_single_sdram_mask[3:2];
+    end
+    if (write_single_sdram_req_cmd && !write_single_sdram_ack)begin
+      sdram_rw_addr <= rdwr_sdram_addr;
+      sdram_wr_burst <= 2;
       if         (sdram_step==0)begin
         sdram_step <= 1;
-        sdram_rw_addr <= rdwr_sdram_addr;
-        sdram_wr_burst <= 2;
         sdram_wr_req <= 1;
       end else if(sdram_step==1)begin
         if(sdram_wr_ack)begin
           sdram_step <= 2;
-          sdram_din <= write_single_sdram_data[15:0];
-          sdram_mask <= write_single_sdram_mask[1:0];
         end
       end else if(sdram_step==2)begin
-        sdram_din <= write_single_sdram_data[31:16];
-        sdram_mask <= write_single_sdram_mask[3:2];
         sdram_wr_req <= 0;
         sdram_step <= 0;
         write_single_sdram_ack <= 1;
@@ -734,17 +712,17 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
     end
     
     if(!read_line_req_buff && read_line_ack)begin
-      cmd <= 0;
+      read_line_req_cmd <= 0;
       read_line_ack <= 0;
     end
 
     if(!read_sdram_req_buff && read_sdram_ack)begin
-      cmd <= 0;
+      read_sdram_req_cmd <= 0;
       read_sdram_ack <= 0;
     end
 
     if(!write_single_sdram_req_buff && write_single_sdram_ack)begin
-      cmd <= 0;
+      write_single_sdram_req_cmd <= 0;
       write_single_sdram_ack <= 0;
     end
     
