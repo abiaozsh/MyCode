@@ -28,11 +28,13 @@ void mfree(int size){
 void flushCache(void* addr){
   int tmp = (int)addr;
   tmp = tmp >> 10;
-  cli();
+  int status = sti(0);
   IOWR(CACHE_CTL, 0, 0x80000000 | tmp);
   volatile int a = *((int*)addr);
   IOWR(CACHE_CTL, 0, 0);
-  sti();
+  if(status){
+    sti(1);
+  }
 }
 
 void memcpy(void *dst, const void *src, int len){

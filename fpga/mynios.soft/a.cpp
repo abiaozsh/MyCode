@@ -1,6 +1,6 @@
 #include "inc/io.h"
 #include "inc/system.h"
-#include "inc/noirq.h"
+#include "inc/irq.h"
 #include "inc/system.cpp"
 #include "inc/uart.cpp"
 #include "inc/uartio.cpp"

@@ -1,5 +1,14 @@
 #pattern                     @ text format @ ins format 0:i 1:r 2:j @    cmd
 
+#pushfp r4,r5,r0
+#pushfp r6,r7,r0
+#nop?
+#setmux 1 ;2,3 add h l  mul h l
+#fetchresult r2
+#setmux 1 ;2,3 add h l  mul h l
+#fetchresult r3
+
+
 #00 cmp1
 #ext                                                                   00000
 cmpgei reg, reg, ins         @          10 @                      0 @  00100
@@ -38,7 +47,7 @@ xor reg, reg, reg            @          30 @                      1 @  01101
 mul reg, reg, reg            @          30 @                      1 @  10001
 sub reg, reg, reg            @          30 @                      1 @  10101
 nor reg, reg, reg            @          30 @                      1 @  11001
-#                                                                      11101
+pushfp reg, reg, reg         @          30 @                      1 @  11101 @
 
 #10 mem
 ldw reg, regins              @          11 @                      0 @  00010
@@ -51,17 +60,17 @@ stb reg, regins              @          11 @                      0 @  11010
 sth reg, regins              @          11 @                      0 @  11110
 
 
-#10 shift1
+#10 shift1 ext
 slli reg, reg, ins            @         31 @                      1 @  00010
 srai reg, reg, ins            @         31 @                      1 @  00110
 srli reg, reg, ins            @         31 @                      1 @  01010
 roli reg, reg, ins            @         31 @                      1 @  01110
-#                                                                      10010
+#selectmux ins                                                         10010
 #                                                                      10110
 #                                                                      11010
 #                                                                      11110
 
-#11 shift2
+#11 shift2 ext
 sll reg, reg, reg            @          30 @                      1 @  00011
 sra reg, reg, reg            @          30 @                      1 @  00111
 srl reg, reg, reg            @          30 @                      1 @  01011
@@ -85,11 +94,12 @@ bltu reg, reg, sym           @          15 @                      0 @  11011
 
 #11 pc ext
 callr reg                    @          50 @                      3 @  00011
-jmp reg                      @          51 @                      3 @  00111
-setirq reg, reg, ins         @          52 @                      3 @  01011
+jmp reg                      @          51 @                      3 @  00111 @
+ret                          @          55 @                      3 @  00111 @
+setirq reg, reg, reg, ins    @          52 @                      3 @  01011 @ addr, flg, result, isSetAddr
 stoff reg                    @          53 @                      3 @  01111
 hlt ins                      @          54 @                      3 @  10011
-ret                          @          55 @                      3 @  10111
+#fetchresult reg, ins
 reti                         @          56 @                      3 @  11011
 #irqcall                     @          57 @                      3 @  11111
 

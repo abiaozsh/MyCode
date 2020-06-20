@@ -61,6 +61,7 @@ public class Base
 		public Op op1;
 		public Op op2;
 		public Op op3;
+		public Op op4;
 		public static Line match(string line, string filename)
 		{
 			Line l = new Line();
@@ -126,7 +127,14 @@ public class Base
 				{
 					throw new Exception("err" + line);
 				}
-				if (temparr.Length == 3)
+				if (temparr.Length == 4)
+				{
+					l.op1 = Op.match(temparr[0].Trim(), filename);
+					l.op2 = Op.match(temparr[1].Trim(), filename);
+					l.op3 = Op.match(temparr[2].Trim(), filename);
+					l.op4 = Op.match(temparr[3].Trim(), filename);
+				}
+				else if (temparr.Length == 3)
 				{
 					l.op1 = Op.match(temparr[0].Trim(), filename);
 					l.op2 = Op.match(temparr[1].Trim(), filename);
@@ -353,6 +361,7 @@ public class Base
 		public string op1;
 		public string op2;
 		public string op3;
+		public string op4;
 		public int textformat;
 		public int insformat;
 		public int cmd;
@@ -371,6 +380,13 @@ public class Base
 				scmd = text.Substring(0, pos1);
 				string temp = text.Substring(pos1);
 				temparr = temp.Split(',');
+			}
+			if (temparr.Length == 4)
+			{
+				op1 = temparr[0].Trim();
+				op2 = temparr[1].Trim();
+				op3 = temparr[2].Trim();
+				op4 = temparr[3].Trim();
 			}
 			if (temparr.Length == 3)
 			{
@@ -477,6 +493,26 @@ public class Base
 					return false;
 				}
 			}
+
+			if (this.op4 != null)
+			{
+				if (line.op4 == null)
+				{
+					return false;
+				}
+				if (this.op4 != line.op4.type.ToString())
+				{
+					return false;
+				}
+			}
+			else
+			{
+				if (line.op4 != null)
+				{
+					return false;
+				}
+			}
+
 
 			return true;
 		}

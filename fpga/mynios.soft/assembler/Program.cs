@@ -17,7 +17,7 @@ namespace Assembler
 			string filein;
 			string fileout;
 			string filetemp;
-			string test = "dos";
+			string test = "e";
 			string type = "dos";
 			string fileoutBin;
 			if (args.Length > 0 && !String.IsNullOrEmpty(args[0]))
@@ -26,7 +26,7 @@ namespace Assembler
 			}
 			else
 			{
-				filein = test + ".s";
+				filein = test + ".s,inc\\irq.asm";
 			}
 			if (args.Length > 1 && !String.IsNullOrEmpty(args[1]))
 			{
@@ -627,10 +627,12 @@ namespace Assembler
 							ins.CMD3 = 1;
 							break;
 
-						case 52://setirq reg, reg, ins
+						case 52://setirq reg, reg, reg, ins   @ addr, flg, result, isSetAddr
 							ins.bitregA = line.op1.reg.Value;
+							ins.bitregB = line.op2.reg.Value;
+							ins.bitregC = line.op3.reg.Value;
 							ins.CMD3 = 2;
-							ins.IMM6 = line.op3.ins.Value;
+							ins.IMM6 = line.op4.ins.Value;
 							break;
 
 						case 53://stoff reg

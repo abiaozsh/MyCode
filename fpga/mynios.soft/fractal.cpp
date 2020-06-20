@@ -1,11 +1,24 @@
 //中断向量
 //浮点数
+/*
+push A
+push B
+pushadd B
+pushsub B
+
+getHmul
+getLmul
+getHadd
+getLadd
+getHsub
+getLsub
+*/
 
 //#define DEBUG
 
 #include "inc/io.h"
 #include "inc/system.h"
-#include "inc/noirq.h"
+#include "inc/irq.h"
 #include "inc/system.cpp"
 //#include "inc/uart.cpp"
 //#include "inc/uartio.cpp"
@@ -87,17 +100,6 @@ void f(int wid, int hei, double viswid, double vishei, double visx, double visy,
 				ImaZ = 2 * ImaZ * ReaZ + ImaC;
 				ReaZ = ReaZ2 - ImaZ2 + ReaC;
 			}
-          //for(int j=0;j<16;j++){
-          //  for(int i=0;i<16;i++){
-          //    short* addr = (short*)(&((short*)(buffAddr))[x+i+((y+j)<<10)]);
-          //    if(i==j){
-          //      *addr = 0;//at 2Mbyte
-          //    }else{
-          //      *addr = getpixel(btn1?0xFF:0, btn2?0xFF:0, btn3?0xFF:0);//at 2Mbyte
-          //    }
-          //    flushCache(addr);
-          //  }
-          //}
       short* addr = (short*)(&((short*)(buffAddr))[i+(j<<10)]);
       *addr = getpixel(0, 0, clr * n);//at 2Mbyte
       flushCache(addr);

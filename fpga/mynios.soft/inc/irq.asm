@@ -1,7 +1,5 @@
 irqPtr:
 	.zero	4
-irqStatus:
-	.zero	4
 irqCall:
 	addi	sp, sp, -100
 	stw	ra ,0(sp) 
@@ -63,25 +61,13 @@ irqCall:
 	reti
 
 setIrq:
-  stw r5, %gprel(irqStatus)(gp)
   stw r4, %gprel(irqPtr)(gp)
   movhi r2, %hiadj(irqCall)
   addi r2, r2, %lo(irqCall)
-  beq r5, r0, exit_setIrq
-  setirq r2, r2, 3
+  setirq r2, r5, r0, 1
 exit_setIrq:
   ret
 
 sti:
-  ldw r1, %gprel(irqStatus)(gp)
-  beq r1, r0, exit_sti
-  setirq r0, r0, 1
-exit_sti:
-  ret
-
-cli:
-  ldw r1, %gprel(irqStatus)(gp)
-  beq r1, r0, exit_cli
-  setirq r0, r0, 0
-exit_cli:
+  setirq r0, r4, r2, 0
   ret

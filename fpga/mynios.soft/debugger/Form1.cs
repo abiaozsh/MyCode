@@ -548,87 +548,48 @@ namespace WindowsFormsApplication1
 			}
 		}
 
-		uint[] data0 = new uint[256];
+		uint[] data;
 
 		private void button7_Click(object sender, EventArgs e)
 		{
-			/*
-				this.getmem(1024 * 0, null);
-				this.getmem(1024 * 1, null);
-				this.getmem(1024 * 2, null);
-				this.getmem(1024 * 3, null);
-
-				Random r = new Random();
-				for (uint i = 0; i < 256; i++)
+			clearBuff();
+			int baseAddr = 0;
+			for (int i = 0; i < data.Length; i += 64)
+			{
+				bool error = false;
+				string sretry = "";
+				for (int retry = 0; retry < 5; retry++)
 				{
-					data0[i] = (uint)r.Next();
-					this.setmem(i * 4, data0[i]);//page0
-				}
-
-				int cachelife0 = getCacheInfoVal(0);//life 0
-
-				for (uint i = 0; i < cachelife0; i++)
-				{
-					this.getmem(1028, null);//page1
-				}
-				cachelife0 = getCacheInfoVal(0);//life 0
-
-				//if (cachelife0 != 0) MessageBox.Show("err1");
-
-				this.getmem(1024 * 4, null);//*******************
-
-				int cacheaddr0 = getCacheInfoVal(8);//addr 0
-
-				//if (cacheaddr0 != 4) MessageBox.Show("err2");
-				for (uint i = 0; i < 256; i++)
-				{
-					uint val = this.getmem((int)(i * 4), null);
-					if (val != data0[i])
+					error = false;
+					//:04001600 1005003a 97
+					for (int j = i; j < i + 64 && j < data.Length; j++)
 					{
-						MessageBox.Show("err3");
+						uint b = getmem(baseAddr + j * 4, null);
+						if (data[j] != b)
+						{
+							error = true;
+							break;
+						}
+					}
+					if (!error)
+					{
 						break;
 					}
+					else
+					{
+						portWrite((byte)(0x00), 0);
+						readFromPort(10);
+						sretry = "retry";
+					}
 				}
-
-				int cachelife2 = getCacheInfoVal(4);//life 0
-
-				for (uint i = 0; i < cachelife2; i++)
+				if (error)
 				{
-					this.getmem(1024 * 4, null);//page1
+					MessageBox.Show("err");
+					break;
 				}
-
-				this.getmem(1024 * 14, null);//page1
-				this.getmem(1024 * 15, null);//page1
-
-				int byteEnable = 1;
-				portWrite((byte)(0x28), (byte)byteEnable);
-				this.setmem(0, 0xFF);
-
-				byteEnable = 8;
-				portWrite((byte)(0x28), (byte)byteEnable);
-				this.setmem(4, 0xFF000000);
-
-				uint v1 = this.getmem(0, null);
-
-				uint v2 = this.getmem(4, null);
-
-				cachelife2 = getCacheInfoVal(6);
-				for (uint i = 0; i < cachelife2; i++)
-				{
-					this.getmem(1024 * 14, null);//page1
-				}
-				this.getmem(1024 * 22, null);//page1
-				this.getmem(1024 * 23, null);//page1
-
-				uint v3 = this.getmem(0, null);
-
-				uint v4 = this.getmem(4, null);
-
-
-				byteEnable = 15;
-				portWrite((byte)(0x28), (byte)byteEnable);
-				this.getstatus();
-				*/
+				this.Text = (i * 4).ToString() + sretry;
+				Application.DoEvents();
+			}
 
 
 			/*
@@ -753,32 +714,9 @@ namespace WindowsFormsApplication1
 
 			loadSym();
 
-			uint baseAddr = 0x02000000;
+			int baseAddr = 0x02000000;
 
-			portWrite((byte)(0x01), 1);//halt_uart
-
-			{
-				FileStream fs = new FileStream("out.hex", FileMode.Open, FileAccess.Read);
-				StreamReader sr = new StreamReader(fs);
-				String s = sr.ReadToEnd();
-				sr.Close();
-				fs.Close();
-
-				uint index = 0;
-				foreach (var item in s.Split('\n'))
-				{
-					if (item.Length == ":040016001005003a97".Length + 1)
-					{
-						//:04001600 1005003a 97
-						String data = item.Substring(9, 8);
-						setmem(baseAddr + index, Convert.ToUInt32(data, 16));
-						index += 4;
-						this.Text = index.ToString();
-						Application.DoEvents();
-					}
-				}
-			}
-
+			loadprog(baseAddr);
 
 			//      end else if (command == 8'h02) begin debug_reset_n<=data[0]; command_done<=1;
 
@@ -1033,75 +971,7 @@ struct dir_t {//directoryEntry
 
 			baseAddr = 0x00000000;
 
-			{
-				FileStream fs = new FileStream("out.hex", FileMode.Open, FileAccess.Read);
-				StreamReader sr = new StreamReader(fs);
-				String s = sr.ReadToEnd();
-				sr.Close();
-				fs.Close();
-
-				int index = 0;
-				uint[] data = new uint[s.Split('\n').Length];
-				foreach (var item in s.Split('\n'))
-				{
-					if (item.Length == ":040016001005003a97".Length + 1)
-					{
-						//:04001600 1005003a 97
-						String str = item.Substring(9, 8);
-						data[index] = Convert.ToUInt32(str, 16);
-						index++;
-					}
-				}
-				for (int i = 0; i < data.Length; i += 64)
-				{
-					bool error = false;
-					string sretry = "";
-					for (int retry = 0; retry < 5; retry++)
-					{
-						error = false;
-						//:04001600 1005003a 97
-						for (int j = i; j < i + 64 && j < data.Length; j++)
-						{
-							bool result = setmem((uint)(baseAddr + j * 4), data[j], true);
-							if (!result)
-							{
-								error = true;
-								break;
-							}
-						}
-						for (int j = i; j < i + 64 && j < data.Length; j++)
-						{
-							uint b = getmem(baseAddr + j * 4, null);
-							if (data[j] != b)
-							{
-								error = true;
-								break;
-							}
-						}
-						if (!error)
-						{
-							break;
-						}
-						else
-						{
-							portWrite((byte)(0x00), 0);
-							readFromPort(10);
-							sretry = "retry";
-						}
-					}
-					if (error)
-					{
-						MessageBox.Show("err");
-						break;
-					}
-					this.Text = (i * 4).ToString() + sretry;
-					Application.DoEvents();
-
-				}
-
-
-			}
-
+			loadprog(baseAddr);
 
 			//      end else if (command == 8'h02) begin debug_reset_n<=data[0]; command_done<=1;
 
@@ -1112,6 +982,75 @@ struct dir_t {//directoryEntry
 			{
 				portWrite((byte)(0x01), 0);
 			}
+		}
+		public void loadprog(int baseAddr)
+		{
+			FileStream fs = new FileStream("out.hex", FileMode.Open, FileAccess.Read);
+			StreamReader sr = new StreamReader(fs);
+			String s = sr.ReadToEnd();
+			sr.Close();
+			fs.Close();
+
+			int index = 0;
+			uint[] data = new uint[s.Split('\n').Length];
+			foreach (var item in s.Split('\n'))
+			{
+				if (item.Length == ":040016001005003a97".Length + 1)
+				{
+					//:04001600 1005003a 97
+					String str = item.Substring(9, 8);
+					data[index] = Convert.ToUInt32(str, 16);
+					index++;
+				}
+			}
+			for (int i = 0; i < data.Length; i += 64)
+			{
+				bool error = false;
+				string sretry = "";
+				for (int retry = 0; retry < 5; retry++)
+				{
+					error = false;
+					//:04001600 1005003a 97
+					for (int j = i; j < i + 64 && j < data.Length; j++)
+					{
+						bool result = setmem((uint)(baseAddr + j * 4), data[j], true);
+						if (!result)
+						{
+							error = true;
+							break;
+						}
+					}
+					for (int j = i; j < i + 64 && j < data.Length; j++)
+					{
+						uint b = getmem(baseAddr + j * 4, null);
+						if (data[j] != b)
+						{
+							error = true;
+							break;
+						}
+					}
+					if (!error)
+					{
+						break;
+					}
+					else
+					{
+						portWrite((byte)(0x00), 0);
+						readFromPort(10);
+						sretry = "retry";
+					}
+				}
+				if (error)
+				{
+					MessageBox.Show("err");
+					break;
+				}
+				this.Text = (i * 4).ToString() + sretry;
+				Application.DoEvents();
+
+			}
+
+
 		}
 
 		private void trackBar1_Scroll(object sender, EventArgs e)
@@ -1147,56 +1086,63 @@ struct dir_t {//directoryEntry
 
 		private void button15_Click(object sender, EventArgs e)
 		{
-			//portWrite((byte)(0x01), 1);
-			//for (int j = 0; j < 768; j++)
-			//{
-			//	for (int i = 0; i < 1024; i += 2)
-			//	{
-			//		setmem((uint)(0x00200000 + i * 2 + j * 2048), 0);//2M
-			//	}
-			//	this.Text = "" + j;
-			//}
-			String s = "车";
-			byte[] a = System.Text.Encoding.GetEncoding("GB2312").GetBytes(s);
-			int i = a[0] - 0xa0;
-			int j = a[1] - 0xa0;
-
-			FileStream fs = new FileStream(@"e:\fpgaproj\mynios.soft\HZK16", FileMode.Open, FileAccess.Read);
-			Bitmap bmp = new Bitmap(16, 16);
-			fs.Seek((94 * (i - 1) + (j - 1)) * 32, SeekOrigin.Begin);
-			byte[] mat = new byte[32];
-			fs.Read(mat, 0, 32);
-			for (j = 0; j < 16; j++)
+			data = new uint[64 * 1024];
+			Random r = new Random();
+			for (int i = 0; i < data.Length; i++)
 			{
-				for (i = 0; i < 16; i++)
-				{
-					if ((mat[j * 2 + i / 8] & (0x80 >> (i & 7))) != 0)
-					{/*测试为1的位则显示*/
-						bmp.SetPixel(i, j, Color.White);
-					}
-					else
-					{
-						bmp.SetPixel(i, j, Color.Black);
-					}
-				}
+				data[i] = (uint)r.Next();
 			}
-			bmp.Save(@"D:\fpgaproj\hzk\tmp.bmp");
-			fs.Close();
 
 		}
 
 		private void button14_Click(object sender, EventArgs e)
 		{
-			portWrite((byte)(0x01), 1);
-			for (int j = 0; j < 768; j++)
+			int baseAddr = 0;
+			for (int i = 0; i < data.Length; i += 64)
 			{
-				for (int i = 0; i < 1024; i += 2)
+				bool error = false;
+				string sretry = "";
+				for (int retry = 0; retry < 5; retry++)
 				{
-					setmem((uint)(0x00400000 + i * 2 + j * 2048), 0);//4M
+					error = false;
+					//:04001600 1005003a 97
+					for (int j = i; j < i + 64 && j < data.Length; j++)
+					{
+						bool result = setmem((uint)(baseAddr + j * 4), data[j], true);
+						if (!result)
+						{
+							error = true;
+							break;
+						}
+					}
+					for (int j = i; j < i + 64 && j < data.Length; j++)
+					{
+						uint b = getmem(baseAddr + j * 4, null);
+						if (data[j] != b)
+						{
+							error = true;
+							break;
+						}
+					}
+					if (!error)
+					{
+						break;
+					}
+					else
+					{
+						portWrite((byte)(0x00), 0);
+						readFromPort(10);
+						sretry = "retry";
+					}
 				}
-				this.Text = "" + j;
+				if (error)
+				{
+					MessageBox.Show("err");
+					break;
+				}
+				this.Text = (i * 4).ToString() + sretry;
+				Application.DoEvents();
 			}
-
 		}
 
 		private void button16_Click(object sender, EventArgs e)

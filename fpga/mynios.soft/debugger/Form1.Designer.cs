@@ -258,7 +258,7 @@ namespace WindowsFormsApplication1
 			// 
 			// button13
 			// 
-			this.button13.Location = new System.Drawing.Point(958, 38);
+			this.button13.Location = new System.Drawing.Point(1013, 35);
 			this.button13.Name = "button13";
 			this.button13.Size = new System.Drawing.Size(79, 23);
 			this.button13.TabIndex = 33;
@@ -306,7 +306,7 @@ namespace WindowsFormsApplication1
 			this.button14.Name = "button14";
 			this.button14.Size = new System.Drawing.Size(49, 23);
 			this.button14.TabIndex = 38;
-			this.button14.Text = "clear1";
+			this.button14.Text = "write";
 			this.button14.UseVisualStyleBackColor = true;
 			this.button14.Click += new System.EventHandler(this.button14_Click);
 			// 
@@ -316,7 +316,7 @@ namespace WindowsFormsApplication1
 			this.button15.Name = "button15";
 			this.button15.Size = new System.Drawing.Size(49, 23);
 			this.button15.TabIndex = 37;
-			this.button15.Text = "font";
+			this.button15.Text = "rnd";
 			this.button15.UseVisualStyleBackColor = true;
 			this.button15.Click += new System.EventHandler(this.button15_Click);
 			// 
