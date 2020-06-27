@@ -20,3 +20,4 @@
 #define VGA_CURSOR_X     0x2000
 #define VGA_CURSOR_Y     0x2800
 #define HID              0x02070000
+#define RND              0x02080000

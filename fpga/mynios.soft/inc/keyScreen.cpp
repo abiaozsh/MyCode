@@ -429,7 +429,7 @@ int getc(){
 
   while(1){
     int hid_value = IORD(HID, 0);
-    if((hid_value & 0xFF000000) == 0x01000000){
+    if((hid_value & 0x0F000000) == 0x01000000){
       //key
       if(((hid_value & 0x00008000) != 0x00008000) && ((hid_value & 0x00800000) != 0x00800000)){
         int tmp = PS2Keymap_US[hid_value & 0xFF];

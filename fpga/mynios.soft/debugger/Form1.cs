@@ -54,6 +54,7 @@ namespace WindowsFormsApplication1
 			this.textBox3.Enabled = true;
 			this.button7.Enabled = true;
 			this.button15.Enabled = true;
+			this.button13.Enabled = true;
 			loadSym();
 		}
 		private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -495,18 +496,16 @@ namespace WindowsFormsApplication1
 
 		private void button13_Click(object sender, EventArgs e)
 		{
-			Bitmap b2 = new Bitmap(20, 20);
-			for (int f = 0; f < 16; f++)
-			{
-				Bitmap b = new Bitmap(@"e:\MyCode.github\Other\Tetris_html\" + f + ".bmp");
-				Graphics g = Graphics.FromImage(b2);
-				g.DrawImage(b, new Rectangle(0, 0, 1024, 768), 0, 0, b.Width, b.Height, GraphicsUnit.Pixel, null);
-				g.Dispose();
+            String[] files = Directory.GetFiles(@"E:\fpgaproj\mine.new\", "*.bmp");
 
-				FileStream fs = new FileStream(@"E:\temp\tetris\" + f + ".img", FileMode.CreateNew, FileAccess.Write);
-				for (int j = 0; j < 20; j++)
+			foreach (var item in files)
+			{
+				Bitmap b = new Bitmap(item);
+
+				FileStream fs = new FileStream(item.Replace(".bmp",".img"), FileMode.CreateNew, FileAccess.Write);
+				for (int j = 0; j < b.Height; j++)
 				{
-					for (int i = 0; i < 20; i++)
+                    for (int i = 0; i < b.Width; i++)
 					{
 						uint val = getpixel(b.GetPixel(i, j));
 						fs.WriteByte((byte)val);

@@ -339,13 +339,15 @@ int16_t read_movement_y(int16_t status,int16_t y) {
 #define PORT_STR_ON  DDRC |=  _BV(3)
 #define PORT_STR_OFF DDRC &= ~_BV(3)
 
-void SendByte(uint8_t data){
+uint8_t SendByte(uint8_t data){
+  uint8_t p = 0;
   for(uint8_t i=0;i<8;i++)
   {
     delay(1);
     if(data&1)
     {
       PORT_DAT_ON;
+      p = p ^ 1;
     }
     else
     {
@@ -357,6 +359,7 @@ void SendByte(uint8_t data){
     delay(1);
     PORT_CLK_OFF; //shift clock down
   }
+  return p;
 }
 
 int main()
@@ -435,10 +438,12 @@ int main()
             SerialSend(' ');    printBin(key_data[2]);
             SerialSend(' ');
           }else{
-            SendByte(key_data[key_idx-1]);
-            SendByte(key_data[key_idx-2]);
-            SendByte(key_data[key_idx-3]);
-            SendByte(1);
+            uint8_t p = 0;
+            p = p ^ SendByte(key_data[key_idx-1]);
+            p = p ^ SendByte(key_data[key_idx-2]);
+            p = p ^ SendByte(key_data[key_idx-3]);
+            p = p ^ 1;
+            SendByte((p<<4)|1);
             delay(1);
             PORT_STR_ON ;
             delay(1);
@@ -480,10 +485,11 @@ int main()
         SerialSend(',');
         SendInt(y); // Y Movement Data
       }else{
-        SendByte(x);
-        SendByte(y);
-        SendByte(mouse_data[1]);
-        SendByte(2);
+        uint8_t p = 0;
+        p = p ^ SendByte(x);
+        p = p ^ SendByte(y);
+        p = p ^ SendByte(mouse_data[1]);
+        SendByte((p<<4) | 0);
         delay(1);
         PORT_STR_ON ;
         delay(1);

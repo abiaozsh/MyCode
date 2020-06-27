@@ -131,12 +131,17 @@ int main(){
 
   for(int j=0;j<32;j++){
     for(int i=0;i<32;i++){
-      if(i>j){
-        IOWR(VGA, (VGA_CURSOR_DATA+i+j*32), 0x00FF);
-      }else if(i<j){
-        IOWR(VGA, (VGA_CURSOR_DATA+i+j*32), 0xFF00);
-      }else{
-        IOWR(VGA, (VGA_CURSOR_DATA+i+j*32), 0x0001);
+      if(j<16 && i < 16){
+        if(i>j){
+          IOWR(VGA, (VGA_CURSOR_DATA+i+j*32), 0x00FF);
+        }else if(i<j){
+          IOWR(VGA, (VGA_CURSOR_DATA+i+j*32), 0xFF00);
+        }else{
+          IOWR(VGA, (VGA_CURSOR_DATA+i+j*32), 0x0001);
+        }
+      }
+      else{
+        IOWR(VGA, (VGA_CURSOR_DATA+i+j*32), 0x0000);
       }
     }
   }
@@ -147,7 +152,7 @@ int main(){
   while(1){
     if(hid_arrived){
       hid_arrived = 0;
-      if((hid_value & 0xFF000000) == 0x01000000){
+      if((hid_value & 0x0F000000) == 0x01000000){
         //key
         if(((hid_value & 0x00008000) != 0x00008000) && ((hid_value & 0x00800000) != 0x00800000)){
           int tmp = hid_value & 0xFF;
