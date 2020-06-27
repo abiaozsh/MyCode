@@ -124,27 +124,26 @@ module system (
     .debugin32  (sdrambus_debug32)
       
   );
-  reg [31:0] avm_m0_readdata;
-  reg        avm_m0_waitrequest;
-  always @ (*) begin
-    if         (sdrambus_cs )begin avm_m0_waitrequest <= sdrambus_waitrequest ; avm_m0_readdata <= sdrambus_readdata ;//TODO
-    end else if(mainSRAM_cs )begin avm_m0_waitrequest <= mainSRAM_waitrequest ; avm_m0_readdata <= mainSRAM_readdata ;
-    end else if(cacheCtrl_cs)begin avm_m0_waitrequest <= 0                    ; avm_m0_readdata <= 0                 ;
-    end else if(irq_Ctrl_cs )begin avm_m0_waitrequest <= 0                    ; avm_m0_readdata <= irq_Ctrl_readdata ;
-    end else if(mytimer_cs  )begin avm_m0_waitrequest <= mytimer_waitrequest  ; avm_m0_readdata <= mytimer_readdata  ;
-    end else if(myuart_cs   )begin avm_m0_waitrequest <= myuart_waitrequest   ; avm_m0_readdata <= myuart_readdata   ;
-    end else if(softspi_cs  )begin avm_m0_waitrequest <= softspi_waitrequest  ; avm_m0_readdata <= softspi_readdata  ;
-    end else if(vga_cs      )begin avm_m0_waitrequest <= vga_waitrequest      ; avm_m0_readdata <= 0                 ;
-    end else if(hid_cs      )begin avm_m0_waitrequest <= 0                    ; avm_m0_readdata <= hid_readdata      ;
-    
-    
-    end else                 begin avm_m0_waitrequest <= 0;                     avm_m0_readdata <= 0;
-    end
-  end
+
+  wire [31:0] avm_m0_readdata;
+  wire        avm_m0_waitrequest;
+  assign avm_m0_waitrequest = (sdrambus_cs ? sdrambus_waitrequest : 1'b0) |
+                              (mainSRAM_cs ? mainSRAM_waitrequest : 1'b0) |
+                              (mytimer_cs  ? mytimer_waitrequest  : 1'b0) |
+                              (myuart_cs   ? myuart_waitrequest   : 1'b0) |
+                              (softspi_cs  ? softspi_waitrequest  : 1'b0) |
+                              (vga_cs      ? vga_waitrequest      : 1'b0);
   
   
-  
-  
+  assign avm_m0_readdata =  (sdrambus_cs ? sdrambus_readdata : 32'b0) |
+                            (mainSRAM_cs ? mainSRAM_readdata : 32'b0) |
+                            (irq_Ctrl_cs ? irq_Ctrl_readdata : 32'b0) |
+                            (mytimer_cs  ? mytimer_readdata  : 32'b0) |
+                            (myuart_cs   ? myuart_readdata   : 32'b0) |
+                            (softspi_cs  ? softspi_readdata  : 32'b0) |
+                            (hid_cs      ? hid_readdata      : 32'b0) |
+                            (rnd_cs      ? rnd_readdata      : 32'b0);
+
   
   
   
@@ -560,6 +559,11 @@ assign debug8 = vga_debug;
   end
   
   wire [31:0] hid_readdata = arrived ? hid_data : 0;
+  wire pCheckOk = (hid_data[0] ^  hid_data[1] ^  hid_data[2] ^  hid_data[3] ^  hid_data[4] ^  hid_data[5] ^  hid_data[6] ^  hid_data[7] ^ 
+                   hid_data[8] ^  hid_data[9] ^ hid_data[10] ^ hid_data[11] ^ hid_data[12] ^ hid_data[13] ^ hid_data[14] ^ hid_data[15] ^ 
+                  hid_data[16] ^ hid_data[17] ^ hid_data[18] ^ hid_data[19] ^ hid_data[20] ^ hid_data[21] ^ hid_data[22] ^ hid_data[23] ^ 
+                  hid_data[24]) == hid_data[28];
+  
   reg arrived;
   reg hid_str_buff1_clk;
   reg hid_str_buff2_clk;
@@ -577,7 +581,7 @@ assign debug8 = vga_debug;
       
       hid_str_buff1_clk <= hid_str;
       hid_str_buff2_clk <= hid_str_buff1_clk;
-      if(hid_str_buff1_clk && !hid_str_buff2_clk)begin
+      if(hid_str_buff1_clk && !hid_str_buff2_clk && pCheckOk)begin
         arrived <= 1;
       end
 
@@ -611,5 +615,49 @@ assign debug8 = vga_debug;
   end
 
 
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   
+  wire rnd_cs = avm_m0_address[31:16] == 16'h0208;
+
+  wire [31:0] rnd_readdata = {31'b0,a^b};
+
+  wire a;
+  ringOscillator ro_a(
+    .enable(reset_n),
+    .ro_out(a)
+  );
+
+  wire b;
+  ringOscillator ro_b(
+    .enable(reset_n),
+    .ro_out(b)
+  );
+
+endmodule
+
+
+module ringOscillator(
+  input enable,
+  output ro_out
+);
+//(* DONT_TOUCH = "1"*) 
+wire      notgate_in/* synthesis syn_keep=1 */;
+//(* DONT_TOUCH = "1"*) 
+wire[4:0] notgate_out/* synthesis syn_keep=1 */;
+
+and u1(notgate_in, notgate_out[4], enable);
+
+not u2(notgate_out[0], notgate_in);
+
+not u3(notgate_out[1], notgate_out[0]);
+
+not u4(notgate_out[2], notgate_out[1]);
+
+not u5(notgate_out[3], notgate_out[2]);
+
+not u6(notgate_out[4], notgate_out[3]);
+
+assign ro_out = notgate_out[4];
+
+
 endmodule
