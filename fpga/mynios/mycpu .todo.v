@@ -125,7 +125,7 @@ always @(posedge clk or negedge reset_n) begin
     debug_step<=0;
     debug_readmem_step<=0;
 
-    halt_uart<=0;///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    halt_uart<=1;
     debug_read<=0;
     debug_write<=0;
     debug_reset_n<=1;
@@ -144,47 +144,58 @@ always @(posedge clk or negedge reset_n) begin
         command_done<=0;
       end
     end else begin//command_done==0
-      case(command)
-      8'h00 : begin end
-      8'h01 : begin halt_uart<=data[0]; command_done<=1; end
-      8'h02 : begin debug_reset_n<=data[0]; command_done<=1; end
-      8'h03 : begin debug_step<=~debug_step; command_done<=1; end
-      8'h04 : begin uart_send<=1; uart_data_in<=accessTime[ 7: 0]; command_done<=1; end
-      8'h05 : begin uart_send<=1; uart_data_in<=accessTime[15: 8]; command_done<=1; end
-      8'h06 : begin uart_send<=1; uart_data_in<=data; command_done<=1; end
-      8'h10 : begin uart_send<=1; uart_data_in<=debug_data[ 7: 0]; command_done<=1; end
-      8'h11 : begin uart_send<=1; uart_data_in<=debug_data[15: 8]; command_done<=1; end
-      8'h12 : begin uart_send<=1; uart_data_in<=debug_data[23:16]; command_done<=1; end
-      8'h13 : begin uart_send<=1; uart_data_in<=debug_data[31:24]; command_done<=1; end
-      8'h14 : begin uart_send<=1; uart_data_in<=halt_cpu; command_done<=1; end
-      8'h15 : begin uart_send<=1; uart_data_in<=halt_uart; command_done<=1; end
-      8'h16 : begin uart_send<=1; uart_data_in<=avm_m0_waitrequest; command_done<=1; end
-      8'h17 : begin uart_send<=1; uart_data_in<={3'b0,irq_enable,3'b0,irq_req}; command_done<=1; end
-      //8'h18 : begin uart_send<=1; uart_data_in<=Cmd; command_done<=1; end
-      //8'h19 : begin uart_send<=1; uart_data_in<=Cmd3; command_done<=1; end
-      8'h20 : begin debug_address[ 7: 0] <= data; command_done<=1; end
-      8'h21 : begin debug_address[15: 8] <= data; command_done<=1; end
-      8'h22 : begin debug_address[23:16] <= data; command_done<=1; end
-      8'h23 : begin debug_address[31:24] <= data; command_done<=1; end
-      8'h24 : begin debug_writedata[ 7: 0] <= data; command_done<=1; end
-      8'h25 : begin debug_writedata[15: 8] <= data; command_done<=1; end
-      8'h26 : begin debug_writedata[23:16] <= data; command_done<=1; end
-      8'h27 : begin debug_writedata[31:24] <= data; command_done<=1; end
-      8'h28 : begin debug_byteenable <= data[3:0]; command_done<=1; end
-      8'h29 : begin cache_life_addr <= data[3:0]; command_done<=1; end
-      8'h2A : begin cacheAddrHigh_addr <= data[3:0]; command_done<=1; end
-      8'h60 : begin uart_send<=1; uart_data_in<=debugin32[ 7: 0]; command_done<=1; end
-      8'h61 : begin uart_send<=1; uart_data_in<=debugin32[15: 8]; command_done<=1; end
-      8'h62 : begin uart_send<=1; uart_data_in<=debugin32[23:16]; command_done<=1; end
-      8'h63 : begin uart_send<=1; uart_data_in<=debugin32[31:24]; command_done<=1; end
-      8'h64 : begin uart_send<=1; uart_data_in<=debug_flg; command_done<=1; end//debugin8
-      8'h68 : begin uart_send<=1; uart_data_in<=cache_life_data[ 7: 0]; command_done<=1; end
-      8'h69 : begin uart_send<=1; uart_data_in<=cache_life_data[15: 8]; command_done<=1; end
-      8'h6A : begin uart_send<=1; uart_data_in<=cacheAddrHigh_data[ 7: 0]; command_done<=1; end
-      8'h6B : begin uart_send<=1; uart_data_in<=cacheAddrHigh_data[15: 8]; command_done<=1; end
+      if          (command == 8'h00) begin
+
+      end else if (command == 8'h01) begin halt_uart<=data[0]; command_done<=1;
+
+      end else if (command == 8'h02) begin debug_reset_n<=data[0]; command_done<=1;
+
+      end else if (command == 8'h03) begin debug_step<=~debug_step; command_done<=1;
+
+      end else if (command == 8'h04) begin uart_send<=1; uart_data_in<=accessTime[ 7: 0]; command_done<=1;
+      end else if (command == 8'h05) begin uart_send<=1; uart_data_in<=accessTime[15: 8]; command_done<=1;
+
+      end else if (command == 8'h06) begin uart_send<=1; uart_data_in<=data; command_done<=1;
+
+      end else if (command == 8'h10) begin uart_send<=1; uart_data_in<=debug_data[ 7: 0]; command_done<=1;
+      end else if (command == 8'h11) begin uart_send<=1; uart_data_in<=debug_data[15: 8]; command_done<=1;
+      end else if (command == 8'h12) begin uart_send<=1; uart_data_in<=debug_data[23:16]; command_done<=1;
+      end else if (command == 8'h13) begin uart_send<=1; uart_data_in<=debug_data[31:24]; command_done<=1;
+      
+      end else if (command == 8'h14) begin uart_send<=1; uart_data_in<=halt_cpu; command_done<=1;
+      end else if (command == 8'h15) begin uart_send<=1; uart_data_in<=halt_uart; command_done<=1;
+      end else if (command == 8'h16) begin uart_send<=1; uart_data_in<=avm_m0_waitrequest; command_done<=1;
+      end else if (command == 8'h17) begin uart_send<=1; uart_data_in<={3'b0,irq_enable,3'b0,irq_req}; command_done<=1;
+      //end else if (command == 8'h18) begin uart_send<=1; uart_data_in<=Cmd; command_done<=1;
+      //end else if (command == 8'h19) begin uart_send<=1; uart_data_in<=Cmd3; command_done<=1;
+      
+      end else if (command == 8'h20) begin debug_address[ 7: 0] <= data; command_done<=1;
+      end else if (command == 8'h21) begin debug_address[15: 8] <= data; command_done<=1;
+      end else if (command == 8'h22) begin debug_address[23:16] <= data; command_done<=1;
+      end else if (command == 8'h23) begin debug_address[31:24] <= data; command_done<=1;
+
+      end else if (command == 8'h24) begin debug_writedata[ 7: 0] <= data; command_done<=1;
+      end else if (command == 8'h25) begin debug_writedata[15: 8] <= data; command_done<=1;
+      end else if (command == 8'h26) begin debug_writedata[23:16] <= data; command_done<=1;
+      end else if (command == 8'h27) begin debug_writedata[31:24] <= data; command_done<=1;
+
+      end else if (command == 8'h28) begin debug_byteenable <= data[3:0]; command_done<=1;
+      end else if (command == 8'h29) begin cache_life_addr <= data[3:0]; command_done<=1;
+      end else if (command == 8'h2A) begin cacheAddrHigh_addr <= data[3:0]; command_done<=1;
+      
+      end else if (command == 8'h60) begin uart_send<=1; uart_data_in<=debugin32[ 7: 0]; command_done<=1;
+      end else if (command == 8'h61) begin uart_send<=1; uart_data_in<=debugin32[15: 8]; command_done<=1;
+      end else if (command == 8'h62) begin uart_send<=1; uart_data_in<=debugin32[23:16]; command_done<=1;
+      end else if (command == 8'h63) begin uart_send<=1; uart_data_in<=debugin32[31:24]; command_done<=1;
+      end else if (command == 8'h64) begin uart_send<=1; uart_data_in<=debug_flg; command_done<=1;//debugin8
+
+      end else if (command == 8'h68) begin uart_send<=1; uart_data_in<=cache_life_data[ 7: 0]; command_done<=1;
+      end else if (command == 8'h69) begin uart_send<=1; uart_data_in<=cache_life_data[15: 8]; command_done<=1;
+      end else if (command == 8'h6A) begin uart_send<=1; uart_data_in<=cacheAddrHigh_data[ 7: 0]; command_done<=1;
+      end else if (command == 8'h6B) begin uart_send<=1; uart_data_in<=cacheAddrHigh_data[15: 8]; command_done<=1;
 
 
-      8'h30 : begin
+      end else if (command == 8'h30) begin
         if         (debug_readmem_step==0)begin
           debug_readmem_step <= 1;
           debug_read <= 1;
@@ -200,8 +211,7 @@ always @(posedge clk or negedge reset_n) begin
           end
         end
         
-      end
-      8'h31 : begin
+      end else if (command == 8'h31) begin
         if         (debug_readmem_step==0)begin
           debug_readmem_step <= 1;
           debug_write <= 1;
@@ -215,29 +225,24 @@ always @(posedge clk or negedge reset_n) begin
             command_done <= 1;
           end
         end
-      end
-      8'h40 : begin debug_data<=irq_addr; command_done<=1; end
-      8'h43 : begin debug_data<=pc; command_done<=1; end
-      8'h44 : begin debug_data<=private_offset; command_done<=1; end
-      8'h45 : begin debug_data<=pcResult; command_done<=1; end
+        
+      end else if (command == 8'h40) begin debug_data<=irq_addr; command_done<=1;
+      end else if (command == 8'h43) begin debug_data<=pc; command_done<=1;
+      end else if (command == 8'h44) begin debug_data<=private_offset; command_done<=1;
+      end else if (command == 8'h45) begin debug_data<=pcResult; command_done<=1;
       
-      8'h47 : begin
+      end else if (command == 8'h47) begin
         if         (debug_readmem_step==0)begin
           debug_readmem_step <= 1;
           debug_reg <= data[4:0];
         end else if(debug_readmem_step==1)begin
-          debug_readmem_step <= 2;
-        end else if(debug_readmem_step==2)begin
-          debug_data <= regDataOutA;
+          debug_data <= wire_regDataOutA;
           debug_readmem_step <= 0;
           command_done <= 1;
         end
-      end
-      default: begin
+      end else begin
         command_done<=1;
       end
-      endcase
-      
     end
 
 
@@ -249,22 +254,10 @@ end
   //cpu是32位处理器，指令集参考了NIOSII，总线参考了qsys总线，都有所修改
   //编译器是使用NIOSII的编译器，
   //这次的demo：从rom中的bios启动，加载位于sd卡上的操作系统
-  //从操作系统再启动3个应用程序：图片查看程序，俄罗斯方块，扫雷，汉字显示程序
+  //从操作系统再启动3个应用程序：图片查看程序，画图板，俄罗斯方块
   //开发板：勤谋的Altera EP4CE15 
   //外设：vga口，sd卡，键盘，鼠标，串口
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   //示波器前期准备
   
   //sd卡座拆分
@@ -339,6 +332,7 @@ end
   reg  [1:0] fetch_status;
   reg        debug_step_buff;
   reg        halt_accept;
+  reg        on_reg_read;
   always @(posedge clk or negedge cpu_reset_n) begin
     if (!cpu_reset_n) begin
       //stage1寄存器初始化
@@ -350,12 +344,14 @@ end
       pc<=32'h0200_0000;
       irq_req_buff <= 0;
       debug_step_buff <= 0;
+      on_reg_read <= 0;
     end else begin
       irq_req_buff = irq_req;
       
       //执行单元mem权限高于fetch
       //流水线里有pc，mem指令时，fetch关闭
       stage1_Valid <= 0;
+      on_reg_read <= 0;
       if(
         (stage1_Valid && (stage1_PCChange || stage1_MEMAccess)) ||
         (stage2_Valid && (stage2_PCChange || stage2_MEMAccess))
@@ -371,6 +367,7 @@ end
             if(irq_req_buff && irq_enable)begin
               //r29 ea Exception return address
               stage1_Valid <= 1;
+              on_reg_read <= 1;
               stage1_PCChange <= 1;
               stage1_MEMAccess <= 0;
               stage1_CMP <= 0;
@@ -379,7 +376,6 @@ end
               stage1_SHIFT2 <= 0;
               stage1_cmd_ext <= 1;
               stage1_cmd <= 3'b111;
-              stage1_regC <= 29;
               fetch_status <= 3;
             end else begin
               fetch_read <= 1;
@@ -393,32 +389,51 @@ end
             if(
                 (stage1_Valid && stage1_regChange != 5'b0 && (stage1_regChange == avm_m0_readdata_regA || stage1_regChange == avm_m0_readdata_regB)) || //regA regB
                 (stage2_Valid && stage2_regChange != 5'b0 && (stage2_regChange == avm_m0_readdata_regA || stage2_regChange == avm_m0_readdata_regB)) || //regA regB
-                (stage3_Valid && stage3_regChange) //regA regB
+                (stage3_Valid && stage3_regChange != 5'b0 && (stage3_regChange == avm_m0_readdata_regA || stage3_regChange == avm_m0_readdata_regB))    //regA regB
             )begin
               latch_readdata <= avm_m0_readdata;
               fetch_status <= 2;
             end else begin
+//
+//周期0 从总线上获取到源寄存器ID 普通指令fetch_read<=1       addr=read
+//周期1 wait1                                                            从寄存器获取到源1的值  从寄存器获取到源2的值	
+//周期2 wait2                                                            获取到计算结果
+//周期3 从总线上获取到源寄存器ID 普通指令fetch_read<=1   addr=read       写入结果 addr=write
+//                                                                       
+//                                                           从寄存器获取到源1的值  从寄存器获取到源2的值	
+//TODO：SRAM总线，多加一个等待周期 把regfile用双端口ram实现
+//A regA / debug read
+//B regB / write
               case(avm_m0_readdata[1:0])
               2'b00,2'b01,2'b10 : begin
+                if(halt)begin
                   fetch_status <= 0;
+                end else begin
+                  if(irq_req_buff && irq_enable)begin
+                    fetch_status <= 0;
+                  end else begin
+                    fetch_read <= 1;
+                    fetch_status <= 1;
+                  end
+                end
                 pc <= nextpc;
-              end
               2'b11 : begin
                 fetch_status <= 3;//update pc
               end
               endcase
               stage1_Valid <= 1;
+              on_reg_read <= 1;
             end
 
-            stage1_parity_check_error <= (
-              avm_m0_readdata[ 0] ^ avm_m0_readdata[ 1] ^ avm_m0_readdata[ 2] ^ avm_m0_readdata[ 3] ^
-              avm_m0_readdata[ 4] ^ avm_m0_readdata[ 5] ^ avm_m0_readdata[ 6] ^ avm_m0_readdata[ 7] ^
-              avm_m0_readdata[ 8] ^ avm_m0_readdata[ 9] ^ avm_m0_readdata[10] ^ avm_m0_readdata[11] ^
-              avm_m0_readdata[12] ^ avm_m0_readdata[13] ^ avm_m0_readdata[14] ^ avm_m0_readdata[15] ^
-              avm_m0_readdata[16] ^ avm_m0_readdata[17] ^ avm_m0_readdata[18] ^ avm_m0_readdata[19] ^
-              avm_m0_readdata[20] ^ avm_m0_readdata[21] ^ avm_m0_readdata[22] ^ avm_m0_readdata[23] ^
-              avm_m0_readdata[24] ^ avm_m0_readdata[25] ^ avm_m0_readdata[26] ^ avm_m0_readdata[27] ^
-              avm_m0_readdata[28] ^ avm_m0_readdata[29] ^ avm_m0_readdata[30]) == avm_m0_readdata[31];
+            stage1_parity_check_error <= 0;//(
+              //avm_m0_readdata[ 0] ^ avm_m0_readdata[ 1] ^ avm_m0_readdata[ 2] ^ avm_m0_readdata[ 3] ^
+              //avm_m0_readdata[ 4] ^ avm_m0_readdata[ 5] ^ avm_m0_readdata[ 6] ^ avm_m0_readdata[ 7] ^
+              //avm_m0_readdata[ 8] ^ avm_m0_readdata[ 9] ^ avm_m0_readdata[10] ^ avm_m0_readdata[11] ^
+              //avm_m0_readdata[12] ^ avm_m0_readdata[13] ^ avm_m0_readdata[14] ^ avm_m0_readdata[15] ^
+              //avm_m0_readdata[16] ^ avm_m0_readdata[17] ^ avm_m0_readdata[18] ^ avm_m0_readdata[19] ^
+              //avm_m0_readdata[20] ^ avm_m0_readdata[21] ^ avm_m0_readdata[22] ^ avm_m0_readdata[23] ^
+              //avm_m0_readdata[24] ^ avm_m0_readdata[25] ^ avm_m0_readdata[26] ^ avm_m0_readdata[27] ^
+              //avm_m0_readdata[28] ^ avm_m0_readdata[29] ^ avm_m0_readdata[30]) == avm_m0_readdata[31];
             
             stage1_PCChange <= 0;
             stage1_MEMAccess <= 0;
@@ -489,13 +504,20 @@ end
           if(
               (stage1_Valid && stage1_regChange != 5'b0 && (stage1_regChange == latch_readdata_regA || stage1_regChange == latch_readdata_regB)) || //regA regB
               (stage2_Valid && stage2_regChange != 5'b0 && (stage2_regChange == latch_readdata_regA || stage2_regChange == latch_readdata_regB)) || //regA regB
-              (stage3_Valid && stage3_regChange != 5'b0)    //regA regB
+              (stage3_Valid && stage3_regChange != 5'b0 && (stage3_regChange == latch_readdata_regA || stage3_regChange == latch_readdata_regB))    //regA regB
           )begin
             fetch_status <= 2;
           end else begin
-
             case(latch_readdata[1:0])
-            2'b00,2'b01,2'b10 : begin
+            2'b00 : begin
+              fetch_status <= 0;
+              pc <= nextpc;
+            end
+            2'b01 : begin
+              fetch_status <= 0;
+              pc <= nextpc;
+            end
+            2'b10 : begin
               fetch_status <= 0;
               pc <= nextpc;
             end
@@ -504,7 +526,7 @@ end
             end
             endcase
             stage1_Valid <= 1;
-
+            on_reg_read <= 1;
           end
 
         end else if(fetch_status==3)begin//wait rw
@@ -803,41 +825,6 @@ reg [31:0] stage2_res_nor;
     .datab  ( mulDataB ),
     .result ( mulResultSigned )
   );
-
-//5cycle
-//module mul (
-//	clock,
-//	dataa,
-//	datab,
-//	result);
-//
-//	input	  clock;
-//	input	[63:0]  dataa;
-//	input	[63:0]  datab;
-//	output	[63:0]  result;
-//
-//	wire [63:0] sub_wire0;
-//	wire [63:0] result = sub_wire0[63:0];
-
-
-//7cycle
-//module addsub (
-//	add_sub,
-//	clock,
-//	dataa,
-//	datab,
-//	result);
-//
-//	input	  add_sub;
-//	input	  clock;
-//	input	[63:0]  dataa;
-//	input	[63:0]  datab;
-//	output	[63:0]  result;
-//
-//	wire [63:0] sub_wire0;
-//	wire [63:0] result = sub_wire0[63:0];
-
-
   //////////////////////////////////////////////////////////
   
   //4，stage2 执行
@@ -871,7 +858,6 @@ reg [31:0] stage2_res_nor;
       irq_enable <= 0;
       halt_cpu <= 0;
     end else begin
-      byteenable <= 4'b1111;
       stage3_Valid <= 0;
       if(stage2_Valid)begin
         stage3_Valid <= 1;
@@ -946,18 +932,17 @@ reg [31:0] stage2_res_nor;
               stage3_regChange <= stage2_regC;//regResultC <= 1;// c is ra
             end
             //jmp reg                      @          51 @                      1 @  111111
-            //ret                          @          55 @                      1 @  111111         TODO 等效于 jmp reg 可以合并 腾出指令空间
             3'b001 : begin//ok
               pcResult <= stage2_regfileA;
             end
             //setirq reg, reg, ins         @          52 @                      1 @  111111
             3'b010 : begin//ok
-              irq_enable <= stage2_regfileB[0];
-              if(stage2_IMM6[0])begin
+              irq_enable <= stage2_IMM6[0];//rB ← rA & (0x0000 : IMM16)
+              if(stage2_IMM6[1])begin
                 irq_addr <= stage2_regfileA;
               end
               pcResult <= nextpc;
-              stage3_regResult <= {31'b0,irq_enable};//rC ← rA + rB
+              stage3_regResult[0] <= irq_enable;//rC ← rA + rB
               stage3_regChange <= stage2_regC;//regResultC <= 1;// c is ra
             end
             //stoff reg                    @          53 @                      1 @  111111
@@ -970,10 +955,9 @@ reg [31:0] stage2_res_nor;
               halt_cpu <= stage2_IMM6[0];
               pcResult <= nextpc;
             end
-            //fetch result
+            //ret                          @          55 @                      1 @  111111         TODO 等效于 jmp reg 可以合并 腾出指令空间
             3'b101 : begin
-              //stage3_regResult <= fdsafdsafdsa;
-              //stage3_regChange <= stage2_regC;//r29 ea Exception return address
+              pcResult <= stage2_regfileA;//regA == 31
             end
             //reti                         @          56 @                      1 @  111111
             3'b110 : begin//ok
@@ -986,7 +970,7 @@ reg [31:0] stage2_res_nor;
               pcResult <= irq_addr;
               irq_enable <= 0;
               stage3_regResult <= pc;
-              stage3_regChange <= stage2_regC;//r29 ea Exception return address
+              stage3_regChange <= 29;//r29 ea Exception return address
             end
             endcase
           end
@@ -1000,6 +984,7 @@ reg [31:0] stage2_res_nor;
               stage3_regResult <= avm_m0_readdata;
               if         (exec_step==0)begin
                 exec_step <= 1;
+                //exec_address <= {dsAddr[31:2],2'b0};//rB ← Mem32[rA + σ(IMM16)]
                 exec_read <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
@@ -1010,9 +995,10 @@ reg [31:0] stage2_res_nor;
             end
             //stw reg, regins              @          11 @                      0 @  15 @          001111      0x0f stw rB, byte_offset(rA)
             3'b001 : begin//ok
-              exec_writedata <= stage2_regfileB;
               if         (exec_step==0)begin
                 exec_step <= 1;
+                //exec_address <= {dsAddr[31:2],2'b0};//Mem32[rA + σ(IMM16)] ← rB
+                exec_writedata <= stage2_regfileB;
                 exec_write <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
@@ -1032,6 +1018,7 @@ reg [31:0] stage2_res_nor;
               endcase
               if         (exec_step==0)begin
                 exec_step <= 1;
+                //exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x000000 : Mem8[rA + σ(IMM16)]
                 exec_read <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
@@ -1051,6 +1038,7 @@ reg [31:0] stage2_res_nor;
               endcase
               if         (exec_step==0)begin
                 exec_step <= 1;
+                //exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x000000 : Mem8[rA + σ(IMM16)]
                 exec_read <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
@@ -1068,6 +1056,7 @@ reg [31:0] stage2_res_nor;
               endcase
               if         (exec_step==0)begin
                 exec_step <= 1;
+                //exec_address <= {dsAddr[31:2],2'b0};//rB ← 0x0000 : Mem16[rA + σ(IMM16)]
                 exec_read <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
@@ -1085,6 +1074,7 @@ reg [31:0] stage2_res_nor;
               endcase
               if         (exec_step==0)begin
                 exec_step <= 1;
+                //exec_address <= {dsAddr[31:2],2'b0};//rB ← σ(Mem16[rA + σ(IMM16)])
                 exec_read <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
@@ -1103,9 +1093,11 @@ reg [31:0] stage2_res_nor;
               endcase
               if         (exec_step==0)begin
                 exec_step <= 1;
+                //exec_address <= {dsAddr[31:2],2'b0};//Mem8[rA + σ(IMM16)] ← rB7..0
                 exec_write <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
+                  byteenable <= 4'b1111;
                   exec_write <= 0;
                   exec_step <= 0;
                 end
@@ -1119,9 +1111,11 @@ reg [31:0] stage2_res_nor;
               endcase
               if         (exec_step==0)begin
                 exec_step <= 1;
+                //exec_address <= {dsAddr[31:2],2'b0};//Mem8[rA + σ(IMM16)] ← rB7..0
                 exec_write <= 1;
               end else if(exec_step==1)begin
                 if(!avm_m0_waitrequest)begin
+                  byteenable <= 4'b1111;
                   exec_write <= 0;
                   exec_step <= 0;
                 end
@@ -1218,22 +1212,22 @@ reg [31:0] stage2_res_nor;
   //读A，debug
   wire  [4:0] reg_addrA = (halt_accept == 1) ? debug_reg : (fetch_status == 1 ? avm_m0_readdata_regA : latch_readdata_regA);//stage1_regA
   wire [31:0] reg_outA;
-  //读B，写  读让写
-  wire       wren_b = stage3_Valid && stage3_regChange != 0;
-  wire  [4:0] reg_addrB = wren_b ? stage3_regChange : (fetch_status == 1 ? avm_m0_readdata_regB : latch_readdata_regB);//stage1_regB
+  //读B，写
+  wire  [4:0] reg_addrB = (fetch_status == 1 ? avm_m0_readdata_regB : latch_readdata_regB);//stage1_regB
   wire [31:0] reg_outB;
-  
+
   regfile regfile_ins(
     .address_a(reg_addrA),
-    .address_b(reg_addrB),
-    .clock(clk),
-    .data_a(0),
-    .data_b(stage3_regResult),
-    .wren_a(0),
-    .wren_b(wren_b),
+    input	[4:0]  address_b;
+    input	  clock;
+    input	[31:0]  data_a;
+    input	[31:0]  data_b;
+    input	  wren_a;
+    input	  wren_b;
     .q_a(reg_outA),
     .q_b(reg_outB)
-  );
+
+  };
   
   //读端口 分2个周期读
   //周期0 从总线上获取到源寄存器ID
@@ -1241,26 +1235,22 @@ reg [31:0] stage2_res_nor;
   //周期2 获取到计算结果
   //周期3 写入结果
   //写用一个端口
-  //reg  [31:0] regfile[32];
-  //wire [31:0] wire_regDataOutA = regfile[reg_addr];
+  reg  [31:0] regfile[32];
+  wire [31:0] wire_regDataOutA = regfile[reg_addr];
 
   //5，stage3 寄存器/PC 更新
-  //always @(posedge clk or negedge cpu_reset_n) begin
-  //  if (!cpu_reset_n) begin
-  //    regWriteAddr <= 0;
-  //    data_b <= 0;
-  //    wren_b <= 0;
-  //  end else begin
-  //    wren_b <= 0;
-  //    if(stage3_Valid)begin
-  //      if(stage3_regChange != 0)begin
-  //        regWriteAddr <= stage3_regChange;
-  //        data_b <= stage3_regResult;
-  //        wren_b <= 1;
-  //      end
-  //    end
-  //  end
-  //end
+  always @(posedge clk or negedge cpu_reset_n) begin
+    if (!cpu_reset_n) begin
+      //stage2寄存器初始化
+    end else begin
+    //TODO 遇上读周期的话，延迟一周写入
+      if(stage3_Valid)begin
+        if(stage3_regChange != 0)begin
+          regfile[stage3_regChange] <= stage3_regResult;
+        end
+      end
+    end
+  end
 
 endmodule
 
