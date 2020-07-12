@@ -715,6 +715,8 @@ namespace WindowsFormsApplication1
 
 			int baseAddr = 0x02000000;
 
+			portWrite((byte)(0x01), 1);//halt_uart
+
 			loadprog(baseAddr);
 
 			//      end else if (command == 8'h02) begin debug_reset_n<=data[0]; command_done<=1;
@@ -984,6 +986,8 @@ struct dir_t {//directoryEntry
 		}
 		public void loadprog(int baseAddr)
 		{
+			setmem((uint)(0x02010000), 0, true);//reset cache
+
 			FileStream fs = new FileStream("out.hex", FileMode.Open, FileAccess.Read);
 			StreamReader sr = new StreamReader(fs);
 			String s = sr.ReadToEnd();

@@ -10,16 +10,21 @@
 #include "inc/Sd2Card.cpp"
 #include "inc/FileSystem.cpp"
 
-int autoLevel; //0 no open, 1 open empty, 2: ai
+volatile int timeon;
+volatile int hidon;
+volatile int hid_value;
 
-int boardW = 30;
-int boardH = 16;
-
-
-int* mineBoard;
-int* status;//0x00:close  0x10:open  0x01:flag mark  0x02:question mark  0x03:mine mark
-
-
+void irq_proc(){
+  int irq = IORD(IRQ, 0);
+  if(irq&1){
+    timeon = 1;
+  }
+  if(irq&4){
+    hid_value = IORD(HID, 0);
+    hidon = 1;
+  }
+  IOWR(IRQ, 0, 1+2+4);
+}
 
 int currBuff;
 int buffAddr;
@@ -38,6 +43,29 @@ int drawImg(int basex, int basey, int x, int y, int w, int h, short* block){
     }
     flushCache(addr);
   }
+}
+int paint(int basex, int basey, int x, int y, int w, int h, short color){
+  int bx = basex + x;
+  int by = basey + y;
+  for(int j=0;j<h;j++){
+    int j_temp = j*w;
+    short* addr;
+    for(int i=0;i<w;i++){
+      int x = bx + i;
+      int y = by + j;
+      addr = (short*)(&(((short*)buffAddr)[x+(y<<10)]));
+      *addr = color;//at 2Mbyte
+    }
+    flushCache(addr);
+  }
+}
+int getColorRGB(int r, int g, int b)
+{
+  int val = 0;
+  val += (r >> 3) << (5 + 6);
+  val += (g >> 2) << (5);
+  val += (b >> 3);
+  return val;
 }
 
 int loadImg(SdFile* file, SdVolume* currVolume, char* filename, char* arr){
@@ -65,28 +93,33 @@ int screenInit2(int screenBase){
   }
 }
 
-volatile int hidon;
-volatile int hid_value;
 
-void irq_proc(){
-  int irq = IORD(IRQ, 0);
-  //if(irq&1){
-    //timer
-    IOWR(IRQ, 0, 1);
-    //putc('t');
-  //}
-  //if(irq&2){
-    //int tmp = IORD(MYUART, 0);
-    //IOWR(MYUART, 1 ,tmp);
-    IOWR(IRQ, 0, 2);
-  //}
-  if(irq&4){
-    hid_value = IORD(HID, 0);
-    hidon = 1;
-    //putc('k');
-    IOWR(IRQ, 0, 4);
+int rnd(int max){
+  int v = 0;
+  for(int i=0;i<16;i++){
+    v <<= 1;
+    int r = IORD(RND, 0);
+    v |= r;
   }
+  v = v * max;
+  v = v >> 16;
+  return v;
 }
+
+
+//---------------------------------------------------------------------------------------------------
+
+int autoLevel; //0 no open, 1 open empty, 2: ai
+
+int boardW = 30;
+int boardH = 16;
+
+
+int* mineBoard;
+int* status;//0x00:close  0x10:open  0x01:flag mark  0x02:question mark
+
+int isFailed;
+int isWined;
 
 int basex;
 int basey;
@@ -108,7 +141,7 @@ short* imgArr;
 short* num;
 short* ma;//flag
 short* mb;//question mark
-short* mc;//read mine
+short* mc;//red mine
 short* md;//x mine
 short* me;//mine
 
@@ -118,89 +151,8 @@ short* mm;
 short* mo;
 short* mt;
 
-
-
-int rnd(int max){
-  int v = 0;
-  for(int i=0;i<16;i++){
-    v <<= 1;
-    int r = IORD(RND, 0);
-    v |= r;
-  }
-  v = v * max;
-  v = v >> 16;
-  return v;
-}
-int* arr;
 int n = 20;
-
-void reset(){
-  int total = boardW*boardH;
-
-
-  for(int i=0;i<total;i++){
-    arr[i] = 0;
-  }
-  for(int i=0;i<n;i++){
-    arr[i] = 1;
-  }
-  
-  for(int i=0;i<total;i++){
-    int pos = i+rnd(total-i);
-    int tmp = arr[pos];
-    arr[pos] = arr[i];
-    arr[i] = tmp;
-  }
-
-  drawImg(lv1x+0   , lv1y, 0, 0, 12, 23, &num[2*12*23]);
-  drawImg(lv1x+12  , lv1y, 0, 0, 12, 23, &num[0*12*23]);
-  drawImg(lv2x+0   , lv2y, 0, 0, 12, 23, &num[5*12*23]);
-  drawImg(lv2x+12  , lv2y, 0, 0, 12, 23, &num[0*12*23]);
-  drawImg(lv3x+0   , lv3y, 0, 0, 12, 23, &num[9*12*23]);
-  drawImg(lv3x+12  , lv3y, 0, 0, 12, 23, &num[9*12*23]);
-
-  
-  
-  drawImg(framex+18+12*0, framey+16, 0, 0, 12, 23, &num[1*12*23]);
-  drawImg(framex+18+12*1, framey+16, 0, 0, 12, 23, &num[3*12*23]);
-  drawImg(framex+18+12*2, framey+16, 0, 0, 12, 23, &num[4*12*23]);
-
-  drawImg(framex+448 +12*0,  framey+16, 0, 0, 12, 23, &num[6*12*23]);
-  drawImg(framex+448 +12*1,  framey+16, 0, 0, 12, 23, &num[7*12*23]);
-  drawImg(framex+448 +12*2,  framey+16, 0, 0, 12, 23, &num[8*12*23]);
-
-  //ok
-  drawImg(btnx, btny, 0, 0, 26, 26, mi);
-  
-  for(int j=0;j<boardH;j++){
-    for(int i=0;i<boardW;i++){
-      if(arr[i+j*boardW]){
-        drawImg(basex, basey, i*16, j*16, 16, 16, me);
-      }else{
-        drawImg(basex, basey, i*16, j*16, 16, 16, &imgArr[0*16*16]);
-      }
-    }
-  }
-  
-  drawImg(basex, basey, 0, 0*16, 16, 16, ma);
-  drawImg(basex, basey, 0, 1*16, 16, 16, mb);
-  drawImg(basex, basey, 0, 2*16, 16, 16, mc);
-  drawImg(basex, basey, 0, 3*16, 16, 16, md);
-  drawImg(basex, basey, 0, 4*16, 16, 16, me);
-
-  drawImg(basex, basey, 1*16, 0*16, 16, 16, &imgArr[0*16*16]);
-  drawImg(basex, basey, 1*16, 1*16, 16, 16, &imgArr[1*16*16]);
-  drawImg(basex, basey, 1*16, 2*16, 16, 16, &imgArr[2*16*16]);
-  drawImg(basex, basey, 1*16, 3*16, 16, 16, &imgArr[3*16*16]);
-  drawImg(basex, basey, 1*16, 4*16, 16, 16, &imgArr[4*16*16]);
-  drawImg(basex, basey, 1*16, 5*16, 16, 16, &imgArr[5*16*16]);
-  drawImg(basex, basey, 1*16, 6*16, 16, 16, &imgArr[6*16*16]);
-  drawImg(basex, basey, 1*16, 7*16, 16, 16, &imgArr[7*16*16]);
-  drawImg(basex, basey, 1*16, 8*16, 16, 16, &imgArr[8*16*16]);
-  drawImg(basex, basey, 1*16, 9*16, 16, 16, &imgArr[9*16*16]);
-
-
-}
+int time = 0;
 
 
 int loadCur(SdFile* file, SdVolume* currVolume){
@@ -214,35 +166,256 @@ int loadCur(SdFile* file, SdVolume* currVolume){
   }
 }
 
-int loadBG(SdFile* file, SdVolume* currVolume){
-  short buff[502*322];
-  loadImg(file, currVolume, "mbg.img", (char*)buff);
-  drawImg(framex,framey,0,0,502,322,buff);
+int drawBG(){
+  paint(framex, framey, 0+502-3, 0, 3, 322, getColorRGB(255, 255, 255));
+  paint(framex, framey, 0, 0+322-3, 502, 3, getColorRGB(255, 255, 255));
+  paint(framex, framey, 0, 0, 502, 3, getColorRGB(255, 255, 255));
+  paint(framex, framey, 0, 0, 3, 322, getColorRGB(255, 255, 255));
+  paint(framex, framey, 3, 3, 502-6, 322-6, getColorRGB(192, 192, 192));
+  paint(framex, framey, 9, 9, 486, 2, getColorRGB(128, 128, 128));
+  paint(framex, framey, 9, 9, 2, 37, getColorRGB(128, 128, 128));
+  paint(framex, framey, 9+486-2, 9, 2, 37, getColorRGB(255, 255, 255));
+  paint(framex, framey, 9, 9+37-2, 486, 2, getColorRGB(255, 255, 255));
+  
+  paint(framex, framey, 9, 53, 485, 2, getColorRGB(128, 128, 128));
+  paint(framex, framey, 9, 53, 2, 261, getColorRGB(128, 128, 128));
+
+  paint(framex, framey, 9+485-2, 53, 2, 261, getColorRGB(255, 255, 255));
+  paint(framex, framey, 9, 53+261-2, 485, 2, getColorRGB(255, 255, 255));
+
+}
+
+void drawNum(int bx, int by, int val){
+  int a;
+  a = val % 10;
+  val = val / 10;
+  drawImg(bx+12*2, by, 0, 0, 12, 23, &num[a*12*23]);
+  a = val % 10;
+  val = val / 10;
+  drawImg(bx+12*1, by, 0, 0, 12, 23, &num[a*12*23]);
+  a = val % 10;
+  val = val / 10;
+  drawImg(bx+12*0, by, 0, 0, 12, 23, &num[a*12*23]);
+
+}
+
+void timing() {
+  if(isFailed || isWined)return;
+  time++;
+  drawNum(framex+448, framey+16, time);
 }
 
 
+
+int inRange(int x, int y){
+  if(x>=0 && x<boardW && y>=0 && y<boardH){
+    return 1;
+  }else{
+    return 0;
+  }
+}
+
+int getMine(int x, int y){
+  if(inRange(x, y)){
+    return mineBoard[x+y*boardW];
+  }else{
+    return 0;
+  }
+}
+
+int getCount(int x, int y){
+  int cnt = 0;
+  cnt = cnt + getMine((x+1),(y+1));
+  cnt = cnt + getMine((x  ),(y+1));
+  cnt = cnt + getMine((x-1),(y+1));
+  cnt = cnt + getMine((x+1),(y  ));
+  cnt = cnt + getMine((x  ),(y  ));
+  cnt = cnt + getMine((x-1),(y  ));
+  cnt = cnt + getMine((x+1),(y-1));
+  cnt = cnt + getMine((x  ),(y-1));
+  cnt = cnt + getMine((x-1),(y-1));
+  return cnt;
+}
+
+int getStatus(int x, int y){
+  return status[x+y*boardW];
+}
+void setStatus(int x, int y, int val){
+  status[x+y*boardW] = val;
+}
+
+
+int isWin(){
+  int notyet=0;
+  
+  for(int j=0;j<boardH;j++){
+    for(int i=0;i<boardW;i++){
+      if(getMine(i, j)==0){
+        if(getStatus(i, j)==0x10){//0x00:close  0x10:open  0x01:flag mark  0x02:question mark
+        }else{
+          notyet = 1;
+        }
+      }
+    }
+  }
+  
+  if(!notyet){
+    return 1;
+  }else{
+    return 0;
+  }
+}
+
+
+void finish(){
+  for(int j=0;j<boardH;j++){
+    for(int i=0;i<boardW;i++){
+      if(getStatus(i, j)==0x01 && getMine(i, j)==0){//0x00:close  0x10:open  0x01:flag mark  0x02:question mark
+        drawImg(basex, basey, i*16, j*16, 16, 16, md);//x mine
+      }
+      if(getMine(i, j)==1){
+        drawImg(basex, basey, i*16, j*16, 16, 16, me);//mine
+      }
+    }
+  }
+  
+  isFailed = true;
+}
+
+void open(int x, int y){
+  if(inRange(x, y)){
+    if(getStatus(x, y)==0){//0x00:close  0x10:open  0x01:flag mark  0x02:question mark
+      setStatus(x, y, 0x10);
+      if(isWin()){
+        isWined = 1;
+        finish();
+        drawImg(btnx, btny, 0, 0, 26, 26, mm);
+      }else{
+        if(getMine(x, y)){
+          finish();
+          drawImg(btnx, btny, 0, 0, 26, 26, mj);
+          drawImg(basex, basey, x*16, y*16, 16, 16, mc);//red mine
+        }else{
+          int cnt = getCount(x, y);
+          drawImg(basex, basey, x*16, y*16, 16, 16, &imgArr[cnt*16*16]);
+          if(cnt==0){
+            open(x+1, y+1);
+            open(x  , y+1);
+            open(x-1, y+1);
+            open(x+1, y  );
+            //open(x  , y  );
+            open(x-1, y  );
+            open(x+1, y-1);
+            open(x  , y-1);
+            open(x-1, y-1);
+          }
+        }
+      }
+      //AI
+    }
+  }
+}
+
+int downx;
+int downy;
+int down;
+int mineCount;
 void onclick(int x, int y, int b1, int b2){
+  if(isFailed || isWined)return;
   x = x / 16;
   y = y / 16;
   if(b1){
-    drawImg(basex, basey, x*16, y*16, 16, 16, me);
+    downx = x;
+    downy = y;
+    down = 1;
+    if(getStatus(x, y)==0){
+      drawImg(basex, basey, x*16, y*16, 16, 16, &imgArr[0*16*16]);
+    }
+  }else{
+    
+    if(down==1){
+      open(downx, downy);
+      down = 0;
+    }
   }
+  
   if(b2){
-    drawImg(basex, basey, x*16, y*16, 16, 16, &imgArr[0*16*16]);
+    int status = getStatus(x, y);//0x00:close  0x10:open  0x01:flag mark  0x02:question mark
+    if(status==0){
+      setStatus(x, y, 0x01);
+      drawImg(basex, basey, x*16, y*16, 16, 16, ma);//flag
+      mineCount--;
+    }
+    if(status==0x01){
+      setStatus(x, y, 0x02);
+      drawImg(basex, basey, x*16, y*16, 16, 16, mb);//question mark
+      mineCount++;
+    }
+    if(status==0x02){
+      setStatus(x, y, 0x00);
+      drawImg(basex, basey, x*16, y*16, 16, 16, &imgArr[9*16*16]);//block
+    }
+    
+    drawNum(framex+18, framey+16, mineCount);
+
+  }
+}
+
+void reset(){
+  int total = boardW*boardH;
+  isFailed = 0;
+  isWined = 0;
+  time = 0;
+  mineCount = n;
+  for(int i=0;i<total;i++){
+    mineBoard[i] = 0;
+  }
+  for(int i=0;i<n;i++){
+    mineBoard[i] = 1;
+  }
+  
+  for(int i=0;i<total;i++){
+    int pos = i+rnd(total-i);
+    int tmp = mineBoard[pos];
+    mineBoard[pos] = mineBoard[i];
+    mineBoard[i] = tmp;
+  }
+  
+  for(int i=0;i<total;i++){
+    status[i] = 0;
   }
 
+  drawImg(lv1x+0   , lv1y, 0, 0, 12, 23, &num[2*12*23]);
+  drawImg(lv1x+12  , lv1y, 0, 0, 12, 23, &num[0*12*23]);
+  drawImg(lv2x+0   , lv2y, 0, 0, 12, 23, &num[5*12*23]);
+  drawImg(lv2x+12  , lv2y, 0, 0, 12, 23, &num[0*12*23]);
+  drawImg(lv3x+0   , lv3y, 0, 0, 12, 23, &num[9*12*23]);
+  drawImg(lv3x+12  , lv3y, 0, 0, 12, 23, &num[9*12*23]);
+
+  drawNum(framex+448, framey+16, 0);
+
+  //ok
+  drawImg(btnx, btny, 0, 0, 26, 26, mi);
+  
+  for(int j=0;j<boardH;j++){
+    for(int i=0;i<boardW;i++){
+      drawImg(basex, basey, i*16, j*16, 16, 16, &imgArr[9*16*16]);
+    }
+  }
 }
+
 
 int main()
 {
+  print("Hello from minesweeper!\r\n");
   basex = 80;
   basey = 150;
   
-  framex = basex-12;
-  framey = basey-52;
+  framex = basex-11;
+  framey = basey-55;
 
   btnx = framex+240;
-  btny = basey-52+16;
+  btny = framey+15;
 
   lv1x = 200;
   lv1y = 50;
@@ -251,13 +424,14 @@ int main()
   lv3x = 400;
   lv3y = 50;
 
-  malloc_index = 0;
-  print("Hello from tetris!\r\n");
+
+  mineBoard = (int*)malloc(boardW*boardH*4);
+  status = (int*)malloc(boardW*boardH*4);
 
   imgArr = (short*)malloc(16*16*2 *10);
   ma = (short*)malloc(16*16*2);//flag
   mb = (short*)malloc(16*16*2);//question mark
-  mc = (short*)malloc(16*16*2);//read mine
+  mc = (short*)malloc(16*16*2);//red mine
   md = (short*)malloc(16*16*2);//x mine
   me = (short*)malloc(16*16*2);//mine
 
@@ -315,7 +489,7 @@ int main()
     //
     loadImg(file, sdvolume,  "ma.img", (char*)(ma));//flag
     loadImg(file, sdvolume,  "mb.img", (char*)(mb));//question mark
-    loadImg(file, sdvolume,  "mc.img", (char*)(mc));//read mine
+    loadImg(file, sdvolume,  "mc.img", (char*)(mc));//red mine
     loadImg(file, sdvolume,  "md.img", (char*)(md));//x mine
     loadImg(file, sdvolume,  "me.img", (char*)(me));//mine
 
@@ -341,15 +515,15 @@ int main()
     
     screenInit2(1024);
     
-    loadBG(file, sdvolume);
+    drawBG();
+    reset();
 
+    IOWR(MYTIMER, 4, 1000000);
+    IOWR(MYTIMER, 0, 0);
+    timeon = 0;
     hidon = 0;
     setIrq(irq_proc, 1);
 
-    
-    arr = (int*)malloc(boardW*boardH*4);
-
-    reset();
     
     int oldbtn1 = 0;
     int oldbtn2 = 0;
@@ -394,7 +568,7 @@ int main()
           IOWR(VGA, VGA_CURSOR_X, x);
           IOWR(VGA, VGA_CURSOR_Y, y);
           
-          if((oldbtn1 != btn1 && btn1) || (oldbtn2 != btn2 && btn2)){
+          if((oldbtn1 != btn1) || (oldbtn2 != btn2)){
             if(
               x>=basex && x<(basex+boardW*20) &&
               y>=basey && y<(basey+boardH*20)
@@ -404,27 +578,27 @@ int main()
             
             if(
               x>=btnx && x<(btnx+26) &&
-              y>=btny && y<(btny+26)
+              y>=btny && y<(btny+26) && btn1
               ){
               reset();
             }
             if(
               x>=lv1x && x<(lv1x+28) &&
-              y>=lv1y && y<(lv1y+23)
+              y>=lv1y && y<(lv1y+23) && btn1
               ){
               n=20;
               reset();
             }
             if(
               x>=lv2x && x<(lv2x+28) &&
-              y>=lv2y && y<(lv2y+23)
+              y>=lv2y && y<(lv2y+23) && btn1
               ){
               n=50;
               reset();
             }
             if(
               x>=lv3x && x<(lv3x+28) &&
-              y>=lv3y && y<(lv3y+23)
+              y>=lv3y && y<(lv3y+23) && btn1
               ){
               n=99;
               reset();
@@ -434,6 +608,11 @@ int main()
           oldbtn2 = btn2;
           oldbtn3 = btn3;
         }
+      }
+      if(timeon){
+        IOWR(MYTIMER, 0, 0);
+        timeon = 0;
+        timing();
       }
     }
   }else{
