@@ -1,9 +1,10 @@
 #include "inc/io.h"
+#include "inc/irq.h"
 #include "inc/system.h"
 #include "inc/system.cpp"
-//#include "inc/uart.cpp"
-//#include "inc/uartio.cpp"
-#include "inc/keyScreen.cpp"
+#include "inc/uart.cpp"
+#include "inc/uartio.cpp"
+//#include "inc/keyScreen.cpp"
 #include "inc/print.cpp"
 #include "inc/spi.cpp"
 
@@ -25,6 +26,7 @@ int cardCommand(int cmd, int arg) {
     ;
   return 0;
 }
+//cs
 
 int main()
 {

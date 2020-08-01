@@ -1,10 +1,9 @@
-//中断向量
-//浮点数
-
 #include "inc/io.h"
+#include "inc/irq.h"
 #include "inc/system.h"
 #include "inc/system.cpp"
 #include "inc/uart.cpp"
+#include "inc/uartio.cpp"
 #include "inc/print.cpp"
 #include "inc/spi.cpp"
 #include "inc/Sd2Card.cpp"
@@ -31,7 +30,7 @@ int main(){
     char str[10];
     int res;
     print("cmd?\r\n");
-    scan(str,-1,-1);
+    scan(str,-1);
     print(str);
     
     if(equal(str,"i",-1)){
@@ -82,7 +81,7 @@ int main(){
     if(equal(str,"mkdir",-1)){
       print("dir name?\r\n");
       char filename[12];
-      scan(filename,-1,-1);
+      scan(filename,-1);
       res = file->makeDir(currVolume->root, filename);
       if(res){
         print("mkdir ok\r\n");
@@ -93,7 +92,7 @@ int main(){
     if(equal(str,"del",-1)){
       print("name?\r\n");
       char filename[12];
-      scan(filename,-1,-1);
+      scan(filename,-1);
       res = file->del(currVolume->root, filename);
       if(res){
         print("del ok\r\n");
@@ -113,7 +112,7 @@ int main(){
     if(equal(str,"write",-1)){
       print("filename?\r\n");
       char filename[12];
-      scan(filename,-1,-1);
+      scan(filename,-1);
       res = file->open(currVolume->root, filename, O_CREAT | O_WRITE | O_APPEND);
       if(res){
         print("open ok\r\n");
@@ -140,7 +139,7 @@ int main(){
     if(equal(str,"print",-1)){
       print("which file?\r\n");
       char filename[12];
-      scan(filename,-1,-1);
+      scan(filename,-1);
       print("[");print(filename);print("]");
       res = file->open(currVolume->root, filename, O_READ);
       if(res){
@@ -159,7 +158,7 @@ int main(){
     if(equal(str,"load",-1)){
       print("which file?\r\n");
       char filename[12];
-      scan(filename,-1,-1);
+      scan(filename,-1);
       res = file->open(currVolume->root, filename, O_READ);
       if(res){
         print("open ok\r\n");
@@ -179,7 +178,7 @@ int main(){
     if(equal(str,"upload",-1)){
       print("filename?\r\n");
       char filename[12];
-      scan(filename,-1,-1);
+      scan(filename,-1);
       print(filename);
       print("length?\r\n");
       int len = scanInt();
@@ -208,7 +207,7 @@ int main(){
     if(equal(str,"run",-1)){
       print("which file?\r\n");
       char filename[12];
-      scan(filename,-1,-1);
+      scan(filename,-1);
       res = file->open(currVolume->root, filename, O_READ);
       if(res){
         print("open ok:");printInt(file->fileSize_);print("\r\n");
@@ -234,10 +233,6 @@ int main(){
       }
     }
 
-    
-    if(equal(str,"clr",-1)){
-      screenInit(1024);
-    }
 
   }
 }
