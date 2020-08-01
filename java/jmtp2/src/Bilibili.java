@@ -31,7 +31,7 @@ public class Bilibili {
 
 		//getList(1, "a.txt");
 
-		copy(1, "b.txt", "I:\\bilibili6");
+		copy(1, "b.txt", "J:\\bilibili1");
 	}
 
 	public static void getList(int dev, String fn) throws Exception {
@@ -320,9 +320,12 @@ public class Bilibili {
 			name = name.replace("\\", "");
 			name = name.replace("/", "");
 			name = name.replace(":", "");
+			name = name.replace("*", "¡Á");
+			name = name.replace("\"", "¡°");
 			name = name.replace("-", "");
 			name = name.replace("?", "£¿");
 			name = name.replace("|", "£ü");
+			name = name.replace("...", "¡­");
 
 			String tmp = item.getOriginalFileName() + "_" + name;
 
