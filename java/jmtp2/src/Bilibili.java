@@ -326,7 +326,7 @@ public class Bilibili {
 			name = name.replace("?", "£¿");
 			name = name.replace("|", "£ü");
 			name = name.replace("...", "¡­");
-
+			name = name.trim();
 			String tmp = item.getOriginalFileName() + "_" + name;
 
 			copyFolder((PortableDeviceFolderObject) item, path + "\\" + tmp);
