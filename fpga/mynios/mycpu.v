@@ -33,7 +33,7 @@ module mycpu (
     output reg [3:0] cache_life_addr ,
     input      [15:0] cache_life_data   ,
     output reg [3:0] cacheAddrHigh_addr,
-    input      [15:0] cacheAddrHigh_data,
+    input      [16:0] cacheAddrHigh_data,
     input      [31:0] debugin32
   );
 
@@ -114,7 +114,7 @@ reg        debug_reset_n;
 reg  [3:0] debug_byteenable;
 reg halt_uart;
 
-reg [15:0] accessTime;
+reg [31:0] accessTime;
 
 reg uart_send;
 reg uart_send_ack_buff;
@@ -125,7 +125,7 @@ always @(posedge clk or negedge reset_n) begin
     debug_step<=0;
     debug_readmem_step<=0;
 
-    halt_uart<=0;///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    halt_uart<=1;
     debug_read<=0;
     debug_write<=0;
     debug_reset_n<=1;
@@ -151,7 +151,9 @@ always @(posedge clk or negedge reset_n) begin
       8'h03 : begin debug_step<=~debug_step; command_done<=1; end
       8'h04 : begin uart_send<=1; uart_data_in<=accessTime[ 7: 0]; command_done<=1; end
       8'h05 : begin uart_send<=1; uart_data_in<=accessTime[15: 8]; command_done<=1; end
-      8'h06 : begin uart_send<=1; uart_data_in<=data; command_done<=1; end
+      8'h06 : begin uart_send<=1; uart_data_in<=accessTime[23:16]; command_done<=1; end
+      8'h07 : begin uart_send<=1; uart_data_in<=accessTime[31:24]; command_done<=1; end
+      8'h08 : begin uart_send<=1; uart_data_in<=data; command_done<=1; end//loop back
       8'h10 : begin uart_send<=1; uart_data_in<=debug_data[ 7: 0]; command_done<=1; end
       8'h11 : begin uart_send<=1; uart_data_in<=debug_data[15: 8]; command_done<=1; end
       8'h12 : begin uart_send<=1; uart_data_in<=debug_data[23:16]; command_done<=1; end
@@ -177,12 +179,14 @@ always @(posedge clk or negedge reset_n) begin
       8'h61 : begin uart_send<=1; uart_data_in<=debugin32[15: 8]; command_done<=1; end
       8'h62 : begin uart_send<=1; uart_data_in<=debugin32[23:16]; command_done<=1; end
       8'h63 : begin uart_send<=1; uart_data_in<=debugin32[31:24]; command_done<=1; end
-      8'h64 : begin uart_send<=1; uart_data_in<=debug_flg; command_done<=1; end//debugin8
+      8'h64 : begin uart_send<=1; uart_data_in<=debugin8; command_done<=1; end//debugin8 / debug_flg
       8'h68 : begin uart_send<=1; uart_data_in<=cache_life_data[ 7: 0]; command_done<=1; end
       8'h69 : begin uart_send<=1; uart_data_in<=cache_life_data[15: 8]; command_done<=1; end
+
       8'h6A : begin uart_send<=1; uart_data_in<=cacheAddrHigh_data[ 7: 0]; command_done<=1; end
       8'h6B : begin uart_send<=1; uart_data_in<=cacheAddrHigh_data[15: 8]; command_done<=1; end
-
+      8'h6C : begin uart_send<=1; uart_data_in<=cacheAddrHigh_data[16]; command_done<=1; end
+      8'h6D : begin uart_send<=1; uart_data_in<=0; command_done<=1; end
 
       8'h30 : begin
         if         (debug_readmem_step==0)begin

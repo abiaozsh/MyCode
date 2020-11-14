@@ -85,7 +85,7 @@ module system (
   
   
   
-  wire sdrambus_debug8;
+  wire [7:0] sdrambus_debug8;
   assign debug32 = mycpu_debug32;
   wire [31:0] sdrambus_debug32;
 
@@ -116,7 +116,7 @@ module system (
     .debug8             (mycpu_debug8),                    //            .export
     .debug32            (mycpu_debug32),                    //            .export
       
-    .debugin8           (spidebug8    ),
+    .debugin8           (sdrambus_debug8    ),//spidebug8
     .cache_life_addr    (cache_life_addr     ),
     .cache_life_data    (cache_life_data     ),
     .cacheAddrHigh_addr    (cacheAddrHigh_addr     ),
@@ -164,7 +164,7 @@ module system (
   wire [3:0]  cache_life_addr;
   wire [15:0] cache_life_data;
   wire [3:0]  cacheAddrHigh_addr;
-  wire [15:0] cacheAddrHigh_data;
+  wire [16:0] cacheAddrHigh_data;
 
 
   wire sdrambus_cs = avm_m0_address[31:25] == 7'h0;// 0000:0000 ~ 01FF:FFFF 32M byte
@@ -207,6 +207,9 @@ module system (
     .flush_cache    (flush_cache),
     .flush_page     (flush_page ),
     
+    .nocache        (nocache),
+    .nocache_page   (nocache_page ),
+
     .debug8                (sdrambus_debug8 ),
     .cache_life_addr       (cache_life_addr     ),
     .cache_life_data       (cache_life_data     ),
@@ -269,6 +272,8 @@ end
   wire cacheCtrl_cs = avm_m0_address[31:16] == 16'h0201;
   reg              flush_cache;
   reg   [14:0]     flush_page;
+  reg              nocache;
+  reg   [14:0]     nocache_page;
   always@(posedge clk or negedge reset_n) begin
     if(!reset_n) begin
       flush_cache <= 0;
@@ -279,6 +284,8 @@ end
           flush_cache <= avm_m0_writedata[31];
           flush_page = avm_m0_writedata[14:0];
         end else if(avm_m0_address[15:2]==1)begin
+          nocache <= avm_m0_writedata[31];
+          nocache_page = avm_m0_writedata[14:0];
         end
       end
     end

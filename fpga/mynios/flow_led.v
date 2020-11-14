@@ -1,4 +1,4 @@
-     
+   
 module flow_led(
   input sys_clk,
   input key1,
