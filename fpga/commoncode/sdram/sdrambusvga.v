@@ -1,7 +1,7 @@
 module sdrambusvga(
     input          clk,                // clock.clk
     input          reset_n,               // reset.reset
-		input          clk_100m,
+    input          clk_100m,
     input          clk_100m_shift,
 
     //SDRAM 芯片接口
@@ -16,7 +16,7 @@ module sdrambusvga(
     inout  [15:0] sdram_data,               //SDRAM 数据
     output [ 1:0] sdram_dqm,                //SDRAM 数据掩码
 
-    
+
     input   [22:0]     avs_s0_address,     //    s0.address
     input              avs_s0_read,        //      .read
     input              avs_s0_write,       //      .write
@@ -27,6 +27,9 @@ module sdrambusvga(
 
     input              flush_cache,
     input   [14:0]     flush_page,
+    
+    input              nocache,
+    input   [14:0]     nocache_page,
 
     input         read_line_req  ,
     input         read_line_A_B  ,
@@ -41,7 +44,7 @@ module sdrambusvga(
     input      [3:0] cache_life_addr ,
     output reg [15:0] cache_life_data   ,
     input      [3:0] cacheAddrHigh_addr,
-    output reg [15:0] cacheAddrHigh_data,
+    output reg [16:0] cacheAddrHigh_data,
     output     [31:0] debug32
     
 );
@@ -147,7 +150,7 @@ always@(posedge clk or negedge sys_rst_n) begin
     cacheAddrHigh_data <= 0;
   end else begin
     cache_life_data    <= cache_life[cache_life_addr];
-    cacheAddrHigh_data <= {cacheInvalid[cacheAddrHigh_addr], cacheAddrHigh[cacheAddrHigh_addr]};
+    cacheAddrHigh_data <= {cacheDirty[cacheAddrHigh_addr], cacheInvalid[cacheAddrHigh_addr], cacheAddrHigh[cacheAddrHigh_addr]};
   end
 end
 
@@ -159,17 +162,18 @@ assign debug32 = {flush_cache,1'b0,flush_page};//{interface_status,1'b0,free_cac
     //input   [14:0]     flush_page,
 
 
-reg cacheAddrLow8_writeBack;
-wire  [ 7:0] cacheAddrLow8 = cacheAddrLow8_writeBack ? write_back_count[7:0] : avs_s0_address[7:0];
-wire [35:0] cacheq[CACHE_COUNT];
+reg cacheAddrLow8_writeBack_readPage;
+wire [ 7:0] cacheAddrLow8 = cacheAddrLow8_writeBack_readPage ? sdram_rw_count[7:0] : avs_s0_address[7:0];
+wire [31:0] cacheq[CACHE_COUNT];
 wire        cache_hit[CACHE_COUNT];
 wire        cache_flush_hit[CACHE_COUNT];
-
-wire        cacheInvalid[CACHE_COUNT];//32Mbyte / 1024byte per cache slot = total 32k cache slot
+wire        cacheInvalid[CACHE_COUNT];
+wire        cacheDirty[CACHE_COUNT];  //32Mbyte / 1024byte per cache slot = total 32k cache slot
 wire [14:0] cacheAddrHigh[CACHE_COUNT];//32Mbyte / 1024byte per cache slot = total 32k cache slot
 wire [CACHE_COUNT-1:0] cache_life[CACHE_COUNT];
 
 wire [CACHE_COUNT-1:0] cache_hited;
+wire [CACHE_COUNT-1:0] cache_dirty;
 wire [CACHE_COUNT-1:0] cache_flush_hited;
 wire [CACHE_COUNT-1:0] free_cache_temp;
 
@@ -185,77 +189,93 @@ generate
 
       .cacheAddrLow8      (cacheAddrLow8         ),
       .cacheData          (cacheData             ),
+      .cacheData_ena      (cacheData_ena         ),
       .write_enable       (write_enable          ),
       .adj_cache_life     (adj_cache_life        ),
       .current_slot       (current_slot[i]       ),
       .set_cacheAddrHigh  (set_cacheAddrHigh[i]  ),
+      .set_cacheDirty     (set_cacheDirty[i]     ),
       .clr_cacheAddrHigh  (clr_cacheAddrHigh[i]  ),
 
       .cacheq             (cacheq[i]             ),
       .cache_hit          (cache_hit[i]          ),
       .cache_flush_hit    (cache_flush_hit[i]    ),
-      
+
       .cacheInvalid       (cacheInvalid[i]       ),
+      .cacheDirty         (cacheDirty[i]         ),
       .cacheAddrHigh      (cacheAddrHigh[i]      ),
       .cache_life         (cache_life[i]         )
     );
     assign cache_hited[i] = cache_hit[i];
+    assign cache_dirty[i] = cacheDirty[i];
     assign cache_flush_hited[i] = cache_flush_hit[i];
     assign free_cache_temp[i] = cache_life[i] == 0;
   end
 endgenerate
 
 reg  [CACHE_COUNT-1:0] set_cacheAddrHigh;
+reg  [CACHE_COUNT-1:0] set_cacheDirty;
 reg  [CACHE_COUNT-1:0] clr_cacheAddrHigh;
 reg  [CACHE_COUNT-1:0] current_slot;
 
 wire [CACHE_COUNT-1:0] free_cache;
 
-//assign singleOut = free_cache_temp;
-//assign free_cache = singleIn;
-//
 singleOut ins_singleOut(
 .in(free_cache_temp),
 .out(free_cache)
 );
 
-wire freeCacheInvalid = (free_cache[ 0] ? cacheInvalid[ 0] : 1'b0) | //current_slot == 0 ? 15'b0 : cacheAddrHigh[current_slot-1][14:0];
-                        (free_cache[ 1] ? cacheInvalid[ 1] : 1'b0) | 
-                        (free_cache[ 2] ? cacheInvalid[ 2] : 1'b0) | 
-                        (free_cache[ 3] ? cacheInvalid[ 3] : 1'b0) | 
-                        (free_cache[ 4] ? cacheInvalid[ 4] : 1'b0) | 
-                        (free_cache[ 5] ? cacheInvalid[ 5] : 1'b0) | 
-                        (free_cache[ 6] ? cacheInvalid[ 6] : 1'b0) | 
-                        (free_cache[ 7] ? cacheInvalid[ 7] : 1'b0) | 
-                        (free_cache[ 8] ? cacheInvalid[ 8] : 1'b0) | 
-                        (free_cache[ 9] ? cacheInvalid[ 9] : 1'b0) | 
-                        (free_cache[10] ? cacheInvalid[10] : 1'b0) | 
-                        (free_cache[11] ? cacheInvalid[11] : 1'b0) | 
-                        (free_cache[12] ? cacheInvalid[12] : 1'b0) | 
-                        (free_cache[13] ? cacheInvalid[13] : 1'b0) | 
-                        (free_cache[14] ? cacheInvalid[14] : 1'b0) | 
-                        (free_cache[15] ? cacheInvalid[15] : 1'b0);
+wire freeCacheDirty =   (free_cache[ 0] ? cacheDirty[ 0] : 1'b0) | 
+                        (free_cache[ 1] ? cacheDirty[ 1] : 1'b0) | 
+                        (free_cache[ 2] ? cacheDirty[ 2] : 1'b0) | 
+                        (free_cache[ 3] ? cacheDirty[ 3] : 1'b0) | 
+                        (free_cache[ 4] ? cacheDirty[ 4] : 1'b0) | 
+                        (free_cache[ 5] ? cacheDirty[ 5] : 1'b0) | 
+                        (free_cache[ 6] ? cacheDirty[ 6] : 1'b0) | 
+                        (free_cache[ 7] ? cacheDirty[ 7] : 1'b0) | 
+                        (free_cache[ 8] ? cacheDirty[ 8] : 1'b0) | 
+                        (free_cache[ 9] ? cacheDirty[ 9] : 1'b0) | 
+                        (free_cache[10] ? cacheDirty[10] : 1'b0) | 
+                        (free_cache[11] ? cacheDirty[11] : 1'b0) | 
+                        (free_cache[12] ? cacheDirty[12] : 1'b0) | 
+                        (free_cache[13] ? cacheDirty[13] : 1'b0) | 
+                        (free_cache[14] ? cacheDirty[14] : 1'b0) | 
+                        (free_cache[15] ? cacheDirty[15] : 1'b0);
 
-parameter FLG_VALID = 35;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,}
-parameter FLG_DIRTY = 34;
+wire [31:0] current_slot_data = (current_slot[ 0] ? cacheq[ 0] : 32'b0) | 
+                                (current_slot[ 1] ? cacheq[ 1] : 32'b0) | 
+                                (current_slot[ 2] ? cacheq[ 2] : 32'b0) | 
+                                (current_slot[ 3] ? cacheq[ 3] : 32'b0) | 
+                                (current_slot[ 4] ? cacheq[ 4] : 32'b0) | 
+                                (current_slot[ 5] ? cacheq[ 5] : 32'b0) | 
+                                (current_slot[ 6] ? cacheq[ 6] : 32'b0) | 
+                                (current_slot[ 7] ? cacheq[ 7] : 32'b0) | 
+                                (current_slot[ 8] ? cacheq[ 8] : 32'b0) | 
+                                (current_slot[ 9] ? cacheq[ 9] : 32'b0) | 
+                                (current_slot[10] ? cacheq[10] : 32'b0) | 
+                                (current_slot[11] ? cacheq[11] : 32'b0) | 
+                                (current_slot[12] ? cacheq[12] : 32'b0) | 
+                                (current_slot[13] ? cacheq[13] : 32'b0) | 
+                                (current_slot[14] ? cacheq[14] : 32'b0) | 
+                                (current_slot[15] ? cacheq[15] : 32'b0);
 
-
-wire [35:0] cache_hit_data = (current_slot[ 0] ? cacheq[ 0] : 36'b0) | //current_slot == 0 ? 36'b0 : cacheq[current_slot-1];
-                             (current_slot[ 1] ? cacheq[ 1] : 36'b0) | 
-                             (current_slot[ 2] ? cacheq[ 2] : 36'b0) | 
-                             (current_slot[ 3] ? cacheq[ 3] : 36'b0) | 
-                             (current_slot[ 4] ? cacheq[ 4] : 36'b0) | 
-                             (current_slot[ 5] ? cacheq[ 5] : 36'b0) | 
-                             (current_slot[ 6] ? cacheq[ 6] : 36'b0) | 
-                             (current_slot[ 7] ? cacheq[ 7] : 36'b0) | 
-                             (current_slot[ 8] ? cacheq[ 8] : 36'b0) | 
-                             (current_slot[ 9] ? cacheq[ 9] : 36'b0) | 
-                             (current_slot[10] ? cacheq[10] : 36'b0) | 
-                             (current_slot[11] ? cacheq[11] : 36'b0) | 
-                             (current_slot[12] ? cacheq[12] : 36'b0) | 
-                             (current_slot[13] ? cacheq[13] : 36'b0) | 
-                             (current_slot[14] ? cacheq[14] : 36'b0) | 
-                             (current_slot[15] ? cacheq[15] : 36'b0);
+                             
+wire [31:0] cache_hit_data = (cache_hited[ 0] ? cacheq[ 0] : 32'b0) | 
+                             (cache_hited[ 1] ? cacheq[ 1] : 32'b0) | 
+                             (cache_hited[ 2] ? cacheq[ 2] : 32'b0) | 
+                             (cache_hited[ 3] ? cacheq[ 3] : 32'b0) | 
+                             (cache_hited[ 4] ? cacheq[ 4] : 32'b0) | 
+                             (cache_hited[ 5] ? cacheq[ 5] : 32'b0) | 
+                             (cache_hited[ 6] ? cacheq[ 6] : 32'b0) | 
+                             (cache_hited[ 7] ? cacheq[ 7] : 32'b0) | 
+                             (cache_hited[ 8] ? cacheq[ 8] : 32'b0) | 
+                             (cache_hited[ 9] ? cacheq[ 9] : 32'b0) | 
+                             (cache_hited[10] ? cacheq[10] : 32'b0) | 
+                             (cache_hited[11] ? cacheq[11] : 32'b0) | 
+                             (cache_hited[12] ? cacheq[12] : 32'b0) | 
+                             (cache_hited[13] ? cacheq[13] : 32'b0) | 
+                             (cache_hited[14] ? cacheq[14] : 32'b0) | 
+                             (cache_hited[15] ? cacheq[15] : 32'b0);
 
 
 wire [14:0] current_cacheAddrHigh = (current_slot[ 0] ? cacheAddrHigh[ 0] : 15'b0) | //current_slot == 0 ? 15'b0 : cacheAddrHigh[current_slot-1][14:0];
@@ -276,20 +296,28 @@ wire [14:0] current_cacheAddrHigh = (current_slot[ 0] ? cacheAddrHigh[ 0] : 15'b
                                     (current_slot[15] ? cacheAddrHigh[15] : 15'b0);
 
 
-reg [2:0]  interface_status;//0~8
+reg [3:0]  interface_status;//0~8
 parameter STATUS_INIT              = 0;
-parameter STATUS_HITED1            = 1;
-parameter STATUS_READ              = 2;
-parameter STATUS_WRITE_BACK_DLY    = 3;
-parameter STATUS_WRITE_BACK        = 4;
-parameter STATUS_WRITE_BACK_EXEC   = 5;
-parameter STATUS_WRITE_BACK_FINISH = 6;
-parameter STATUS_WRITE             = 7;
+parameter STATUS_READPAGE_1        = 1;
+parameter STATUS_READPAGE_2        = 2;
+parameter STATUS_READPAGE_3        = 3;
+parameter STATUS_READPAGE_4        = 4;
+parameter STATUS_READPAGE_DLY      = 5;
+parameter STATUS_READPAGE_FINISH   = 6;
+parameter STATUS_READ              = 7;
+parameter STATUS_WRITEBACK_1       = 8;
+parameter STATUS_WRITEBACK_2       = 9;
+parameter STATUS_WRITEBACK_3       = 10;
+parameter STATUS_WRITE             = 11;
+parameter STATUS_FLUSH_1           = 12;
+parameter STATUS_FLUSH_2           = 13;
+parameter STATUS_FLUSH_3           = 14;
 
 `define RD_FINISH interface_status <= STATUS_INIT;avs_s0_read_ack  <= 1;
 `define WR_FINISH interface_status <= STATUS_INIT;avs_s0_write_ack <= 1;
 
-reg [35:0] cacheData;
+reg [31:0] cacheData;
+reg  [3:0] cacheData_ena;
 reg        write_enable;
 reg        adj_cache_life;//update when finish
 reg [31:0] flushCount;
@@ -302,7 +330,8 @@ reg avs_s0_read_ack;
 reg avs_s0_write_ack;
 reg read_sdram_ack_buff;
 reg write_single_sdram_ack_buff;
-reg [10:0] write_back_count;
+//reg [10:0] write_back_count;
+reg [8:0] sdram_rw_count;
 assign avs_s0_waitrequest = (avs_s0_read && !avs_s0_read_ack) || (avs_s0_write && !avs_s0_write_ack);
 always@(posedge clk or negedge sys_rst_n) begin
   if(!sys_rst_n) begin
@@ -318,109 +347,166 @@ always@(posedge clk or negedge sys_rst_n) begin
     read_sdram_ack_buff <= 0;
     write_single_sdram_ack_buff <= 0;
     current_slot <= 0;
-    write_enable <= 0;
     adj_cache_life <= 0;
     debug8 <= 0;
-    cacheAddrLow8_writeBack <= 0;
+    cacheAddrLow8_writeBack_readPage <= 0;
     flushCount <= 0;
+    sdram_rw_count <= 0;
   end else begin
     read_sdram_ack_buff <= read_sdram_ack;
     write_single_sdram_ack_buff <= write_single_sdram_ack;
-    
     write_enable <= 0;
     adj_cache_life <= 0;
     clr_cacheAddrHigh <= 0;
+    set_cacheDirty    <= 0;
     set_cacheAddrHigh <= 0;
     
-    //回写时尝试批量写入，提升性能
+    //case1 读取命中缓存，返回，STATUS_INIT
+    //case2 有无效cache，读页，返回
+    //case3 有有效cache life==0 写回，读页，返回
+    //case4 无可用缓存，读取，返回
+    //flushCount <= flushCount + 1'b1;
     
+    //Total logic elements	7,340 / 15,408 ( 48 % )
+    //Total combinational functions	6,574 / 15,408 ( 43 % )
+    //Dedicated logic registers	2,828 / 15,408 ( 18 % )
+
     if(avs_s0_read && !avs_s0_read_ack)begin
-      cacheData[31:0] <= readBuffer;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
       case (interface_status)
       STATUS_INIT : begin//初始化
-        rdwr_sdram_addr <= {avs_s0_address,1'b0};
-        if(flush_cache && cache_flush_hited != 0)begin
-          current_slot <= cache_flush_hited;
-          write_back_count <= 0;
-          cacheAddrLow8_writeBack <= 1;
-          flushCount <= flushCount + 1'b1;
-          interface_status <= STATUS_WRITE_BACK_DLY;
-        end else if(cache_hited != 0)begin
-          current_slot <= cache_hited;
-          interface_status <= STATUS_HITED1;//高地址命中等一个周期
+        if(nocache && nocache_page == avs_s0_address[22:8])begin
+          current_slot <= 0;
+          read_sdram_req <= 1;
+          rdwr_sdram_addr <= {avs_s0_address,1'b0};
+          interface_status <= STATUS_READ;
+        end else if(cache_hited)begin//命中，返回
+          if(flush_cache && (cache_flush_hited & cache_hited))begin//写入内存   cache_flush_hit = flush_page == cacheAddrHigh[14:0];
+            current_slot <= cache_flush_hited;
+            if(cache_dirty & cache_hited)begin
+              cacheAddrLow8_writeBack_readPage <= 1;
+              interface_status <= STATUS_FLUSH_1;
+            end else begin
+              //clr_cacheAddrHigh <= current_slot;//清有效位
+              clr_cacheAddrHigh <= cache_flush_hited;//清有效位
+              `RD_FINISH
+            end
+          end else begin
+            avs_s0_readdata <= cache_hit_data;
+            current_slot <= cache_hited;
+            adj_cache_life <= 1;//current_slot
+            `RD_FINISH
+          end
         end else if(free_cache != 0)begin//找到空闲cache
           current_slot <= free_cache;
-          if(freeCacheInvalid)begin//invalid 无效 直接使用
-            interface_status <= STATUS_HITED1; 
-            set_cacheAddrHigh <= free_cache;//当前地址写入缓存地址高
-          end else begin
-            write_back_count <= 0;
-            cacheAddrLow8_writeBack <= 1;
-            flushCount <= flushCount + 1'b1;
-            interface_status <= STATUS_WRITE_BACK_DLY;
+          cacheAddrLow8_writeBack_readPage <= 1;
+          if(!freeCacheDirty)begin//非脏cache
+            sdram_rw_count <= 0;
+            set_cacheAddrHigh <= free_cache;//当前地址写入缓存地址高，重置life
+            interface_status <= STATUS_READPAGE_1;
+          end else begin//脏cache, 写回
+            sdram_rw_count <= 0;
+            interface_status <= STATUS_WRITEBACK_1;
           end
         end else begin//不经过cache
           current_slot <= 0;
           read_sdram_req <= 1;
+          rdwr_sdram_addr <= {avs_s0_address,1'b0};
           interface_status <= STATUS_READ;
         end
       end
-      STATUS_HITED1 : begin//高地址命中
-        rdwr_sdram_addr <= {avs_s0_address,1'b0};
-        avs_s0_readdata <= cache_hit_data[31:0];//TODO
-        if(cache_hit_data[FLG_VALID])begin
-          adj_cache_life <= 1;
-          `RD_FINISH
+      STATUS_READPAGE_1 : begin
+        if(sdram_rw_count[8]==1'b1)begin//256 sdram_rw_count[8]==1'b1
+          cacheAddrLow8_writeBack_readPage <= 0;//cacheAddrLow8 = avs_s0_address[7:0];
+          sdram_rw_count <= 0;
+          interface_status <= STATUS_READPAGE_DLY;//读页完成后，等待cache读取,等一周期
         end else begin
-          interface_status <= STATUS_READ;
+          rdwr_sdram_addr <= {avs_s0_address[22:8],sdram_rw_count[7:0],1'b0};
           read_sdram_req <= 1;
+          interface_status <= STATUS_READPAGE_2;
         end
       end
-      STATUS_READ : begin//读取等待
-        avs_s0_readdata <= readBuffer;
-        cacheData[35:32] <= 4'b1000;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
+      STATUS_READPAGE_2 : begin
         if(read_sdram_ack_buff)begin
           read_sdram_req <= 0;
-          if(current_slot != 0)begin
-            write_enable <= 1;
-          end
-          adj_cache_life <= 1;
+          //cacheAddrLow8 = sdram_rw_count[7:0]
+          cacheData <= readBuffer;// data sdram to cache
+          cacheData_ena <= 4'b1111;
+          write_enable <= 1;
+          interface_status <= STATUS_READPAGE_3; 
+        end
+      end
+      STATUS_READPAGE_3 : begin
+        sdram_rw_count <= sdram_rw_count + 1'b1;
+        cacheData <= readBuffer2;// data sdram to cache
+        cacheData_ena <= 4'b1111;
+        write_enable <= 1;
+        interface_status <= STATUS_READPAGE_4; 
+      end
+      STATUS_READPAGE_4 : begin
+        sdram_rw_count <= sdram_rw_count + 1'b1;
+        interface_status <= STATUS_READPAGE_1;
+      end
+      STATUS_READPAGE_DLY: begin
+        interface_status <= STATUS_READPAGE_FINISH;
+      end
+      STATUS_READPAGE_FINISH: begin
+        avs_s0_readdata <= current_slot_data;
+        `RD_FINISH
+      end
+      STATUS_READ : begin//读取等待
+        if(read_sdram_ack_buff)begin
+          read_sdram_req <= 0;
+          current_slot <= 0;
+          adj_cache_life <= 1;//未命中的话，每个缓存都减一
+          avs_s0_readdata <= readBuffer;
           `RD_FINISH
         end
       end
-      STATUS_WRITE_BACK_DLY : begin//sram读出延时
-        cacheData[35:32] <= 4'b0000;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
-        if(write_back_count==256)begin
-          cacheAddrLow8_writeBack <= 0;
-          if(flush_cache && current_slot != 0)begin
-            clr_cacheAddrHigh <= current_slot;
-            `RD_FINISH
-          end else begin
-            interface_status <= STATUS_HITED1;
-            set_cacheAddrHigh <= current_slot;//当前地址写入缓存地址高
-          end
+      STATUS_WRITEBACK_1 : begin
+        if(sdram_rw_count[8]==1'b1)begin//256
+          sdram_rw_count <= 0;
+          set_cacheAddrHigh <= free_cache;//当前地址写入缓存地址高，重置life
+          interface_status <= STATUS_READPAGE_1;//写回完成后，读取
         end else begin
-          interface_status <= STATUS_WRITE_BACK;
-          write_enable <= 1;//写回后要置空
+          interface_status <= STATUS_WRITEBACK_2;
         end
       end
-      STATUS_WRITE_BACK : begin//dirty 的话，写回
-        rdwr_sdram_addr <= {current_cacheAddrHigh,write_back_count[7:0],1'b0};
-        write_single_sdram_data <= cache_hit_data[31:0];
+      STATUS_WRITEBACK_2 : begin//dirty 的话，写回
+        rdwr_sdram_addr <= {current_cacheAddrHigh,sdram_rw_count[7:0],1'b0};
+        write_single_sdram_data <= current_slot_data;
         write_single_sdram_mask <= 4'b0000;
-        if(cache_hit_data[FLG_DIRTY])begin
-          interface_status <= STATUS_WRITE_BACK_EXEC;
-          write_single_sdram_req <= 1;
-        end else begin
-          write_back_count <= write_back_count + 1'b1;
-          interface_status <= STATUS_WRITE_BACK_DLY;
-        end
+        interface_status <= STATUS_WRITEBACK_3;
+        write_single_sdram_req <= 1;
       end
-      STATUS_WRITE_BACK_EXEC : begin//写回执行
+      STATUS_WRITEBACK_3 : begin//写回执行
         if(write_single_sdram_ack_buff)begin
           write_single_sdram_req <= 0;
-          write_back_count <= write_back_count + 1'b1;
-          interface_status <= STATUS_WRITE_BACK_DLY;
+          sdram_rw_count <= sdram_rw_count + 1'b1;
+          interface_status <= STATUS_WRITEBACK_1;
+        end
+      end
+      STATUS_FLUSH_1 : begin
+        if(sdram_rw_count[8]==1'b1)begin//256
+          cacheAddrLow8_writeBack_readPage <= 0;
+          sdram_rw_count <= 0;
+          clr_cacheAddrHigh <= current_slot;//清有效位
+          `RD_FINISH
+        end else begin
+          interface_status <= STATUS_FLUSH_2;
+        end
+      end
+      STATUS_FLUSH_2 : begin//dirty 的话，写回
+        rdwr_sdram_addr <= {current_cacheAddrHigh,sdram_rw_count[7:0],1'b0};
+        write_single_sdram_data <= current_slot_data;
+        write_single_sdram_mask <= 4'b0000;
+        interface_status <= STATUS_FLUSH_3;
+        write_single_sdram_req <= 1;
+      end
+      STATUS_FLUSH_3 : begin//写回执行
+        if(write_single_sdram_ack_buff)begin
+          write_single_sdram_req <= 0;
+          sdram_rw_count <= sdram_rw_count + 1'b1;
+          interface_status <= STATUS_FLUSH_1;
         end
       end
       endcase
@@ -432,113 +518,31 @@ always@(posedge clk or negedge sys_rst_n) begin
 
 
 
-    
+
     if(avs_s0_write && !avs_s0_write_ack)begin
       case(interface_status)
       STATUS_INIT : begin//初始化
-        rdwr_sdram_addr <= {avs_s0_address,1'b0};
-        write_single_sdram_data <= avs_s0_writedata;
-        write_single_sdram_mask <= ~avs_s0_byteenable;
-        cacheData <= {4'b1100,avs_s0_writedata};//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
-        if(cache_hited)begin
-          current_slot <= cache_hited;
-          if(avs_s0_byteenable==4'b1111)begin//完整写入DW的话，不考虑FLG_VALID
-            write_enable <= 1;
-            adj_cache_life <= 1;
-            `WR_FINISH
-          end else begin
-            interface_status <= STATUS_HITED1;//高地址命中等一个周期
-          end
-        end else begin
-          if(free_cache != 0)begin//有闲置cache
-            current_slot <= free_cache;
-            if(freeCacheInvalid)begin//invalid 无效 直接使用
-              set_cacheAddrHigh <= free_cache;//当前地址写入缓存地址高
-              interface_status <= STATUS_WRITE_BACK_FINISH;
-            end else begin
-              write_back_count <= 0;
-              cacheAddrLow8_writeBack <= 1;
-              flushCount <= flushCount + 1'b1;
-              interface_status <= STATUS_WRITE_BACK_DLY;
-            end
-          end else begin
-            //直接写入
-            current_slot <= 0;
-            interface_status <= STATUS_WRITE;//高地址命中等一个周期
-            write_single_sdram_req <= 1;
-          end
-        end
-      end
-      STATUS_HITED1 : begin//高地址命中
-        rdwr_sdram_addr <= {avs_s0_address,1'b0};
-        cacheData <= {4'b1100,
-          avs_s0_byteenable[3] ? avs_s0_writedata[31:24] : cache_hit_data[31:24],
-          avs_s0_byteenable[2] ? avs_s0_writedata[23:16] : cache_hit_data[23:16],
-          avs_s0_byteenable[1] ? avs_s0_writedata[15: 8] : cache_hit_data[15: 8],
-          avs_s0_byteenable[0] ? avs_s0_writedata[ 7: 0] : cache_hit_data[ 7: 0]
-          };//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
-        if(cache_hit_data[FLG_VALID])begin//有效
-          write_enable <= 1;
-          adj_cache_life <= 1;
-          `WR_FINISH
-        end else begin
-          //读取后写入
-          interface_status <= STATUS_READ;
-          read_sdram_req <= 1;
-        end
-      end
-      STATUS_READ : begin//读取等待
-        cacheData <= {4'b1100,
-          avs_s0_byteenable[3] ? avs_s0_writedata[31:24] : readBuffer[31:24],
-          avs_s0_byteenable[2] ? avs_s0_writedata[23:16] : readBuffer[23:16],
-          avs_s0_byteenable[1] ? avs_s0_writedata[15: 8] : readBuffer[15: 8],
-          avs_s0_byteenable[0] ? avs_s0_writedata[ 7: 0] : readBuffer[ 7: 0]
-          };//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
-        if(read_sdram_ack_buff)begin
-          read_sdram_req <= 0;
-          write_enable <= 1;
-          adj_cache_life <= 1;
-          `WR_FINISH
-        end
-      end
-      STATUS_WRITE_BACK_DLY : begin//sram读出延时
-        cacheData[35:32] <= 4'b0000;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
-        if(write_back_count==256)begin
-          set_cacheAddrHigh <= current_slot;//当前地址写入缓存地址高
-          cacheAddrLow8_writeBack <= 0;
-          interface_status <= STATUS_WRITE_BACK_FINISH;
-        end else begin
-          interface_status <= STATUS_WRITE_BACK;
-          write_enable <= 1;//写回后要置空
-        end
-      end
-      STATUS_WRITE_BACK : begin//dirty 的话，写回
-        rdwr_sdram_addr <= {current_cacheAddrHigh,write_back_count[7:0],1'b0};
-        write_single_sdram_data <= cache_hit_data[31:0];
-        write_single_sdram_mask <= 4'b0000;
-        if(cache_hit_data[FLG_DIRTY])begin
-          interface_status <= STATUS_WRITE_BACK_EXEC;
+        if(nocache && nocache_page == avs_s0_address[22:8])begin
+          //直接写入
+          rdwr_sdram_addr <= {avs_s0_address,1'b0};
+          write_single_sdram_data <= avs_s0_writedata;
+          write_single_sdram_mask <= ~avs_s0_byteenable;
           write_single_sdram_req <= 1;
-        end else begin
-          write_back_count <= write_back_count + 1'b1;
-          interface_status <= STATUS_WRITE_BACK_DLY;
-        end
-      end
-      STATUS_WRITE_BACK_EXEC : begin//写回执行
-        if(write_single_sdram_ack_buff)begin
-          write_single_sdram_req <= 0;
-          write_back_count <= write_back_count + 1'b1;
-          interface_status <= STATUS_WRITE_BACK_DLY;
-        end
-      end
-      STATUS_WRITE_BACK_FINISH : begin
-        set_cacheAddrHigh <= 0;
-        cacheData <= {4'b1100,avs_s0_writedata};//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
-        if(avs_s0_byteenable==4'b1111)begin//完整写入DW的话，不考虑FLG_VALID
-          write_enable <= 1;
+          interface_status <= STATUS_WRITE;
+        end else if(cache_hited)begin
+          current_slot <= cache_hited;
+          cacheData <= avs_s0_writedata;
+          cacheData_ena <= avs_s0_byteenable;
+          write_enable <= 1;//cacheAddrLow8 = cacheAddrLow8_writeBack_readPage ? sdram_rw_count[7:0] : avs_s0_address[7:0];
+          set_cacheDirty <= cache_hited;
           `WR_FINISH
         end else begin
-          interface_status <= STATUS_HITED1;//高地址命中等一个周期
+          //直接写入
+          rdwr_sdram_addr <= {avs_s0_address,1'b0};
+          write_single_sdram_data <= avs_s0_writedata;
+          write_single_sdram_mask <= ~avs_s0_byteenable;
+          write_single_sdram_req <= 1;
+          interface_status <= STATUS_WRITE;
         end
       end
       STATUS_WRITE : begin
@@ -576,8 +580,9 @@ reg  [8:0] sdram_timer2;
 reg  [2:0] sdram_timer1;
 reg  [1:0] sram_add_high;
 
-reg [1:0]  sdram_step;
+reg [2:0]  sdram_step;
 reg [31:0] readBuffer;
+reg [31:0] readBuffer2;
 
 reg read_sdram_req_cmd;
 reg write_single_sdram_req_cmd;
@@ -681,6 +686,12 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram 主控
         end
       end else if(sdram_step == 2) begin
         readBuffer[31:16] <= sdram_dout;
+        sdram_step <= 3;
+      end else if(sdram_step == 3) begin
+        readBuffer2[15: 0] <= sdram_dout;
+        sdram_step <= 4;
+      end else if(sdram_step == 4) begin
+        readBuffer2[31:16] <= sdram_dout;
         sdram_rd_req <= 0;
         sdram_step <= 0;
         read_sdram_ack <= 1;
@@ -766,9 +777,11 @@ module cacheEntity(
   input              clk              ,
   input              sys_rst_n        ,
   input      [ 7:0]  cacheAddrLow8    ,
-  input      [35:0]  cacheData        ,
+  input      [31:0]  cacheData        ,
+  input       [3:0]  cacheData_ena    ,
   input              current_slot     ,
   input              set_cacheAddrHigh,
+  input              set_cacheDirty   ,
   input              clr_cacheAddrHigh,
   input      [22:0]  avs_s0_address   ,
   input              write_enable     ,
@@ -776,23 +789,33 @@ module cacheEntity(
   input              flush_cache      ,
   input              adj_cache_life   ,
   
-  output     [35:0]  cacheq           ,
+  output     [31:0]  cacheq           ,
   output             cache_hit        ,
   output             cache_flush_hit  ,
   
   output reg         cacheInvalid     ,
+  output reg         cacheDirty       ,
   output reg  [14:0] cacheAddrHigh    ,
   output reg  [15:0] cache_life       
 );
 parameter CACHE_COUNTX2 = 6'd32;
 
-cache256x36 cache256x36_inst (
-  .address(cacheAddrLow8),//input	[7:0]  address;
-  .clock  (clk          ),  //input	  clock;
-  .data   (cacheData    ),   //input	[35:0]  data;
-  .wren   (wren         ),   //input	  wren;
-  .q      (cacheq       )     //output	[35:0]  q;
-);
+//cache256x36 cache256x36_inst (
+//  .address(cacheAddrLow8),//input	[7:0]  address;
+//  .clock  (clk          ),  //input	  clock;
+//  .data   ({4'b0,cacheData}  ),   //input	[31:0]  data;
+//  .wren   (wren         ),   //input	  wren;
+//  .q      (cacheq[31:0]       )     //output	[31:0]  q;
+//);
+
+ram256x32	ram256x32_inst (
+	.address ( cacheAddrLow8 ),
+	.byteena ( cacheData_ena ),
+	.clock ( clk ),
+	.data ( cacheData ),
+	.wren ( wren ),
+	.q ( cacheq )
+	);
 
 assign cache_hit       = cacheInvalid == 0 && avs_s0_address[22:8] == cacheAddrHigh[14:0];
 assign cache_flush_hit = cacheInvalid == 0 &&           flush_page == cacheAddrHigh[14:0];
@@ -824,129 +847,18 @@ always@(posedge clk or negedge sys_rst_n) begin
       cacheInvalid <= 1'b0;
       cache_life <= 512;
     end
+    
+    if(set_cacheDirty)begin
+      cacheDirty <= 1'b1;
+    end
+    
     if(clr_cacheAddrHigh)begin
       //cacheAddrHigh <= 15'b0;
       cacheInvalid <= 1'b1;
+      cacheDirty <= 1'b0;
       cache_life <= 0;
     end
   end
 end
 
 endmodule 
-
-//assign free_cache[ 0] =                                                                                                                                                                                                                                                                                                                                                cache_life[ 0] == 0;
-//assign free_cache[ 1] =                                                                                                                                                                                                                                                                                                                          free_cache[0] == 0 && cache_life[ 1] == 0;
-//assign free_cache[ 2] =                                                                                                                                                                                                                                                                                                    free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 2] == 0;
-//assign free_cache[ 3] =                                                                                                                                                                                                                                                                              free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 3] == 0;
-//assign free_cache[ 4] =                                                                                                                                                                                                                                                        free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 4] == 0;
-//assign free_cache[ 5] =                                                                                                                                                                                                                                  free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 5] == 0;
-//assign free_cache[ 6] =                                                                                                                                                                                                            free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 6] == 0;
-//assign free_cache[ 7] =                                                                                                                                                                                      free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 7] == 0;
-//assign free_cache[ 8] =                                                                                                                                                                free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 8] == 0;
-//assign free_cache[ 9] =                                                                                                                                          free_cache[8] == 0 && free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 9] == 0;
-//assign free_cache[10] =                                                                                                                    free_cache[9] == 0 && free_cache[8] == 0 && free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[10] == 0;
-//assign free_cache[11] =                                                                                             free_cache[10] == 0 && free_cache[9] == 0 && free_cache[8] == 0 && free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[11] == 0;
-//assign free_cache[12] =                                                                      free_cache[11] == 0 && free_cache[10] == 0 && free_cache[9] == 0 && free_cache[8] == 0 && free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[12] == 0;
-//assign free_cache[13] =                                               free_cache[12] == 0 && free_cache[11] == 0 && free_cache[10] == 0 && free_cache[9] == 0 && free_cache[8] == 0 && free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[13] == 0;
-//assign free_cache[14] =                        free_cache[13] == 0 && free_cache[12] == 0 && free_cache[11] == 0 && free_cache[10] == 0 && free_cache[9] == 0 && free_cache[8] == 0 && free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[14] == 0;
-//assign free_cache[15] = free_cache[14] == 0 && free_cache[13] == 0 && free_cache[12] == 0 && free_cache[11] == 0 && free_cache[10] == 0 && free_cache[9] == 0 && free_cache[8] == 0 && free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[15] == 0;
-
-//always @(*) begin
-//  if(free_cache_temp==0)begin
-//    free_cache <= 16'b0;
-//  end else begin
-//    case (clzres)
-//      4'd00: free_cache <= 16'b0000000000000001;
-//      4'd01: free_cache <= 16'b0000000000000010;
-//      4'd02: free_cache <= 16'b0000000000000100;
-//      4'd03: free_cache <= 16'b0000000000001000;
-//      4'd04: free_cache <= 16'b0000000000010000;
-//      4'd05: free_cache <= 16'b0000000000100000;
-//      4'd06: free_cache <= 16'b0000000001000000;
-//      4'd07: free_cache <= 16'b0000000010000000;
-//      4'd08: free_cache <= 16'b0000000100000000;
-//      4'd09: free_cache <= 16'b0000001000000000;
-//      4'd10: free_cache <= 16'b0000010000000000;
-//      4'd11: free_cache <= 16'b0000100000000000;
-//      4'd12: free_cache <= 16'b0001000000000000;
-//      4'd13: free_cache <= 16'b0010000000000000;
-//      4'd14: free_cache <= 16'b0100000000000000;
-//      4'd15: free_cache <= 16'b1000000000000000;
-//    endcase
-//  end
-//end
-
-//reg [15:0] free_cache;
-//always @(*) begin
-//  casez (free_cache_temp)
-//    16'b???????????????1: free_cache <= 16'b0000000000000001;
-//    16'b??????????????10: free_cache <= 16'b0000000000000010;
-//    16'b?????????????100: free_cache <= 16'b0000000000000100;
-//    16'b????????????1000: free_cache <= 16'b0000000000001000;
-//    16'b???????????10000: free_cache <= 16'b0000000000010000;
-//    16'b??????????100000: free_cache <= 16'b0000000000100000;
-//    16'b?????????1000000: free_cache <= 16'b0000000001000000;
-//    16'b????????10000000: free_cache <= 16'b0000000010000000;
-//    16'b???????100000000: free_cache <= 16'b0000000100000000;
-//    16'b??????1000000000: free_cache <= 16'b0000001000000000;
-//    16'b?????10000000000: free_cache <= 16'b0000010000000000;
-//    16'b????100000000000: free_cache <= 16'b0000100000000000;
-//    16'b???1000000000000: free_cache <= 16'b0001000000000000;
-//    16'b??10000000000000: free_cache <= 16'b0010000000000000;
-//    16'b?100000000000000: free_cache <= 16'b0100000000000000;
-//    16'b1000000000000000: free_cache <= 16'b1000000000000000;
-//    default:              free_cache <= 16'b0000000000000000;
-//  endcase
-//end
-
-//wire [15:0] free_cache = free_cache_temp[ 0] ? 16'b0000000000000001 :
-//                         free_cache_temp[ 1] ? 16'b0000000000000010 :
-//                         free_cache_temp[ 2] ? 16'b0000000000000100 :
-//                         free_cache_temp[ 3] ? 16'b0000000000001000 :
-//                         free_cache_temp[ 4] ? 16'b0000000000010000 :
-//                         free_cache_temp[ 5] ? 16'b0000000000100000 :
-//                         free_cache_temp[ 6] ? 16'b0000000001000000 :
-//                         free_cache_temp[ 7] ? 16'b0000000010000000 :
-//                         free_cache_temp[ 8] ? 16'b0000000100000000 :
-//                         free_cache_temp[ 9] ? 16'b0000001000000000 :
-//                         free_cache_temp[10] ? 16'b0000010000000000 :
-//                         free_cache_temp[11] ? 16'b0000100000000000 :
-//                         free_cache_temp[12] ? 16'b0001000000000000 :
-//                         free_cache_temp[13] ? 16'b0010000000000000 :
-//                         free_cache_temp[14] ? 16'b0100000000000000 :
-//                         free_cache_temp[15] ? 16'b1000000000000000 :
-//                                               16'b0000000000000000;
-
-//wire [3:0] clzres;
-//
-//assign clzres[3] = (in[15: 8] ==  8'b0);
-// 
-//wire [ 7:0] part2 = clzres[3] ? in [ 7: 0] : in [15: 8];
-// 
-//assign clzres[2] = (part2 [ 7: 4] ==  4'b0);
-// 
-//wire [ 3:0] part3 = clzres[2] ? part2 [ 3: 0] : part2 [ 7: 4];
-//
-//assign clzres[1] = (part3 [ 3: 2] ==  2'b0);
-// 
-//wire [ 1:0] part4 = clzres[1] ? part3 [ 1: 0] : part3 [ 3: 2];
-// 
-//assign clzres[0] = (part4 [ 1: 1] ==  1'b0);
-//
-////assign out = in;
-//assign out[ 0] = in != 0 && clzres ==  0;
-//assign out[ 1] = in != 0 && clzres ==  1;
-//assign out[ 2] = in != 0 && clzres ==  2;
-//assign out[ 3] = in != 0 && clzres ==  3;
-//assign out[ 4] = in != 0 && clzres ==  4;
-//assign out[ 5] = in != 0 && clzres ==  5;
-//assign out[ 6] = in != 0 && clzres ==  6;
-//assign out[ 7] = in != 0 && clzres ==  7;
-//assign out[ 8] = in != 0 && clzres ==  8;
-//assign out[ 9] = in != 0 && clzres ==  9;
-//assign out[10] = in != 0 && clzres == 10;
-//assign out[11] = in != 0 && clzres == 11;
-//assign out[12] = in != 0 && clzres == 12;
-//assign out[13] = in != 0 && clzres == 13;
-//assign out[14] = in != 0 && clzres == 14;
-//assign out[15] = in != 0 && clzres == 15;
