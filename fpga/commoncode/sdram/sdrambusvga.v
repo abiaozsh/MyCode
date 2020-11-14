@@ -4,17 +4,17 @@ module sdrambusvga(
     input          clk_100m,
     input          clk_100m_shift,
 
-    //SDRAM èŠ¯ç‰‡æ¥å£
-    output        sdram_clk_out,            //SDRAM èŠ¯ç‰‡æ—¶é’Ÿ
-    output        sdram_cke,                //SDRAM æ—¶é’Ÿæœ‰æ•ˆ
-    output        sdram_cs_n,               //SDRAM ç‰‡é€‰
-    output        sdram_ras_n,              //SDRAM è¡Œæœ‰æ•ˆ
-    output        sdram_cas_n,              //SDRAM åˆ—æœ‰æ•ˆ
-    output        sdram_we_n,               //SDRAM å†™æœ‰æ•ˆ
-    output [ 1:0] sdram_ba,                 //SDRAM Bankåœ°å€
-    output [12:0] sdram_addr,               //SDRAM è¡Œ/åˆ—åœ°å€
-    inout  [15:0] sdram_data,               //SDRAM æ•°æ®
-    output [ 1:0] sdram_dqm,                //SDRAM æ•°æ®æ©ç 
+    //SDRAM Ğ¾Æ¬½Ó¿Ú
+    output        sdram_clk_out,            //SDRAM Ğ¾Æ¬Ê±ÖÓ
+    output        sdram_cke,                //SDRAM Ê±ÖÓÓĞĞ§
+    output        sdram_cs_n,               //SDRAM Æ¬Ñ¡
+    output        sdram_ras_n,              //SDRAM ĞĞÓĞĞ§
+    output        sdram_cas_n,              //SDRAM ÁĞÓĞĞ§
+    output        sdram_we_n,               //SDRAM Ğ´ÓĞĞ§
+    output [ 1:0] sdram_ba,                 //SDRAM BankµØÖ·
+    output [12:0] sdram_addr,               //SDRAM ĞĞ/ÁĞµØÖ·
+    inout  [15:0] sdram_data,               //SDRAM Êı¾İ
+    output [ 1:0] sdram_dqm,                //SDRAM Êı¾İÑÚÂë
 
 
     input   [22:0]     avs_s0_address,     //    s0.address
@@ -94,52 +94,52 @@ buff1024x16  buffReadB (
 
 wire sdram_clk;
 assign sdram_clk = clk_100m;
-assign  sdram_clk_out = clk_100m_shift;//out_clk;                //å°†ç›¸ä½åç§»æ—¶é’Ÿè¾“å‡ºç»™sdramèŠ¯ç‰‡
+assign  sdram_clk_out = clk_100m_shift;//out_clk;                //½«ÏàÎ»Æ«ÒÆÊ±ÖÓÊä³ö¸øsdramĞ¾Æ¬
 
 
-reg         sdram_wr_req    ;    //å†™SDRAMè¯·æ±‚ä¿¡å·              input 
-wire        sdram_wr_ack    ;    //å†™SDRAMå“åº”ä¿¡å·              output
-reg [23:0]  sdram_rw_addr   ;  //SDRAMå†™æ“ä½œçš„åœ°å€            input 
-reg [ 9:0]  sdram_wr_burst  ;   //å†™sdramæ—¶æ•°æ®çªå‘é•¿åº¦      input 
-reg [15:0]  sdram_din       ;      //å†™å…¥SDRAMçš„æ•°æ®              input 
+reg         sdram_wr_req    ;    //Ğ´SDRAMÇëÇóĞÅºÅ              input 
+wire        sdram_wr_ack    ;    //Ğ´SDRAMÏìÓ¦ĞÅºÅ              output
+reg [23:0]  sdram_rw_addr   ;  //SDRAMĞ´²Ù×÷µÄµØÖ·            input 
+reg [ 9:0]  sdram_wr_burst  ;   //Ğ´sdramÊ±Êı¾İÍ»·¢³¤¶È      input 
+reg [15:0]  sdram_din       ;      //Ğ´ÈëSDRAMµÄÊı¾İ              input 
 reg [1:0]   sdram_mask      ;
-reg         sdram_rd_req    ;    //è¯»SDRAMè¯·æ±‚ä¿¡å·              input 
-wire        sdram_rd_ack    ;    //è¯»SDRAMå“åº”ä¿¡å·              output
-reg [ 9:0]  sdram_rd_burst  ;   //è¯»sdramæ—¶æ•°æ®çªå‘é•¿åº¦      input 
-wire [15:0] sdram_dout      ;      //ä»SDRAMè¯»å‡ºçš„æ•°æ®            output
-wire        sdram_init_done ;  //SDRAM åˆå§‹åŒ–å®Œæˆæ ‡å¿—       output
+reg         sdram_rd_req    ;    //¶ÁSDRAMÇëÇóĞÅºÅ              input 
+wire        sdram_rd_ack    ;    //¶ÁSDRAMÏìÓ¦ĞÅºÅ              output
+reg [ 9:0]  sdram_rd_burst  ;   //¶ÁsdramÊ±Êı¾İÍ»·¢³¤¶È      input 
+wire [15:0] sdram_dout      ;      //´ÓSDRAM¶Á³öµÄÊı¾İ            output
+wire        sdram_init_done ;  //SDRAM ³õÊ¼»¯Íê³É±êÖ¾       output
 
-//SDRAMæ§åˆ¶å™¨
+//SDRAM¿ØÖÆÆ÷
 sdram_controller ins_sdram_controller(
-  .clk        (sdram_clk),      //sdram æ§åˆ¶å™¨æ—¶é’Ÿ
-  .rst_n        (reset_n),      //ç³»ç»Ÿå¤ä½
+  .clk        (sdram_clk),      //sdram ¿ØÖÆÆ÷Ê±ÖÓ
+  .rst_n        (reset_n),      //ÏµÍ³¸´Î»
 
-  //SDRAM èŠ¯ç‰‡æ¥å£
-  .sdram_cke       (sdram_cke),    //SDRAM æ—¶é’Ÿæœ‰æ•ˆ
-  .sdram_cs_n      (sdram_cs_n),    //SDRAM ç‰‡é€‰
-  .sdram_ras_n     (sdram_ras_n),    //SDRAM è¡Œæœ‰æ•ˆ  
-  .sdram_cas_n     (sdram_cas_n),    //SDRAM åˆ—æœ‰æ•ˆ
-  .sdram_we_n      (sdram_we_n),    //SDRAM å†™æœ‰æ•ˆ
-  .sdram_ba        (sdram_ba),      //SDRAM Bankåœ°å€
-  .sdram_addr      (sdram_addr),    //SDRAM è¡Œ/åˆ—åœ°å€
-  .sdram_data      (sdram_data),    //SDRAM æ•°æ®
-  .sdram_dqm       (sdram_dqm),    //SDRAM æ•°æ®
+  //SDRAM Ğ¾Æ¬½Ó¿Ú
+  .sdram_cke       (sdram_cke),    //SDRAM Ê±ÖÓÓĞĞ§
+  .sdram_cs_n      (sdram_cs_n),    //SDRAM Æ¬Ñ¡
+  .sdram_ras_n     (sdram_ras_n),    //SDRAM ĞĞÓĞĞ§  
+  .sdram_cas_n     (sdram_cas_n),    //SDRAM ÁĞÓĞĞ§
+  .sdram_we_n      (sdram_we_n),    //SDRAM Ğ´ÓĞĞ§
+  .sdram_ba        (sdram_ba),      //SDRAM BankµØÖ·
+  .sdram_addr      (sdram_addr),    //SDRAM ĞĞ/ÁĞµØÖ·
+  .sdram_data      (sdram_data),    //SDRAM Êı¾İ
+  .sdram_dqm       (sdram_dqm),    //SDRAM Êı¾İ
   
-  //SDRAM æ§åˆ¶å™¨ç«¯å£  
-  .sdram_rw_addr     (sdram_rw_addr),   //sdram åœ°å€
-  .sdram_wr_req      (sdram_wr_req),   //sdram å†™è¯·æ±‚
-  .sdram_wr_ack      (sdram_wr_ack),   //sdram å†™å“åº”
-  .sdram_wr_burst    (sdram_wr_burst),        //å†™sdramæ—¶æ•°æ®çªå‘é•¿åº¦
-  .sdram_din         (sdram_din),      //å†™å…¥sdramä¸­çš„æ•°æ®
+  //SDRAM ¿ØÖÆÆ÷¶Ë¿Ú  
+  .sdram_rw_addr     (sdram_rw_addr),   //sdram µØÖ·
+  .sdram_wr_req      (sdram_wr_req),   //sdram Ğ´ÇëÇó
+  .sdram_wr_ack      (sdram_wr_ack),   //sdram Ğ´ÏìÓ¦
+  .sdram_wr_burst    (sdram_wr_burst),        //Ğ´sdramÊ±Êı¾İÍ»·¢³¤¶È
+  .sdram_din         (sdram_din),      //Ğ´ÈësdramÖĞµÄÊı¾İ
   .sdram_mask        (sdram_mask),
-  .sdram_rd_req      (sdram_rd_req),   //sdram è¯»è¯·æ±‚
-  .sdram_rd_ack      (sdram_rd_ack),    //sdram è¯»å“åº”
-  .sdram_rd_burst    (sdram_rd_burst),        //è¯»sdramæ—¶æ•°æ®çªå‘é•¿åº¦
-  .sdram_dout        (sdram_dout),     //ä»sdramä¸­è¯»å‡ºçš„æ•°æ®
+  .sdram_rd_req      (sdram_rd_req),   //sdram ¶ÁÇëÇó
+  .sdram_rd_ack      (sdram_rd_ack),    //sdram ¶ÁÏìÓ¦
+  .sdram_rd_burst    (sdram_rd_burst),        //¶ÁsdramÊ±Êı¾İÍ»·¢³¤¶È
+  .sdram_dout        (sdram_dout),     //´ÓsdramÖĞ¶Á³öµÄÊı¾İ
   
   .block_auto_refresh (0),//write_en
   
-  .sdram_init_done  (sdram_init_done)  //sdram åˆå§‹åŒ–å®Œæˆæ ‡å¿—
+  .sdram_init_done  (sdram_init_done)  //sdram ³õÊ¼»¯Íê³É±êÖ¾
 
 );
 
@@ -150,7 +150,7 @@ always@(posedge clk or negedge sys_rst_n) begin
     cacheAddrHigh_data <= 0;
   end else begin
     cache_life_data    <= cache_life[cache_life_addr];
-    cacheAddrHigh_data <= {cacheDirty[cacheAddrHigh_addr], cacheInvalid[cacheAddrHigh_addr], cacheAddrHigh[cacheAddrHigh_addr]};
+    cacheAddrHigh_data <= {1'b0, cacheInvalid[cacheAddrHigh_addr], cacheAddrHigh[cacheAddrHigh_addr]};
   end
 end
 
@@ -162,18 +162,17 @@ assign debug32 = {flush_cache,1'b0,flush_page};//{interface_status,1'b0,free_cac
     //input   [14:0]     flush_page,
 
 
-reg cacheAddrLow8_writeBack_readPage;
-wire [ 7:0] cacheAddrLow8 = cacheAddrLow8_writeBack_readPage ? sdram_rw_count[7:0] : avs_s0_address[7:0];
-wire [31:0] cacheq[CACHE_COUNT];
+reg cacheAddrLow8_writeBack;
+wire  [ 7:0] cacheAddrLow8 = cacheAddrLow8_writeBack ? write_back_count[7:0] : avs_s0_address[7:0];
+wire [35:0] cacheq[CACHE_COUNT];
 wire        cache_hit[CACHE_COUNT];
 wire        cache_flush_hit[CACHE_COUNT];
-wire        cacheInvalid[CACHE_COUNT];
-wire        cacheDirty[CACHE_COUNT];  //32Mbyte / 1024byte per cache slot = total 32k cache slot
+
+wire        cacheInvalid[CACHE_COUNT];//32Mbyte / 1024byte per cache slot = total 32k cache slot
 wire [14:0] cacheAddrHigh[CACHE_COUNT];//32Mbyte / 1024byte per cache slot = total 32k cache slot
 wire [CACHE_COUNT-1:0] cache_life[CACHE_COUNT];
 
 wire [CACHE_COUNT-1:0] cache_hited;
-wire [CACHE_COUNT-1:0] cache_dirty;
 wire [CACHE_COUNT-1:0] cache_flush_hited;
 wire [CACHE_COUNT-1:0] free_cache_temp;
 
@@ -189,93 +188,77 @@ generate
 
       .cacheAddrLow8      (cacheAddrLow8         ),
       .cacheData          (cacheData             ),
-      .cacheData_ena      (cacheData_ena         ),
       .write_enable       (write_enable          ),
       .adj_cache_life     (adj_cache_life        ),
       .current_slot       (current_slot[i]       ),
       .set_cacheAddrHigh  (set_cacheAddrHigh[i]  ),
-      .set_cacheDirty     (set_cacheDirty[i]     ),
       .clr_cacheAddrHigh  (clr_cacheAddrHigh[i]  ),
 
       .cacheq             (cacheq[i]             ),
       .cache_hit          (cache_hit[i]          ),
       .cache_flush_hit    (cache_flush_hit[i]    ),
-
+      
       .cacheInvalid       (cacheInvalid[i]       ),
-      .cacheDirty         (cacheDirty[i]         ),
       .cacheAddrHigh      (cacheAddrHigh[i]      ),
       .cache_life         (cache_life[i]         )
     );
     assign cache_hited[i] = cache_hit[i];
-    assign cache_dirty[i] = cacheDirty[i];
     assign cache_flush_hited[i] = cache_flush_hit[i];
     assign free_cache_temp[i] = cache_life[i] == 0;
   end
 endgenerate
 
 reg  [CACHE_COUNT-1:0] set_cacheAddrHigh;
-reg  [CACHE_COUNT-1:0] set_cacheDirty;
 reg  [CACHE_COUNT-1:0] clr_cacheAddrHigh;
 reg  [CACHE_COUNT-1:0] current_slot;
 
 wire [CACHE_COUNT-1:0] free_cache;
 
+//assign singleOut = free_cache_temp;
+//assign free_cache = singleIn;
+//
 singleOut ins_singleOut(
 .in(free_cache_temp),
 .out(free_cache)
 );
 
-wire freeCacheDirty =   (free_cache[ 0] ? cacheDirty[ 0] : 1'b0) | 
-                        (free_cache[ 1] ? cacheDirty[ 1] : 1'b0) | 
-                        (free_cache[ 2] ? cacheDirty[ 2] : 1'b0) | 
-                        (free_cache[ 3] ? cacheDirty[ 3] : 1'b0) | 
-                        (free_cache[ 4] ? cacheDirty[ 4] : 1'b0) | 
-                        (free_cache[ 5] ? cacheDirty[ 5] : 1'b0) | 
-                        (free_cache[ 6] ? cacheDirty[ 6] : 1'b0) | 
-                        (free_cache[ 7] ? cacheDirty[ 7] : 1'b0) | 
-                        (free_cache[ 8] ? cacheDirty[ 8] : 1'b0) | 
-                        (free_cache[ 9] ? cacheDirty[ 9] : 1'b0) | 
-                        (free_cache[10] ? cacheDirty[10] : 1'b0) | 
-                        (free_cache[11] ? cacheDirty[11] : 1'b0) | 
-                        (free_cache[12] ? cacheDirty[12] : 1'b0) | 
-                        (free_cache[13] ? cacheDirty[13] : 1'b0) | 
-                        (free_cache[14] ? cacheDirty[14] : 1'b0) | 
-                        (free_cache[15] ? cacheDirty[15] : 1'b0);
+wire freeCacheInvalid = (free_cache[ 0] ? cacheInvalid[ 0] : 1'b0) | //current_slot == 0 ? 15'b0 : cacheAddrHigh[current_slot-1][14:0];
+                        (free_cache[ 1] ? cacheInvalid[ 1] : 1'b0) | 
+                        (free_cache[ 2] ? cacheInvalid[ 2] : 1'b0) | 
+                        (free_cache[ 3] ? cacheInvalid[ 3] : 1'b0) | 
+                        (free_cache[ 4] ? cacheInvalid[ 4] : 1'b0) | 
+                        (free_cache[ 5] ? cacheInvalid[ 5] : 1'b0) | 
+                        (free_cache[ 6] ? cacheInvalid[ 6] : 1'b0) | 
+                        (free_cache[ 7] ? cacheInvalid[ 7] : 1'b0) | 
+                        (free_cache[ 8] ? cacheInvalid[ 8] : 1'b0) | 
+                        (free_cache[ 9] ? cacheInvalid[ 9] : 1'b0) | 
+                        (free_cache[10] ? cacheInvalid[10] : 1'b0) | 
+                        (free_cache[11] ? cacheInvalid[11] : 1'b0) | 
+                        (free_cache[12] ? cacheInvalid[12] : 1'b0) | 
+                        (free_cache[13] ? cacheInvalid[13] : 1'b0) | 
+                        (free_cache[14] ? cacheInvalid[14] : 1'b0) | 
+                        (free_cache[15] ? cacheInvalid[15] : 1'b0);
 
-wire [31:0] current_slot_data = (current_slot[ 0] ? cacheq[ 0] : 32'b0) | 
-                                (current_slot[ 1] ? cacheq[ 1] : 32'b0) | 
-                                (current_slot[ 2] ? cacheq[ 2] : 32'b0) | 
-                                (current_slot[ 3] ? cacheq[ 3] : 32'b0) | 
-                                (current_slot[ 4] ? cacheq[ 4] : 32'b0) | 
-                                (current_slot[ 5] ? cacheq[ 5] : 32'b0) | 
-                                (current_slot[ 6] ? cacheq[ 6] : 32'b0) | 
-                                (current_slot[ 7] ? cacheq[ 7] : 32'b0) | 
-                                (current_slot[ 8] ? cacheq[ 8] : 32'b0) | 
-                                (current_slot[ 9] ? cacheq[ 9] : 32'b0) | 
-                                (current_slot[10] ? cacheq[10] : 32'b0) | 
-                                (current_slot[11] ? cacheq[11] : 32'b0) | 
-                                (current_slot[12] ? cacheq[12] : 32'b0) | 
-                                (current_slot[13] ? cacheq[13] : 32'b0) | 
-                                (current_slot[14] ? cacheq[14] : 32'b0) | 
-                                (current_slot[15] ? cacheq[15] : 32'b0);
+parameter FLG_VALID = 35;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,}
+parameter FLG_DIRTY = 34;
 
-                             
-wire [31:0] cache_hit_data = (cache_hited[ 0] ? cacheq[ 0] : 32'b0) | 
-                             (cache_hited[ 1] ? cacheq[ 1] : 32'b0) | 
-                             (cache_hited[ 2] ? cacheq[ 2] : 32'b0) | 
-                             (cache_hited[ 3] ? cacheq[ 3] : 32'b0) | 
-                             (cache_hited[ 4] ? cacheq[ 4] : 32'b0) | 
-                             (cache_hited[ 5] ? cacheq[ 5] : 32'b0) | 
-                             (cache_hited[ 6] ? cacheq[ 6] : 32'b0) | 
-                             (cache_hited[ 7] ? cacheq[ 7] : 32'b0) | 
-                             (cache_hited[ 8] ? cacheq[ 8] : 32'b0) | 
-                             (cache_hited[ 9] ? cacheq[ 9] : 32'b0) | 
-                             (cache_hited[10] ? cacheq[10] : 32'b0) | 
-                             (cache_hited[11] ? cacheq[11] : 32'b0) | 
-                             (cache_hited[12] ? cacheq[12] : 32'b0) | 
-                             (cache_hited[13] ? cacheq[13] : 32'b0) | 
-                             (cache_hited[14] ? cacheq[14] : 32'b0) | 
-                             (cache_hited[15] ? cacheq[15] : 32'b0);
+
+wire [35:0] cache_hit_data = (current_slot[ 0] ? cacheq[ 0] : 36'b0) | //current_slot == 0 ? 36'b0 : cacheq[current_slot-1];
+                             (current_slot[ 1] ? cacheq[ 1] : 36'b0) | 
+                             (current_slot[ 2] ? cacheq[ 2] : 36'b0) | 
+                             (current_slot[ 3] ? cacheq[ 3] : 36'b0) | 
+                             (current_slot[ 4] ? cacheq[ 4] : 36'b0) | 
+                             (current_slot[ 5] ? cacheq[ 5] : 36'b0) | 
+                             (current_slot[ 6] ? cacheq[ 6] : 36'b0) | 
+                             (current_slot[ 7] ? cacheq[ 7] : 36'b0) | 
+                             (current_slot[ 8] ? cacheq[ 8] : 36'b0) | 
+                             (current_slot[ 9] ? cacheq[ 9] : 36'b0) | 
+                             (current_slot[10] ? cacheq[10] : 36'b0) | 
+                             (current_slot[11] ? cacheq[11] : 36'b0) | 
+                             (current_slot[12] ? cacheq[12] : 36'b0) | 
+                             (current_slot[13] ? cacheq[13] : 36'b0) | 
+                             (current_slot[14] ? cacheq[14] : 36'b0) | 
+                             (current_slot[15] ? cacheq[15] : 36'b0);
 
 
 wire [14:0] current_cacheAddrHigh = (current_slot[ 0] ? cacheAddrHigh[ 0] : 15'b0) | //current_slot == 0 ? 15'b0 : cacheAddrHigh[current_slot-1][14:0];
@@ -296,28 +279,20 @@ wire [14:0] current_cacheAddrHigh = (current_slot[ 0] ? cacheAddrHigh[ 0] : 15'b
                                     (current_slot[15] ? cacheAddrHigh[15] : 15'b0);
 
 
-reg [3:0]  interface_status;//0~8
+reg [2:0]  interface_status;//0~8
 parameter STATUS_INIT              = 0;
-parameter STATUS_READPAGE_1        = 1;
-parameter STATUS_READPAGE_2        = 2;
-parameter STATUS_READPAGE_3        = 3;
-parameter STATUS_READPAGE_4        = 4;
-parameter STATUS_READPAGE_DLY      = 5;
-parameter STATUS_READPAGE_FINISH   = 6;
-parameter STATUS_READ              = 7;
-parameter STATUS_WRITEBACK_1       = 8;
-parameter STATUS_WRITEBACK_2       = 9;
-parameter STATUS_WRITEBACK_3       = 10;
-parameter STATUS_WRITE             = 11;
-parameter STATUS_FLUSH_1           = 12;
-parameter STATUS_FLUSH_2           = 13;
-parameter STATUS_FLUSH_3           = 14;
+parameter STATUS_HITED1            = 1;
+parameter STATUS_READ              = 2;
+parameter STATUS_WRITE_BACK_DLY    = 3;
+parameter STATUS_WRITE_BACK        = 4;
+parameter STATUS_WRITE_BACK_EXEC   = 5;
+parameter STATUS_WRITE_BACK_FINISH = 6;
+parameter STATUS_WRITE             = 7;
 
 `define RD_FINISH interface_status <= STATUS_INIT;avs_s0_read_ack  <= 1;
 `define WR_FINISH interface_status <= STATUS_INIT;avs_s0_write_ack <= 1;
 
-reg [31:0] cacheData;
-reg  [3:0] cacheData_ena;
+reg [35:0] cacheData;
 reg        write_enable;
 reg        adj_cache_life;//update when finish
 reg [31:0] flushCount;
@@ -330,8 +305,7 @@ reg avs_s0_read_ack;
 reg avs_s0_write_ack;
 reg read_sdram_ack_buff;
 reg write_single_sdram_ack_buff;
-//reg [10:0] write_back_count;
-reg [8:0] sdram_rw_count;
+reg [10:0] write_back_count;
 assign avs_s0_waitrequest = (avs_s0_read && !avs_s0_read_ack) || (avs_s0_write && !avs_s0_write_ack);
 always@(posedge clk or negedge sys_rst_n) begin
   if(!sys_rst_n) begin
@@ -347,166 +321,109 @@ always@(posedge clk or negedge sys_rst_n) begin
     read_sdram_ack_buff <= 0;
     write_single_sdram_ack_buff <= 0;
     current_slot <= 0;
+    write_enable <= 0;
     adj_cache_life <= 0;
     debug8 <= 0;
-    cacheAddrLow8_writeBack_readPage <= 0;
+    cacheAddrLow8_writeBack <= 0;
     flushCount <= 0;
-    sdram_rw_count <= 0;
   end else begin
     read_sdram_ack_buff <= read_sdram_ack;
     write_single_sdram_ack_buff <= write_single_sdram_ack;
+    
     write_enable <= 0;
     adj_cache_life <= 0;
     clr_cacheAddrHigh <= 0;
-    set_cacheDirty    <= 0;
     set_cacheAddrHigh <= 0;
     
-    //case1 è¯»å–å‘½ä¸­ç¼“å­˜ï¼Œè¿”å›ï¼ŒSTATUS_INIT
-    //case2 æœ‰æ— æ•ˆcacheï¼Œè¯»é¡µï¼Œè¿”å›
-    //case3 æœ‰æœ‰æ•ˆcache life==0 å†™å›ï¼Œè¯»é¡µï¼Œè¿”å›
-    //case4 æ— å¯ç”¨ç¼“å­˜ï¼Œè¯»å–ï¼Œè¿”å›
-    //flushCount <= flushCount + 1'b1;
+    //»ØĞ´Ê±³¢ÊÔÅúÁ¿Ğ´Èë£¬ÌáÉıĞÔÄÜ
     
-    //Total logic elements	7,340 / 15,408 ( 48 % )
-    //Total combinational functions	6,574 / 15,408 ( 43 % )
-    //Dedicated logic registers	2,828 / 15,408 ( 18 % )
-
     if(avs_s0_read && !avs_s0_read_ack)begin
+      cacheData[31:0] <= readBuffer;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} ÖÃÒÑ»º´æÎ»
       case (interface_status)
-      STATUS_INIT : begin//åˆå§‹åŒ–
-        if(nocache && nocache_page == avs_s0_address[22:8])begin
-          current_slot <= 0;
-          read_sdram_req <= 1;
-          rdwr_sdram_addr <= {avs_s0_address,1'b0};
-          interface_status <= STATUS_READ;
-        end else if(cache_hited)begin//å‘½ä¸­ï¼Œè¿”å›
-          if(flush_cache && (cache_flush_hited & cache_hited))begin//å†™å…¥å†…å­˜   cache_flush_hit = flush_page == cacheAddrHigh[14:0];
-            current_slot <= cache_flush_hited;
-            if(cache_dirty & cache_hited)begin
-              cacheAddrLow8_writeBack_readPage <= 1;
-              interface_status <= STATUS_FLUSH_1;
-            end else begin
-              //clr_cacheAddrHigh <= current_slot;//æ¸…æœ‰æ•ˆä½
-              clr_cacheAddrHigh <= cache_flush_hited;//æ¸…æœ‰æ•ˆä½
-              `RD_FINISH
-            end
-          end else begin
-            avs_s0_readdata <= cache_hit_data;
-            current_slot <= cache_hited;
-            adj_cache_life <= 1;//current_slot
-            `RD_FINISH
-          end
-        end else if(free_cache != 0)begin//æ‰¾åˆ°ç©ºé—²cache
+      STATUS_INIT : begin//³õÊ¼»¯
+        rdwr_sdram_addr <= {avs_s0_address,1'b0};
+        if(flush_cache && (cache_flush_hited & cache_hited))begin
+          current_slot <= cache_flush_hited;
+          write_back_count <= 0;
+          cacheAddrLow8_writeBack <= 1;
+          flushCount <= flushCount + 1'b1;
+          interface_status <= STATUS_WRITE_BACK_DLY;
+        end else if(cache_hited)begin
+          current_slot <= cache_hited;
+          interface_status <= STATUS_HITED1;//¸ßµØÖ·ÃüÖĞµÈÒ»¸öÖÜÆÚ
+        end else if(free_cache)begin//ÕÒµ½¿ÕÏĞcache
           current_slot <= free_cache;
-          cacheAddrLow8_writeBack_readPage <= 1;
-          if(!freeCacheDirty)begin//éè„cache
-            sdram_rw_count <= 0;
-            set_cacheAddrHigh <= free_cache;//å½“å‰åœ°å€å†™å…¥ç¼“å­˜åœ°å€é«˜ï¼Œé‡ç½®life
-            interface_status <= STATUS_READPAGE_1;
-          end else begin//è„cache, å†™å›
-            sdram_rw_count <= 0;
-            interface_status <= STATUS_WRITEBACK_1;
+          if(freeCacheInvalid)begin//invalid ÎŞĞ§ Ö±½ÓÊ¹ÓÃ
+            set_cacheAddrHigh <= free_cache;//µ±Ç°µØÖ·Ğ´Èë»º´æµØÖ·¸ß
+            interface_status <= STATUS_HITED1; 
+          end else begin
+            write_back_count <= 0;
+            cacheAddrLow8_writeBack <= 1;
+            flushCount <= flushCount + 1'b1;
+            interface_status <= STATUS_WRITE_BACK_DLY;
           end
-        end else begin//ä¸ç»è¿‡cache
+        end else begin//²»¾­¹ıcache
           current_slot <= 0;
           read_sdram_req <= 1;
-          rdwr_sdram_addr <= {avs_s0_address,1'b0};
           interface_status <= STATUS_READ;
         end
       end
-      STATUS_READPAGE_1 : begin
-        if(sdram_rw_count[8]==1'b1)begin//256 sdram_rw_count[8]==1'b1
-          cacheAddrLow8_writeBack_readPage <= 0;//cacheAddrLow8 = avs_s0_address[7:0];
-          sdram_rw_count <= 0;
-          interface_status <= STATUS_READPAGE_DLY;//è¯»é¡µå®Œæˆåï¼Œç­‰å¾…cacheè¯»å–,ç­‰ä¸€å‘¨æœŸ
+      STATUS_HITED1 : begin//¸ßµØÖ·ÃüÖĞ
+        rdwr_sdram_addr <= {avs_s0_address,1'b0};
+        avs_s0_readdata <= cache_hit_data[31:0];//TODO
+        if(cache_hit_data[FLG_VALID])begin
+          adj_cache_life <= 1;
+          `RD_FINISH
         end else begin
-          rdwr_sdram_addr <= {avs_s0_address[22:8],sdram_rw_count[7:0],1'b0};
+          interface_status <= STATUS_READ;
           read_sdram_req <= 1;
-          interface_status <= STATUS_READPAGE_2;
         end
       end
-      STATUS_READPAGE_2 : begin
+      STATUS_READ : begin//¶ÁÈ¡µÈ´ı
+        avs_s0_readdata <= readBuffer;
+        cacheData[35:32] <= 4'b1000;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} ÖÃÒÑ»º´æÎ»
         if(read_sdram_ack_buff)begin
           read_sdram_req <= 0;
-          //cacheAddrLow8 = sdram_rw_count[7:0]
-          cacheData <= readBuffer;// data sdram to cache
-          cacheData_ena <= 4'b1111;
-          write_enable <= 1;
-          interface_status <= STATUS_READPAGE_3; 
-        end
-      end
-      STATUS_READPAGE_3 : begin
-        sdram_rw_count <= sdram_rw_count + 1'b1;
-        cacheData <= readBuffer2;// data sdram to cache
-        cacheData_ena <= 4'b1111;
-        write_enable <= 1;
-        interface_status <= STATUS_READPAGE_4; 
-      end
-      STATUS_READPAGE_4 : begin
-        sdram_rw_count <= sdram_rw_count + 1'b1;
-        interface_status <= STATUS_READPAGE_1;
-      end
-      STATUS_READPAGE_DLY: begin
-        interface_status <= STATUS_READPAGE_FINISH;
-      end
-      STATUS_READPAGE_FINISH: begin
-        avs_s0_readdata <= current_slot_data;
-        `RD_FINISH
-      end
-      STATUS_READ : begin//è¯»å–ç­‰å¾…
-        if(read_sdram_ack_buff)begin
-          read_sdram_req <= 0;
-          current_slot <= 0;
-          adj_cache_life <= 1;//æœªå‘½ä¸­çš„è¯ï¼Œæ¯ä¸ªç¼“å­˜éƒ½å‡ä¸€
-          avs_s0_readdata <= readBuffer;
+          if(current_slot != 0)begin
+            write_enable <= 1;
+          end
+          adj_cache_life <= 1;
           `RD_FINISH
         end
       end
-      STATUS_WRITEBACK_1 : begin
-        if(sdram_rw_count[8]==1'b1)begin//256
-          sdram_rw_count <= 0;
-          set_cacheAddrHigh <= free_cache;//å½“å‰åœ°å€å†™å…¥ç¼“å­˜åœ°å€é«˜ï¼Œé‡ç½®life
-          interface_status <= STATUS_READPAGE_1;//å†™å›å®Œæˆåï¼Œè¯»å–
+      STATUS_WRITE_BACK_DLY : begin//sram¶Á³öÑÓÊ±
+        cacheData[35:32] <= 4'b0000;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} ÖÃÒÑ»º´æÎ»
+        if(write_back_count==256)begin
+          cacheAddrLow8_writeBack <= 0;
+          if(flush_cache && current_slot != 0)begin
+            clr_cacheAddrHigh <= current_slot;
+            `RD_FINISH
+          end else begin
+            interface_status <= STATUS_HITED1;
+            set_cacheAddrHigh <= current_slot;//µ±Ç°µØÖ·Ğ´Èë»º´æµØÖ·¸ß
+          end
         end else begin
-          interface_status <= STATUS_WRITEBACK_2;
+          interface_status <= STATUS_WRITE_BACK;
+          write_enable <= 1;//Ğ´»ØºóÒªÖÃ¿Õ
         end
       end
-      STATUS_WRITEBACK_2 : begin//dirty çš„è¯ï¼Œå†™å›
-        rdwr_sdram_addr <= {current_cacheAddrHigh,sdram_rw_count[7:0],1'b0};
-        write_single_sdram_data <= current_slot_data;
+      STATUS_WRITE_BACK : begin//dirty µÄ»°£¬Ğ´»Ø
+        rdwr_sdram_addr <= {current_cacheAddrHigh,write_back_count[7:0],1'b0};
+        write_single_sdram_data <= cache_hit_data[31:0];
         write_single_sdram_mask <= 4'b0000;
-        interface_status <= STATUS_WRITEBACK_3;
-        write_single_sdram_req <= 1;
+        if(cache_hit_data[FLG_DIRTY])begin
+          interface_status <= STATUS_WRITE_BACK_EXEC;
+          write_single_sdram_req <= 1;
+        end else begin
+          write_back_count <= write_back_count + 1'b1;
+          interface_status <= STATUS_WRITE_BACK_DLY;
+        end
       end
-      STATUS_WRITEBACK_3 : begin//å†™å›æ‰§è¡Œ
+      STATUS_WRITE_BACK_EXEC : begin//Ğ´»ØÖ´ĞĞ
         if(write_single_sdram_ack_buff)begin
           write_single_sdram_req <= 0;
-          sdram_rw_count <= sdram_rw_count + 1'b1;
-          interface_status <= STATUS_WRITEBACK_1;
-        end
-      end
-      STATUS_FLUSH_1 : begin
-        if(sdram_rw_count[8]==1'b1)begin//256
-          cacheAddrLow8_writeBack_readPage <= 0;
-          sdram_rw_count <= 0;
-          clr_cacheAddrHigh <= current_slot;//æ¸…æœ‰æ•ˆä½
-          `RD_FINISH
-        end else begin
-          interface_status <= STATUS_FLUSH_2;
-        end
-      end
-      STATUS_FLUSH_2 : begin//dirty çš„è¯ï¼Œå†™å›
-        rdwr_sdram_addr <= {current_cacheAddrHigh,sdram_rw_count[7:0],1'b0};
-        write_single_sdram_data <= current_slot_data;
-        write_single_sdram_mask <= 4'b0000;
-        interface_status <= STATUS_FLUSH_3;
-        write_single_sdram_req <= 1;
-      end
-      STATUS_FLUSH_3 : begin//å†™å›æ‰§è¡Œ
-        if(write_single_sdram_ack_buff)begin
-          write_single_sdram_req <= 0;
-          sdram_rw_count <= sdram_rw_count + 1'b1;
-          interface_status <= STATUS_FLUSH_1;
+          write_back_count <= write_back_count + 1'b1;
+          interface_status <= STATUS_WRITE_BACK_DLY;
         end
       end
       endcase
@@ -518,31 +435,113 @@ always@(posedge clk or negedge sys_rst_n) begin
 
 
 
-
+    
     if(avs_s0_write && !avs_s0_write_ack)begin
       case(interface_status)
-      STATUS_INIT : begin//åˆå§‹åŒ–
-        if(nocache && nocache_page == avs_s0_address[22:8])begin
-          //ç›´æ¥å†™å…¥
-          rdwr_sdram_addr <= {avs_s0_address,1'b0};
-          write_single_sdram_data <= avs_s0_writedata;
-          write_single_sdram_mask <= ~avs_s0_byteenable;
-          write_single_sdram_req <= 1;
-          interface_status <= STATUS_WRITE;
-        end else if(cache_hited)begin
+      STATUS_INIT : begin//³õÊ¼»¯
+        rdwr_sdram_addr <= {avs_s0_address,1'b0};
+        write_single_sdram_data <= avs_s0_writedata;
+        write_single_sdram_mask <= ~avs_s0_byteenable;
+        cacheData <= {4'b1100,avs_s0_writedata};//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} ÖÃÒÑ»º´æÎ»
+        if(cache_hited)begin
           current_slot <= cache_hited;
-          cacheData <= avs_s0_writedata;
-          cacheData_ena <= avs_s0_byteenable;
-          write_enable <= 1;//cacheAddrLow8 = cacheAddrLow8_writeBack_readPage ? sdram_rw_count[7:0] : avs_s0_address[7:0];
-          set_cacheDirty <= cache_hited;
+          if(avs_s0_byteenable==4'b1111)begin//ÍêÕûĞ´ÈëDWµÄ»°£¬²»¿¼ÂÇFLG_VALID
+            write_enable <= 1;
+            adj_cache_life <= 1;
+            `WR_FINISH
+          end else begin
+            interface_status <= STATUS_HITED1;//¸ßµØÖ·ÃüÖĞµÈÒ»¸öÖÜÆÚ
+          end
+        end else begin
+          if(free_cache != 0)begin//ÓĞÏĞÖÃcache
+            current_slot <= free_cache;
+            if(freeCacheInvalid)begin//invalid ÎŞĞ§ Ö±½ÓÊ¹ÓÃ
+              set_cacheAddrHigh <= free_cache;//µ±Ç°µØÖ·Ğ´Èë»º´æµØÖ·¸ß
+              interface_status <= STATUS_WRITE_BACK_FINISH;
+            end else begin
+              write_back_count <= 0;
+              cacheAddrLow8_writeBack <= 1;
+              flushCount <= flushCount + 1'b1;
+              interface_status <= STATUS_WRITE_BACK_DLY;
+            end
+          end else begin
+            //Ö±½ÓĞ´Èë
+            current_slot <= 0;
+            interface_status <= STATUS_WRITE;//¸ßµØÖ·ÃüÖĞµÈÒ»¸öÖÜÆÚ
+            write_single_sdram_req <= 1;
+          end
+        end
+      end
+      STATUS_HITED1 : begin//¸ßµØÖ·ÃüÖĞ
+        rdwr_sdram_addr <= {avs_s0_address,1'b0};
+        cacheData <= {4'b1100,
+          avs_s0_byteenable[3] ? avs_s0_writedata[31:24] : cache_hit_data[31:24],
+          avs_s0_byteenable[2] ? avs_s0_writedata[23:16] : cache_hit_data[23:16],
+          avs_s0_byteenable[1] ? avs_s0_writedata[15: 8] : cache_hit_data[15: 8],
+          avs_s0_byteenable[0] ? avs_s0_writedata[ 7: 0] : cache_hit_data[ 7: 0]
+          };//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} ÖÃÒÑ»º´æÎ»
+        if(cache_hit_data[FLG_VALID])begin//ÓĞĞ§
+          write_enable <= 1;
+          adj_cache_life <= 1;
           `WR_FINISH
         end else begin
-          //ç›´æ¥å†™å…¥
-          rdwr_sdram_addr <= {avs_s0_address,1'b0};
-          write_single_sdram_data <= avs_s0_writedata;
-          write_single_sdram_mask <= ~avs_s0_byteenable;
+          //¶ÁÈ¡ºóĞ´Èë
+          interface_status <= STATUS_READ;
+          read_sdram_req <= 1;
+        end
+      end
+      STATUS_READ : begin//¶ÁÈ¡µÈ´ı
+        cacheData <= {4'b1100,
+          avs_s0_byteenable[3] ? avs_s0_writedata[31:24] : readBuffer[31:24],
+          avs_s0_byteenable[2] ? avs_s0_writedata[23:16] : readBuffer[23:16],
+          avs_s0_byteenable[1] ? avs_s0_writedata[15: 8] : readBuffer[15: 8],
+          avs_s0_byteenable[0] ? avs_s0_writedata[ 7: 0] : readBuffer[ 7: 0]
+          };//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} ÖÃÒÑ»º´æÎ»
+        if(read_sdram_ack_buff)begin
+          read_sdram_req <= 0;
+          write_enable <= 1;
+          adj_cache_life <= 1;
+          `WR_FINISH
+        end
+      end
+      STATUS_WRITE_BACK_DLY : begin//sram¶Á³öÑÓÊ±
+        cacheData[35:32] <= 4'b0000;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} ÖÃÒÑ»º´æÎ»
+        if(write_back_count==256)begin
+          set_cacheAddrHigh <= current_slot;//µ±Ç°µØÖ·Ğ´Èë»º´æµØÖ·¸ß
+          cacheAddrLow8_writeBack <= 0;
+          interface_status <= STATUS_WRITE_BACK_FINISH;
+        end else begin
+          interface_status <= STATUS_WRITE_BACK;
+          write_enable <= 1;//Ğ´»ØºóÒªÖÃ¿Õ
+        end
+      end
+      STATUS_WRITE_BACK : begin//dirty µÄ»°£¬Ğ´»Ø
+        rdwr_sdram_addr <= {current_cacheAddrHigh,write_back_count[7:0],1'b0};
+        write_single_sdram_data <= cache_hit_data[31:0];
+        write_single_sdram_mask <= 4'b0000;
+        if(cache_hit_data[FLG_DIRTY])begin
+          interface_status <= STATUS_WRITE_BACK_EXEC;
           write_single_sdram_req <= 1;
-          interface_status <= STATUS_WRITE;
+        end else begin
+          write_back_count <= write_back_count + 1'b1;
+          interface_status <= STATUS_WRITE_BACK_DLY;
+        end
+      end
+      STATUS_WRITE_BACK_EXEC : begin//Ğ´»ØÖ´ĞĞ
+        if(write_single_sdram_ack_buff)begin
+          write_single_sdram_req <= 0;
+          write_back_count <= write_back_count + 1'b1;
+          interface_status <= STATUS_WRITE_BACK_DLY;
+        end
+      end
+      STATUS_WRITE_BACK_FINISH : begin
+        set_cacheAddrHigh <= 0;
+        cacheData <= {4'b1100,avs_s0_writedata};//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} ÖÃÒÑ»º´æÎ»
+        if(avs_s0_byteenable==4'b1111)begin//ÍêÕûĞ´ÈëDWµÄ»°£¬²»¿¼ÂÇFLG_VALID
+          write_enable <= 1;
+          `WR_FINISH
+        end else begin
+          interface_status <= STATUS_HITED1;//¸ßµØÖ·ÃüÖĞµÈÒ»¸öÖÜÆÚ
         end
       end
       STATUS_WRITE : begin
@@ -562,7 +561,7 @@ always@(posedge clk or negedge sys_rst_n) begin
 end
 
 
-//fifoåŒ–
+//fifo»¯
 
 
 reg read_sdram_req_buff;
@@ -580,15 +579,14 @@ reg  [8:0] sdram_timer2;
 reg  [2:0] sdram_timer1;
 reg  [1:0] sram_add_high;
 
-reg [2:0]  sdram_step;
+reg [1:0]  sdram_step;
 reg [31:0] readBuffer;
-reg [31:0] readBuffer2;
 
 reg read_sdram_req_cmd;
 reg write_single_sdram_req_cmd;
 reg read_line_req_cmd;
 //sdram_rd_req sdram_rd_burst sdram_rw_addr
-always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram ä¸»æ§
+always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram Ö÷¿Ø
   if(!sys_rst_n) begin
     sdram_timer0 <= 0;
     sdram_step <= 0;
@@ -647,7 +645,7 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram ä¸»æ§
         end
         sdram_timer2 <= 0;
         sdram_page_delay <= 0;
-        sdram_rd_req = 1;//åªéœ€è¦ç½®é«˜ä¸€ä¸ªå‘¨æœŸå°±å¯ä»¥äº†
+        sdram_rd_req = 1;//Ö»ĞèÒªÖÃ¸ßÒ»¸öÖÜÆÚ¾Í¿ÉÒÔÁË
       end else begin
         if(sdram_rd_ack || sdram_page_delay)begin
           sdram_timer2 <= sdram_timer2 + 1'b1;
@@ -686,12 +684,6 @@ always@(posedge sdram_clk or negedge sys_rst_n) begin // sdram ä¸»æ§
         end
       end else if(sdram_step == 2) begin
         readBuffer[31:16] <= sdram_dout;
-        sdram_step <= 3;
-      end else if(sdram_step == 3) begin
-        readBuffer2[15: 0] <= sdram_dout;
-        sdram_step <= 4;
-      end else if(sdram_step == 4) begin
-        readBuffer2[31:16] <= sdram_dout;
         sdram_rd_req <= 0;
         sdram_step <= 0;
         read_sdram_ack <= 1;
@@ -777,11 +769,9 @@ module cacheEntity(
   input              clk              ,
   input              sys_rst_n        ,
   input      [ 7:0]  cacheAddrLow8    ,
-  input      [31:0]  cacheData        ,
-  input       [3:0]  cacheData_ena    ,
+  input      [35:0]  cacheData        ,
   input              current_slot     ,
   input              set_cacheAddrHigh,
-  input              set_cacheDirty   ,
   input              clr_cacheAddrHigh,
   input      [22:0]  avs_s0_address   ,
   input              write_enable     ,
@@ -789,33 +779,23 @@ module cacheEntity(
   input              flush_cache      ,
   input              adj_cache_life   ,
   
-  output     [31:0]  cacheq           ,
+  output     [35:0]  cacheq           ,
   output             cache_hit        ,
   output             cache_flush_hit  ,
   
   output reg         cacheInvalid     ,
-  output reg         cacheDirty       ,
   output reg  [14:0] cacheAddrHigh    ,
   output reg  [15:0] cache_life       
 );
 parameter CACHE_COUNTX2 = 6'd32;
 
-//cache256x36 cache256x36_inst (
-//  .address(cacheAddrLow8),//input	[7:0]  address;
-//  .clock  (clk          ),  //input	  clock;
-//  .data   ({4'b0,cacheData}  ),   //input	[31:0]  data;
-//  .wren   (wren         ),   //input	  wren;
-//  .q      (cacheq[31:0]       )     //output	[31:0]  q;
-//);
-
-ram256x32	ram256x32_inst (
-	.address ( cacheAddrLow8 ),
-	.byteena ( cacheData_ena ),
-	.clock ( clk ),
-	.data ( cacheData ),
-	.wren ( wren ),
-	.q ( cacheq )
-	);
+cache256x36 cache256x36_inst (
+  .address(cacheAddrLow8),//input	[7:0]  address;
+  .clock  (clk          ),  //input	  clock;
+  .data   (cacheData    ),   //input	[35:0]  data;
+  .wren   (wren         ),   //input	  wren;
+  .q      (cacheq       )     //output	[35:0]  q;
+);
 
 assign cache_hit       = cacheInvalid == 0 && avs_s0_address[22:8] == cacheAddrHigh[14:0];
 assign cache_flush_hit = cacheInvalid == 0 &&           flush_page == cacheAddrHigh[14:0];
@@ -847,18 +827,129 @@ always@(posedge clk or negedge sys_rst_n) begin
       cacheInvalid <= 1'b0;
       cache_life <= 512;
     end
-    
-    if(set_cacheDirty)begin
-      cacheDirty <= 1'b1;
-    end
-    
     if(clr_cacheAddrHigh)begin
       //cacheAddrHigh <= 15'b0;
       cacheInvalid <= 1'b1;
-      cacheDirty <= 1'b0;
       cache_life <= 0;
     end
   end
 end
 
 endmodule 
+
+//assign free_cache[ 0] =                                                                                                                                                                                                                                                                                                                                                cache_life[ 0] == 0;
+//assign free_cache[ 1] =                                                                                                                                                                                                                                                                                                                          free_cache[0] == 0 && cache_life[ 1] == 0;
+//assign free_cache[ 2] =                                                                                                                                                                                                                                                                                                    free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 2] == 0;
+//assign free_cache[ 3] =                                                                                                                                                                                                                                                                              free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 3] == 0;
+//assign free_cache[ 4] =                                                                                                                                                                                                                                                        free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 4] == 0;
+//assign free_cache[ 5] =                                                                                                                                                                                                                                  free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 5] == 0;
+//assign free_cache[ 6] =                                                                                                                                                                                                            free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 6] == 0;
+//assign free_cache[ 7] =                                                                                                                                                                                      free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 7] == 0;
+//assign free_cache[ 8] =                                                                                                                                                                free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 8] == 0;
+//assign free_cache[ 9] =                                                                                                                                          free_cache[8] == 0 && free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[ 9] == 0;
+//assign free_cache[10] =                                                                                                                    free_cache[9] == 0 && free_cache[8] == 0 && free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[10] == 0;
+//assign free_cache[11] =                                                                                             free_cache[10] == 0 && free_cache[9] == 0 && free_cache[8] == 0 && free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[11] == 0;
+//assign free_cache[12] =                                                                      free_cache[11] == 0 && free_cache[10] == 0 && free_cache[9] == 0 && free_cache[8] == 0 && free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[12] == 0;
+//assign free_cache[13] =                                               free_cache[12] == 0 && free_cache[11] == 0 && free_cache[10] == 0 && free_cache[9] == 0 && free_cache[8] == 0 && free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[13] == 0;
+//assign free_cache[14] =                        free_cache[13] == 0 && free_cache[12] == 0 && free_cache[11] == 0 && free_cache[10] == 0 && free_cache[9] == 0 && free_cache[8] == 0 && free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[14] == 0;
+//assign free_cache[15] = free_cache[14] == 0 && free_cache[13] == 0 && free_cache[12] == 0 && free_cache[11] == 0 && free_cache[10] == 0 && free_cache[9] == 0 && free_cache[8] == 0 && free_cache[7] == 0 && free_cache[6] == 0 && free_cache[5] == 0 && free_cache[4] == 0 && free_cache[3] == 0 && free_cache[2] == 0 && free_cache[1] == 0 && free_cache[0] == 0 && cache_life[15] == 0;
+
+//always @(*) begin
+//  if(free_cache_temp==0)begin
+//    free_cache <= 16'b0;
+//  end else begin
+//    case (clzres)
+//      4'd00: free_cache <= 16'b0000000000000001;
+//      4'd01: free_cache <= 16'b0000000000000010;
+//      4'd02: free_cache <= 16'b0000000000000100;
+//      4'd03: free_cache <= 16'b0000000000001000;
+//      4'd04: free_cache <= 16'b0000000000010000;
+//      4'd05: free_cache <= 16'b0000000000100000;
+//      4'd06: free_cache <= 16'b0000000001000000;
+//      4'd07: free_cache <= 16'b0000000010000000;
+//      4'd08: free_cache <= 16'b0000000100000000;
+//      4'd09: free_cache <= 16'b0000001000000000;
+//      4'd10: free_cache <= 16'b0000010000000000;
+//      4'd11: free_cache <= 16'b0000100000000000;
+//      4'd12: free_cache <= 16'b0001000000000000;
+//      4'd13: free_cache <= 16'b0010000000000000;
+//      4'd14: free_cache <= 16'b0100000000000000;
+//      4'd15: free_cache <= 16'b1000000000000000;
+//    endcase
+//  end
+//end
+
+//reg [15:0] free_cache;
+//always @(*) begin
+//  casez (free_cache_temp)
+//    16'b???????????????1: free_cache <= 16'b0000000000000001;
+//    16'b??????????????10: free_cache <= 16'b0000000000000010;
+//    16'b?????????????100: free_cache <= 16'b0000000000000100;
+//    16'b????????????1000: free_cache <= 16'b0000000000001000;
+//    16'b???????????10000: free_cache <= 16'b0000000000010000;
+//    16'b??????????100000: free_cache <= 16'b0000000000100000;
+//    16'b?????????1000000: free_cache <= 16'b0000000001000000;
+//    16'b????????10000000: free_cache <= 16'b0000000010000000;
+//    16'b???????100000000: free_cache <= 16'b0000000100000000;
+//    16'b??????1000000000: free_cache <= 16'b0000001000000000;
+//    16'b?????10000000000: free_cache <= 16'b0000010000000000;
+//    16'b????100000000000: free_cache <= 16'b0000100000000000;
+//    16'b???1000000000000: free_cache <= 16'b0001000000000000;
+//    16'b??10000000000000: free_cache <= 16'b0010000000000000;
+//    16'b?100000000000000: free_cache <= 16'b0100000000000000;
+//    16'b1000000000000000: free_cache <= 16'b1000000000000000;
+//    default:              free_cache <= 16'b0000000000000000;
+//  endcase
+//end
+
+//wire [15:0] free_cache = free_cache_temp[ 0] ? 16'b0000000000000001 :
+//                         free_cache_temp[ 1] ? 16'b0000000000000010 :
+//                         free_cache_temp[ 2] ? 16'b0000000000000100 :
+//                         free_cache_temp[ 3] ? 16'b0000000000001000 :
+//                         free_cache_temp[ 4] ? 16'b0000000000010000 :
+//                         free_cache_temp[ 5] ? 16'b0000000000100000 :
+//                         free_cache_temp[ 6] ? 16'b0000000001000000 :
+//                         free_cache_temp[ 7] ? 16'b0000000010000000 :
+//                         free_cache_temp[ 8] ? 16'b0000000100000000 :
+//                         free_cache_temp[ 9] ? 16'b0000001000000000 :
+//                         free_cache_temp[10] ? 16'b0000010000000000 :
+//                         free_cache_temp[11] ? 16'b0000100000000000 :
+//                         free_cache_temp[12] ? 16'b0001000000000000 :
+//                         free_cache_temp[13] ? 16'b0010000000000000 :
+//                         free_cache_temp[14] ? 16'b0100000000000000 :
+//                         free_cache_temp[15] ? 16'b1000000000000000 :
+//                                               16'b0000000000000000;
+
+//wire [3:0] clzres;
+//
+//assign clzres[3] = (in[15: 8] ==  8'b0);
+// 
+//wire [ 7:0] part2 = clzres[3] ? in [ 7: 0] : in [15: 8];
+// 
+//assign clzres[2] = (part2 [ 7: 4] ==  4'b0);
+// 
+//wire [ 3:0] part3 = clzres[2] ? part2 [ 3: 0] : part2 [ 7: 4];
+//
+//assign clzres[1] = (part3 [ 3: 2] ==  2'b0);
+// 
+//wire [ 1:0] part4 = clzres[1] ? part3 [ 1: 0] : part3 [ 3: 2];
+// 
+//assign clzres[0] = (part4 [ 1: 1] ==  1'b0);
+//
+////assign out = in;
+//assign out[ 0] = in != 0 && clzres ==  0;
+//assign out[ 1] = in != 0 && clzres ==  1;
+//assign out[ 2] = in != 0 && clzres ==  2;
+//assign out[ 3] = in != 0 && clzres ==  3;
+//assign out[ 4] = in != 0 && clzres ==  4;
+//assign out[ 5] = in != 0 && clzres ==  5;
+//assign out[ 6] = in != 0 && clzres ==  6;
+//assign out[ 7] = in != 0 && clzres ==  7;
+//assign out[ 8] = in != 0 && clzres ==  8;
+//assign out[ 9] = in != 0 && clzres ==  9;
+//assign out[10] = in != 0 && clzres == 10;
+//assign out[11] = in != 0 && clzres == 11;
+//assign out[12] = in != 0 && clzres == 12;
+//assign out[13] = in != 0 && clzres == 13;
+//assign out[14] = in != 0 && clzres == 14;
+//assign out[15] = in != 0 && clzres == 15;
