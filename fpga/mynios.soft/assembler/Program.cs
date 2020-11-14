@@ -14,47 +14,48 @@ namespace Assembler
 
 		static void Main(string[] args)
 		{
-			string filein;
-			string fileout;
-			string filetemp;
-			string test = "e";
-			string type = "dos";
-			string fileoutBin;
-			if (args.Length > 0 && !String.IsNullOrEmpty(args[0]))
+			string filein = "";
+			string fileout = "";
+			string filetemp = "";
+			//string test = "e";
+			string type = "";
+
+			string fileoutBin = "";
+
+			if (args.Length == 0)
 			{
-				filein = args[0];
+				filein = "divsi3.s,memtest.s,inc\\irq.asm";
+				fileout = "memtest.hex";
+				filetemp = "memtest.temp.s";
+				type = "bios";
+				fileoutBin = "memtest.bin";
 			}
 			else
 			{
-				filein = test + ".s,inc\\irq.asm";
-			}
-			if (args.Length > 1 && !String.IsNullOrEmpty(args[1]))
-			{
-				fileout = args[1];
-			}
-			else
-			{
-				fileout = test + ".hex";
-			}
-			if (args.Length > 2 && !String.IsNullOrEmpty(args[2]))
-			{
-				filetemp = args[2];
-			}
-			else
-			{
-				filetemp = test + ".temp.s";
-			}
-			if (args.Length > 3 && !String.IsNullOrEmpty(args[3]))
-			{
-				type = args[3];
-			}
-			if (args.Length > 4 && !String.IsNullOrEmpty(args[4]))
-			{
-				fileoutBin = args[4];
-			}
-			else
-			{
-				fileoutBin = test + ".bin";
+				if (args.Length > 0 && !String.IsNullOrEmpty(args[0]))
+				{
+					filein = args[0];
+				}
+				if (args.Length > 1 && !String.IsNullOrEmpty(args[1]))
+				{
+					fileout = args[1];
+				}
+				else
+				{
+				}
+				if (args.Length > 2 && !String.IsNullOrEmpty(args[2]))
+				{
+					filetemp = args[2];
+				}
+				if (args.Length > 3 && !String.IsNullOrEmpty(args[3]))
+				{
+					type = args[3];
+				}
+				if (args.Length > 4 && !String.IsNullOrEmpty(args[4]))
+				{
+					fileoutBin = args[4];
+				}
+
 			}
 			Console.WriteLine(filein);
 			Console.WriteLine(fileout);
@@ -104,7 +105,8 @@ namespace Assembler
 			if (type == "bios")
 			{
 				Console.WriteLine("type=bios");
-				int sp = 0x02000000;//0x0200C000
+				int sramSize = 32 * 1024;//32k
+				int sp = 0x02000000 + sramSize;
 				basePos = 0x02000000;
 				lines.Add(Line.match("movhi sp, %hiadj(" + sp + ")", null));
 				lines.Add(Line.match("addi sp, sp, %lo(" + sp + ")", null));
@@ -472,7 +474,7 @@ namespace Assembler
 					string ssym = "";
 					foreach (var sym in syms)
 					{
-						if (((posx) * 4) == sym.pos)
+						if (((posx) * 4) + basePos == sym.pos)
 						{
 							ssym += sym.name + ",";
 						}

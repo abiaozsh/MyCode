@@ -22,8 +22,8 @@ getLsub
 #include "inc/system.cpp"
 //#include "inc/uart.cpp"
 //#include "inc/uartio.cpp"
-#include "inc/keyScreen.cpp"
-#include "inc/print.cpp"
+//#include "inc/keyScreen.cpp"
+//#include "inc/print.cpp"
 #include "inc/soft-fp/soft-fp.h"
 
 
@@ -109,6 +109,7 @@ void f(int wid, int hei, double viswid, double vishei, double visx, double visy,
 
 int main()
 {
+  screenInit2(1024);
   f(256, 192 , 2, 2, -1, -1, 256, 4);
   while(1){
   }

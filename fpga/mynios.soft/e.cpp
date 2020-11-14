@@ -111,7 +111,7 @@ int drawImg(int blockx, int blocky, short* block, int isNext){
   }
 }
 
-int getColorRGB(int r, int g, int b)
+int getpixel(int r, int g, int b)
 {
   int val = 0;
   val += (r >> 3) << (5 + 6);

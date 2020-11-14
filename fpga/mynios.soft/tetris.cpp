@@ -562,13 +562,13 @@ int main()
       //hid_value = IORD(HID, 0);
       //if(hid_value){
         hidon = 0;
-        
+        print("hid\r\n");
+        printInt(hid_value);
         if((hid_value & 0x0F000000) == 0x01000000){
           //key
           if(((hid_value & 0x00008000) != 0x00008000) && ((hid_value & 0x00800000) != 0x00800000)){
-            int tmp = hid_value & 0xFF;
-            int tmp2 = PS2Keymap_US[tmp];
-            keyDown(tmp2);
+          int tmp = PS2Keymap_US[hid_value & 0xFF];
+            keyDown(tmp);
           }
         }
       }
@@ -576,7 +576,7 @@ int main()
       //int time = IORD(MYTIMER, 0);
       //if(time>1000000){
         IOWR(MYTIMER, 0, 0);
-        //print("time\r\n");
+        print("time\r\n");
         timeon = 0;
         timing();
       }

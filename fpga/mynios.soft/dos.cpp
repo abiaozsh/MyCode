@@ -3,7 +3,7 @@
 #include "inc/system.h"
 #include "inc/irq.h"
 #include "inc/system.cpp"
-//#include "inc/uart.cpp"
+#include "inc/uart.cpp"
 //#include "inc/uartio.cpp"
 #include "inc/keyScreen.cpp"
 #include "inc/print.cpp"
@@ -65,7 +65,7 @@ int main(){
     res = sdvolumes[i]->root->openRoot(sdvolumes[i]);
     if(res){
       print("found root");printInt(i);print("\r\n");
-      //sdvolumes[i]->root->dirList();
+      sdvolumes[i]->root->dirList();
     }else{
       print("root error");printInt(i);print("\r\n");
     }
