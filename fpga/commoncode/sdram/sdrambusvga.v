@@ -382,7 +382,7 @@ always@(posedge clk or negedge sys_rst_n) begin
       STATUS_READ : begin//读取等待
         avs_s0_readdata <= readBuffer;
         cacheData[35:32] <= 4'b1000;//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位
-        if(read_sdram_ack_buff)begin
+        if(read_sdram_ack_buff)begin如果是低地址的话，再读取一个双字，注意如果后一个字是dirty的话，怎么处理  等待sdram响应的时候，读取邻字的dirty flag
           read_sdram_req <= 0;
           if(current_slot != 0)begin
             write_enable <= 1;
