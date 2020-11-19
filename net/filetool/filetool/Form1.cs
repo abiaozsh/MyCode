@@ -725,6 +725,10 @@ namespace filetool
 			if (d.FileNames.Length > 0)
 			{
 				TRoot tf = TRoot.load(d.FileNames[0]);
+				if (tf.md5List == null)
+				{
+					tf.md5List = new Dictionary<string, string>();
+				}
 				filePath = d.FileNames[0];
 				refresh(tf);
 			}
