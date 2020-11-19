@@ -80,9 +80,9 @@ namespace filetool
 			// treeView1
 			// 
 			this.treeView1.AllowDrop = true;
-			this.treeView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			this.treeView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+			| System.Windows.Forms.AnchorStyles.Left)
+			| System.Windows.Forms.AnchorStyles.Right)));
 			this.treeView1.Location = new System.Drawing.Point(0, 4);
 			this.treeView1.Name = "treeView1";
 			this.treeView1.Size = new System.Drawing.Size(370, 314);
@@ -91,9 +91,9 @@ namespace filetool
 			// 
 			// splitContainer1
 			// 
-			this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+			| System.Windows.Forms.AnchorStyles.Left)
+			| System.Windows.Forms.AnchorStyles.Right)));
 			this.splitContainer1.Location = new System.Drawing.Point(2, 28);
 			this.splitContainer1.Name = "splitContainer1";
 			// 
@@ -111,9 +111,9 @@ namespace filetool
 			// dataGridView1
 			// 
 			this.dataGridView1.AllowDrop = true;
-			this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+			| System.Windows.Forms.AnchorStyles.Left)
+			| System.Windows.Forms.AnchorStyles.Right)));
 			this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.dataGridView1.Location = new System.Drawing.Point(3, 4);
 			this.dataGridView1.Name = "dataGridView1";
@@ -634,11 +634,24 @@ namespace filetool
 					md5b = root.md5List[lastfile.getFullPath()];
 				}
 
-				if (md5a == md5b)
+
+				if (md5a == "" && md5b == "")
 				{
-					dupfiles.Add(lastfile);
-					dupfiles.Add(item);
+					if (item.size == lastfile.size)
+					{
+						dupfiles.Add(lastfile);
+						dupfiles.Add(item);
+					}
 				}
+				else
+				{
+					if (md5a == md5b)
+					{
+						dupfiles.Add(lastfile);
+						dupfiles.Add(item);
+					}
+				}
+
 
 				lastfile = item;
 			}
