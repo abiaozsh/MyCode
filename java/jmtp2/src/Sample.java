@@ -20,18 +20,18 @@ public class Sample {
 
 		// tRoot = new Folder.TRoot();
 
-		Folder.TRoot root = GetFolder();
+		Folder.TRoot root = GetFolder(1);
 
-		root.save("memcard2.json");
+		root.save("d:\\memcard2.json");
 
 	}
 
-	public static Folder.TRoot GetFolder() {
+	public static Folder.TRoot GetFolder(int dev) {
 		Folder.TRoot tRoot = new Folder.TRoot();
-		PortableDeviceStorageObject root = getRoot(0);
+		PortableDeviceStorageObject root = getRoot(dev);
 		Folder.TFolder tFolder = GetFolder(root);
 
-		tRoot.root = root.getName();
+		tRoot.path = root.getName();
 
 		tRoot.fileList = tFolder.fileList;
 		tRoot.folderList = tFolder.folderList;

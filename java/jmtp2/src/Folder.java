@@ -5,6 +5,7 @@ import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import org.codehaus.jackson.map.ObjectMapper;
@@ -22,8 +23,8 @@ public class Folder {
 		public String name;
 		public long size;
 		public String datetime;
-		public String md5;
 		public TFolder parent;
+		public TRoot root;
 
 		public Date _GetDatetime() {
 			try {
@@ -68,22 +69,26 @@ public class Folder {
 			return "<" + name + ">";
 		}
 
-		public void setParent() {
+		public void setParent(TRoot root) {
 			for (TFile file : fileList) {
 				file.parent = this;
+				file.root = root;
 			}
 			for (TFolder folder : folderList) {
 				folder.parent = this;
-				folder.setParent();
+				folder.root = root;
+				folder.setParent(root);
 			}
 		}
 
 		public void clearParent() {
 			for (TFile file : fileList) {
 				file.parent = null;
+				file.root = null;
 			}
 			for (TFolder folder : folderList) {
 				folder.parent = null;
+				folder.root = null;
 				folder.clearParent();
 			}
 		}
@@ -91,7 +96,9 @@ public class Folder {
 	}
 
 	public static class TRoot extends TFolder {
-		public String root;
+		public String path;
+		
+		public HashMap<String, String> md5List;
 
 		public void save(String file) throws Throwable {
 
