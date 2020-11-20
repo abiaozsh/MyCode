@@ -20,9 +20,9 @@ public class Sample {
 
 		// tRoot = new Folder.TRoot();
 
-		Folder.TRoot root = GetFolder(1);
+		Folder.TRoot root = GetFolder(0);
 
-		root.save("d:\\memcard2.json");
+		root.save("E:\\memcard2.json");
 
 	}
 
