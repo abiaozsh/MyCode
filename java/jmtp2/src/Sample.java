@@ -81,10 +81,10 @@ public class Sample {
 					Folder.TFile tfile = new Folder.TFile();
 					tfile.name = obj.getOriginalFileName();
 					System.out.println(tfile._GetFullPath());
-					tfile.size = obj.getSize().intValue();
+					tfile.size = obj.getSize().longValue();
 					tfile._SetDatetime(obj.getDateModified());
 					tf.fileList.add(tfile);
-					size += obj.getSize().intValue();
+					size += obj.getSize().longValue();
 					filecount++;
 				}
 			}
