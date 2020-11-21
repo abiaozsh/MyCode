@@ -406,6 +406,7 @@ always@(posedge clk or negedge sys_rst_n) begin
         end
       end
       
+      cacheData <= {4'b1100,avs_s0_writedata};//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位   完整写入DW的话，不考虑FLG_VALID //case3
 
       if(avs_s0_write && !avs_s0_write_ack)begin
         interface_status_rw <= 1;
@@ -413,7 +414,6 @@ always@(posedge clk or negedge sys_rst_n) begin
         if(cache_hited)begin
           current_slot <= cache_hited;
           if(avs_s0_byteenable==4'b1111)begin//完整写入DW的话，不考虑FLG_VALID //case3
-            cacheData <= {4'b1100,avs_s0_writedata};//{FLG_VALID,FLG_DIRTY,1'b0,1'b0,} 置已缓存位   完整写入DW的话，不考虑FLG_VALID //case3
             write_enable <= 1;
             interface_status <= STATUS_INIT; avs_s0_write_ack <= 1;//`WR_FINISH
           end else begin
