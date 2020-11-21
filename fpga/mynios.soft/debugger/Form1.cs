@@ -37,13 +37,6 @@ namespace WindowsFormsApplication1
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			String[] list = SerialPort.GetPortNames();
-			foreach (String s in list)
-			{
-				this.comboBox1.Items.Add(s);
-			}
-			this.comboBox2.SelectedIndex = 0;
-
 			foreach (var item in this.Controls)
 			{
 				(item as Control).Enabled = false;
@@ -60,6 +53,18 @@ namespace WindowsFormsApplication1
 		{
 			portName = (string)this.comboBox1.SelectedItem;
 		}
+
+		void comboBox1_Click(object sender, System.EventArgs e)
+		{
+			String[] list = SerialPort.GetPortNames();
+			this.comboBox1.Items.Clear();
+			foreach (String s in list)
+			{
+				this.comboBox1.Items.Add(s);
+			}
+			this.comboBox2.SelectedIndex = 0;
+		}
+
 
 		private void button1_Click(object sender, EventArgs e)
 		{
@@ -109,15 +114,23 @@ namespace WindowsFormsApplication1
 
 		private void button4_Click(object sender, EventArgs e)
 		{
-			getstatus();
+			try
+			{
+				getstatus();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(ex.Message);
+			}
 		}
-        public string getCacheAddr(int id)
+
+        public int getCacheAddr(int id, StringBuilder sb)
         {
             portWrite((byte)(0x2A), (byte)id);
             //portWrite((byte)(0x6A), (byte)0);
             //portWrite((byte)(0x6B), (byte)0);
             //var temp = readFromPort(2);
-            int val = getData(0x6A, new StringBuilder());// temp[0] | (temp[1] << 8);
+            int val = getData(0x6A, null);// temp[0] | (temp[1] << 8);
             string invalid;
             string dirty;
             if ((val & 0x10000) != 0)
@@ -137,31 +150,34 @@ namespace WindowsFormsApplication1
                 invalid = "V";
             }
             int addr = (val & 0x7fff) << 10;
-            return dirty + invalid + Util.getHex8((uint)addr);
+			sb.Append(dirty + invalid + Util.getHex8((uint)addr));
+			return addr;
         }
-		public string getCacheLife(int id)
+		public int getCacheLife(int id, StringBuilder sb)
 		{
 			portWrite((byte)(0x29), (byte)id);
 			portWrite((byte)(0x68), (byte)0);
 			portWrite((byte)(0x69), (byte)0);
 			var temp = readFromPort(2);
 			int val = temp[0] | (temp[1] << 8);
-			return String.Format("    {0:000000}", val);
+			if (sb != null)
+			{
+				sb.Append(String.Format("    {0:000000}", val));
+			}
+			return val;
 		}
-		//public int getCacheInfoVal(int id)
-		//{
-		//	portWrite((byte)(0x50 + id), (byte)0x00);
-		//	portWrite((byte)(0x50 + id + 1), (byte)0x00);
-		//	var temp = readFromPort(2);
-		//	int val = temp[0] | (temp[1] << 8);
-		//	return val;
-		//}
 
+		public long getAccessTime()
+		{
+			return getData(0x4, null);
+		}
 
 		public void getstatus()
 		{
 			byte[] temp;
 			portWrite((byte)(0x00), (byte)(0x00));
+			clearBuff();
+
 			int baseaddr = 0;
 
 
@@ -204,29 +220,22 @@ namespace WindowsFormsApplication1
 			sb.AppendLine();
 
 			sb.Append("  access time:");
-			portWrite((byte)(0x4), (byte)0x00);
-			portWrite((byte)(0x5), (byte)0x00);
-			portWrite((byte)(0x6), (byte)0x00);
-			portWrite((byte)(0x7), (byte)0x00);
-			temp = readFromPort(4);
-			long v = temp[0];
-			v += temp[1] << 8;
-			v += temp[2] << 16;
-			v += temp[3] << 24;
-			sb.Append(v);
+			sb.Append(getAccessTime());
 			sb.AppendLine();
 
 			sb.Append("cache_life:");
 			for (int i = 0; i < 16; i++)
 			{
-				sb.Append(" " + getCacheLife(i));
+				sb.Append(" ");
+				getCacheLife(i, sb);
 			}
 			sb.AppendLine();
 
 			sb.Append("cache_addr:");
 			for (int i = 0; i < 16; i++)
 			{
-				sb.Append(" " + getCacheAddr(i));
+				sb.Append(" ");
+				getCacheAddr(i, sb);
 			}
 			sb.AppendLine();
 
@@ -336,20 +345,20 @@ namespace WindowsFormsApplication1
 			portWrite(cmd, reg);
 			byte[] temp;
 			int val = 0;
-			portWrite((byte)(0x13), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 24; sb.Append(Util.getHex2(temp[0]));
-			portWrite((byte)(0x12), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 16; sb.Append(Util.getHex2(temp[0]));
-			portWrite((byte)(0x11), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 8; sb.Append(Util.getHex2(temp[0]));
-			portWrite((byte)(0x10), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 0; sb.Append(Util.getHex2(temp[0]));
+			portWrite((byte)(0x13), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 24; if (sb != null) sb.Append(Util.getHex2(temp[0]));
+			portWrite((byte)(0x12), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 16; if (sb != null) sb.Append(Util.getHex2(temp[0]));
+			portWrite((byte)(0x11), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 8; if (sb != null) sb.Append(Util.getHex2(temp[0]));
+			portWrite((byte)(0x10), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 0; if (sb != null) sb.Append(Util.getHex2(temp[0]));
 			return val;
 		}
 		public int getData(int baseCmd, StringBuilder sb)
 		{
 			byte[] temp;
 			int val = 0;
-			portWrite((byte)(baseCmd + 0x3), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 24; sb.Append(Util.getHex2(temp[0]));
-			portWrite((byte)(baseCmd + 0x2), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 16; sb.Append(Util.getHex2(temp[0]));
-			portWrite((byte)(baseCmd + 0x1), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 8; sb.Append(Util.getHex2(temp[0]));
-			portWrite((byte)(baseCmd + 0x0), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 0; sb.Append(Util.getHex2(temp[0]));
+			portWrite((byte)(baseCmd + 0x3), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 24; if (sb != null) sb.Append(Util.getHex2(temp[0]));
+			portWrite((byte)(baseCmd + 0x2), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 16; if (sb != null) sb.Append(Util.getHex2(temp[0]));
+			portWrite((byte)(baseCmd + 0x1), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 8; if (sb != null) sb.Append(Util.getHex2(temp[0]));
+			portWrite((byte)(baseCmd + 0x0), (byte)0x00); temp = readFromPort(1); val |= temp[0] << 0; if (sb != null) sb.Append(Util.getHex2(temp[0]));
 			return val;
 		}
 
@@ -456,6 +465,12 @@ namespace WindowsFormsApplication1
 			textBox2.Text = sb.ToString();
 			//getstatus();
 		}
+
+		public void writeByteEnable(int byteEnable)
+		{
+			portWrite((byte)(0x28), (byte)byteEnable);
+		}
+
 		private void button6_Click(object sender, EventArgs e)
 		{
 			portWrite((byte)(0x00), (byte)(0x00));
@@ -467,8 +482,7 @@ namespace WindowsFormsApplication1
 			byteEnable |= this.checkBox5.Checked ? 4 : 0;
 			byteEnable |= this.checkBox6.Checked ? 2 : 0;
 			byteEnable |= this.checkBox7.Checked ? 1 : 0;
-
-			portWrite((byte)(0x28), (byte)byteEnable);
+			writeByteEnable(byteEnable);
 
 			uint addr = Convert.ToUInt32(textBox1.Text, 16);
 			setmem(addr, Convert.ToUInt32(textBox2.Text, 16));
@@ -495,7 +509,7 @@ namespace WindowsFormsApplication1
 			getstatus();
 		}
 
-		private void clearBuff()
+		public void clearBuff()
 		{
 			buff_a0 = null;
 			buff_a1 = null;
@@ -607,209 +621,11 @@ namespace WindowsFormsApplication1
 			return val;
 		}
 
-		public class TestCase { 
-			public uint addr;
-			public uint data;
-		}
-
-		public void randomTest() {
-
-			Random r = new Random();
-			List<TestCase> cases = new List<TestCase>();
-			int count = 1024;
-
-			NoCache(0, false);
-
-			for (int i = 0; i < count; i++)
-			{
-				TestCase c = new TestCase();
-				c.addr = (uint)r.Next(0x2000000);
-				c.data = (uint)r.Next();
-				cases.Add(c);
-			}
-
-			foreach (var c in cases)
-			{
-				setmem(c.addr, c.data);
-			}
-
-			int err = 0;
-			foreach (var c in cases)
-			{
-				uint val = getmem(c.addr, null);
-
-				if (val != c.data)
-				{
-					err++;
-				}
-			}
-			if (err > 0)
-			{
-				throw new Exception("err:" + err);//todo
-			}
-		}
-
-		public void writebackTest()
-		{
-			Random r = new Random();
-			uint targetPage = 1;
-
-			while (targetPage >= 1 && targetPage <= 15)
-			{
-				targetPage = (uint)r.Next(0x2000000);
-				targetPage = targetPage >> 10;
-			}
-
-			uint otherPage = 1;
-
-			while ((otherPage >= 1 && otherPage <= 15) || otherPage == targetPage)
-			{
-				otherPage = (uint)r.Next(0x2000000);
-				otherPage = otherPage >> 10;
-			}
-
-			uint otherPageData = (uint)r.Next();
-
-			setmem(((otherPage << 10) + 0), otherPageData);
-
-			getmem((targetPage << 10) + 0, null);
-
-			uint[] data = new uint[256];
-			for (int i = 0; i < 256; i++)
-			{
-				data[i] = (uint)r.Next();
-			}
-
-			for (int i = 0; i < 256; i++)
-			{
-				setmem(((uint)((targetPage << 10) + i * 4)), data[i]);
-			}
-
-			for (int j = 0; j < 40; j++)
-			{
-				for (int i = 1; i <= 15; i++)
-				{
-					uint temppage = (uint)i;
-					getmem((temppage << 10) + 0, null);
-				}
-			}
-
-			uint otherPageDataTemp = getmem((otherPage << 10) + 0, null);
-
-			if (otherPageDataTemp != otherPageData)
-			{
-				throw new Exception("otherPageDataTemp != otherPageData");
-			}
-
-			for (int i = 0; i < 256; i++)
-			{
-				uint val = getmem(((uint)((targetPage << 10) + i * 4)), null);
-				if (val != data[i])
-				{
-					throw new Exception("val != data[i]");
-				}
-			}
-		}
-
-
-		public void flushTest()
-		{
-			Random r = new Random();
-			uint targetPage = 1;
-
-			while (targetPage >= 0 && targetPage <= 15)
-			{
-				targetPage = (uint)r.Next(0x2000000);
-				targetPage = targetPage >> 10;
-			}
-
-			getmem((targetPage << 10) + 0, null);
-
-			uint[] data = new uint[256];
-			for (int i = 0; i < 256; i++)
-			{
-				data[i] = (uint)r.Next();
-			}
-
-			for (int i = 0; i < 256; i++)
-			{
-				setmem(((uint)((targetPage << 10) + i * 4)), data[i]);
-			}
-
-			FlushCache(targetPage << 10);
-
-			for (int i = 0; i <= 15; i++)
-			{
-				uint temppage = (uint)i;
-				getmem((temppage << 10) + 0, null);
-			}
-
-			for (int i = 0; i < 256; i++)
-			{
-				uint val = getmem(((uint)((targetPage << 10) + i * 4)), null);
-				if (val != data[i])
-				{
-					throw new Exception("val != data[i]");
-				}
-			}
-
-
-		}
-
-		public void readpageTest()
-		{
-			Random r = new Random();
-
-			uint otherPage = 1;
-
-			while ((otherPage >= 1 && otherPage <= 15))
-			{
-				otherPage = (uint)r.Next(0x2000000);
-				otherPage = otherPage >> 10;
-			}
-
-			uint otherPageData = (uint)r.Next();
-
-			setmem(((otherPage << 10) + 0), otherPageData);
-
-			uint otherPageDataTemp = getmem((otherPage << 10) + 0, null);
-
-			if (otherPageDataTemp != otherPageData)
-			{
-				throw new Exception("readpageTest err");
-			}
-		}
-
 		private void button7_Click(object sender, EventArgs e)
 		{
-			try
-			{
-				clearBuff();
-
-				NoCache(0, false);
-				if (this.comboBox3.Text == "random")
-				{
-					randomTest();
-				}
-				if (this.comboBox3.Text == "readpage")
-				{
-					readpageTest();
-				}
-				if (this.comboBox3.Text == "writeback")
-				{
-					writebackTest();
-				}
-				if (this.comboBox3.Text == "flushTest")
-				{
-					flushTest();
-				}
-
-				MessageBox.Show("ok");
-			}
-			catch (Exception ex)
-			{
-				MessageBox.Show(ex.Message);
-			}
+			Form2 form2 = new Form2();
+			form2.mainForm = this;
+			form2.Show();
 		}
 
 		List<Config> cfgs;
@@ -1420,6 +1236,11 @@ struct dir_t {//directoryEntry
 				this.Text = "" + j;
 			}
 			//setmem(0x02040008, 0);
+
+		}
+
+		private void checkBox4_CheckedChanged(object sender, EventArgs e)
+		{
 
 		}
 
