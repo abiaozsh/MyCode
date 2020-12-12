@@ -124,23 +124,13 @@ namespace WindowsFormsApplication1
 			}
 		}
 
-        public int getCacheAddr(int id, StringBuilder sb)
+        public void getCacheDebugData(int id, StringBuilder sb,out int addr,out int life,out string invalid)
         {
-            portWrite((byte)(0x2A), (byte)id);
-            //portWrite((byte)(0x6A), (byte)0);
-            //portWrite((byte)(0x6B), (byte)0);
-            //var temp = readFromPort(2);
-            int val = getData(0x6A, null);// temp[0] | (temp[1] << 8);
-            string invalid;
-            string dirty;
-            if ((val & 0x10000) != 0)
-            {
-                dirty = "D";
-            }
-            else
-            {
-                dirty = " ";
-            }
+            portWrite((byte)(0x29), (byte)id);
+            int val = getData(0x68, null);
+            //                     16                             1                                15
+            //cache_debug_data <= {cache_life[cache_debug_index], cacheInvalid[cache_debug_index], cacheAddrHigh[cache_debug_index]};
+
             if ((val & 0x8000) != 0)
             {
                 invalid = " ";
@@ -149,25 +139,22 @@ namespace WindowsFormsApplication1
             {
                 invalid = "V";
             }
-            int addr = (val & 0x7fff) << 10;
-			sb.Append(dirty + invalid + Util.getHex8((uint)addr));
-			return addr;
-        }
-		public int getCacheLife(int id, StringBuilder sb)
-		{
-			portWrite((byte)(0x29), (byte)id);
-			portWrite((byte)(0x68), (byte)0);
-			portWrite((byte)(0x69), (byte)0);
-			var temp = readFromPort(2);
-			int val = temp[0] | (temp[1] << 8);
-			if (sb != null)
-			{
-				sb.Append(String.Format("    {0:000000}", val));
-			}
-			return val;
-		}
+            addr = (val & 0x7fff) << 10;
+            if (sb != null)
+            {
+                sb.Append(invalid + Util.getHex8((uint)addr));
+            }
 
-		public long getAccessTime()
+            life = val >> 16;
+            if (sb != null)
+            {
+                sb.Append(String.Format(",{0:000000}", life));
+            }
+
+        }
+
+
+		public int getAccessTime()
 		{
 			return getData(0x4, null);
 		}
@@ -223,21 +210,20 @@ namespace WindowsFormsApplication1
 			sb.Append(getAccessTime());
 			sb.AppendLine();
 
-			sb.Append("cache_life:");
+			sb.AppendLine("cache:");
+
 			for (int i = 0; i < 16; i++)
 			{
-				sb.Append(" ");
-				getCacheLife(i, sb);
-			}
+                sb.Append(String.Format(",{0:00}", i) + ":[");
+                int life;
+                int addr;
+                string invalid;
+                getCacheDebugData(i, sb,out life,out addr,out invalid);
+                sb.Append("] ");
+                if (i == 7) sb.AppendLine();
+            }
 			sb.AppendLine();
 
-			sb.Append("cache_addr:");
-			for (int i = 0; i < 16; i++)
-			{
-				sb.Append(" ");
-				getCacheAddr(i, sb);
-			}
-			sb.AppendLine();
 
 			//sb.Append("  numer:"); getreg(0x40, 0, sb);
 			//sb.Append("  denom:"); getreg(0x41, 0, sb);
@@ -605,11 +591,13 @@ namespace WindowsFormsApplication1
 				setmem(0x02010004, 0);
 			}
 		}
-		public void FlushCache(uint addr)
+		public int FlushCache(uint addr)
 		{
 			setmem(0x02010000, 0x80000000 | (addr >> 10));
 			getmem(addr, null);
+            int time = this.getAccessTime();
 			setmem(0x02010000, 0);
+            return time;
 		}
 		public uint getValue(byte[] arr, int pos)
 		{
