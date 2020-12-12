@@ -30,6 +30,11 @@ module system (
     output  [2:0]  softspi_SCLK,   //        .SCLK
     output  [2:0]  softspi_CS,   //        .SS_n
     
+    output spirom_clk,
+    output spirom_mosi,
+    output spirom_ncs,
+    input spirom_miso,
+
     input          myuart_rxd,     //  myuart.rxd
     output         myuart_txd,     //        .txd
 
@@ -78,8 +83,8 @@ module system (
     output          vga_vs,         //场同步信号
     output  [15:0]  vga_rgb,         //红绿蓝三原色输出 
      
-    
-    
+    output [7:0]  audioOut, 
+
     input dummy
   );
   
@@ -117,10 +122,8 @@ module system (
     .debug32            (mycpu_debug32),                    //            .export
       
     .debugin8           (sdrambus_debug8    ),//spidebug8
-    .cache_life_addr    (cache_life_addr     ),
-    .cache_life_data    (cache_life_data     ),
-    .cacheAddrHigh_addr    (cacheAddrHigh_addr     ),
-    .cacheAddrHigh_data    (cacheAddrHigh_data     ),
+    .cache_debug_index  (cache_debug_index     ),
+    .cache_debug_data   (cache_debug_data     ),
     .debugin32  (sdrambus_debug32)
       
   );
@@ -128,11 +131,11 @@ module system (
   wire [31:0] avm_m0_readdata;
   wire        avm_m0_waitrequest;
   assign avm_m0_waitrequest = (sdrambus_cs ? sdrambus_waitrequest : 1'b0) |
-                              (mainSRAM_cs ? mainSRAM_waitrequest : 1'b0) |
-                              (mytimer_cs  ? mytimer_waitrequest  : 1'b0) |
-                              (myuart_cs   ? myuart_waitrequest   : 1'b0) |
-                              (softspi_cs  ? softspi_waitrequest  : 1'b0) |
-                              (vga_cs      ? vga_waitrequest      : 1'b0);
+                              (mainSRAM_cs ? mainSRAM_waitrequest : 1'b0)
+                              //(mytimer_cs  ? mytimer_waitrequest  : 1'b0) |
+                              //(myuart_cs   ? myuart_waitrequest   : 1'b0) |
+                              //(softspi_cs  ? softspi_waitrequest  : 1'b0)
+                              ;
   
   
   assign avm_m0_readdata =  (sdrambus_cs ? sdrambus_readdata : 32'b0) |
@@ -161,10 +164,8 @@ module system (
   wire  [9:0] read_pixel_addr       ;//input [9:0]   buff_readB_addr,
   wire        read_pixel_clk        ;//input         buff_readB_clk,
 
-  wire [3:0]  cache_life_addr;
-  wire [15:0] cache_life_data;
-  wire [3:0]  cacheAddrHigh_addr;
-  wire [16:0] cacheAddrHigh_data;
+  wire [3:0]  cache_debug_index;
+  wire [31:0] cache_debug_data;
 
 
   wire sdrambus_cs = avm_m0_address[31:25] == 7'h0;// 0000:0000 ~ 01FF:FFFF 32M byte
@@ -211,10 +212,8 @@ module system (
     .nocache_page   (nocache_page ),
 
     .debug8                (sdrambus_debug8 ),
-    .cache_life_addr       (cache_life_addr     ),
-    .cache_life_data       (cache_life_data     ),
-    .cacheAddrHigh_addr    (cacheAddrHigh_addr     ),
-    .cacheAddrHigh_data    (cacheAddrHigh_data     ),
+    .cache_debug_index     (cache_debug_index     ),
+    .cache_debug_data      (cache_debug_data     ),
     .debug32               (sdrambus_debug32)
 
   );
@@ -238,27 +237,27 @@ module system (
     .wren ( mainSRAM_write ),
     .q ( mainSRAM_readdata )
   );
-  
-reg mainSRAM_read_ack;
-wire mainSRAM_waitrequest = ((mainSRAM_cs && avm_m0_read) && !mainSRAM_read_ack);
-always@(posedge clk or negedge reset_n) begin
-  if(!reset_n) begin
-    mainSRAM_read_ack <= 0;
-  end else begin
-    if((mainSRAM_cs && avm_m0_read) && !mainSRAM_read_ack)begin
-      mainSRAM_read_ack <= 1;
-    end
-    
-    if(!(mainSRAM_cs && avm_m0_read) && mainSRAM_read_ack)begin
-      mainSRAM_read_ack <= 0;
-    end
-
-  end
-end
 
   wire mainSRAM_write = mainSRAM_cs ? avm_m0_write : 1'b0;
   
   wire [13:0] mainSRAM_address = avm_m0_address[15:2];//~[12:0]
+
+  reg mainSRAM_read_ack;
+  wire mainSRAM_waitrequest = (avm_m0_read && !mainSRAM_read_ack);
+  always@(posedge clk or negedge reset_n) begin
+    if(!reset_n) begin
+      mainSRAM_read_ack <= 0;
+    end else begin
+      if(avm_m0_read && !mainSRAM_read_ack)begin
+        mainSRAM_read_ack <= 1;
+      end
+      
+      if(!avm_m0_read && mainSRAM_read_ack)begin
+        mainSRAM_read_ack <= 0;
+      end
+
+    end
+  end
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   //assign debug8[0] = flush_cache;//mouse_send_req_buff;
@@ -291,6 +290,7 @@ end
     end
   end
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//低2G内存间隔64M，总共32个device 高2G是private
 
   wire irq_Ctrl_cs = avm_m0_address[31:16] == 16'h0202;
 
@@ -306,11 +306,17 @@ end
   reg  hid_irq_req;
   reg  hid_irq_req_buff;
   reg  hid_irq_ack;
+  reg  audio_irq_req;
+  reg  audio_irq_req_buff;
+  reg  audio_irq_ack;
 
   always@(posedge clk or negedge reset_n) begin
     if(!reset_n) begin
       irq_num <= 0;
+      mytimer_irq_ack <= 0;
       myuart_irq_ack <= 0;
+      hid_irq_ack <= 0;
+      audio_irq_ack <= 0;
     end else begin
       if(irq_Ctrl_cs && avm_m0_write)begin
         if         (avm_m0_address[15:2]==0)begin
@@ -320,6 +326,7 @@ end
       end
       mytimer_irq_req_buff = mytimer_irq_req;
       hid_irq_req_buff = hid_irq_req;
+      audio_irq_req_buff = audio_irq_req;
       
       if(mytimer_irq_req_buff && !mytimer_irq_ack)begin
         irq_num[0] <= 1;
@@ -344,7 +351,17 @@ end
       if(!hid_irq_req_buff && hid_irq_ack)begin
         hid_irq_ack <= 0;
       end
+      
+      if(audio_irq_req_buff && !audio_irq_ack)begin
+        irq_num[3] <= 1;
+        audio_irq_ack <= 1;
+      end
+      if(!audio_irq_req_buff && audio_irq_ack)begin
+        audio_irq_ack <= 0;
+      end
 
+      //audio 3
+      
     end
   end
   
@@ -356,7 +373,7 @@ end
   wire mytimer_cs = avm_m0_address[31:16] == 16'h0203;
 
   wire [31:0] mytimer_readdata;
-  wire        mytimer_waitrequest;
+  //wire        mytimer_waitrequest;
   mytimer mytimer_inst (
     .clk                (clk),                       //       clock.clk
 		.clk_50M            (clk_50M),
@@ -366,7 +383,7 @@ end
     .avs_s0_write       (mytimer_write ),
     .avs_s0_readdata    (mytimer_readdata ),
     .avs_s0_writedata   (avm_m0_writedata ),
-    .avs_s0_waitrequest (mytimer_waitrequest ),
+    //.avs_s0_waitrequest (mytimer_waitrequest ),
     .avs_s0_byteenable  (avm_m0_byteenable ),
     .irq_req            (mytimer_irq_req),       //  irq0.irq
     .irq_ack            (mytimer_irq_ack)
@@ -382,17 +399,17 @@ end
   wire myuart_cs = avm_m0_address[31:16] == 16'h0204;
 
   wire [31:0] myuart_readdata;
-  wire        myuart_waitrequest;
+  //wire        myuart_waitrequest;
   myuart myuart_inst (
     .clk                (clk),                       //       clock.clk
-		.clk_50M            (clk_50M),
+    .clk_50M            (clk_50M),
     .reset_n            (reset_n), //       reset.reset_n
     .avs_s0_address     (myuart_address ),
     .avs_s0_read        (myuart_read ),
     .avs_s0_write       (myuart_write ),
     .avs_s0_readdata    (myuart_readdata ),
     .avs_s0_writedata   (avm_m0_writedata ),
-    .avs_s0_waitrequest (myuart_waitrequest ),
+    //.avs_s0_waitrequest (myuart_waitrequest ),
     .avs_s0_byteenable  (avm_m0_byteenable ),
     .irq_req            (myuart_irq_req),       //  irq0.irq
     .irq_ack            (myuart_irq_ack),
@@ -416,7 +433,7 @@ end
   wire softspi_cs = avm_m0_address[31:16] == 16'h0205;
 
   wire [31:0] softspi_readdata;
-  wire        softspi_waitrequest;
+  //wire        softspi_waitrequest;
   wire [7:0] spidebug8;
   softspi softspi_inst (
     .clk                (clk),                       //       clock.clk
@@ -427,7 +444,7 @@ end
     .avs_s0_write       (softspi_write ),
     .avs_s0_readdata    (softspi_readdata ),
     .avs_s0_writedata   (avm_m0_writedata ),
-    .avs_s0_waitrequest (softspi_waitrequest ),
+    //.avs_s0_waitrequest (softspi_waitrequest ),
     .avs_s0_byteenable  (avm_m0_byteenable ),
     
     .debug4 (debug4),
@@ -487,7 +504,6 @@ end
       end
     end
   end
-  wire vga_waitrequest = 0;
   
   //128m byte range 64k line * 2048byte per line
   reg vga_mode;
@@ -639,6 +655,90 @@ assign debug8 = vga_debug;
     .enable(reset_n),
     .ro_out(b)
   );
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  
+  //中断
+  wire audio_cs = avm_m0_address[31:16] == 16'h0209;
+  
+  wire audio_write = audio_cs ? avm_m0_write : 1'b0;
+  
+  //50,000,000 / 1134 = 44091.71   //567
+  reg clk_audio;// 44.1khz
+  reg [9:0] clk_audio_count;
+  always@(posedge clk_50M or negedge reset_n) begin
+    if(!reset_n) begin
+      clk_audio_count <= 0;
+      clk_audio <= 0;
+    end else begin
+      clk_audio_count <= clk_audio_count + 1'b1;
+      if(clk_audio_count==567)begin
+        clk_audio_count <= 0;
+        clk_audio = ~clk_audio;
+      end
+    end
+  end
+
+ // fifo	fifo_inst (
+ //   .data ( data_sig ),
+ //   .rdclk ( rdclk_sig ),
+ //   .rdreq ( rdreq_sig ),
+ //   .wrclk ( wrclk_sig ),
+ //   .wrreq ( wrreq_sig ),
+ //   .q ( q_sig ),
+ //   .rdempty ( rdempty_sig ),
+ //   .wrfull ( wrfull_sig ),
+ //   .wrusedw ( wrusedw_sig )
+ //   );
+
+  //reg hid_irq_ack_buff;
+  //always@(posedge clk_50M or negedge reset_n) begin
+  //  if(!reset_n) begin
+  //    hid_irq_req <= 0;
+  //    hid_str_buff1 <= 0;
+  //    hid_str_buff2 <= 0;
+  //  end else begin
+  //    hid_str_buff1 <= hid_str;
+  //    hid_str_buff2 <= hid_str_buff1;
+  //    
+  //    hid_irq_ack_buff <= hid_irq_ack;
+  //    
+  //    if(hid_str_buff1 && !hid_str_buff2)begin
+  //      hid_irq_req <= 1;
+  //    end
+  //    
+  //    if(hid_irq_ack_buff)begin
+  //      hid_irq_req <= 0;
+  //    end
+  //  end
+  //end
+
+  //fifo
+  //audio_irq_req
+  
+  //avm_m0_address[15:2]
+  //reg mainSRAM_read_ack;
+  //wire mainSRAM_waitrequest = (avm_m0_read && !mainSRAM_read_ack);
+  //always@(posedge clk or negedge reset_n) begin
+  //  if(!reset_n) begin
+  //    mainSRAM_read_ack <= 0;
+  //  end else begin
+  //    if(avm_m0_read && !mainSRAM_read_ack)begin
+  //      mainSRAM_read_ack <= 1;
+  //    end
+  //    
+  //    if(!avm_m0_read && mainSRAM_read_ack)begin
+  //      mainSRAM_read_ack <= 0;
+  //    end
+  //
+  //  end
+  //end
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  
+  //spi Rom
+    //output spirom_clk,
+    //output spirom_mosi,
+    //output spirom_ncs,
+    //input spirom_miso,
 
 endmodule
 

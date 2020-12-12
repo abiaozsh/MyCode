@@ -8,7 +8,7 @@ module mytimer (
     input          avs_s0_write,       //      .write
     output  [31:0] avs_s0_readdata,    //      .readdata
     input   [31:0] avs_s0_writedata,   //      .writedata
-    output         avs_s0_waitrequest, //      .waitrequest
+    //output         avs_s0_waitrequest, //      .waitrequest
     input   [3:0]  avs_s0_byteenable,    //      .readdata
     output reg     irq_req,
     input          irq_ack
@@ -16,7 +16,7 @@ module mytimer (
 
   // TODO: Auto-generated HDL template
 
-  assign avs_s0_waitrequest = 1'b0;
+  //assign avs_s0_waitrequest = 1'b0;
   
   reg [31:0] timer[8];
   reg [31:0] timer_trans[4];

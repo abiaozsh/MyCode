@@ -8,7 +8,7 @@ module softspi (
     input          avs_s0_write,       //      .write
     output  [31:0] avs_s0_readdata,    //      .readdata
     input   [31:0] avs_s0_writedata,   //      .writedata
-    output         avs_s0_waitrequest, //      .waitrequest
+    //output         avs_s0_waitrequest, //      .waitrequest
     input   [3:0]  avs_s0_byteenable,    //      .readdata
 
     output [7:0]   debug8,
@@ -206,7 +206,7 @@ module softspi (
     end
   end
 
-  assign avs_s0_waitrequest = 1'b0;
+  //assign avs_s0_waitrequest = 1'b0;
   
   assign avs_s0_readdata = avs_s0_address == 0 ? {read_data_valid,read_data[0],read_data[1],read_data[2],read_data[3],read_data[4],read_data[5],read_data[6],read_data[7]} : 
                            avs_s0_address == 1 ? {write_data_done,8'b0} : {6'b0,MISO};

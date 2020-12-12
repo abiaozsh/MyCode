@@ -30,10 +30,8 @@ module mycpu (
     
     
     input      [7:0] debugin8,
-    output reg [3:0] cache_life_addr ,
-    input      [15:0] cache_life_data   ,
-    output reg [3:0] cacheAddrHigh_addr,
-    input      [16:0] cacheAddrHigh_data,
+    output reg [3:0] cache_debug_index ,
+    input      [31:0] cache_debug_data ,
     input      [31:0] debugin32
   );
 
@@ -132,6 +130,7 @@ always @(posedge clk or negedge reset_n) begin
     debug_byteenable <= 4'b1111;
     accessTime <= 0;
     uart_send_ack_buff<=0;
+    cache_debug_index <= 0;
   end else begin
     uart_send_ack_buff <= uart_send_ack;
 
@@ -173,19 +172,18 @@ always @(posedge clk or negedge reset_n) begin
       8'h26 : begin debug_writedata[23:16] <= data; command_done<=1; end
       8'h27 : begin debug_writedata[31:24] <= data; command_done<=1; end
       8'h28 : begin debug_byteenable <= data[3:0]; command_done<=1; end
-      8'h29 : begin cache_life_addr <= data[3:0]; command_done<=1; end
-      8'h2A : begin cacheAddrHigh_addr <= data[3:0]; command_done<=1; end
+      8'h29 : begin cache_debug_index <= data[3:0]; command_done<=1; end
       8'h60 : begin uart_send<=1; uart_data_in<=debugin32[ 7: 0]; command_done<=1; end
       8'h61 : begin uart_send<=1; uart_data_in<=debugin32[15: 8]; command_done<=1; end
       8'h62 : begin uart_send<=1; uart_data_in<=debugin32[23:16]; command_done<=1; end
       8'h63 : begin uart_send<=1; uart_data_in<=debugin32[31:24]; command_done<=1; end
       8'h64 : begin uart_send<=1; uart_data_in<=debugin8; command_done<=1; end//debugin8 / debug_flg
-      8'h68 : begin uart_send<=1; uart_data_in<=cache_life_data[ 7: 0]; command_done<=1; end
-      8'h69 : begin uart_send<=1; uart_data_in<=cache_life_data[15: 8]; command_done<=1; end
 
-      8'h6A : begin uart_send<=1; uart_data_in<=cacheAddrHigh_data[ 7: 0]; command_done<=1; end
-      8'h6B : begin uart_send<=1; uart_data_in<=cacheAddrHigh_data[15: 8]; command_done<=1; end
-      8'h6C : begin uart_send<=1; uart_data_in<=cacheAddrHigh_data[16]; command_done<=1; end
+      8'h68 : begin uart_send<=1; uart_data_in<=cache_debug_data[ 7: 0]; command_done<=1; end
+      8'h69 : begin uart_send<=1; uart_data_in<=cache_debug_data[15: 8]; command_done<=1; end
+      8'h6A : begin uart_send<=1; uart_data_in<=cache_debug_data[23:16]; command_done<=1; end
+      8'h6B : begin uart_send<=1; uart_data_in<=cache_debug_data[31:24]; command_done<=1; end
+
       8'h6D : begin uart_send<=1; uart_data_in<=0; command_done<=1; end
 
       8'h30 : begin

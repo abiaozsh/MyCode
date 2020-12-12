@@ -8,7 +8,7 @@ module myuart (
 		input         avs_s0_write,       //      .write
 		output [31:0] avs_s0_readdata,    //      .readdata
 		input  [31:0] avs_s0_writedata,   //      .writedata
-		output        avs_s0_waitrequest, //      .waitrequest
+		//output        avs_s0_waitrequest, //      .waitrequest
 		input  [3:0]  avs_s0_byteenable,    //      .readdata
 		output   reg  irq_req,       //  irq0.irq
     input         irq_ack,
@@ -18,7 +18,7 @@ module myuart (
 
 	);
 
-	assign avs_s0_waitrequest = 1'b0;
+	//assign avs_s0_waitrequest = 1'b0;
 
 	assign avs_s0_readdata = avs_s0_address == 0 ? ({23'b0,rec_flg,rec_data}) : ({23'b0,uart_busy,8'b0});
 

@@ -15,8 +15,12 @@ module flow_led(
   output segled_dat, 
   output segled_str,
   output [7:0] debug,
-  output [3:0] debug4,
- 
+  
+  output spirom_clk,
+  output spirom_mosi,
+  output spirom_ncs,
+  input spirom_miso,
+
   //SDRAM 芯片接口
   output        sdram_clk_out,                //SDRAM 芯片时钟
   output        sdram_cke,                //SDRAM 时钟有效
@@ -124,7 +128,7 @@ wire hid_clk = ~hid_clk_n;
 wire hid_str = ~hid_str_n;
 
 
-
+wire [3:0] debug4;
 wire dummy;
 system system_inst(
   .clk      (clk_cpu),        //     clk.clk
@@ -164,6 +168,11 @@ system system_inst(
   .softspi_MOSI        (spi_MOSI),        //        .MOSI
   .softspi_SCLK        (spi_SCLK),        //        .SCLK
   .softspi_CS          (spi_CS),         //        .SS_n    
+  
+  .spirom_clk          (spirom_clk),
+  .spirom_mosi         (spirom_mosi),
+  .spirom_ncs          (spirom_ncs),
+  .spirom_miso         (spirom_miso),
   
   //.pio0out_export (outpin32), // pio0out.export
   //.pio1in_export  (inpin8),  //  pio1in.export
