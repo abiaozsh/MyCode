@@ -40,7 +40,7 @@ module sdrambusvga(
     input   [9:0] read_pixel_addr ,//10bit 1024word per line
     input         read_pixel_clk  ,
     
-    output reg [7:0] debug8,
+    output     [7:0] debug8,
     input      [3:0] cache_debug_index,
     output reg [31:0] cache_debug_data,
     output     [31:0] debug32
@@ -323,6 +323,10 @@ reg [31:0] write_single_sdram_data_H_buff;
 reg        write_single_sdram_mask_H_buff;
 reg        write_single_sdram_H_buff_flag;
 
+assign debug8[0] = read_sdram_req;
+assign debug8[1] = write_single_sdram_ack_buff;
+assign debug8[2] = cacheAddrLow8_writeBack;
+
 reg avs_s0_read_ack;
 reg avs_s0_write_ack;
 reg read_sdram_ack_buff;
@@ -356,7 +360,7 @@ always@(posedge clk or negedge sys_rst_n) begin
     current_slot <= 0;
     write_enable <= 0;
     adj_cache_life <= 0;
-    debug8 <= 0;
+    //debug8 <= 0;
     cacheAddrLow8_writeBack <= 0;
     flushCountPlus1 <= 0;
     onFlush <= 0;
