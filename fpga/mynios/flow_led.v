@@ -142,7 +142,7 @@ system system_inst(
 
   .mycpu_uart_rxd (uart_rxd), //        .uart_rxd
   .mycpu_uart_txd (uart_txd), //   mycpu.uart_txd
-  .debug4         (debug4),    //        .debug
+
   .debug8         (debug8),    //        .debug
   .debug32        (debug32),   //        .debug0
 

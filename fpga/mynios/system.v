@@ -9,7 +9,6 @@ module system (
 
     output        mycpu_uart_txd, //   mycpu.uart_txd
     input         mycpu_uart_rxd, //        .uart_rxd
-    output [3:0]  debug4, 
     output [7:0]  debug8, 
     output [31:0] debug32,
 
@@ -90,7 +89,6 @@ module system (
   
   
   
-  wire [7:0] sdrambus_debug8;
   assign debug32 = mycpu_debug32;
   wire [31:0] sdrambus_debug32;
 
@@ -131,8 +129,8 @@ module system (
   wire [31:0] avm_m0_readdata;
   wire        avm_m0_waitrequest;
   assign avm_m0_waitrequest = (sdrambus_cs ? sdrambus_waitrequest : 1'b0) |
-                              (mainSRAM_cs ? mainSRAM_waitrequest : 1'b0)
-                              //(mytimer_cs  ? mytimer_waitrequest  : 1'b0) |
+                              (mainSRAM_cs ? mainSRAM_waitrequest : 1'b0) |
+                              (spirom_cs   ? spirom_waitrequest   : 1'b0)
                               //(myuart_cs   ? myuart_waitrequest   : 1'b0) |
                               //(softspi_cs  ? softspi_waitrequest  : 1'b0)
                               ;
@@ -145,7 +143,9 @@ module system (
                             (myuart_cs   ? myuart_readdata   : 32'b0) |
                             (softspi_cs  ? softspi_readdata  : 32'b0) |
                             (hid_cs      ? hid_readdata      : 32'b0) |
-                            (rnd_cs      ? rnd_readdata      : 32'b0);
+                            (rnd_cs      ? rnd_readdata      : 32'b0) |
+                            (spirom_cs   ? spirom_readdata   : 32'b0)
+                            ;
 
   
   
@@ -154,7 +154,8 @@ module system (
   
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   
-  
+  wire [7:0] sdrambus_debug8;
+  assign debug8 = sdrambus_debug8;
 
   wire        read_line_req         ;//input read_buffA_req,
   wire        read_line_A_B         ;//input read_buffB_req,
@@ -447,7 +448,6 @@ module system (
     //.avs_s0_waitrequest (softspi_waitrequest ),
     .avs_s0_byteenable  (avm_m0_byteenable ),
     
-    .debug4 (debug4),
     .debug8 (spidebug8),
     
     .MISO           (softspi_MISO),
@@ -530,7 +530,7 @@ module system (
   );
   
 wire [7:0] vga_debug;
-assign debug8 = vga_debug;
+//assign debug8 = vga_debug;
 
   wire blanking;
   vga_driver8m u_vga_driver8m(
@@ -733,12 +733,41 @@ assign debug8 = vga_debug;
   //  end
   //end
   //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  wire spirom_cs = avm_m0_address[31:16] == 16'h020A;
+
+  wire [31:0] spirom_readdata;
+  spirom spirom_inst (
+    .clk                (clk),                       //       clock.clk
+    .clk_25M            (vga_clk_25M),
+    .reset_n            (reset_n), //       reset.reset_n
+    .avs_s0_address     (spirom_address ),
+    .avs_s0_read        (spirom_read ),
+    .avs_s0_write       (spirom_write ),
+    .avs_s0_readdata    (spirom_readdata ),
+    .avs_s0_writedata   (avm_m0_writedata ),
+    .avs_s0_waitrequest (spirom_waitrequest ),
+    .avs_s0_byteenable  (avm_m0_byteenable ),
+    
+    //.debug8 (spidebug8),
+    
+    .spirom_clk         (spirom_clk ),
+    .spirom_mosi        (spirom_mosi),
+    .spirom_ncs         (spirom_ncs ),
+    .spirom_miso        (spirom_miso)
+
+  );
   
+  wire spirom_waitrequest;
+  wire   [13:0] spirom_address = avm_m0_address[15:2];//~[0]
+  
+  wire spirom_read = spirom_cs ? avm_m0_read : 1'b0;
+  wire spirom_write = spirom_cs ? avm_m0_write : 1'b0;
+
   //spi Rom
-    //output spirom_clk,
+    //output spirom_clk ,
     //output spirom_mosi,
-    //output spirom_ncs,
-    //input spirom_miso,
+    //output spirom_ncs ,
+    //input  spirom_miso,
 
 endmodule
 

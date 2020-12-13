@@ -252,6 +252,7 @@ set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
 #set_global_assignment -name PHYSICAL_SYNTHESIS_EFFORT EXTRA
 #set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP ON
 #set_global_assignment -name REMOVE_REDUNDANT_LOGIC_CELLS ON
+set_global_assignment -name VERILOG_FILE spirom.v
 set_global_assignment -name QIP_FILE ../commoncode/sdram/ram256x32.qip
 set_global_assignment -name QIP_FILE mul.qip
 set_global_assignment -name QIP_FILE addsub.qip

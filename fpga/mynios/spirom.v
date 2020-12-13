@@ -1,4 +1,4 @@
-module softspi (
+module spirom (
     input  clk,                // clock.clk
     input  clk_25M,
     input  reset_n,               // reset.reset
@@ -8,16 +8,16 @@ module softspi (
     input          avs_s0_write,       //      .write
     output  [31:0] avs_s0_readdata,    //      .readdata
     input   [31:0] avs_s0_writedata,   //      .writedata
-    //output         avs_s0_waitrequest, //      .waitrequest
+    output         avs_s0_waitrequest, //      .waitrequest
     input   [3:0]  avs_s0_byteenable,    //      .readdata
 
     output [7:0]   debug8,
 
-    input      [2:0]  MISO,
-    output     [2:0]  MOSI,
-    output     [2:0]  SCLK,
-    output reg [2:0]  CS
-    
+    output spirom_clk,
+    output spirom_mosi,
+    output spirom_ncs,
+    input spirom_miso
+
 );
 
   //reg [7:0] clk_count;
@@ -30,20 +30,15 @@ module softspi (
   assign debug8 = clk_delay;
 
   reg _MOSI_;
-  assign MOSI[0] = _MOSI_;//(~CS[0]) ?  : 1'b1;
-  assign MOSI[1] = _MOSI_;//(~CS[1]) ?  : 1'b1;
-  assign MOSI[2] = _MOSI_;//(~CS[2]) ?  : 1'b1;
+  assign spirom_mosi = _MOSI_;//(~CS[0]) ?  : 1'b1;
   reg _SCLK_;
-  assign SCLK[0] = _SCLK_;//(~CS[0]) ?  : 1'b0;
-  assign SCLK[1] = _SCLK_;//(~CS[1]) ?  : 1'b0;
-  assign SCLK[2] = _SCLK_;//(~CS[2]) ?  : 1'b0;
+  assign spirom_clk = _SCLK_;
 
+  assign spirom_ncs = CS;
   
   wire rst_sd_n = reset_n & reset_by_cpu_n;
   
-  wire _MISO_ = (~CS[0]) ? MISO[0] :
-                (~CS[1]) ? MISO[1] :
-                (~CS[2]) ? MISO[2] : 0;
+  wire _MISO_ = spirom_miso;
 
   reg [7:0] read_data;
   reg read_req_buff;
@@ -210,10 +205,10 @@ module softspi (
     end
   end
 
-  //assign avs_s0_waitrequest = 1'b0;
+  assign avs_s0_waitrequest = 1'b0;
   
   assign avs_s0_readdata = avs_s0_address == 0 ? {read_data_valid,read_data} : 
-                           avs_s0_address == 1 ? {write_data_done,8'b0} : {6'b0,MISO};
+                           (avs_s0_address == 1 ? {write_data_done,8'b0} : {7'b0,spirom_miso});
 
   
   reg rpol;
@@ -227,6 +222,7 @@ module softspi (
   reg       _MOSI_data;
   reg       _SCLK_data;
 
+  reg CS;
   reg       read_data_valid;
   reg [7:0] write_data;
   reg       write_data_done;
@@ -239,7 +235,7 @@ module softspi (
   reg reset_by_cpu_n;
   always @ (posedge clk or negedge reset_n) begin
     if (!reset_n) begin
-      CS <= 3'b111;
+      CS <= 1'b1;
       read_req <= 0;
       write_req <= 0;
       manual_req <= 0;
@@ -283,12 +279,7 @@ module softspi (
           write_req<=1;
         end
         if(avs_s0_address==2) begin
-          CS<=avs_s0_writedata[2:0];
-        end
-        
-        if(avs_s0_address==3) begin
-          CS <= 3'b111;
-          reset_by_cpu_n<=avs_s0_writedata[0];
+          CS<=avs_s0_writedata[0];
         end
         
         if(avs_s0_address==4) begin
