@@ -28,13 +28,17 @@ void mfree(int size){
 void flushCache(void* addr){
   int tmp = (int)addr;
   tmp = tmp >> 10;//TODO 要加上sdram的偏移，和考虑私有空间的情况
+  #ifdef sti
   int status = sti(0);
+  #endif
   IOWR(CACHE_CTL, 0, 0x80000000 | tmp);
   volatile int a = *((int*)addr);
   IOWR(CACHE_CTL, 0, 0);
+  #ifdef sti
   if(status){
     sti(1);
   }
+  #endif
 }
 
 void memcpy(void *dst, const void *src, int len){

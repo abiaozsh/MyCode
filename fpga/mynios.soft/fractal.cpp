@@ -61,9 +61,9 @@ void f(int wid, int hei, double viswid, double vishei, double visx, double visy,
 	double ImaZ;
 	double ReaZ2;
 	double ImaZ2;
-	int n;
+	//int n;
 
-	n = 256 / maxi;
+	//n = 256 / maxi;
 
 	dReaC = (viswid) / ((double)wid - 1);
 	dImaC = (vishei) / ((double)hei - 1);
@@ -74,7 +74,7 @@ void f(int wid, int hei, double viswid, double vishei, double visx, double visy,
 		for (i = 0; i < wid; i++)
 		{
       addr = (short*)(&((short*)(buffAddr))[i+(j<<10)]);
-      *addr = getpixel(0, 255, 0);//at 2Mbyte
+      *addr = getpixel(0, 0, 255);//at 2Mbyte
 		}
     flushCache(addr);
 	}
@@ -101,7 +101,7 @@ void f(int wid, int hei, double viswid, double vishei, double visx, double visy,
 				ReaZ = ReaZ2 - ImaZ2 + ReaC;
 			}
       short* addr = (short*)(&((short*)(buffAddr))[i+(j<<10)]);
-      *addr = getpixel(0, 0, clr * n);//at 2Mbyte
+      *addr = getpixel(0, clr, 0);// * n    at 2Mbyte
       flushCache(addr);
 		}
 	}
@@ -110,7 +110,7 @@ void f(int wid, int hei, double viswid, double vishei, double visx, double visy,
 int main()
 {
   screenInit2(1024);
-  f(256, 192 , 2, 2, -1, -1, 256, 4);
+  f(256, 192 , 2, 2, -1, -1, 254, 4);
   while(1){
   }
 

@@ -410,6 +410,7 @@ class Sd2Card {
         while(IORD(MYTIMER, 2)<1000);
       }
       if(ok){
+        print("polpha=");printInt(polpha_);print("\r\n");
         break;
       }
     }

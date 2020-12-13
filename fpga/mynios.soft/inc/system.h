@@ -21,3 +21,12 @@
 #define VGA_CURSOR_Y     0x2800
 #define HID              0x02070000
 #define RND              0x02080000
+#define SPIROM           0x020A0000
+#define SPIROM_READ      0
+#define SPIROM_WRITE     1
+#define SPIROM_CS        2
+#define SPIROM_MISO      2
+#define SPIROM_RST_N     3
+#define SPIROM_POLPHA    4
+#define SPIROM_MOSI      5
+#define SPIROM_SCK       6
